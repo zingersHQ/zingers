@@ -17,6 +17,7 @@ import {
   type Creature,
 } from "./roster";
 import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
+import { banterLine } from "./banter";
 import { makeAgent, type Agent, type AgentView } from "./agent";
 import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type FighterPub, type ResolveInfo, type Strat } from "@/lib/types";
 
@@ -156,9 +157,23 @@ function buildView(att: Fighter, opp: Fighter, topic: string, rnd: number): Agen
   };
 }
 
+// A funny, in-character, deterministic line for when no live brain supplies one.
+function houseLine(att: Fighter, opp: Fighter, moveId: string, topic: string, rng: Rng): string {
+  return banterLine({
+    moveId,
+    attName: att.name,
+    attType: att.type,
+    oppName: opp.name,
+    topic,
+    confused: att.confused > 0,
+    tilted: att.tilted > 0,
+    rng,
+  });
+}
+
 // One turn: ask the side's Agent to decide, validate, and fall back to the
 // trained-doctrine heuristic if the agent fails or returns an illegal move.
-async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number): Promise<AgentChoice> {
+async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number, rng: Rng): Promise<AgentChoice> {
   const moves = legalMoves(att, opp);
   const valid = Object.fromEntries(moves.map((m) => [m.id, m]));
   const out = await att.agent.act(buildView(att, opp, topic, rnd));
@@ -166,7 +181,7 @@ async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number)
     return {
       move: valid[out.move],
       intent: (out.intent || MOCK_INTENT[out.move] || "Press the advantage").slice(0, 42),
-      line: (out.line || `${att.name}: that point bends my way.`).slice(0, 160),
+      line: (out.line || houseLine(att, opp, out.move, topic, rng)).slice(0, 160),
       why: (out.why || `${valid[out.move].name} fits the trained doctrine here.`).slice(0, 160),
     };
   }
@@ -175,7 +190,7 @@ async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number)
   return {
     move: m,
     intent: out?.intent || MOCK_INTENT[m.id] || "Press the advantage",
-    line: out?.line || `${att.name}: your point folds. Mine stands.`,
+    line: out?.line || houseLine(att, opp, m.id, topic, rng),
     why: out?.why || `${m.name} fits the trained doctrine here.`,
   };
 }
@@ -194,16 +209,21 @@ async function judge(
     const hl = rng.random() < 0.1;
     return [hl ? Q_HIGHLIGHT : q, hl, q > 1.05 ? "sharp and on point" : "lands cleanly"];
   }
-  const sysP = `You are the impartial judge of a debate battle on the proposition: "${topic}". You score one line.`;
+  const sysP =
+    `You are the judge of ZINGERS, a debate battle on the proposition: "${topic}". ` +
+    "You reward WIT, not term-paper rigor: the funniest, most savage, most quotable bar wins. " +
+    "You are scoring one line for how hard it lands.";
   const oppLast = opp.lines.length ? opp.lines[opp.lines.length - 1] : "(none)";
   const usr =
     `${att.name} (arguing ${att.stance}) used ${move.name} and said:\n"${line}"\n` +
     `Opponent's previous line: "${oppLast}"\n\n` +
-    "Score rhetorical quality, relevance to the proposition, and cleverness (callbacks, " +
-    "turning the opponent's own words/logic). Reply ONLY as JSON: " +
-    '{"quality": <float 0.7-1.3>, "highlight": <true|false>, "ruling": "<max 8 word verdict>"}. ' +
+    "Reward: comedic timing, savagery of the roast, turning the opponent's own words/logic " +
+    "against them, and clip-worthiness (would someone screenshot this?). Stay roughly on the " +
+    "proposition, but a hilarious on-topic burn beats a dry correct one. Reply ONLY as JSON: " +
+    '{"quality": <float 0.7-1.3>, "highlight": <true|false>, "ruling": "<max 8 word verdict, may be funny>"}. ' +
     "Be a STRICT scorer: most lines are 0.9-1.1. Reserve highlight=true for roughly 1 line in 8 — " +
-    "only a truly exceptional, clip-worthy zinger; otherwise false. If off-topic, quality 0.7.";
+    "only a truly exceptional, clip-worthy zinger that made you laugh or wince; otherwise false. " +
+    "If it whiffs (not funny AND off-topic), quality 0.7.";
   const out = parseJson<{ quality?: number; highlight?: boolean; ruling?: string }>(
     await chat([{ role: "system", content: sysP }, { role: "user", content: usr }], 0.2, 120),
   );
@@ -330,7 +350,7 @@ export async function* battleEvents(
     rnd += 1;
     const att = order[(rnd - 1) % 2];
     const opp = order[rnd % 2];
-    const { move, intent, line, why } = await agentTurn(att, opp, topic, rnd);
+    const { move, intent, line, why } = await agentTurn(att, opp, topic, rnd, rng);
     att.lines.push(line);
     let [q, hl, ruling] = await judge(att, opp, move, line, topic, mock, rng);
     if (hl) {

@@ -14,6 +14,7 @@ export const STORAGE = {
   stateLegacy: "battler_state_v3",
   intro: "zingers_intro_v1",
   introLegacy: "battler_intro_v1",
+  sound: "zingers_sound_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

@@ -31,20 +31,45 @@ function fbm(x: number, z: number) {
   return a; // ~0..0.93
 }
 
+// The SHAPE of the land — independent of its skin. Different worlds pass a
+// different shape, so the geometry you walk through actually changes, not just
+// the colours. Derived from a biome's terrain block via `shapeOf`.
+export interface TerrainShape {
+  seed: number;
+  scale: number;
+  rollAmp: number;
+  ridgeAmp: number;
+  rollFreq: number;
+  ridgeFreq: number;
+  ridged: boolean;
+}
+
+export function shapeOf(biome: BiomeConfig): TerrainShape {
+  const t = biome.terrain;
+  return { seed: t.seed, scale: t.heightScale, rollAmp: t.rollAmp, ridgeAmp: t.ridgeAmp, rollFreq: t.rollFreq, ridgeFreq: t.ridgeFreq, ridged: t.ridged };
+}
+
 /** World-space terrain height at (x,z). Flat (0) inside the plaza, rising hills beyond. */
-export function terrainHeight(x: number, z: number, scale = 1): number {
+export function terrainHeight(x: number, z: number, t: TerrainShape): number {
   const d = Math.hypot(x, z);
   if (d <= PLAZA_R) return 0;
-  const t = Math.min(1, (d - PLAZA_R) / RAMP);
-  const ease = t * t * (3 - 2 * t);
-  const rolling = fbm(x * 0.03 + 5, z * 0.03 + 5);
-  const ridges = fbm(x * 0.012 - 7, z * 0.012 - 7);
-  return (rolling * 6 + ridges * 12) * ease * scale;
+  const e = Math.min(1, (d - PLAZA_R) / RAMP);
+  const ease = e * e * (3 - 2 * e);
+  const s = t.seed;
+  const rolling = fbm(x * t.rollFreq + 5 + s, z * t.rollFreq + 5 + s);
+  let ridges = fbm(x * t.ridgeFreq - 7 + s, z * t.ridgeFreq - 7 + s);
+  if (t.ridged) {
+    // fold the ridge layer into sharp volcanic spines/spires
+    const k = Math.abs(ridges * 2 - 1);
+    ridges = (1 - k) * (1 - k);
+  }
+  return (rolling * t.rollAmp + ridges * t.ridgeAmp) * ease * t.scale;
 }
 
 export function Terrain({ biome }: { biome: BiomeConfig }) {
   const geo = useMemo(() => {
-    const SEG = 96;
+    const SEG = 128;
+    const shape = shapeOf(biome);
     const low = new THREE.Color(biome.terrain.low);
     const mid = new THREE.Color(biome.terrain.mid);
     const high = new THREE.Color(biome.terrain.high);
@@ -57,7 +82,7 @@ export function Terrain({ biome }: { biome: BiomeConfig }) {
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      const h = terrainHeight(x, z, biome.terrain.heightScale);
+      const h = terrainHeight(x, z, shape);
       pos.setY(i, h);
       const t = Math.max(0, Math.min(1, h / band));
       if (t < 0.5) c.lerpColors(low, mid, t / 0.5);
@@ -90,7 +115,7 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
     const e = new THREE.Euler();
     const s = new THREE.Vector3();
     const p = new THREE.Vector3();
-    const scale = biome.terrain.heightScale;
+    const shape = shapeOf(biome);
     let placed = 0;
     let guard = 0;
     while (placed < biome.scatter.count && guard < 5000) {
@@ -99,7 +124,7 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
       const r = PLAZA_R + 4 + Math.random() * (TERRAIN_HALF - PLAZA_R - 10);
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
-      const y = terrainHeight(x, z, scale);
+      const y = terrainHeight(x, z, shape);
       if (y < 1.2) continue; // keep scatter on the risen hills
       const isCrystal = Math.random() < biome.scatter.crystalRatio;
       e.set(0, Math.random() * Math.PI * 2, isCrystal ? 0 : Math.random() * 0.4);

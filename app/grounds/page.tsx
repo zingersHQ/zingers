@@ -13,8 +13,11 @@ import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
-import { BIOMES, DEFAULT_BIOME } from "@/components/grounds/biomes";
+import { WORLDS, DEFAULT_WORLD, worldById } from "@/components/grounds/worlds";
+import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
+import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
+import { AmbientToggle } from "@/components/grounds/ambience";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
@@ -32,7 +35,7 @@ export default function GroundsPage() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   const [matchView, setMatchView] = useState<MatchView | null>(null);
   const [betSide, setBetSide] = useState<"me" | "opp" | null>(null);
@@ -45,8 +48,11 @@ export default function GroundsPage() {
     leveledTo: number | null;
     learned: string | null;
   } | null>(null);
-  const [biomeId, setBiomeId] = useState(DEFAULT_BIOME.id);
-  const biome = useMemo(() => BIOMES.find((b) => b.id === biomeId) ?? DEFAULT_BIOME, [biomeId]);
+  const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
+  const world = useMemo(() => worldById(worldId), [worldId]);
+  const biome = world.biome;
+  const scenario = world.scenario;
+  const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [gpu, setGpu] = useState<ReturnType<typeof gpuStatus> | null>(null);
@@ -114,18 +120,20 @@ export default function GroundsPage() {
   );
 
   const inMatch = bout.phase === "live";
-  const controlsEnabled = overlay === "none" && !inMatch && !result;
+  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun;
 
-  // open the nearby interaction (shared by the E key and the on-screen prompt)
+  // open the nearby interaction (shared by the E key and the on-screen prompt).
+  // The central arena routes to the world's scenario; perched-agent challenges
+  // are always a single duel regardless of world.
   const interact = useCallback(() => {
-    if (overlay !== "none" || inMatch || result) return;
+    if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
-    else if (near?.kind === "arena") setOverlay("arena");
+    else if (near?.kind === "arena") setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
     else if (near?.kind === "challenge") {
       setOpponent(near.key);
       setOverlay("arena");
     }
-  }, [near, overlay, inMatch, result]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -220,10 +228,94 @@ export default function GroundsPage() {
     setBetSide(null);
   }
 
+  // ── The Gauntlet (scenario: "gauntlet") ────────────────────────────────────
+  // A press-your-luck chain of duels. Each cleared bout banks an escalating pot
+  // (held at risk); the player then cashes out or presses on. One loss ends the
+  // run for a consolation fraction. Every bout is a real Arena battle, so ELO,
+  // XP and body evolution accrue per fight exactly as in a duel.
+  const gCfg = scenario.gauntlet ?? null;
+
+  const finishRound = useCallback(
+    (end: BattleEnd, run: GauntletRun, oppKey: string) => {
+      if (!owned || !gCfg) return;
+      const styles: Record<string, Style> = { [owned]: blankStyle(), [oppKey]: blankStyle() };
+      for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[oppKey], turn);
+      const iWon = end.winner === owned;
+      const loserKey = iWon ? oppKey : owned;
+      store.recordBattle(end.winner, loserKey, styles);
+      const dom = dominant(store.get(owned));
+      store.learnFromBout({ key: owned, opponentName: byKey[oppKey]?.name || oppKey, won: iWon, axisLabel: dom.axis.label });
+
+      if (!iWon) {
+        const consolation = Math.floor(run.pot * gCfg.consolationFrac);
+        if (consolation > 0) store.earn(consolation);
+        setGRun({ ...run, phase: "over", pot: consolation, lastWon: false });
+        return;
+      }
+      const pot = run.pot + roundReward(gCfg, run.idx + 1);
+      const streak = run.streak + 1;
+      const last = run.idx + 1 >= run.queue.length;
+      if (last) {
+        const total = pot + Math.round(pot * gCfg.clearBonus);
+        store.earn(total);
+        setGRun({ ...run, phase: "over", pot: total, streak, lastWon: true, cashedOut: true });
+      } else {
+        setGRun({ ...run, phase: "cleared", pot, streak, lastWon: true });
+      }
+    },
+    [owned, gCfg, store, byKey],
+  );
+
+  const runRound = useCallback(
+    (run: GauntletRun) => {
+      if (!owned) return;
+      const oppKey = run.queue[run.idx];
+      setOpponent(oppKey);
+      counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
+      setMatchView({ aKey: owned, bKey: oppKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+      const ra = getRecipe(owned);
+      const rb = getRecipe(oppKey);
+      const url = `/api/battle?a=${owned}&b=${oppKey}&${sideParams("a", ra)}&${sideParams("b", rb)}`;
+      bout.begin(url, (end: BattleEnd) => finishRound(end, run, oppKey));
+    },
+    [owned, getRecipe, bout, finishRound],
+  );
+
+  const startGauntlet = useCallback(() => {
+    if (!owned || !gCfg) return;
+    const queue = gauntletQueue(owned, roster.map((r) => r.key), store.get, gCfg.maxRounds);
+    if (!queue.length) return;
+    setResult(null);
+    setOverlay("none");
+    const run: GauntletRun = { phase: "fighting", queue, idx: 0, streak: 0, pot: 0, cashedOut: false, lastWon: false };
+    setGRun(run);
+    runRound(run);
+  }, [owned, gCfg, roster, store, runRound]);
+
+  const pressOn = useCallback(() => {
+    if (!gRun || gRun.phase !== "cleared") return;
+    const next: GauntletRun = { ...gRun, idx: gRun.idx + 1, phase: "fighting" };
+    setGRun(next);
+    runRound(next);
+  }, [gRun, runRound]);
+
+  const cashOut = useCallback(() => {
+    if (!gRun || gRun.phase !== "cleared") return;
+    store.earn(gRun.pot);
+    setGRun({ ...gRun, phase: "over", cashedOut: true });
+  }, [gRun, store]);
+
+  const closeGauntlet = useCallback(() => {
+    bout.stop();
+    setGRun(null);
+    setMatchView(null);
+    setOpponent(null);
+  }, [bout]);
+
   const showMatch = inMatch || overlay === "result";
 
   return (
-    <main style={{ position: "relative", height: "calc(100dvh - 49px)", overflow: "hidden" }}>
+    <main className="fill-shell" style={{ position: "relative", overflow: "hidden" }}>
       {mounted && gpu && !gpu.ok && (
         <RenderNotice
           title="3D isn't available in this browser"
@@ -271,17 +363,22 @@ export default function GroundsPage() {
 
       {/* HUD */}
       <div style={{ position: "absolute", top: 14, left: 16, pointerEvents: "none" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, textShadow: "0 2px 12px #000" }}>The Grounds</h1>
-        <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1 }}>
-          {isTouch
-            ? "LEFT STICK MOVE · DRAG TO LOOK · JUMP ×4 · CLIMB THE TOWER"
-            : "WASD MOVE · SPACE TO JUMP (×4) · CLIMB THE TOWER · E TO CHALLENGE"}
+        <h1 className="grounds-hud__title" style={{ fontSize: 22, fontWeight: 700, margin: 0, textShadow: "0 2px 12px #000" }}>{world.name}</h1>
+        <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1 }}>
+          {scenario.id === "gauntlet"
+            ? (isTouch ? "WALK TO THE ARENA · ENTER THE GAUNTLET · CLIMB THE TOWER" : "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER")
+            : isTouch
+            ? "LEFT STICK MOVE · DRAG TO LOOK · JUMP ×4 THEN HOLD TO FLY · CLIMB THE TOWER"
+            : "WASD MOVE · SPACE TO JUMP · HOLD AFTER 4 JUMPS TO FLY · CLIMB · E TO CHALLENGE"}
         </p>
       </div>
-      <div className="panel" style={{ position: "absolute", top: 14, right: 16, padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 18 }}>👑</span>
-        <span style={{ fontWeight: 700, fontSize: 18, color: "var(--gold)" }}>{crowns}</span>
-        <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>
+      <div style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <AmbientToggle />
+        <div className="panel" style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>👑</span>
+          <span style={{ fontWeight: 700, fontSize: 18, color: "var(--gold)" }}>{crowns}</span>
+          <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>
+        </div>
       </div>
 
       {/* altitude / tower HUD */}
@@ -303,24 +400,29 @@ export default function GroundsPage() {
         </div>
       )}
 
-      {/* world switcher */}
-      {!showMatch && overlay === "none" && owned && (
-        <div className="panel" style={{ position: "absolute", bottom: 16, left: 16, padding: 8, display: "flex", flexDirection: "column", gap: 6, maxWidth: 200 }}>
+      {/* world switcher — each world is a different GAME, not just a skin */}
+      {!showMatch && overlay === "none" && owned && !gRun && (
+        <div className="panel" style={{ position: "absolute", bottom: 16, left: 16, padding: 8, display: "flex", flexDirection: "column", gap: 6, maxWidth: 230 }}>
           <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", padding: "0 2px" }}>WORLD</span>
-          {BIOMES.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setBiomeId(b.id)}
-              className="panel"
-              style={{ ["--ac" as string]: b.lights.arenaPoint, textAlign: "left", padding: "6px 10px", cursor: "pointer", borderColor: b.id === biomeId ? b.lights.arenaPoint : "var(--line)", background: b.id === biomeId ? "rgba(255,255,255,.04)" : "transparent" }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 9, height: 9, borderRadius: 9, background: b.lights.arenaPoint, boxShadow: `0 0 8px ${b.lights.arenaPoint}` }} />
-                <span style={{ fontSize: 12, fontWeight: 700 }}>{b.name}</span>
-              </div>
-              <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>{b.tagline}</div>
-            </button>
-          ))}
+          {WORLDS.map((w) => {
+            const ac = w.biome.lights.arenaPoint;
+            const on = w.id === worldId;
+            return (
+              <button
+                key={w.id}
+                onClick={() => setWorldId(w.id)}
+                className="panel"
+                style={{ ["--ac" as string]: ac, textAlign: "left", padding: "6px 10px", cursor: "pointer", borderColor: on ? ac : "var(--line)", background: on ? "rgba(255,255,255,.04)" : "transparent" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: 9, background: ac, boxShadow: `0 0 8px ${ac}` }} />
+                  <span style={{ fontSize: 12, fontWeight: 700 }}>{w.name}</span>
+                  <span className="mono" style={{ marginLeft: "auto", fontSize: 8, letterSpacing: 1, color: ac, border: `1px solid ${ac}`, borderRadius: 5, padding: "1px 5px" }}>{w.scenario.name}</span>
+                </div>
+                <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 3 }}>{w.scenario.blurb}</div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -331,7 +433,7 @@ export default function GroundsPage() {
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}
 
       {/* proximity prompt — tappable on touch, E on desktop */}
-      {owned && near && overlay === "none" && !inMatch && !result && (
+      {owned && near && overlay === "none" && !inMatch && !result && !gRun && (
         <button
           onClick={interact}
           className="panel pop"
@@ -339,7 +441,13 @@ export default function GroundsPage() {
         >
           <span className="mono" style={{ fontSize: 13 }}>
             <b style={{ color: "var(--gold)" }}>tap</b> / <b style={{ color: "var(--gold)" }}>E</b> to{" "}
-            {near.kind === "train" ? "train your champion" : near.kind === "challenge" ? `challenge ${near.name}` : "enter the Arena"}
+            {near.kind === "train"
+              ? "train your champion"
+              : near.kind === "challenge"
+                ? `challenge ${near.name}`
+                : scenario.id === "gauntlet"
+                  ? "enter the Gauntlet"
+                  : "enter the Arena"}
           </span>
         </button>
       )}
@@ -367,6 +475,26 @@ export default function GroundsPage() {
           onFight={startMatch}
         />
       )}
+
+      {/* gauntlet briefing — entering the chain */}
+      {overlay === "gauntlet" && owned && byKey[owned] && gCfg && (
+        <GauntletBriefing
+          ownedEntry={byKey[owned]}
+          roster={roster}
+          get={store.get}
+          cfg={gCfg}
+          onStart={startGauntlet}
+          onClose={() => setOverlay("none")}
+        />
+      )}
+
+      {/* gauntlet between-rounds: press your luck or cash out */}
+      {gRun?.phase === "cleared" && gCfg && (
+        <GauntletInterstitial run={gRun} byKey={byKey} get={store.get} cfg={gCfg} onPressOn={pressOn} onCashOut={cashOut} />
+      )}
+
+      {/* gauntlet run resolved */}
+      {gRun?.phase === "over" && <GauntletResult run={gRun} onClose={closeGauntlet} />}
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (

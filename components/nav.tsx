@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 
 const LINKS = [
+  { href: "/daily", label: "Daily Zinger" },
+  { href: "/guardian", label: "The Guardian" },
   { href: "/grounds", label: "The Grounds" },
   { href: "/league", label: "Live League" },
   { href: "/standings", label: "Standings" },
@@ -13,23 +16,11 @@ const LINKS = [
 
 export function Nav() {
   const path = usePathname();
+  const [open, setOpen] = useState(false);
   if (path.startsWith("/slides")) return null;
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        gap: 18,
-        padding: "12px 22px",
-        borderBottom: "1px solid var(--line)",
-        background: "color-mix(in srgb, var(--bg) 78%, transparent)",
-        backdropFilter: "blur(14px)",
-      }}
-    >
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <header className="site-nav">
+      <Link href="/" className="site-nav__brand" onClick={() => setOpen(false)}>
         <span
           aria-hidden
           style={{
@@ -43,39 +34,37 @@ export function Nav() {
         >
           <span style={{ width: 6, height: 6, borderRadius: 99, background: "var(--accent)" }} />
         </span>
-        <span style={{ fontWeight: 700, letterSpacing: 0.5 }}>
-          {BRAND.nameUpper}
-        </span>
-        <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 2, marginTop: 2 }}>
-          {BRAND.tagline.toUpperCase()}
-        </span>
+        <span className="site-nav__name">{BRAND.nameUpper}</span>
+        <span className="site-nav__tagline mono">{BRAND.tagline.toUpperCase()}</span>
       </Link>
       <a
         href={BRAND.twitterUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mono"
-        style={{ fontSize: 10, color: "var(--muted2)", letterSpacing: 0.5, marginLeft: 4 }}
+        className="site-nav__twitter mono"
       >
         @{BRAND.twitter}
       </a>
-      <nav style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+
+      <button
+        type="button"
+        className="site-nav__burger"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {open ? "✕" : "☰"}
+      </button>
+
+      <nav className={`site-nav__links${open ? " is-open" : ""}`}>
         {LINKS.map((l) => {
           const on = path === l.href || path.startsWith(l.href + "/");
           return (
             <Link
               key={l.href}
               href={l.href}
-              className="mono"
-              style={{
-                fontSize: 12,
-                letterSpacing: 0.6,
-                padding: "8px 13px",
-                borderRadius: 9,
-                color: on ? "var(--ink)" : "var(--muted)",
-                background: on ? "var(--panel)" : "transparent",
-                border: `1px solid ${on ? "var(--line2)" : "transparent"}`,
-              }}
+              onClick={() => setOpen(false)}
+              className={`site-nav__link mono${on ? " is-on" : ""}`}
             >
               {l.label}
             </Link>

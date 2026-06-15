@@ -17,6 +17,13 @@ export interface BiomeConfig {
     roughness: number;
     metalness: number;
     colorBand: number; // height at which "high" colour is reached
+    // ── topology (the SHAPE of the land, not the skin) ──────────────────────
+    seed: number; // shifts the noise field → a genuinely different landscape
+    rollAmp: number; // amplitude of the fine rolling layer
+    ridgeAmp: number; // amplitude of the coarse ridge layer
+    rollFreq: number; // frequency of the rolling layer
+    ridgeFreq: number; // frequency of the ridge layer
+    ridged: boolean; // true → sharp volcanic spires; false → soft hills
   };
   plaza: { color: string; emissive: string; emissiveIntensity: number };
   scatter: {
@@ -44,6 +51,28 @@ export interface BiomeConfig {
   ibl: { key: string; warm: string; cool: string; fill: string };
   bloom: number;
   exposure: number;
+  // ── scene composition (which structures appear and how they're arranged) ──
+  scene: {
+    towerAngle: number; // bearing of the Tower helix from plaza centre
+    towerSteps: number; // length of the climb
+    obeliskCount: number;
+    platformCount: number;
+    crystalCount: number;
+    // bespoke built environment — each world is a different BUILDING, not a
+    // recoloured copy of the same plaza.
+    surround: "tiers" | "caldera"; // what rings the arena floor
+    arena: "ring" | "pit"; // the form of the central combat space
+    pillar: "obelisk" | "basalt"; // the ambient standing structures in the wilds
+    // how the resident agents are deployed + how they roam — so the population
+    // is arranged and behaves differently per world, not parked in one ring.
+    roam: {
+      pattern: "ring" | "arc" | "scatter";
+      radius: number; // home formation radius
+      spread: number; // outer wander radius
+      inner: number; // keep-out radius around the arena (don't walk into the pit/ring)
+      speed: number; // wander move speed
+    };
+  };
 }
 
 export const BIOMES: BiomeConfig[] = [
@@ -55,7 +84,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#3a2a66", bottom: "#0a0714" },
     nebula: { colors: ["#3a2a6a", "#5a2a7a", "#2a3a8a", "#6a2a5a"], opacity: 0.7 },
     fog: { color: "#140e2a", near: 50, far: 190 },
-    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17 },
+    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17, seed: 0, rollAmp: 6, ridgeAmp: 12, rollFreq: 0.03, ridgeFreq: 0.012, ridged: false },
     plaza: { color: "#b6b6d8", emissive: "#1a1838", emissiveIntensity: 0.6 },
     scatter: { rock: "#241f3e", crystal: "#7a5cff", crystalEmissive: "#5a3cff", crystalEmissiveIntensity: 1.1, crystalRatio: 0.32, count: 220 },
     obelisk: { color: "#2a2448", emissive: "#5440c0", emissiveIntensity: 1.1 },
@@ -65,6 +94,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#cdb8ff", warm: "#f0a93a", cool: "#6a6bff", fill: "#3a2a6a" },
     bloom: 0.85,
     exposure: 1.15,
+    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 } },
   },
   {
     id: "ember",
@@ -74,7 +104,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#7a2a14", bottom: "#1a0805" },
     nebula: { colors: ["#7a2a14", "#a8431a", "#5a1a0a", "#c2691a"], opacity: 0.6 },
     fog: { color: "#2a0e06", near: 42, far: 165 },
-    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22 },
+    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22, seed: 53, rollAmp: 5, ridgeAmp: 14, rollFreq: 0.055, ridgeFreq: 0.02, ridged: true },
     plaza: { color: "#c8b0a0", emissive: "#3a1408", emissiveIntensity: 0.7 },
     scatter: { rock: "#2a1610", crystal: "#ff8a3a", crystalEmissive: "#ff5a1a", crystalEmissiveIntensity: 1.5, crystalRatio: 0.24, count: 250 },
     obelisk: { color: "#2a1208", emissive: "#ff5a1a", emissiveIntensity: 1.25 },
@@ -84,6 +114,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#ffcaa0", warm: "#ff7a2a", cool: "#a8431a", fill: "#5a1a0a" },
     bloom: 1.0,
     exposure: 1.1,
+    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 17, spread: 21, inner: 11, speed: 2.1 } },
   },
   {
     id: "void",
@@ -93,7 +124,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#0a2e3e", bottom: "#02060a" },
     nebula: { colors: ["#0a4a5a", "#1a7a6a", "#2a3a8a", "#0a5a4a"], opacity: 0.65 },
     fog: { color: "#06141a", near: 55, far: 205 },
-    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19 },
+    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19, seed: 113, rollAmp: 9, ridgeAmp: 8, rollFreq: 0.022, ridgeFreq: 0.009, ridged: false },
     plaza: { color: "#a0c8c0", emissive: "#08222a", emissiveIntensity: 0.6 },
     scatter: { rock: "#14242a", crystal: "#34ffd0", crystalEmissive: "#10d0b0", crystalEmissiveIntensity: 1.4, crystalRatio: 0.4, count: 250 },
     obelisk: { color: "#0a2830", emissive: "#18c0a0", emissiveIntensity: 1.1 },
@@ -103,6 +134,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#aef0e0", warm: "#34ffd0", cool: "#1a7a8a", fill: "#0a4a5a" },
     bloom: 0.95,
     exposure: 1.18,
+    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 15, spread: 22, inner: 7, speed: 3.6 } },
   },
 ];
 

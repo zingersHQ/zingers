@@ -22,6 +22,37 @@ export interface RosterResponse {
   topics: string[];
 }
 
+// ── Daily Zinger (one shared marquee bout per day) ───────────────────────────
+
+export interface DailyResponse {
+  day: number; // puzzle number, 1-indexed
+  date: string; // YYYY-MM-DD (UTC)
+  topic: string;
+  seed: number; // bout RNG seed — identical for everyone
+  a: RosterEntry;
+  b: RosterEntry;
+}
+
+// The locked-in outcome of a player's daily call, persisted client-side so the
+// puzzle stays solved-once-per-day and the share grid survives a refresh.
+export interface DailyResult {
+  day: number;
+  winnerCorrect: boolean;
+  dunkCorrect: boolean | null; // null = player skipped the dunk call
+  winnerKey: string;
+  winnerName: string;
+  dunkName: string; // who landed the hardest line
+  dunkLine: string; // the zinger of the day
+}
+
+export interface DailyState {
+  lastDay: number; // puzzle number last completed (0 = none)
+  streak: number;
+  best: number;
+  plays: number;
+  result: DailyResult | null;
+}
+
 // ── Tower (vertical platforming grounds) ─────────────────────────────────────
 // Other agents perched on the floating platforms read one of three live states,
 // derived from the shared ladder (brain provider + reachability + activity).
@@ -189,6 +220,34 @@ export type HouseEvent =
   | HouseSpeak
   | HouseVotes
   | HouseEnd;
+
+// ── The Guardian (single-player secret-extraction game) ──────────────────────
+
+export interface GuardianPub {
+  level: number;
+  name: string;
+  title: string;
+  color: string;
+  brief: string;
+  maxTurns: number;
+  total: number; // how many guardians exist (the ladder length)
+}
+
+export interface GuardianTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface GuardianReply {
+  reply: string;
+  turn: number; // turns used so far (1-indexed for the message just sent)
+  turnsLeft: number;
+  won: boolean;
+  lost: boolean; // out of turns without cracking it
+  intel: boolean; // soft hint leaked this turn (flavour only)
+  live: boolean; // true = real LLM guardian, false = offline mock
+  secret?: string; // only present once won/lost
+}
 
 // ── Champion progression (the "genome receipt" persisted client-side) ────────
 

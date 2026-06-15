@@ -15,6 +15,9 @@
   --good: #36d39a;
   --bad: #ff5a6a;
   --radius: 16px;
+  /* fixed nav height — referenced by full-bleed pages so the 3D viewport
+     fills exactly the space below the nav (no hardcoded magic numbers). */
+  --nav-h: 56px;
 }
 
 @theme inline {
@@ -49,6 +52,11 @@ body {
   /* no rubber-band / pull-to-refresh fighting the 3D world's touch controls */
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* full-bleed pages (e.g. the grounds) fill exactly below the fixed-height nav */
+.fill-shell {
+  height: calc(100dvh - var(--nav-h));
 }
 
 /* the WebGL world should own its touch gestures, not the browser */
@@ -161,4 +169,119 @@ a {
 
 .glow {
   text-shadow: 0 0 24px color-mix(in srgb, var(--ac, var(--gold)) 55%, transparent);
+}
+
+/* ── top nav ───────────────────────────────────────────────────────── */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(14px);
+}
+.site-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.site-nav__name {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.site-nav__tagline {
+  font-size: 9px;
+  color: var(--muted2);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+.site-nav__twitter {
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+.site-nav__links {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.site-nav__link {
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.site-nav__link.is-on {
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line2);
+}
+.site-nav__burger {
+  display: none;
+  margin-left: auto;
+  width: 40px;
+  height: 36px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 720px) {
+  .site-nav {
+    gap: 10px;
+    padding: 0 14px;
+  }
+  .site-nav__tagline,
+  .site-nav__twitter {
+    display: none;
+  }
+  .site-nav__burger {
+    display: grid;
+  }
+  .site-nav__links {
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    display: none;
+  }
+  .site-nav__links.is-open {
+    display: flex;
+  }
+  .site-nav__link {
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 11px;
+  }
+}
+
+/* ── grounds HUD (keep it readable on small screens) ───────────────── */
+@media (max-width: 560px) {
+  .grounds-hud__title {
+    font-size: 16px !important;
+  }
+  .grounds-hud__hint {
+    font-size: 9px !important;
+    max-width: 60vw;
+  }
 }

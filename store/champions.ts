@@ -1,7 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Champion, HouseEnd, Progress, Recipe, Strat, Style } from "@/lib/types";
+import type { Champion, DailyResult, DailyState, HouseEnd, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
 import { applyResult, blank, blankStyle, levelFor, tierIndex } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
@@ -46,6 +46,7 @@ interface ChampionStore {
   crowns: number;
   owned: string | null;
   predict: PredictState;
+  daily: DailyState;
   get: (key: string) => Champion;
   getRecipe: (key: string) => Recipe;
   setStrat: (key: string, strat: Strat) => void;
@@ -59,6 +60,7 @@ interface ChampionStore {
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
   recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
   predictResult: (correct: boolean) => void;
+  recordDaily: (r: DailyResult) => boolean;
   reseed: () => void;
   setChampion: (key: string, c: Champion) => void;
 }
@@ -71,6 +73,7 @@ export const useChampions = create<ChampionStore>()(
       crowns: STARTING_CROWNS,
       owned: null,
       predict: { streak: 0, best: 0 },
+      daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
 
       get: (key) => get().progress[key] || blank(),
       getRecipe: (key) => get().recipes[key] || { strat: { ...DEFAULT_STRAT } },
@@ -164,6 +167,25 @@ export const useChampions = create<ChampionStore>()(
           const streak = correct ? s.predict.streak + 1 : 0;
           return { predict: { streak, best: Math.max(streak, s.predict.best) } };
         }),
+
+      // Lock in today's daily call. No-ops (returns false) if this puzzle was
+      // already solved, so a refresh or replay can never inflate the streak.
+      recordDaily: (r) => {
+        if (get().daily.lastDay >= r.day) return false;
+        set((s) => {
+          const streak = r.winnerCorrect ? s.daily.streak + 1 : 0;
+          return {
+            daily: {
+              lastDay: r.day,
+              streak,
+              best: Math.max(streak, s.daily.best),
+              plays: s.daily.plays + 1,
+              result: r,
+            },
+          };
+        });
+        return true;
+      },
 
       reseed: () => set({ progress: seeded() }),
       setChampion: (key, c) => set((s) => ({ progress: { ...s.progress, [key]: c } })),

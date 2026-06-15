@@ -9,9 +9,11 @@ import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
-import { Terrain, Scatter, terrainHeight, PLAZA_R } from "./terrain";
+import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } from "./terrain";
+import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { RenderBoundary } from "./render-guard";
+import { jumpBeep } from "@/lib/sfx";
 
 export interface GroundChampion {
   key: string;
@@ -141,7 +143,7 @@ export default function World({
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false });
   // touch input channels, mutated by the on-screen controls and read each frame
   const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
-  const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0 });
+  const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
   const camDrag = useRef<CamDrag>({ dx: 0, dy: 0, pinch: 0 });
   const [isTouch, setIsTouch] = useState(false);
   useEffect(() => {
@@ -153,10 +155,13 @@ export default function World({
     window.addEventListener("touchstart", onFirstTouch, { once: true, passive: true });
     return () => window.removeEventListener("touchstart", onFirstTouch);
   }, []);
-  const hs = biome.terrain.heightScale;
+  // the SHAPE of the land + the per-world scene composition. Switching world
+  // changes the geometry you walk through, not just its colour.
+  const shape = useMemo(() => shapeOf(biome), [biome]);
+  const sc = biome.scene;
   // shared, deterministic tower layout — colliders, perched agents and the
   // challenge proximity check all read from this same list.
-  const towerNodes = useMemo(() => towerLayout(hs), [hs]);
+  const towerNodes = useMemo(() => towerLayout(shape, sc.towerAngle, sc.towerSteps), [shape, sc.towerAngle, sc.towerSteps]);
   const perched = useMemo(() => assignPerch(towerNodes, towerAgents), [towerNodes, towerAgents]);
   const challengeTargets = useMemo(
     () =>
@@ -164,6 +169,15 @@ export default function World({
         .filter((p) => p.agent.status === "awaiting")
         .map((p) => ({ key: p.agent.key, name: p.agent.name, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
     [perched],
+  );
+  // checkpoint pads (top surface + landing radius) — the climber respawns onto
+  // the highest one they've reached, so a fall never drops them to the bottom
+  const checkpoints = useMemo(
+    () =>
+      towerNodes
+        .filter((n) => n.checkpoint)
+        .map((n) => ({ x: n.pos[0], y: n.pos[1] + n.size[1] / 2, z: n.pos[2], r: n.size[0] / 2 })),
+    [towerNodes],
   );
   return (
     <>
@@ -221,12 +235,13 @@ export default function World({
         <Physics gravity={[0, -22, 0]}>
           <Terrain biome={biome} />
           <PlazaFloor biome={biome} />
-          <Platforms biome={biome} hs={hs} />
+          <PlazaSurround biome={biome} />
+          <Platforms biome={biome} shape={shape} count={sc.platformCount} />
           <Tower biome={biome} nodes={towerNodes} />
-          <ArenaPlatform />
-          <Obelisks biome={biome} hs={hs} />
+          {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
+          <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
-          <Crystals biome={biome} hs={hs} />
+          <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
 
           {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
 
@@ -235,7 +250,7 @@ export default function World({
           ) : (
             champions.map((c) => {
               const owned = c.key === ownedKey;
-              const home = owned ? TRAIN_PAD : roamHome(c.key, champions);
+              const home = owned ? TRAIN_PAD : roamHome(c.key, champions, sc.roam);
               return (
                 <ChampionMesh
                   key={c.key}
@@ -246,13 +261,15 @@ export default function World({
                   rotation={owned ? Math.atan2(ARENA[0] - home[0], ARENA[2] - home[2]) : 0}
                   selected={owned}
                   wander={!owned}
-                  worldRadius={PLAZA_R - 4}
+                  worldRadius={sc.roam.spread}
+                  wanderInner={sc.roam.inner}
+                  wanderSpeed={sc.roam.speed}
                 />
               );
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} onAltitude={onAltitude} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} checkpoints={checkpoints} shape={shape} onAltitude={onAltitude} />
         </Physics>
 
         <RenderBoundary fallback={null}>
@@ -278,12 +295,32 @@ function ExposureSync({ exposure }: { exposure: number }) {
   return null;
 }
 
-function roamHome(key: string, champions: GroundChampion[]): [number, number, number] {
+// stable 0..1 hash from a key, for deterministic per-world scatter placement
+function keyHash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+// where an idle agent stands — its formation depends on the world, so the
+// population is laid out differently in each scene.
+function roamHome(key: string, champions: GroundChampion[], roam: BiomeConfig["scene"]["roam"]): [number, number, number] {
   const list = champions.map((c) => c.key);
   const idx = list.indexOf(key);
   const n = Math.max(1, list.length);
+  if (roam.pattern === "scatter") {
+    const a = keyHash(key) * Math.PI * 2;
+    const r = roam.inner + keyHash(key + "r") * (roam.spread - roam.inner);
+    return [Math.cos(a) * r, 0, Math.sin(a) * r];
+  }
+  if (roam.pattern === "arc") {
+    // fan the agents across a wide arc rather than a full ring
+    const t = n === 1 ? 0.5 : idx / (n - 1);
+    const a = Math.PI / 2 - Math.PI * 0.9 + t * Math.PI * 1.8;
+    return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
+  }
   const a = (idx / n) * Math.PI * 2;
-  return [Math.cos(a) * 14, 0, Math.sin(a) * 14];
+  return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
 }
 
 // ---------- environment ----------
@@ -389,23 +426,25 @@ function TrainPad() {
 }
 
 // jumpable platforms in the wilds — solid physics colliders, placed on the terrain
-function Platforms({ biome, hs }: { biome: BiomeConfig; hs: number }) {
+function Platforms({ biome, shape, count }: { biome: BiomeConfig; shape: TerrainShape; count: number }) {
   const items = useMemo(() => {
     const out: { pos: [number, number, number]; size: [number, number, number]; color: string }[] = [];
-    const baseA = Math.PI * 0.25;
-    for (let i = 0; i < 6; i++) {
+    // the bearing of the platform staircase tracks the world's seed so each
+    // world arranges them differently
+    const baseA = Math.PI * 0.25 + shape.seed * 0.013;
+    for (let i = 0; i < count; i++) {
       const r = PLAZA_R + 5 + i * 3.4;
       const a = baseA + i * 0.16;
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
-      const top = terrainHeight(x, z, hs) + 1.4 + i * 1.5;
+      const top = terrainHeight(x, z, shape) + 1.4 + i * 1.5;
       out.push({ pos: [x, top, z], size: [3.4, 0.5, 3.4], color: i % 2 ? biome.platform.a : biome.platform.b });
     }
     const lx = Math.cos(baseA + 1.1) * (PLAZA_R + 26);
     const lz = Math.sin(baseA + 1.1) * (PLAZA_R + 26);
-    out.push({ pos: [lx, terrainHeight(lx, lz, hs) + 12, lz], size: [6, 0.6, 6], color: biome.platform.top });
+    out.push({ pos: [lx, terrainHeight(lx, lz, shape) + 12, lz], size: [6, 0.6, 6], color: biome.platform.top });
     return out;
-  }, [biome, hs]);
+  }, [biome, shape, count]);
   return (
     <>
       {items.map((it, i) => (
@@ -424,12 +463,12 @@ function Platforms({ biome, hs }: { biome: BiomeConfig; hs: number }) {
 // A climbable helix of small floating platforms spiralling toward the sky. The
 // gaps are tuned to the Handler's jump arc + multi-jump so a confident player
 // can chain hops all the way to the summit. Other agents perch on the platforms.
-const TOWER_ANGLE = Math.PI * 1.15; // direction of the helix axis from plaza centre
-const TOWER_STEPS = 16;
+const CHECKPOINT_EVERY = 12;         // a generous landing pad (and respawn anchor) every ~12 hops
 
 interface TowerNode {
   pos: [number, number, number];
   size: [number, number, number];
+  checkpoint?: boolean; // wide rest pad that also catches a fall
 }
 
 interface Perch {
@@ -437,25 +476,28 @@ interface Perch {
   pos: [number, number, number];
 }
 
-function towerLayout(hs: number): TowerNode[] {
-  const cx = Math.cos(TOWER_ANGLE) * (PLAZA_R + 9);
-  const cz = Math.sin(TOWER_ANGLE) * (PLAZA_R + 9);
-  const baseY = terrainHeight(cx, cz, hs);
+function towerLayout(shape: TerrainShape, angle: number, steps: number): TowerNode[] {
+  const cx = Math.cos(angle) * (PLAZA_R + 9);
+  const cz = Math.sin(angle) * (PLAZA_R + 9);
+  const baseY = terrainHeight(cx, cz, shape);
   const out: TowerNode[] = [];
-  // a low entry step you can hop onto straight off the ground
-  out.push({ pos: [cx, baseY + 1.2, cz], size: [4.2, 0.5, 4.2] });
+  // a low entry step you can hop onto straight off the ground — the first checkpoint
+  out.push({ pos: [cx, baseY + 1.2, cz], size: [4.6, 0.5, 4.6], checkpoint: true });
   let y = baseY + 1.2;
-  for (let i = 0; i < TOWER_STEPS; i++) {
+  for (let i = 0; i < steps; i++) {
     const a = i * 0.95 + 0.5;
     const radius = 3.6 + Math.sin(i * 0.7) * 0.6;
-    const step = 2.7 + (i / TOWER_STEPS) * 0.9; // slightly bigger gaps higher up
+    // gaps stay inside the jump arc the whole way up (normalised by step count)
+    const step = 2.7 + (i / steps) * 0.9;
     y += step;
-    const w = Math.max(1.9, 3.2 - i * 0.06); // platforms shrink as you ascend
-    out.push({ pos: [cx + Math.cos(a) * radius, y, cz + Math.sin(a) * radius], size: [w, 0.45, w] });
+    const isCp = (i + 1) % CHECKPOINT_EVERY === 0;
+    // platforms taper gently as you ascend; checkpoints are wide, safe landing pads
+    const w = isCp ? 4.6 : Math.max(2.0, 3.2 - i * 0.008);
+    out.push({ pos: [cx + Math.cos(a) * radius, y, cz + Math.sin(a) * radius], size: [w, 0.45, w], checkpoint: isCp });
   }
   // the summit — a wide platform, the prize at the top
   y += 3.1;
-  out.push({ pos: [cx, y, cz], size: [5.5, 0.6, 5.5] });
+  out.push({ pos: [cx, y, cz], size: [6.5, 0.6, 6.5], checkpoint: true });
   return out;
 }
 
@@ -505,17 +547,27 @@ function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
       </group>
       {nodes.map((n, i) => {
         const top = i === nodes.length - 1;
-        const color = top ? biome.platform.top : i % 2 ? biome.platform.a : biome.platform.b;
+        const cp = !!n.checkpoint;
+        const color = top || cp ? biome.platform.top : i % 2 ? biome.platform.a : biome.platform.b;
+        const topY = n.pos[1] + n.size[1] / 2;
         return (
           <RigidBody key={i} type="fixed" colliders="cuboid">
             <mesh position={n.pos} castShadow receiveShadow>
               <boxGeometry args={n.size} />
-              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={top ? 0.6 : 0.32} metalness={0.4} roughness={0.5} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={top ? 0.6 : cp ? 0.5 : 0.32} metalness={0.4} roughness={0.5} />
             </mesh>
-            <mesh position={[n.pos[0], n.pos[1] + n.size[1] / 2 + 0.012, n.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh position={[n.pos[0], topY + 0.012, n.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
               <ringGeometry args={[n.size[0] / 2 - 0.16, n.size[0] / 2, 44]} />
-              <meshBasicMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
+              <meshBasicMaterial color={color} transparent opacity={cp ? 0.85 : 0.5} side={THREE.DoubleSide} depthWrite={false} />
             </mesh>
+            {cp && !top && (
+              /* a glowing landing halo so checkpoints read from a distance (no
+                 dynamic light — additive emissive keeps it cheap across ~14 pads) */
+              <mesh position={[n.pos[0], topY + 0.05, n.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[n.size[0] / 2 + 0.25, n.size[0] / 2 + 0.55, 48]} />
+                <meshBasicMaterial color={biome.platform.top} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} fog={false} />
+              </mesh>
+            )}
           </RigidBody>
         );
       })}
@@ -595,38 +647,47 @@ function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [numbe
   );
 }
 
-function Obelisks({ biome, hs }: { biome: BiomeConfig; hs: number }) {
+function Obelisks({ biome, shape, count, pillar }: { biome: BiomeConfig; shape: TerrainShape; count: number; pillar: "obelisk" | "basalt" }) {
   const items = useMemo(
     () =>
-      Array.from({ length: 16 }, (_, i) => {
-        const a = (i / 16) * Math.PI * 2;
+      Array.from({ length: count }, (_, i) => {
+        const a = (i / count) * Math.PI * 2;
         const r = PLAZA_R + 14 + (i % 3) * 6;
         const x = Math.cos(a) * r, z = Math.sin(a) * r;
-        return { x, z, base: terrainHeight(x, z, hs), h: 9 + Math.random() * 8, rot: Math.random() * 6.28 };
+        return { x, z, base: terrainHeight(x, z, shape), h: 9 + Math.random() * 8, rot: Math.random() * 6.28, lean: (Math.random() - 0.5) * 0.25 };
       }),
-    [hs],
+    [shape, count],
   );
   return (
     <>
-      {items.map((o, i) => (
-        <mesh key={i} position={[o.x, o.base + o.h / 2, o.z]} rotation={[0, o.rot, 0]} castShadow>
-          <coneGeometry args={[1.3, o.h, 5]} />
-          <meshStandardMaterial color={biome.obelisk.color} emissive={biome.obelisk.emissive} emissiveIntensity={biome.obelisk.emissiveIntensity} metalness={0.5} roughness={0.45} envMapIntensity={1} />
-        </mesh>
-      ))}
+      {items.map((o, i) =>
+        pillar === "basalt" ? (
+          // chunky, leaning hexagonal basalt columns — volcanic, not crystalline
+          <mesh key={i} position={[o.x, o.base + o.h / 2, o.z]} rotation={[o.lean, o.rot, o.lean]} castShadow>
+            <cylinderGeometry args={[1.4, 1.7, o.h, 6]} />
+            <meshStandardMaterial color={biome.obelisk.color} emissive={biome.obelisk.emissive} emissiveIntensity={biome.obelisk.emissiveIntensity * 0.5} metalness={0.2} roughness={0.95} flatShading envMapIntensity={0.6} />
+          </mesh>
+        ) : (
+          // tall sharp obelisks — crystalline spires
+          <mesh key={i} position={[o.x, o.base + o.h / 2, o.z]} rotation={[0, o.rot, 0]} castShadow>
+            <coneGeometry args={[1.3, o.h, 5]} />
+            <meshStandardMaterial color={biome.obelisk.color} emissive={biome.obelisk.emissive} emissiveIntensity={biome.obelisk.emissiveIntensity} metalness={0.5} roughness={0.45} envMapIntensity={1} />
+          </mesh>
+        ),
+      )}
     </>
   );
 }
 
-function Crystals({ biome, hs }: { biome: BiomeConfig; hs: number }) {
+function Crystals({ biome, shape, count }: { biome: BiomeConfig; shape: TerrainShape; count: number }) {
   const items = useMemo(
     () =>
-      Array.from({ length: 26 }, () => {
+      Array.from({ length: count }, () => {
         const a = Math.random() * 6.28, r = 14 + Math.random() * 60;
         const x = Math.cos(a) * r, z = Math.sin(a) * r;
-        return { x, z, by: terrainHeight(x, z, hs) + 2 + Math.random() * 9, s: 0.3 + Math.random() * 0.5, spin: Math.random() * 0.02 + 0.005, ph: Math.random() * 6.28 };
+        return { x, z, by: terrainHeight(x, z, shape) + 2 + Math.random() * 9, s: 0.3 + Math.random() * 0.5, spin: Math.random() * 0.02 + 0.005, ph: Math.random() * 6.28 };
       }),
-    [hs],
+    [shape, count],
   );
   const refs = useRef<(THREE.Mesh | null)[]>([]);
   useFrame((state) => {
@@ -664,7 +725,11 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   );
 }
 
-const WALK = 7.6, RUN = 13.6, JUMP = 10.4, AIR_JUMP = 9.6, MAX_JUMPS = 4;
+const WALK = 7.6, RUN = 13.6, JUMP = 10.4, AIR_JUMP = 9.6;
+// jetpack flight (unlocked after 4 consecutive jumps): hold to thrust smoothly
+const FLY_TRIGGER = 4;     // consecutive jumps needed before the pack deploys
+const FLY_CLIMB = 8.4;     // target upward velocity while thrusting
+const FLY_THRUST_K = 0.12; // how snappily we ease toward that climb velocity
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -677,8 +742,127 @@ interface CamCue {
 
 // on-screen touch control channels (mobile)
 interface TouchMove { x: number; y: number }   // analog stick, x = strafe, y = forward (+up)
-interface TouchBtn { sprint: boolean; jump: number } // jump is a tap counter, consumed as an edge
+interface TouchBtn { sprint: boolean; jump: number; jumpHeld: boolean } // jump = tap counter (edge); jumpHeld = button currently down (hold-to-fly)
 interface CamDrag { dx: number; dy: number; pinch: number } // orbit + pinch deltas, drained each frame
+
+// Jetpack worn during sustained flight (5+ consecutive jumps). The pack springs
+// out of the character's back; every jump stroke fires a downward smoke burst.
+// Driven entirely by refs (no re-renders): `flyingRef` toggles the pack in/out,
+// `burstRef` is a counter the Handler bumps on each flight stroke.
+function Jetpack({ h, flyingRef, burstRef }: { h: number; flyingRef: React.RefObject<boolean>; burstRef: React.RefObject<number> }) {
+  const grp = useRef<THREE.Group>(null);
+  const flameL = useRef<THREE.Mesh>(null);
+  const flameR = useRef<THREE.Mesh>(null);
+  const scale = useRef(0);
+  const lastBurst = useRef(0);
+
+  const PUFFS = 22;
+  const puffRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const puffState = useRef(
+    Array.from({ length: PUFFS }, () => ({
+      pos: new THREE.Vector3(),
+      vel: new THREE.Vector3(),
+      life: 0,
+      max: 1,
+      size: 1,
+    })),
+  );
+  const cursor = useRef(0);
+
+  // two exhaust nozzles, tucked under the (small) pack on the character's back
+  const nozzle = useMemo(
+    () => [new THREE.Vector3(-h * 0.09, h * 0.36, -h * 0.2), new THREE.Vector3(h * 0.09, h * 0.36, -h * 0.2)],
+    [h],
+  );
+
+  function emitBurst(n = 4) {
+    // a small cluster, alternating nozzles, kicked down + back
+    for (let i = 0; i < n; i++) {
+      const p = puffState.current[cursor.current % PUFFS];
+      cursor.current++;
+      const noz = nozzle[i % 2];
+      p.pos.set(noz.x + (Math.random() - 0.5) * h * 0.05, noz.y, noz.z);
+      p.vel.set((Math.random() - 0.5) * 0.6, -2.6 - Math.random() * 1.4, -0.35 - Math.random() * 0.5);
+      p.max = 0.28 + Math.random() * 0.16;
+      p.life = p.max;
+      p.size = h * (0.08 + Math.random() * 0.07);
+    }
+  }
+
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    const flying = !!flyingRef.current;
+    // fast spring so the pack snaps out / retracts quickly
+    scale.current += ((flying ? 1 : 0) - scale.current) * Math.min(1, dt * 16);
+    if (grp.current) {
+      grp.current.visible = scale.current > 0.02;
+      grp.current.scale.setScalar(scale.current);
+    }
+
+    // flame flicker while thrusting
+    const flick = 0.55 + Math.random() * 0.45;
+    if (flameL.current) { flameL.current.scale.y = flick; (flameL.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
+    if (flameR.current) { flameR.current.scale.y = flick * 0.92; (flameR.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
+
+    // counter bumped by the Handler (per stroke, or paced while thrusting) → smoke
+    const b = burstRef.current || 0;
+    if (b > lastBurst.current) { lastBurst.current = b; emitBurst(3); }
+
+    // advance live smoke puffs
+    for (let i = 0; i < PUFFS; i++) {
+      const p = puffState.current[i];
+      const m = puffRefs.current[i];
+      if (!m) continue;
+      if (p.life <= 0) { if (m.visible) m.visible = false; continue; }
+      p.life -= dt;
+      p.vel.multiplyScalar(0.9); // air drag
+      p.pos.addScaledVector(p.vel, dt);
+      const age = 1 - Math.max(0, p.life) / p.max; // 0 = ignition, 1 = gone
+      m.visible = true;
+      m.position.copy(p.pos);
+      m.scale.setScalar(p.size * (0.5 + age * 1.9));
+      const mat = m.material as THREE.MeshBasicMaterial;
+      // bright cyan at ignition, cooling to grey smoke as it expands
+      mat.color.setRGB(0.5 + age * 0.2, 0.95 - age * 0.23, 1.0 - age * 0.22);
+      mat.opacity = (1 - age) * 0.6;
+    }
+  });
+
+  return (
+    <group>
+      {/* pack body — springs in/out of the back (kept compact) */}
+      <group ref={grp} visible={false}>
+        <mesh position={[0, h * 0.56, -h * 0.18]} castShadow>
+          <boxGeometry args={[h * 0.22, h * 0.32, h * 0.13]} />
+          <meshStandardMaterial color="#20242e" metalness={0.7} roughness={0.35} emissive="#39e0ff" emissiveIntensity={0.3} />
+        </mesh>
+        {nozzle.map((n, i) => (
+          <mesh key={i} position={[n.x, n.y + h * 0.04, n.z]}>
+            <cylinderGeometry args={[h * 0.034, h * 0.05, h * 0.1, 12]} />
+            <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} />
+          </mesh>
+        ))}
+        {/* thruster flames (point downward) */}
+        <mesh ref={flameL} position={[nozzle[0].x, nozzle[0].y - h * 0.1, nozzle[0].z]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
+          <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+        <mesh ref={flameR} position={[nozzle[1].x, nozzle[1].y - h * 0.1, nozzle[1].z]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
+          <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+      </group>
+
+      {/* smoke puffs — pooled, unscaled so the spring doesn't squash them */}
+      {puffState.current.map((_, i) => (
+        <mesh key={i} ref={(el) => { puffRefs.current[i] = el; }} visible={false}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshBasicMaterial color="#aeefff" transparent opacity={0} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
 
 // physics-driven Handler: dynamic capsule + feet sensor for grounding
 function Handler({
@@ -691,6 +875,8 @@ function Handler({
   touchMove,
   touchBtn,
   challengeTargets,
+  checkpoints,
+  shape,
   onAltitude,
 }: {
   controlsEnabled: boolean;
@@ -702,6 +888,8 @@ function Handler({
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
   challengeTargets: { key: string; name: string; pos: THREE.Vector3 }[];
+  checkpoints: { x: number; y: number; z: number; r: number }[];
+  shape: TerrainShape;
   onAltitude?: (y: number) => void;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
@@ -715,6 +903,11 @@ function Handler({
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
+  // jetpack flight: kicks in past 4 consecutive jumps; bursts on every stroke
+  const flying = useRef(false);
+  const jetBurst = useRef(0);
+  const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
+  const lastCp = useRef<{ x: number; y: number; z: number } | null>(null);
   const altAccum = useRef(0);
   const altLast = useRef(-999);
   const { camera } = useThree();
@@ -805,26 +998,79 @@ function Handler({
       if (grounded) setAnim("idle");
     }
 
-    // multi-jump (up to MAX_JUMPS) — edge-triggered so a held key/tap can't spam it
+    // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
     const space = controlsEnabled && !!keys["Space"];
     const spaceEdge = space && !prevSpace.current;
     prevSpace.current = space;
     const tj = touchBtn.current ? touchBtn.current.jump : 0;
     const touchEdge = controlsEnabled && tj > prevTouchJump.current;
     prevTouchJump.current = tj;
-    const jumpPressed = spaceEdge || touchEdge;
-    if (jumpPressed && jumps.current < MAX_JUMPS) {
+    const jumpEdge = spaceEdge || touchEdge;
+    const jumpHeld = space || (controlsEnabled && !!touchBtn.current?.jumpHeld);
+
+    if (jumps.current > FLY_TRIGGER) {
+      // ── jetpack flight ── hold jump to thrust upward smoothly; release to glide
+      if (jumpHeld) {
+        rb.setLinvel({ x: v.x, y: v.y + (FLY_CLIMB - v.y) * FLY_THRUST_K, z: v.z }, true);
+        // continuous exhaust while the thruster is firing (paced, not per-frame)
+        jetEmit.current += dt;
+        if (jetEmit.current > 0.045) { jetEmit.current = 0; jetBurst.current++; }
+        if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.04);
+      }
+      // hold an upright hover pose while the pack does the work — not the jump tuck
+      setAnim("idle");
+    } else if (jumpEdge) {
+      // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
       const air = jumps.current > 0;
       jumps.current++;
       rb.setLinvel({ x: v.x, y: air ? AIR_JUMP : JUMP, z: v.z }, true);
+      jumpBeep(jumps.current - 1);
       const j = built.actions.jump;
       built.actions[cur.current]?.fadeOut(0.06);
       j?.reset().setEffectiveTimeScale(air ? 1.9 : 1.5).fadeIn(0.06).play();
       cur.current = "jump";
       // action-cam: punch the camera in toward the character on every air jump
       if (air && camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.85);
+      // the stroke that crosses the threshold kicks off the jetpack with a burst
+      if (jumps.current > FLY_TRIGGER) jetBurst.current++;
     }
-    if (!grounded && cur.current !== "jump") cur.current = "jump";
+    // airborne → jump pose, except while flying (the jetpack holds the hover pose)
+    if (!grounded && jumps.current <= FLY_TRIGGER && cur.current !== "jump") cur.current = "jump";
+    // pack deploys once we're flying (past the trigger), retracts on landing
+    flying.current = jumps.current > FLY_TRIGGER;
+
+    // ── tower checkpoints ──
+    // ratchet to the highest landing pad we've actually touched down on
+    if (grounded) {
+      for (const cp of checkpoints) {
+        if (Math.hypot(t.x - cp.x, t.z - cp.z) < cp.r + 0.7 && Math.abs(t.y - cp.y) < 1.8) {
+          if (!lastCp.current || cp.y > lastCp.current.y) lastCp.current = { x: cp.x, y: cp.y, z: cp.z };
+        }
+      }
+    }
+    // a fall well below the last checkpoint sets us back onto it — never the bottom
+    const cp = lastCp.current;
+    if (cp && t.y < cp.y - 6) {
+      rb.setTranslation({ x: cp.x, y: cp.y + 1.3, z: cp.z }, true);
+      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      jumps.current = 0;
+      if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.5);
+    }
+
+    // ── under-terrain safety net ──
+    // a trimesh ground collider can let a fast/steep capsule tunnel through and
+    // drop "under-earth" (worst on Ember's spires). If our centre ever ends up
+    // below the surface height at our (x,z), lift back onto it. Read a fresh
+    // translation so this doesn't double-fire after a checkpoint rescue above.
+    const p = rb.translation();
+    const floorY = terrainHeight(p.x, p.z, shape);
+    const FEET = 1.0; // capsule half-height (0.55) + radius (0.45)
+    if (p.y < floorY - 0.1) {
+      rb.setTranslation({ x: p.x, y: floorY + FEET + 0.05, z: p.z }, true);
+      const lv = rb.linvel();
+      rb.setLinvel({ x: lv.x, y: Math.max(0, lv.y), z: lv.z }, true);
+      ground.current = Math.max(ground.current, 1);
+    }
 
     // hand the camera the live movement state so it can smart-follow the player
     if (camCue.current) {
@@ -892,6 +1138,7 @@ function Handler({
         />
         <group ref={inner} position={[0, -1.0, 0]}>
           <primitive object={built.root} />
+          <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
             <ringGeometry args={[0.6, 0.72, 40]} />
             <meshBasicMaterial color="#39e0ff" transparent opacity={0.7} side={THREE.DoubleSide} />
@@ -1056,7 +1303,7 @@ function TouchControls({ active, move, btn, cam }: {
     setKnob({ x: 0, y: 0 });
     setSprint(false);
     if (move.current) { move.current.x = 0; move.current.y = 0; }
-    if (btn.current) btn.current.sprint = false;
+    if (btn.current) { btn.current.sprint = false; btn.current.jumpHeld = false; }
     look.current.clear();
     pinchPrev.current = 0;
   }, [active, move, btn]);
@@ -1120,7 +1367,13 @@ function TouchControls({ active, move, btn, cam }: {
   const tapJump = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (btn.current) btn.current.jump++;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (btn.current) { btn.current.jump++; btn.current.jumpHeld = true; }
+  };
+  const releaseJump = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (btn.current) btn.current.jumpHeld = false;
   };
   const toggleSprint = (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -1158,7 +1411,7 @@ function TouchControls({ active, move, btn, cam }: {
 
       <div style={{ position: "absolute", right: 22, bottom: 34, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
         <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", fontSize: 22, background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>»</button>
-        <button onPointerDown={tapJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", fontSize: 13, background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>JUMP</button>
+        <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", fontSize: 13, background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>JUMP</button>
       </div>
     </div>
   );

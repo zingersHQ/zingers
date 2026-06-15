@@ -132,6 +132,8 @@ export function ChampionMesh({
   baseColorOverride,
   wander = false,
   worldRadius = 34,
+  wanderInner = 0,
+  wanderSpeed = 3.0,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -147,6 +149,8 @@ export function ChampionMesh({
   baseColorOverride?: string;
   wander?: boolean;
   worldRadius?: number;
+  wanderInner?: number;
+  wanderSpeed?: number;
 }) {
   const { scene, animations } = useGLTF(MODEL);
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
@@ -221,8 +225,9 @@ export function ChampionMesh({
     if (wander && gref.current) {
       if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2) {
         if (still.current <= 0) {
+          // roam an annulus: stay outside the arena keep-out, inside the world radius
           const a = Math.random() * 6.28;
-          const r = Math.random() * (worldRadius - 8);
+          const r = wanderInner + Math.random() * Math.max(1, worldRadius - wanderInner);
           wtarget.current = new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
           still.current = 0.6 + Math.random() * 2.2;
         }
@@ -236,7 +241,7 @@ export function ChampionMesh({
         const dl = dir.length();
         if (dl > 0.08) {
           dir.normalize();
-          wpos.current.addScaledVector(dir, 3.0 * dt);
+          wpos.current.addScaledVector(dir, wanderSpeed * dt);
           const want = Math.atan2(dir.x, dir.z);
           let d = want - wheading.current;
           d = Math.atan2(Math.sin(d), Math.cos(d));

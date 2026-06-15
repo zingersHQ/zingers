@@ -93,6 +93,39 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
   return champ;
 }
 
+export interface TrainInput {
+  ownerToken: string;
+  id: string;
+  strat?: Partial<{ risk: number; focus: number; aggression: number }>;
+  brain?: { provider: "grok" | "http"; endpoint?: string };
+}
+
+// Retune an owned champion's doctrine (and/or swap its brain) between bouts —
+// the "train how it thinks" loop. Owner-token gated; house champions are locked.
+export async function trainChampion(input: TrainInput): Promise<LadderChampion | { error: string }> {
+  if (!input.ownerToken) return { error: "missing owner token" };
+  const store = getStore();
+  const champ = await store.getChampion(input.id);
+  if (!champ) return { error: "champion not found" };
+  if (champ.ownerToken !== input.ownerToken) return { error: "not your champion" };
+  if (champ.house) return { error: "house champions cannot be trained" };
+  if (input.strat) {
+    champ.strat = {
+      risk: clamp(input.strat.risk ?? champ.strat.risk),
+      focus: clamp(input.strat.focus ?? champ.strat.focus),
+      aggression: clamp(input.strat.aggression ?? champ.strat.aggression),
+    };
+  }
+  if (input.brain) {
+    champ.brain =
+      input.brain.provider === "http" && input.brain.endpoint
+        ? { provider: "http", endpoint: input.brain.endpoint.slice(0, 400) }
+        : { provider: "grok" };
+  }
+  await store.putChampion(champ);
+  return champ;
+}
+
 function expectedScore(a: number, b: number): number {
   return 1 / (1 + Math.pow(10, (b - a) / 400));
 }
