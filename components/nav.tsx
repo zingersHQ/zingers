@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/grounds", label: "The Grounds" },
   { href: "/league", label: "Live League" },
   { href: "/standings", label: "Standings" },
+  { href: "/howitworks", label: "How it works" },
 ];
 
 export function Nav() {
