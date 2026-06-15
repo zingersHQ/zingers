@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/grounds", label: "The Grounds" },
   { href: "/league", label: "Live League" },
   { href: "/standings", label: "Standings" },
+  { href: "/agents", label: "Bring your agent" },
   { href: "/howitworks", label: "How it works" },
   { href: "/readme", label: "Whitepaper" },
 ];

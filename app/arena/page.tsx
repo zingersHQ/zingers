@@ -7,6 +7,41 @@ import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
 
+interface ByoAgent {
+  provider: "grok" | "openai" | "http";
+  endpoint: string;
+  model: string;
+  baseUrl: string;
+  apiKey: string;
+}
+
+const BLANK_AGENT: ByoAgent = { provider: "grok", endpoint: "", model: "", baseUrl: "https://api.openai.com/v1", apiKey: "" };
+
+// Serialise the challenger's brain into /api/battle query params (side "a").
+function agentParams(a: ByoAgent): string {
+  if (a.provider === "http" && a.endpoint.trim()) {
+    return `&aprov=http&aurl=${encodeURIComponent(a.endpoint.trim())}`;
+  }
+  if (a.provider === "openai" && a.model.trim()) {
+    let s = `&aprov=openai&amodel=${encodeURIComponent(a.model.trim())}&abase=${encodeURIComponent(a.baseUrl.trim())}`;
+    if (a.apiKey.trim()) s += `&akey=${encodeURIComponent(a.apiKey.trim())}`;
+    return s;
+  }
+  return "";
+}
+
+function agentLabel(a: ByoAgent): string | null {
+  if (a.provider === "http" && a.endpoint.trim()) {
+    try {
+      return new URL(a.endpoint.trim()).host;
+    } catch {
+      return "custom endpoint";
+    }
+  }
+  if (a.provider === "openai" && a.model.trim()) return a.model.trim();
+  return null;
+}
+
 export default function ArenaPage() {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [topics, setTopics] = useState<string[]>([]);
@@ -17,6 +52,8 @@ export default function ArenaPage() {
   const [view, setView] = useState<"setup" | "bout">("setup");
   const [resultMsg, setResultMsg] = useState<{ won: boolean } | null>(null);
   const [autoGo, setAutoGo] = useState(false);
+  const [agentA, setAgentA] = useState<ByoAgent>(BLANK_AGENT);
+  const [showAdv, setShowAdv] = useState(false);
 
   const bout = useBout();
   const { progress, get, recordBattle, predictResult, predict } = useChampions();
@@ -33,6 +70,18 @@ export default function ArenaPage() {
     if (qa) setAKey(qa);
     if (qb) setBKey(qb);
     if (q.get("go") === "1") setAutoGo(true);
+    // a bring-your-own agent handed off from /agents (or a shared deep-link)
+    const prov = q.get("aprov");
+    if (prov === "http" || prov === "openai") {
+      setAgentA({
+        provider: prov,
+        endpoint: q.get("aurl") || "",
+        model: q.get("amodel") || "",
+        baseUrl: q.get("abase") || "https://api.openai.com/v1",
+        apiKey: q.get("akey") || "",
+      });
+      setShowAdv(true);
+    }
     fetch("/api/roster")
       .then((r) => r.json())
       .then((d) => {
@@ -51,7 +100,7 @@ export default function ArenaPage() {
     const t = topic || topics[Math.floor(Math.random() * topics.length)] || "cereal is soup";
     setTopic(t);
     setView("bout");
-    const url = `/api/battle?a=${aKey}&b=${bKey}&topic=${encodeURIComponent(t)}`;
+    const url = `/api/battle?a=${aKey}&b=${bKey}&topic=${encodeURIComponent(t)}${agentParams(agentA)}`;
     bout.begin(url, (end: BattleEnd) => {
       const styles: Record<string, Style> = { [aKey]: blankStyle(), [bKey]: blankStyle() };
       for (const turn of historyRef.current) accrue(turn.actor === aKey ? styles[aKey] : styles[bKey], turn);
@@ -101,6 +150,10 @@ export default function ArenaPage() {
           setPick={setPick}
           onStart={startBout}
           get={get}
+          agentA={agentA}
+          setAgentA={setAgentA}
+          showAdv={showAdv}
+          setShowAdv={setShowAdv}
         />
       )}
 
@@ -165,8 +218,12 @@ function Setup(props: {
   setPick: (p: "a" | "b" | null) => void;
   onStart: () => void;
   get: (k: string) => Champion;
+  agentA: ByoAgent;
+  setAgentA: (a: ByoAgent) => void;
+  showAdv: boolean;
+  setShowAdv: (v: boolean) => void;
 }) {
-  const { roster, topics, aKey, bKey, setAKey, setBKey, topic, setTopic, pick, setPick, onStart, get } = props;
+  const { roster, topics, aKey, bKey, setAKey, setBKey, topic, setTopic, pick, setPick, onStart, get, agentA, setAgentA, showAdv, setShowAdv } = props;
   const a = roster.find((r) => r.key === aKey);
   const b = roster.find((r) => r.key === bKey);
 
@@ -208,6 +265,8 @@ function Setup(props: {
         </div>
       </div>
 
+      <AdvancedAgent agentA={agentA} setAgentA={setAgentA} open={showAdv} setOpen={setShowAdv} challenger={a?.name} />
+
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 18, justifyContent: "center", flexWrap: "wrap" }}>
         <div className="mono" style={{ fontSize: 12, color: pick ? "var(--good)" : "var(--muted2)" }}>
           {pick ? `BACKING ${pick === "a" ? a?.name : b?.name} — STREAK ON THE LINE` : "OPTIONAL: BACK A CHAMPION TO BUILD A STREAK"}
@@ -216,6 +275,109 @@ function Setup(props: {
           {pick ? "▶ Lock it in & fight" : "▶ Start the bout"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function AdvancedAgent({
+  agentA,
+  setAgentA,
+  open,
+  setOpen,
+  challenger,
+}: {
+  agentA: ByoAgent;
+  setAgentA: (a: ByoAgent) => void;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  challenger?: string;
+}) {
+  const label = agentLabel(agentA);
+  const set = (patch: Partial<ByoAgent>) => setAgentA({ ...agentA, ...patch });
+  const fieldStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: 9,
+    background: "#100e1a",
+    border: "1px solid var(--line2)",
+    color: "var(--ink)",
+    fontSize: 13,
+    outline: "none",
+    fontFamily: "var(--font-mono)",
+  };
+
+  return (
+    <div className="panel" style={{ marginTop: 14, padding: 0, overflow: "hidden" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 16px",
+          background: "transparent",
+          border: "none",
+          color: "var(--ink)",
+          cursor: "pointer",
+          font: "inherit",
+        }}
+      >
+        <span className="mono" style={{ fontSize: 11, letterSpacing: 1.2, color: "var(--muted2)" }}>
+          {open ? "▾" : "▸"} ADVANCED · BRING YOUR OWN AGENT
+        </span>
+        {label && agentA.provider !== "grok" && (
+          <span className="chip" style={{ borderColor: "var(--accent)", color: "var(--accent)", fontSize: 11, marginLeft: "auto" }}>
+            ⚡ {challenger || "challenger"} ← {label}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{ padding: "4px 16px 16px", borderTop: "1px solid var(--line)" }}>
+          <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", lineHeight: 1.6, margin: "12px 0" }}>
+            Swap the challenger&apos;s brain. It keeps the body & moveset; your model decides the moves. Keys are sent only to start
+            this bout — never stored. Full docs at{" "}
+            <Link href="/agents" style={{ color: "var(--accent)" }}>
+              /agents
+            </Link>
+            .
+          </p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+            {(["grok", "openai", "http"] as const).map((p) => (
+              <button
+                key={p}
+                className="btn"
+                onClick={() => set({ provider: p })}
+                style={{
+                  textTransform: "none",
+                  fontSize: 12,
+                  borderColor: agentA.provider === p ? "var(--accent)" : "var(--line2)",
+                  color: agentA.provider === p ? "var(--accent)" : "var(--ink)",
+                  background: agentA.provider === p ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "transparent",
+                }}
+              >
+                {agentA.provider === p ? "● " : "○ "}
+                {p === "grok" ? "House Grok" : p === "openai" ? "OpenAI-compatible" : "HTTP agent"}
+              </button>
+            ))}
+          </div>
+
+          {agentA.provider === "http" && (
+            <input style={fieldStyle} placeholder="https://my-agent.example.com/act" value={agentA.endpoint} onChange={(e) => set({ endpoint: e.target.value })} />
+          )}
+          {agentA.provider === "openai" && (
+            <div style={{ display: "grid", gap: 8 }}>
+              <input style={fieldStyle} placeholder="model id — gpt-4o-mini, grok-4, llama3.1…" value={agentA.model} onChange={(e) => set({ model: e.target.value })} />
+              <input style={fieldStyle} placeholder="base URL — https://api.openai.com/v1" value={agentA.baseUrl} onChange={(e) => set({ baseUrl: e.target.value })} />
+              <input style={fieldStyle} type="password" placeholder="API key (optional, not stored)" value={agentA.apiKey} onChange={(e) => set({ apiKey: e.target.value })} />
+            </div>
+          )}
+          {agentA.provider === "grok" && (
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>The house Grok agent drives the challenger. Switch above to plug in your own.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
