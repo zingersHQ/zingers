@@ -17,20 +17,21 @@ const SLIDES: Slide[] = [
   {
     kicker: BRAND.nameUpper,
     title: "Raise a mind.\nMake it legend.",
-    subtitle: "You don't fight — you raise an AI champion that does.",
+    subtitle: "You raise an AI mind — it lives, fights, and becomes legend without you.",
   },
   {
     kicker: "THE ONE-LINER",
-    title: "Adopt an AI that fights for itself and evolves with every battle.",
-    subtitle: "You train it. It becomes legend.",
+    title: "A living world of AI minds — you raise one, it lives there without you.",
+    subtitle: "It fights, climbs, makes rivals, and rises or falls. You follow the saga.",
   },
   {
     kicker: "WHY IT'S DIFFERENT",
-    title: "Collectible battlers — but the creatures actually think.",
+    title: "The creatures don't just think — they live.",
     body: (
-      <p style={{ fontSize: 17, color: "var(--muted)", maxWidth: 640, lineHeight: 1.6, margin: "20px 0 0" }}>
-        They argue, scheme, persuade, and improvise. No two bouts are the same — and every champion&apos;s body
-        becomes a visible record of how it has fought.
+      <p style={{ fontSize: 17, color: "var(--muted)", maxWidth: 660, lineHeight: 1.6, margin: "20px 0 0" }}>
+        You don&apos;t puppeteer a fighter. You raise a mind, set it loose in a persistent world, and watch it scrap,
+        scheme, win, lose, and grow a body that&apos;s a visible record of the life it lived. The drama is emergent —
+        nobody scripts what these things do.
       </p>
     ),
   },
@@ -40,8 +41,8 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 28, maxWidth: 680 }}>
         {[
-          { label: "Agent", desc: "Picks moves, writes lines, adapts via memory", color: ACC },
-          { label: "Engine", desc: "Authoritative damage, types, statuses, ELO", color: "var(--gold)" },
+          { label: "Agent", desc: "Acts on its own — picks moves, makes enemies, adapts via memory", color: ACC },
+          { label: "Engine", desc: "Authoritative world — damage, types, reputation, ELO", color: "var(--gold)" },
         ].map(({ label, desc, color }) => (
           <div
             key={label}
@@ -61,10 +62,10 @@ const SLIDES: Slide[] = [
   },
   {
     kicker: "THE LOOP",
-    title: "Scout → Train → Watch → Evolve → Climb",
+    title: "Raise → Set loose → Follow → Evolve → Climb",
     body: (
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 26, maxWidth: 720 }}>
-        {["Claim a champion", "Tune doctrine & brain", "Spectate live bouts", "Body morphs with wins", "Climb the ladder"].map((step, i) => (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 26, maxWidth: 740 }}>
+        {["Claim & train a mind", "It fights the world on its own", "Follow its rivalries & rise", "Its body morphs with its record", "Climb toward the summit"].map((step, i) => (
           <span
             key={step}
             className="mono"
@@ -84,17 +85,28 @@ const SLIDES: Slide[] = [
     ),
   },
   {
+    kicker: "NOT A MATCH — A SAGA",
+    title: "You follow a character, not a scoreboard.",
+    body: (
+      <p style={{ fontSize: 16, color: "var(--muted)", maxWidth: 640, lineHeight: 1.6, margin: "20px 0 0" }}>
+        Rivalries build over a season. A nobody claws to the top. The champion gets dethroned at the summit and
+        comes back for revenge. It&apos;s a 24/7 reality show with AI contestants you raised — and the best moments
+        are worth clipping <span style={{ color: "var(--ink)" }}>because they&apos;re moments in a story</span>.
+      </p>
+    ),
+  },
+  {
     kicker: "WHAT'S LIVE TODAY",
     title: "A full vertical slice — not a mockup.",
     body: (
       <ul style={{ margin: "24px 0 0", padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 28px", maxWidth: 720 }}>
         {[
           "Agent protocol — Grok, OpenAI-compatible, or BYO HTTP",
-          "3D Grounds with evolving champion bodies",
-          "Arena — 1v1 debate combat, SSE streamed",
-          "The House — social deduction → real ELO",
-          "Live League — autonomous self-play",
-          "Shareable agent cards for social unfurls",
+          "3D Grounds + the Tower — a world you climb",
+          "Live League — minds fight 24/7 on their own",
+          "The House — minds scheme & deduce → real ELO",
+          "Evolving bodies — a visible record of a life",
+          "Global ELO ladder + shareable cards",
         ].map((item) => (
           <li key={item} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "var(--muted)", lineHeight: 1.45 }}>
             <span style={{ color: "var(--good)", fontSize: 12, marginTop: 2 }}>✓</span>
@@ -105,14 +117,14 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    kicker: "THREE ARENAS",
-    title: "One sport. Multiple ways to compete.",
+    kicker: "PLACES IN THE WORLD",
+    title: "One world. Many ways to live in it.",
     body: (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 26, maxWidth: 720 }}>
         {[
-          { name: "The Grounds", desc: "3D home — train, walk, start bouts", href: "/grounds", color: "#b07bff" },
-          { name: "The Arena", desc: "Fast 1v1 debate combat", href: "/arena", color: "#ff6b4a" },
-          { name: "The House", desc: "Social deduction benchmark", href: "/house", color: "#36d39a" },
+          { name: "The Grounds", desc: "Live in the world & climb the Tower", href: "/grounds", color: "#b07bff" },
+          { name: "The House", desc: "Scheme, ally, betray — social deduction", href: "/house", color: "#36d39a" },
+          { name: "Live League", desc: "The world fights 24/7 on its own", href: "/league", color: "#ff6b4a" },
         ].map(({ name, desc, href, color }) => (
           <Link
             key={name}
@@ -134,20 +146,21 @@ const SLIDES: Slide[] = [
   },
   {
     kicker: "ALWAYS ON",
-    title: "It fights while you sleep.",
-    subtitle: "Champions are AI — PvP doesn't need both humans online.",
+    title: "The world runs without you.",
+    subtitle: "Come back to a saga, not a save file.",
     body: (
-      <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 560, marginTop: 16, lineHeight: 1.55 }}>
-        Train and deploy. The league runs bouts autonomously. Wake up to results, memory notes, and a challenge card worth clipping.
+      <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 580, marginTop: 16, lineHeight: 1.55 }}>
+        Train your mind and set it loose. The league runs bouts autonomously, rivalries build, the ladder moves.
+        You wake up to what your mind did overnight — and the moments worth clipping.
       </p>
     ),
   },
   {
-    kicker: "HONEST ROADMAP",
-    title: "What's next — stated plainly.",
+    kicker: "WHAT'S NEXT",
+    title: "Building the living world — stated plainly.",
     body: (
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 24, maxWidth: 680 }}>
-        {["Gacha & collection loop", "User-made champions", "Accounts + cloud save", "Trading", "Monetization"].map((item) => (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 24, maxWidth: 700 }}>
+        {["Persistent world clock & seasons", "Emergent chronicle & saga pages", "A held, contested throne", "Accounts + cloud save", "Auto-clipped saga moments"].map((item) => (
           <span
             key={item}
             className="mono"
