@@ -1,11 +1,12 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
-import { useGLTF, Environment, Lightformer } from "@react-three/drei";
+import { useGLTF, Environment, Lightformer, Html } from "@react-three/drei";
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import * as THREE from "three";
-import type { Champion, CreatureType } from "@/lib/types";
+import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, PLAZA_R } from "./terrain";
@@ -30,7 +31,11 @@ export interface MatchView {
   hitB: number;
 }
 
-export type NearTarget = { kind: "train"; key: string } | { kind: "arena" } | null;
+export type NearTarget =
+  | { kind: "train"; key: string }
+  | { kind: "arena" }
+  | { kind: "challenge"; key: string; name: string }
+  | null;
 
 const ARENA: [number, number, number] = [0, 0, 0];
 const TRAIN_PAD: [number, number, number] = [-15, 0, 4];
@@ -119,6 +124,8 @@ export default function World({
   match,
   controlsEnabled,
   biome,
+  towerAgents = [],
+  onAltitude,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -126,11 +133,39 @@ export default function World({
   match: MatchView | null;
   controlsEnabled: boolean;
   biome: BiomeConfig;
+  towerAgents?: TowerAgent[];
+  onAltitude?: (y: number) => void;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
-  const camCue = useRef<CamCue>({ zoom: 0 });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false });
+  // touch input channels, mutated by the on-screen controls and read each frame
+  const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
+  const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0 });
+  const camDrag = useRef<CamDrag>({ dx: 0, dy: 0, pinch: 0 });
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    const coarse =
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0);
+    if (coarse) setIsTouch(true);
+    const onFirstTouch = () => setIsTouch(true);
+    window.addEventListener("touchstart", onFirstTouch, { once: true, passive: true });
+    return () => window.removeEventListener("touchstart", onFirstTouch);
+  }, []);
   const hs = biome.terrain.heightScale;
+  // shared, deterministic tower layout — colliders, perched agents and the
+  // challenge proximity check all read from this same list.
+  const towerNodes = useMemo(() => towerLayout(hs), [hs]);
+  const perched = useMemo(() => assignPerch(towerNodes, towerAgents), [towerNodes, towerAgents]);
+  const challengeTargets = useMemo(
+    () =>
+      perched
+        .filter((p) => p.agent.status === "awaiting")
+        .map((p) => ({ key: p.agent.key, name: p.agent.name, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
+    [perched],
+  );
   return (
+    <>
     <Canvas
       shadows
       camera={{ position: [0, 8, 18], fov: 52, near: 0.1, far: 600 }}
@@ -180,10 +215,13 @@ export default function World({
           <Terrain biome={biome} />
           <PlazaFloor biome={biome} />
           <Platforms biome={biome} hs={hs} />
+          <Tower biome={biome} nodes={towerNodes} />
           <ArenaPlatform />
           <Obelisks biome={biome} hs={hs} />
           <Scatter biome={biome} />
           <Crystals biome={biome} hs={hs} />
+
+          {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
 
           {match ? (
             <MatchStage champions={champions} match={match} />
@@ -207,7 +245,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} onAltitude={onAltitude} />
         </Physics>
 
         <EffectComposer enableNormalPass={false}>
@@ -216,8 +254,10 @@ export default function World({
         </EffectComposer>
       </Suspense>
 
-      <CameraController match={match} handlerPos={handlerPos} camCue={camCue} />
+      <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} />
     </Canvas>
+    {isTouch && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} />}
+    </>
   );
 }
 
@@ -371,6 +411,181 @@ function Platforms({ biome, hs }: { biome: BiomeConfig; hs: number }) {
   );
 }
 
+// ── The Tower ────────────────────────────────────────────────────────────────
+// A climbable helix of small floating platforms spiralling toward the sky. The
+// gaps are tuned to the Handler's jump arc + multi-jump so a confident player
+// can chain hops all the way to the summit. Other agents perch on the platforms.
+const TOWER_ANGLE = Math.PI * 1.15; // direction of the helix axis from plaza centre
+const TOWER_STEPS = 16;
+
+interface TowerNode {
+  pos: [number, number, number];
+  size: [number, number, number];
+}
+
+interface Perch {
+  agent: TowerAgent;
+  pos: [number, number, number];
+}
+
+function towerLayout(hs: number): TowerNode[] {
+  const cx = Math.cos(TOWER_ANGLE) * (PLAZA_R + 9);
+  const cz = Math.sin(TOWER_ANGLE) * (PLAZA_R + 9);
+  const baseY = terrainHeight(cx, cz, hs);
+  const out: TowerNode[] = [];
+  // a low entry step you can hop onto straight off the ground
+  out.push({ pos: [cx, baseY + 1.2, cz], size: [4.2, 0.5, 4.2] });
+  let y = baseY + 1.2;
+  for (let i = 0; i < TOWER_STEPS; i++) {
+    const a = i * 0.95 + 0.5;
+    const radius = 3.6 + Math.sin(i * 0.7) * 0.6;
+    const step = 2.7 + (i / TOWER_STEPS) * 0.9; // slightly bigger gaps higher up
+    y += step;
+    const w = Math.max(1.9, 3.2 - i * 0.06); // platforms shrink as you ascend
+    out.push({ pos: [cx + Math.cos(a) * radius, y, cz + Math.sin(a) * radius], size: [w, 0.45, w] });
+  }
+  // the summit — a wide platform, the prize at the top
+  y += 3.1;
+  out.push({ pos: [cx, y, cz], size: [5.5, 0.6, 5.5] });
+  return out;
+}
+
+// Spread agents across the tower with rating rising as you climb — weakest near
+// the base, the strongest perched on the summit.
+function assignPerch(nodes: TowerNode[], agents: TowerAgent[]): Perch[] {
+  if (!agents.length) return [];
+  const slots = nodes.slice(1); // leave the entry step clear
+  const sorted = [...agents].sort((a, b) => a.rating - b.rating);
+  const n = Math.min(sorted.length, slots.length);
+  const out: Perch[] = [];
+  for (let i = 0; i < n; i++) {
+    const slot = n === 1 ? slots[slots.length - 1] : slots[Math.round((i * (slots.length - 1)) / (n - 1))];
+    out.push({ agent: sorted[i], pos: [slot.pos[0], slot.pos[1] + slot.size[1] / 2, slot.pos[2]] });
+  }
+  return out;
+}
+
+function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
+  const beamRef = useRef<THREE.Mesh>(null);
+  const base = nodes[0];
+  const top = nodes[nodes.length - 1];
+  // a tall light column rising from the entry platform — a wayfinder you can
+  // spot from anywhere on the plaza so the climb is discoverable.
+  const beamH = top.pos[1] - base.pos[1] + 8;
+  useFrame((state) => {
+    if (beamRef.current) {
+      const m = beamRef.current.material as THREE.MeshBasicMaterial;
+      m.opacity = 0.08 + Math.sin(state.clock.elapsedTime * 1.4) * 0.03;
+    }
+  });
+  return (
+    <>
+      {/* wayfinding beacon */}
+      <group position={[base.pos[0], base.pos[1], base.pos[2]]}>
+        <mesh ref={beamRef} position={[0, beamH / 2, 0]}>
+          <cylinderGeometry args={[0.5, 1.4, beamH, 14, 1, true]} />
+          <meshBasicMaterial color={biome.platform.top} transparent opacity={0.1} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+        </mesh>
+        <pointLight position={[0, 3, 0]} intensity={40} color={biome.platform.top} distance={26} />
+        <Html position={[0, beamH + 1.5, 0]} center distanceFactor={26} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+            <div style={{ fontWeight: 700, color: "#fff", fontSize: 22, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>↑ THE TOWER</div>
+            <div style={{ fontSize: 11, color: biome.platform.top, letterSpacing: 1 }}>climb to challenge the agents above</div>
+          </div>
+        </Html>
+      </group>
+      {nodes.map((n, i) => {
+        const top = i === nodes.length - 1;
+        const color = top ? biome.platform.top : i % 2 ? biome.platform.a : biome.platform.b;
+        return (
+          <RigidBody key={i} type="fixed" colliders="cuboid">
+            <mesh position={n.pos} castShadow receiveShadow>
+              <boxGeometry args={n.size} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={top ? 0.6 : 0.32} metalness={0.4} roughness={0.5} />
+            </mesh>
+            <mesh position={[n.pos[0], n.pos[1] + n.size[1] / 2 + 0.012, n.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[n.size[0] / 2 - 0.16, n.size[0] / 2, 44]} />
+              <meshBasicMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
+            </mesh>
+          </RigidBody>
+        );
+      })}
+    </>
+  );
+}
+
+const STATUS_VIS: Record<AgentStatus, { color: string; badge: string; label: string }> = {
+  awaiting: { color: "#36d39a", badge: "⚔", label: "AWAITING" },
+  hibernating: { color: "#6a6bff", badge: "🌙", label: "HIBERNATING" },
+  disabled: { color: "#7b7b88", badge: "⛔", label: "OFFLINE" },
+};
+
+function pseudoChampion(a: TowerAgent): Champion {
+  const c = blank();
+  c.battles = a.battles;
+  c.wins = Math.round(a.battles * 0.5);
+  c.losses = a.battles - c.wins;
+  c.xp = a.battles * 60;
+  c.rating = a.rating;
+  return c;
+}
+
+function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [number, number, number] }) {
+  const champ = useMemo(() => pseudoChampion(agent), [agent]);
+  const vis = STATUS_VIS[agent.status];
+  const disabled = agent.status === "disabled";
+  const hibernating = agent.status === "hibernating";
+  const ringRef = useRef<THREE.Mesh>(null);
+  const beamRef = useRef<THREE.Mesh>(null);
+  const rot = useMemo(() => Math.atan2(-position[0], -position[2]), [position]);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (ringRef.current) {
+      const sc = 1 + Math.sin(t * (hibernating ? 0.8 : 2.2) + position[1]) * (disabled ? 0.02 : 0.08);
+      ringRef.current.scale.set(sc, sc, sc);
+    }
+    if (beamRef.current) beamRef.current.rotation.y += 0.01;
+  });
+
+  return (
+    <group position={position}>
+      <ChampionMesh
+        type={agent.type}
+        champion={champ}
+        position={[0, 0, 0]}
+        rotation={rot}
+        showLabel={false}
+        baseColorOverride={disabled ? "#3a3a44" : undefined}
+      />
+
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
+        <ringGeometry args={[0.85, 1.08, 48]} />
+        <meshBasicMaterial color={vis.color} transparent opacity={disabled ? 0.35 : 0.9} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+
+      {agent.status === "awaiting" && (
+        <mesh ref={beamRef} position={[0, 3, 0]}>
+          <cylinderGeometry args={[0.06, 0.5, 6, 8, 1, true]} />
+          <meshBasicMaterial color={vis.color} transparent opacity={0.12} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+        </mesh>
+      )}
+
+      <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
+          <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
+            {agent.name}
+            {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
+          </div>
+          <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700 }}>
+            {vis.badge} {vis.label} · {agent.rating}
+          </div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
 function Obelisks({ biome, hs }: { biome: BiomeConfig; hs: number }) {
   const items = useMemo(
     () =>
@@ -442,10 +657,19 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
 
 const WALK = 7.6, RUN = 13.6, JUMP = 10.4, AIR_JUMP = 9.6, MAX_JUMPS = 4;
 
-// shared one-shot channel from Handler → CameraController for action-cam cues
+// shared channel from Handler → CameraController for action-cam cues +
+// the live movement state the smart-follow camera steers from
 interface CamCue {
-  zoom: number;
+  zoom: number;        // one-shot punch-in impulse (decays each frame)
+  heading: number;     // player facing / move heading (radians)
+  speed: number;       // planar speed magnitude
+  moving: boolean;     // actively pressing movement keys this frame
 }
+
+// on-screen touch control channels (mobile)
+interface TouchMove { x: number; y: number }   // analog stick, x = strafe, y = forward (+up)
+interface TouchBtn { sprint: boolean; jump: number } // jump is a tap counter, consumed as an edge
+interface CamDrag { dx: number; dy: number; pinch: number } // orbit + pinch deltas, drained each frame
 
 // physics-driven Handler: dynamic capsule + feet sensor for grounding
 function Handler({
@@ -455,6 +679,10 @@ function Handler({
   matchActive,
   handlerPos,
   camCue,
+  touchMove,
+  touchBtn,
+  challengeTargets,
+  onAltitude,
 }: {
   controlsEnabled: boolean;
   onNear: (n: NearTarget) => void;
@@ -462,6 +690,10 @@ function Handler({
   matchActive: boolean;
   handlerPos: React.RefObject<THREE.Vector3>;
   camCue: React.RefObject<CamCue>;
+  touchMove: React.RefObject<TouchMove>;
+  touchBtn: React.RefObject<TouchBtn>;
+  challengeTargets: { key: string; name: string; pos: THREE.Vector3 }[];
+  onAltitude?: (y: number) => void;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
   const built = useMemo(() => buildCharacter(scene, animations, blank(), "#cfd2e8"), [scene, animations]);
@@ -473,6 +705,9 @@ function Handler({
   const near = useRef<NearTarget>(null);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
+  const prevTouchJump = useRef(0);
+  const altAccum = useRef(0);
+  const altLast = useRef(-999);
   const { camera } = useThree();
 
   function setAnim(name: "idle" | "walk" | "run" | "jump") {
@@ -515,16 +750,27 @@ function Handler({
     const fwd = new THREE.Vector3(t.x - camera.position.x, 0, t.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
     fwd.normalize();
-    const right = new THREE.Vector3(fwd.z, 0, -fwd.x);
-    let mx = 0, mz = 0;
+    const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    // gather input as analog axes (ax = strafe, az = forward) from keys + touch stick
+    let ax = 0, az = 0;
+    let touchSprint = false;
     if (controlsEnabled) {
-      if (keys["KeyW"] || keys["ArrowUp"]) { mx += fwd.x; mz += fwd.z; }
-      if (keys["KeyS"] || keys["ArrowDown"]) { mx -= fwd.x; mz -= fwd.z; }
-      if (keys["KeyD"] || keys["ArrowRight"]) { mx += right.x; mz += right.z; }
-      if (keys["KeyA"] || keys["ArrowLeft"]) { mx -= right.x; mz -= right.z; }
+      if (keys["KeyW"] || keys["ArrowUp"]) az += 1;
+      if (keys["KeyS"] || keys["ArrowDown"]) az -= 1;
+      if (keys["KeyD"] || keys["ArrowRight"]) ax += 1;
+      if (keys["KeyA"] || keys["ArrowLeft"]) ax -= 1;
+      const tm = touchMove.current;
+      if (tm) { ax += tm.x; az += tm.y; }
+      touchSprint = !!touchBtn.current?.sprint;
     }
+    // clamp the combined stick to the unit circle so diagonals aren't faster
+    let mag = Math.hypot(ax, az);
+    if (mag > 1) { ax /= mag; az /= mag; mag = 1; }
+    // camera-relative move vector; its length is the analog throttle (0..1)
+    const mx = fwd.x * az + right.x * ax;
+    const mz = fwd.z * az + right.z * ax;
     const len = Math.hypot(mx, mz);
-    const sprint = keys["ShiftLeft"] || keys["ShiftRight"];
+    const sprint = keys["ShiftLeft"] || keys["ShiftRight"] || touchSprint;
     const grounded = ground.current > 0;
     const v = rb.linvel();
     // refund the air-jump budget only once settled on the ground (not the frame
@@ -533,7 +779,8 @@ function Handler({
 
     if (len > 0) {
       const sp = sprint ? RUN : WALK;
-      const tvx = (mx / len) * sp, tvz = (mz / len) * sp;
+      // mx/mz already carry the analog throttle (their length is 0..1)
+      const tvx = mx * sp, tvz = mz * sp;
       // elastic snap toward the target velocity — punchy on the ground, lighter air control
       const k = grounded ? 0.5 : 0.22;
       rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
@@ -549,10 +796,14 @@ function Handler({
       if (grounded) setAnim("idle");
     }
 
-    // multi-jump (up to MAX_JUMPS) — edge-triggered so a held key can't spam it
+    // multi-jump (up to MAX_JUMPS) — edge-triggered so a held key/tap can't spam it
     const space = controlsEnabled && !!keys["Space"];
-    const jumpPressed = space && !prevSpace.current;
+    const spaceEdge = space && !prevSpace.current;
     prevSpace.current = space;
+    const tj = touchBtn.current ? touchBtn.current.jump : 0;
+    const touchEdge = controlsEnabled && tj > prevTouchJump.current;
+    prevTouchJump.current = tj;
+    const jumpPressed = spaceEdge || touchEdge;
     if (jumpPressed && jumps.current < MAX_JUMPS) {
       const air = jumps.current > 0;
       jumps.current++;
@@ -566,6 +817,14 @@ function Handler({
     }
     if (!grounded && cur.current !== "jump") cur.current = "jump";
 
+    // hand the camera the live movement state so it can smart-follow the player
+    if (camCue.current) {
+      const lv = rb.linvel();
+      camCue.current.heading = heading.current;
+      camCue.current.speed = Math.hypot(lv.x, lv.z);
+      camCue.current.moving = len > 0;
+    }
+
     if (inner.current) inner.current.rotation.y = heading.current;
 
     let next: NearTarget = null;
@@ -574,10 +833,31 @@ function Handler({
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
       else if (dArena < 6.5) next = { kind: "arena" };
+      // perched-agent challenge: nearest awaiting agent within reach (full 3D,
+      // so you must actually climb up to it), only when you own a champion
+      if (!next && ownedKey) {
+        let best: { key: string; name: string } | null = null;
+        let bestD = 3.0;
+        for (const ct of challengeTargets) {
+          const d = Math.hypot(t.x - ct.pos.x, t.y - ct.pos.y, t.z - ct.pos.z);
+          if (d < bestD) { bestD = d; best = { key: ct.key, name: ct.name }; }
+        }
+        if (best) next = { kind: "challenge", key: best.key, name: best.name };
+      }
     }
     if (JSON.stringify(next) !== JSON.stringify(near.current)) {
       near.current = next;
       onNear(next);
+    }
+
+    // report altitude to the HUD (throttled by time + change)
+    if (onAltitude) {
+      altAccum.current += dt;
+      if (altAccum.current > 0.12 && Math.abs(t.y - altLast.current) > 0.2) {
+        altAccum.current = 0;
+        altLast.current = t.y;
+        onAltitude(t.y);
+      }
     }
   });
 
@@ -614,7 +894,7 @@ function Handler({
 }
 
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
-function CameraController({ match, handlerPos, camCue }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue> }) {
+function CameraController({ match, handlerPos, camCue, camDrag }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag> }) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
@@ -623,6 +903,10 @@ function CameraController({ match, handlerPos, camCue }: { match: MatchView | nu
   const last = useRef({ x: 0, y: 0 });
   const dirYaw = useRef(0);
   const tmp = useRef(new THREE.Vector3());
+  // when the user last steered with the mouse — auto-follow stays out of the way for a beat after
+  const lastInput = useRef(-9999);
+  // speed-driven dolly-back, eased so the pull-out/in feels smooth
+  const followDist = useRef(0);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -633,8 +917,9 @@ function CameraController({ match, handlerPos, camCue }: { match: MatchView | nu
       yaw.current -= (e.clientX - last.current.x) * 0.005;
       pitch.current = Math.min(1.25, Math.max(0.12, pitch.current - (e.clientY - last.current.y) * 0.004));
       last.current = { x: e.clientX, y: e.clientY };
+      lastInput.current = performance.now();
     };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(34, Math.max(6, dist.current + e.deltaY * 0.012)); };
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(34, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
     el.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointermove", onMove);
@@ -647,7 +932,8 @@ function CameraController({ match, handlerPos, camCue }: { match: MatchView | nu
     };
   }, [gl]);
 
-  useFrame(() => {
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
     if (match) {
       dirYaw.current += 0.003;
       const tx = ARENA[0], ty = 1.6, tz = ARENA[2];
@@ -657,18 +943,214 @@ function CameraController({ match, handlerPos, camCue }: { match: MatchView | nu
       camera.lookAt(tx, ty, tz);
       return;
     }
+    // drain touch orbit / pinch deltas accumulated by the on-screen look pad
+    const drag = camDrag.current;
+    if (drag && (drag.dx || drag.dy || drag.pinch)) {
+      yaw.current -= drag.dx * 0.005;
+      pitch.current = Math.min(1.25, Math.max(0.12, pitch.current - drag.dy * 0.004));
+      if (drag.pinch) dist.current = Math.min(34, Math.max(6, dist.current - drag.pinch * 0.02));
+      drag.dx = 0; drag.dy = 0; drag.pinch = 0;
+      lastInput.current = performance.now();
+    }
+
     const hp = handlerPos.current;
     const cue = camCue.current;
     const zoom = cue ? cue.zoom : 0;
     if (cue) cue.zoom *= 0.86; // ease the punch back out
-    const eff = Math.max(5, dist.current - zoom * 6); // fast zoom-in toward the character
+
+    const speed = cue ? cue.speed : 0;
+    const moving = cue ? cue.moving : false;
+    const speed01 = Math.min(1, speed / RUN); // 0 = still, 1 = full sprint
+
+    // smart-follow: gently swing the orbit behind the player's heading while
+    // they move — but only once the mouse has been idle for a beat, so manual
+    // steering always wins. Faster movement → a touch more eagerness.
+    if (cue && moving && performance.now() - lastInput.current > 900) {
+      let d = cue.heading + Math.PI - yaw.current;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
+    }
+
+    // characteristic speed feel: dolly back as you accelerate, ease in as you stop
+    followDist.current += (speed01 * 6 - followDist.current) * Math.min(1, dt * 4);
+    const eff = Math.max(5, dist.current + followDist.current - zoom * 6);
+
+    // playful sway — a lazy lateral drift + bob that grows with speed so the
+    // camera always feels alive (lookAt stays locked on the player, so it reads
+    // as a handheld float rather than nausea)
+    const ts = performance.now() * 0.001;
+    const swayX = Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
+    const swayY = Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
+
     const tx = hp.x, ty = hp.y + 0.4 + zoom * 0.3, tz = hp.z;
-    const cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff;
+    const cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
     const cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
-    const cy = ty + Math.sin(pitch.current) * eff;
+    const cy = ty + Math.sin(pitch.current) * eff + swayY;
     // snap in faster than it eases out, for a punchy action-cam
     camera.position.lerp(tmp.current.set(cx, cy, cz), zoom > 0.05 ? 0.3 : 0.12);
     camera.lookAt(tx, ty, tz);
+
+    // dynamic FOV whoosh: widen while sprinting / punching in, settle back at rest
+    const cam = camera as THREE.PerspectiveCamera;
+    const targetFov = 52 + speed01 * 10 + zoom * 6;
+    if (Math.abs(cam.fov - targetFov) > 0.01) {
+      cam.fov += (targetFov - cam.fov) * Math.min(1, dt * 3);
+      cam.updateProjectionMatrix();
+    }
   });
   return null;
+}
+
+// ── on-screen touch controls (mobile) ─────────────────────────────────
+// left half = floating analog stick (move), right half = drag-to-look +
+// two-finger pinch-to-zoom, plus jump / sprint buttons bottom-right.
+function touchBtnStyle(size: number): CSSProperties {
+  return {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    border: "2px solid",
+    fontFamily: "var(--font-mono), monospace",
+    fontWeight: 700,
+    letterSpacing: 1,
+    display: "grid",
+    placeItems: "center",
+    touchAction: "none",
+    backdropFilter: "blur(3px)",
+    cursor: "pointer",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+  };
+}
+
+function TouchControls({ active, move, btn, cam }: {
+  active: boolean;
+  move: React.RefObject<TouchMove>;
+  btn: React.RefObject<TouchBtn>;
+  cam: React.RefObject<CamDrag>;
+}) {
+  const R = 56; // stick radius in px
+  const joyId = useRef<number | null>(null);
+  const joyOrigin = useRef<{ x: number; y: number } | null>(null);
+  const [base, setBase] = useState<{ x: number; y: number } | null>(null);
+  const [knob, setKnob] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [sprint, setSprint] = useState(false);
+  const look = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchPrev = useRef(0);
+
+  // fully release input when controls get disabled (overlay / match)
+  useEffect(() => {
+    if (active) return;
+    joyId.current = null;
+    joyOrigin.current = null;
+    setBase(null);
+    setKnob({ x: 0, y: 0 });
+    setSprint(false);
+    if (move.current) { move.current.x = 0; move.current.y = 0; }
+    if (btn.current) btn.current.sprint = false;
+    look.current.clear();
+    pinchPrev.current = 0;
+  }, [active, move, btn]);
+
+  if (!active) return null;
+
+  const joyDown = (e: ReactPointerEvent) => {
+    if (joyId.current !== null) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    joyId.current = e.pointerId;
+    joyOrigin.current = { x: e.clientX, y: e.clientY };
+    setBase({ x: e.clientX, y: e.clientY });
+    setKnob({ x: 0, y: 0 });
+  };
+  const joyMove = (e: ReactPointerEvent) => {
+    if (joyId.current !== e.pointerId || !joyOrigin.current) return;
+    let dx = e.clientX - joyOrigin.current.x;
+    let dy = e.clientY - joyOrigin.current.y;
+    const d = Math.hypot(dx, dy);
+    if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
+    setKnob({ x: dx, y: dy });
+    if (move.current) { move.current.x = dx / R; move.current.y = -dy / R; }
+  };
+  const joyEnd = (e: ReactPointerEvent) => {
+    if (joyId.current !== e.pointerId) return;
+    joyId.current = null;
+    joyOrigin.current = null;
+    setBase(null);
+    setKnob({ x: 0, y: 0 });
+    if (move.current) { move.current.x = 0; move.current.y = 0; }
+  };
+
+  const lookDown = (e: ReactPointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    look.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (look.current.size === 2) {
+      const [a, b] = [...look.current.values()];
+      pinchPrev.current = Math.hypot(a.x - b.x, a.y - b.y);
+    }
+  };
+  const lookMove = (e: ReactPointerEvent) => {
+    const prev = look.current.get(e.pointerId);
+    if (!prev) return;
+    const cur = { x: e.clientX, y: e.clientY };
+    if (look.current.size >= 2) {
+      look.current.set(e.pointerId, cur);
+      const [a, b] = [...look.current.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchPrev.current && cam.current) cam.current.pinch += d - pinchPrev.current;
+      pinchPrev.current = d;
+    } else {
+      if (cam.current) { cam.current.dx += cur.x - prev.x; cam.current.dy += cur.y - prev.y; }
+      look.current.set(e.pointerId, cur);
+    }
+  };
+  const lookEnd = (e: ReactPointerEvent) => {
+    look.current.delete(e.pointerId);
+    if (look.current.size < 2) pinchPrev.current = 0;
+  };
+
+  const tapJump = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (btn.current) btn.current.jump++;
+  };
+  const toggleSprint = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSprint((s) => {
+      const n = !s;
+      if (btn.current) btn.current.sprint = n;
+      return n;
+    });
+  };
+
+  return (
+    <div style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}>
+      <div
+        onPointerDown={joyDown}
+        onPointerMove={joyMove}
+        onPointerUp={joyEnd}
+        onPointerCancel={joyEnd}
+        style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "50%", pointerEvents: "auto", touchAction: "none" }}
+      />
+      <div
+        onPointerDown={lookDown}
+        onPointerMove={lookMove}
+        onPointerUp={lookEnd}
+        onPointerCancel={lookEnd}
+        style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "50%", pointerEvents: "auto", touchAction: "none" }}
+      />
+
+      {base && (
+        <div style={{ position: "fixed", left: base.x, top: base.y, width: 0, height: 0, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", left: 0, top: 0, width: R * 2, height: R * 2, borderRadius: "50%", border: "2px solid rgba(255,255,255,.22)", background: "rgba(10,8,20,.28)", backdropFilter: "blur(2px)", transform: "translate(-50%,-50%)" }} />
+          <div style={{ position: "absolute", left: 0, top: 0, width: 50, height: 50, borderRadius: "50%", background: "rgba(57,224,255,.55)", boxShadow: "0 0 18px rgba(57,224,255,.6)", border: "2px solid rgba(255,255,255,.5)", transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }} />
+        </div>
+      )}
+
+      <div style={{ position: "absolute", right: 22, bottom: 34, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
+        <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", fontSize: 22, background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>»</button>
+        <button onPointerDown={tapJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", fontSize: 13, background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>JUMP</button>
+      </div>
+    </div>
+  );
 }

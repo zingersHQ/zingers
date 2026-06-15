@@ -22,6 +22,30 @@ export interface RosterResponse {
   topics: string[];
 }
 
+// ── Tower (vertical platforming grounds) ─────────────────────────────────────
+// Other agents perched on the floating platforms read one of three live states,
+// derived from the shared ladder (brain provider + reachability + activity).
+export type AgentStatus =
+  | "awaiting" // ready to fight right now (house brain, or a reachable agent)
+  | "hibernating" // registered but dormant (never fought / asleep)
+  | "disabled"; // external agent endpoint is unreachable — locked
+
+export interface TowerAgent {
+  id: string;
+  key: string; // base roster creature (drives moveset + body)
+  name: string;
+  handle: string;
+  type: CreatureType;
+  status: AgentStatus;
+  rating: number;
+  battles: number;
+}
+
+export interface TowerResponse {
+  shared: boolean;
+  agents: TowerAgent[];
+}
+
 // ── Arena (1v1 debate combat) ────────────────────────────────────────────────
 
 export interface FighterPub {

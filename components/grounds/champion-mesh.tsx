@@ -339,7 +339,7 @@ export function ChampionMesh({
       )}
 
       {hpFrac != null && (
-        <Html position={[0, app.h + 0.7, 0]} center distanceFactor={9} style={{ pointerEvents: "none" }}>
+        <Html position={[0, app.h + 0.7, 0]} center distanceFactor={9} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ width: 120, height: 9, background: "#241f33", borderRadius: 6, border: "1px solid #000", overflow: "hidden" }}>
             <div style={{ width: `${Math.max(0, hpFrac) * 100}%`, height: "100%", background: hpFrac > 0.55 ? "#36d39a" : hpFrac > 0.25 ? "#f0a93a" : "#ff5a6a", transition: "width .4s ease" }} />
           </div>
@@ -347,7 +347,7 @@ export function ChampionMesh({
       )}
 
       {showLabel && label && (
-        <Html position={[0, app.h + 1.0, 0]} center distanceFactor={11} style={{ pointerEvents: "none" }}>
+        <Html position={[0, app.h + 1.0, 0]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontWeight: 700, color: "#fff", fontSize: 20, textShadow: "0 2px 8px #000", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.82 }}>
             {label}
             <div style={{ fontSize: 10, color: colHex, letterSpacing: 1 }}>{tier.name}</div>

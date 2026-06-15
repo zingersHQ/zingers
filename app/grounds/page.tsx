@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import type { AgentConfig, BattleEnd, Champion, Recipe, RosterEntry, Style } from "@/lib/types";
+import type { AgentConfig, BattleEnd, Champion, Recipe, RosterEntry, Style, TowerAgent } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
@@ -26,6 +26,9 @@ const World = dynamic(() => import("@/components/grounds/world"), {
 
 export default function GroundsPage() {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
+  const [towerAgents, setTowerAgents] = useState<TowerAgent[]>([]);
+  const [altitude, setAltitude] = useState(0);
+  const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
   const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result">("none");
@@ -44,6 +47,7 @@ export default function GroundsPage() {
   const [biomeId, setBiomeId] = useState(DEFAULT_BIOME.id);
   const biome = useMemo(() => BIOMES.find((b) => b.id === biomeId) ?? DEFAULT_BIOME, [biomeId]);
   const [showIntro, setShowIntro] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
 
   const store = useChampions();
   const { progress, getRecipe, owned, setOwned, crowns } = store;
@@ -54,7 +58,11 @@ export default function GroundsPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0)) {
+      setIsTouch(true);
+    }
     fetch("/api/roster").then((r) => r.json()).then((d) => setRoster(d.creatures));
+    fetch("/api/grounds").then((r) => r.json()).then((d) => setTowerAgents(d.agents ?? [])).catch(() => {});
     try {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
       if (!seen) setShowIntro(true);
@@ -68,6 +76,11 @@ export default function GroundsPage() {
     setShowIntro(false);
   }, []);
 
+  const onAltitude = useCallback((y: number) => {
+    setAltitude(y);
+    setPeakAltitude((p) => (y > p ? y : p));
+  }, []);
+
   const byKey = useMemo(() => Object.fromEntries(roster.map((r) => [r.key, r])), [roster]);
   const champions: GroundChampion[] = useMemo(
     () => roster.map((r) => ({ key: r.key, type: r.type, name: r.name, champion: progress[r.key] || store.get(r.key) })),
@@ -78,17 +91,24 @@ export default function GroundsPage() {
   const inMatch = bout.phase === "live";
   const controlsEnabled = overlay === "none" && !inMatch && !result;
 
-  // E key opens the nearby interaction
+  // open the nearby interaction (shared by the E key and the on-screen prompt)
+  const interact = useCallback(() => {
+    if (overlay !== "none" || inMatch || result) return;
+    if (near?.kind === "train") setOverlay("train");
+    else if (near?.kind === "arena") setOverlay("arena");
+    else if (near?.kind === "challenge") {
+      setOpponent(near.key);
+      setOverlay("arena");
+    }
+  }, [near, overlay, inMatch, result]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== "e") return;
-      if (overlay !== "none" || inMatch || result) return;
-      if (near?.kind === "train") setOverlay("train");
-      else if (near?.kind === "arena") setOverlay("arena");
+      if (e.key.toLowerCase() === "e") interact();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [near, overlay, inMatch, result]);
+  }, [interact]);
 
   // drive the in-world match visuals from streamed turns
   useEffect(() => {
@@ -180,14 +200,16 @@ export default function GroundsPage() {
   return (
     <main style={{ position: "relative", height: "calc(100dvh - 49px)", overflow: "hidden" }}>
       {mounted && roster.length > 0 && (
-        <World champions={champions} ownedKey={owned} onNear={setNear} match={showMatch ? matchView : null} controlsEnabled={controlsEnabled} biome={biome} />
+        <World champions={champions} ownedKey={owned} onNear={setNear} match={showMatch ? matchView : null} controlsEnabled={controlsEnabled} biome={biome} towerAgents={towerAgents} onAltitude={onAltitude} />
       )}
 
       {/* HUD */}
       <div style={{ position: "absolute", top: 14, left: 16, pointerEvents: "none" }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, textShadow: "0 2px 12px #000" }}>The Grounds</h1>
         <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1 }}>
-          WASD / ARROWS TO MOVE · WALK TO A PAD · E TO INTERACT
+          {isTouch
+            ? "LEFT STICK MOVE · DRAG TO LOOK · JUMP ×4 · CLIMB THE TOWER"
+            : "WASD MOVE · SPACE TO JUMP (×4) · CLIMB THE TOWER · E TO CHALLENGE"}
         </p>
       </div>
       <div className="panel" style={{ position: "absolute", top: 14, right: 16, padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -195,6 +217,25 @@ export default function GroundsPage() {
         <span style={{ fontWeight: 700, fontSize: 18, color: "var(--gold)" }}>{crowns}</span>
         <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>
       </div>
+
+      {/* altitude / tower HUD */}
+      {!showMatch && overlay === "none" && towerAgents.length > 0 && (
+        <div className="panel" style={{ position: "absolute", top: 64, right: 16, padding: "10px 14px", minWidth: 140, pointerEvents: "none" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontWeight: 700, fontSize: 22, color: altitude > 1 ? "#39e0ff" : "var(--muted)" }}>{Math.max(0, altitude).toFixed(1)}</span>
+            <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>m</span>
+            <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1, marginLeft: "auto" }}>ALTITUDE</span>
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>
+            peak {Math.max(0, peakAltitude).toFixed(1)}m
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 8, fontSize: 9 }} className="mono">
+            <span style={{ color: "#36d39a" }}>⚔ {towerAgents.filter((a) => a.status === "awaiting").length}</span>
+            <span style={{ color: "#6a6bff" }}>🌙 {towerAgents.filter((a) => a.status === "hibernating").length}</span>
+            <span style={{ color: "#7b7b88" }}>⛔ {towerAgents.filter((a) => a.status === "disabled").length}</span>
+          </div>
+        </div>
+      )}
 
       {/* world switcher */}
       {!showMatch && overlay === "none" && owned && (
@@ -223,13 +264,18 @@ export default function GroundsPage() {
       {/* first-run tutorial / elevator pitch */}
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}
 
-      {/* proximity prompt */}
+      {/* proximity prompt — tappable on touch, E on desktop */}
       {owned && near && overlay === "none" && !inMatch && !result && (
-        <div className="panel pop" style={{ position: "absolute", bottom: 26, left: "50%", transform: "translateX(-50%)", padding: "10px 18px" }}>
+        <button
+          onClick={interact}
+          className="panel pop"
+          style={{ position: "absolute", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "12px 20px", cursor: "pointer", color: "var(--ink)", touchAction: "manipulation" }}
+        >
           <span className="mono" style={{ fontSize: 13 }}>
-            press <b style={{ color: "var(--gold)" }}>E</b> to {near.kind === "train" ? "train your champion" : "enter the Arena"}
+            <b style={{ color: "var(--gold)" }}>tap</b> / <b style={{ color: "var(--gold)" }}>E</b> to{" "}
+            {near.kind === "train" ? "train your champion" : near.kind === "challenge" ? `challenge ${near.name}` : "enter the Arena"}
           </span>
-        </div>
+        </button>
       )}
 
       {/* training overlay */}

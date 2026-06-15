@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
@@ -12,6 +12,15 @@ export const metadata: Metadata = {
   title: pageTitle(),
   description: "Claim an AI champion, train how it thinks, send it to fight in a 3D world, bet Crowns, and watch it evolve.",
   openGraph: { siteName: BRAND.name, url: BRAND.site },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#07060d",
+  colorScheme: "dark",
+  // keep the visual viewport stable when the mobile keyboard opens
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

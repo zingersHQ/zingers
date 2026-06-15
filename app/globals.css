@@ -46,6 +46,14 @@ body {
   font-family: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+  /* no rubber-band / pull-to-refresh fighting the 3D world's touch controls */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* the WebGL world should own its touch gestures, not the browser */
+canvas[data-engine] {
+  touch-action: none;
 }
 
 .mono {
