@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/league", label: "Live League" },
   { href: "/standings", label: "Standings" },
   { href: "/howitworks", label: "How it works" },
+  { href: "/readme", label: "Whitepaper" },
 ];
 
 export function Nav() {
