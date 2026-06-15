@@ -974,6 +974,9 @@ function Handler({
     const len = Math.hypot(mx, mz);
     const sprint = keys["ShiftLeft"] || keys["ShiftRight"] || touchSprint;
     const grounded = ground.current > 0;
+    // jetpack flight is active past the trigger — while flying we hold a still
+    // hover pose, so the ground walk/run/idle animation must not drive the body
+    const flyingMode = jumps.current > FLY_TRIGGER;
     const v = rb.linvel();
     // refund the air-jump budget only once settled on the ground (not the frame
     // we launched), so a multi-jump isn't refunded mid-takeoff
@@ -990,12 +993,12 @@ function Handler({
       let d = want - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       heading.current += d * Math.min(1, dt * 14);
-      if (grounded) setAnim(sprint ? "run" : "walk");
+      if (grounded && !flyingMode) setAnim(sprint ? "run" : "walk");
     } else {
       // stickier stop on the ground, glide through the air
       const damp = grounded ? 0.55 : 0.92;
       rb.setLinvel({ x: v.x * damp, y: v.y, z: v.z * damp }, true);
-      if (grounded) setAnim("idle");
+      if (grounded && !flyingMode) setAnim("idle");
     }
 
     // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
