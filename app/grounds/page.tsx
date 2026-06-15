@@ -14,6 +14,7 @@ import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { BIOMES, DEFAULT_BIOME } from "@/components/grounds/biomes";
+import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
@@ -48,6 +49,9 @@ export default function GroundsPage() {
   const biome = useMemo(() => BIOMES.find((b) => b.id === biomeId) ?? DEFAULT_BIOME, [biomeId]);
   const [showIntro, setShowIntro] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [gpu, setGpu] = useState<ReturnType<typeof gpuStatus> | null>(null);
+  const [rosterError, setRosterError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const store = useChampions();
   const { progress, getRecipe, owned, setOwned, crowns } = store;
@@ -58,16 +62,37 @@ export default function GroundsPage() {
 
   useEffect(() => {
     setMounted(true);
+    setGpu(gpuStatus());
     if (typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0)) {
       setIsTouch(true);
     }
-    fetch("/api/roster").then((r) => r.json()).then((d) => setRoster(d.creatures));
-    fetch("/api/grounds").then((r) => r.json()).then((d) => setTowerAgents(d.agents ?? [])).catch(() => {});
     try {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
       if (!seen) setShowIntro(true);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    let live = true;
+    setRosterError(null);
+    fetch("/api/roster")
+      .then((r) => {
+        if (!r.ok) throw new Error(`roster ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        if (!live) return;
+        if (!Array.isArray(d.creatures) || d.creatures.length === 0) throw new Error("empty roster");
+        setRoster(d.creatures);
+      })
+      .catch((e) => {
+        if (live) setRosterError(e instanceof Error ? e.message : "failed to load roster");
+      });
+    fetch("/api/grounds").then((r) => r.json()).then((d) => live && setTowerAgents(d.agents ?? [])).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [reloadKey]);
 
   const closeIntro = useCallback(() => {
     try {
@@ -199,8 +224,49 @@ export default function GroundsPage() {
 
   return (
     <main style={{ position: "relative", height: "calc(100dvh - 49px)", overflow: "hidden" }}>
-      {mounted && roster.length > 0 && (
-        <World champions={champions} ownedKey={owned} onNear={setNear} match={showMatch ? matchView : null} controlsEnabled={controlsEnabled} biome={biome} towerAgents={towerAgents} onAltitude={onAltitude} />
+      {mounted && gpu && !gpu.ok && (
+        <RenderNotice
+          title="3D isn't available in this browser"
+          body={
+            <>
+              The Grounds needs WebGL, which your browser couldn&apos;t start. In Chrome or Brave, open{" "}
+              <b>Settings → System</b> and turn on <b>&ldquo;Use graphics acceleration when available&rdquo;</b>, then restart the
+              browser. If it&apos;s already on, check <span className="mono">chrome://gpu</span>.
+            </>
+          }
+          detail={gpu.reason ? `webgl: ${gpu.reason}` : undefined}
+        />
+      )}
+
+      {mounted && gpu?.ok && rosterError && (
+        <RenderNotice
+          title="Couldn’t load the roster"
+          body="The world is ready, but the champion data failed to load. This is usually a temporary network hiccup."
+          detail={rosterError}
+          onRetry={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
+      {mounted && gpu?.ok && !rosterError && roster.length > 0 && (
+        <RenderBoundary
+          fallback={(error, reset) => (
+            <RenderNotice
+              title="The Grounds couldn’t render"
+              body={
+                gpu?.software
+                  ? "Your browser is rendering 3D in software mode (hardware acceleration is off or your GPU is blocklisted), which can’t handle this scene. Enable graphics acceleration in your browser settings and reload."
+                  : "Something went wrong while drawing the 3D scene. Reloading usually fixes it."
+              }
+              detail={`${gpu?.renderer ? gpu.renderer + " · " : ""}${error.message}`}
+              onRetry={() => {
+                reset();
+                setReloadKey((k) => k + 1);
+              }}
+            />
+          )}
+        >
+          <World champions={champions} ownedKey={owned} onNear={setNear} match={showMatch ? matchView : null} controlsEnabled={controlsEnabled} biome={biome} towerAgents={towerAgents} onAltitude={onAltitude} />
+        </RenderBoundary>
       )}
 
       {/* HUD */}

@@ -36,7 +36,7 @@ export default function AgentShowcase({
 }) {
   const rim = TYPE_COLOR[type];
   return (
-    <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 1.35, 7.4], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
+    <Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [0, 1.35, 7.4], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
       <color attach="background" args={["#0a0813"]} />
       <fog attach="fog" args={["#0a0813", 10, 22]} />
       <Rig lookY={1.05 * scale} />

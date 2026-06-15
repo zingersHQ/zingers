@@ -11,6 +11,7 @@ import { blank } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, PLAZA_R } from "./terrain";
 import type { BiomeConfig } from "./biomes";
+import { RenderBoundary } from "./render-guard";
 
 export interface GroundChampion {
   key: string;
@@ -167,7 +168,7 @@ export default function World({
   return (
     <>
     <Canvas
-      shadows
+      shadows="percentage"
       camera={{ position: [0, 8, 18], fov: 52, near: 0.1, far: 600 }}
       dpr={[1, 2]}
       gl={{ antialias: true }}
@@ -210,7 +211,13 @@ export default function World({
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
       <pointLight position={[TRAIN_PAD[0], 6, TRAIN_PAD[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />
 
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <Html center className="mono" style={{ color: "var(--muted)", fontSize: 12, whiteSpace: "nowrap" }}>
+            loading the grounds…
+          </Html>
+        }
+      >
         <Physics gravity={[0, -22, 0]}>
           <Terrain biome={biome} />
           <PlazaFloor biome={biome} />
@@ -248,10 +255,12 @@ export default function World({
           <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} onAltitude={onAltitude} />
         </Physics>
 
-        <EffectComposer enableNormalPass={false}>
-          <Bloom intensity={biome.bloom} luminanceThreshold={0.62} luminanceSmoothing={0.28} mipmapBlur radius={0.7} />
-          <Vignette eskil={false} offset={0.22} darkness={0.6} />
-        </EffectComposer>
+        <RenderBoundary fallback={null}>
+          <EffectComposer enableNormalPass={false}>
+            <Bloom intensity={biome.bloom} luminanceThreshold={0.62} luminanceSmoothing={0.28} mipmapBlur radius={0.7} />
+            <Vignette eskil={false} offset={0.22} darkness={0.6} />
+          </EffectComposer>
+        </RenderBoundary>
       </Suspense>
 
       <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} />

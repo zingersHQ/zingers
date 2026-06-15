@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { LeaguePoster } from "./league-poster";
+import { RenderBoundary } from "@/components/grounds/render-guard";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -153,7 +154,15 @@ function Cover() {
 function Agents() {
   return (
     <div style={{ position: "absolute", inset: 0, background: "#0a0813" }}>
-      <AgentShowcase champion={HERO} type={HERO_TYPE} scale={0.5} />
+      <RenderBoundary
+        fallback={
+          <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 11, padding: 24, textAlign: "center" }}>
+            3D preview unavailable — enable graphics acceleration in your browser to see live agents.
+          </div>
+        }
+      >
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={0.5} />
+      </RenderBoundary>
 
       {/* compact copy — ~50% smaller so the character owns the frame */}
       <div style={{ position: "absolute", top: 16, left: 24, pointerEvents: "none", maxWidth: 220 }}>
