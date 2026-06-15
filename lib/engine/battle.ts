@@ -1,0 +1,381 @@
+// Ported from battle.py + server.py battle_events(). Async generator so the SSE
+// route can stream each turn as the LLM resolves it.
+import "server-only";
+import {
+  ARENA,
+  BASE_DEFENSE,
+  HP_MAX,
+  MAX_HIT,
+  Move,
+  Q_HIGHLIGHT,
+  Q_MAX,
+  Q_MIN,
+  ROSTER,
+  TURN_LIMIT,
+  TYPE_NEU,
+  typeMult,
+  type Creature,
+} from "./roster";
+import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
+import { makeAgent, type Agent, type AgentView } from "./agent";
+import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type FighterPub, type ResolveInfo, type Strat } from "@/lib/types";
+
+class Fighter {
+  key: string;
+  name: string;
+  type: Creature["type"];
+  persona: string;
+  strat: Strat;
+  stats: Creature["stats"];
+  moves: Move[];
+  stance: "for" | "against";
+  hp = HP_MAX;
+  exposed = 0;
+  tilted = 0;
+  confused = 0;
+  hyped = false;
+  guard = 0;
+  guardTurns = 0;
+  deflect = false;
+  lastMove: string | null = null;
+  creCount = 0;
+  lines: string[] = [];
+  best: [number, string] = [0, ""];
+  agent: Agent;
+  memory: string[] = [];
+
+  constructor(key: string, stance: "for" | "against", cfg: SideConfig = {}, mock = false) {
+    const c = ROSTER[key];
+    this.key = key;
+    this.name = c.name;
+    this.type = c.type;
+    this.persona = cfg.persona?.trim() ? cfg.persona.trim() : c.persona;
+    this.strat = cfg.strat ?? DEFAULT_STRAT;
+    this.stats = { ...c.stats };
+    this.moves = c.moves;
+    this.stance = stance;
+    this.agent = makeAgent(cfg.agent, mock);
+    this.memory = cfg.memory ?? [];
+  }
+  alive() {
+    return this.hp > 0;
+  }
+}
+
+function fighterPub(f: Fighter): FighterPub {
+  return { key: f.key, name: f.name, type: f.type, stance: f.stance, hp: f.hp, max: HP_MAX, persona: f.persona };
+}
+
+function legalMoves(att: Fighter, opp: Fighter): Move[] {
+  return att.moves.filter((m) => {
+    if (m.requires === "opp_open" && !(opp.exposed || opp.tilted)) return false;
+    if (m.requires === "two_cre" && att.creCount < 2) return false;
+    return true;
+  });
+}
+
+function describeMove(m: Move): string {
+  const fx: string[] = [];
+  if (m.apply) fx.push(`inflicts ${m.apply[0]}`);
+  if (m.self_hyped) fx.push("self Hyped");
+  if (m.self_guard) fx.push("self Guard");
+  if (m.heal) fx.push(`heal ${m.heal}`);
+  if (m.after_deflect) fx.push("+50% right after Deflect");
+  if (m.bonus_if_tilted) fx.push("+30% vs Tilted");
+  if (m.recoil) fx.push(`recoil ${m.recoil}`);
+  if (m.finisher) fx.push("FINISHER");
+  return `${m.name} (id=${m.id}, ${m.stat}, pow ${m.base}${fx.length ? "; " + fx.join(", ") : ""})`;
+}
+
+function statusStr(f: Fighter): string {
+  const s: string[] = [];
+  if (f.exposed) s.push("Exposed");
+  if (f.tilted) s.push("Tilted");
+  if (f.confused) s.push("Confused");
+  if (f.hyped) s.push("Hyped");
+  if (f.guardTurns) s.push(`Guard+${f.guard}`);
+  return s.join(", ") || "none";
+}
+
+const MOCK_INTENT: Record<string, string> = {
+  syllogism: "Compound the proof",
+  checkmate: "Punish the opening",
+  reductio: "Pry them open",
+  mic_drop: "Cash in the hype",
+  appeal: "Bank momentum",
+  strawman: "Rattle them",
+  crowd_swell: "Work the jury",
+  burn: "Scorch them",
+  inferno: "Finish the firestarter",
+  callout: "Provoke a mistake",
+  reframe: "Change the frame",
+  magnum_opus: "Unveil the masterpiece",
+  immovable: "Stand and punish",
+  counterpoint: "Punish the lull",
+  deflect: "Read the big hit",
+};
+
+interface AgentChoice {
+  move: Move;
+  intent: string;
+  line: string;
+  why: string;
+}
+
+// How the handler's training tilts move selection (mock) and is briefed (live).
+function stratScore(m: Move, att: Fighter, opp: Fighter): number {
+  const { risk, focus, aggression } = att.strat;
+  let s = m.base;
+  if (aggression > 50) s += ((aggression - 50) / 50) * (m.base * 0.6); // prefer raw power
+  if (m.finisher) s += risk / 6;
+  if (m.widen_jitter) s += risk / 10;
+  if (focus > 50 && m.apply && !(opp.exposed || opp.tilted)) s += ((focus - 50) / 50) * 14; // set up combos first
+  if (focus > 50 && (m.bonus_if_tilted || m.after_deflect) && (opp.tilted || att.lastMove === "deflect")) s += 10;
+  if (aggression < 45 && (m.heal || m.deflect || m.self_guard)) s += ((45 - aggression) / 45) * 14; // play safe
+  return s;
+}
+
+function buildView(att: Fighter, opp: Fighter, topic: string, rnd: number): AgentView {
+  const moves = legalMoves(att, opp);
+  return {
+    topic,
+    round: rnd,
+    arena: `${ARENA.name} (${ARENA.desc})`,
+    you: { name: att.name, type: att.type, persona: att.persona, stance: att.stance, hp: att.hp, max: HP_MAX, statuses: statusStr(att) },
+    opponent: {
+      name: opp.name,
+      type: opp.type,
+      hp: opp.hp,
+      max: HP_MAX,
+      statuses: statusStr(opp),
+      lastLine: opp.lines.length ? opp.lines[opp.lines.length - 1] : "(opponent has not spoken yet)",
+    },
+    legalMoves: moves.map((m) => ({ id: m.id, name: m.name, desc: describeMove(m) })),
+    strat: att.strat,
+    memory: att.memory,
+  };
+}
+
+// One turn: ask the side's Agent to decide, validate, and fall back to the
+// trained-doctrine heuristic if the agent fails or returns an illegal move.
+async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number): Promise<AgentChoice> {
+  const moves = legalMoves(att, opp);
+  const valid = Object.fromEntries(moves.map((m) => [m.id, m]));
+  const out = await att.agent.act(buildView(att, opp, topic, rnd));
+  if (out && out.move && valid[out.move]) {
+    return {
+      move: valid[out.move],
+      intent: (out.intent || MOCK_INTENT[out.move] || "Press the advantage").slice(0, 42),
+      line: (out.line || `${att.name}: that point bends my way.`).slice(0, 160),
+      why: (out.why || `${valid[out.move].name} fits the trained doctrine here.`).slice(0, 160),
+    };
+  }
+  // heuristic fallback — pick the move best matching the trained doctrine
+  const m = moves.reduce((a, b) => (stratScore(b, att, opp) > stratScore(a, att, opp) ? b : a));
+  return {
+    move: m,
+    intent: out?.intent || MOCK_INTENT[m.id] || "Press the advantage",
+    line: out?.line || `${att.name}: your point folds. Mine stands.`,
+    why: out?.why || `${m.name} fits the trained doctrine here.`,
+  };
+}
+
+async function judge(
+  att: Fighter,
+  opp: Fighter,
+  move: Move,
+  line: string,
+  topic: string,
+  mock: boolean,
+  rng: Rng,
+): Promise<[number, boolean, string]> {
+  if (mock || !KEY) {
+    const q = Math.round(rng.uniform(0.85, 1.18) * 100) / 100;
+    const hl = rng.random() < 0.1;
+    return [hl ? Q_HIGHLIGHT : q, hl, q > 1.05 ? "sharp and on point" : "lands cleanly"];
+  }
+  const sysP = `You are the impartial judge of a debate battle on the proposition: "${topic}". You score one line.`;
+  const oppLast = opp.lines.length ? opp.lines[opp.lines.length - 1] : "(none)";
+  const usr =
+    `${att.name} (arguing ${att.stance}) used ${move.name} and said:\n"${line}"\n` +
+    `Opponent's previous line: "${oppLast}"\n\n` +
+    "Score rhetorical quality, relevance to the proposition, and cleverness (callbacks, " +
+    "turning the opponent's own words/logic). Reply ONLY as JSON: " +
+    '{"quality": <float 0.7-1.3>, "highlight": <true|false>, "ruling": "<max 8 word verdict>"}. ' +
+    "Be a STRICT scorer: most lines are 0.9-1.1. Reserve highlight=true for roughly 1 line in 8 — " +
+    "only a truly exceptional, clip-worthy zinger; otherwise false. If off-topic, quality 0.7.";
+  const out = parseJson<{ quality?: number; highlight?: boolean; ruling?: string }>(
+    await chat([{ role: "system", content: sysP }, { role: "user", content: usr }], 0.2, 120),
+  );
+  if (!out) return [1.0, false, "noted"];
+  let q = Number(out.quality ?? 1.0);
+  if (!Number.isFinite(q)) q = 1.0;
+  q = Math.max(Q_MIN, Math.min(Q_MAX, q));
+  const hl = Boolean(out.highlight);
+  return [hl ? Q_HIGHLIGHT : q, hl, String(out.ruling ?? "noted").slice(0, 40)];
+}
+
+const statScale = (v: number) => 0.5 + v / 100.0;
+
+function resolve(att: Fighter, opp: Fighter, move: Move, quality: number, rng: Rng): [number, ResolveInfo] {
+  const fizzle = att.confused > 0 && rng.random() < 0.3;
+  const base = move.base;
+  const info: ResolveInfo = {
+    fizzle,
+    type: TYPE_NEU,
+    capped: false,
+    crit: quality >= Q_HIGHLIGHT,
+    se: false,
+    resist: false,
+    status: [],
+  };
+  const q = quality - (att.tilted ? 0.2 : 0.0);
+  let dmg = 0;
+  if (base > 0 && !fizzle) {
+    const sc = statScale(att.stats[move.stat]);
+    const tm = typeMult(att.type, opp.type);
+    info.type = tm;
+    info.se = tm > 1.0;
+    info.resist = tm < 1.0;
+    const arena = ARENA.mult[att.type] ?? 1.0;
+    let mult = 1.0;
+    if (opp.exposed) {
+      mult *= 1.2;
+      opp.exposed = 0;
+    }
+    if (att.hyped) {
+      mult *= 1.2;
+      att.hyped = false;
+    }
+    if (move.bonus_if_tilted && opp.tilted) mult *= 1.0 + move.bonus_if_tilted;
+    if (move.after_deflect && att.lastMove === "deflect") mult *= 1.0 + move.after_deflect;
+    if (move.scale_low_hp) mult *= 1.0 + (HP_MAX - att.hp) / HP_MAX;
+    const [lo, hi] = move.widen_jitter ? [0.7, 1.3] : [0.9, 1.1];
+    const jit = rng.uniform(lo, hi);
+    const raw = base * sc * tm * arena * q * mult * jit;
+    dmg = Math.round(raw) - (BASE_DEFENSE + opp.guard);
+    if (opp.deflect) {
+      dmg = Math.round(dmg * 0.5);
+      opp.deflect = false;
+      info.status.push("DEFLECTED");
+    }
+    dmg = Math.max(1, dmg);
+    if (dmg > MAX_HIT) {
+      dmg = MAX_HIT;
+      info.capped = true;
+    }
+    opp.hp = Math.max(0, opp.hp - dmg);
+  }
+  if (!fizzle) {
+    if (move.apply && rng.random() <= move.apply[1]) {
+      const eff = move.apply[0];
+      if (eff === "exposed") opp.exposed = 1;
+      else if (eff === "tilted") opp.tilted = 1;
+      else if (eff === "confused") opp.confused = 1;
+      info.status.push(`${opp.name} ${eff[0].toUpperCase() + eff.slice(1)}`);
+    }
+    if (move.self_hyped) {
+      att.hyped = true;
+      info.status.push(`${att.name} Hyped`);
+    }
+    if (move.self_guard) {
+      [att.guard, att.guardTurns] = move.self_guard;
+      info.status.push(`${att.name} Guard+${att.guard}`);
+    }
+    if (move.heal) {
+      att.hp = Math.min(HP_MAX, att.hp + move.heal);
+      info.status.push(`${att.name} +${move.heal} Resolve`);
+    }
+    if (move.recoil) {
+      att.hp = Math.max(0, att.hp - move.recoil);
+      info.status.push(`${att.name} recoil ${move.recoil}`);
+    }
+    if (move.deflect) {
+      att.deflect = true;
+      info.status.push(`${att.name} braces`);
+    }
+    if (move.stat === "CRE") att.creCount += 1;
+  }
+  att.tilted = 0;
+  att.confused = 0;
+  att.lastMove = move.id;
+  return [dmg, info];
+}
+
+export interface SideConfig {
+  strat?: Strat;
+  persona?: string;
+  agent?: AgentConfig;
+  memory?: string[];
+}
+
+export async function* battleEvents(
+  aKey: string,
+  bKey: string,
+  topic: string,
+  mock: boolean,
+  seed?: number | null,
+  cfgA: SideConfig = {},
+  cfgB: SideConfig = {},
+): AsyncGenerator<BattleEvent> {
+  const rng = makeRng(seed);
+  const a = new Fighter(aKey, "for", cfgA, mock);
+  const b = new Fighter(bKey, "against", cfgB, mock);
+  yield { type: "start", topic, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
+  let mvp: [number, string] = [0, ""];
+  let lastHl = -10;
+  const order = [a, b];
+  let rnd = 0;
+  while (a.alive() && b.alive() && rnd < TURN_LIMIT) {
+    rnd += 1;
+    const att = order[(rnd - 1) % 2];
+    const opp = order[rnd % 2];
+    const { move, intent, line, why } = await agentTurn(att, opp, topic, rnd);
+    att.lines.push(line);
+    let [q, hl, ruling] = await judge(att, opp, move, line, topic, mock, rng);
+    if (hl) {
+      if (rnd - lastHl < 3 || rng.random() < 0.5) q = Math.min(q, 1.28);
+      else lastHl = rnd;
+    }
+    const [dmg, info] = resolve(att, opp, move, q, rng);
+    if (dmg > mvp[0]) mvp = [dmg, line];
+    if (dmg > att.best[0]) att.best = [dmg, line];
+    if (att.guardTurns) {
+      att.guardTurns -= 1;
+      if (att.guardTurns === 0) att.guard = 0;
+    }
+    yield {
+      type: "turn",
+      round: rnd,
+      actor: att.key,
+      opp: opp.key,
+      actor_name: att.name,
+      actor_type: att.type,
+      move: move.name,
+      intent,
+      line,
+      why,
+      dmg,
+      info,
+      q: Math.round(q * 100) / 100,
+      ruling,
+      a_hp: a.hp,
+      b_hp: b.hp,
+    };
+    if (!opp.alive()) break;
+  }
+  let w: Fighter, l: Fighter;
+  if (a.alive() && !b.alive()) [w, l] = [a, b];
+  else if (b.alive() && !a.alive()) [w, l] = [b, a];
+  else [w, l] = a.hp >= b.hp ? [a, b] : [b, a];
+  yield {
+    type: "end",
+    winner: w.key,
+    winner_name: w.name,
+    loser_name: l.name,
+    rounds: rnd,
+    mvp: { dmg: mvp[0], line: mvp[1] },
+    a_hp: a.hp,
+    b_hp: b.hp,
+  };
+}

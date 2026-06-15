@@ -1,0 +1,21 @@
+// Zingers — single source of truth for product naming & domains.
+export const BRAND = {
+  name: "Zingers",
+  nameUpper: "ZINGERS",
+  tagline: "train · fight · evolve AI champions",
+  site: "https://zingers.gg",
+  siteTech: "https://zingers.org",
+  twitter: "zingersHQ",
+  twitterUrl: "https://x.com/zingersHQ",
+} as const;
+
+export const STORAGE = {
+  state: "zingers_state_v1",
+  stateLegacy: "battler_state_v3",
+  intro: "zingers_intro_v1",
+  introLegacy: "battler_intro_v1",
+} as const;
+
+export function pageTitle(suffix?: string) {
+  return suffix ? `${suffix} · ${BRAND.name}` : `${BRAND.nameUpper} — ${BRAND.tagline}`;
+}
