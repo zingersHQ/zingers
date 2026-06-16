@@ -254,8 +254,7 @@ export default function World({
           <Platforms biome={biome} shape={shape} count={sc.platformCount} />
           <Tower biome={biome} nodes={towerNodes} />
           {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
-          <GuardianShrine />
-          <GuardianFigures />
+          <GuardianSpire />
           <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
@@ -427,114 +426,162 @@ function ArenaPlatform() {
   );
 }
 
-// ── The Guardian's Shrine ────────────────────────────────────────────────────
-// A diegetic entry point to the single-player extraction game: a monolith you
-// walk up to and challenge, instead of a menu page. A floating rune + beacon
-// make it readable from across the plaza.
+// ── The Guardian's Spire ─────────────────────────────────────────────────────
+// A diegetic entry point to the single-player extraction game. Rather than a flat
+// menu — or a cramped lineup — the five guardians ascend a glowing spire by level:
+// El Becario near the base, El Mago Oscuro crowning the top. Each floats on its own
+// dais wrapped in a strong aura + light beacon so they clearly outrank the regular
+// agents perched on the climbing Tower. Walk up to the base to open the full ladder.
 const GUARDIAN_COL = "#c77dff";
+const SPIRE_BASE_Y = 2.6; // lowest guardian
+const SPIRE_STEP_Y = 3.0; // vertical gap between guardians
+const SPIRE_RADIUS = 1.95; // how far each guardian orbits the core column
+const SPIRE_TWIST = 2.3; // radians of spiral per level
+const SPIRE_TOP_Y = SPIRE_BASE_Y + SPIRE_STEP_Y * (GUARDIAN_ROSTER.length - 1); // boss height
 
-function GuardianShrine() {
-  const runeRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+function GuardianSpire() {
+  const coreRef = useRef<THREE.Mesh>(null);
+  const beaconRef = useRef<THREE.Mesh>(null);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    if (runeRef.current) {
-      runeRef.current.rotation.y += 0.012;
-      runeRef.current.position.y = 3.2 + Math.sin(t * 1.2) * 0.18;
-    }
-    if (glowRef.current) {
-      const m = glowRef.current.material as THREE.MeshBasicMaterial;
-      m.opacity = 0.1 + Math.sin(t * 1.6) * 0.04;
+    if (coreRef.current) coreRef.current.rotation.y += 0.004;
+    if (beaconRef.current) {
+      const m = beaconRef.current.material as THREE.MeshBasicMaterial;
+      m.opacity = 0.08 + Math.sin(t * 1.4) * 0.03;
     }
   });
+
+  const guardians = useMemo(
+    () =>
+      GUARDIAN_ROSTER.map((g, i) => {
+        const theta = i * SPIRE_TWIST;
+        const x = Math.cos(theta) * SPIRE_RADIUS;
+        const z = Math.sin(theta) * SPIRE_RADIUS;
+        const y = SPIRE_BASE_Y + i * SPIRE_STEP_Y;
+        const champ = blank();
+        champ.xp = g.xp;
+        return { g, x, y, z, champ };
+      }),
+    [],
+  );
+
+  const coreH = SPIRE_TOP_Y + 3.4;
+
   return (
     <group position={GUARDIAN_PAD}>
       {/* base dais */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} receiveShadow>
-        <circleGeometry args={[2.8, 48]} />
+        <circleGeometry args={[3.0, 48]} />
         <meshStandardMaterial color="#1a1330" emissive={GUARDIAN_COL} emissiveIntensity={0.35} metalness={0.4} roughness={0.5} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <ringGeometry args={[2.7, 2.84, 48]} />
+        <ringGeometry args={[2.88, 3.04, 48]} />
         <meshBasicMaterial color={GUARDIAN_COL} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* the monolith — a solid obstacle you approach */}
+      {/* the spire core — a tall tapering pillar the guardians orbit; also the
+          solid object you approach to trigger the challenge */}
       <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[0, 2.1, 0]} castShadow>
-          <boxGeometry args={[1.3, 4.2, 0.5]} />
-          <meshStandardMaterial color="#221836" emissive={GUARDIAN_COL} emissiveIntensity={0.4} metalness={0.55} roughness={0.4} />
+        <mesh ref={coreRef} position={[0, coreH / 2, 0]} castShadow>
+          <cylinderGeometry args={[0.22, 0.62, coreH, 9]} />
+          <meshStandardMaterial color="#221836" emissive={GUARDIAN_COL} emissiveIntensity={0.5} metalness={0.6} roughness={0.35} flatShading />
         </mesh>
       </RigidBody>
-
-      {/* floating rune */}
-      <mesh ref={runeRef} position={[0, 3.2, 0]}>
-        <torusGeometry args={[0.5, 0.07, 12, 5]} />
-        <meshStandardMaterial color={GUARDIAN_COL} emissive={GUARDIAN_COL} emissiveIntensity={2.4} metalness={0.3} roughness={0.3} />
+      {/* crowning finial above the boss */}
+      <mesh position={[0, coreH + 0.4, 0]}>
+        <octahedronGeometry args={[0.5, 0]} />
+        <meshStandardMaterial color={GUARDIAN_COL} emissive={GUARDIAN_COL} emissiveIntensity={2.6} metalness={0.3} roughness={0.25} />
       </mesh>
 
-      {/* wayfinding beacon */}
-      <mesh ref={glowRef} position={[0, 6, 0]}>
-        <cylinderGeometry args={[0.4, 1.1, 12, 14, 1, true]} />
-        <meshBasicMaterial color={GUARDIAN_COL} transparent opacity={0.12} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      {/* full-height wayfinding beacon — spot the spire from across the plaza */}
+      <mesh ref={beaconRef} position={[0, coreH / 2, 0]}>
+        <cylinderGeometry args={[0.5, 1.5, coreH, 16, 1, true]} />
+        <meshBasicMaterial color={GUARDIAN_COL} transparent opacity={0.09} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
       </mesh>
-      <pointLight position={[0, 4, 0]} intensity={60} color={GUARDIAN_COL} distance={26} />
+      <pointLight position={[0, SPIRE_TOP_Y * 0.6, 0]} intensity={70} color={GUARDIAN_COL} distance={30} />
 
-      <Html position={[0, 5.1, 0]} center distanceFactor={16} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+      {guardians.map(({ g, x, y, z, champ }, i) => (
+        <SpireGuardian key={g.level} g={g} champ={champ} x={x} y={y} z={z} top={i === guardians.length - 1} />
+      ))}
+
+      <Html position={[0, 1.5, 0]} center distanceFactor={15} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>THE GUARDIAN</div>
-          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>talk a secret out of it</div>
+          <div style={{ fontWeight: 700, color: "#fff", fontSize: 17, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>THE GUARDIAN</div>
+          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>climb the spire · talk a secret out of it</div>
         </div>
       </Html>
     </group>
   );
 }
 
-// The five guardians, embodied: a standing council arranged on the shrine dais,
-// facing the plaza so they read as the keepers you walk up to challenge. Each is
-// tinted its level colour and pitched at an escalating evolution tier. They are
-// scenery (no colliders) — the monolith remains the solid object you approach,
-// and reaching the pad still opens the full ladder.
-function GuardianFigures() {
-  const figs = useMemo(() => {
-    // bearing from the shrine toward the plaza centre (where the player approaches)
-    const base = Math.atan2(-GUARDIAN_PAD[0], -GUARDIAN_PAD[2]);
-    const R = 2.6;
-    const spread = 0.4;
-    const mid = (GUARDIAN_ROSTER.length - 1) / 2;
-    return GUARDIAN_ROSTER.map((g, i) => {
-      const theta = base + (i - mid) * spread;
-      const x = Math.cos(theta) * R;
-      const z = Math.sin(theta) * R;
-      // face the plaza centre from this figure's world position
-      const rot = Math.atan2(-(GUARDIAN_PAD[0] + x), -(GUARDIAN_PAD[2] + z));
-      const champ = blank();
-      champ.xp = g.xp;
-      return { g, pos: [x, 0, z] as [number, number, number], rot, champ };
-    });
-  }, []);
+// One guardian on the spire: floats on its own glowing dais, tinted its level
+// colour, wrapped in an aura sphere + a vertical light shaft + a point light so it
+// reads as a marked boss, not a regular perched agent.
+function SpireGuardian({
+  g,
+  champ,
+  x,
+  y,
+  z,
+  top,
+}: {
+  g: (typeof GUARDIAN_ROSTER)[number];
+  champ: Champion;
+  x: number;
+  y: number;
+  z: number;
+  top: boolean;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const auraRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+  // face outward from the core so it's legible as you orbit the spire
+  const rot = useMemo(() => Math.atan2(x, z), [x, z]);
+  const phase = useMemo(() => Math.random() * 6.28, []);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (groupRef.current) groupRef.current.position.y = y + Math.sin(t * 1.1 + phase) * 0.14;
+    if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.7 + phase) * 0.07);
+    if (ringRef.current) ringRef.current.rotation.z += 0.01;
+  });
+
+  const auraR = top ? 1.7 : 1.35;
 
   return (
-    <group position={GUARDIAN_PAD}>
-      {figs.map(({ g, pos, rot, champ }) => (
-        <group key={g.level} position={pos}>
-          <ChampionMesh
-            type={g.type}
-            champion={champ}
-            position={[0, 0, 0]}
-            rotation={rot}
-            baseColorOverride={g.color}
-            showLabel={false}
-          />
-          <Html position={[0, 2.5, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
-            <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
-              <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
-              <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
-            </div>
-          </Html>
-        </group>
-      ))}
+    <group ref={groupRef} position={[x, y, z]}>
+      {/* floating dais */}
+      <mesh position={[0, -0.09, 0]}>
+        <cylinderGeometry args={[1.15, 1.0, 0.18, 32]} />
+        <meshStandardMaterial color="#15102a" emissive={g.color} emissiveIntensity={0.6} metalness={0.5} roughness={0.4} />
+      </mesh>
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[1.18, 1.34, 40]} />
+        <meshBasicMaterial color={g.color} transparent opacity={0.9} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+
+      <ChampionMesh type={g.type} champion={champ} position={[0, 0.1, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} />
+
+      {/* aura sphere + rising light shaft + dedicated light = "this is a boss" */}
+      <mesh ref={auraRef} position={[0, 0.9, 0]}>
+        <sphereGeometry args={[auraR, 20, 20]} />
+        <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
+      </mesh>
+      <mesh position={[0, 2.4, 0]}>
+        <cylinderGeometry args={[0.18, 0.6, 4.4, 12, 1, true]} />
+        <meshBasicMaterial color={g.color} transparent opacity={0.16} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      </mesh>
+      <pointLight position={[0, 1.0, 0]} intensity={top ? 34 : 22} color={g.color} distance={10} />
+
+      <Html position={[0, 2.5, 0]} center distanceFactor={11} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>
+            {top ? "★ " : ""}LEVEL {g.level}
+          </div>
+          <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
+          <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
+        </div>
+      </Html>
     </group>
   );
 }
@@ -865,8 +912,8 @@ const STOP_GROUND = 16, STOP_AIR = 1.4, STOP_FLY = 4.5;
 const TURN_GROUND = 22, TURN_AIR = 16;
 // jetpack flight (unlocked after 4 consecutive jumps): hold to thrust smoothly
 const FLY_TRIGGER = 4;     // consecutive jumps needed before the pack deploys
-const FLY_CLIMB = 9.6;     // target upward velocity while thrusting
-const FLY_THRUST_K = 0.16; // how snappily we ease toward that climb velocity
+const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
+const FLY_THRUST = 14;     // ease rate toward climb velocity (frame-rate independent)
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1065,7 +1112,17 @@ function Handler({
   }
 
   useEffect(() => {
+    // don't hijack keys while the player is typing in a field (e.g. the Guardian
+    // chat overlay) — otherwise Space/arrows get preventDefault'd and never reach
+    // the input, so you can't type spaces.
+    const isTyping = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
     const down = (e: KeyboardEvent) => {
+      if (isTyping(e.target)) return;
       const code = e.code;
       if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"].includes(code)) {
         keys[code] = true;
@@ -1159,23 +1216,29 @@ function Handler({
     const jumpHeld = space || (controlsEnabled && !!touchBtn.current?.jumpHeld);
 
     if (jumps.current > FLY_TRIGGER) {
-      // ── jetpack flight ── hold jump to thrust upward smoothly; release to glide
+      // ── jetpack flight ── hold jump to thrust upward; release to glide. Read the
+      // LIVE velocity (the steering block above just wrote x/z) and only touch y, so
+      // holding thrust never cancels your WASD steering. Ease toward the climb speed
+      // frame-rate independently so the ascent is smooth instead of stuttering.
       if (jumpHeld) {
-        rb.setLinvel({ x: v.x, y: v.y + (FLY_CLIMB - v.y) * FLY_THRUST_K, z: v.z }, true);
+        const cv = rb.linvel();
+        const ky = 1 - Math.exp(-FLY_THRUST * dt);
+        rb.setLinvel({ x: cv.x, y: cv.y + (FLY_CLIMB - cv.y) * ky, z: cv.z }, true);
         // continuous exhaust while the thruster is firing (paced, not per-frame)
         jetEmit.current += dt;
         if (jetEmit.current > 0.045) { jetEmit.current = 0; jetBurst.current++; }
-        if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.04);
+        if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + dt * 2.4);
       }
-      // hold a steady flight pose while the pack does the work — never the walk
-      // cycle, even when the stick is pushed to steer. the forward lean below sells
-      // the direction of travel instead of moving legs
+      // hold a steady flight pose while the pack does the work; the forward lean
+      // below sells the direction of travel instead of moving legs
       setAnim("idle");
     } else if (jumpEdge) {
       // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
       const air = jumps.current > 0;
       jumps.current++;
-      rb.setLinvel({ x: v.x, y: air ? AIR_JUMP : JUMP, z: v.z }, true);
+      // keep the steered horizontal velocity (don't snap back to pre-frame inertia)
+      const cv = rb.linvel();
+      rb.setLinvel({ x: cv.x, y: air ? AIR_JUMP : JUMP, z: cv.z }, true);
       jumpBeep(jumps.current - 1);
       const j = built.actions.jump;
       built.actions[cur.current]?.fadeOut(0.06);

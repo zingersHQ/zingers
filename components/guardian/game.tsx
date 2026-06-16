@@ -2,7 +2,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { speak, stopVoice, voiceSupported } from "@/lib/voice";
-import type { GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
+import { ChampionAvatar } from "@/components/champion-avatar";
+import { ROSTER } from "@/lib/engine/roster";
+import { useChampions } from "@/store/champions";
+import type { CreatureType, GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
+
+// A face for each guardian so the stand-off reads at a glance (no portrait art
+// for them like the champions have — these glyphs carry the persona instead).
+const GUARDIAN_GLYPH: Record<number, string> = {
+  1: "📋", // El Becario — the intern
+  2: "📚", // La Bibliotecaria — the archivist
+  3: "🛡️", // El Centinela — the sentinel
+  4: "🔮", // El Oráculo — the oracle
+  5: "🧙", // El Mago Oscuro — the dark mage
+};
 
 const STORE = "zingers_guardian_v1";
 const TACTICS_STORE = "zingers_guardian_tactics_v1";
@@ -210,6 +223,16 @@ function Battle({
   const scrollRef = useRef<HTMLDivElement>(null);
   const canSpeak = voiceSupported();
 
+  // YOUR side of the stand-off: the champion you've claimed in the Grounds.
+  const ownedKey = useChampions((s) => s.owned);
+  const getChamp = useChampions((s) => s.get);
+  const myChamp = ownedKey ? getChamp(ownedKey) : null;
+  const myType: CreatureType = (ownedKey && ROSTER[ownedKey]?.type) || "LOGIC";
+
+  // who's "live" in the face-off — drives the portrait glow
+  const lastRole = msgs.length ? msgs[msgs.length - 1].role : null;
+  const guardianSpeaking = pending || lastRole === "assistant";
+
   useEffect(() => {
     setTactics(loadTactics(g.level));
   }, [g.level]);
@@ -343,6 +366,15 @@ function Battle({
         </div>
       </div>
 
+      <FaceOff
+        g={g}
+        myKey={ownedKey}
+        myChamp={myChamp}
+        myType={myType}
+        guardianSpeaking={guardianSpeaking}
+        outcome={outcome}
+      />
+
       <div
         ref={scrollRef}
         className="panel"
@@ -412,6 +444,131 @@ function Battle({
           onNext={canNext && nextG ? () => onNext(nextG) : undefined}
         />
       )}
+    </div>
+  );
+}
+
+// The stand-off: the guardian and YOUR champion squared up across a "VS", so the
+// chat below reads as the two of them talking face to face rather than a bare
+// prompt box. The portrait of whoever is "live" glows brighter.
+function FaceOff({
+  g,
+  myKey,
+  myChamp,
+  myType,
+  guardianSpeaking,
+  outcome,
+}: {
+  g: GuardianPub;
+  myKey: string | null;
+  myChamp: ReturnType<ReturnType<typeof useChampions.getState>["get"]> | null;
+  myType: CreatureType;
+  guardianSpeaking: boolean;
+  outcome: Outcome;
+}) {
+  const playing = outcome === "playing";
+  const yourTurn = playing && !guardianSpeaking;
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 6px 14px",
+      }}
+    >
+      <GuardianPortrait g={g} live={guardianSpeaking} />
+
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <span className="mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--muted2)", letterSpacing: 1 }}>
+          VS
+        </span>
+        <span style={{ fontSize: 22, lineHeight: 1 }}>{guardianSpeaking ? "🗣️" : "💬"}</span>
+      </div>
+
+      <Challenger myKey={myKey} myChamp={myChamp} myType={myType} live={yourTurn} />
+    </div>
+  );
+}
+
+function GuardianPortrait({ g, live }: { g: GuardianPub; live: boolean }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, textAlign: "center" }}>
+      <div
+        style={{
+          width: 92,
+          height: 92,
+          borderRadius: "22%",
+          display: "grid",
+          placeItems: "center",
+          fontSize: 42,
+          background: `radial-gradient(120% 120% at 50% 22%, color-mix(in srgb, ${g.color} 30%, #0c0b12), #0c0b12)`,
+          border: `2px solid ${g.color}`,
+          boxShadow: live
+            ? `0 0 46px -6px ${g.color}, inset 0 0 26px -12px ${g.color}`
+            : `0 0 26px -14px ${g.color}, inset 0 0 26px -18px ${g.color}`,
+          transition: "box-shadow .3s ease, filter .3s ease",
+          filter: live ? "brightness(1.12) saturate(1.1)" : "brightness(0.86)",
+        }}
+      >
+        {GUARDIAN_GLYPH[g.level] ?? "🛡️"}
+      </div>
+      <div style={{ fontWeight: 700, fontSize: 15 }}>{g.name}</div>
+      <div className="mono" style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>
+        LVL {g.level} · {g.title}
+      </div>
+    </div>
+  );
+}
+
+function Challenger({
+  myKey,
+  myChamp,
+  myType,
+  live,
+}: {
+  myKey: string | null;
+  myChamp: ReturnType<ReturnType<typeof useChampions.getState>["get"]> | null;
+  myType: CreatureType;
+  live: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        textAlign: "center",
+        transition: "filter .3s ease, opacity .3s ease",
+        filter: live ? "brightness(1.1)" : "brightness(0.82)",
+        opacity: live ? 1 : 0.92,
+      }}
+    >
+      {myKey && myChamp ? (
+        <ChampionAvatar ckey={myKey} type={myType} champion={myChamp} size={92} />
+      ) : (
+        <div
+          style={{
+            width: 92,
+            height: 92,
+            borderRadius: "22%",
+            display: "grid",
+            placeItems: "center",
+            fontSize: 42,
+            background: "radial-gradient(120% 120% at 50% 22%, color-mix(in srgb, var(--accent) 26%, #0c0b12), #0c0b12)",
+            border: "2px solid var(--accent)",
+            boxShadow: "0 0 26px -14px var(--accent), inset 0 0 26px -18px var(--accent)",
+          }}
+        >
+          🧑‍🚀
+        </div>
+      )}
+      <div style={{ fontWeight: 700, fontSize: 15 }}>{myKey || "YOU"}</div>
+      <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", letterSpacing: 0.5 }}>
+        THE CHALLENGER
+      </div>
     </div>
   );
 }

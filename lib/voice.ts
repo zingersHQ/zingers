@@ -15,13 +15,17 @@ export interface VoiceProfile {
   prefer: "female" | "male" | "any";
 }
 
-// Keyed by guardian level (see lib/server/guardian.ts).
+// Keyed by guardian level (see lib/server/guardian.ts). Pitch/rate are pushed to
+// inhuman extremes and slowed right down so the guardians read as creatures, not
+// people: squeaky gremlins at the bottom, a deep, booming demon at the top. (The
+// Web Speech API only exposes pitch/rate — no formant/effect control — so these
+// values are the whole lever for the "creaturish" feel.)
 export const VOICE_PROFILES: Record<number, VoiceProfile> = {
-  1: { pitch: 1.28, rate: 1.08, prefer: "male" }, // El Becario — nervous, eager intern
-  2: { pitch: 1.04, rate: 0.96, prefer: "female" }, // La Bibliotecaria — stern, measured
-  3: { pitch: 0.84, rate: 1.0, prefer: "male" }, // El Centinela — proud veteran
-  4: { pitch: 0.72, rate: 0.86, prefer: "any" }, // El Oráculo — slow, mysterious
-  5: { pitch: 0.58, rate: 0.82, prefer: "male" }, // El Mago Oscuro — cold, booming
+  1: { pitch: 1.7, rate: 0.82, prefer: "any" }, // El Becario — twitchy squeaky gremlin
+  2: { pitch: 1.45, rate: 0.78, prefer: "female" }, // La Bibliotecaria — reedy, brittle
+  3: { pitch: 0.5, rate: 0.74, prefer: "male" }, // El Centinela — gruff, growling brute
+  4: { pitch: 0.4, rate: 0.64, prefer: "any" }, // El Oráculo — slow, warped, otherworldly
+  5: { pitch: 0.25, rate: 0.6, prefer: "male" }, // El Mago Oscuro — deep, demonic, booming
 };
 
 const DEFAULT_PROFILE: VoiceProfile = { pitch: 1, rate: 1, prefer: "any" };
