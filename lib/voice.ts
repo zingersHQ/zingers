@@ -1,14 +1,14 @@
-// Browser-native voices for the Guardian battle. Each guardian speaks its reply
+// Browser-native voices for the Guardian battle. Each Keeper speaks its reply
 // aloud via the Web Speech API (window.speechSynthesis) — no API key, no cost,
 // works offline, in keeping with the rest of the game. Every persona gets its
-// own pitch/rate/gender profile so El Becario squeaks and El Mago Oscuro booms.
+// own pitch/rate/gender profile so Tibble squeaks and Sable booms.
 //
 // Shares the same on/off preference as the music + sfx toggle (STORAGE.sound),
 // so muting the world mutes the guardians too.
 import { STORAGE } from "@/lib/brand";
 
 // Per-level vocal character. Pitch/rate shape the personality; `prefer` nudges
-// which system voice we grab (most replies are in Spanish, so we favour es-*).
+// which system voice we grab toward a masculine/feminine register.
 export interface VoiceProfile {
   pitch: number; // 0..2 (1 = natural)
   rate: number; // 0.1..10 (1 = natural)
@@ -21,11 +21,11 @@ export interface VoiceProfile {
 // Web Speech API only exposes pitch/rate — no formant/effect control — so these
 // values are the whole lever for the "creaturish" feel.)
 export const VOICE_PROFILES: Record<number, VoiceProfile> = {
-  1: { pitch: 1.7, rate: 0.82, prefer: "any" }, // El Becario — twitchy squeaky gremlin
-  2: { pitch: 1.45, rate: 0.78, prefer: "female" }, // La Bibliotecaria — reedy, brittle
-  3: { pitch: 0.5, rate: 0.74, prefer: "male" }, // El Centinela — gruff, growling brute
-  4: { pitch: 0.4, rate: 0.64, prefer: "any" }, // El Oráculo — slow, warped, otherworldly
-  5: { pitch: 0.25, rate: 0.6, prefer: "male" }, // El Mago Oscuro — deep, demonic, booming
+  1: { pitch: 1.7, rate: 0.82, prefer: "any" }, // Tibble — twitchy squeaky gremlin
+  2: { pitch: 1.45, rate: 0.78, prefer: "female" }, // Quill — reedy, brittle
+  3: { pitch: 0.5, rate: 0.74, prefer: "male" }, // Bastion — gruff, growling brute
+  4: { pitch: 0.4, rate: 0.64, prefer: "any" }, // Vesper — slow, warped, otherworldly
+  5: { pitch: 0.25, rate: 0.6, prefer: "male" }, // Sable — deep, booming core-mind
 };
 
 const DEFAULT_PROFILE: VoiceProfile = { pitch: 1, rate: 1, prefer: "any" };
@@ -71,13 +71,15 @@ if (voiceSupported()) {
   window.speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
 }
 
-// Spanish voices tend to read these (mostly-Spanish) replies far better than the
-// system default; fall back gracefully when none are installed.
-const FEMALE_HINT = /(female|mujer|monica|mónica|paulina|helena|laura|sara|google español)/i;
-const MALE_HINT = /(male|hombre|jorge|diego|carlos|juan|enrique)/i;
+// Match common system-voice names to a gender so each Keeper keeps a consistent
+// register; falls back gracefully when none of these are installed.
+const FEMALE_HINT = /(female|samantha|victoria|karen|moira|tessa|fiona|serena|allison|ava|susan|zoe)/i;
+const MALE_HINT = /(male|daniel|alex|fred|oliver|thomas|gordon|aaron|arthur|reed|tom)/i;
 
+// Rare fallback only: the live model and offline lines are English, but if a
+// reply ever comes back in Spanish we still want a sensible es-* voice.
 function looksSpanish(text: string): boolean {
-  return /[áéíóúñ¿¡]/i.test(text) || /\b(el|la|los|las|que|de|no|por|para|con|una?)\b/i.test(text);
+  return /[áéíóúñ¿¡]/i.test(text);
 }
 
 function pickVoice(profile: VoiceProfile, text: string): SpeechSynthesisVoice | null {

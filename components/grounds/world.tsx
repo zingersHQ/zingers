@@ -52,11 +52,11 @@ const GUARDIAN_PAD: [number, number, number] = [15, 0, -6];
 // escalating evolution tier: the intern reads as a rookie, the dark mage a crowned
 // legend. `type` only seeds incidental body variety since the colour is overridden.
 const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: string; xp: number; type: CreatureType }[] = [
-  { level: 1, name: "El Becario", title: "The Intern", color: "#f0a93a", xp: 40, type: "RHETORIC" },
-  { level: 2, name: "La Bibliotecaria", title: "The Archivist", color: "#6a6bff", xp: 320, type: "LOGIC" },
-  { level: 3, name: "El Centinela", title: "The Sentinel", color: "#36d39a", xp: 1100, type: "COMPOSURE" },
-  { level: 4, name: "El Oráculo", title: "The Oracle", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
-  { level: 5, name: "El Mago Oscuro", title: "The Dark Mage", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
+  { level: 1, name: "Tibble", title: "The Greeter", color: "#f0a93a", xp: 40, type: "RHETORIC" },
+  { level: 2, name: "Quill", title: "The Archivist", color: "#6a6bff", xp: 320, type: "LOGIC" },
+  { level: 3, name: "Bastion", title: "The Warden", color: "#36d39a", xp: 1100, type: "COMPOSURE" },
+  { level: 4, name: "Vesper", title: "The Diviner", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
+  { level: 5, name: "Sable", title: "The Vaultheart", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
 ];
 const PODIUM_A: [number, number, number] = [ARENA[0] - 1.9, 0, 0];
 const PODIUM_B: [number, number, number] = [ARENA[0] + 1.9, 0, 0];
@@ -429,8 +429,8 @@ function ArenaPlatform() {
 
 // ── The Guardian's Spire ─────────────────────────────────────────────────────
 // A diegetic entry point to the single-player extraction game. Rather than a flat
-// menu — or a cramped lineup — the five guardians ascend a glowing spire by level:
-// El Becario near the base, El Mago Oscuro crowning the top. Each floats on its own
+// menu — or a cramped lineup — the five Keepers ascend a glowing spire by level:
+// Tibble near the base, Sable the Vaultheart crowning the top. Each floats on its own
 // dais wrapped in a strong aura + light beacon so they clearly outrank the regular
 // agents perched on the climbing Tower. Walk up to the base to open the full ladder.
 const GUARDIAN_COL = "#c77dff";
