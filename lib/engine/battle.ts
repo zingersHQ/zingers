@@ -18,8 +18,8 @@ import {
 } from "./roster";
 import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
 import { banterLine } from "./banter";
-import { makeAgent, type Agent, type AgentView } from "./agent";
-import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type FighterPub, type ResolveInfo, type Strat } from "@/lib/types";
+import { makeAgent, type Agent, type AgentTools, type AgentTurnCtx, type AgentView, type ScoutResult, type SimResult } from "./agent";
+import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
 
 class Fighter {
   key: string;
@@ -39,6 +39,7 @@ class Fighter {
   guardTurns = 0;
   deflect = false;
   lastMove: string | null = null;
+  moveHistory: string[] = [];
   creCount = 0;
   lines: string[] = [];
   best: [number, string] = [0, ""];
@@ -121,6 +122,7 @@ interface AgentChoice {
   intent: string;
   line: string;
   why: string;
+  trace: ToolStep[];
 }
 
 // How the handler's training tilts move selection (mock) and is briefed (live).
@@ -176,13 +178,21 @@ function houseLine(att: Fighter, opp: Fighter, moveId: string, topic: string, rn
 async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number, rng: Rng): Promise<AgentChoice> {
   const moves = legalMoves(att, opp);
   const valid = Object.fromEntries(moves.map((m) => [m.id, m]));
-  const out = await att.agent.act(buildView(att, opp, topic, rnd));
+  const trace: ToolStep[] = [];
+  const ctx: AgentTurnCtx = {
+    tools: buildTools(att, opp),
+    onStep: (s) => {
+      if (trace.length < 8) trace.push(s);
+    },
+  };
+  const out = await att.agent.act(buildView(att, opp, topic, rnd), ctx);
   if (out && out.move && valid[out.move]) {
     return {
       move: valid[out.move],
       intent: (out.intent || MOCK_INTENT[out.move] || "Press the advantage").slice(0, 42),
       line: (out.line || houseLine(att, opp, out.move, topic, rng)).slice(0, 160),
       why: (out.why || `${valid[out.move].name} fits the trained doctrine here.`).slice(0, 160),
+      trace,
     };
   }
   // heuristic fallback — pick the move best matching the trained doctrine
@@ -192,6 +202,7 @@ async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number,
     intent: out?.intent || MOCK_INTENT[m.id] || "Press the advantage",
     line: out?.line || houseLine(att, opp, m.id, topic, rng),
     why: out?.why || `${m.name} fits the trained doctrine here.`,
+    trace,
   };
 }
 
@@ -319,7 +330,75 @@ function resolve(att: Fighter, opp: Fighter, move: Move, quality: number, rng: R
   att.tilted = 0;
   att.confused = 0;
   att.lastMove = move.id;
+  att.moveHistory.push(move.name);
   return [dmg, info];
+}
+
+// ── engine-backed agent tools (read-only, real math; no faked outputs) ───────
+function matchupLabel(tm: number): SimResult["matchup"] {
+  return tm > 1 ? "super-effective" : tm < 1 ? "resisted" : "neutral";
+}
+
+// The deterministic EXPECTATION of a move against the live state: the same math
+// resolve() uses, with mean quality/jitter (1.0) and no RNG or mutation. Honest
+// preview — what the engine would do on average — handed to the agent as a tool.
+function previewMove(att: Fighter, opp: Fighter, move: Move): SimResult {
+  const utility: string[] = [];
+  if (move.self_hyped) utility.push("self Hyped");
+  if (move.self_guard) utility.push(`self Guard+${move.self_guard[0]}`);
+  if (move.heal) utility.push(`heal ${move.heal}`);
+  if (move.deflect) utility.push("brace for Deflect");
+  if (move.recoil) utility.push(`recoil ${move.recoil}`);
+
+  const tm = typeMult(att.type, opp.type);
+  let expected = 0;
+  if (move.base > 0) {
+    const sc = statScale(att.stats[move.stat]);
+    const arena = ARENA.mult[att.type] ?? 1.0;
+    let mult = 1.0;
+    if (opp.exposed) mult *= 1.2;
+    if (att.hyped) mult *= 1.2;
+    if (move.bonus_if_tilted && opp.tilted) mult *= 1.0 + move.bonus_if_tilted;
+    if (move.after_deflect && att.lastMove === "deflect") mult *= 1.0 + move.after_deflect;
+    if (move.scale_low_hp) mult *= 1.0 + (HP_MAX - att.hp) / HP_MAX;
+    const raw = move.base * sc * tm * arena * mult; // q = 1.0, jitter mean = 1.0
+    let dmg = Math.round(raw) - (BASE_DEFENSE + opp.guard);
+    dmg = Math.max(1, dmg);
+    if (dmg > MAX_HIT) dmg = MAX_HIT;
+    expected = dmg;
+  }
+
+  return {
+    moveId: move.id,
+    legal: true,
+    name: move.name,
+    expectedDamage: expected,
+    matchup: matchupLabel(tm),
+    appliesStatus: move.apply ? `${move.apply[0]} (${Math.round(move.apply[1] * 100)}% chance)` : null,
+    finisher: !!move.finisher,
+    utility: utility.length ? utility : undefined,
+    note: move.requires === "opp_open" ? "requires opponent Exposed or Tilted" : undefined,
+  };
+}
+
+function buildTools(att: Fighter, opp: Fighter): AgentTools {
+  const legal = legalMoves(att, opp);
+  const byId = new Map(legal.map((m) => [m.id, m]));
+  return {
+    simulateMove: (id: string): SimResult => {
+      const m = byId.get(id);
+      if (!m) return { moveId: id, legal: false, note: "not a legal move this turn" };
+      return previewMove(att, opp, m);
+    },
+    scoutOpponent: (): ScoutResult => ({
+      name: opp.name,
+      type: opp.type,
+      hp: opp.hp,
+      statuses: statusStr(opp),
+      lastLine: opp.lines.length ? opp.lines[opp.lines.length - 1] : "(opponent has not spoken yet)",
+      recentMoves: opp.moveHistory.slice(-3),
+    }),
+  };
 }
 
 export interface SideConfig {
@@ -350,7 +429,7 @@ export async function* battleEvents(
     rnd += 1;
     const att = order[(rnd - 1) % 2];
     const opp = order[rnd % 2];
-    const { move, intent, line, why } = await agentTurn(att, opp, topic, rnd, rng);
+    const { move, intent, line, why, trace } = await agentTurn(att, opp, topic, rnd, rng);
     att.lines.push(line);
     let [q, hl, ruling] = await judge(att, opp, move, line, topic, mock, rng);
     if (hl) {
@@ -381,6 +460,7 @@ export async function* battleEvents(
       ruling,
       a_hp: a.hp,
       b_hp: b.hp,
+      trace: trace.length ? trace : undefined,
     };
     if (!opp.alive()) break;
   }

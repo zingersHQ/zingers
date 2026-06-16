@@ -108,6 +108,15 @@ export interface BattleStart {
   b: FighterPub;
 }
 
+// One step of an agent's in-turn investigation: a tool it called, the args it
+// passed, and the engine's real result. Streamed so spectators can watch the
+// champion scout and simulate before it commits — proof the agency is real.
+export interface ToolStep {
+  tool: string;
+  args: Record<string, unknown>;
+  result: unknown;
+}
+
 export interface BattleTurn {
   type: "turn";
   round: number;
@@ -125,6 +134,7 @@ export interface BattleTurn {
   ruling: string;
   a_hp: number;
   b_hp: number;
+  trace?: ToolStep[]; // engine tools the agent invoked this turn (live brains only)
 }
 
 export interface BattleEnd {

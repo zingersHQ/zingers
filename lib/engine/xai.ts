@@ -2,13 +2,85 @@
 // Keys never reach the browser; routes that call this are Node-runtime only.
 import "server-only";
 
-const ENDPOINT = "https://api.x.ai/v1/chat/completions";
+export const ENDPOINT = "https://api.x.ai/v1/chat/completions";
 export const MODEL = process.env.ZINGERS_MODEL || process.env.BATTLER_MODEL || "grok-4.20-0309-non-reasoning";
 export const KEY = process.env.XAI_API_KEY || null;
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
+}
+
+// ── Function-calling primitives (OpenAI-compatible) ──────────────────────────
+// These let an agent actually EXECUTE tools in a reason→act→observe loop, rather
+// than emit one structured string. Works for xAI Grok and any /chat/completions
+// endpoint that supports `tools` + `tool_calls`.
+export interface ToolFunctionSpec {
+  type: "function";
+  function: { name: string; description: string; parameters: Record<string, unknown> };
+}
+
+export interface RawToolCall {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+}
+
+export interface RawMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
+  tool_calls?: RawToolCall[];
+  tool_call_id?: string;
+  name?: string;
+}
+
+export interface ChatCfg {
+  endpoint: string;
+  key: string | null;
+  model: string;
+}
+
+export const houseCfg = (): ChatCfg => ({ endpoint: ENDPOINT, key: KEY, model: MODEL });
+
+// One round-trip of a tool-calling conversation: send the running transcript
+// (incl. prior tool results) and return the assistant message, which may carry
+// `tool_calls` to execute or final `content`. The caller owns the loop.
+export async function chatRawWith(
+  cfg: ChatCfg,
+  messages: RawMessage[],
+  opts: {
+    tools?: ToolFunctionSpec[];
+    toolChoice?: unknown;
+    temperature?: number;
+    maxTokens?: number;
+    timeoutMs?: number;
+    attempts?: number;
+  } = {},
+): Promise<RawMessage | null> {
+  const { tools, toolChoice, temperature = 0.8, maxTokens = 400, timeoutMs = 60000, attempts = 3 } = opts;
+  const payload: Record<string, unknown> = { model: cfg.model, messages, temperature, max_tokens: maxTokens };
+  if (tools && tools.length) payload.tools = tools;
+  if (toolChoice !== undefined) payload.tool_choice = toolChoice;
+  const body = JSON.stringify(payload);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (cfg.key) headers.Authorization = `Bearer ${cfg.key}`;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeoutMs);
+      const res = await fetch(cfg.endpoint, { method: "POST", headers, body, signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`chat ${res.status}`);
+      const d = await res.json();
+      const msg = d?.choices?.[0]?.message;
+      if (!msg) return null;
+      return { role: "assistant", content: msg.content ?? null, tool_calls: msg.tool_calls };
+    } catch {
+      if (attempt === attempts - 1) return null;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+  }
+  return null;
 }
 
 // Generic OpenAI-compatible chat call. Works for xAI Grok, OpenAI, OpenRouter,
