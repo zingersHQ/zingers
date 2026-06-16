@@ -90,8 +90,12 @@ function pickVoice(profile: VoiceProfile, text: string): SpeechSynthesisVoice | 
 
   if (profile.prefer !== "any") {
     const hint = profile.prefer === "female" ? FEMALE_HINT : MALE_HINT;
-    const match = pool.find((v) => hint.test(v.name));
-    if (match) return match;
+    const matches = pool.filter((v) => hint.test(v.name));
+    // Among gender matches, favour a local (offline) voice — remote voices
+    // (e.g. "Google español") are flaky and can fail to play silently.
+    const localMatch = matches.find((v) => v.localService);
+    if (localMatch) return localMatch;
+    if (matches[0]) return matches[0];
   }
   // Prefer a local (offline) voice for instant, reliable playback.
   return pool.find((v) => v.localService) ?? pool[0] ?? null;
@@ -110,6 +114,28 @@ export function stopVoice() {
   if (!voiceSupported()) return;
   try {
     window.speechSynthesis.cancel();
+  } catch {
+    /* ignore */
+  }
+}
+
+// Browsers gate speechSynthesis behind a user gesture, and crucially the FIRST
+// utterance must be kicked off from within one. Our guardian lines are spoken
+// *after* an awaited fetch (no longer inside the gesture), so without unlocking
+// up-front they're silently dropped — especially on Safari. Call this from the
+// click/submit handler (synchronously) to prime the engine; once unlocked, all
+// later async speak() calls in the session play normally.
+let primed = false;
+
+export function primeVoice() {
+  if (primed || !voiceSupported()) return;
+  try {
+    const synth = window.speechSynthesis;
+    synth.resume();
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    synth.speak(u);
+    primed = true;
   } catch {
     /* ignore */
   }
@@ -145,7 +171,15 @@ export function speak(text: string, level: number, opts?: { onEnd?: () => void }
   u.onend = () => opts?.onEnd?.();
   u.onerror = () => opts?.onEnd?.();
 
-  // Chrome occasionally drops the queued utterance if it's still "speaking"
-  // from a just-cancelled one; a microtask defer makes it reliable.
-  setTimeout(() => synth.speak(u), 0);
+  // Chrome drops the queued utterance if it's still "speaking" from a
+  // just-cancelled one, and can get stuck "paused"; deferring a tick and
+  // nudging resume() makes playback reliable.
+  setTimeout(() => {
+    try {
+      synth.resume();
+      synth.speak(u);
+    } catch {
+      opts?.onEnd?.();
+    }
+  }, 0);
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BRAND } from "@/lib/brand";
-import { speak, stopVoice, voiceSupported } from "@/lib/voice";
+import { primeVoice, speak, stopVoice, voiceSupported } from "@/lib/voice";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
@@ -295,7 +295,11 @@ function Battle({
 
   const toggleVoice = useCallback(() => {
     setVoiceOn((on) => {
-      if (on) stopVoice();
+      if (on) {
+        stopVoice();
+      } else {
+        primeVoice(); // unlock while we have the click gesture
+      }
       return !on;
     });
   }, []);
@@ -401,6 +405,9 @@ function Battle({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            // Unlock TTS from inside the gesture — the reply is spoken later,
+            // after the fetch, when we no longer have user activation.
+            if (voiceOn) primeVoice();
             send();
           }}
           style={{ display: "flex", gap: 10, marginTop: 12 }}

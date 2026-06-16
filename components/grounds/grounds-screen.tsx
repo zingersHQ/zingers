@@ -19,6 +19,7 @@ import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
+import { setMood } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -131,6 +132,13 @@ export default function GroundsScreen() {
 
   const inMatch = bout.phase === "live";
   const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun;
+
+  // Swap the soundscape into the tense battle loop whenever a fight is on — the
+  // live arena/gauntlet bout or the Guardian face-off — and back to calm after.
+  useEffect(() => {
+    const inBattle = inMatch || overlay === "guardian";
+    setMood(inBattle ? "battle" : "grounds");
+  }, [inMatch, overlay]);
 
   // open the nearby interaction (shared by the E key and the on-screen prompt).
   // The central arena routes to the world's scenario; perched-agent challenges

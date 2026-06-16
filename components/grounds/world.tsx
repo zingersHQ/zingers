@@ -1105,12 +1105,24 @@ function Handler({
   const altLast = useRef(-999);
   const { camera } = useThree();
 
-  function setAnim(name: "idle" | "walk" | "run" | "jump") {
-    if (cur.current === name) return;
+  // Single entry point for body animation. Always fades out whatever `cur`
+  // points at and fades in the new clip, so the `cur` ref can never desync from
+  // what's actually playing on the mixer (that desync is what kept the walk
+  // cycle running while idle or flying). `force` re-pops a clip already current
+  // (used so each multi-jump re-triggers the leap).
+  function setAnim(
+    name: "idle" | "walk" | "run" | "jump",
+    opts?: { force?: boolean; fade?: number; timeScale?: number },
+  ) {
+    if (cur.current === name && !opts?.force) return;
+    const fade = opts?.fade ?? 0.18;
     const prev = built.actions[cur.current];
     const next = built.actions[name] || built.actions.idle;
-    prev?.fadeOut(0.18);
-    next?.reset().setEffectiveWeight(1).fadeIn(0.18).play();
+    if (prev && prev !== next) prev.fadeOut(fade);
+    if (next) {
+      next.setEffectiveTimeScale(opts?.timeScale ?? 1);
+      next.reset().setEffectiveWeight(1).fadeIn(fade).play();
+    }
     cur.current = name;
   }
 
@@ -1199,13 +1211,11 @@ function Handler({
       let d = want - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       heading.current += d * (1 - Math.exp(-(grounded ? TURN_GROUND : TURN_AIR) * dt));
-      if (grounded && !flyingMode) setAnim(sprint ? "run" : "walk");
     } else {
       // stickier stop on the ground, a gentle brake while flying, long glide mid-jump
       const stop = grounded ? STOP_GROUND : flyingMode ? STOP_FLY : STOP_AIR;
       const damp = Math.exp(-stop * dt);
       rb.setLinvel({ x: v.x * damp, y: v.y, z: v.z * damp }, true);
-      if (grounded && !flyingMode) setAnim("idle");
     }
 
     // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
@@ -1240,9 +1250,6 @@ function Handler({
         jetEmit.current += dt;
         if (jetEmit.current > 0.13) { jetEmit.current = 0; jetBurst.current++; }
       }
-      // hold a steady flight pose while the pack does the work; the forward lean
-      // below sells the direction of travel instead of moving legs
-      setAnim("idle");
     } else if (jumpEdge) {
       // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
       const air = jumps.current > 0;
@@ -1251,10 +1258,8 @@ function Handler({
       const cv = rb.linvel();
       rb.setLinvel({ x: cv.x, y: air ? AIR_JUMP : JUMP, z: cv.z }, true);
       jumpBeep(jumps.current - 1);
-      const j = built.actions.jump;
-      built.actions[cur.current]?.fadeOut(0.06);
-      j?.reset().setEffectiveTimeScale(air ? 1.9 : 1.5).fadeIn(0.06).play();
-      cur.current = "jump";
+      // snappy leap; force so a second/third jump re-pops the clip
+      setAnim("jump", { force: true, fade: 0.06, timeScale: air ? 1.9 : 1.5 });
       // launch pop — the body stretches upward as it leaps
       stretch.current = 1;
       // action-cam: punch the camera in toward the character on every air jump
@@ -1262,13 +1267,30 @@ function Handler({
       // the stroke that crosses the threshold kicks off the jetpack with a burst
       if (jumps.current > FLY_TRIGGER) jetBurst.current++;
     }
-    // airborne → jump pose, except while flying (the jetpack holds the hover pose)
-    if (!grounded && jumps.current <= FLY_TRIGGER && cur.current !== "jump") cur.current = "jump";
     // touchdown absorb — squash on the frame we regain the ground with downward speed
     if (grounded && !wasGrounded.current && v.y < -2) stretch.current = -1;
     wasGrounded.current = grounded;
     // pack deploys once we're flying (past the trigger), retracts on landing
     flying.current = jumps.current > FLY_TRIGGER;
+
+    // ── resolve the body animation from the REAL locomotion state ──
+    // One place, every frame, so the playing clip always matches the state:
+    //  • flying  → still hover pose (lean sells the motion, legs don't walk)
+    //  • airborne (jumped or walked off an edge) → the leap/fall pose
+    //  • grounded + moving → walk / run
+    //  • grounded + still → idle
+    // `endVy > 1.5` treats the launch frame (ground sensor may still read true)
+    // as airborne so the jump pose isn't instantly overwritten by walk.
+    const endVy = rb.linvel().y;
+    if (flying.current) {
+      setAnim("idle");
+    } else if (!grounded || endVy > 1.5) {
+      if (cur.current !== "jump") setAnim("jump");
+    } else if (len > 0) {
+      setAnim(sprint ? "run" : "walk");
+    } else {
+      setAnim("idle");
+    }
 
     // ── tower checkpoints ──
     // ratchet to the highest landing pad we've actually touched down on

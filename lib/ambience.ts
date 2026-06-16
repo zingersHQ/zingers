@@ -44,6 +44,44 @@ const MOTIFS: number[][] = [
   [4, -1, 2, -1, 5, -1, -1, -1],
 ];
 
+// ── Battle mood ──────────────────────────────────────────────────────────────
+// When a fight is on we morph the same music-box into something tense and
+// driving: a dark minor loop (i–VI–VII–v in A minor), a low pulse on the
+// downbeat for adrenaline, and a tighter, busier melody. Still all synthesised,
+// no bass drone — it reads as "stakes are up" without turning broody.
+const BATTLE_CHORDS: number[][] = [
+  [57, 60, 64, 69], // A minor
+  [53, 57, 60, 65], // F  major
+  [55, 59, 62, 67], // G  major
+  [52, 55, 59, 64], // E  minor
+];
+
+// A minor pentatonic, biting and a little higher (A4 → C6).
+const BATTLE_MELODY = [69, 72, 74, 76, 79, 81, 84, 88].map(midi);
+
+// Busier, more syncopated phrases — fewer rests, more momentum.
+const BATTLE_MOTIFS: number[][] = [
+  [4, 2, -1, 3, 4, -1, 2, 1],
+  [2, -1, 4, 3, 1, -1, 2, -1],
+  [5, 4, -1, 2, 3, -1, 1, 2],
+  [4, -1, 3, 4, 5, -1, 2, -1],
+];
+
+export type Mood = "grounds" | "battle";
+
+interface MoodConfig {
+  chords: number[][];
+  melody: number[];
+  motifs: number[][];
+  tempo: number; // ms per step
+  birds: boolean; // birdsong (calm) vs. a low pulse (tense)
+}
+
+const MOODS: Record<Mood, MoodConfig> = {
+  grounds: { chords: CHORDS, melody: MELODY, motifs: MOTIFS, tempo: 520, birds: true },
+  battle: { chords: BATTLE_CHORDS, melody: BATTLE_MELODY, motifs: BATTLE_MOTIFS, tempo: 300, birds: false },
+};
+
 export class Ambience {
   private ctx: AudioContext | null = null;
   private out: GainNode | null = null; // master fade control
@@ -59,9 +97,29 @@ export class Ambience {
   private motifIdx = 0;
   private on = false;
   private vol = 0.28;
+  private mood: Mood = "grounds";
 
   get playing() {
     return this.on;
+  }
+
+  // Swap the soundscape between the calm Grounds tune and a tense battle loop.
+  // Safe to call any time — if we're already playing, it crossfades into the new
+  // mood on the next beat; otherwise it just sets what start() will play.
+  setMood(mood: Mood) {
+    if (mood === this.mood) return;
+    this.mood = mood;
+    this.step = 0;
+    this.chordIdx = 0;
+    this.motifIdx = 0;
+    if (!this.on) return;
+    // restart the melodic loop immediately so the change is felt at once
+    if (this.stepTimer) clearTimeout(this.stepTimer);
+    this.tick();
+    // birdsong only belongs to the calm Grounds; (re)arm the right texture
+    if (this.birdTimer) clearTimeout(this.birdTimer);
+    this.birdTimer = null;
+    if (MOODS[this.mood].birds) this.scheduleBird();
   }
 
   private build() {
@@ -113,7 +171,7 @@ export class Ambience {
     out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), now);
     out.gain.linearRampToValueAtTime(this.vol, now + 1.2);
     this.tick();
-    this.scheduleBird();
+    if (MOODS[this.mood].birds) this.scheduleBird();
   }
 
   stop() {
@@ -158,27 +216,53 @@ export class Ambience {
   // once per bar.
   private tick() {
     if (!this.on || !this.ctx) return;
-    const chord = CHORDS[this.chordIdx];
-    const motif = MOTIFS[this.motifIdx];
+    const cfg = MOODS[this.mood];
+    const battle = this.mood === "battle";
+    const chord = cfg.chords[this.chordIdx % cfg.chords.length];
+    const motif = cfg.motifs[this.motifIdx % cfg.motifs.length];
+
+    // a low pulse on each bar's downbeat drives the battle without a drone
+    if (battle && this.step === 0) this.pulse(midi(chord[0] - 12));
 
     // gentle harmony — a soft chord tone every other beat, lots of space
     if (this.step % 2 === 0) {
-      this.pluck(midi(chord[(this.step / 2) % chord.length]), 0.02, 1.4);
+      this.pluck(midi(chord[(this.step / 2) % chord.length]), battle ? 0.03 : 0.02, battle ? 0.9 : 1.4);
     }
 
-    // soft melody on top
+    // melody on top — brighter & busier in battle
     const m = motif[this.step % motif.length];
-    if (m >= 0) this.pluck(MELODY[m], 0.045, 1.1);
+    if (m >= 0) this.pluck(cfg.melody[m], battle ? 0.055 : 0.045, battle ? 0.7 : 1.1);
 
     this.step++;
     if (this.step >= 8) {
       this.step = 0;
-      this.chordIdx = (this.chordIdx + 1) % CHORDS.length;
-      this.motifIdx = (this.motifIdx + 1) % MOTIFS.length;
+      this.chordIdx = (this.chordIdx + 1) % cfg.chords.length;
+      this.motifIdx = (this.motifIdx + 1) % cfg.motifs.length;
     }
-    // slow and calm (~half the old tempo) with a gentle swing
+    // gentle swing; battle is roughly twice the tempo of the calm Grounds
     const swing = this.step % 2 === 0 ? 1.08 : 0.92;
-    this.stepTimer = setTimeout(() => this.tick(), 520 * swing);
+    this.stepTimer = setTimeout(() => this.tick(), cfg.tempo * swing);
+  }
+
+  // a short low thump for battle drive: a fast pitch-dropping sine with a
+  // snappy envelope — adrenaline, not a sustained bass drone
+  private pulse(freq: number) {
+    const ctx = this.ctx;
+    if (!ctx || !this.voice) return;
+    const t = ctx.currentTime + 0.02;
+    const g = ctx.createGain();
+    g.connect(this.voice);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+
+    const o = ctx.createOscillator();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.6), t + 0.18);
+    o.connect(g);
+    o.start(t);
+    o.stop(t + 0.46);
   }
 
   // a warm, soft chime: sine fundamental + a quiet octave, soft attack and a
