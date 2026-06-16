@@ -913,7 +913,9 @@ const TURN_GROUND = 22, TURN_AIR = 16;
 // jetpack flight (unlocked after 4 consecutive jumps): hold to thrust smoothly
 const FLY_TRIGGER = 4;     // consecutive jumps needed before the pack deploys
 const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
-const FLY_THRUST = 14;     // ease rate toward climb velocity (frame-rate independent)
+const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead of full gravity)
+const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
+const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1216,18 +1218,26 @@ function Handler({
     const jumpHeld = space || (controlsEnabled && !!touchBtn.current?.jumpHeld);
 
     if (jumps.current > FLY_TRIGGER) {
-      // ── jetpack flight ── hold jump to thrust upward; release to glide. Read the
-      // LIVE velocity (the steering block above just wrote x/z) and only touch y, so
-      // holding thrust never cancels your WASD steering. Ease toward the climb speed
-      // frame-rate independently so the ascent is smooth instead of stuttering.
+      // ── jetpack flight ── a fully controlled hover so vertical motion stays
+      // fluid: ease the vertical velocity toward a strong climb while thrusting, or
+      // a gentle sink when released — never letting full gravity yank you straight
+      // down between presses (that's what made tapping feel clunky). Read the LIVE
+      // velocity (the steering block above just wrote x/z) and only touch y, so
+      // thrust never fights your WASD steering.
+      const cv = rb.linvel();
+      const targetY = jumpHeld ? FLY_CLIMB : FLY_SINK;
+      const rate = jumpHeld ? FLY_THRUST : FLY_GLIDE;
+      const ky = 1 - Math.exp(-rate * dt);
+      rb.setLinvel({ x: cv.x, y: cv.y + (targetY - cv.y) * ky, z: cv.z }, true);
       if (jumpHeld) {
-        const cv = rb.linvel();
-        const ky = 1 - Math.exp(-FLY_THRUST * dt);
-        rb.setLinvel({ x: cv.x, y: cv.y + (FLY_CLIMB - cv.y) * ky, z: cv.z }, true);
         // continuous exhaust while the thruster is firing (paced, not per-frame)
         jetEmit.current += dt;
         if (jetEmit.current > 0.045) { jetEmit.current = 0; jetBurst.current++; }
         if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + dt * 2.4);
+      } else {
+        // idle hover still puffs occasionally so the pack reads as "on"
+        jetEmit.current += dt;
+        if (jetEmit.current > 0.13) { jetEmit.current = 0; jetBurst.current++; }
       }
       // hold a steady flight pose while the pack does the work; the forward lean
       // below sells the direction of travel instead of moving legs
