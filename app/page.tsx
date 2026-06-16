@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import GroundsScreen from "@/components/grounds/grounds-screen";
 
 export default function Home() {
-  redirect("/grounds");
+  return <GroundsScreen />;
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 import { Ambience } from "@/lib/ambience";
 import { setSfxEnabled } from "@/lib/sfx";
 import { STORAGE } from "@/lib/brand";
@@ -18,10 +19,14 @@ function initialPref(): boolean {
   }
 }
 
-export function AmbientToggle() {
+export function AmbientToggle({ compact = false }: { compact?: boolean }) {
   const engineRef = useRef<Ambience | null>(null);
   const armedRef = useRef(false);
-  const [enabled, setEnabled] = useState<boolean>(initialPref);
+  // Start from the SSR-safe default so the server and first client render
+  // agree (the icon is a nested <svg>, which suppressHydrationWarning can't
+  // cover). The stored preference is applied after mount.
+  const [enabled, setEnabled] = useState<boolean>(true);
+  useEffect(() => setEnabled(initialPref()), []);
 
   useEffect(() => {
     setSfxEnabled(enabled);
@@ -69,20 +74,23 @@ export function AmbientToggle() {
       aria-label={enabled ? "Mute ambience" : "Play ambience"}
       title={enabled ? "Ambience on — calm pad, wind & birdsong" : "Ambience muted"}
       style={{
-        padding: "8px 12px",
+        padding: compact ? "8px 9px" : "8px 12px",
         display: "flex",
         alignItems: "center",
         gap: 7,
         cursor: "pointer",
         color: enabled ? "var(--ink)" : "var(--muted2)",
+        lineHeight: 0,
       }}
     >
-      <span suppressHydrationWarning style={{ fontSize: 15, lineHeight: 1, opacity: enabled ? 1 : 0.6 }}>
-        {enabled ? "🔊" : "🔈"}
+      <span suppressHydrationWarning style={{ display: "grid", placeItems: "center", opacity: enabled ? 1 : 0.6 }}>
+        {enabled ? <Volume2 size={16} strokeWidth={2} /> : <VolumeX size={16} strokeWidth={2} />}
       </span>
-      <span suppressHydrationWarning className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "var(--muted2)" }}>
-        {enabled ? "ON" : "OFF"}
-      </span>
+      {!compact && (
+        <span suppressHydrationWarning className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "var(--muted2)" }}>
+          {enabled ? "ON" : "OFF"}
+        </span>
+      )}
     </button>
   );
 }

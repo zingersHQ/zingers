@@ -9,14 +9,15 @@ import { BRAND } from "@/lib/brand";
 // (duels, the guardian, the league, training, your agent) is reached by
 // walking through the Grounds, not from a menu.
 const LINKS = [
-  { href: "/grounds", label: "Enter the Grounds" },
+  { href: "/", label: "Enter the Grounds" },
   { href: "/standings", label: "Standings" },
   { href: "/howitworks", label: "How it works" },
   { href: "/readme", label: "Whitepaper" },
 ];
 
 // Immersive surfaces — the actual game. No SaaS navbar bolted on top of these.
-const IMMERSIVE = ["/grounds", "/arena", "/guardian", "/house", "/league"];
+// The Grounds now live at the root path.
+const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
 
 export function Nav() {
   const path = usePathname();

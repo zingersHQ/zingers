@@ -17,10 +17,33 @@ const HERO_TYPE: CreatureType = "CHAOS";
 const ACC = "#7c5cff";
 
 export function FirstRun({ onClose }: { onClose: () => void }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  // On mobile the full pitch is too much — collapse to the single "live agent"
+  // slide (the character standing) before they claim their champion.
+  const slides = isMobile
+    ? [<Agents key="agents" />]
+    : [<Cover key="cover" />, <Agents key="agents" />, <Mind key="mind" />, <Reasoning key="reasoning" />, <Climb key="climb" />];
+  const count = slides.length;
+  const LAST = count - 1;
+
   const [i, setI] = useState(0);
-  const LAST = 4;
-  const next = useCallback(() => setI((v) => (v >= LAST ? v : v + 1)), []);
+  const next = useCallback(() => setI((v) => (v >= LAST ? v : v + 1)), [LAST]);
   const back = useCallback(() => setI((v) => Math.max(0, v - 1)), []);
+
+  // Keep the active index valid when the layout flips between desktop/mobile.
+  useEffect(() => {
+    setI((v) => Math.min(v, LAST));
+  }, [LAST]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -32,7 +55,7 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, next, back, onClose]);
+  }, [i, LAST, next, back, onClose]);
 
   return (
     <div
@@ -68,35 +91,33 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
             </span>
             <span className="mono" style={{ fontSize: 10, letterSpacing: 2.5, color: "var(--muted2)" }}>{BRAND.nameUpper}</span>
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-            {[0, 1, 2, 3, 4].map((d) => (
-              <button
-                key={d}
-                onClick={() => setI(d)}
-                aria-label={`slide ${d + 1}`}
-                style={{
-                  width: d === i ? 22 : 8,
-                  height: 8,
-                  borderRadius: 99,
-                  border: "none",
-                  cursor: "pointer",
-                  background: d === i ? ACC : "var(--line2)",
-                  transition: "all .3s cubic-bezier(.2,.8,.2,1)",
-                }}
-              />
-            ))}
-          </div>
-          <button onClick={onClose} className="mono" style={{ marginLeft: 14, background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
+          {count > 1 && (
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+              {slides.map((_, d) => (
+                <button
+                  key={d}
+                  onClick={() => setI(d)}
+                  aria-label={`slide ${d + 1}`}
+                  style={{
+                    width: d === i ? 22 : 8,
+                    height: 8,
+                    borderRadius: 99,
+                    border: "none",
+                    cursor: "pointer",
+                    background: d === i ? ACC : "var(--line2)",
+                    transition: "all .3s cubic-bezier(.2,.8,.2,1)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <button onClick={onClose} className="mono" style={{ marginLeft: count > 1 ? 14 : "auto", background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
             SKIP
           </button>
         </div>
 
         <div style={{ flex: 1, position: "relative", minHeight: 0, background: "#0a0813" }}>
-          {i === 0 && <Cover />}
-          {i === 1 && <Agents />}
-          {i === 2 && <Mind />}
-          {i === 3 && <Reasoning />}
-          {i === 4 && <Climb />}
+          {slides[i]}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", padding: "16px 22px", borderTop: "1px solid var(--line)" }}>
@@ -107,8 +128,8 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
           >
             ← back
           </button>
-          <span className="mono" style={{ marginLeft: "auto", marginRight: 16, fontSize: 11, color: "var(--muted2)" }}>
-            {i + 1} / 5
+          <span className="mono" style={{ marginLeft: "auto", marginRight: 16, fontSize: 11, color: "var(--muted2)", visibility: count > 1 ? "visible" : "hidden" }}>
+            {i + 1} / {count}
           </span>
           <button
             onClick={() => (i >= LAST ? onClose() : next())}

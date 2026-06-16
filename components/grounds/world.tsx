@@ -5,6 +5,7 @@ import { useGLTF, Environment, Lightformer, Html } from "@react-three/drei";
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import { ChevronsUp, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank } from "@/lib/evolve/progression";
@@ -1659,8 +1660,12 @@ function TouchControls({ active, move, btn, cam }: {
       )}
 
       <div style={{ position: "absolute", right: 22, bottom: 34, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
-        <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", fontSize: 22, background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>»</button>
-        <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", fontSize: 13, background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>JUMP</button>
+        <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
+          <Zap size={22} strokeWidth={2.2} fill={sprint ? "#0a0810" : "none"} />
+        </button>
+        <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>
+          <ChevronsUp size={30} strokeWidth={2.2} />
+        </button>
       </div>
     </div>
   );
