@@ -791,11 +791,19 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   );
 }
 
-const WALK = 7.6, RUN = 13.6, JUMP = 10.4, AIR_JUMP = 9.6;
+const WALK = 8.6, RUN = 15.2, JUMP = 10.4, AIR_JUMP = 9.6;
+// acceleration rates (per second) for dt-based, frame-rate-independent smoothing —
+// higher = snappier response to the stick. Ground is punchy; air is lighter; the
+// jetpack gives strong horizontal authority so you can steer your flight path.
+const ACCEL_GROUND = 22, ACCEL_AIR = 9, ACCEL_FLY = 16;
+// how quickly the body coasts to a stop when the stick is released (per second)
+const STOP_GROUND = 16, STOP_AIR = 1.4, STOP_FLY = 4.5;
+// how quickly the character pivots toward the move direction (per second)
+const TURN_GROUND = 22, TURN_AIR = 16;
 // jetpack flight (unlocked after 4 consecutive jumps): hold to thrust smoothly
 const FLY_TRIGGER = 4;     // consecutive jumps needed before the pack deploys
-const FLY_CLIMB = 8.4;     // target upward velocity while thrusting
-const FLY_THRUST_K = 0.12; // how snappily we ease toward that climb velocity
+const FLY_CLIMB = 9.6;     // target upward velocity while thrusting
+const FLY_THRUST_K = 0.16; // how snappily we ease toward that climb velocity
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -973,6 +981,12 @@ function Handler({
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
+  // procedural body polish: a forward/banked lean while flying, and a
+  // squash-&-stretch impulse that pops on launch and absorbs on landing
+  const leanX = useRef(0);
+  const leanZ = useRef(0);
+  const stretch = useRef(0); // +1 = stretch up (launch), -1 = squash down (land)
+  const wasGrounded = useRef(true);
   const lastCp = useRef<{ x: number; y: number; z: number } | null>(null);
   const altAccum = useRef(0);
   const altLast = useRef(-999);
@@ -1052,17 +1066,21 @@ function Handler({
       const sp = sprint ? RUN : WALK;
       // mx/mz already carry the analog throttle (their length is 0..1)
       const tvx = mx * sp, tvz = mz * sp;
-      // elastic snap toward the target velocity — punchy on the ground, lighter air control
-      const k = grounded ? 0.5 : 0.22;
+      // exponential smoothing toward the target velocity, frame-rate independent.
+      // ground is punchy; flying keeps strong authority so you can steer the pack;
+      // a plain jump keeps lighter air control
+      const accel = grounded ? ACCEL_GROUND : flyingMode ? ACCEL_FLY : ACCEL_AIR;
+      const k = 1 - Math.exp(-accel * dt);
       rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
       const want = Math.atan2(mx, mz);
       let d = want - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
-      heading.current += d * Math.min(1, dt * 14);
+      heading.current += d * (1 - Math.exp(-(grounded ? TURN_GROUND : TURN_AIR) * dt));
       if (grounded && !flyingMode) setAnim(sprint ? "run" : "walk");
     } else {
-      // stickier stop on the ground, glide through the air
-      const damp = grounded ? 0.55 : 0.92;
+      // stickier stop on the ground, a gentle brake while flying, long glide mid-jump
+      const stop = grounded ? STOP_GROUND : flyingMode ? STOP_FLY : STOP_AIR;
+      const damp = Math.exp(-stop * dt);
       rb.setLinvel({ x: v.x * damp, y: v.y, z: v.z * damp }, true);
       if (grounded && !flyingMode) setAnim("idle");
     }
@@ -1086,7 +1104,9 @@ function Handler({
         if (jetEmit.current > 0.045) { jetEmit.current = 0; jetBurst.current++; }
         if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.04);
       }
-      // hold an upright hover pose while the pack does the work — not the jump tuck
+      // hold a steady flight pose while the pack does the work — never the walk
+      // cycle, even when the stick is pushed to steer. the forward lean below sells
+      // the direction of travel instead of moving legs
       setAnim("idle");
     } else if (jumpEdge) {
       // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
@@ -1098,6 +1118,8 @@ function Handler({
       built.actions[cur.current]?.fadeOut(0.06);
       j?.reset().setEffectiveTimeScale(air ? 1.9 : 1.5).fadeIn(0.06).play();
       cur.current = "jump";
+      // launch pop — the body stretches upward as it leaps
+      stretch.current = 1;
       // action-cam: punch the camera in toward the character on every air jump
       if (air && camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.85);
       // the stroke that crosses the threshold kicks off the jetpack with a burst
@@ -1105,6 +1127,9 @@ function Handler({
     }
     // airborne → jump pose, except while flying (the jetpack holds the hover pose)
     if (!grounded && jumps.current <= FLY_TRIGGER && cur.current !== "jump") cur.current = "jump";
+    // touchdown absorb — squash on the frame we regain the ground with downward speed
+    if (grounded && !wasGrounded.current && v.y < -2) stretch.current = -1;
+    wasGrounded.current = grounded;
     // pack deploys once we're flying (past the trigger), retracts on landing
     flying.current = jumps.current > FLY_TRIGGER;
 
@@ -1149,7 +1174,23 @@ function Handler({
       camCue.current.moving = len > 0;
     }
 
-    if (inner.current) inner.current.rotation.y = heading.current;
+    // ── procedural body polish ──
+    // forward lean + bank while flying so steering reads visually (the legs stay
+    // still in the hover pose); decays to upright the instant we touch down
+    const lv2 = rb.linvel();
+    const hspeed = Math.hypot(lv2.x, lv2.z);
+    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : 0;
+    const tgtLeanZ = flyingMode ? Math.max(-0.35, Math.min(0.35, -ax * 0.35)) : 0;
+    const ls = 1 - Math.exp(-10 * dt);
+    leanX.current += (tgtLeanX - leanX.current) * ls;
+    leanZ.current += (tgtLeanZ - leanZ.current) * ls;
+    // squash-&-stretch impulse eases back to neutral
+    stretch.current += (0 - stretch.current) * (1 - Math.exp(-9 * dt));
+    if (inner.current) {
+      inner.current.rotation.set(leanX.current, heading.current, leanZ.current);
+      const s = stretch.current;
+      inner.current.scale.set(1 - s * 0.12, 1 + s * 0.18, 1 - s * 0.12);
+    }
 
     let next: NearTarget = null;
     if (!matchActive) {
@@ -1210,11 +1251,12 @@ function Handler({
         <group ref={inner} position={[0, -1.0, 0]}>
           <primitive object={built.root} />
           <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-            <ringGeometry args={[0.6, 0.72, 40]} />
-            <meshBasicMaterial color="#39e0ff" transparent opacity={0.7} side={THREE.DoubleSide} />
-          </mesh>
         </group>
+        {/* ground ring stays flat & upright — outside the leaning/squashing body group */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.96, 0]}>
+          <ringGeometry args={[0.6, 0.72, 40]} />
+          <meshBasicMaterial color="#39e0ff" transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
       </RigidBody>
     </>
   );

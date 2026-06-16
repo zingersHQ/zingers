@@ -11,6 +11,19 @@ import { appearanceOf } from "@/lib/evolve/appearance";
 const MODEL = "/models/RobotExpressive.glb";
 useGLTF.preload(MODEL);
 
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+// small deterministic string hash so each named mesh/material gets a stable
+// (but well-spread) per-part colour offset
+function hashName(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 function pickClip(clips: THREE.AnimationClip[], ...names: string[]): THREE.AnimationClip | undefined {
   for (const n of names) {
     const c = clips.find((c) => c.name.toLowerCase() === n) || clips.find((c) => c.name.toLowerCase().includes(n));
@@ -38,6 +51,8 @@ export function buildCharacter(
 ): BuiltCharacter {
   const root = skeletonClone(scene) as THREE.Group;
   const tcol = new THREE.Color(colorHex);
+  const baseHSL = { h: 0, s: 0, l: 0 };
+  tcol.getHSL(baseHSL);
   const app = appearanceOf(champion);
 
   root.traverse((o) => {
@@ -46,14 +61,31 @@ export function buildCharacter(
       m.castShadow = true;
       m.frustumCulled = false;
       const mat = (m.material as THREE.MeshStandardMaterial).clone();
-      if (mat.color) mat.color.copy(mat.color.clone().lerp(tcol, 0.5));
-      if ("emissive" in mat) {
-        mat.emissive = tcol.clone();
-        // keep the body readable as a lit object; the aura/shards/rings carry the bloom
-        mat.emissiveIntensity = app.emissive * 0.4;
+      // give each body part its own tone within the champion's colour family:
+      // a deterministic per-part offset shifts lightness/saturation (and a touch of
+      // hue) so the model reads as distinct armour/limbs/trim rather than one
+      // flat colour, while staying clearly "their" colour
+      const seed = hashName(m.name || mat.name || "");
+      const u = (seed % 997) / 997;          // 0..1, stable per part
+      const v = ((seed >> 7) % 997) / 997;   // a second independent stream
+      const part = new THREE.Color().setHSL(
+        (baseHSL.h + (u - 0.5) * 0.05 + 1) % 1,
+        clamp01(baseHSL.s * (0.85 + v * 0.45)),
+        clamp01(baseHSL.l + (u - 0.5) * 0.34),
+      );
+      if (mat.color) {
+        // blend the GLB's own part colour toward this tonal variant (keeps a hint
+        // of the source material's contrast between parts)
+        mat.color.copy(mat.color.clone().lerp(part, 0.78));
       }
-      if ("metalness" in mat) mat.metalness = app.metalness;
-      if ("roughness" in mat) mat.roughness = app.roughness;
+      if ("emissive" in mat) {
+        mat.emissive = part.clone();
+        // keep the body readable as a lit object; the aura/shards/rings carry the bloom
+        mat.emissiveIntensity = app.emissive * (0.3 + u * 0.25);
+      }
+      // vary the surface finish per part too — some pieces glossier/metallic
+      if ("metalness" in mat) mat.metalness = clamp01(app.metalness + (v - 0.5) * 0.35);
+      if ("roughness" in mat) mat.roughness = clamp01(app.roughness + (u - 0.5) * 0.3);
       mat.needsUpdate = true;
       m.material = mat;
     }
@@ -94,6 +126,10 @@ export function buildCharacter(
   };
   actions.punch?.setLoop(THREE.LoopOnce, 1);
   if (actions.punch) actions.punch.clampWhenFinished = true;
+  // play the leap once and hold the airborne pose instead of looping the whole
+  // hop (crouch→land) over and over while still in the air — that looked robotic
+  actions.jump?.setLoop(THREE.LoopOnce, 1);
+  if (actions.jump) actions.jump.clampWhenFinished = true;
   actions.idle?.reset().play();
 
   return { root, mixer, actions, bones, boneBase, morph, h: app.h, emissive: app.emissive };
