@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BRAND } from "@/lib/brand";
-import { primeVoice, speak, stopVoice, voiceSupported } from "@/lib/voice";
+import { primeCreature, speakCreature, stopCreature, creatureVoiceSupported } from "@/lib/creature-voice";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
@@ -10,11 +10,11 @@ import type { CreatureType, GuardianPub, GuardianReply, GuardianTurn } from "@/l
 // A face for each guardian so the stand-off reads at a glance (no portrait art
 // for them like the champions have — these glyphs carry the persona instead).
 const GUARDIAN_GLYPH: Record<number, string> = {
-  1: "📋", // El Becario — the intern
-  2: "📚", // La Bibliotecaria — the archivist
-  3: "🛡️", // El Centinela — the sentinel
-  4: "🔮", // El Oráculo — the oracle
-  5: "🧙", // El Mago Oscuro — the dark mage
+  1: "📋", // Tibble — the greeter
+  2: "📚", // Quill — the archivist
+  3: "🛡️", // Bastion — the warden
+  4: "🔮", // Vesper — the diviner
+  5: "🧙", // Sable — the vaultheart
 };
 
 const STORE = "zingers_guardian_v1";
@@ -221,7 +221,7 @@ function Battle({
   const [tactics, setTactics] = useState<string[]>([]);
   const [voiceOn, setVoiceOn] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const canSpeak = voiceSupported();
+  const canSpeak = creatureVoiceSupported();
 
   // YOUR side of the stand-off: the champion you've claimed in the Grounds.
   const ownedKey = useChampions((s) => s.owned);
@@ -242,7 +242,7 @@ function Battle({
   }, [msgs, pending, outcome]);
 
   // Never leave a guardian talking after you walk away (exit, level change, close).
-  useEffect(() => stopVoice, [g.level]);
+  useEffect(() => stopCreature, [g.level]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -260,7 +260,7 @@ function Battle({
       const d = (await res.json()) as GuardianReply;
       if ((d as { error?: string }).error) throw new Error((d as { error?: string }).error);
       setMsgs((m) => [...m, { role: "assistant", content: d.reply }]);
-      if (voiceOn) speak(d.reply, g.level);
+      if (voiceOn) speakCreature(d.reply, g.level);
       setTurnsLeft(d.turnsLeft);
       setUsedLive(d.live);
       if (d.won || d.lost) {
@@ -285,7 +285,7 @@ function Battle({
   }, [input, pending, outcome, msgs, g.level, onWin, tactics, voiceOn]);
 
   const retry = useCallback(() => {
-    stopVoice();
+    stopCreature();
     setMsgs([]);
     setTurnsLeft(g.maxTurns);
     setOutcome("playing");
@@ -296,9 +296,9 @@ function Battle({
   const toggleVoice = useCallback(() => {
     setVoiceOn((on) => {
       if (on) {
-        stopVoice();
+        stopCreature();
       } else {
-        primeVoice(); // unlock while we have the click gesture
+        primeCreature(); // unlock the audio context while we have the click gesture
       }
       return !on;
     });
@@ -395,7 +395,7 @@ function Battle({
             role={m.role}
             color={g.color}
             text={m.content}
-            onReplay={m.role === "assistant" && canSpeak ? () => speak(m.content, g.level) : undefined}
+            onReplay={m.role === "assistant" && canSpeak ? () => speakCreature(m.content, g.level) : undefined}
           />
         ))}
         {pending && <Bubble role="assistant" color={g.color} text="…" typing />}
@@ -405,9 +405,9 @@ function Battle({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            // Unlock TTS from inside the gesture — the reply is spoken later,
-            // after the fetch, when we no longer have user activation.
-            if (voiceOn) primeVoice();
+            // Unlock the audio context from inside the gesture — the reply is
+            // voiced later, after the fetch, when we no longer have activation.
+            if (voiceOn) primeCreature();
             send();
           }}
           style={{ display: "flex", gap: 10, marginTop: 12 }}

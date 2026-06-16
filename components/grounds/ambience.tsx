@@ -4,6 +4,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { Ambience } from "@/lib/ambience";
 import { registerAmbience } from "@/lib/ambience-bus";
 import { setSfxEnabled } from "@/lib/sfx";
+import { setCreatureVoiceEnabled } from "@/lib/creature-voice";
 import { STORAGE } from "@/lib/brand";
 
 // On/off control for the procedural ambient soundscape. Defaults to on, but
@@ -31,6 +32,7 @@ export function AmbientToggle({ compact = false }: { compact?: boolean }) {
 
   useEffect(() => {
     setSfxEnabled(enabled);
+    setCreatureVoiceEnabled(enabled);
     const engine = (engineRef.current ??= new Ambience());
     registerAmbience(engine); // let battle overlays morph the mood
     if (!enabled) {
