@@ -18,6 +18,7 @@ import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
+import { GuardianGame } from "@/components/guardian/game";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
@@ -35,7 +36,7 @@ export default function GroundsPage() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "guardian">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   const [matchView, setMatchView] = useState<MatchView | null>(null);
   const [betSide, setBetSide] = useState<"me" | "opp" | null>(null);
@@ -128,6 +129,7 @@ export default function GroundsPage() {
   const interact = useCallback(() => {
     if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
+    else if (near?.kind === "guardian") setOverlay("guardian");
     else if (near?.kind === "arena") setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
     else if (near?.kind === "challenge") {
       setOpponent(near.key);
@@ -443,11 +445,13 @@ export default function GroundsPage() {
             <b style={{ color: "var(--gold)" }}>tap</b> / <b style={{ color: "var(--gold)" }}>E</b> to{" "}
             {near.kind === "train"
               ? "train your champion"
-              : near.kind === "challenge"
-                ? `challenge ${near.name}`
-                : scenario.id === "gauntlet"
-                  ? "enter the Gauntlet"
-                  : "enter the Arena"}
+              : near.kind === "guardian"
+                ? "face the Guardian"
+                : near.kind === "challenge"
+                  ? `challenge ${near.name}`
+                  : scenario.id === "gauntlet"
+                    ? "enter the Gauntlet"
+                    : "enter the Arena"}
           </span>
         </button>
       )}
@@ -455,6 +459,15 @@ export default function GroundsPage() {
       {/* training overlay */}
       {overlay === "train" && owned && byKey[owned] && (
         <TrainOverlay ckey={owned} entry={byKey[owned]} onClose={() => setOverlay("none")} />
+      )}
+
+      {/* guardian duel overlay — opened from the Shrine in the world */}
+      {overlay === "guardian" && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.78)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 20 }}>
+            <GuardianGame embedded onClose={() => setOverlay("none")} />
+          </div>
+        </div>
       )}
 
       {/* arena / challenge overlay */}

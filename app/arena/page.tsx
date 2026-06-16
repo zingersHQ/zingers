@@ -134,6 +134,9 @@ export default function ArenaPage() {
 
   return (
     <main style={{ maxWidth: 1120, margin: "0 auto", padding: "26px 22px 80px" }}>
+      <Link href="/grounds" className="mono" style={{ position: "fixed", top: 14, left: 16, zIndex: 20, fontSize: 12, color: "var(--muted)" }}>
+        ← Zingers
+      </Link>
       <Header streak={predict.streak} best={predict.best} />
 
       {view === "setup" && (

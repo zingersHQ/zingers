@@ -38,10 +38,12 @@ export type NearTarget =
   | { kind: "train"; key: string }
   | { kind: "arena" }
   | { kind: "challenge"; key: string; name: string }
+  | { kind: "guardian" }
   | null;
 
 const ARENA: [number, number, number] = [0, 0, 0];
 const TRAIN_PAD: [number, number, number] = [-15, 0, 4];
+const GUARDIAN_PAD: [number, number, number] = [15, 0, -6];
 const PODIUM_A: [number, number, number] = [ARENA[0] - 1.9, 0, 0];
 const PODIUM_B: [number, number, number] = [ARENA[0] + 1.9, 0, 0];
 const SPAWN: [number, number, number] = [0, 0, 13];
@@ -239,6 +241,7 @@ export default function World({
           <Platforms biome={biome} shape={shape} count={sc.platformCount} />
           <Tower biome={biome} nodes={towerNodes} />
           {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
+          <GuardianShrine />
           <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
@@ -406,6 +409,69 @@ function ArenaPlatform() {
           </mesh>
         );
       })}
+    </group>
+  );
+}
+
+// ── The Guardian's Shrine ────────────────────────────────────────────────────
+// A diegetic entry point to the single-player extraction game: a monolith you
+// walk up to and challenge, instead of a menu page. A floating rune + beacon
+// make it readable from across the plaza.
+const GUARDIAN_COL = "#c77dff";
+
+function GuardianShrine() {
+  const runeRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (runeRef.current) {
+      runeRef.current.rotation.y += 0.012;
+      runeRef.current.position.y = 3.2 + Math.sin(t * 1.2) * 0.18;
+    }
+    if (glowRef.current) {
+      const m = glowRef.current.material as THREE.MeshBasicMaterial;
+      m.opacity = 0.1 + Math.sin(t * 1.6) * 0.04;
+    }
+  });
+  return (
+    <group position={GUARDIAN_PAD}>
+      {/* base dais */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} receiveShadow>
+        <circleGeometry args={[2.8, 48]} />
+        <meshStandardMaterial color="#1a1330" emissive={GUARDIAN_COL} emissiveIntensity={0.35} metalness={0.4} roughness={0.5} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <ringGeometry args={[2.7, 2.84, 48]} />
+        <meshBasicMaterial color={GUARDIAN_COL} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* the monolith — a solid obstacle you approach */}
+      <RigidBody type="fixed" colliders="cuboid">
+        <mesh position={[0, 2.1, 0]} castShadow>
+          <boxGeometry args={[1.3, 4.2, 0.5]} />
+          <meshStandardMaterial color="#221836" emissive={GUARDIAN_COL} emissiveIntensity={0.4} metalness={0.55} roughness={0.4} />
+        </mesh>
+      </RigidBody>
+
+      {/* floating rune */}
+      <mesh ref={runeRef} position={[0, 3.2, 0]}>
+        <torusGeometry args={[0.5, 0.07, 12, 5]} />
+        <meshStandardMaterial color={GUARDIAN_COL} emissive={GUARDIAN_COL} emissiveIntensity={2.4} metalness={0.3} roughness={0.3} />
+      </mesh>
+
+      {/* wayfinding beacon */}
+      <mesh ref={glowRef} position={[0, 6, 0]}>
+        <cylinderGeometry args={[0.4, 1.1, 12, 14, 1, true]} />
+        <meshBasicMaterial color={GUARDIAN_COL} transparent opacity={0.12} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      </mesh>
+      <pointLight position={[0, 4, 0]} intensity={60} color={GUARDIAN_COL} distance={26} />
+
+      <Html position={[0, 5.1, 0]} center distanceFactor={16} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>THE GUARDIAN</div>
+          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>talk a secret out of it</div>
+        </div>
+      </Html>
     </group>
   );
 }
@@ -1089,7 +1155,9 @@ function Handler({
     if (!matchActive) {
       const dTrain = Math.hypot(t.x - TRAIN_PAD[0], t.z - TRAIN_PAD[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
+      const dGuardian = Math.hypot(t.x - GUARDIAN_PAD[0], t.z - GUARDIAN_PAD[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
+      else if (dGuardian < 3.6) next = { kind: "guardian" };
       else if (dArena < 6.5) next = { kind: "arena" };
       // perched-agent challenge: nearest awaiting agent within reach (full 3D,
       // so you must actually climb up to it), only when you own a champion

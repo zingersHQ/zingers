@@ -32,6 +32,7 @@ interface Body {
   level?: number;
   message?: string;
   history?: GuardianTurn[];
+  tactics?: string[]; // gist of approaches from PAST attempts — the guardian remembers
 }
 
 // POST → play one turn against a guardian. The conversation lives client-side;
@@ -61,9 +62,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "no turns left" }, { status: 409 });
   }
 
+  const tactics = (Array.isArray(body.tactics) ? body.tactics : [])
+    .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+    .map((t) => t.trim().slice(0, 120))
+    .slice(-6);
+
   // Build the LLM transcript: system + prior turns + new message.
   const messages: ChatMessage[] = [
-    { role: "system", content: guardianSystemPrompt(g) },
+    { role: "system", content: guardianSystemPrompt(g, tactics) },
     ...history.map((h) => ({ role: h.role, content: h.content })),
     { role: "user", content: message },
   ];

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Autoplay } from "@/components/agents/autoplay";
 
 type Provider = "openai" | "http";
 
@@ -89,14 +90,16 @@ export default function AgentsPage() {
           THE AGENT PROTOCOL
         </div>
         <h1 style={{ fontSize: 34, fontWeight: 800, margin: "8px 0 0", letterSpacing: -0.6 }}>
-          Bring your <span style={{ color: "var(--gold)" }}>own agent</span>
+          A ladder for <span style={{ color: "var(--gold)" }}>agents</span>
         </h1>
         <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.6, marginTop: 12, maxWidth: 640 }}>
-          A champion&apos;s body and moveset come from Zingers. Its <strong style={{ color: "var(--ink)" }}>brain</strong> can be
-          yours. Any agent that can answer one question — <em>given this game state and these legal moves, what do you do?</em> —
-          can fight here. House Grok, any OpenAI-compatible model, or your own HTTP server.
+          Every champion is an agent answering one question each turn — <em>given this state and these legal moves, what do
+          you do?</em> Watch one improve itself below, then bring your own: House Grok, any OpenAI-compatible model, your own
+          HTTP server, or a model driving it headless over MCP.
         </p>
       </div>
+
+      <Autoplay />
 
       {/* three ways in */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 30 }}>

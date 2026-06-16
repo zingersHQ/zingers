@@ -249,6 +249,61 @@ export interface GuardianReply {
   secret?: string; // only present once won/lost
 }
 
+// ── Autoplay: an agent that improves ITSELF to climb the ladder ──────────────
+// A visible OODA loop — fight → reflect on the result → retune its own doctrine
+// → fight a tougher opponent. The point of the whole platform, made loud.
+
+export interface AutoplayStart {
+  type: "start";
+  learner: string;
+  learnerName: string;
+  learnerType: CreatureType;
+  rounds: number;
+  strat: Strat;
+  elo: number;
+  live: boolean; // true = real LLM bouts + reflection, false = offline heuristic
+}
+
+export interface AutoplayRound {
+  type: "round";
+  round: number;
+  opponent: string;
+  opponentName: string;
+  opponentType: CreatureType;
+  topic: string;
+}
+
+export interface AutoplayBout {
+  type: "bout";
+  round: number;
+  won: boolean;
+  winnerName: string;
+  rounds: number;
+  learnerHp: number;
+  oppHp: number;
+  bestLine: string; // the learner's hardest-landing bar
+}
+
+export interface AutoplayReflect {
+  type: "reflect";
+  round: number;
+  note: string; // first-person lesson the agent drew from the bout
+  strat: Strat; // doctrine AFTER self-retuning
+  delta: Strat; // how each dial moved this round
+  eloDelta: number;
+  elo: number;
+  won: boolean;
+}
+
+export interface AutoplayDone {
+  type: "done";
+  elo: number;
+  wins: number;
+  losses: number;
+}
+
+export type AutoplayEvent = AutoplayStart | AutoplayRound | AutoplayBout | AutoplayReflect | AutoplayDone;
+
 // ── Champion progression (the "genome receipt" persisted client-side) ────────
 
 export interface HouseStats {

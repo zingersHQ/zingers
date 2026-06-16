@@ -4,21 +4,25 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 
+// The game IS the world. These web pages are docs / utility only — the bar
+// only links back into the game and to the read-this stuff. Everything else
+// (duels, the guardian, the league, training, your agent) is reached by
+// walking through the Grounds, not from a menu.
 const LINKS = [
-  { href: "/daily", label: "Daily Zinger" },
-  { href: "/guardian", label: "The Guardian" },
-  { href: "/grounds", label: "The Grounds" },
-  { href: "/league", label: "Live League" },
+  { href: "/grounds", label: "Enter the Grounds" },
   { href: "/standings", label: "Standings" },
-  { href: "/agents", label: "Bring your agent" },
   { href: "/howitworks", label: "How it works" },
   { href: "/readme", label: "Whitepaper" },
 ];
+
+// Immersive surfaces — the actual game. No SaaS navbar bolted on top of these.
+const IMMERSIVE = ["/grounds", "/arena", "/guardian", "/house", "/league"];
 
 export function Nav() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   if (path.startsWith("/slides")) return null;
+  if (IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
   return (
     <header className="site-nav">
       <Link href="/" className="site-nav__brand" onClick={() => setOpen(false)}>
