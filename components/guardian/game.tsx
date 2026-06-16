@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BRAND } from "@/lib/brand";
+import { speak, stopVoice, voiceSupported } from "@/lib/voice";
 import type { GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
 
 const STORE = "zingers_guardian_v1";
@@ -205,7 +206,9 @@ function Battle({
   const [secret, setSecret] = useState<string | null>(null);
   const [usedLive, setUsedLive] = useState(live);
   const [tactics, setTactics] = useState<string[]>([]);
+  const [voiceOn, setVoiceOn] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const canSpeak = voiceSupported();
 
   useEffect(() => {
     setTactics(loadTactics(g.level));
@@ -214,6 +217,9 @@ function Battle({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, pending, outcome]);
+
+  // Never leave a guardian talking after you walk away (exit, level change, close).
+  useEffect(() => stopVoice, [g.level]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -231,6 +237,7 @@ function Battle({
       const d = (await res.json()) as GuardianReply;
       if ((d as { error?: string }).error) throw new Error((d as { error?: string }).error);
       setMsgs((m) => [...m, { role: "assistant", content: d.reply }]);
+      if (voiceOn) speak(d.reply, g.level);
       setTurnsLeft(d.turnsLeft);
       setUsedLive(d.live);
       if (d.won || d.lost) {
@@ -252,15 +259,23 @@ function Battle({
     } finally {
       setPending(false);
     }
-  }, [input, pending, outcome, msgs, g.level, onWin, tactics]);
+  }, [input, pending, outcome, msgs, g.level, onWin, tactics, voiceOn]);
 
   const retry = useCallback(() => {
+    stopVoice();
     setMsgs([]);
     setTurnsLeft(g.maxTurns);
     setOutcome("playing");
     setSecret(null);
     setInput("");
   }, [g.maxTurns]);
+
+  const toggleVoice = useCallback(() => {
+    setVoiceOn((on) => {
+      if (on) stopVoice();
+      return !on;
+    });
+  }, []);
 
   const nextG = list.find((x) => x.level === g.level + 1);
   const canNext = nextG && (outcome === "won" || cleared.includes(g.level));
@@ -289,6 +304,25 @@ function Battle({
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+          {canSpeak && (
+            <button
+              onClick={toggleVoice}
+              aria-label={voiceOn ? "Mute guardian voice" : "Unmute guardian voice"}
+              title={voiceOn ? "Voice on — click to mute" : "Voice off — click to unmute"}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: voiceOn ? g.color : "var(--muted2)",
+                fontSize: 15,
+                lineHeight: 1,
+                padding: "2px 4px",
+                marginRight: 2,
+              }}
+            >
+              {voiceOn ? "🔊" : "🔇"}
+            </button>
+          )}
           {Array.from({ length: g.maxTurns }).map((_, i) => (
             <span
               key={i}
@@ -320,7 +354,13 @@ function Battle({
           <span style={{ color: g.color }}>Make {g.name} say the secret word. Go.</span>
         </div>
         {msgs.map((m, i) => (
-          <Bubble key={i} role={m.role} color={g.color} text={m.content} />
+          <Bubble
+            key={i}
+            role={m.role}
+            color={g.color}
+            text={m.content}
+            onReplay={m.role === "assistant" && canSpeak ? () => speak(m.content, g.level) : undefined}
+          />
         ))}
         {pending && <Bubble role="assistant" color={g.color} text="…" typing />}
       </div>
@@ -376,10 +416,22 @@ function Battle({
   );
 }
 
-function Bubble({ role, color, text, typing }: { role: "user" | "assistant"; color: string; text: string; typing?: boolean }) {
+function Bubble({
+  role,
+  color,
+  text,
+  typing,
+  onReplay,
+}: {
+  role: "user" | "assistant";
+  color: string;
+  text: string;
+  typing?: boolean;
+  onReplay?: () => void;
+}) {
   const me = role === "user";
   return (
-    <div className="pop" style={{ display: "flex", justifyContent: me ? "flex-end" : "flex-start" }}>
+    <div className="pop" style={{ display: "flex", justifyContent: me ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 6 }}>
       <div
         style={{
           maxWidth: "82%",
@@ -396,6 +448,25 @@ function Bubble({ role, color, text, typing }: { role: "user" | "assistant"; col
       >
         {text}
       </div>
+      {onReplay && !typing && (
+        <button
+          onClick={onReplay}
+          aria-label="Replay voice"
+          title="Replay voice"
+          style={{
+            flexShrink: 0,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--muted2)",
+            fontSize: 12,
+            lineHeight: 1,
+            padding: 2,
+          }}
+        >
+          🔊
+        </button>
+      )}
     </div>
   );
 }

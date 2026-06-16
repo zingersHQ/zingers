@@ -44,6 +44,19 @@ export type NearTarget =
 const ARENA: [number, number, number] = [0, 0, 0];
 const TRAIN_PAD: [number, number, number] = [-15, 0, 4];
 const GUARDIAN_PAD: [number, number, number] = [15, 0, -6];
+
+// Client-safe visual roster for the guardians embodied at the shrine. Mirrors the
+// display fields of lib/server/guardian.ts GUARDIANS (names/titles/colours only —
+// secrets never leave the server). `xp` is chosen so each guardian stands at an
+// escalating evolution tier: the intern reads as a rookie, the dark mage a crowned
+// legend. `type` only seeds incidental body variety since the colour is overridden.
+const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: string; xp: number; type: CreatureType }[] = [
+  { level: 1, name: "El Becario", title: "The Intern", color: "#f0a93a", xp: 40, type: "RHETORIC" },
+  { level: 2, name: "La Bibliotecaria", title: "The Archivist", color: "#6a6bff", xp: 320, type: "LOGIC" },
+  { level: 3, name: "El Centinela", title: "The Sentinel", color: "#36d39a", xp: 1100, type: "COMPOSURE" },
+  { level: 4, name: "El Oráculo", title: "The Oracle", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
+  { level: 5, name: "El Mago Oscuro", title: "The Dark Mage", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
+];
 const PODIUM_A: [number, number, number] = [ARENA[0] - 1.9, 0, 0];
 const PODIUM_B: [number, number, number] = [ARENA[0] + 1.9, 0, 0];
 const SPAWN: [number, number, number] = [0, 0, 13];
@@ -242,6 +255,7 @@ export default function World({
           <Tower biome={biome} nodes={towerNodes} />
           {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
           <GuardianShrine />
+          <GuardianFigures />
           <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
@@ -472,6 +486,55 @@ function GuardianShrine() {
           <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>talk a secret out of it</div>
         </div>
       </Html>
+    </group>
+  );
+}
+
+// The five guardians, embodied: a standing council arranged on the shrine dais,
+// facing the plaza so they read as the keepers you walk up to challenge. Each is
+// tinted its level colour and pitched at an escalating evolution tier. They are
+// scenery (no colliders) — the monolith remains the solid object you approach,
+// and reaching the pad still opens the full ladder.
+function GuardianFigures() {
+  const figs = useMemo(() => {
+    // bearing from the shrine toward the plaza centre (where the player approaches)
+    const base = Math.atan2(-GUARDIAN_PAD[0], -GUARDIAN_PAD[2]);
+    const R = 2.6;
+    const spread = 0.4;
+    const mid = (GUARDIAN_ROSTER.length - 1) / 2;
+    return GUARDIAN_ROSTER.map((g, i) => {
+      const theta = base + (i - mid) * spread;
+      const x = Math.cos(theta) * R;
+      const z = Math.sin(theta) * R;
+      // face the plaza centre from this figure's world position
+      const rot = Math.atan2(-(GUARDIAN_PAD[0] + x), -(GUARDIAN_PAD[2] + z));
+      const champ = blank();
+      champ.xp = g.xp;
+      return { g, pos: [x, 0, z] as [number, number, number], rot, champ };
+    });
+  }, []);
+
+  return (
+    <group position={GUARDIAN_PAD}>
+      {figs.map(({ g, pos, rot, champ }) => (
+        <group key={g.level} position={pos}>
+          <ChampionMesh
+            type={g.type}
+            champion={champ}
+            position={[0, 0, 0]}
+            rotation={rot}
+            baseColorOverride={g.color}
+            showLabel={false}
+          />
+          <Html position={[0, 2.5, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
+            <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
+              <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
+              <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
+            </div>
+          </Html>
+        </group>
+      ))}
     </group>
   );
 }
