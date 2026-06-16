@@ -186,15 +186,6 @@ export default function World({
         .map((p) => ({ key: p.agent.key, name: p.agent.name, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
     [perched],
   );
-  // checkpoint pads (top surface + landing radius) — the climber respawns onto
-  // the highest one they've reached, so a fall never drops them to the bottom
-  const checkpoints = useMemo(
-    () =>
-      towerNodes
-        .filter((n) => n.checkpoint)
-        .map((n) => ({ x: n.pos[0], y: n.pos[1] + n.size[1] / 2, z: n.pos[2], r: n.size[0] / 2 })),
-    [towerNodes],
-  );
   return (
     <>
     <Canvas
@@ -286,7 +277,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} checkpoints={checkpoints} shape={shape} onAltitude={onAltitude} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} shape={shape} onAltitude={onAltitude} />
         </Physics>
 
         <RenderBoundary fallback={null}>
@@ -1062,7 +1053,6 @@ function Handler({
   touchMove,
   touchBtn,
   challengeTargets,
-  checkpoints,
   shape,
   onAltitude,
 }: {
@@ -1075,7 +1065,6 @@ function Handler({
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
   challengeTargets: { key: string; name: string; pos: THREE.Vector3 }[];
-  checkpoints: { x: number; y: number; z: number; r: number }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
 }) {
@@ -1100,7 +1089,6 @@ function Handler({
   const leanZ = useRef(0);
   const stretch = useRef(0); // +1 = stretch up (launch), -1 = squash down (land)
   const wasGrounded = useRef(true);
-  const lastCp = useRef<{ x: number; y: number; z: number } | null>(null);
   const altAccum = useRef(0);
   const altLast = useRef(-999);
   const { camera } = useThree();
@@ -1290,24 +1278,6 @@ function Handler({
       setAnim(sprint ? "run" : "walk");
     } else {
       setAnim("idle");
-    }
-
-    // ── tower checkpoints ──
-    // ratchet to the highest landing pad we've actually touched down on
-    if (grounded) {
-      for (const cp of checkpoints) {
-        if (Math.hypot(t.x - cp.x, t.z - cp.z) < cp.r + 0.7 && Math.abs(t.y - cp.y) < 1.8) {
-          if (!lastCp.current || cp.y > lastCp.current.y) lastCp.current = { x: cp.x, y: cp.y, z: cp.z };
-        }
-      }
-    }
-    // a fall well below the last checkpoint sets us back onto it — never the bottom
-    const cp = lastCp.current;
-    if (cp && t.y < cp.y - 6) {
-      rb.setTranslation({ x: cp.x, y: cp.y + 1.3, z: cp.z }, true);
-      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
-      jumps.current = 0;
-      if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.5);
     }
 
     // ── under-terrain safety net ──
