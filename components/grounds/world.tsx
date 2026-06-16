@@ -156,7 +156,7 @@ export default function World({
   onAltitude?: (y: number) => void;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false });
   // touch input channels, mutated by the on-screen controls and read each frame
   const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
   const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
@@ -916,6 +916,7 @@ interface CamCue {
   heading: number;     // player facing / move heading (radians)
   speed: number;       // planar speed magnitude
   moving: boolean;     // actively pressing movement keys this frame
+  reverse: boolean;    // moving back toward the camera — suppress auto-follow (else it spins)
 }
 
 // on-screen touch control channels (mobile)
@@ -1301,6 +1302,10 @@ function Handler({
       camCue.current.heading = heading.current;
       camCue.current.speed = Math.hypot(lv.x, lv.z);
       camCue.current.moving = len > 0;
+      // `az` is exactly the move's forward component (fwd ⟂ right): negative means
+      // we're heading back toward the camera. Flag it so the auto-follow stands
+      // down — chasing "behind" a player who's facing the camera spins endlessly.
+      camCue.current.reverse = az < -0.1;
     }
 
     // ── procedural body polish ──
@@ -1463,7 +1468,7 @@ function CameraController({ match, handlerPos, camCue, camDrag }: { match: Match
     // smart-follow: gently swing the orbit behind the player's heading while
     // they move — but only once the mouse has been idle for a beat, so manual
     // steering always wins. Faster movement → a touch more eagerness.
-    if (cue && moving && performance.now() - lastInput.current > 900) {
+    if (cue && moving && !cue.reverse && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
