@@ -14,7 +14,7 @@ import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } 
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { RenderBoundary } from "./render-guard";
-import { jumpBeep } from "@/lib/sfx";
+import { jumpBeep, setJet, stopJet } from "@/lib/sfx";
 
 export interface GroundChampion {
   key: string;
@@ -288,7 +288,7 @@ export default function World({
         </RenderBoundary>
       </Suspense>
 
-      <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} />
+      <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
     </Canvas>
     {isTouch && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} />}
     </>
@@ -1134,12 +1134,23 @@ function Handler({
       }
     };
     const up = (e: KeyboardEvent) => { keys[e.code] = false; };
+    // when the window loses focus (alt-tab, switching apps/tabs, an overlay
+    // grabbing focus) the matching keyup never reaches us, so a held movement
+    // key would stay `true` and the character walks forever. Drop every key the
+    // moment we lose focus / the page is hidden so we never get stuck moving.
+    const clearKeys = () => { for (const k in keys) keys[k] = false; };
+    const onVisibility = () => { if (document.hidden) clearKeys(); };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", clearKeys);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", clearKeys);
+      document.removeEventListener("visibilitychange", onVisibility);
       for (const k in keys) keys[k] = false;
+      stopJet(); // never leave the thruster roaring after we unmount
     };
   }, []);
 
@@ -1261,6 +1272,9 @@ function Handler({
     wasGrounded.current = grounded;
     // pack deploys once we're flying (past the trigger), retracts on landing
     flying.current = jumps.current > FLY_TRIGGER;
+    // thruster roar: silent on the ground, a low idle while hovering, full while
+    // actively thrusting — spooled smoothly inside the sfx engine
+    setJet(flying.current && controlsEnabled ? (jumpHeld ? 1 : 0.4) : 0);
 
     // ── resolve the body animation from the REAL locomotion state ──
     // One place, every frame, so the playing clip always matches the state:
@@ -1396,8 +1410,12 @@ function Handler({
   );
 }
 
+// camera elevation range. Negative dips the rig below the player so the view
+// tilts UP past the horizon toward the sky; positive looks down from above.
+const PITCH_MIN = -0.5;  // ~ -29°: look up at the sky
+const PITCH_MAX = 1.25;  // ~ 72°: look steeply down
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
-function CameraController({ match, handlerPos, camCue, camDrag }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag> }) {
+function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag>; shape: TerrainShape }) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
@@ -1418,7 +1436,7 @@ function CameraController({ match, handlerPos, camCue, camDrag }: { match: Match
     const onMove = (e: PointerEvent) => {
       if (!dragging.current) return;
       yaw.current -= (e.clientX - last.current.x) * 0.005;
-      pitch.current = Math.min(1.25, Math.max(0.12, pitch.current - (e.clientY - last.current.y) * 0.004));
+      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - (e.clientY - last.current.y) * 0.004));
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
@@ -1450,7 +1468,7 @@ function CameraController({ match, handlerPos, camCue, camDrag }: { match: Match
     const drag = camDrag.current;
     if (drag && (drag.dx || drag.dy || drag.pinch)) {
       yaw.current -= drag.dx * 0.005;
-      pitch.current = Math.min(1.25, Math.max(0.12, pitch.current - drag.dy * 0.004));
+      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - drag.dy * 0.004));
       if (drag.pinch) dist.current = Math.min(34, Math.max(6, dist.current - drag.pinch * 0.02));
       drag.dx = 0; drag.dy = 0; drag.pinch = 0;
       lastInput.current = performance.now();
@@ -1488,7 +1506,10 @@ function CameraController({ match, handlerPos, camCue, camDrag }: { match: Match
     const tx = hp.x, ty = hp.y + 0.4 + zoom * 0.3, tz = hp.z;
     const cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
     const cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
-    const cy = ty + Math.sin(pitch.current) * eff + swayY;
+    let cy = ty + Math.sin(pitch.current) * eff + swayY;
+    // looking up drops the rig below the player — keep it from sinking into the
+    // ground at its own (x,z) so the view never clips beneath the terrain
+    cy = Math.max(cy, terrainHeight(cx, cz, shape) + 0.8);
     // snap in faster than it eases out, for a punchy action-cam
     camera.position.lerp(tmp.current.set(cx, cy, cz), zoom > 0.05 ? 0.3 : 0.12);
     camera.lookAt(tx, ty, tz);

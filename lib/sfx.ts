@@ -72,3 +72,93 @@ export function jumpBeep(level = 0) {
   o.start(t);
   o.stop(t + 0.14);
 }
+
+// ── jetpack thruster ─────────────────────────────────────────────────────────
+// A sustained rocket roar: looping filtered noise (the hiss) plus a low sawtooth
+// (the body rumble), driven by a single intensity 0..1. The Handler calls
+// setJet() every frame — 0 grounded, a low idle while hovering, full while
+// thrusting — and the gain/brightness spool smoothly up and down so it reads as
+// the pack revving rather than clicking on and off.
+let noiseBuf: AudioBuffer | null = null;
+let jet: {
+  gain: GainNode;
+  lp: BiquadFilterNode;
+  src: AudioBufferSourceNode;
+  rumble: OscillatorNode;
+  rumbleGain: GainNode;
+} | null = null;
+
+function noiseBuffer(c: AudioContext): AudioBuffer {
+  if (noiseBuf) return noiseBuf;
+  const len = Math.floor(c.sampleRate * 2);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  noiseBuf = buf;
+  return buf;
+}
+
+function ensureJet(c: AudioContext, out: GainNode): NonNullable<typeof jet> {
+  if (jet) return jet;
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  src.loop = true;
+
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 500;
+  lp.Q.value = 0.8;
+
+  const rumble = c.createOscillator();
+  rumble.type = "sawtooth";
+  rumble.frequency.value = 58;
+  const rumbleGain = c.createGain();
+  rumbleGain.gain.value = 0;
+
+  const gain = c.createGain();
+  gain.gain.value = 0;
+
+  src.connect(lp);
+  lp.connect(gain);
+  rumble.connect(rumbleGain);
+  rumbleGain.connect(gain);
+  gain.connect(out);
+
+  src.start();
+  rumble.start();
+  jet = { gain, lp, src, rumble, rumbleGain };
+  return jet;
+}
+
+// intensity: 0 = off, ~0.4 = idle hover, 1 = full thrust
+export function setJet(intensity: number) {
+  const lvl = enabled() ? Math.max(0, Math.min(1, intensity)) : 0;
+  if (lvl <= 0 && !jet) return; // nothing playing and nothing to do — no allocation
+  const c = ensure();
+  if (!c || !master) return;
+  if (lvl > 0 && c.state === "suspended") c.resume().catch(() => {});
+
+  const j = ensureJet(c, master);
+  const now = c.currentTime;
+  const tc = 0.1; // smoothing time constant → smooth spool up/down
+  j.gain.gain.setTargetAtTime(lvl * 0.22, now, tc); // overall roar loudness
+  j.lp.frequency.setTargetAtTime(420 + lvl * 2800, now, tc); // brighter under thrust
+  j.rumbleGain.gain.setTargetAtTime(lvl * 0.45, now, tc); // body grows with thrust
+  j.rumble.frequency.setTargetAtTime(54 + lvl * 40, now, tc); // pitches up under load
+}
+
+export function stopJet() {
+  if (!jet) return;
+  try {
+    jet.src.stop();
+    jet.rumble.stop();
+  } catch {
+    /* already stopped */
+  }
+  try {
+    jet.gain.disconnect();
+  } catch {
+    /* ignore */
+  }
+  jet = null;
+}
