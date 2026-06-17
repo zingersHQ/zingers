@@ -1440,7 +1440,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(34, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(60, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
     el.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointermove", onMove);
@@ -1469,7 +1469,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     if (drag && (drag.dx || drag.dy || drag.pinch)) {
       yaw.current -= drag.dx * 0.005;
       pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - drag.dy * 0.004));
-      if (drag.pinch) dist.current = Math.min(34, Math.max(6, dist.current - drag.pinch * 0.02));
+      if (drag.pinch) dist.current = Math.min(60, Math.max(6, dist.current - drag.pinch * 0.02));
       drag.dx = 0; drag.dy = 0; drag.pinch = 0;
       lastInput.current = performance.now();
     }
