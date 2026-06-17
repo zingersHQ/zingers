@@ -1419,7 +1419,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
-  const dist = useRef(20);
+  const dist = useRef(12);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
   const dirYaw = useRef(0);
