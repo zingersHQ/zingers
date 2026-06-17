@@ -207,9 +207,7 @@ export default function GroundsScreen() {
       const dom = dominant(afterC);
       // the MIND learns: opponent-specific memory + gentle doctrine auto-tune
       store.learnFromBout({ key: owned, opponentName: byKey[opponent]?.name || opponent, won: iWon, axisLabel: dom.axis.label });
-      const learned = iWon
-        ? `Memory updated · leaning ${dom.axis.label.toLowerCase()} vs ${byKey[opponent]?.name || opponent}`
-        : `Memory updated · adapting after ${byKey[opponent]?.name || opponent}`;
+      const learned = `Learned from ${byKey[opponent]?.name || opponent} ↗`;
 
       let crownsDelta = 0;
       if (iWon) {
@@ -916,23 +914,22 @@ function MatchHud(props: {
             <div className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               {bout.end?.winner_name} wins in {bout.end?.rounds} rounds
             </div>
-            <div style={{ margin: "16px 0", fontSize: 22, fontWeight: 700, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)" }}>
-              {result.crowns >= 0 ? "+" : ""}
-              {result.crowns} 👑
-            </div>
+            {result.crowns !== 0 && (
+              <div style={{ margin: "16px 0", fontSize: 22, fontWeight: 700, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)" }}>
+                {result.crowns >= 0 ? "+" : ""}
+                {result.crowns} 👑
+              </div>
+            )}
             {result.betWon !== null && (
               <div className="mono" style={{ fontSize: 12, color: result.betWon ? "var(--good)" : "var(--bad)" }}>
                 bet {result.betWon ? "won" : "lost"}
               </div>
             )}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "12px 0 4px", flexWrap: "wrap" }}>
-              <span className="chip" style={{ borderColor: result.ratingDelta >= 0 ? "var(--good)" : "var(--bad)", color: result.ratingDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
-                ELO {result.ratingDelta >= 0 ? "+" : ""}{result.ratingDelta}
-              </span>
-              {result.leveledTo && (
+            {result.leveledTo && (
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "12px 0 4px", flexWrap: "wrap" }}>
                 <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{result.leveledTo}</span>
-              )}
-            </div>
+              </div>
+            )}
             {result.learned && (
               <div className="mono" style={{ fontSize: 11, color: "var(--acc, #6a6bff)", marginTop: 2 }}>
                 ⟳ {result.learned}
