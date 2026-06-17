@@ -73,6 +73,64 @@ export function jumpBeep(level = 0) {
   o.stop(t + 0.14);
 }
 
+// A punchy impact for when a battle line lands damage: a pitch-dropping sine
+// thump + a short noise smack, scaled by damage, with a bright sparkle on a
+// Highlight/crit. Used by the agent "mic battles".
+export function hitSfx(power = 10, crit = false) {
+  if (!enabled()) return;
+  const c = ensure();
+  if (!c || !master) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  const t = c.currentTime + 0.005;
+  const amp = Math.min(0.5, 0.16 + Math.min(power, 40) * 0.007) * (crit ? 1.3 : 1);
+
+  // body — a low sine that drops in pitch for the "thud"
+  const o = c.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(crit ? 230 : 175, t);
+  o.frequency.exponentialRampToValueAtTime(crit ? 54 : 46, t + 0.16);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(amp, t + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(g);
+  g.connect(master);
+  o.start(t);
+  o.stop(t + 0.27);
+
+  // transient — a short filtered noise smack for the "crack"
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = crit ? 3400 : 2000;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(amp * 0.7, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + (crit ? 0.12 : 0.08));
+  src.connect(lp);
+  lp.connect(ng);
+  ng.connect(master);
+  src.start(t);
+  src.stop(t + 0.16);
+
+  // crit sparkle — a quick rising blip so Highlights pop
+  if (crit) {
+    const s = c.createOscillator();
+    s.type = "square";
+    s.frequency.setValueAtTime(880, t + 0.02);
+    s.frequency.exponentialRampToValueAtTime(1500, t + 0.1);
+    const sg = c.createGain();
+    sg.gain.setValueAtTime(0.0001, t + 0.02);
+    sg.gain.exponentialRampToValueAtTime(0.08, t + 0.03);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    s.connect(sg);
+    sg.connect(master);
+    s.start(t + 0.02);
+    s.stop(t + 0.18);
+  }
+}
+
 // ── jetpack thruster ─────────────────────────────────────────────────────────
 // A sustained rocket roar: looping filtered noise (the hiss) plus a low sawtooth
 // (the body rumble), driven by a single intensity 0..1. The Handler calls

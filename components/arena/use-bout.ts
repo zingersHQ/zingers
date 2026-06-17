@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BattleEnd, BattleEvent, BattleStart, BattleTurn } from "@/lib/types";
+import { speakCreatureType, stopCreature } from "@/lib/creature-voice";
+import { hitSfx } from "@/lib/sfx";
 
 export interface BoutState {
   phase: "idle" | "live" | "done";
@@ -37,6 +39,7 @@ export function useBout() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     queue.current = [];
+    stopCreature();
   }, []);
 
   const pump = useCallback(() => {
@@ -53,8 +56,12 @@ export function useBout() {
         hpA: ev.a_hp,
         hpB: ev.b_hp,
       }));
+      // voice the line in the actor's creature-type voice; punctuate a hit
+      speakCreatureType(ev.line, ev.actor_type);
+      if (ev.dmg > 0) hitSfx(ev.dmg, !!ev.info?.crit);
       timer.current = setTimeout(pump, TURN_MS);
     } else if (ev.type === "end") {
+      stopCreature();
       setState((s) => ({ ...s, phase: "done", end: ev, hpA: ev.a_hp, hpB: ev.b_hp }));
       pendingEnd.current?.(ev);
     }

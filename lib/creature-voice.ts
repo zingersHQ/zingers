@@ -8,6 +8,7 @@
 // Shares the on/off preference with the music + sfx toggle (STORAGE.sound), so
 // muting the world mutes the Keepers too.
 import { STORAGE } from "@/lib/brand";
+import type { CreatureType } from "@/lib/types";
 
 type AudioCtor = typeof AudioContext;
 
@@ -93,6 +94,17 @@ const PROFILES: Record<number, CProfile> = {
 
 const DEFAULT_PROFILE: CProfile = PROFILES[1];
 
+// Per-creature-type voice for the agent "mic battles" (the five-type pentagon),
+// so each champion's spoken line has its own character: Logic is cool and precise,
+// Chaos is glitchy and manic, Composure is low and steady, etc.
+const TYPE_PROFILES: Record<CreatureType, CProfile> = {
+  LOGIC: { base: 340, spread: 140, wave: "triangle", sub: "sine", subGain: 0.3, dur: 0.08, gap: 0.03, cutoff: 2400, gain: 0.09, warble: 0.0 },
+  RHETORIC: { base: 300, spread: 175, wave: "sawtooth", sub: "triangle", subGain: 0.3, dur: 0.085, gap: 0.032, cutoff: 2200, gain: 0.085, warble: 0.0 },
+  CHAOS: { base: 470, spread: 300, wave: "square", sub: "sawtooth", subGain: 0.35, dur: 0.068, gap: 0.024, cutoff: 3000, gain: 0.09, warble: 0.6 },
+  COMPOSURE: { base: 200, spread: 90, wave: "sine", sub: "sine", subGain: 0.4, dur: 0.1, gap: 0.04, cutoff: 1500, gain: 0.1, warble: 0.0 },
+  CREATIVITY: { base: 420, spread: 240, wave: "triangle", sub: "sine", subGain: 0.3, dur: 0.09, gap: 0.035, cutoff: 2600, gain: 0.088, warble: 0.4 },
+};
+
 export function stopCreature() {
   if (endTimer) {
     clearTimeout(endTimer);
@@ -116,10 +128,20 @@ export function stopCreature() {
   void c;
 }
 
-// Speak a Keeper's line as creature gibberish. Each letter/number becomes a blip
-// whose pitch is derived from the character, so the same text always sounds the
-// same — and questions lilt upward at the end. Capped so long replies stay snappy.
+// Speak a Keeper's line as creature gibberish, keyed by guardian level.
 export function speakCreature(text: string, level: number, opts?: { onEnd?: () => void }) {
+  speakWith(text, PROFILES[level] ?? DEFAULT_PROFILE, opts);
+}
+
+// Speak an agent's battle line in its creature-type voice.
+export function speakCreatureType(text: string, type: CreatureType, opts?: { onEnd?: () => void }) {
+  speakWith(text, TYPE_PROFILES[type] ?? DEFAULT_PROFILE, opts);
+}
+
+// Core synthesis: each letter/number becomes a blip whose pitch is derived from
+// the character, so the same text always sounds the same — and questions lilt
+// upward at the end. Capped so long lines stay snappy.
+function speakWith(text: string, p: CProfile, opts?: { onEnd?: () => void }) {
   stopCreature();
   if (!enabled()) {
     opts?.onEnd?.();
@@ -132,7 +154,6 @@ export function speakCreature(text: string, level: number, opts?: { onEnd?: () =
   }
   if (c.state === "suspended") c.resume().catch(() => {});
 
-  const p = PROFILES[level] ?? DEFAULT_PROFILE;
   const chars = [...text];
   const isQuestion = /\?\s*$/.test(text.trim());
 
