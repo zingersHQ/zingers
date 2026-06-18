@@ -968,6 +968,8 @@ const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate indepe
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
                            // into a uniform hover instead of a per-press sawtooth
+const FLY_LEAN = 0.5;      // base nose-down/hanging tilt (rad) the body holds while
+                           // flying, so it reads as airborne even hovering still
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1426,10 +1428,13 @@ function Handler({
 
     // ── procedural body polish ──
     // forward lean + bank while flying so steering reads visually (the legs stay
-    // still in the hover pose); decays to upright the instant we touch down
+    // still in the hover pose); decays to upright the instant we touch down.
+    // A constant FLY_LEAN base keeps the body pitched nose-down / hanging from the
+    // pack while airborne, so it never looks like it's standing upright mid-air;
+    // horizontal speed leans it further into the dive on top of that.
     const lv2 = rb.linvel();
     const hspeed = Math.hypot(lv2.x, lv2.z);
-    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : 0;
+    const tgtLeanX = flyingMode ? Math.min(1.0, FLY_LEAN + hspeed * 0.03) : 0;
     const tgtLeanZ = flyingMode ? Math.max(-0.35, Math.min(0.35, -ax * 0.35)) : 0;
     const ls = 1 - Math.exp(-10 * dt);
     leanX.current += (tgtLeanX - leanX.current) * ls;
