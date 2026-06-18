@@ -198,7 +198,7 @@ export function Autoplay() {
         </div>
         <div style={{ textAlign: "center", minWidth: 96 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)" }}>
-            {me.name.toUpperCase()} · ELO
+            {me.name.toUpperCase()} · RATING
           </div>
           <div
             style={{
@@ -260,7 +260,7 @@ export function Autoplay() {
                     style={{ fontSize: 11, color: r.eloDelta >= 0 ? "var(--good)" : "var(--bad)" }}
                   >
                     {r.eloDelta >= 0 ? "+" : ""}
-                    {r.eloDelta} elo
+                    {r.eloDelta} rating
                   </span>
                 )}
               </div>
@@ -279,7 +279,7 @@ export function Autoplay() {
 
       {phase === "done" && record && (
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
-          Started at 1000 ELO and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
+          Started at 1000 rating and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
           settled on {strat.risk}/{strat.focus}/{strat.aggression} — no one touched the dials but the agent.
         </p>
       )}

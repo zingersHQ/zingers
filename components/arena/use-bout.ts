@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BattleEnd, BattleEvent, BattleStart, BattleTurn } from "@/lib/types";
+import type { BattleEnd, BattleEvent, BattleRanked, BattleStart, BattleTurn } from "@/lib/types";
 import { speakCreatureType, stopCreature } from "@/lib/creature-voice";
 import { hitSfx } from "@/lib/sfx";
 
@@ -31,7 +31,10 @@ export function useBout() {
   const queue = useRef<BattleEvent[]>([]);
   const es = useRef<EventSource | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingEnd = useRef<(e: BattleEnd) => void>(undefined);
+  const pendingEnd = useRef<(e: BattleEnd, ranked: BattleRanked | null) => void>(undefined);
+  // ranked swing arrives just before `end`; stash it (not paced like turns) so we
+  // can hand it to onEnd when the bout reveal finishes
+  const ranked = useRef<BattleRanked | null>(null);
 
   const stop = useCallback(() => {
     es.current?.close();
@@ -63,14 +66,15 @@ export function useBout() {
     } else if (ev.type === "end") {
       stopCreature();
       setState((s) => ({ ...s, phase: "done", end: ev, hpA: ev.a_hp, hpB: ev.b_hp }));
-      pendingEnd.current?.(ev);
+      pendingEnd.current?.(ev, ranked.current);
     }
   }, []);
 
   const begin = useCallback(
-    (url: string, onEnd?: (e: BattleEnd) => void) => {
+    (url: string, onEnd?: (e: BattleEnd, ranked: BattleRanked | null) => void) => {
       stop();
       pendingEnd.current = onEnd;
+      ranked.current = null;
       setState({ phase: "live", start: null, turn: null, history: [], hpA: 100, hpB: 100, end: null });
       const source = new EventSource(url);
       es.current = source;
@@ -84,6 +88,9 @@ export function useBout() {
         if (ev.type === "start") {
           setState((s) => ({ ...s, start: ev }));
           timer.current = setTimeout(pump, 900);
+        } else if (ev.type === "ranked") {
+          // metadata, not a paced turn — stash for onEnd
+          ranked.current = ev;
         } else {
           queue.current.push(ev);
           if (ev.type === "end") source.close();

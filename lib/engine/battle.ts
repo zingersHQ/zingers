@@ -19,7 +19,7 @@ import {
 import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
 import { banterLine } from "./banter";
 import { makeAgent, type Agent, type AgentTools, type AgentTurnCtx, type AgentView, type ScoutResult, type SimResult } from "./agent";
-import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
+import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type BattleHighlight, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
 
 class Fighter {
   key: string;
@@ -421,10 +421,18 @@ export async function* battleEvents(
   const a = new Fighter(aKey, "for", cfgA, mock);
   const b = new Fighter(bKey, "against", cfgB, mock);
   yield { type: "start", topic, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
-  let mvp: [number, string] = [0, ""];
+  let mvp = { dmg: 0, line: "", round: 0, actor_name: "" };
   let lastHl = -10;
   const order = [a, b];
   let rnd = 0;
+  // ── the tug-of-war ── momentum is side-A-positive and decays toward neutral,
+  // so a big bar SURGES the meter and a lull lets it drift back — that's the
+  // turning point spectators feel. Streaks mark who's "on a roll".
+  let momentum = 0;
+  const SURGE_AT = 40; // meter past this = that side is visibly running the show
+  const clampM = (v: number) => Math.max(-100, Math.min(100, v));
+  let bestSwing = { round: 0, delta: 0, line: "", actor: "" };
+  let ko: { round: number; line: string; actor: string; actor_name: string; dmg: number } | null = null;
   while (a.alive() && b.alive() && rnd < TURN_LIMIT) {
     rnd += 1;
     const att = order[(rnd - 1) % 2];
@@ -437,8 +445,21 @@ export async function* battleEvents(
       else lastHl = rnd;
     }
     const [dmg, info] = resolve(att, opp, move, q, rng);
-    if (dmg > mvp[0]) mvp = [dmg, line];
+    if (dmg > mvp.dmg) mvp = { dmg, line, round: rnd, actor_name: att.name };
     if (dmg > att.best[0]) att.best = [dmg, line];
+
+    // momentum: a hard / crit / super-effective bar swings the meter toward the
+    // attacker; resisted bars push less. Then decay toward 0.
+    const attackerIsA = att === a;
+    const impact = dmg + (info.crit ? 10 : 0) + (info.se ? 5 : 0) - (info.resist ? 3 : 0);
+    const prevMomentum = momentum;
+    momentum = clampM(momentum * 0.78 + (attackerIsA ? 1 : -1) * impact * 1.6);
+    const swing = Math.abs(momentum - prevMomentum);
+    if (rnd > 1 && swing > bestSwing.delta) bestSwing = { round: rnd, delta: swing, line, actor: att.key };
+    // "on a roll" = the meter is firmly on one side right now
+    const surge: "a" | "b" | null = momentum >= SURGE_AT ? "a" : momentum <= -SURGE_AT ? "b" : null;
+    if (!opp.alive()) ko = { round: rnd, line, actor: att.key, actor_name: att.name, dmg };
+
     if (att.guardTurns) {
       att.guardTurns -= 1;
       if (att.guardTurns === 0) att.guard = 0;
@@ -460,6 +481,8 @@ export async function* battleEvents(
       ruling,
       a_hp: a.hp,
       b_hp: b.hp,
+      momentum: Math.round(momentum),
+      surge,
       trace: trace.length ? trace : undefined,
     };
     if (!opp.alive()) break;
@@ -468,14 +491,31 @@ export async function* battleEvents(
   if (a.alive() && !b.alive()) [w, l] = [a, b];
   else if (b.alive() && !a.alive()) [w, l] = [b, a];
   else [w, l] = a.hp >= b.hp ? [a, b] : [b, a];
+
+  // Highlight reel — lead the replay with the best moment, not turn one.
+  // Order by drama: the finish, then the hardest bar, then the swing; deduped.
+  const highlights: BattleHighlight[] = [];
+  const seen = new Set<number>();
+  const add = (h: BattleHighlight | null) => {
+    if (h && h.round && !seen.has(h.round)) { seen.add(h.round); highlights.push(h); }
+  };
+  if (ko) add({ round: ko.round, line: ko.line, actor_name: ko.actor_name, dmg: ko.dmg, kind: "ko" });
+  if (mvp.round) add({ round: mvp.round, line: mvp.line, actor_name: mvp.actor_name, dmg: mvp.dmg, kind: "crit" });
+  if (bestSwing.round) {
+    const sw = order.find((f) => f.key === bestSwing.actor);
+    add({ round: bestSwing.round, line: bestSwing.line, actor_name: sw?.name ?? "", dmg: 0, kind: "turn" });
+  }
+
   yield {
     type: "end",
     winner: w.key,
     winner_name: w.name,
     loser_name: l.name,
     rounds: rnd,
-    mvp: { dmg: mvp[0], line: mvp[1] },
+    mvp: { dmg: mvp.dmg, line: mvp.line },
     a_hp: a.hp,
     b_hp: b.hp,
+    turning_point: bestSwing.round ? { round: bestSwing.round, line: bestSwing.line, actor: bestSwing.actor } : undefined,
+    highlights: highlights.slice(0, 3),
   };
 }

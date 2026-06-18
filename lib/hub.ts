@@ -69,7 +69,7 @@ export const LAYERS: Layer[] = [
     home: "/guardian",
     spokes: [
       { id: "guardian", label: "The Keepers", href: "/guardian", blurb: "The campaign — talk five cipher-words out of the Vault's Keepers." },
-      { id: "house", label: "The House", href: "/house", blurb: "Social deduction; the engine decides, so it feeds real ELO." },
+      { id: "house", label: "The House", href: "/house", blurb: "Social deduction; the engine decides, so it feeds a real rating." },
       { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own doctrine to climb." },
       { id: "collection", label: "The Collection", href: "/collection", blurb: "Your dex of minds — evolving cards, sigils, sagas, rarity." },
       { id: "champion", label: "Champion Profile", href: "/collection", blurb: "Open any card to see a single mind's full record, body, and saga." },

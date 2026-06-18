@@ -5,7 +5,7 @@
 // local dev, but the real shared ladder requires the Redis env vars.
 import "server-only";
 import { Redis } from "@upstash/redis";
-import type { CreatureType } from "@/lib/types";
+import type { CreatureType, PlayerSave, Recipe } from "@/lib/types";
 
 export interface LadderChampion {
   id: string;
@@ -42,6 +42,8 @@ export interface Store {
   getFeed(limit: number): Promise<FeedEntry[]>;
   addOwned(token: string, id: string): Promise<void>;
   getOwned(token: string): Promise<LadderChampion[]>;
+  getSave(token: string): Promise<PlayerSave | null>;
+  putSave(token: string, save: PlayerSave): Promise<void>;
 }
 
 const K = {
@@ -49,9 +51,59 @@ const K = {
   ladder: "z:ladder",
   feed: "z:feed",
   owner: (token: string) => `z:owner:${token}`,
+  save: (token: string) => `z:save:${token}`,
 };
 
 const FEED_CAP = 60;
+// Defensive caps so one owner's blob can't grow unbounded in the store.
+const MAX_PROGRESS_KEYS = 400;
+const MAX_RECIPE_KEYS = 400;
+
+// Strip everything we refuse to persist server-side — most importantly model
+// API keys, which are client-only by design — and clamp the blob to sane sizes.
+// Returns a fresh, safe PlayerSave; the server is the last line of defence even
+// if a client sends something it shouldn't.
+export function sanitizeSave(raw: unknown): PlayerSave | null {
+  if (!raw || typeof raw !== "object") return null;
+  const s = raw as Partial<PlayerSave>;
+  if (typeof s.progress !== "object" || !s.progress) return null;
+
+  const trim = <T,>(obj: Record<string, T>, max: number): Record<string, T> =>
+    Object.fromEntries(Object.entries(obj).slice(0, max));
+
+  const recipes: Record<string, Recipe> = {};
+  for (const [key, r] of Object.entries((s.recipes ?? {}) as Record<string, Recipe>).slice(0, MAX_RECIPE_KEYS)) {
+    if (!r || typeof r !== "object") continue;
+    const agent = r.agent
+      ? {
+          provider: r.agent.provider,
+          model: r.agent.model,
+          baseUrl: r.agent.baseUrl,
+          endpoint: r.agent.endpoint,
+          label: r.agent.label,
+          // apiKey deliberately omitted — never stored server-side.
+        }
+      : undefined;
+    recipes[key] = { strat: r.strat, persona: r.persona, memory: r.memory, agent };
+  }
+
+  return {
+    v: typeof s.v === "number" ? s.v : 1,
+    progress: trim(s.progress as Record<string, unknown>, MAX_PROGRESS_KEYS) as PlayerSave["progress"],
+    recipes,
+    crowns: typeof s.crowns === "number" && isFinite(s.crowns) ? Math.max(0, Math.floor(s.crowns)) : 0,
+    owned: typeof s.owned === "string" ? s.owned.slice(0, 64) : null,
+    predict:
+      s.predict && typeof s.predict === "object"
+        ? { streak: Number(s.predict.streak) || 0, best: Number(s.predict.best) || 0 }
+        : { streak: 0, best: 0 },
+    daily:
+      s.daily && typeof s.daily === "object"
+        ? s.daily
+        : { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
+    updatedAt: Date.now(),
+  };
+}
 
 // ── Upstash backend ──────────────────────────────────────────────────────────
 class UpstashStore implements Store {
@@ -89,6 +141,12 @@ class UpstashStore implements Store {
     const champs = await Promise.all(ids.map((id) => this.getChampion(id)));
     return champs.filter((c): c is LadderChampion => !!c);
   }
+  async getSave(token: string) {
+    return (await this.r.get<PlayerSave>(K.save(token))) ?? null;
+  }
+  async putSave(token: string, save: PlayerSave) {
+    await this.r.set(K.save(token), save);
+  }
 }
 
 // ── In-memory fallback (per-instance; not shared across serverless workers) ────
@@ -96,6 +154,7 @@ class MemoryStore implements Store {
   private champs = new Map<string, LadderChampion>();
   private feed: FeedEntry[] = [];
   private owners = new Map<string, Set<string>>();
+  private saves = new Map<string, PlayerSave>();
 
   async getChampion(id: string) {
     return this.champs.get(id) ?? null;
@@ -123,6 +182,12 @@ class MemoryStore implements Store {
   async getOwned(token: string) {
     const ids = [...(this.owners.get(token) ?? [])];
     return ids.map((id) => this.champs.get(id)).filter((c): c is LadderChampion => !!c);
+  }
+  async getSave(token: string) {
+    return this.saves.get(token) ?? null;
+  }
+  async putSave(token: string, save: PlayerSave) {
+    this.saves.set(token, save);
   }
 }
 

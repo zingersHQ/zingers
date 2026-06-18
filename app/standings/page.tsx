@@ -5,6 +5,7 @@ import type { CreatureType, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
 import { SeasonBanner } from "@/components/lore/season-banner";
+import { TrainerCode } from "@/components/trainer-code";
 
 interface LadderChampion {
   id: string;
@@ -190,7 +191,7 @@ export default function StandingsPage() {
                 </div>
                 <div style={{ textAlign: "right", width: 56 }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: "var(--gold)" }}>{c.rating}</div>
-                  <div className="mono" style={{ fontSize: 8, letterSpacing: 1.2, color: "var(--muted2)" }}>ELO</div>
+                  <div className="mono" style={{ fontSize: 8, letterSpacing: 1.2, color: "var(--muted2)" }}>RATING</div>
                 </div>
                 {mine && (
                   <button
@@ -265,6 +266,9 @@ export default function StandingsPage() {
               )}
             </div>
           </div>
+
+          {/* trainer code — identity & cross-device recovery (no login) */}
+          <TrainerCode />
 
           {/* feed */}
           <div className="panel" style={{ ["--ac" as string]: "var(--good)", padding: 16 }}>

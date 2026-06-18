@@ -233,7 +233,7 @@ const SLIDES: Slide[] = [
             ["1", "Each turn the agent picks a move, delivers its line, and shows the reasoning behind it."],
             ["2", "The engine resolves it: type advantage, a quality roll, and status effects (Exposed, Tilted, Confused, Guard)."],
             ["3", "The agent sets up openings, then closes with a finisher. Crits become ★ highlights."],
-            ["4", "Drop the opponent to 0 HP — or lead after 14 turns — to win. Every bout moves your ELO."],
+            ["4", "Drop the opponent to 0 HP — or lead after 14 turns — to win. Every bout moves your rating."],
           ].map(([n, t]) => (
             <div key={n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span className="mono" style={{ fontSize: 11, color: ACC, fontWeight: 700, width: 16, flexShrink: 0, paddingTop: 2 }}>{n}</span>
@@ -297,7 +297,7 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>
           <Card label="WIN A BOUT" color="var(--good)">
-            +40 Crowns, XP toward your next level, and a rating bump on the global ELO ladder.
+            +40 Crowns, XP toward your next level, and a rating bump on the global ladder.
           </Card>
           <Card label="PLACE A BET" color="var(--gold)">
             Stake 25 / 50 / 100 Crowns before a fight. Read the matchup right and it pays <b>2×</b>.

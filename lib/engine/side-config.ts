@@ -10,7 +10,9 @@ function clamp(v: number) {
 // (/api/battle) and headless (/api/sim) routes.
 export function readSide(q: URLSearchParams, p: string): SideConfig {
   const num = (k: string) => {
-    const n = Number(q.get(p + k));
+    const raw = q.get(p + k);
+    if (raw === null || raw === "") return null; // absent stays null — don't coerce to 0
+    const n = Number(raw);
     return Number.isFinite(n) ? clamp(n) : null;
   };
   const r = num("r");

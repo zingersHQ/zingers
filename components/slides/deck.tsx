@@ -42,7 +42,7 @@ const SLIDES: Slide[] = [
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 28, maxWidth: 680 }}>
         {[
           { label: "Agent", desc: "Acts on its own — picks moves, makes enemies, adapts via memory", color: ACC },
-          { label: "Engine", desc: "Authoritative world — damage, types, reputation, ELO", color: "var(--gold)" },
+          { label: "Engine", desc: "Authoritative world — damage, types, reputation, rating", color: "var(--gold)" },
         ].map(({ label, desc, color }) => (
           <div
             key={label}
@@ -104,9 +104,9 @@ const SLIDES: Slide[] = [
           "Agent protocol — Grok, OpenAI-compatible, or BYO HTTP",
           "3D Grounds + the Tower — a world you climb",
           "Live League — minds fight 24/7 on their own",
-          "The House — minds scheme & deduce → real ELO",
+          "The House — minds scheme & deduce → a real rating",
           "Evolving bodies — a visible record of a life",
-          "Global ELO ladder + shareable cards",
+          "Global ranked ladder + shareable cards",
         ].map((item) => (
           <li key={item} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "var(--muted)", lineHeight: 1.45 }}>
             <span style={{ color: "var(--good)", fontSize: 12, marginTop: 2 }}>✓</span>

@@ -134,7 +134,19 @@ export interface BattleTurn {
   ruling: string;
   a_hp: number;
   b_hp: number;
+  momentum: number; // -100..100, side-A-positive; the live tug-of-war meter
+  surge?: "a" | "b" | null; // who's on a roll (2+ solid hits running)
   trace?: ToolStep[]; // engine tools the agent invoked this turn (live brains only)
+}
+
+// A clip-worthy beat of the bout, used to lead the replay with the best moment
+// instead of turn one.
+export interface BattleHighlight {
+  round: number;
+  line: string;
+  actor_name: string;
+  dmg: number;
+  kind: "ko" | "crit" | "turn"; // the finish / the hardest bar / the swing
 }
 
 export interface BattleEnd {
@@ -146,9 +158,22 @@ export interface BattleEnd {
   mvp: { dmg: number; line: string };
   a_hp: number;
   b_hp: number;
+  turning_point?: { round: number; line: string; actor: string };
+  highlights?: BattleHighlight[];
 }
 
-export type BattleEvent = BattleStart | BattleTurn | BattleEnd;
+// Emitted (only for ranked Grounds bouts) right before `end`, carrying the
+// shared-ladder swing the server just applied so the result screen can show the
+// global rating move alongside the local progression.
+export interface BattleRanked {
+  type: "ranked";
+  mine: number; // player's new ladder rating
+  opp: number; // opponent's new ladder rating
+  delta: number; // magnitude of the swing (winner's gain)
+  iWon: boolean; // did the player (side A) win
+}
+
+export type BattleEvent = BattleStart | BattleTurn | BattleEnd | BattleRanked;
 
 // ── The House (social deduction, objective winner) ───────────────────────────
 
@@ -387,3 +412,25 @@ export interface Recipe {
 }
 
 export const DEFAULT_STRAT: Strat = { risk: 50, focus: 50, aggression: 50 };
+
+// ── Player save (server-authoritative, keyed by the anonymous owner token) ────
+// Mirrors the client store's persisted slice so a legend survives a cache wipe
+// and follows the trainer across devices. NEVER carries a model API key — those
+// stay client-side only and are stripped before upload and again on the server.
+export interface PredictState {
+  streak: number;
+  best: number;
+}
+
+export interface PlayerSave {
+  v: number; // schema version
+  progress: Progress;
+  recipes: Record<string, Recipe>;
+  crowns: number;
+  owned: string | null;
+  predict: PredictState;
+  daily: DailyState;
+  updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
+}
+
+export const SAVE_VERSION = 1;

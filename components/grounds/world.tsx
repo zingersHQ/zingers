@@ -38,7 +38,7 @@ export interface MatchView {
 export type NearTarget =
   | { kind: "train"; key: string }
   | { kind: "arena" }
-  | { kind: "challenge"; key: string; name: string }
+  | { kind: "challenge"; key: string; name: string; id: string }
   | { kind: "guardian" }
   | null;
 
@@ -164,6 +164,12 @@ export default function World({
   const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
   const camDrag = useRef<CamDrag>({ dx: 0, dy: 0, pinch: 0 });
   const [isTouch, setIsTouch] = useState(false);
+  // True while the WebGL context is lost (e.g. the GPU dropped the context after
+  // a heavy frame — like zooming all the way out and pulling the whole scene into
+  // view). We tear the post-processing chain down while it's gone, otherwise the
+  // EffectComposer reconstructs against a dead context and throws on
+  // getContextAttributes().alpha, which reads to the player as a hard crash.
+  const [glLost, setGlLost] = useState(false);
   useEffect(() => {
     const coarse =
       typeof window !== "undefined" &&
@@ -185,7 +191,7 @@ export default function World({
     () =>
       perched
         .filter((p) => p.agent.status === "awaiting")
-        .map((p) => ({ key: p.agent.key, name: p.agent.name, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
+        .map((p) => ({ key: p.agent.key, name: p.agent.name, id: p.agent.id, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
     [perched],
   );
   return (
@@ -198,6 +204,11 @@ export default function World({
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = biome.exposure;
+        const canvas = gl.domElement;
+        // calling preventDefault() is what tells the browser we want the context
+        // back — without it the loss is permanent and the canvas stays blank.
+        canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); setGlLost(true); });
+        canvas.addEventListener("webglcontextrestored", () => { setGlLost(false); });
       }}
     >
       <ExposureSync exposure={biome.exposure} />
@@ -286,12 +297,14 @@ export default function World({
           <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} shape={shape} onAltitude={onAltitude} />
         </Physics>
 
-        <RenderBoundary fallback={null}>
-          <EffectComposer enableNormalPass={false}>
-            <Bloom intensity={biome.bloom} luminanceThreshold={0.62} luminanceSmoothing={0.28} mipmapBlur radius={0.7} />
-            <Vignette eskil={false} offset={0.22} darkness={0.6} />
-          </EffectComposer>
-        </RenderBoundary>
+        {!glLost && (
+          <RenderBoundary fallback={null}>
+            <EffectComposer enableNormalPass={false}>
+              <Bloom intensity={biome.bloom} luminanceThreshold={0.62} luminanceSmoothing={0.28} mipmapBlur radius={0.7} />
+              <Vignette eskil={false} offset={0.22} darkness={0.6} />
+            </EffectComposer>
+          </RenderBoundary>
+        )}
       </Suspense>
 
       <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
@@ -914,6 +927,8 @@ const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
 const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead of full gravity)
 const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
+const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
+                           // into a uniform hover instead of a per-press sawtooth
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1071,7 +1086,7 @@ function Handler({
   camCue: React.RefObject<CamCue>;
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
-  challengeTargets: { key: string; name: string; pos: THREE.Vector3 }[];
+  challengeTargets: { key: string; name: string; id: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
 }) {
@@ -1095,6 +1110,9 @@ function Handler({
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
+  // smoothed 0..1 thrust command — eases toward 1 while the jump key is held and
+  // back to 0 when released, so tapping doesn't snap the climb target each frame
+  const thrust = useRef(0);
   // procedural body polish: a forward/banked lean while flying, and a
   // squash-&-stretch impulse that pops on launch and absorbs on landing
   const leanX = useRef(0);
@@ -1259,26 +1277,28 @@ function Handler({
 
     if (jumps.current > FLY_TRIGGER) {
       // ── jetpack flight ── a fully controlled hover so vertical motion stays
-      // fluid: ease the vertical velocity toward a strong climb while thrusting, or
-      // a gentle sink when released — never letting full gravity yank you straight
-      // down between presses (that's what made tapping feel clunky). Read the LIVE
+      // fluid. The key trick: we smooth the THRUST COMMAND (0..1), not just the
+      // resulting velocity. Snapping the climb target between full-up and sink on
+      // every keypress was the bobbing/shaking — to stay aloft you machine-gun the
+      // spacebar, and each tap yanked the target the other way. With the command
+      // eased, a held key spools up to a steady climb and rapid taps average into a
+      // smooth, uniform hover, like holding W gives a uniform walk. Read the LIVE
       // velocity (the steering block above just wrote x/z) and only touch y, so
       // thrust never fights your WASD steering.
       const cv = rb.linvel();
-      const targetY = jumpHeld ? FLY_CLIMB : FLY_SINK;
-      const rate = jumpHeld ? FLY_THRUST : FLY_GLIDE;
+      thrust.current += ((jumpHeld ? 1 : 0) - thrust.current) * (1 - Math.exp(-FLY_SPOOL * dt));
+      // blend the vertical target + ease rate by the smoothed thrust: full press →
+      // strong, snappy climb; released → a slow, floaty sink
+      const targetY = FLY_SINK + (FLY_CLIMB - FLY_SINK) * thrust.current;
+      const rate = FLY_GLIDE + (FLY_THRUST - FLY_GLIDE) * thrust.current;
       const ky = 1 - Math.exp(-rate * dt);
       rb.setLinvel({ x: cv.x, y: cv.y + (targetY - cv.y) * ky, z: cv.z }, true);
-      if (jumpHeld) {
-        // continuous exhaust while the thruster is firing (paced, not per-frame)
-        jetEmit.current += dt;
-        if (jetEmit.current > 0.045) { jetEmit.current = 0; jetBurst.current++; }
-        if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + dt * 2.4);
-      } else {
-        // idle hover still puffs occasionally so the pack reads as "on"
-        jetEmit.current += dt;
-        if (jetEmit.current > 0.13) { jetEmit.current = 0; jetBurst.current++; }
-      }
+      // exhaust pace + camera punch ride the smoothed thrust so they read as a
+      // steady plume/lean instead of strobing with each tap
+      if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + dt * 2.4 * thrust.current);
+      jetEmit.current += dt;
+      const emitGap = 0.045 + (1 - thrust.current) * 0.085; // tighter puffs at full thrust
+      if (jetEmit.current > emitGap) { jetEmit.current = 0; jetBurst.current++; }
     } else if (jumpEdge) {
       // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
       const air = jumps.current > 0;
@@ -1301,6 +1321,8 @@ function Handler({
     wasGrounded.current = grounded;
     // pack deploys once we're flying (past the trigger), retracts on landing
     flying.current = jumps.current > FLY_TRIGGER;
+    // drop the thrust command when not airborne so the next takeoff spools from 0
+    if (!flying.current) thrust.current = 0;
     // thruster roar: silent on the ground, a low idle while hovering, full while
     // actively thrusting — spooled smoothly inside the sfx engine
     setJet(flying.current && controlsEnabled ? (jumpHeld ? 1 : 0.4) : 0);
@@ -1380,13 +1402,13 @@ function Handler({
       // perched-agent challenge: nearest awaiting agent within reach (full 3D,
       // so you must actually climb up to it), only when you own a champion
       if (!next && ownedKey) {
-        let best: { key: string; name: string } | null = null;
+        let best: { key: string; name: string; id: string } | null = null;
         let bestD = 3.0;
         for (const ct of challengeTargets) {
           const d = Math.hypot(t.x - ct.pos.x, t.y - ct.pos.y, t.z - ct.pos.z);
-          if (d < bestD) { bestD = d; best = { key: ct.key, name: ct.name }; }
+          if (d < bestD) { bestD = d; best = { key: ct.key, name: ct.name, id: ct.id }; }
         }
-        if (best) next = { kind: "challenge", key: best.key, name: best.name };
+        if (best) next = { kind: "challenge", key: best.key, name: best.name, id: best.id };
       }
     }
     if (JSON.stringify(next) !== JSON.stringify(near.current)) {

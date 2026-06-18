@@ -118,7 +118,7 @@ function Setup(props: {
                 <ChampionAvatar ckey={r.key} type={r.type} champion={get(r.key)} size={72} />
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="mono" style={{ fontSize: 10, color: col }}>
-                  {r.type} · {ratingOf(get(r.key))} ELO
+                  {r.type} · {ratingOf(get(r.key))} rating
                 </div>
               </button>
             );

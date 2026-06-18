@@ -1,8 +1,8 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Champion, DailyResult, DailyState, HouseEnd, Progress, Recipe, Strat, Style } from "@/lib/types";
-import { DEFAULT_STRAT } from "@/lib/types";
+import type { Champion, DailyResult, DailyState, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
+import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
 import { applyResult, blank, blankStyle, levelFor, tierIndex } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
 import { STORAGE } from "@/lib/brand";
@@ -35,11 +35,6 @@ function seeded(): Progress {
 const STARTING_CROWNS = 500;
 export const TRAIN_COST = 60;
 
-interface PredictState {
-  streak: number;
-  best: number;
-}
-
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
@@ -47,6 +42,9 @@ interface ChampionStore {
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
+  lastServerSync: number; // updatedAt of the last save we reconciled with the server
+  applyServerSave: (save: PlayerSave) => void;
+  snapshotSave: () => PlayerSave;
   get: (key: string) => Champion;
   getRecipe: (key: string) => Recipe;
   setStrat: (key: string, strat: Strat) => void;
@@ -74,6 +72,49 @@ export const useChampions = create<ChampionStore>()(
       owned: null,
       predict: { streak: 0, best: 0 },
       daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
+      lastServerSync: 0,
+
+      // Reconcile the server's authoritative save into local state. Server
+      // recipes never carry an API key (client-only), so we re-apply any key we
+      // already hold locally — the rest of the recipe comes from the server.
+      applyServerSave: (save) =>
+        set((s) => {
+          const recipes: Record<string, Recipe> = {};
+          for (const [key, r] of Object.entries(save.recipes || {})) {
+            const localKey = s.recipes[key]?.agent?.apiKey;
+            recipes[key] = localKey && r.agent ? { ...r, agent: { ...r.agent, apiKey: localKey } } : r;
+          }
+          return {
+            progress: { ...seeded(), ...(save.progress || {}) },
+            recipes,
+            crowns: save.crowns,
+            owned: save.owned ?? null,
+            predict: save.predict || { streak: 0, best: 0 },
+            daily: save.daily || { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
+            lastServerSync: save.updatedAt,
+          };
+        }),
+
+      // Build the blob to push to the server — sanitized of API keys so a secret
+      // never leaves the device (the server strips them too as a backstop).
+      snapshotSave: () => {
+        const s = get();
+        const recipes: Record<string, Recipe> = {};
+        for (const [key, r] of Object.entries(s.recipes)) {
+          const agent = r.agent ? { ...r.agent, apiKey: undefined } : undefined;
+          recipes[key] = { ...r, agent };
+        }
+        return {
+          v: SAVE_VERSION,
+          progress: s.progress,
+          recipes,
+          crowns: s.crowns,
+          owned: s.owned,
+          predict: s.predict,
+          daily: s.daily,
+          updatedAt: Date.now(),
+        };
+      },
 
       get: (key) => get().progress[key] || blank(),
       getRecipe: (key) => get().recipes[key] || { strat: { ...DEFAULT_STRAT } },

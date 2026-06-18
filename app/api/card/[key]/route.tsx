@@ -29,7 +29,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const portrait = `${origin}${portraitOf(k)}`;
 
   const stats: [string, string, string][] = [
-    ["ELO", rating, "#f5d020"],
+    ["RATING", rating, "#f5d020"],
     ["LEVEL", level, col],
     ["RECORD", `${wins}W · ${losses}L`, "#36d39a"],
   ];

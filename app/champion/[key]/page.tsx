@@ -70,7 +70,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            <Stat n={card.elo} l="ELO" c="var(--gold)" />
+            <Stat n={card.elo} l="RATING" c="var(--gold)" />
             <Stat n={card.level} l="LEVEL" c={col} />
             <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
           </div>
@@ -125,7 +125,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               </div>
             ) : (
               <p style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
-                No House games yet — play one to generate an objective skill profile and ELO.
+                No House games yet — play one to generate an objective skill profile and rating.
               </p>
             )}
 

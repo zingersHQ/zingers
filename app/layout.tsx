@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
+import { PlayerSync } from "@/components/player-sync";
 import { BRAND, pageTitle } from "@/lib/brand";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", weight: ["400", "500", "700"] });
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${grotesk.variable} ${mono.variable}`}>
+        <PlayerSync />
         <Nav />
         {children}
       </body>

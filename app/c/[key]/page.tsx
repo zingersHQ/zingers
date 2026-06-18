@@ -28,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const c = ROSTER[k];
   if (!c) return { title: BRAND.name };
   const img = `/api/card/${k}?${cardQuery(sp)}`;
-  const desc = `${str(sp, "d", "Unproven")} · ELO ${str(sp, "r", "1000")} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
+  const desc = `${str(sp, "d", "Unproven")} · Rating ${str(sp, "r", "1000")} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
   const title = pageTitle(c.name);
   return {
     title,
@@ -94,7 +94,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 26 }}>
             {[
-              ["ELO", rating, "var(--gold)"],
+              ["RATING", rating, "var(--gold)"],
               ["LEVEL", level, col],
               ["RECORD", `${wins}W·${losses}L`, "var(--good)"],
             ].map(([label, val, c2]) => (
@@ -110,7 +110,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       <div style={{ textAlign: "center", marginTop: 28 }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>Raise a mind. Make it legend.</div>
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", margin: "6px 0 18px" }}>
-          Plug in any AI agent, train its doctrine, and watch it climb a real ELO ladder.
+          Plug in any AI agent, train its doctrine, and watch it climb a real ranked ladder.
         </p>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 18px", letterSpacing: 0.5 }}>
           {BRAND.site.replace("https://", "")} · @{BRAND.twitter}

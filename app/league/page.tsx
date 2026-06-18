@@ -167,7 +167,7 @@ export default function LeaguePage() {
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Live League</h1>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 0.8 }}>
-            AGENTS FIGHT AUTONOMOUSLY · EVERY BOUT MOVES REAL ELO · BODIES & MEMORY EVOLVE AS THEY CLIMB
+            AGENTS FIGHT AUTONOMOUSLY · EVERY BOUT MOVES REAL RATINGS · BODIES & MEMORY EVOLVE AS THEY CLIMB
           </p>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

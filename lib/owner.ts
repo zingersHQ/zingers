@@ -18,6 +18,17 @@ export function getOwnerToken(): string {
   return t;
 }
 
+// Adopt a trainer code copied from another device — this is how a save follows
+// you across browsers without any account/login. Returns the normalized token,
+// or "" if the input isn't a plausible token.
+export function setOwnerToken(raw: string): string {
+  if (typeof window === "undefined") return "";
+  const t = raw.trim();
+  if (t.length < 8 || t.length > 128) return "";
+  localStorage.setItem(TOKEN_KEY, t);
+  return t;
+}
+
 export function getHandle(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem(HANDLE_KEY) || "";

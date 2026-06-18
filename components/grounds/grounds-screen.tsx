@@ -13,6 +13,7 @@ import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
+import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById } from "@/components/grounds/worlds";
 import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
@@ -43,6 +44,9 @@ export default function GroundsScreen() {
   const [near, setNear] = useState<NearTarget>(null);
   const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "guardian">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
+  // ladder id of the opponent when challenging a specific perched agent — so the
+  // hit lands on THAT champion. null = a central-arena pick → its house champion.
+  const [opponentId, setOpponentId] = useState<string | null>(null);
   const [matchView, setMatchView] = useState<MatchView | null>(null);
   const [betSide, setBetSide] = useState<"me" | "opp" | null>(null);
   const [betAmt, setBetAmt] = useState(50);
@@ -53,6 +57,8 @@ export default function GroundsScreen() {
     ratingDelta: number;
     leveledTo: number | null;
     learned: string | null;
+    globalDelta: number | null; // signed swing on the shared ladder (null if unranked)
+    globalRating: number | null; // player's new ladder rating
   } | null>(null);
   const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
@@ -150,9 +156,12 @@ export default function GroundsScreen() {
     if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
     else if (near?.kind === "guardian") setOverlay("guardian");
-    else if (near?.kind === "arena") setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
-    else if (near?.kind === "challenge") {
+    else if (near?.kind === "arena") {
+      setOpponentId(null); // central arena picks resolve to house champions
+      setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
+    } else if (near?.kind === "challenge") {
       setOpponent(near.key);
+      setOpponentId(near.id); // dent THIS perched agent's real ladder champion
       setOverlay("arena");
     }
   }, [near, overlay, inMatch, result, gRun, scenario.id]);
@@ -189,8 +198,14 @@ export default function GroundsScreen() {
     setOverlay("none");
     const ra = getRecipe(owned);
     const rb = getRecipe(opponent);
-    const url = `/api/battle?a=${owned}&b=${opponent}&${sideParams("a", ra)}&${sideParams("b", rb)}`;
-    bout.begin(url, (end: BattleEnd) => {
+    // Ranked: a perched agent dents its own ladder champion (opponentId); a
+    // central-arena pick maps to that creature's house champion. Either way the
+    // server records the engine's verdict so this duel moves the one global rating.
+    const tok = getOwnerToken();
+    const oid = opponentId ?? `house-${opponent}`;
+    const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}` : "";
+    const url = `/api/battle?a=${owned}&b=${opponent}&${sideParams("a", ra)}&${sideParams("b", rb)}${rank}`;
+    bout.begin(url, (end: BattleEnd, ranked) => {
       const styles: Record<string, Style> = { [owned]: blankStyle(), [opponent]: blankStyle() };
       for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[opponent], turn);
       const winnerKey = end.winner;
@@ -234,10 +249,12 @@ export default function GroundsScreen() {
         ratingDelta: afterRating - beforeRating,
         leveledTo: afterLevel > beforeLevel ? afterLevel : null,
         learned,
+        globalDelta: ranked ? (iWon ? ranked.delta : -ranked.delta) : null,
+        globalRating: ranked ? ranked.mine : null,
       });
       setOverlay("result");
     });
-  }, [owned, opponent, betSide, betAmt, store, getRecipe, bout]);
+  }, [owned, opponent, opponentId, betSide, betAmt, store, getRecipe, bout]);
 
   function closeMatch() {
     bout.stop();
@@ -245,6 +262,7 @@ export default function GroundsScreen() {
     setResult(null);
     setOverlay("none");
     setOpponent(null);
+    setOpponentId(null);
     setBetSide(null);
   }
 
@@ -336,6 +354,10 @@ export default function GroundsScreen() {
   const pickingChampion = mounted && !owned && roster.length > 0;
   const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion;
   const dockPad = showDock ? DOCK_H + 8 : 0;
+  // Keep the world HUD (season banner, music, crowns, altitude) tucked away
+  // until the first-run tutorial and champion claim are done — otherwise its
+  // zIndex pokes through on top of those higher-priority overlays.
+  const showHud = mounted && !showIntro && !pickingChampion;
 
   return (
     <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden" }}>
@@ -397,6 +419,7 @@ export default function GroundsScreen() {
       )}
 
       {/* HUD — sits above the WebGL canvas and touch layer */}
+      {showHud && (
       <div style={{ position: "absolute", top: 14, left: 16, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
         {!showMatch && overlay === "none" && owned && !gRun && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
@@ -468,6 +491,8 @@ export default function GroundsScreen() {
           </div>
         )}
       </div>
+      )}
+      {showHud && (
       <div style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
         <AmbientToggle compact={isMobile} />
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
@@ -476,9 +501,10 @@ export default function GroundsScreen() {
           {!isMobile && <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>}
         </div>
       </div>
+      )}
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
-      {!showMatch && overlay === "none" && towerAgents.length > 0 && (
+      {showHud && !showMatch && overlay === "none" && towerAgents.length > 0 && (
         <div className="panel" style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
@@ -585,7 +611,7 @@ export default function GroundsScreen() {
           roster={roster}
           get={store.get}
           opponent={opponent}
-          setOpponent={setOpponent}
+          setOpponent={(k) => { setOpponent(k); setOpponentId(null); }}
           betSide={betSide}
           setBetSide={setBetSide}
           betAmt={betAmt}
@@ -900,13 +926,45 @@ function ChallengeOverlay(props: {
   );
 }
 
+// The live tug-of-war. Side A fills from the left; the bar surges with every
+// hard bar and drifts back in a lull — so the turning point is something you
+// watch happen, not just read about after.
+function MomentumMeter({ momentum, surge, aName, bName, aColor, bColor, isMobile }: {
+  momentum: number;
+  surge: "a" | "b" | null;
+  aName?: string;
+  bName?: string;
+  aColor: string;
+  bColor: string;
+  isMobile: boolean;
+}) {
+  const frac = Math.max(0.02, Math.min(0.98, (momentum + 100) / 200)); // 0 = all B, 1 = all A
+  return (
+    <div style={{ marginTop: 8, width: isMobile ? "86vw" : 420, maxWidth: "94vw", marginInline: "auto", pointerEvents: "none" }}>
+      <div className="mono" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 9, letterSpacing: 1, marginBottom: 3, gap: 8 }}>
+        <span style={{ color: aColor, fontWeight: surge === "a" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "b" ? 0.55 : 1, whiteSpace: "nowrap" }}>
+          {surge === "a" ? "🔥 " : ""}{aName}
+        </span>
+        <span style={{ color: surge ? "var(--gold)" : "var(--muted2)", letterSpacing: 1.5, whiteSpace: "nowrap" }}>{surge ? "ON A ROLL" : "MOMENTUM"}</span>
+        <span style={{ color: bColor, fontWeight: surge === "b" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "a" ? 0.55 : 1, whiteSpace: "nowrap" }}>
+          {bName}{surge === "b" ? " 🔥" : ""}
+        </span>
+      </div>
+      <div style={{ position: "relative", height: 9, borderRadius: 5, overflow: "hidden", background: bColor, boxShadow: surge ? `0 0 14px -3px ${surge === "a" ? aColor : bColor}` : "none" }}>
+        <div style={{ position: "absolute", inset: 0, width: `${Math.round(frac * 100)}%`, background: aColor, transition: "width .55s cubic-bezier(.25,1,.4,1)" }} />
+        <div style={{ position: "absolute", left: "50%", top: -2, bottom: -2, width: 2, background: "rgba(255,255,255,.6)", transform: "translateX(-1px)" }} />
+      </div>
+    </div>
+  );
+}
+
 function MatchHud(props: {
   bout: ReturnType<typeof useBout>;
   owned: string;
   opponent: string;
   byKey: Record<string, RosterEntry>;
   get: (k: string) => Champion;
-  result: { won: boolean; crowns: number; betWon: boolean | null; ratingDelta: number; leveledTo: number | null; learned: string | null } | null;
+  result: { won: boolean; crowns: number; betWon: boolean | null; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null } | null;
   onClose: () => void;
   isMobile: boolean;
 }) {
@@ -954,6 +1012,17 @@ function MatchHud(props: {
             <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.35 }}>
               &ldquo;{bout.start.topic}&rdquo;
             </div>
+          )}
+          {t && !result && (
+            <MomentumMeter
+              momentum={t.momentum}
+              surge={t.surge ?? null}
+              aName={a?.name}
+              bName={b?.name}
+              aColor={a ? TYPE_COLOR[a.type] : "var(--gold)"}
+              bColor={b ? TYPE_COLOR[b.type] : "var(--muted2)"}
+              isMobile={isMobile}
+            />
           )}
         </div>
       </div>
@@ -1011,6 +1080,15 @@ function MatchHud(props: {
             <div className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               {bout.end?.winner_name} wins in {bout.end?.rounds} rounds
             </div>
+            {bout.end?.highlights?.[0] && (
+              <div style={{ margin: "14px 0", padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid var(--line2)", textAlign: "left" }}>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)" }}>
+                  {bout.end.highlights[0].kind === "ko" ? "THE FINISH" : bout.end.highlights[0].kind === "crit" ? "HARDEST BAR" : "TURNING POINT"} · R{bout.end.highlights[0].round}
+                </div>
+                <div style={{ fontStyle: "italic", fontSize: 14, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{bout.end.highlights[0].line}&rdquo;</div>
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 3 }}>— {bout.end.highlights[0].actor_name}</div>
+              </div>
+            )}
             {result.crowns !== 0 && (
               <div style={{ margin: "16px 0", fontSize: 22, fontWeight: 700, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)" }}>
                 {result.crowns >= 0 ? "+" : ""}
@@ -1020,6 +1098,12 @@ function MatchHud(props: {
             {result.betWon !== null && (
               <div className="mono" style={{ fontSize: 12, color: result.betWon ? "var(--good)" : "var(--bad)" }}>
                 bet {result.betWon ? "won" : "lost"}
+              </div>
+            )}
+            {result.globalDelta !== null && (
+              <div className="mono" style={{ fontSize: 12, marginTop: 8, color: result.globalDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
+                global rating {result.globalDelta >= 0 ? "+" : ""}{result.globalDelta}
+                <span style={{ color: "var(--muted2)" }}> → {result.globalRating} · ranks everyone</span>
               </div>
             )}
             {result.leveledTo && (

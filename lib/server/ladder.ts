@@ -96,6 +96,90 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
   return champ;
 }
 
+// Ensure the player has a single ladder presence for the base creature they're
+// fielding in the Grounds — their "mirror". Created lazily the first time they
+// fight ranked, so claiming on /standings is no longer a prerequisite for the
+// 3D world to feed the global ladder. Idempotent per (token, key).
+export async function ensureMirror(
+  ownerToken: string,
+  key: string,
+  handle?: string,
+  strat?: { risk: number; focus: number; aggression: number },
+): Promise<LadderChampion | null> {
+  const K = key.toUpperCase();
+  const base = ROSTER[K];
+  if (!base || !ownerToken) return null;
+  const store = getStore();
+  const owned = await store.getOwned(ownerToken);
+  const existing = owned.find((c) => c.key === K && !c.house);
+  if (existing) return existing;
+  const champ: LadderChampion = {
+    id: shortId(),
+    key: K,
+    name: base.name,
+    handle: (handle?.trim() || "").slice(0, 24),
+    type: base.type as CreatureType,
+    brain: { provider: "grok" },
+    strat: {
+      risk: clamp(strat?.risk ?? 50),
+      focus: clamp(strat?.focus ?? 50),
+      aggression: clamp(strat?.aggression ?? 50),
+    },
+    rating: BASE_RATING,
+    wins: 0,
+    losses: 0,
+    battles: 0,
+    house: false,
+    ownerToken: ownerToken.slice(0, 64),
+    createdAt: Date.now(),
+  };
+  await store.putChampion(champ);
+  await store.addOwned(champ.ownerToken, champ.id);
+  return champ;
+}
+
+// Apply a KNOWN bout outcome (decided by the live engine, not claimed by the
+// client) to the shared ladder: bumps both ratings, records W/L, pushes the
+// feed. This is how a fight in the 3D Grounds moves the one global rating.
+export async function recordGroundsBout(args: {
+  ownerToken: string;
+  myKey: string;
+  oppId: string;
+  iWon: boolean;
+  topic?: string;
+  handle?: string;
+  strat?: { risk: number; focus: number; aggression: number };
+}): Promise<{ mine: number; opp: number; delta: number } | null> {
+  await ensureSeeded();
+  const store = getStore();
+  const mine = await ensureMirror(args.ownerToken, args.myKey, args.handle, args.strat);
+  if (!mine) return null;
+  const opp = await store.getChampion(args.oppId);
+  if (!opp || opp.id === mine.id) return null;
+
+  const winner = args.iWon ? mine : opp;
+  const loser = args.iWon ? opp : mine;
+  const exp = expectedScore(winner.rating, loser.rating);
+  const delta = Math.round(ELO_K * (1 - exp));
+  winner.rating += delta;
+  loser.rating -= delta;
+  winner.wins += 1;
+  loser.losses += 1;
+  winner.battles += 1;
+  loser.battles += 1;
+
+  await Promise.all([store.putChampion(winner), store.putChampion(loser)]);
+  await store.pushFeed({
+    t: Date.now(),
+    winner: winner.name,
+    loser: loser.name,
+    topic: args.topic || "Grounds duel",
+    delta,
+    mode: "ladder",
+  });
+  return { mine: mine.rating, opp: opp.rating, delta };
+}
+
 export interface TrainInput {
   ownerToken: string;
   id: string;

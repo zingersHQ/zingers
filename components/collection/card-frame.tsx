@@ -106,7 +106,7 @@ export function ChampionCardFrame({
           </span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
             <span style={{ fontSize: compact ? 16 : 20, fontWeight: 700, color: "var(--gold)" }}>{hasRecord ? card.elo : "—"}</span>
-            <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>ELO</span>
+            <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>RATING</span>
           </span>
         </div>
         {footer}
