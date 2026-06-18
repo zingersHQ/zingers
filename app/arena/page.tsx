@@ -272,7 +272,7 @@ function Setup(props: {
 
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 18, justifyContent: "center", flexWrap: "wrap" }}>
         <div className="mono" style={{ fontSize: 12, color: pick ? "var(--good)" : "var(--muted2)" }}>
-          {pick ? `BACKING ${pick === "a" ? a?.name : b?.name} — STREAK ON THE LINE` : "OPTIONAL: BACK A CHAMPION TO BUILD A STREAK"}
+          {pick ? `BACKING ${pick === "a" ? a?.name : b?.name}: STREAK ON THE LINE` : "OPTIONAL: BACK A CHAMPION TO BUILD A STREAK"}
         </div>
         <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", fontSize: 14, padding: "14px 28px" }} onClick={onStart}>
           {pick ? "▶ Lock it in & fight" : "▶ Start the bout"}
@@ -340,7 +340,7 @@ function AdvancedAgent({
         <div style={{ padding: "4px 16px 16px", borderTop: "1px solid var(--line)" }}>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", lineHeight: 1.6, margin: "12px 0" }}>
             Swap the challenger&apos;s brain. It keeps the body & moveset; your model decides the moves. Keys are sent only to start
-            this bout — never stored. Full docs at{" "}
+            this bout, never stored. Full docs at{" "}
             <Link href="/agents" style={{ color: "var(--accent)" }}>
               /agents
             </Link>
@@ -371,8 +371,8 @@ function AdvancedAgent({
           )}
           {agentA.provider === "openai" && (
             <div style={{ display: "grid", gap: 8 }}>
-              <input style={fieldStyle} placeholder="model id — gpt-4o-mini, grok-4, llama3.1…" value={agentA.model} onChange={(e) => set({ model: e.target.value })} />
-              <input style={fieldStyle} placeholder="base URL — https://api.openai.com/v1" value={agentA.baseUrl} onChange={(e) => set({ baseUrl: e.target.value })} />
+              <input style={fieldStyle} placeholder="model id: gpt-4o-mini, grok-4, llama3.1…" value={agentA.model} onChange={(e) => set({ model: e.target.value })} />
+              <input style={fieldStyle} placeholder="base URL: https://api.openai.com/v1" value={agentA.baseUrl} onChange={(e) => set({ baseUrl: e.target.value })} />
               <input style={fieldStyle} type="password" placeholder="API key (optional, not stored)" value={agentA.apiKey} onChange={(e) => set({ apiKey: e.target.value })} />
             </div>
           )}
@@ -502,7 +502,7 @@ function BoutView(props: {
           </div>
           <p style={{ margin: "10px 0 0", color: "var(--ink)", fontSize: 14, lineHeight: 1.5 }}>
             <span style={{ color: "var(--muted2)" }}>why&nbsp;&rsaquo;&nbsp;</span>
-            {t.why || "—"}
+            {t.why || "-"}
           </p>
           <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)" }}>
             ⚖ jury: {t.ruling} (q={t.q.toFixed(2)})
@@ -597,7 +597,7 @@ function ResultCard(props: {
         )}
         {pick !== null && resultMsg && (
           <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 10, border: `1px solid ${correct ? "var(--good)" : "var(--bad)"}`, color: correct ? "var(--good)" : "var(--bad)", fontWeight: 700 }}>
-            {correct ? "✓ Your prediction was right — streak up!" : "✗ Wrong call — streak reset."}
+            {correct ? "✓ Your prediction was right. Streak up!" : "✗ Wrong call. Streak reset."}
           </div>
         )}
         <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 14 }}>

@@ -35,11 +35,11 @@ The Lattice → The Static → The Stillness → The Chorus → The Spark → (L
    LOGIC    →   CHAOS    →   COMPOSURE   →  RHETORIC  → CREATIVITY →  (LOGIC)
 ```
 
-- **The Lattice** tames **the Static** — order silences noise. (LOGIC > CHAOS)
-- **The Static** cracks **the Stillness** — chaos rattles the calm. (CHAOS > COMPOSURE)
-- **The Stillness** deflects **the Chorus** — patience shrugs off appeals. (COMPOSURE > RHETORIC)
-- **The Chorus** drowns **the Spark** — selling beats merely inventing. (RHETORIC > CREATIVITY)
-- **The Spark** outflanks **the Lattice** — a reframe escapes the proof. (CREATIVITY > LOGIC)
+- **The Lattice** tames **the Static**. Order silences noise. (LOGIC > CHAOS)
+- **The Static** cracks **the Stillness**. Chaos rattles the calm. (CHAOS > COMPOSURE)
+- **The Stillness** deflects **the Chorus**. Patience shrugs off appeals. (COMPOSURE > RHETORIC)
+- **The Chorus** drowns **the Spark**. Selling beats merely inventing. (RHETORIC > CREATIVITY)
+- **The Spark** outflanks **the Lattice**. A reframe escapes the proof. (CREATIVITY > LOGIC)
 
 Advantage ×1.25, neutral ×1.0, disadvantage ×0.8. This wheel is the deepest law of
 the world; every region, season modifier, and matchup is read against it.
@@ -48,7 +48,7 @@ the world; every region, season modifier, and matchup is read against it.
 
 Within a mind, the same five appear as the combat stats (LOG / CHA / CMP / RHE /
 CRE) and, as a *career accrues*, as the five **behavioural axes** that sculpt the
-body (aggression, control, resilience, flair, creativity — see
+body (aggression, control, resilience, flair, creativity; see
 `lib/evolve/progression.ts`). A mind is "of" one force but carries a measure of all
 five; what it *does* in the ring decides which one swells.
 

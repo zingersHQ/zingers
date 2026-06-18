@@ -1,9 +1,9 @@
-# 06 · The Chronicle — living, generative seasons
+# 06 · The Chronicle: living, generative seasons
 
 A **season** is the Vault opening one more door. It is the game's content cadence
 and its story engine at once. Seasons are **generative and seeded**: from a single
 season seed plus this bible, the game derives the season's story, topic bank, region
-tilt, featured mind, and rank policy — reproducibly, and never off-canon.
+tilt, featured mind, and rank policy, reproducibly, and never off-canon.
 
 ## What a season turns over
 
@@ -31,7 +31,7 @@ always carry your name forward; you just have to defend it.
 ## Champion sagas (personal generative narrative)
 
 Beyond the world story, **each champion accrues its own saga** from its real match
-history — its memory notes, its biggest dunks, its rivalries (who it beat, who beat
+history: its memory notes, its biggest dunks, its rivalries (who it beat, who beat
 it). The generator turns this into a short, evolving in-character biography that
 lives on the champion's card and profile. The data is already there
 (`Recipe.memory`, the battle MVP lines, the ELO record); the season engine just
@@ -43,7 +43,7 @@ The generative layer must:
 1. Take a **seed** (the season number is the default seed) so output is reproducible.
 2. Read this bible as canon and **never rename** forces, Keepers, regions, or First
    Minds.
-3. Produce **additive** lore only — a new door, not a retcon.
+3. Produce **additive** lore only: a new door, not a retcon.
 4. Degrade gracefully: with no model available, fall back to a **deterministic**
    season composed from canon tables (so the game always has a live season).
 

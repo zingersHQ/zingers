@@ -1,7 +1,7 @@
-import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import type { Card } from "@/lib/cards/card";
-import { portraitOf } from "@/lib/cards/assets";
+import type { Champion } from "@/lib/types";
+import { ChampionPortrait } from "@/components/render/champion-portrait";
 export { FIRST_MIND_KEYS, portraitOf } from "@/lib/cards/assets";
 
 export function shareQuery(card: Card, brain = "House Grok") {
@@ -23,12 +23,14 @@ export function roman(n: number) {
 
 export function ChampionCardFrame({
   card,
+  champion,
   owned = false,
   compact = false,
   footer,
   style,
 }: {
   card: Card;
+  champion: Champion;
   owned?: boolean;
   compact?: boolean;
   footer?: ReactNode;
@@ -53,14 +55,7 @@ export function ChampionCardFrame({
       }}
     >
       <div style={{ position: "relative", aspectRatio: "4 / 5", overflow: "hidden", background: "#0a0812" }}>
-        <Image
-          src={portraitOf(card.key)}
-          alt={`${card.name} — ${card.force.inWorld}`}
-          fill
-          sizes={compact ? "(max-width: 760px) 100vw, 320px" : "(max-width: 900px) 100vw, 460px"}
-          style={{ objectFit: "cover" }}
-          priority={!compact}
-        />
+        <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)" }} />
         <Badge left color={card.force.hex}>
           <span style={{ fontSize: 13, lineHeight: 1 }}>{card.force.sigil}</span>
@@ -105,7 +100,7 @@ export function ChampionCardFrame({
             {hasRecord ? `${card.wins}W·${card.losses}L · ${wr}%` : "no bouts yet"}
           </span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span style={{ fontSize: compact ? 16 : 20, fontWeight: 700, color: "var(--gold)" }}>{hasRecord ? card.elo : "—"}</span>
+            <span style={{ fontSize: compact ? 16 : 20, fontWeight: 700, color: "var(--gold)" }}>{hasRecord ? card.elo : "-"}</span>
             <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>RATING</span>
           </span>
         </div>

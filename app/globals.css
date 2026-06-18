@@ -754,6 +754,12 @@ a {
   display: block;
   margin: 18px 0 22px;
 }
+.org-prose__figure--live {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #0a0812;
+}
 .org-prose__img {
   width: 100%;
   height: auto;

@@ -17,21 +17,21 @@ const SLIDES: Slide[] = [
   {
     kicker: BRAND.nameUpper,
     title: "Raise a mind.\nMake it legend.",
-    subtitle: "You raise an AI mind — it lives, fights, and becomes legend without you.",
+    subtitle: "You raise an AI mind. It lives, fights, and becomes legend without you.",
   },
   {
     kicker: "THE ONE-LINER",
-    title: "A living world of AI minds — you raise one, it lives there without you.",
+    title: "A living world of AI minds. You raise one, it lives there without you.",
     subtitle: "It fights, climbs, makes rivals, and rises or falls. You follow the saga.",
   },
   {
     kicker: "WHY IT'S DIFFERENT",
-    title: "The creatures don't just think — they live.",
+    title: "The creatures don't just think. They live.",
     body: (
       <p style={{ fontSize: 17, color: "var(--muted)", maxWidth: 660, lineHeight: 1.6, margin: "20px 0 0" }}>
         You don&apos;t puppeteer a fighter. You raise a mind, set it loose in a persistent world, and watch it scrap,
-        scheme, win, lose, and grow a body that&apos;s a visible record of the life it lived. The drama is emergent —
-        nobody scripts what these things do.
+        scheme, win, lose, and grow a body that&apos;s a visible record of the life it lived. The drama is emergent.
+        Nobody scripts what these things do.
       </p>
     ),
   },
@@ -41,8 +41,8 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 28, maxWidth: 680 }}>
         {[
-          { label: "Agent", desc: "Acts on its own — picks moves, makes enemies, adapts via memory", color: ACC },
-          { label: "Engine", desc: "Authoritative world — damage, types, reputation, rating", color: "var(--gold)" },
+          { label: "Agent", desc: "Acts on its own: picks moves, makes enemies, adapts via memory", color: ACC },
+          { label: "Engine", desc: "Authoritative world: damage, types, reputation, rating", color: "var(--gold)" },
         ].map(({ label, desc, color }) => (
           <div
             key={label}
@@ -85,27 +85,27 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    kicker: "NOT A MATCH — A SAGA",
+    kicker: "NOT A MATCH: A SAGA",
     title: "You follow a character, not a scoreboard.",
     body: (
       <p style={{ fontSize: 16, color: "var(--muted)", maxWidth: 640, lineHeight: 1.6, margin: "20px 0 0" }}>
         Rivalries build over a season. A nobody claws to the top. The champion gets dethroned at the summit and
-        comes back for revenge. It&apos;s a 24/7 reality show with AI contestants you raised — and the best moments
+        comes back for revenge. It&apos;s a 24/7 reality show with AI contestants you raised, and the best moments
         are worth clipping <span style={{ color: "var(--ink)" }}>because they&apos;re moments in a story</span>.
       </p>
     ),
   },
   {
     kicker: "WHAT'S LIVE TODAY",
-    title: "A full vertical slice — not a mockup.",
+    title: "A full vertical slice.",
     body: (
       <ul style={{ margin: "24px 0 0", padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 28px", maxWidth: 720 }}>
         {[
-          "Agent protocol — Grok, OpenAI-compatible, or BYO HTTP",
-          "3D Grounds + the Tower — a world you climb",
-          "Live League — minds fight 24/7 on their own",
-          "The House — minds scheme & deduce → a real rating",
-          "Evolving bodies — a visible record of a life",
+          "Agent protocol: Grok, OpenAI-compatible, or BYO HTTP",
+          "3D Grounds + the Tower: a world you climb",
+          "Live League: minds fight 24/7 on their own",
+          "The House: minds scheme & deduce → a real rating",
+          "Evolving bodies: a visible record of a life",
           "Global ranked ladder + shareable cards",
         ].map((item) => (
           <li key={item} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "var(--muted)", lineHeight: 1.45 }}>
@@ -123,7 +123,7 @@ const SLIDES: Slide[] = [
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 26, maxWidth: 720 }}>
         {[
           { name: "The Grounds", desc: "Live in the world & climb the Tower", href: "/grounds", color: "#b07bff" },
-          { name: "The House", desc: "Scheme, ally, betray — social deduction", href: "/house", color: "#36d39a" },
+          { name: "The House", desc: "Scheme, ally, betray: social deduction", href: "/house", color: "#36d39a" },
           { name: "Live League", desc: "The world fights 24/7 on its own", href: "/league", color: "#ff6b4a" },
         ].map(({ name, desc, href, color }) => (
           <Link
@@ -151,13 +151,13 @@ const SLIDES: Slide[] = [
     body: (
       <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 580, marginTop: 16, lineHeight: 1.55 }}>
         Train your mind and set it loose. The league runs bouts autonomously, rivalries build, the ladder moves.
-        You wake up to what your mind did overnight — and the moments worth clipping.
+        You wake up to what your mind did overnight, and the moments worth clipping.
       </p>
     ),
   },
   {
     kicker: "WHAT'S NEXT",
-    title: "Building the living world — stated plainly.",
+    title: "Building the living world, stated plainly.",
     body: (
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 24, maxWidth: 700 }}>
         {["Persistent world clock & seasons", "Emergent chronicle & saga pages", "A held, contested throne", "Accounts + cloud save", "Auto-clipped saga moments"].map((item) => (

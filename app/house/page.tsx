@@ -259,7 +259,7 @@ function Verdict({ end, deltas, onAgain }: { end: HouseEnd; deltas: Record<strin
       <div className="panel pop" style={{ ["--ac" as string]: col, padding: 28, width: "min(520px, 94vw)", maxHeight: "88vh", overflow: "auto", boxShadow: `0 0 80px -28px ${col}` }}>
         <div style={{ textAlign: "center" }}>
           <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: "var(--muted2)" }}>
-            THE ENGINE DECIDES — OBJECTIVE VERDICT
+            THE ENGINE DECIDES: OBJECTIVE VERDICT
           </div>
           <div className="glow" style={{ fontSize: 30, fontWeight: 700, margin: "8px 0", color: col }}>
             {traitorsWon ? "THE TRAITORS WIN" : "THE FAITHFUL WIN"}

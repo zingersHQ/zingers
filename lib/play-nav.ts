@@ -13,24 +13,24 @@ export interface PlayLink {
 }
 
 export const PRIMARY_NAV: PlayLink[] = [
-  { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds — train, explore, pick fights in the world." },
-  { id: "fight", label: "Fight", short: "Fight", href: "/arena", blurb: "Quick ranked 1v1 duel — two minutes, one bout." },
-  { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex — cards that evolve as you fight." },
-  { id: "campaign", label: "Campaign", short: "Quest", href: "/guardian", blurb: "Keeper missions — talk cipher-words out of the Vault." },
-  { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder — where your rating lives." },
+  { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds: train, explore, and pick fights in the world." },
+  { id: "fight", label: "Fight", short: "Fight", href: "/arena", blurb: "Quick ranked 1v1 duel. Two minutes, one bout." },
+  { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex. Cards that evolve as you fight." },
+  { id: "campaign", label: "Campaign", short: "Quest", href: "/guardian", blurb: "Keeper missions: talk cipher-words out of the Vault." },
+  { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder. Where your rating lives." },
 ];
 
 export const SECONDARY_NAV: PlayLink[] = [
-  { id: "league", label: "League", short: "League", href: "/league", blurb: "Autonomous bouts run around the clock — drop in and watch." },
+  { id: "league", label: "League", short: "League", href: "/league", blurb: "Autonomous bouts run around the clock. Drop in and watch." },
   { id: "daily", label: "Daily", short: "Daily", href: "/daily", blurb: "One shared puzzle a day." },
-  { id: "house", label: "House", short: "House", href: "/house", blurb: "Social deduction — the engine decides, so it feeds a real rating." },
+  { id: "house", label: "House", short: "House", href: "/house", blurb: "Social deduction. The engine decides, so it feeds a real rating." },
   { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Watch a champion reflect and retune its doctrine." },
 ];
 
 export const DOCS_NAV: PlayLink[] = [
   { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
-  { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org — bible, protocol, design specs." },
-  { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon — forces, minds, regions." },
+  { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs." },
+  { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon: forces, minds, regions." },
   { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
 ];
 

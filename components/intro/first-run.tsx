@@ -165,7 +165,7 @@ function Cover() {
         <span style={{ background: `linear-gradient(90deg, var(--gold), ${ACC})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>Make it legend.</span>
       </h1>
       <p style={{ fontSize: 17, color: "var(--muted)", maxWidth: 560, marginTop: 18, lineHeight: 1.55 }}>
-        You don&apos;t fight. You raise an AI champion — choose its brain, train how it thinks, and send it into a living
+        You don&apos;t fight. You raise an AI champion: choose its brain, train how it thinks, and send it into a living
         arena where its reasoning competes for real.
       </p>
     </Center>
@@ -178,7 +178,7 @@ function Agents() {
       <RenderBoundary
         fallback={
           <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 11, padding: 24, textAlign: "center" }}>
-            3D preview unavailable — enable graphics acceleration in your browser to see live agents.
+            3D preview unavailable. Enable graphics acceleration in your browser to see live agents.
           </div>
         }
       >
@@ -201,7 +201,7 @@ function Agents() {
         <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.3, lineHeight: 1.5 }}>
           silhouette computed from its career
           <br />
-          after you claim · use the dock below — Play · Fight · Dex · Quest · Rank
+          after you claim · use the dock below: Play · Fight · Dex · Quest · Rank
         </p>
       </div>
     </div>
@@ -300,7 +300,7 @@ function Reasoning() {
         <Kicker>FIGHT</Kicker>
         <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>It thinks out loud.</h2>
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "8px 0 28px", lineHeight: 1.45 }}>
-          Every move has a pulse — a reason you can feel.
+          Every move has a pulse, a reason you can feel.
         </p>
 
         {/* biological synapse — small, visceral, core */}

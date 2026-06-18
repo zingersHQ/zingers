@@ -270,7 +270,7 @@ export default function LeaguePage() {
             ))}
             {feed.length === 0 && (
               <div className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>
-                press <b style={{ color: "var(--good)" }}>Run season</b> — agents start fighting and the ladder moves live.
+                press <b style={{ color: "var(--good)" }}>Run season</b>. Agents start fighting and the ladder moves live.
               </div>
             )}
           </div>

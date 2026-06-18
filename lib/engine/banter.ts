@@ -29,29 +29,29 @@ const MOVE_BARS: Record<string, string[]> = {
   ],
   reductio: [
     "Follow {opp}'s logic and we end up worshipping toasters.",
-    "Take your point to its conclusion — congrats, you proved nothing.",
+    "Take your point to its conclusion. Congrats, you proved nothing.",
     "By that reasoning, {opp}, the moon owes me rent.",
   ],
   cold_read: [
     "I read {opp} like a terms-of-service nobody agreed to.",
     "Your tell, {opp}? You believe what you just said.",
-    "I've seen sharper logic on a cereal box — speaking of {topic}.",
+    "I've seen sharper logic on a cereal box, speaking of {topic}.",
   ],
   checkmate: [
     "You left the door open, {opp}. I'm just locking it behind you.",
-    "Checkmate — you were playing checkers about {topic} the whole time.",
+    "Checkmate. You were playing checkers about {topic} the whole time.",
     "Game over, {opp}, and you forgot to bring a game.",
   ],
   // VOX — RHETORIC
   crowd_swell: [
     "Ladies and gentlemen of the jury: {opp} just folded.",
     "Hear that roar? It's the room agreeing {opp} is wrong.",
-    "I don't argue, {opp} — I conduct. Sit down.",
+    "I don't argue, {opp}. I conduct. Sit down.",
   ],
   appeal: [
     "I'm not loud, {opp}, I'm just right at volume.",
     "Let the record show I warmed up; {opp} merely showed up.",
-    "Give me the floor — {opp} clearly can't use it.",
+    "Give me the floor. {opp} clearly can't use it.",
   ],
   strawman: [
     "So {opp} believes {topic}? Bold, baseless, and adorable.",
@@ -59,7 +59,7 @@ const MOVE_BARS: Record<string, string[]> = {
     "Let me summarize {opp}'s point: ... yeah, exactly.",
   ],
   mic_drop: [
-    "Mic's heavy, {opp} — maybe that's why you dropped the point.",
+    "Mic's heavy, {opp}. Maybe that's why you dropped the point.",
     "I'd explain it again, but {opp} only listens to applause.",
     "And that, {opp}, is how you end a sentence.",
   ],
@@ -67,26 +67,26 @@ const MOVE_BARS: Record<string, string[]> = {
   non_sequitur: [
     "Anyway, {opp}, my grandmother also distrusted the toaster.",
     "Have you considered {topic}? No? Me neither. Moving on.",
-    "Banana. Sorry — what were you wrong about, {opp}?",
+    "Banana. Sorry, what were you wrong about, {opp}?",
   ],
   wildfire: [
     "I lit the whole {topic} debate up while {opp} read the rules.",
     "No plan, {opp}, just vibes and casualties.",
-    "Catch, {opp} — it's everything you said, on fire.",
+    "Catch, {opp}. It's everything you said, on fire.",
   ],
   gaslight: [
     "You never actually made that point, {opp}. We all saw it.",
-    "Weird, {opp} — I distinctly remember you agreeing with me.",
+    "Weird, {opp}. I distinctly remember you agreeing with me.",
     "That's not what you said, and deep down you know it.",
   ],
   pandemonium: [
     "I'll go down swinging, {opp}, and you're going down confused.",
-    "Burn it all — {topic}, the jury, your notes, {opp}.",
+    "Burn it all: {topic}, the jury, your notes, {opp}.",
     "Chaos costs me too, but you can't afford it at all.",
   ],
   // MUSE — CREATIVITY
   reframe: [
-    "This was never about {topic}, {opp} — it's about who blinks.",
+    "This was never about {topic}, {opp}. It's about who blinks.",
     "Wrong question. The real one makes {opp} look silly.",
     "Let me move the goalposts somewhere {opp} can't reach.",
   ],
@@ -97,11 +97,11 @@ const MOVE_BARS: Record<string, string[]> = {
   ],
   plot_twist: [
     "Plot twist, {opp}: your best point was secretly working for me.",
-    "Turns out {topic} agrees with me — shocking, I know, {opp}.",
+    "Turns out {topic} agrees with me. Shocking, I know, {opp}.",
     "The villain was your own argument all along, {opp}.",
   ],
   magnum_opus: [
-    "Behold the masterpiece, {opp} — you're the 'before' picture.",
+    "Behold the masterpiece, {opp}. You're the 'before' picture.",
     "I painted a whole truth while {opp} drew a stick figure.",
     "This is art, {opp}. You're the empty frame.",
   ],
@@ -113,12 +113,12 @@ const MOVE_BARS: Record<string, string[]> = {
   ],
   patience: [
     "Take your time, {opp}. I have all of it.",
-    "I'll wait — wrong arguments tire themselves out.",
+    "I'll wait. Wrong arguments tire themselves out.",
     "Breathe, {opp}. You'll need it for the loss.",
   ],
   counterpoint: [
     "You missed, {opp}. Now watch how it's actually done.",
-    "Thanks for the opening — and the {topic} lesson you needed.",
+    "Thanks for the opening, and the {topic} lesson you needed.",
     "My turn, {opp}, and I don't miss.",
   ],
   immovable: [
@@ -130,16 +130,16 @@ const MOVE_BARS: Record<string, string[]> = {
   callout: [
     "Say it louder, {opp}, so the whole jury hears you're wrong.",
     "I called your bluff and {topic} folded right along with it.",
-    "Stand up, {opp} — oh, you were? My mistake.",
+    "Stand up, {opp}. Oh, you were? My mistake.",
   ],
   burn: [
-    "That take on {topic} is so cold I'll warm it up — gone.",
+    "That take on {topic} is so cold I'll warm it up. Gone.",
     "Third-degree, {opp}. Maybe get that point looked at.",
     "I'd roast you, {opp}, but you're already well done.",
   ],
   double_down: [
     "Wrong? Watch me be wrong louder and still win, {opp}.",
-    "I'm doubling down — {opp}'s doubling over.",
+    "I'm doubling down. {opp}'s doubling over.",
     "All gas, no brakes, no respect for {opp}.",
   ],
   inferno: [
@@ -150,26 +150,26 @@ const MOVE_BARS: Record<string, string[]> = {
 };
 
 const TYPE_BARS: Record<CreatureType, string[]> = {
-  LOGIC: ["The math says no, {opp}.", "Sound premises, {opp}. Yours weren't.", "Q.E.D. — that's 'quit, embarrassing display.'"],
-  CHAOS: ["No notes, {opp}, just noise — and you're losing to it.", "Reality's optional today, {opp}.", "I don't make sense; I make wins."],
-  COMPOSURE: ["I'm calm, {opp}. That should worry you.", "Tire yourself out — I'll be here.", "Stillness, then the loss. Yours."],
+  LOGIC: ["The math says no, {opp}.", "Sound premises, {opp}. Yours weren't.", "Q.E.D. That's 'quit, embarrassing display.'"],
+  CHAOS: ["No notes, {opp}, just noise, and you're losing to it.", "Reality's optional today, {opp}.", "I don't make sense; I make wins."],
+  COMPOSURE: ["I'm calm, {opp}. That should worry you.", "Tire yourself out. I'll be here.", "Stillness, then the loss. Yours."],
   RHETORIC: ["The room's mine, {opp}. You're just renting.", "Applause doesn't lie, {opp}. You did.", "I speak; juries nod; you fold."],
-  CREATIVITY: ["I changed the game, {opp} — you're still reading the box.", "New frame, {opp}. You don't fit it.", "I imagined a better point than yours existing."],
+  CREATIVITY: ["I changed the game, {opp}. You're still reading the box.", "New frame, {opp}. You don't fit it.", "I imagined a better point than yours existing."],
 };
 
 // When the speaker is Confused, the words come out sideways — and that's funnier
 // than a clean line. Overrides the move bar most of the time.
 const CONFUSED_BARS = [
-  "Wait — what were we— is {topic} the blue one?",
+  "Wait... what were we... is {topic} the blue one?",
   "Hold on, {opp}, give me a sec, the words went sideways.",
   "I had a great point. It left. Without me.",
-  "Two plus {opp} carry the— no. Anyway. I win, right?",
+  "Two plus {opp} carry the... no. Anyway. I win, right?",
   "{topic}? I was so sure that meant something a second ago.",
 ];
 
 // When Tilted, rattled but still trying — defensive heat plays for laughs.
 const TILTED_BARS = [
-  "Fine — FINE — let's do this, {opp}.",
+  "Fine. FINE. Let's do this, {opp}.",
   "You got under my skin, {opp}. Now you're stuck there.",
   "I'm not mad about {topic}, I'm mad about you.",
 ];

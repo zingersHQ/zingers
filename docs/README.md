@@ -1,4 +1,4 @@
-# Zingers — documentation
+# Zingers: documentation
 
 | Doc | Purpose |
 |-----|---------|

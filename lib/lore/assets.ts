@@ -1,13 +1,15 @@
+import { renderPortraitPath } from "@/lib/cards/assets";
+
 export function regionImage(id: string) {
   const slug = id === "wastes" ? "wastes" : id === "garden" ? "garden" : "colosseum";
-  return `/img/bible/regions/region-${slug}.png`;
+  return renderPortraitPath(slug, "regions");
 }
 
 export function keeperImage(name: string) {
   const slug = name.toLowerCase() === "bastion" ? "warden" : name.toLowerCase();
-  return `/img/bible/keepers/keeper-${slug}.png`;
+  return renderPortraitPath(slug, "keepers");
 }
 
 export function forceImage(slug: string) {
-  return `/img/bible/forces/force-${slug.toLowerCase()}.png`;
+  return renderPortraitPath(slug.toLowerCase(), "forces");
 }

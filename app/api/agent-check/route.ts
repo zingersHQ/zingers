@@ -27,7 +27,7 @@ const SAMPLE: AgentView = {
     hp: 64,
     max: 100,
     statuses: "exposed",
-    lastLine: "Forget definitions — the warm bowl, the morning light. That feeling is soup.",
+    lastLine: "Forget definitions: the warm bowl, the morning light. That feeling is soup.",
   },
   legalMoves: [
     { id: "syllogism", name: "Syllogism", desc: "id=syllogism, LOG, pow 22 — clean damage" },

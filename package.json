@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:agents": "node scripts/test-agents.mjs",
+    "render:canon": "node scripts/render-canon.mjs",
     "mcp": "node mcp/zingers-mcp.mjs"
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "@types/three": "^0.184.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "playwright": "^1.55.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

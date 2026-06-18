@@ -16,9 +16,12 @@ function resolveMdHref(sourceFile: string, href: string): string | null {
 export function preprocessMarkdown(raw: string, sourceFile: string): string {
   let s = raw;
 
-  // public assets → site root
-  s = s.replace(/\]\(\.\.\/\.\.\/public(\/[^)]+)\)/g, "]($1)");
-  s = s.replace(/\]\(\.\.\/public(\/[^)]+)\)/g, "]($1)");
+  // public assets → site root; prefer game renders over legacy AI bible art
+  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/minds\/mind-([a-z]+)\.png)\)/g, "](/renders/minds/$2.png)");
+  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/forces\/(force-[a-z]+)\.png)\)/g, "](/renders/forces/$2.png)");
+  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/regions\/(region-[a-z]+)\.png)\)/g, "](/renders/regions/$2.png)");
+  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/keepers\/(keeper-[a-z]+)\.png)\)/g, "](/renders/keepers/$2.png)");
+  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/[^)]+)\)/g, "]($1)");
 
   // markdown cross-links
   s = s.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (match, text: string, href: string) => {

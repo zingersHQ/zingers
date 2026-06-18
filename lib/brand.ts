@@ -18,5 +18,5 @@ export const STORAGE = {
 } as const;
 
 export function pageTitle(suffix?: string) {
-  return suffix ? `${suffix} · ${BRAND.name}` : `${BRAND.nameUpper} — ${BRAND.tagline}`;
+  return suffix ? `${suffix} · ${BRAND.name}` : `${BRAND.nameUpper} · ${BRAND.tagline}`;
 }

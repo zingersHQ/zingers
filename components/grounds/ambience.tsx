@@ -82,7 +82,7 @@ export function AmbientToggle({ compact = false }: { compact?: boolean }) {
       className="panel"
       suppressHydrationWarning
       aria-label={enabled ? "Mute ambience" : "Play ambience"}
-      title={enabled ? "Ambience on — calm pad, wind & birdsong" : "Ambience muted"}
+      title={enabled ? "Ambience on: calm pad, wind & birdsong" : "Ambience muted"}
       style={{
         padding: compact ? "8px 9px" : "8px 12px",
         display: "flex",

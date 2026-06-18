@@ -110,12 +110,12 @@ export function Autoplay() {
         THE LOOP · SELF-IMPROVEMENT
       </div>
       <h2 style={{ fontSize: 24, fontWeight: 800, margin: "6px 0 0", letterSpacing: -0.4 }}>
-        Watch an agent climb — by rewriting itself
+        Watch an agent climb by rewriting itself
       </h2>
       <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0", maxWidth: 620 }}>
         No human in the loop. Each round it <strong style={{ color: "var(--ink)" }}>fights</strong>, reads the transcript,{" "}
         <strong style={{ color: "var(--ink)" }}>reflects</strong> on what went wrong, and{" "}
-        <strong style={{ color: "var(--ink)" }}>retunes its own doctrine</strong> — then faces a tougher opponent.
+        <strong style={{ color: "var(--ink)" }}>retunes its own doctrine</strong>, then faces a tougher opponent.
       </p>
 
       {/* controls */}
@@ -280,7 +280,7 @@ export function Autoplay() {
       {phase === "done" && record && (
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
           Started at 1000 rating and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
-          settled on {strat.risk}/{strat.focus}/{strat.aggression} — no one touched the dials but the agent.
+          settled on {strat.risk}/{strat.focus}/{strat.aggression}. No one touched the dials but the agent.
         </p>
       )}
     </section>

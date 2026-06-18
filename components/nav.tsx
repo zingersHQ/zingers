@@ -14,7 +14,7 @@ export function Nav() {
   const [open, setOpen] = useState(false);
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
   const onOrg = host ? isOrgHost(host) : false;
-  if (path.startsWith("/slides")) return null;
+  if (path.startsWith("/slides") || path.startsWith("/render")) return null;
   if (!onOrg && IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
 
   const gameHref = (href: string) => (onOrg ? `${BRAND.site}${href}` : href);

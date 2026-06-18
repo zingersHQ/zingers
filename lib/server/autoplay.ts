@@ -55,14 +55,14 @@ async function reflect(
       focus: clamp(strat.focus + 12),
       aggression: clamp(strat.aggression + (strat.aggression < 55 ? 8 : -4)),
     };
-    return { strat: next, note: `Lost to ${oppName} — set up the combo before I swing.` };
+    return { strat: next, note: `Lost to ${oppName}. Set up the combo before I swing.` };
   }
   const next: Strat = {
     risk: clamp(strat.risk + 4),
     focus: clamp(strat.focus + 2),
     aggression: clamp(strat.aggression + 3),
   };
-  return { strat: next, note: `Beat ${oppName} — leaning harder into what worked.` };
+  return { strat: next, note: `Beat ${oppName}. Leaning harder into what worked.` };
 }
 
 export async function* autoplayRun(
@@ -129,7 +129,7 @@ export async function* autoplayRun(
       type: "bout",
       round: r,
       won,
-      winnerName: ROSTER[winner]?.name ?? "—",
+      winnerName: ROSTER[winner]?.name ?? "TBD",
       rounds: boutRounds,
       learnerHp: aHp,
       oppHp: bHp,

@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ROSTER, TYPE_COLOR } from "@/lib/engine/roster";
 import { FORCES } from "@/lib/lore/canon";
 import { BRAND, pageTitle } from "@/lib/brand";
-import { portraitOf } from "@/lib/cards/assets";
+import { CardLivePortrait } from "@/components/c/card-live-portrait";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -72,7 +71,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "var(--muted2)" }}>{BRAND.nameUpper} · AGENT CARD</div>
           <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 320px) minmax(0, 1fr)", alignItems: "center", gap: 28, marginTop: 22 }}>
             <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 24, overflow: "hidden", border: `2px solid ${col}`, boxShadow: `0 0 70px -22px ${col}` }}>
-              <Image src={portraitOf(k)} alt={`${c.name} card portrait`} fill sizes="320px" style={{ objectFit: "cover" }} priority />
+              <CardLivePortrait rosterKey={k} type={c.type} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 55%, rgba(8,6,16,.9) 100%)" }} />
               <div className="mono" style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, alignItems: "center", color: col, border: `1px solid ${col}`, borderRadius: 8, padding: "4px 8px", background: "rgba(8,6,16,.65)", fontSize: 10, letterSpacing: 1 }}>
                 <span>{force.sigil}</span>

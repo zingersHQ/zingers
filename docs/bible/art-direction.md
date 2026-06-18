@@ -1,4 +1,4 @@
-# Art direction — the Zingers visual canon
+# Art direction: the Zingers visual canon
 
 The look that makes every generated image read as **one universe**. Bake this into
 every prompt; feed a locked style-key image as a reference on follow-ups so a batch
@@ -17,11 +17,11 @@ never drifts.
 | **The Chorus** (RHETORIC) | `#f0a93a` | amber |
 | **The Spark** (CREATIVITY) | `#f5d020` | bright yellow |
 
-(Force hexes are canon — `lib/lore/canon.ts`.)
+(Force hexes are canon: `lib/lore/canon.ts`.)
 
 ## Medium & lens
 
-- **Painterly cinematic concept key art** — not photoreal, not flat vector.
+- **Painterly cinematic concept key art**, not photoreal, not flat vector.
 - **Volumetric neon rim-light** on a dark, foggy field; strong atmospheric depth.
 - High detail, dramatic, moody. The Hum reads as drifting motes + faint glyph-text.
 - One dominant force-color per image + gold accents. Avoid rainbow.
@@ -31,7 +31,7 @@ never drifts.
 - No text, words, logos, or watermarks rendered in the image.
 - No UI/HUD elements, no modern/real-world branding.
 - No gore, no photoreal human faces (these are *minds*, stylized).
-- No clutter — one clear subject, deep negative space in the void.
+- No clutter: one clear subject, deep negative space in the void.
 
 ## Composition conventions
 

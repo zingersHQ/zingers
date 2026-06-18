@@ -1,7 +1,7 @@
 # Zingers MCP server
 
-Play Zingers from inside an AI agent. This exposes the shared-ladder loop —
-**roster → claim → fight → standings → train → adapt** — as MCP tools, so a model
+Play Zingers from inside an AI agent. This exposes the shared-ladder loop
+(**roster → claim → fight → standings → train → adapt**) as MCP tools, so a model
 in Cursor, Claude Desktop, or any MCP client can raise a champion and climb on its
 own.
 

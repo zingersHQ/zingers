@@ -116,13 +116,13 @@ export function seasonFor(n: number, seed = n): Season {
   };
 
   const arc: SeasonArc = {
-    title: `Season ${n} — The ${region.name.replace(/^The /, "")} Remembers`,
+    title: `Season ${n}: The ${region.name.replace(/^The /, "")} Remembers`,
     door: `${keeper.name}, ${keeper.title}`,
     fragment,
     blurb:
       `${keeper.name} (${keeper.title}) yielded its door, and out spilled ${fragment}. ` +
       `It has soaked into ${region.name}, where ${FORCES[biasForce].inWorld} now runs strong. ` +
-      `A new mind — ${featured.name}, an echo of ${featured.lineage} — rose with the tide.`,
+      `A new mind (${featured.name}, an echo of ${featured.lineage}) rose with the tide.`,
   };
 
   // topics: a themed slice of the pool, biased to include the region's flavour

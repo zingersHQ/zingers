@@ -47,6 +47,8 @@ export default function GroundsScreen() {
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
   const [opponentId, setOpponentId] = useState<string | null>(null);
+  const [duelMeta, setDuelMeta] = useState<{ name: string; handle?: string } | null>(null);
+  const [keeperLevel, setKeeperLevel] = useState<number | null>(null);
   const [matchView, setMatchView] = useState<MatchView | null>(null);
   const [betSide, setBetSide] = useState<"me" | "opp" | null>(null);
   const [betAmt, setBetAmt] = useState(50);
@@ -155,13 +157,18 @@ export default function GroundsScreen() {
   const interact = useCallback(() => {
     if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
-    else if (near?.kind === "guardian") setOverlay("guardian");
-    else if (near?.kind === "arena") {
-      setOpponentId(null); // central arena picks resolve to house champions
+    else if (near?.kind === "keeper") {
+      setKeeperLevel(near.level);
+      setOverlay("guardian");
+    } else if (near?.kind === "arena") {
+      setOpponent(null);
+      setOpponentId(null);
+      setDuelMeta(null);
       setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
     } else if (near?.kind === "challenge") {
       setOpponent(near.key);
-      setOpponentId(near.id); // dent THIS perched agent's real ladder champion
+      setOpponentId(near.id);
+      setDuelMeta({ name: near.name, handle: near.handle });
       setOverlay("arena");
     }
   }, [near, overlay, inMatch, result, gRun, scenario.id]);
@@ -263,6 +270,7 @@ export default function GroundsScreen() {
     setOverlay("none");
     setOpponent(null);
     setOpponentId(null);
+    setDuelMeta(null);
     setBetSide(null);
   }
 
@@ -576,13 +584,13 @@ export default function GroundsScreen() {
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {near.kind === "train"
                 ? "Train your champion"
-                : near.kind === "guardian"
-                  ? "Face the Guardian"
+                : near.kind === "keeper"
+                  ? `Talk to ${near.name}`
                   : near.kind === "challenge"
                     ? `Challenge ${near.name}`
                     : scenario.id === "gauntlet"
                       ? "Enter the Gauntlet"
-                      : "Enter the Arena"}
+                      : "House sparring pit"}
             </span>
             {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
           </button>
@@ -598,12 +606,12 @@ export default function GroundsScreen() {
       {overlay === "guardian" && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.78)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 20 }}>
-            <GuardianGame embedded onClose={() => setOverlay("none")} />
+            <GuardianGame embedded startLevel={keeperLevel ?? undefined} onClose={() => { setOverlay("none"); setKeeperLevel(null); }} />
           </div>
         </div>
       )}
 
-      {/* arena / challenge overlay */}
+      {/* arena spar (central pit) or locked tower duel */}
       {overlay === "arena" && owned && (
         <ChallengeOverlay
           owned={owned}
@@ -611,13 +619,15 @@ export default function GroundsScreen() {
           roster={roster}
           get={store.get}
           opponent={opponent}
-          setOpponent={(k) => { setOpponent(k); setOpponentId(null); }}
+          setOpponent={(k) => { setOpponent(k); setOpponentId(null); setDuelMeta(null); }}
+          locked={!!opponentId}
+          duelMeta={duelMeta}
           betSide={betSide}
           setBetSide={setBetSide}
           betAmt={betAmt}
           setBetAmt={setBetAmt}
           crowns={crowns}
-          onClose={() => setOverlay("none")}
+          onClose={() => { setOverlay("none"); setDuelMeta(null); }}
           onFight={startMatch}
         />
       )}
@@ -671,7 +681,7 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
         </div>
         <h2 style={{ fontSize: 26, fontWeight: 700, margin: "8px 0 4px" }}>Pick the agent you&apos;ll train.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, margin: "0 0 18px" }}>
-          It becomes yours — you tune how it thinks, send it to fight, and watch its body change as it climbs.
+          It becomes yours. You tune how it thinks, send it to fight, and watch its body change as it climbs.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
           {roster.map((r) => {
@@ -779,10 +789,10 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         >
           <ArrowUp size={16} strokeWidth={2.4} />
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            Train session — {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} />
+            Train session: {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} />
           </span>
         </button>
-        {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns — win a bout in the Arena.</p>}
+        {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns. Win a bout in the Arena.</p>}
       </div>
     </div>
   );
@@ -824,15 +834,15 @@ function AgentPicker({ ckey, recipe }: { ckey: string; recipe: Recipe }) {
       </div>
       {cfg.provider === "grok" && (
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0 }}>
-          The built-in house brain. Zero config — it just fights.
+          The built-in house brain. Zero config. It just fights.
         </p>
       )}
       {cfg.provider === "openai" && (
         <div style={{ display: "grid", gap: 6 }}>
-          <input placeholder="model — e.g. gpt-4o-mini" value={cfg.model ?? ""} onChange={(e) => update({ ...cfg, model: e.target.value })} style={inputStyle} />
-          <input placeholder="base URL — default https://api.openai.com/v1" value={cfg.baseUrl ?? ""} onChange={(e) => update({ ...cfg, baseUrl: e.target.value })} style={inputStyle} />
+          <input placeholder="model: e.g. gpt-4o-mini" value={cfg.model ?? ""} onChange={(e) => update({ ...cfg, model: e.target.value })} style={inputStyle} />
+          <input placeholder="base URL: default https://api.openai.com/v1" value={cfg.baseUrl ?? ""} onChange={(e) => update({ ...cfg, baseUrl: e.target.value })} style={inputStyle} />
           <input placeholder="API key" type="password" value={cfg.apiKey ?? ""} onChange={(e) => update({ ...cfg, apiKey: e.target.value })} style={inputStyle} />
-          <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>Any OpenAI-compatible endpoint — GPT, Llama, local Ollama, OpenRouter.</span>
+          <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>Any OpenAI-compatible endpoint: GPT, Llama, local Ollama, OpenRouter.</span>
         </div>
       )}
       {cfg.provider === "http" && (
@@ -852,6 +862,8 @@ function ChallengeOverlay(props: {
   get: (k: string) => Champion;
   opponent: string | null;
   setOpponent: (k: string) => void;
+  locked?: boolean;
+  duelMeta?: { name: string; handle?: string } | null;
   betSide: "me" | "opp" | null;
   setBetSide: (s: "me" | "opp" | null) => void;
   betAmt: number;
@@ -860,21 +872,84 @@ function ChallengeOverlay(props: {
   onClose: () => void;
   onFight: () => void;
 }) {
-  const { owned, ownedEntry, roster, get, opponent, setOpponent, betSide, setBetSide, betAmt, setBetAmt, crowns, onClose, onFight } = props;
+  const { owned, ownedEntry, roster, get, opponent, setOpponent, locked, duelMeta, betSide, setBetSide, betAmt, setBetAmt, crowns, onClose, onFight } = props;
   const opps = roster.filter((r) => r.key !== owned);
   const oppEntry = opponent ? roster.find((r) => r.key === opponent) : null;
+
+  if (locked && opponent && oppEntry) {
+    const col = TYPE_COLOR[oppEntry.type];
+    const oppChamp = get(opponent);
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+        <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(520px, 95vw)", padding: 24, borderColor: col }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>Face to face</div>
+            <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
+              <X size={20} strokeWidth={2} />
+            </button>
+          </div>
+          <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "8px 0 18px", lineHeight: 1.55 }}>
+            You climbed the Tower to this agent. No picking from a menu — you fight the mind standing in front of you.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 14, alignItems: "center", marginBottom: 18 }}>
+            <div style={{ textAlign: "center" }}>
+              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={get(owned)} size={72} />
+              <div style={{ fontWeight: 700, marginTop: 8 }}>{ownedEntry.name}</div>
+              <div className="mono" style={{ fontSize: 10, color: TYPE_COLOR[ownedEntry.type] }}>YOURS</div>
+            </div>
+            <div className="mono" style={{ fontSize: 18, color: "var(--muted2)", fontWeight: 700 }}>VS</div>
+            <div style={{ textAlign: "center" }}>
+              <ChampionAvatar ckey={opponent} type={oppEntry.type} champion={oppChamp} size={72} />
+              <div style={{ fontWeight: 700, marginTop: 8 }}>{duelMeta?.name ?? oppEntry.name}</div>
+              <div className="mono" style={{ fontSize: 10, color: col }}>
+                {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}
+              </div>
+            </div>
+          </div>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
+            PLACE A BET (optional) · win 2× your stake
+          </div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
+              back {ownedEntry.name}
+            </button>
+            <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--bad)" }} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
+              back {duelMeta?.name ?? oppEntry.name}
+            </button>
+            {betSide && (
+              <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+                {[25, 50, 100].map((n) => (
+                  <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
+                    {n}👑
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onFight}>
+            <FightIcon size={18} strokeWidth={2.2} />
+            Fight {duelMeta?.name ?? oppEntry.name}
+            {betSide ? ` (staking ${betAmt}👑)` : ""}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", width: "min(620px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24 }}>
         <div style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>Arena — choose your opponent</div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>House sparring pit</div>
           <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
             <X size={20} strokeWidth={2} />
           </button>
         </div>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
-          You field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b>. It fights to its trained doctrine.
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.55 }}>
+          Practice against a <b>House First Mind</b> in the plaza pit. Ranked ladder fights only happen on the Tower — climb to each agent.
+        </div>
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 6 }}>
+          You field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b>.
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, margin: "16px 0" }}>
@@ -1086,7 +1161,7 @@ function MatchHud(props: {
                   {bout.end.highlights[0].kind === "ko" ? "THE FINISH" : bout.end.highlights[0].kind === "crit" ? "HARDEST BAR" : "TURNING POINT"} · R{bout.end.highlights[0].round}
                 </div>
                 <div style={{ fontStyle: "italic", fontSize: 14, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{bout.end.highlights[0].line}&rdquo;</div>
-                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 3 }}>— {bout.end.highlights[0].actor_name}</div>
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 3 }}>{bout.end.highlights[0].actor_name}</div>
               </div>
             )}
             {result.crowns !== 0 && (

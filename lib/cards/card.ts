@@ -105,8 +105,8 @@ function lineageOf(key: string, explicit?: string): string {
 function deterministicSaga(name: string, force: ForceLore, level: number, c: Champion, memory?: string[]): string {
   const record = `${c.wins}W·${c.losses}L`;
   const note = memory && memory.length ? ` ${memory[0]}` : "";
-  if (c.battles === 0) return `${name}, newly cohered from ${force.inWorld}. Unproven — its argument has yet to leave a mark.`;
-  return `${name} of ${force.inWorld} — ${record} across the Wheel, level ${level}.${note}`;
+  if (c.battles === 0) return `${name}, newly cohered from ${force.inWorld}. Unproven: its argument has yet to leave a mark.`;
+  return `${name} of ${force.inWorld}: ${record} across the Wheel, level ${level}.${note}`;
 }
 
 export interface CardOptions {

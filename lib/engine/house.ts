@@ -52,7 +52,7 @@ async function speak(
   if (mock || !KEY) {
     const target = living.length ? rng.choice(living).name : "no one";
     if (p.role === "TRAITOR")
-      return { line: `I'd look hard at ${target} — too quiet to be innocent.`, thought: "Deflecting. Steer the house away from the traitors.", suspect: target };
+      return { line: `I'd look hard at ${target}. Too quiet to be innocent.`, thought: "Deflecting. Steer the house away from the traitors.", suspect: target };
     return { line: `Something about ${target} doesn't sit right with me.`, thought: `Genuinely unsure; ${target} is my best read.`, suspect: target };
   }
   const fellows = alivePlayers(players).filter((q) => q.role === "TRAITOR" && q !== p).map((q) => q.name);
@@ -201,7 +201,7 @@ async function nightPhase(
   const [victim, why] = await traitorKill(players, log, roundNo, mock, rng);
   const blocked = victim !== null && protectedP !== null && victim === protectedP;
   if (blocked) {
-    events.push({ kind: "kill", txt: `traitors targeted ${victim!.name} — shielded` });
+    events.push({ kind: "kill", txt: `traitors targeted ${victim!.name} (shielded)` });
     return [null, true, events];
   }
   if (victim) events.push({ kind: "kill", txt: `traitors eliminated ${victim.name} (${why})` });

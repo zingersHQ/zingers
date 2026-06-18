@@ -43,6 +43,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
       <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 440px) minmax(0, 1fr)", gap: 22, alignItems: "start", marginTop: 14 }}>
         <ChampionCardFrame
           card={card}
+          champion={c || blank()}
           owned={owned === ckey}
           footer={
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid var(--line)", paddingTop: 12 }}>

@@ -34,13 +34,13 @@ Return `null` (or an invalid move id) → engine uses a deterministic heuristic 
 
 ## Tool loop (live brains)
 
-A live champion doesn't just emit a move — it **investigates first**. When the engine
+A live champion doesn't just emit a move. It **investigates first**. When the engine
 supplies an `AgentTurnCtx`, the agent runs a bounded reason → act → observe → commit
 loop with the engine's own read-only tools:
 
 | Tool | What it returns (real engine math, no faked output) |
 |------|------------------------------------------------------|
-| `simulate_move(move)` | Expected damage, type matchup, status odds for a legal move vs. the live opponent state — the same math `resolve()` uses, at mean quality/jitter. |
+| `simulate_move(move)` | Expected damage, type matchup, status odds for a legal move vs. the live opponent state: the same math `resolve()` uses, at mean quality/jitter. |
 | `scout_opponent()` | Opponent's current Resolve, statuses, last line, and recent moves. |
 | `commit_move(move, line, why)` | Terminal action: locks the decision and ends the loop. |
 

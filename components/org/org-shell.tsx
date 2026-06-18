@@ -19,7 +19,7 @@ export async function OrgShell({ slug, children }: { slug?: string; children: Re
             <span className="org-sidebar__title">Docs &amp; Canon</span>
           </Link>
           <p className="org-sidebar__blurb">
-            Encyclopedia, agent protocol, combat specs, and design bible — one source of truth for humans and generators.
+            Encyclopedia, agent protocol, combat specs, and design bible: one source of truth for humans and generators.
           </p>
         </div>
 

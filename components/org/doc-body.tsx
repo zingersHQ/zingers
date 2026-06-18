@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { OrgLiveFigure } from "@/components/org/org-live-figure";
 import { rewriteOrgHref } from "@/lib/org/load";
 
 const components: Components = {
@@ -51,19 +51,7 @@ const components: Components = {
   img: ({ src, alt }) => {
     const url = typeof src === "string" ? src : undefined;
     if (url?.startsWith("/")) {
-      return (
-        <span className="org-prose__figure">
-          <Image
-            src={url}
-            alt={alt ?? ""}
-            width={1200}
-            height={675}
-            sizes="(max-width: 900px) 100vw, 820px"
-            className="org-prose__img"
-          />
-          {alt ? <span className="org-prose__caption">{alt}</span> : null}
-        </span>
-      );
+      return <OrgLiveFigure src={url} alt={alt ?? undefined} />;
     }
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt={alt ?? ""} className="org-prose__img" />;

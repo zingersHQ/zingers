@@ -28,12 +28,12 @@ export default function CollectionPage() {
       <div style={{ marginBottom: 6, display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
         <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0 }}>The Collection</h1>
         <span className="mono" style={{ color: "var(--muted2)", fontSize: 12, letterSpacing: 1.5 }}>
-          THE ART IS THE CAREER — IT EVOLVES AS YOU FIGHT
+          THE ART IS THE CAREER. IT EVOLVES AS YOU FIGHT
         </span>
       </div>
       <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, maxWidth: 720, margin: "0 0 22px" }}>
         Every champion is a card. Its portrait is its body, and its body is a deterministic function of how it has
-        fought — so a card you raise gets visibly stronger and stranger over time. Rarity is <em>earned</em>, never
+        fought, so a card you raise gets visibly stronger and stranger over time. Rarity is <em>earned</em>, never
         rolled. More minds arrive each season as the Vault remembers them.
       </p>
 
@@ -42,7 +42,7 @@ export default function CollectionPage() {
       </div>
 
       <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16, letterSpacing: 1 }}>
-        FIRST MINDS · {mounted ? collected : "—"} / {FIRST_MIND_KEYS.length} WITH A RECORD
+        FIRST MINDS · {mounted ? collected : "-"} / {FIRST_MIND_KEYS.length} WITH A RECORD
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
@@ -57,7 +57,7 @@ export default function CollectionPage() {
                 color: "inherit",
               }}
             >
-              <ChampionCardFrame card={c} owned={isOwned} compact />
+              <ChampionCardFrame card={c} champion={progress[c.key] || blank()} owned={isOwned} compact />
             </Link>
           );
         })}

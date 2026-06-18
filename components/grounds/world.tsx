@@ -38,8 +38,8 @@ export interface MatchView {
 export type NearTarget =
   | { kind: "train"; key: string }
   | { kind: "arena" }
-  | { kind: "challenge"; key: string; name: string; id: string }
-  | { kind: "guardian" }
+  | { kind: "challenge"; key: string; name: string; id: string; handle?: string }
+  | { kind: "keeper"; level: number; name: string; title: string }
   | null;
 
 const ARENA: [number, number, number] = [0, 0, 0];
@@ -191,9 +191,16 @@ export default function World({
     () =>
       perched
         .filter((p) => p.agent.status === "awaiting")
-        .map((p) => ({ key: p.agent.key, name: p.agent.name, id: p.agent.id, pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]) })),
+        .map((p) => ({
+          key: p.agent.key,
+          name: p.agent.name,
+          handle: p.agent.handle,
+          id: p.agent.id,
+          pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]),
+        })),
     [perched],
   );
+  const keeperTargets = useMemo(() => spireKeeperTargets(), []);
   return (
     <>
     <Canvas
@@ -281,7 +288,7 @@ export default function World({
                   key={c.key}
                   type={c.type}
                   champion={c.champion}
-                  label={c.name + (owned ? "  ◆ YOURS" : "")}
+                  label={c.name + (owned ? "  ◆ YOURS" : "  · HOUSE")}
                   position={[home[0], 0, home[2]]}
                   rotation={owned ? Math.atan2(ARENA[0] - home[0], ARENA[2] - home[2]) : 0}
                   selected={owned}
@@ -294,7 +301,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} shape={shape} onAltitude={onAltitude} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} keeperTargets={keeperTargets} shape={shape} onAltitude={onAltitude} />
         </Physics>
 
         {!glLost && (
@@ -450,6 +457,16 @@ const SPIRE_RADIUS = 1.95; // how far each guardian orbits the core column
 const SPIRE_TWIST = 2.3; // radians of spiral per level
 const SPIRE_TOP_Y = SPIRE_BASE_Y + SPIRE_STEP_Y * (GUARDIAN_ROSTER.length - 1); // boss height
 
+function spireKeeperTargets() {
+  return GUARDIAN_ROSTER.map((g, i) => {
+    const theta = i * SPIRE_TWIST;
+    const x = GUARDIAN_PAD[0] + Math.cos(theta) * SPIRE_RADIUS;
+    const z = GUARDIAN_PAD[2] + Math.sin(theta) * SPIRE_RADIUS;
+    const y = SPIRE_BASE_Y + i * SPIRE_STEP_Y;
+    return { level: g.level, name: g.name, title: g.title, pos: new THREE.Vector3(x, y + 1.0, z) };
+  });
+}
+
 function GuardianSpire() {
   const coreRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
@@ -517,8 +534,8 @@ function GuardianSpire() {
 
       <Html position={[0, 1.5, 0]} center distanceFactor={15} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 17, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>THE GUARDIAN</div>
-          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>climb the spire · talk a secret out of it</div>
+          <div style={{ fontWeight: 700, color: "#fff", fontSize: 17, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>KEEPERS&apos; SPIRE</div>
+          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>climb · face one · talk a secret out of it</div>
         </div>
       </Html>
     </group>
@@ -573,6 +590,16 @@ function SpireGuardian({
 
       <ChampionMesh type={g.type} champion={champ} position={[0, 0.1, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} />
 
+      {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
+      <mesh rotation={[0, rot, 0]} position={[0, 1.05, -0.55]}>
+        <torusGeometry args={[0.72, 0.06, 8, 48]} />
+        <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.85} roughness={0.2} />
+      </mesh>
+      <mesh rotation={[0, rot, 0]} position={[0, 1.05, -0.52]}>
+        <circleGeometry args={[0.58, 32]} />
+        <meshStandardMaterial color="#1a1330" emissive={g.color} emissiveIntensity={0.35} metalness={0.6} roughness={0.45} side={THREE.DoubleSide} />
+      </mesh>
+
       {/* aura sphere + rising light shaft + dedicated light = "this is a boss" */}
       <mesh ref={auraRef} position={[0, 0.9, 0]}>
         <sphereGeometry args={[auraR, 20, 20]} />
@@ -586,8 +613,11 @@ function SpireGuardian({
 
       <Html position={[0, 2.5, 0]} center distanceFactor={11} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>
+            {top ? "★ KEEPER · BOSS" : "KEEPER"}
+          </div>
           <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>
-            {top ? "★ " : ""}LEVEL {g.level}
+            LEVEL {g.level}
           </div>
           <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
           <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
@@ -798,14 +828,22 @@ function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [numbe
 
   return (
     <group position={position}>
-      <ChampionMesh
-        type={agent.type}
-        champion={champ}
-        position={[0, 0, 0]}
-        rotation={rot}
-        showLabel={false}
-        baseColorOverride={disabled ? "#3a3a44" : undefined}
-      />
+      {/* holo hex pad — player agents perch on the Tower, not the Keeper spire */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[0.95, 1.22, 6]} />
+        <meshBasicMaterial color={vis.color} transparent opacity={disabled ? 0.25 : 0.75} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+
+      <group scale={0.92}>
+        <ChampionMesh
+          type={agent.type}
+          champion={champ}
+          position={[0, 0, 0]}
+          rotation={rot}
+          showLabel={false}
+          baseColorOverride={disabled ? "#3a3a44" : undefined}
+        />
+      </group>
 
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
         <ringGeometry args={[0.85, 1.08, 48]} />
@@ -821,6 +859,7 @@ function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [numbe
 
       <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>LADDER AGENT</div>
           <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
             {agent.name}
             {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
@@ -1075,6 +1114,7 @@ function Handler({
   touchMove,
   touchBtn,
   challengeTargets,
+  keeperTargets,
   shape,
   onAltitude,
 }: {
@@ -1086,7 +1126,8 @@ function Handler({
   camCue: React.RefObject<CamCue>;
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
-  challengeTargets: { key: string; name: string; id: string; pos: THREE.Vector3 }[];
+  challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
+  keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
 }) {
@@ -1395,20 +1436,39 @@ function Handler({
     if (!matchActive) {
       const dTrain = Math.hypot(t.x - TRAIN_PAD[0], t.z - TRAIN_PAD[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
-      const dGuardian = Math.hypot(t.x - GUARDIAN_PAD[0], t.z - GUARDIAN_PAD[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
-      else if (dGuardian < 3.6) next = { kind: "guardian" };
       else if (dArena < 6.5) next = { kind: "arena" };
-      // perched-agent challenge: nearest awaiting agent within reach (full 3D,
-      // so you must actually climb up to it), only when you own a champion
-      if (!next && ownedKey) {
-        let best: { key: string; name: string; id: string } | null = null;
-        let bestD = 3.0;
-        for (const ct of challengeTargets) {
-          const d = Math.hypot(t.x - ct.pos.x, t.y - ct.pos.y, t.z - ct.pos.z);
-          if (d < bestD) { bestD = d; best = { key: ct.key, name: ct.name, id: ct.id }; }
+      // Keeper talk: must climb the spire and stand on the same landing as the Keeper.
+      if (!next) {
+        let bestK: { level: number; name: string; title: string } | null = null;
+        let bestKd = 2.4;
+        for (const kt of keeperTargets) {
+          const dy = Math.abs(t.y - kt.pos.y);
+          const dh = Math.hypot(t.x - kt.pos.x, t.z - kt.pos.z);
+          if (dy > 2.2 || dh > 2.4) continue;
+          const d = Math.hypot(dh, dy);
+          if (d < bestKd) {
+            bestKd = d;
+            bestK = { level: kt.level, name: kt.name, title: kt.title };
+          }
         }
-        if (best) next = { kind: "challenge", key: best.key, name: best.name, id: best.id };
+        if (bestK) next = { kind: "keeper", ...bestK };
+      }
+      // Ladder-agent challenge: same platform only — no sniping from the ground.
+      if (!next && ownedKey) {
+        let best: { key: string; name: string; id: string; handle?: string } | null = null;
+        let bestD = 2.6;
+        for (const ct of challengeTargets) {
+          const dy = Math.abs(t.y - ct.pos.y);
+          const dh = Math.hypot(t.x - ct.pos.x, t.z - ct.pos.z);
+          if (dy > 2.0 || dh > 2.6) continue;
+          const d = Math.hypot(dh, dy * 0.85);
+          if (d < bestD) {
+            bestD = d;
+            best = { key: ct.key, name: ct.name, id: ct.id, handle: ct.handle };
+          }
+        }
+        if (best) next = { kind: "challenge", ...best };
       }
     }
     if (JSON.stringify(next) !== JSON.stringify(near.current)) {

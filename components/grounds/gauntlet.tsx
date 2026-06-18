@@ -68,7 +68,7 @@ export function GauntletBriefing({
       </div>
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "8px 0 16px" }}>
         Field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b> against {queue.length} agents, weakest first.
-        Each win <b style={{ color: "var(--gold)" }}>banks crowns into a growing pot</b> — but a single loss ends the run and you keep only a fraction.
+        Each win <b style={{ color: "var(--gold)" }}>banks crowns into a growing pot</b>, but a single loss ends the run and you keep only a fraction.
         After every win you choose: <b>cash out</b>, or <b style={{ color: EMBER }}>press on</b> for more.
       </p>
 
@@ -170,7 +170,7 @@ export function GauntletResult({ run, onClose }: { run: GauntletRun; onClose: ()
         {good ? "+" : ""}{run.pot}👑
       </div>
       <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16 }}>
-        {good ? "banked to your purse" : "the pot scattered — you kept the consolation"}
+        {good ? "banked to your purse" : "the pot scattered: you kept the consolation"}
       </div>
       <button className="btn btn-primary" style={{ ["--ac" as string]: ac }} onClick={onClose}>back to the wastes</button>
     </div>,

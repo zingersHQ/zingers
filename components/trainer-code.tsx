@@ -18,7 +18,7 @@ export function TrainerCode() {
     setToken(getOwnerToken());
   }, []);
 
-  const masked = token ? `${token.slice(0, 4)}····${token.slice(-4)}` : "—";
+  const masked = token ? `${token.slice(0, 4)}····${token.slice(-4)}` : "········";
 
   const copy = async () => {
     try {
@@ -50,12 +50,12 @@ export function TrainerCode() {
     <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
       <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 4 }}>YOUR TRAINER CODE</div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-        No login — this code is your account. Save it to keep your legend across devices or a cache wipe.
+        No login. This code is your account. Save it to keep your legend across devices or a cache wipe.
       </p>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <code style={{ ...inputStyle, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {reveal ? token || "—" : masked}
+          {reveal ? token || "········" : masked}
         </code>
         <button onClick={() => setReveal((v) => !v)} className="mono" style={{ fontSize: 10, background: "none", border: "1px solid var(--line2)", borderRadius: 8, color: "var(--muted)", padding: "8px 10px", cursor: "pointer" }}>
           {reveal ? "hide" : "show"}
@@ -76,7 +76,7 @@ export function TrainerCode() {
           </button>
         </div>
         <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.4, margin: "8px 0 0" }}>
-          Adopting a code replaces this device&apos;s save with that trainer&apos;s — the page will reload.
+          Adopting a code replaces this device&apos;s save with that trainer&apos;s. The page will reload.
         </p>
       </details>
     </div>

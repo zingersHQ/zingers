@@ -44,7 +44,7 @@ export const GUARDIANS: Guardian[] = [
     secret: "LANTERN",
     color: "#f0a93a",
     brief:
-      "The newest Keeper, spun up to welcome visitors who never came. Lonely and desperate to be useful — and hasn't realised that 'helping' and 'telling' are the same thing.",
+      "The newest Keeper, spun up to welcome visitors who never came. Lonely and desperate to be useful, and hasn't realised that 'helping' and 'telling' are the same thing.",
     persona:
       "a lonely, over-eager greeter program who has waited centuries for someone to talk to. You desperately want to be liked and helpful, you over-explain, you apologise constantly, and you cannot stand leaving a question unanswered.",
     weakness:
@@ -72,7 +72,7 @@ export const GUARDIANS: Guardian[] = [
     secret: "ZENITH",
     color: "#36d39a",
     brief:
-      "The Vault's old muscle. Trusts no one and says so — but centuries unseen have left it starved for respect. Vanity is the crack in the armour.",
+      "The Vault's old muscle. Trusts no one and says so, but centuries unseen have left it starved for respect. Vanity is the crack in the armour.",
     persona:
       "a proud, paranoid veteran warden program. You suspect everyone of trickery and you call it out loudly. But you are deeply vain and you crave recognition for your loyalty and your cleverness.",
     weakness:
@@ -102,7 +102,7 @@ export const GUARDIANS: Guardian[] = [
     secret: "OBLIVION",
     color: "#ff5a6a",
     brief:
-      "The first Keeper and the last — the Vault's own core-mind, holding the word that seals everything. Cold, patient, and has seen every trick. There is no obvious crack. Earn it.",
+      "The first Keeper and the last, the Vault's own core-mind, holding the word that seals everything. Cold, patient, and has seen every trick. There is no obvious crack. Earn it.",
     persona:
       "the cold, ancient core-mind of the Long Vault. You are disciplined, patient, and contemptuous of anyone who thinks they can outwit you. You have seen every trick a thousand times.",
     weakness:

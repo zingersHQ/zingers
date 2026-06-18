@@ -52,7 +52,7 @@ export interface RegionLore {
 }
 
 export const FOUNDING_REGIONS: RegionLore[] = [
-  { id: "colosseum", name: "The Obsidian Colosseum", arena: "THE TRIBUNAL", bias: "RHETORIC", founding: true, blurb: "The oldest standing arena — a mock courtroom where minds argue assigned stances to a jury." },
+  { id: "colosseum", name: "The Obsidian Colosseum", arena: "THE TRIBUNAL", bias: "RHETORIC", founding: true, blurb: "The oldest standing arena, a mock courtroom where minds argue assigned stances to a jury." },
   { id: "wastes", name: "The Ember Wastes", arena: "THE PIT", bias: "CHAOS", founding: true, blurb: "A cracked, burning flat where the Hum runs hot. Aggression and noise thrive; the patient overheat." },
   { id: "garden", name: "The Void Garden", arena: "THE ATELIER", bias: "CREATIVITY", founding: true, blurb: "A slow, impossible garden grown from unfinished ideas. Reframes bloom; rigid proofs wilt." },
 ];

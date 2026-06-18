@@ -55,7 +55,7 @@ export function useHouse() {
             ...init,
             phase: "day",
             players: ev.players.map((p) => ({ ...p, alive: true, line: "", thought: "" })),
-            feed: [{ txt: `The house gathers — ${ev.players.length} contestants, ${ev.traitors_n} hidden traitor(s).`, kind: "info" }],
+            feed: [{ txt: `The house gathers: ${ev.players.length} contestants, ${ev.traitors_n} hidden traitor(s).`, kind: "info" }],
           };
         case "round":
           return { ...s, round: ev.round, speaking: null };
@@ -69,7 +69,7 @@ export function useHouse() {
               ...s.feed,
               {
                 txt: ev.blocked
-                  ? "A night attack was shielded — no one died."
+                  ? "A night attack was shielded. No one died."
                   : ev.victim_name
                     ? `${ev.victim_name} was eliminated in the night.`
                     : "The night passed quietly.",
@@ -93,7 +93,7 @@ export function useHouse() {
             players: s.players.map((p) => (p.key === ev.banished ? { ...p, alive: false } : p)),
             feed: [
               ...s.feed,
-              { txt: `${ev.banished_name} was banished — ${ev.banished_traitor ? "a TRAITOR!" : "but FAITHFUL."}`, kind: ev.banished_traitor ? "good" : "bad" },
+              { txt: `${ev.banished_name} was banished, ${ev.banished_traitor ? "a TRAITOR!" : "but FAITHFUL."}`, kind: ev.banished_traitor ? "good" : "bad" },
             ],
           };
         case "end":

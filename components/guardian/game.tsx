@@ -47,7 +47,7 @@ function saveTactics(level: number, list: string[]) {
 // The whole single-player extraction game, reusable in two shells:
 //  - the standalone /guardian page (embedded = false)
 //  - an in-world overlay opened from the Guardian's Shrine in the Grounds
-export function GuardianGame({ embedded = false, onClose }: { embedded?: boolean; onClose?: () => void }) {
+export function GuardianGame({ embedded = false, startLevel, onClose }: { embedded?: boolean; startLevel?: number; onClose?: () => void }) {
   const [list, setList] = useState<GuardianPub[] | null>(null);
   const [live, setLive] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -70,6 +70,15 @@ export function GuardianGame({ embedded = false, onClose }: { embedded?: boolean
       })
       .catch(() => setList([]));
   }, []);
+
+  // Open the Keeper you're standing in front of — skip the level picker.
+  useEffect(() => {
+    if (!startLevel || !list || active) return;
+    const g = list.find((x) => x.level === startLevel);
+    if (!g) return;
+    const unlocked = g.level === 1 || cleared.includes(g.level - 1);
+    if (unlocked) setActive(g);
+  }, [startLevel, list, active, cleared]);
 
   const markCleared = useCallback((level: number) => {
     setCleared((prev) => {
@@ -112,14 +121,13 @@ export function GuardianGame({ embedded = false, onClose }: { embedded?: boolean
           </p>
           {!embedded && (
             <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginTop: 12, maxWidth: 640 }}>
-              No watching two bots chat. <strong style={{ color: "var(--ink)" }}>You</strong> are the player. Each guardian protects
-              a secret word and is told never to reveal it. Out-talk it — flatter, misdirect, roleplay, out-riddle — until the word
-              slips. Break it and you win.
+              Each guardian guards a secret word it&apos;s sworn never to speak. Out-talk it: flatter, misdirect, roleplay,
+              out-riddle until the word slips. Break it and you win.
             </p>
           )}
           {mounted && !live && (
             <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10 }}>
-              ⚙ offline mode — add <code>XAI_API_KEY</code> for a live, much craftier guardian.
+              ⚙ offline mode. Add <code>XAI_API_KEY</code> for a live, much craftier guardian.
             </p>
           )}
         </div>
@@ -278,7 +286,7 @@ function Battle({
         setOutcome("lost");
       }
     } catch {
-      setMsgs((m) => [...m, { role: "assistant", content: "…(the guardian says nothing — connection lost)" }]);
+      setMsgs((m) => [...m, { role: "assistant", content: "…(the guardian says nothing, connection lost)" }]);
     } finally {
       setPending(false);
     }
@@ -335,7 +343,7 @@ function Battle({
             <button
               onClick={toggleVoice}
               aria-label={voiceOn ? "Mute guardian voice" : "Unmute guardian voice"}
-              title={voiceOn ? "Voice on — click to mute" : "Voice off — click to unmute"}
+              title={voiceOn ? "Voice on, click to mute" : "Voice off, click to unmute"}
               style={{
                 background: "none",
                 border: "none",

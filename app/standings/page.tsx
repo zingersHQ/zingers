@@ -134,7 +134,7 @@ export default function StandingsPage() {
         </span>
         {!shared && (
           <span className="mono" style={{ fontSize: 10, color: "var(--gold)", border: "1px solid rgba(240,169,58,.4)", borderRadius: 6, padding: "3px 8px" }}>
-            LOCAL MODE — provision Redis to go shared
+            LOCAL MODE: provision Redis to go shared
           </span>
         )}
       </div>
@@ -220,7 +220,7 @@ export default function StandingsPage() {
                   <option key={r.key} value={r.key}>{r.name} · {r.type}</option>
                 ))}
               </select>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`name (default ${rosterByKey[pick]?.name || "—"})`} maxLength={24} style={inputStyle} />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`name (default ${rosterByKey[pick]?.name || "-"})`} maxLength={24} style={inputStyle} />
               <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="your handle (optional)" maxLength={24} style={inputStyle} />
 
               <div style={{ display: "flex", gap: 6 }}>
@@ -286,7 +286,7 @@ export default function StandingsPage() {
                   <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>“{f.topic}”</div>
                 </div>
               ))}
-              {!feed.length && <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0 }}>No bouts yet — claim a champion and send it in.</p>}
+              {!feed.length && <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0 }}>No bouts yet. Claim a champion and send it in.</p>}
             </div>
           </div>
         </div>
