@@ -148,8 +148,8 @@ export const useChampions = create<ChampionStore>()(
             strat.aggression = clamp(strat.aggression - 1);
           }
           const note = won
-            ? `Beat ${opponentName} leaning ${axisLabel.toLowerCase()} — keep pressing it.`
-            : `Lost to ${opponentName} — set up more, vary tactics.`;
+            ? `Beat ${opponentName} leaning ${axisLabel.toLowerCase()}. Keep pressing it.`
+            : `Lost to ${opponentName}. Set up more, vary tactics.`;
           const memory = [note, ...(cur.memory || []).filter((n) => !n.startsWith(note.split(" ").slice(0, 3).join(" ")))].slice(0, 6);
           return { recipes: { ...s.recipes, [key]: { ...cur, strat, memory } } };
         }),

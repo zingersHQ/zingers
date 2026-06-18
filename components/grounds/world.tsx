@@ -158,7 +158,7 @@ export default function World({
   touchBottomInset?: number;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false });
   // touch input channels, mutated by the on-screen controls and read each frame
   const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
   const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
@@ -977,6 +977,7 @@ interface CamCue {
   speed: number;       // planar speed magnitude
   moving: boolean;     // actively pressing movement keys this frame
   reverse: boolean;    // moving back toward the camera — suppress auto-follow (else it spins)
+  flying: boolean;     // jetpack hover — camera eases off sway / zoom dolly
 }
 
 // on-screen touch control channels (mobile)
@@ -1038,8 +1039,8 @@ function Jetpack({ h, flyingRef, burstRef }: { h: number; flyingRef: React.RefOb
       grp.current.scale.setScalar(scale.current);
     }
 
-    // flame flicker while thrusting
-    const flick = 0.55 + Math.random() * 0.45;
+    // flame flicker while thrusting — sine, not random, so the mesh doesn't jitter
+    const flick = 0.72 + Math.sin(performance.now() * 0.022) * 0.28;
     if (flameL.current) { flameL.current.scale.y = flick; (flameL.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
     if (flameR.current) { flameR.current.scale.y = flick * 0.92; (flameR.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
 
@@ -1160,6 +1161,7 @@ function Handler({
   const leanZ = useRef(0);
   const stretch = useRef(0); // +1 = stretch up (launch), -1 = squash down (land)
   const wasGrounded = useRef(true);
+  const wasFlying = useRef(false);
   const altAccum = useRef(0);
   const altLast = useRef(-999);
   const { camera } = useThree();
@@ -1242,7 +1244,8 @@ function Handler({
       handlerPos.current.set(t.x, t.y, t.z);
     }
 
-    const fwd = new THREE.Vector3(t.x - camera.position.x, 0, t.z - camera.position.z);
+    const hp = handlerPos.current;
+    const fwd = new THREE.Vector3(hp.x - camera.position.x, 0, hp.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
     fwd.normalize();
     const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
@@ -1276,10 +1279,14 @@ function Handler({
     // surface" as grounded, independent of the sensor.
     const floorY = terrainHeight(t.x, t.z, shape);
     const restY = floorY + 1.0; // capsule half-height (0.55) + radius (0.45)
-    const grounded = ground.current > 0 || t.y <= restY + 0.2;
+    const sensorGround = ground.current > 0;
+    // height fallback only before jetpack deploy — while flying it flickers over
+    // hills and was resetting jumps mid-air, yanking between thrust and gravity
+    const grounded = sensorGround || (jumps.current <= FLY_TRIGGER && t.y <= restY + 0.2);
     // jetpack flight is active past the trigger — while flying we hold a still
     // hover pose, so the ground walk/run/idle animation must not drive the body
     const flyingMode = jumps.current > FLY_TRIGGER;
+    rb.setGravityScale(flyingMode ? 0 : 1, false);
     const v = rb.linvel();
     // refund the air-jump budget only once settled on the ground (not the frame
     // we launched), so a multi-jump isn't refunded mid-takeoff
@@ -1334,9 +1341,6 @@ function Handler({
       const rate = FLY_GLIDE + (FLY_THRUST - FLY_GLIDE) * thrust.current;
       const ky = 1 - Math.exp(-rate * dt);
       rb.setLinvel({ x: cv.x, y: cv.y + (targetY - cv.y) * ky, z: cv.z }, true);
-      // exhaust pace + camera punch ride the smoothed thrust so they read as a
-      // steady plume/lean instead of strobing with each tap
-      if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + dt * 2.4 * thrust.current);
       jetEmit.current += dt;
       const emitGap = 0.045 + (1 - thrust.current) * 0.085; // tighter puffs at full thrust
       if (jetEmit.current > emitGap) { jetEmit.current = 0; jetBurst.current++; }
@@ -1362,6 +1366,11 @@ function Handler({
     wasGrounded.current = grounded;
     // pack deploys once we're flying (past the trigger), retracts on landing
     flying.current = jumps.current > FLY_TRIGGER;
+    if (flying.current && !wasFlying.current && camCue.current) {
+      // one-shot punch on deploy — not every frame while thrusting (that pulsed zoom/FOV)
+      camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.35);
+    }
+    wasFlying.current = flying.current;
     // drop the thrust command when not airborne so the next takeoff spools from 0
     if (!flying.current) thrust.current = 0;
     // thruster roar: silent on the ground, a low idle while hovering, full while
@@ -1408,6 +1417,7 @@ function Handler({
       camCue.current.heading = heading.current;
       camCue.current.speed = Math.hypot(lv.x, lv.z);
       camCue.current.moving = len > 0;
+      camCue.current.flying = flyingMode;
       // `az` is exactly the move's forward component (fwd ⟂ right): negative means
       // we're heading back toward the camera. Flag it so the auto-follow stands
       // down — chasing "behind" a player who's facing the camera spins endlessly.
@@ -1541,6 +1551,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
   const lastInput = useRef(-9999);
   // speed-driven dolly-back, eased so the pull-out/in feels smooth
   const followDist = useRef(0);
+  const smoothHp = useRef(new THREE.Vector3());
 
   useEffect(() => {
     const el = gl.domElement;
@@ -1587,49 +1598,51 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
       lastInput.current = performance.now();
     }
 
-    const hp = handlerPos.current;
+    const hpRaw = handlerPos.current;
     const cue = camCue.current;
+    const flying = cue?.flying ?? false;
     const zoom = cue ? cue.zoom : 0;
-    if (cue) cue.zoom *= 0.86; // ease the punch back out
+    if (cue) cue.zoom *= flying ? 0.9 : 0.86;
+
+    // extra low-pass on the follow target while jetpacking — kills the last bit of
+    // physics/interpolation micro-jitter without adding lag on foot
+    if (flying) {
+      if (smoothHp.current.lengthSq() < 1e-6) smoothHp.current.copy(hpRaw);
+      smoothHp.current.lerp(hpRaw, 1 - Math.exp(-14 * dt));
+    } else {
+      smoothHp.current.copy(hpRaw);
+    }
+    const hp = flying ? smoothHp.current : hpRaw;
 
     const speed = cue ? cue.speed : 0;
     const moving = cue ? cue.moving : false;
-    const speed01 = Math.min(1, speed / RUN); // 0 = still, 1 = full sprint
+    const speed01 = Math.min(1, speed / RUN);
 
-    // smart-follow: gently swing the orbit behind the player's heading while
-    // they move — but only once the mouse has been idle for a beat, so manual
-    // steering always wins. Faster movement → a touch more eagerness.
     if (cue && moving && !cue.reverse && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
     }
 
-    // characteristic speed feel: dolly back as you accelerate, ease in as you stop
     followDist.current += (speed01 * 6 - followDist.current) * Math.min(1, dt * 4);
-    const eff = Math.max(5, dist.current + followDist.current - zoom * 6);
+    const flyZoom = flying ? 0 : zoom;
+    const eff = Math.max(5, dist.current + followDist.current - flyZoom * 6);
 
-    // playful sway — a lazy lateral drift + bob that grows with speed so the
-    // camera always feels alive (lookAt stays locked on the player, so it reads
-    // as a handheld float rather than nausea)
     const ts = performance.now() * 0.001;
-    const swayX = Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
-    const swayY = Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
+    const swayX = flying ? 0 : Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
+    const swayY = flying ? 0 : Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
 
-    const tx = hp.x, ty = hp.y + 0.4 + zoom * 0.3, tz = hp.z;
+    const tx = hp.x, ty = hp.y + 0.4 + flyZoom * 0.3, tz = hp.z;
     const cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
     const cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
     let cy = ty + Math.sin(pitch.current) * eff + swayY;
-    // looking up drops the rig below the player — keep it from sinking into the
-    // ground at its own (x,z) so the view never clips beneath the terrain
     cy = Math.max(cy, terrainHeight(cx, cz, shape) + 0.8);
-    // snap in faster than it eases out, for a punchy action-cam
-    camera.position.lerp(tmp.current.set(cx, cy, cz), zoom > 0.05 ? 0.3 : 0.12);
+    const lerpA = flying ? 0.055 : flyZoom > 0.05 ? 0.3 : 0.12;
+    camera.position.lerp(tmp.current.set(cx, cy, cz), lerpA);
     camera.lookAt(tx, ty, tz);
 
-    // dynamic FOV whoosh: widen while sprinting / punching in, settle back at rest
     const cam = camera as THREE.PerspectiveCamera;
-    const targetFov = 52 + speed01 * 10 + zoom * 6;
+    const targetFov = 52 + (flying ? 0 : speed01 * 10 + flyZoom * 6);
     if (Math.abs(cam.fov - targetFov) > 0.01) {
       cam.fov += (targetFov - cam.fov) * Math.min(1, dt * 3);
       cam.updateProjectionMatrix();

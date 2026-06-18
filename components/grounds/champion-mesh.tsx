@@ -170,6 +170,9 @@ export function ChampionMesh({
   worldRadius = 34,
   wanderInner = 0,
   wanderSpeed = 3.0,
+  idlePhase,
+  idleSpeed,
+  auraDim,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -187,6 +190,11 @@ export function ChampionMesh({
   worldRadius?: number;
   wanderInner?: number;
   wanderSpeed?: number;
+  /** desync the idle clip across a gallery of portraits */
+  idlePhase?: number;
+  idleSpeed?: number;
+  /** shrink the energy aura so the body reads clearly in gallery portraits */
+  auraDim?: boolean;
 }) {
   const { scene, animations } = useGLTF(MODEL);
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
@@ -236,6 +244,15 @@ export function ChampionMesh({
   useEffect(() => {
     if (hitSignal) recoil.current = 1;
   }, [hitSignal]);
+
+  // gallery portraits: offset the idle clip + nudge its speed so a wall of
+  // models never breathes in lockstep
+  useEffect(() => {
+    const idle = built.actions.idle;
+    if (!idle || idlePhase == null) return;
+    idle.time = idlePhase;
+    idle.setEffectiveTimeScale(idleSpeed ?? 1);
+  }, [built, idlePhase, idleSpeed]);
 
   // evolution shards + rings, precomputed
   const shardN = Math.min(10, Math.max(0, lf.level - 1));
@@ -321,7 +338,8 @@ export function ChampionMesh({
     }
   });
 
-  const auraOpacity = (0.05 + ti * 0.045) * 0.5;
+  const auraOpacity = (0.05 + ti * 0.045) * 0.5 * (auraDim ? 0.32 : 1);
+  const auraR = app.h * (auraDim ? 0.46 : 0.62);
 
   return (
     <group
@@ -338,7 +356,7 @@ export function ChampionMesh({
 
       {/* aura sphere */}
       <mesh ref={auraRef} position={[0, app.h * 0.55, 0]}>
-        <sphereGeometry args={[app.h * 0.62, 20, 20]} />
+        <sphereGeometry args={[auraR, 20, 20]} />
         <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
       </mesh>
 

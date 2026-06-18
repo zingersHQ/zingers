@@ -34,8 +34,9 @@ export const DOCS_NAV: PlayLink[] = [
   { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
 ];
 
-/** bottom dock height — touch controls and HUD inset reference this */
-export const DOCK_H = 56;
+/** no bottom bar anymore — the menu is a top-left button. Kept at 0 so callers
+ *  that still add it to padding/insets don't reserve dead space. */
+export const DOCK_H = 0;
 
 export function navIsActive(path: string, href: string): boolean {
   if (href === "/") return path === "/" || path === "/grounds";

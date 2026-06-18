@@ -3,7 +3,7 @@ import { BRAND, pageTitle } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: pageTitle("Slides"),
-  description: "Zingers pitch deck — team & hackathon presentation.",
+  description: "Zingers pitch deck: team & hackathon presentation.",
 };
 
 export default function SlidesLayout({ children }: { children: React.ReactNode }) {

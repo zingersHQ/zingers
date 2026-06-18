@@ -55,7 +55,7 @@ export function ChampionCardFrame({
       }}
     >
       <div style={{ position: "relative", aspectRatio: "4 / 5", overflow: "hidden", background: "#0a0812" }}>
-        <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" />
+        <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" eager />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)" }} />
         <Badge left color={card.force.hex}>
           <span style={{ fontSize: 13, lineHeight: 1 }}>{card.force.sigil}</span>

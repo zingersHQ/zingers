@@ -1,15 +1,18 @@
-import Image from "next/image";
+"use client";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { currentSeason, softReset } from "@/lib/lore/season";
 import { FORCES } from "@/lib/lore/canon";
-import { regionImage } from "@/lib/lore/assets";
+import { ChampionPortrait } from "@/components/render/champion-portrait";
+import { showcaseChampion, showcaseForRegion } from "@/lib/render/showcase";
 
 export function SeasonBanner({ compact = false }: { compact?: boolean }) {
   const season = currentSeason();
   const force = FORCES[season.biasForce];
   const sampleOld = 1400;
   const sampleNew = softReset(sampleOld);
+  const regionShowcase = showcaseForRegion(season.region.id);
+  const featuredShowcase = showcaseChampion(season.featured.lineage);
 
   return (
     <section
@@ -28,10 +31,40 @@ export function SeasonBanner({ compact = false }: { compact?: boolean }) {
       <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 80% 20%, ${force.hex}22, transparent 42%)`, pointerEvents: "none" }} />
       {!compact && (
         <div style={{ position: "relative", minHeight: 160, borderRadius: 14, overflow: "hidden", border: `1px solid ${force.hex}55`, background: "#0a0812" }}>
-          <Image src={regionImage(season.region.id)} alt={`${season.region.name} season region`} fill sizes="280px" style={{ objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 45%, rgba(8,6,16,.88) 100%)" }} />
-          <div className="mono" style={{ position: "absolute", left: 10, bottom: 10, fontSize: 10, letterSpacing: 1.5, color: force.hex }}>
+          <ChampionPortrait
+            rosterKey={regionShowcase.key}
+            type={regionShowcase.type}
+            champion={regionShowcase.champion}
+            preset="region"
+            colorHex={force.hex}
+            eager
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 45%, rgba(8,6,16,.88) 100%)", pointerEvents: "none" }} />
+          <div className="mono" style={{ position: "absolute", left: 10, bottom: 10, fontSize: 10, letterSpacing: 1.5, color: force.hex, pointerEvents: "none" }}>
             {season.region.name.toUpperCase()}
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              right: 8,
+              bottom: 8,
+              width: 68,
+              borderRadius: 10,
+              overflow: "hidden",
+              border: `1px solid ${force.hex}88`,
+              boxShadow: `0 0 24px -8px ${force.hex}`,
+              pointerEvents: "none",
+            }}
+            title={`Featured: ${season.featured.name}`}
+          >
+            <ChampionPortrait
+              rosterKey={featuredShowcase.key}
+              type={season.featured.type}
+              champion={featuredShowcase.champion}
+              preset="portrait"
+              colorHex={force.hex}
+              eager
+            />
           </div>
         </div>
       )}

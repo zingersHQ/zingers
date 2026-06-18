@@ -1,92 +1,120 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Gamepad2, Swords, LayoutGrid, Shield, Trophy, Ellipsis, X } from "lucide-react";
-import { DOCK_H, DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, type PlayLink } from "@/lib/play-nav";
+import { useCallback, useEffect, useState } from "react";
+import { Menu as MenuIcon, X } from "lucide-react";
+import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, type PlayLink } from "@/lib/play-nav";
 
-const ICONS: Record<string, typeof Gamepad2> = {
-  play: Gamepad2,
-  fight: Swords,
-  collection: LayoutGrid,
-  campaign: Shield,
-  rank: Trophy,
-};
-
-function DockLink({ item, active, compact }: { item: PlayLink; active: boolean; compact?: boolean }) {
-  const Icon = ICONS[item.id];
-  const col = active ? "var(--gold)" : "var(--muted)";
+function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick: () => void }) {
+  const active = navIsActive(path, item.href);
   return (
-    <Link
-      href={item.href}
-      title={item.blurb}
-      className={`game-dock__link${active ? " is-on" : ""}`}
-    >
-      {Icon && <Icon size={compact ? 20 : 18} strokeWidth={2} color={col} />}
-      <span className="game-dock__label">{compact ? item.short : item.label}</span>
+    <Link href={item.href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
+      <span className="game-menu__item-label">{item.label}</span>
+      <span className="game-menu__item-blurb">{item.blurb}</span>
     </Link>
   );
 }
 
-export function GameDock({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
+/**
+ * In-game navigation — a single visible menu button (top-left) that opens a
+ * panel of every mode. No persistent bottom bar. Also toggled with the M key.
+ */
+export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
   const path = usePathname();
-  const [more, setMore] = useState(false);
-  if (hidden) return null;
+  const [open, setOpen] = useState(false);
 
-  const moreActive = SECONDARY_NAV.some((l) => navIsActive(path, l.href)) || DOCS_NAV.some((l) => navIsActive(path, l.href));
+  const close = useCallback(() => setOpen(false), []);
+  const toggle = useCallback(() => setOpen((v) => !v), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return close();
+      if (e.key.toLowerCase() === "m" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target as HTMLElement | null;
+        const tag = el?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [close, toggle]);
+
+  useEffect(() => {
+    close();
+  }, [path, close]);
+
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  if (hidden) return null;
 
   return (
     <>
-      {more && (
+      <button
+        type="button"
+        className={`game-menu__trigger${fixed ? " game-menu__trigger--fixed" : ""}${open ? " is-open" : ""}`}
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        onClick={toggle}
+      >
+        {open ? <X size={20} strokeWidth={2.2} /> : <MenuIcon size={20} strokeWidth={2.2} />}
+      </button>
+
+      {open && (
         <div
-          className="game-dock__sheet-backdrop"
-          onClick={() => setMore(false)}
-          role="presentation"
-        />
-      )}
-      {more && (
-        <div className="game-dock__sheet panel pop" role="dialog" aria-label="More modes">
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-            <span className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>MORE MODES</span>
-            <button type="button" onClick={() => setMore(false)} aria-label="Close" className="game-dock__sheet-close">
-              <X size={18} strokeWidth={2} />
-            </button>
-          </div>
-          <div className="game-dock__sheet-grid">
-            {[...SECONDARY_NAV, ...DOCS_NAV].map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={() => setMore(false)}
-                className={`game-dock__sheet-item${navIsActive(path, item.href) ? " is-on" : ""}`}
-              >
-                <span style={{ fontWeight: 700, fontSize: 13 }}>{item.label}</span>
-                <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4, lineHeight: 1.35 }}>{item.blurb}</span>
-              </Link>
-            ))}
+          className="game-menu__panel"
+          role="dialog"
+          aria-label="Navigation"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) close();
+          }}
+        >
+          <div className="game-menu__panel-inner">
+            <div className="game-menu__panel-head">
+              <span className="game-menu__panel-kicker mono">Menu</span>
+              <button type="button" className="game-menu__panel-close" aria-label="Close menu" onClick={close}>
+                <X size={18} strokeWidth={2.2} />
+              </button>
+            </div>
+
+            <div className="game-menu__grid">
+              <div className="game-menu__section">
+                <span className="game-menu__section-label mono">Play</span>
+                {PRIMARY_NAV.map((item) => (
+                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
+                ))}
+              </div>
+
+              <div className="game-menu__section">
+                <span className="game-menu__section-label mono">Also</span>
+                {SECONDARY_NAV.map((item) => (
+                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
+                ))}
+              </div>
+
+              <div className="game-menu__section">
+                <span className="game-menu__section-label mono">Read</span>
+                {DOCS_NAV.map((item) => (
+                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
+                ))}
+              </div>
+            </div>
+
+            <p className="game-menu__hint mono">M to toggle · Esc to close</p>
           </div>
         </div>
       )}
-
-      <nav
-        className={`game-dock${fixed ? " game-dock--fixed" : ""}`}
-        aria-label="Game modes"
-        style={{ ["--dock-h" as string]: `${DOCK_H}px` }}
-      >
-        {PRIMARY_NAV.map((item) => (
-          <DockLink key={item.id} item={item} active={navIsActive(path, item.href)} compact />
-        ))}
-        <button
-          type="button"
-          className={`game-dock__link game-dock__more${moreActive ? " is-on" : ""}`}
-          aria-expanded={more}
-          aria-label="More modes and docs"
-          onClick={() => setMore((v) => !v)}
-        >
-          <Ellipsis size={20} strokeWidth={2} color={moreActive ? "var(--gold)" : "var(--muted)"} />
-          <span className="game-dock__label">More</span>
-        </button>
-      </nav>
     </>
   );
 }
+
+/** @deprecated bottom bar — use GameMenu */
+export const GameDock = GameMenu;

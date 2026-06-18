@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
 import type { Champion, CreatureType } from "@/lib/types";
-import { EMBLEM, TYPE_COLOR, levelFor, tierFor, sigils, ROMAN, doctrine } from "@/lib/evolve/progression";
+import { TYPE_COLOR, levelFor, tierFor, sigils, ROMAN, doctrine } from "@/lib/evolve/progression";
+import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 
 export function ChampionAvatar({
   ckey,
@@ -14,7 +14,6 @@ export function ChampionAvatar({
   champion: Champion;
   size?: number;
 }) {
-  const [imgOk, setImgOk] = useState(true);
   const lf = levelFor(champion.xp);
   const tier = tierFor(lf.level);
   const col = TYPE_COLOR[type] || "#888";
@@ -28,12 +27,8 @@ export function ChampionAvatar({
       {Array.from({ length: tier.rings }).map((_, i) => (
         <div key={i} className="evo-ring" style={{ animationDelay: i * 0.7 + "s", ["--rk" as string]: i }} />
       ))}
-      <div
-        className="evo-port"
-        style={imgOk ? { backgroundImage: `url(/img/${ckey}.jpg)` } : undefined}
-      >
-        {!imgOk && <span style={{ fontSize: Math.round(size * 0.42) }}>{EMBLEM[type] || "◆"}</span>}
-        <img alt="" src={`/img/${ckey}.jpg`} onError={() => setImgOk(false)} style={{ display: "none" }} />
+      <div className="evo-port" aria-label={`${ckey} live portrait`}>
+        <ChampionPortraitScene type={type} champion={champion} preset="portrait" />
         <div className="evo-wear" style={{ opacity: wear }} />
       </div>
       {tier.crest && (
@@ -78,10 +73,10 @@ function AvatarStyles() {
   return (
     <style>{`
     .evo-av{position:relative;width:var(--sz);height:var(--sz);display:grid;place-items:center;flex:0 0 auto}
-    .evo-port{position:relative;width:78%;height:78%;border-radius:22%;overflow:hidden;display:grid;place-items:center;
-      color:var(--ac);background:radial-gradient(120% 120% at 50% 22%,color-mix(in srgb,var(--ac) 28%,#0c0b12),#0c0b12);
-      border:2px solid var(--ac);background-size:cover;background-position:center 16%;
-      box-shadow:0 0 38px -12px var(--ac), inset 0 0 26px -16px var(--ac);z-index:2}
+    .evo-port{position:relative;width:78%;height:78%;border-radius:22%;overflow:hidden;
+      border:2px solid var(--ac);
+      box-shadow:0 0 38px -12px var(--ac), inset 0 0 26px -16px var(--ac);z-index:2;background:#0a0812}
+    .evo-port canvas{width:100%!important;height:100%!important;display:block}
     .evo-wear{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
       background:repeating-linear-gradient(125deg,transparent 0 7px,rgba(0,0,0,.5) 7px 8px),
                  repeating-linear-gradient(60deg,transparent 0 11px,rgba(0,0,0,.35) 11px 12px)}

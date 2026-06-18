@@ -29,22 +29,31 @@ export function ChampionPortrait({
   const aspect = RENDER_PRESETS[preset].aspect;
   const accent = colorHex ?? TYPE_COLOR[type];
 
+  // Each live portrait holds its own WebGL context and browsers cap those at
+  // ~16. Mount when near the viewport and tear down once scrolled well away so
+  // a long gallery never starves the earliest tiles of a context.
   useEffect(() => {
-    if (eager || live) return;
+    if (eager) return;
     const el = rootRef.current;
     if (!el) return;
+    let off: ReturnType<typeof setTimeout> | undefined;
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
+          if (off) clearTimeout(off);
           setLive(true);
-          io.disconnect();
+        } else {
+          off = setTimeout(() => setLive(false), 500);
         }
       },
-      { rootMargin: "160px 0px" },
+      { rootMargin: "300px 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, [eager, live]);
+    return () => {
+      if (off) clearTimeout(off);
+      io.disconnect();
+    };
+  }, [eager]);
 
   return (
     <div

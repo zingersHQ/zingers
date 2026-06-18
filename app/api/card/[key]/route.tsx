@@ -108,7 +108,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
         </div>
 
         <div style={{ display: "flex", fontSize: 24, color: "#8a82b8", marginTop: 30 }}>
-          Raise a mind. Make it legend. — train your own
+          Raise a mind. Make it legend. Train your own.
         </div>
       </div>
     ),

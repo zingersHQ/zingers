@@ -6,7 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
 import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive } from "@/lib/play-nav";
 
-// Immersive surfaces use the in-game dock instead of this bar.
+// Immersive surfaces use the bottom GameDock — no site chrome.
 const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
 
 export function Nav() {

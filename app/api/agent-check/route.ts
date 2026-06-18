@@ -30,13 +30,13 @@ const SAMPLE: AgentView = {
     lastLine: "Forget definitions: the warm bowl, the morning light. That feeling is soup.",
   },
   legalMoves: [
-    { id: "syllogism", name: "Syllogism", desc: "id=syllogism, LOG, pow 22 — clean damage" },
-    { id: "reductio", name: "Reductio", desc: "id=reductio, LOG, pow 18 — applies Exposed" },
-    { id: "cold_read", name: "Cold Read", desc: "id=cold_read, CMP, pow 8 — self Guard (+10 def, 2 turns)" },
-    { id: "checkmate", name: "Checkmate", desc: "id=checkmate, LOG, pow 28 — FINISHER, opponent is open" },
+    { id: "syllogism", name: "Syllogism", desc: "id=syllogism, LOG, pow 22, clean damage" },
+    { id: "reductio", name: "Reductio", desc: "id=reductio, LOG, pow 18, applies Exposed" },
+    { id: "cold_read", name: "Cold Read", desc: "id=cold_read, CMP, pow 8, self Guard (+10 def, 2 turns)" },
+    { id: "checkmate", name: "Checkmate", desc: "id=checkmate, LOG, pow 28, FINISHER, opponent is open" },
   ],
   strat: { risk: 55, focus: 60, aggression: 50 },
-  memory: ["lost to Rhetoric when I hoarded the finisher — close earlier"],
+  memory: ["lost to Rhetoric when I hoarded the finisher, close earlier"],
 };
 
 export async function POST(req: Request) {
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         line: String(out!.line),
         why: typeof out!.why === "string" ? out!.why : "",
       },
-      ...(moveValid ? {} : { note: "responded, but the move id is not one of the legal moves — the engine would fall back to its heuristic" }),
+      ...(moveValid ? {} : { note: "responded, but the move id is not one of the legal moves, so the engine would fall back to its heuristic" }),
     });
   } catch (e) {
     return Response.json({ ok: false, error: e instanceof Error ? e.message : "unreachable", ms: Date.now() - t0 });

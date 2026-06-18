@@ -201,7 +201,7 @@ function Agents() {
         <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.3, lineHeight: 1.5 }}>
           silhouette computed from its career
           <br />
-          after you claim · use the dock below: Play · Fight · Dex · Quest · Rank
+          after you claim · press M or touch the top-left corner for the menu
         </p>
       </div>
     </div>

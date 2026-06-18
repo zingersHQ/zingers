@@ -366,6 +366,30 @@ export default function GroundsScreen() {
   // until the first-run tutorial and champion claim are done — otherwise its
   // zIndex pokes through on top of those higher-priority overlays.
   const showHud = mounted && !showIntro && !pickingChampion;
+  const [hudDim, setHudDim] = useState(false);
+
+  useEffect(() => {
+    if (!showHud || showMatch || overlay !== "none" || gRun) {
+      setHudDim(false);
+      return;
+    }
+    let idle: ReturnType<typeof setTimeout>;
+    const wake = () => {
+      setHudDim(false);
+      clearTimeout(idle);
+      idle = setTimeout(() => setHudDim(true), 7000);
+    };
+    idle = setTimeout(() => setHudDim(true), 7000);
+    window.addEventListener("mousemove", wake, { passive: true });
+    window.addEventListener("keydown", wake);
+    window.addEventListener("touchstart", wake, { passive: true });
+    return () => {
+      clearTimeout(idle);
+      window.removeEventListener("mousemove", wake);
+      window.removeEventListener("keydown", wake);
+      window.removeEventListener("touchstart", wake);
+    };
+  }, [showHud, showMatch, overlay, gRun]);
 
   return (
     <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden" }}>
@@ -428,7 +452,7 @@ export default function GroundsScreen() {
 
       {/* HUD — sits above the WebGL canvas and touch layer */}
       {showHud && (
-      <div style={{ position: "absolute", top: 14, left: 16, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
         {!showMatch && overlay === "none" && owned && !gRun && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
@@ -484,12 +508,10 @@ export default function GroundsScreen() {
           <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {owned
               ? isMobile
-                ? "Walk to glowing spots · tap the prompt · or pick a mode below"
+                ? "Walk to glowing spots · tap the prompt when near"
                 : scenario.id === "gauntlet"
-                  ? (isTouch ? "WALK TO THE ARENA · ENTER THE GAUNTLET · CLIMB THE TOWER" : "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER")
-                  : isTouch
-                    ? "LEFT STICK MOVE · DRAG TO LOOK · DOUBLE-JUMP THEN HOLD TO FLY · CLIMB THE TOWER"
-                    : "WASD MOVE · SPACE TO JUMP · DOUBLE-JUMP THEN HOLD TO FLY · CLIMB · E TO CHALLENGE"
+                  ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
+                  : "WASD · SPACE / DOUBLE-JUMP TO FLY · CLIMB · E NEAR NPCs · M FOR MENU"
               : "Claim a champion to enter the world"}
           </p>
         )}
@@ -501,7 +523,7 @@ export default function GroundsScreen() {
       </div>
       )}
       {showHud && (
-      <div style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
         <AmbientToggle compact={isMobile} />
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
@@ -513,7 +535,7 @@ export default function GroundsScreen() {
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
       {showHud && !showMatch && overlay === "none" && towerAgents.length > 0 && (
-        <div className="panel" style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
+        <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
             <span style={{ fontWeight: 700, fontSize: isMobile ? 16 : 22, color: altitude > 1 ? "#39e0ff" : "var(--muted)" }}>{Math.max(0, altitude).toFixed(1)}</span>
@@ -535,10 +557,8 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {/* mode dock — always-visible map of the game */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 200 }}>
-        <GameDock hidden={!showDock} />
-      </div>
+      {/* menu — single visible button, top-left (M to toggle) */}
+      <GameDock hidden={!showDock} />
 
       {/* onboarding: choose your champion */}
       {mounted && !owned && roster.length > 0 && <Onboarding roster={roster} get={store.get} onPick={setOwned} />}
@@ -657,9 +677,9 @@ export default function GroundsScreen() {
         <MatchHud bout={bout} owned={owned!} opponent={opponent!} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
       )}
 
-      {/* bottom nav hint — hidden on touch so it can't sit under the jump pad */}
-      {!showMatch && overlay === "none" && !isTouch && (
-        <div className="mono" style={{ position: "absolute", bottom: 14, right: 16, fontSize: 11, display: "flex", alignItems: "center", gap: 14 }}>
+      {/* footer hints — only when HUD is awake */}
+      {!showMatch && overlay === "none" && !isTouch && !hudDim && (
+        <div className="mono" style={{ position: "absolute", bottom: 14, right: 16, fontSize: 11, display: "flex", alignItems: "center", gap: 14, opacity: 0.45 }}>
           <button onClick={() => setShowIntro(true)} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 11 }}>
             intro
           </button>
