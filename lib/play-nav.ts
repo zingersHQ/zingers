@@ -27,7 +27,8 @@ export const SECONDARY_NAV: PlayLink[] = [
 
 export const DOCS_NAV: PlayLink[] = [
   { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
-  { id: "bible", label: "Bible", short: "Bible", href: "/bible", blurb: "Canon, forces, regions, seasons." },
+  { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org — bible, protocol, design specs." },
+  { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon — forces, minds, regions." },
   { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
 ];
 

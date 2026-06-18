@@ -35,8 +35,11 @@ export default function BiblePage() {
       </div>
       <p style={{ maxWidth: 780, color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "0 0 22px" }}>
         The canon of the Zingers universe: the Hum, the Five Forces, the First Minds, the Long Vault, the Keepers,
-        the regions, and the living Chronicle. This page is the public encyclopedia view; the markdown source lives
-        in <span className="mono">docs/bible/</span>.
+        the regions, and the living Chronicle. This is the visual gallery; the full markdown bible lives at{" "}
+        <Link href="/org/bible" className="org-prose__a" style={{ color: "var(--accent)" }}>
+          /org/bible
+        </Link>
+        .
       </p>
 
       <div style={{ marginBottom: 26 }}>
