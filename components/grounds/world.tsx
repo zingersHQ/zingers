@@ -968,8 +968,8 @@ const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate indepe
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
                            // into a uniform hover instead of a per-press sawtooth
-const FLY_LEAN = 0.5;      // base nose-down/hanging tilt (rad) the body holds while
-                           // flying, so it reads as airborne even hovering still
+const FLY_FOOT = 1.0;      // ankle tuck (rad) while flying: rotates the feet so the
+                           // toes hang straight down — body stays upright, just the feet
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1157,6 +1157,8 @@ function Handler({
   // smoothed 0..1 thrust command — eases toward 1 while the jump key is held and
   // back to 0 when released, so tapping doesn't snap the climb target each frame
   const thrust = useRef(0);
+  // eased ankle-tuck amount (rad) — ramps in while flying so the toes point down
+  const footTuck = useRef(0);
   // procedural body polish: a forward/banked lean while flying, and a
   // squash-&-stretch impulse that pops on launch and absorbs on landing
   const leanX = useRef(0);
@@ -1232,6 +1234,16 @@ function Handler({
     const dt = Math.min(0.05, dtRaw);
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
+    // ankle tuck while flying: rotate just the feet so the toes hang straight down,
+    // letting the body stay upright instead of pitching the whole model over. Layered
+    // on top of the clip each frame (after the mixer writes the pose); the foot bone's
+    // local +Y points at the toe, so a negative local-X rotation swings it downward.
+    footTuck.current += ((flying.current ? FLY_FOOT : 0) - footTuck.current) * (1 - Math.exp(-12 * dt));
+    if (footTuck.current > 0.001) {
+      const fl = built.bones["foot.l"], fr = built.bones["foot.r"];
+      if (fl) fl.rotation.x -= footTuck.current;
+      if (fr) fr.rotation.x -= footTuck.current;
+    }
     const rb = body.current;
     if (!rb) return;
 
@@ -1428,13 +1440,10 @@ function Handler({
 
     // ── procedural body polish ──
     // forward lean + bank while flying so steering reads visually (the legs stay
-    // still in the hover pose); decays to upright the instant we touch down.
-    // A constant FLY_LEAN base keeps the body pitched nose-down / hanging from the
-    // pack while airborne, so it never looks like it's standing upright mid-air;
-    // horizontal speed leans it further into the dive on top of that.
+    // still in the hover pose); decays to upright the instant we touch down
     const lv2 = rb.linvel();
     const hspeed = Math.hypot(lv2.x, lv2.z);
-    const tgtLeanX = flyingMode ? Math.min(1.0, FLY_LEAN + hspeed * 0.03) : 0;
+    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : 0;
     const tgtLeanZ = flyingMode ? Math.max(-0.35, Math.min(0.35, -ax * 0.35)) : 0;
     const ls = 1 - Math.exp(-10 * dt);
     leanX.current += (tgtLeanX - leanX.current) * ls;
