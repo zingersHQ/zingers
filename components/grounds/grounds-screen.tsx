@@ -175,7 +175,7 @@ export default function GroundsScreen() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "e") interact();
+      if (e.key && e.key.toLowerCase() === "e") interact();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -751,6 +751,21 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
   const app = appearanceOf(champ);
   const lf = levelFor(champ.xp);
   const [persona, setPersonaLocal] = useState(recipe.persona ?? "");
+  const [flash, setFlash] = useState<{ xp: number; leveledTo: number | null } | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
+
+  const doTrain = () => {
+    const before = store.get(ckey);
+    const beforeLevel = levelFor(before.xp).level;
+    if (!store.trainChampion(ckey)) return;
+    const after = store.get(ckey);
+    const afterLevel = levelFor(after.xp).level;
+    setFlash({ xp: after.xp - before.xp, leveledTo: afterLevel > beforeLevel ? afterLevel : null });
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 2400);
+  };
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
@@ -805,13 +820,19 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           className="btn btn-primary"
           style={{ ["--ac" as string]: "var(--good)", width: "100%", fontSize: 14, opacity: store.crowns < TRAIN_COST ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           disabled={store.crowns < TRAIN_COST}
-          onClick={() => store.trainChampion(ckey)}
+          onClick={doTrain}
         >
           <ArrowUp size={16} strokeWidth={2.4} />
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
             Train session: {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} />
           </span>
         </button>
+        {flash && (
+          <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
+            <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>✦ Trained · +{flash.xp} XP</span>
+            {flash.leveledTo && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{flash.leveledTo}</span>}
+          </div>
+        )}
         {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns. Win a bout in the Arena.</p>}
       </div>
     </div>

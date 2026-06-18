@@ -28,6 +28,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!e.key) return;
       if (e.key === "Escape") return close();
       if (e.key.toLowerCase() === "m" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const el = e.target as HTMLElement | null;
