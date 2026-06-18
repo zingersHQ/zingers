@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CreatureType, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
+import { SeasonBanner } from "@/components/lore/season-banner";
 
 interface LadderChampion {
   id: string;
@@ -135,6 +136,10 @@ export default function StandingsPage() {
             LOCAL MODE — provision Redis to go shared
           </span>
         )}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <SeasonBanner />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.7fr) minmax(0,1fr)", gap: 20, alignItems: "start" }}>

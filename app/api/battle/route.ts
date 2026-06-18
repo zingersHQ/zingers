@@ -3,11 +3,14 @@ import { readSide, hasExternalAgent } from "@/lib/engine/side-config";
 import { KEY } from "@/lib/engine/xai";
 import { ROSTER, TOPICS } from "@/lib/engine/roster";
 import { sseStream } from "@/lib/sse-server";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = rateLimit(req, "battle", 30, 60_000);
+  if (limited) return limited;
   const q = new URL(req.url).searchParams;
   const aKey = (q.get("a") || "AXIOM").toUpperCase();
   const bKey = (q.get("b") || "VOX").toUpperCase();

@@ -21,6 +21,9 @@ import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/re
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { setMood } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
+import { SeasonBanner } from "@/components/lore/season-banner";
+import { GameDock } from "@/components/game-dock";
+import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
@@ -330,9 +333,12 @@ export default function GroundsScreen() {
   }, [bout]);
 
   const showMatch = inMatch || overlay === "result";
+  const pickingChampion = mounted && !owned && roster.length > 0;
+  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion;
+  const dockPad = showDock ? DOCK_H + 8 : 0;
 
   return (
-    <main className="fill-shell" style={{ position: "relative", overflow: "hidden" }}>
+    <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden" }}>
       {mounted && gpu && !gpu.ok && (
         <RenderNotice
           title="3D isn't available in this browser"
@@ -357,41 +363,112 @@ export default function GroundsScreen() {
       )}
 
       {mounted && gpu?.ok && !rosterError && roster.length > 0 && (
-        <RenderBoundary
-          fallback={(error, reset) => (
-            <RenderNotice
-              title="The Grounds couldn’t render"
-              body={
-                gpu?.software
-                  ? "Your browser is rendering 3D in software mode (hardware acceleration is off or your GPU is blocklisted), which can’t handle this scene. Enable graphics acceleration in your browser settings and reload."
-                  : "Something went wrong while drawing the 3D scene. Reloading usually fixes it."
-              }
-              detail={`${gpu?.renderer ? gpu.renderer + " · " : ""}${error.message}`}
-              onRetry={() => {
-                reset();
-                setReloadKey((k) => k + 1);
-              }}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          <RenderBoundary
+            fallback={(error, reset) => (
+              <RenderNotice
+                title="The Grounds couldn’t render"
+                body={
+                  gpu?.software
+                    ? "Your browser is rendering 3D in software mode (hardware acceleration is off or your GPU is blocklisted), which can’t handle this scene. Enable graphics acceleration in your browser settings and reload."
+                    : "Something went wrong while drawing the 3D scene. Reloading usually fixes it."
+                }
+                detail={`${gpu?.renderer ? gpu.renderer + " · " : ""}${error.message}`}
+                onRetry={() => {
+                  reset();
+                  setReloadKey((k) => k + 1);
+                }}
+              />
+            )}
+          >
+            <World
+              champions={champions}
+              ownedKey={owned}
+              onNear={setNear}
+              match={showMatch ? matchView : null}
+              controlsEnabled={controlsEnabled}
+              biome={biome}
+              towerAgents={towerAgents}
+              onAltitude={onAltitude}
+              touchBottomInset={isTouch ? dockPad : 0}
             />
-          )}
-        >
-          <World champions={champions} ownedKey={owned} onNear={setNear} match={showMatch ? matchView : null} controlsEnabled={controlsEnabled} biome={biome} towerAgents={towerAgents} onAltitude={onAltitude} />
-        </RenderBoundary>
+          </RenderBoundary>
+        </div>
       )}
 
-      {/* HUD */}
-      <div style={{ position: "absolute", top: 14, left: 16, pointerEvents: "none" }}>
-        <h1 className="grounds-hud__title" style={{ fontSize: 22, fontWeight: 700, margin: 0, textShadow: "0 2px 12px #000" }}>{world.name}</h1>
-        {!isMobile && (
-          <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1 }}>
-            {scenario.id === "gauntlet"
-              ? (isTouch ? "WALK TO THE ARENA · ENTER THE GAUNTLET · CLIMB THE TOWER" : "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER")
-              : isTouch
-              ? "LEFT STICK MOVE · DRAG TO LOOK · JUMP ×4 THEN HOLD TO FLY · CLIMB THE TOWER"
-              : "WASD MOVE · SPACE TO JUMP · HOLD AFTER 4 JUMPS TO FLY · CLIMB · E TO CHALLENGE"}
+      {/* HUD — sits above the WebGL canvas and touch layer */}
+      <div style={{ position: "absolute", top: 14, left: 16, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
+        {!showMatch && overlay === "none" && owned && !gRun && (
+          <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
+            {worldMenu && (
+              <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 240, maxWidth: "calc(100vw - 32px)", zIndex: 2 }}>
+                <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", padding: "0 2px" }}>CHOOSE A WORLD</span>
+                {WORLDS.map((w) => {
+                  const ac = w.biome.lights.arenaPoint;
+                  const on = w.id === worldId;
+                  return (
+                    <button
+                      key={w.id}
+                      onClick={() => { setWorldId(w.id); setWorldMenu(false); }}
+                      className="panel"
+                      style={{ ["--ac" as string]: ac, textAlign: "left", padding: "6px 10px", cursor: "pointer", borderColor: on ? ac : "var(--line)", background: on ? "rgba(255,255,255,.04)" : "transparent" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 9, background: ac, boxShadow: `0 0 8px ${ac}` }} />
+                        <span style={{ fontSize: 12, fontWeight: 700 }}>{w.name}</span>
+                        <span className="mono" style={{ marginLeft: "auto", fontSize: 8, letterSpacing: 1, color: ac, border: `1px solid ${ac}`, borderRadius: 5, padding: "1px 5px" }}>{w.scenario.name}</span>
+                      </div>
+                      <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 3 }}>{w.scenario.blurb}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setWorldMenu((v) => !v)}
+              className="panel"
+              aria-label="Choose a world"
+              aria-expanded={worldMenu}
+              style={{
+                ["--ac" as string]: world.biome.lights.arenaPoint,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: isMobile ? "8px 11px" : "8px 12px",
+                cursor: "pointer",
+                borderColor: worldMenu ? world.biome.lights.arenaPoint : "var(--line)",
+                touchAction: "manipulation",
+                width: "fit-content",
+                maxWidth: "100%",
+              }}
+            >
+              <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
+              <span style={{ fontSize: isMobile ? 13 : 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{world.name}</span>
+            </button>
+          </div>
+        )}
+
+        {(owned || !isMobile) && (
+          <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
+            {owned
+              ? isMobile
+                ? "Walk to glowing spots · tap the prompt · or pick a mode below"
+                : scenario.id === "gauntlet"
+                  ? (isTouch ? "WALK TO THE ARENA · ENTER THE GAUNTLET · CLIMB THE TOWER" : "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER")
+                  : isTouch
+                    ? "LEFT STICK MOVE · DRAG TO LOOK · DOUBLE-JUMP THEN HOLD TO FLY · CLIMB THE TOWER"
+                    : "WASD MOVE · SPACE TO JUMP · DOUBLE-JUMP THEN HOLD TO FLY · CLIMB · E TO CHALLENGE"
+              : "Claim a champion to enter the world"}
           </p>
         )}
+        {!isMobile && overlay === "none" && !showMatch && (
+          <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
+            <SeasonBanner compact />
+          </div>
+        )}
       </div>
-      <div style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
         <AmbientToggle compact={isMobile} />
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
@@ -424,46 +501,10 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {/* world switcher — collapsed to an icon that opens a popup so the world
-          stays clean. Each world is a different GAME, not just a skin. */}
-      {!showMatch && overlay === "none" && owned && !gRun && (
-        <div style={{ position: "absolute", bottom: 16, left: 16 }}>
-          {worldMenu && (
-            <div className="panel pop" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 240, maxWidth: "calc(100vw - 32px)" }}>
-              <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", padding: "0 2px" }}>CHOOSE A WORLD</span>
-              {WORLDS.map((w) => {
-                const ac = w.biome.lights.arenaPoint;
-                const on = w.id === worldId;
-                return (
-                  <button
-                    key={w.id}
-                    onClick={() => { setWorldId(w.id); setWorldMenu(false); }}
-                    className="panel"
-                    style={{ ["--ac" as string]: ac, textAlign: "left", padding: "6px 10px", cursor: "pointer", borderColor: on ? ac : "var(--line)", background: on ? "rgba(255,255,255,.04)" : "transparent" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ width: 9, height: 9, borderRadius: 9, background: ac, boxShadow: `0 0 8px ${ac}` }} />
-                      <span style={{ fontSize: 12, fontWeight: 700 }}>{w.name}</span>
-                      <span className="mono" style={{ marginLeft: "auto", fontSize: 8, letterSpacing: 1, color: ac, border: `1px solid ${ac}`, borderRadius: 5, padding: "1px 5px" }}>{w.scenario.name}</span>
-                    </div>
-                    <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 3 }}>{w.scenario.blurb}</div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <button
-            onClick={() => setWorldMenu((v) => !v)}
-            className="panel"
-            aria-label="Choose a world"
-            aria-expanded={worldMenu}
-            style={{ ["--ac" as string]: world.biome.lights.arenaPoint, display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "8px 10px" : "8px 12px", cursor: "pointer", borderColor: worldMenu ? world.biome.lights.arenaPoint : "var(--line)" }}
-          >
-            <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
-            {!isMobile && <span style={{ fontSize: 12, fontWeight: 700 }}>{world.name}</span>}
-          </button>
-        </div>
-      )}
+      {/* mode dock — always-visible map of the game */}
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 200 }}>
+        <GameDock hidden={!showDock} />
+      </div>
 
       {/* onboarding: choose your champion */}
       {mounted && !owned && roster.length > 0 && <Onboarding roster={roster} get={store.get} onPick={setOwned} />}
@@ -474,42 +515,52 @@ export default function GroundsScreen() {
       {/* proximity action — centered above the touch controls so it never
           overlaps the jump / sprint cluster. Tap on touch, E on desktop. */}
       {owned && near && overlay === "none" && !inMatch && !result && !gRun && (
-        <button
-          onClick={interact}
-          className="btn btn-primary pop"
+        <div
           style={{
             position: "absolute",
-            bottom: isTouch ? 132 : 96,
-            left: "50%",
-            transform: "translateX(-50%)",
+            bottom: isTouch ? 132 + dockPad : 96 + dockPad,
+            left: 0,
+            right: 0,
             display: "flex",
-            alignItems: "center",
-            gap: 9,
-            padding: "13px 22px",
-            fontSize: 15,
-            fontWeight: 700,
-            maxWidth: "min(78vw, 360px)",
-            whiteSpace: "nowrap",
-            cursor: "pointer",
-            touchAction: "manipulation",
-            ["--ac" as string]: "var(--gold)",
+            justifyContent: "center",
+            padding: "0 16px",
+            pointerEvents: "none",
             zIndex: 35,
           }}
         >
-          <FightIcon size={18} strokeWidth={2.2} />
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-            {near.kind === "train"
-              ? "Train your champion"
-              : near.kind === "guardian"
-                ? "Face the Guardian"
-                : near.kind === "challenge"
-                  ? `Challenge ${near.name}`
-                  : scenario.id === "gauntlet"
-                    ? "Enter the Gauntlet"
-                    : "Enter the Arena"}
-          </span>
-          {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
-        </button>
+          <button
+            onClick={interact}
+            className="btn btn-primary pop"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              padding: "13px 22px",
+              fontSize: 15,
+              fontWeight: 700,
+              maxWidth: "min(78vw, 360px)",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+              touchAction: "manipulation",
+              pointerEvents: "auto",
+              ["--ac" as string]: "var(--gold)",
+            }}
+          >
+            <FightIcon size={18} strokeWidth={2.2} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              {near.kind === "train"
+                ? "Train your champion"
+                : near.kind === "guardian"
+                  ? "Face the Guardian"
+                  : near.kind === "challenge"
+                    ? `Challenge ${near.name}`
+                    : scenario.id === "gauntlet"
+                      ? "Enter the Gauntlet"
+                      : "Enter the Arena"}
+            </span>
+            {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
+          </button>
+        </div>
       )}
 
       {/* training overlay */}
@@ -567,7 +618,7 @@ export default function GroundsScreen() {
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
-        <MatchHud bout={bout} owned={owned!} opponent={opponent!} byKey={byKey} get={store.get} result={result} onClose={closeMatch} />
+        <MatchHud bout={bout} owned={owned!} opponent={opponent!} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
       )}
 
       {/* bottom nav hint — hidden on touch so it can't sit under the jump pad */}
@@ -857,8 +908,9 @@ function MatchHud(props: {
   get: (k: string) => Champion;
   result: { won: boolean; crowns: number; betWon: boolean | null; ratingDelta: number; leveledTo: number | null; learned: string | null } | null;
   onClose: () => void;
+  isMobile: boolean;
 }) {
-  const { bout, owned, opponent, byKey, get, result, onClose } = props;
+  const { bout, owned, opponent, byKey, get, result, onClose, isMobile } = props;
   const t = bout.turn;
   const a = byKey[owned];
   const b = byKey[opponent];
@@ -881,26 +933,71 @@ function MatchHud(props: {
   };
   return (
     <>
-      <div style={{ position: "absolute", top: 70, left: "50%", transform: "translateX(-50%)", textAlign: "center", pointerEvents: "none" }}>
-        <div className="mono" style={{ fontSize: 12, color: "var(--gold)", letterSpacing: 1 }}>
-          {a?.name} <span style={{ color: "var(--muted2)" }}>vs</span> {b?.name}
+      <div
+        style={{
+          position: "absolute",
+          top: isMobile ? 56 : 70,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          padding: "0 16px",
+          pointerEvents: "none",
+          zIndex: 40,
+        }}
+      >
+        <div style={{ textAlign: "center", maxWidth: "min(640px, 94vw)" }}>
+          <div className="mono" style={{ fontSize: isMobile ? 11 : 12, color: "var(--gold)", letterSpacing: 1 }}>
+            {a?.name} <span style={{ color: "var(--muted2)" }}>vs</span> {b?.name}
+          </div>
+          {bout.start && (
+            <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.35 }}>
+              &ldquo;{bout.start.topic}&rdquo;
+            </div>
+          )}
         </div>
-        {bout.start && <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, textShadow: "0 2px 8px #000" }}>&ldquo;{bout.start.topic}&rdquo;</div>}
       </div>
 
       {t && !result && (
-        <div className="panel pop" key={t.round} style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", width: "min(640px, 94vw)", padding: 16, ["--ac" as string]: TYPE_COLOR[t.actor_type] }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <span className="chip" style={{ borderColor: TYPE_COLOR[t.actor_type], color: TYPE_COLOR[t.actor_type] }}>
-              {t.actor_name} → {t.move}
-            </span>
-            {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
-            {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
-            {t.dmg > 0 && <span className="mono" style={{ color: "var(--bad)", fontWeight: 700 }}>−{t.dmg}</span>}
-          </div>
-          <div style={{ fontStyle: "italic", fontSize: 15, margin: "8px 0 6px" }}>&ldquo;{t.line}&rdquo;</div>
-          <div className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-            why › {t.why} <span style={{ color: "var(--muted2)" }}>· ⚖ {t.ruling} (q={t.q.toFixed(2)})</span>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            padding: isMobile ? "0 10px max(12px, env(safe-area-inset-bottom))" : "0 16px max(24px, env(safe-area-inset-bottom))",
+            pointerEvents: "none",
+            zIndex: 40,
+          }}
+        >
+          <div
+            className="panel pop"
+            key={t.round}
+            style={{
+              width: "min(640px, 100%)",
+              maxHeight: isMobile ? "38vh" : "none",
+              overflowY: isMobile ? "auto" : "visible",
+              padding: isMobile ? 12 : 16,
+              pointerEvents: "auto",
+              ["--ac" as string]: TYPE_COLOR[t.actor_type],
+            }}
+          >
+            <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <span className="chip" style={{ borderColor: TYPE_COLOR[t.actor_type], color: TYPE_COLOR[t.actor_type] }}>
+                {t.actor_name} → {t.move}
+              </span>
+              {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
+              {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
+              {t.dmg > 0 && <span className="mono" style={{ color: "var(--bad)", fontWeight: 700 }}>−{t.dmg}</span>}
+            </div>
+            <div style={{ fontStyle: "italic", fontSize: isMobile ? 14 : 15, margin: "8px 0 6px", lineHeight: 1.4, overflowWrap: "anywhere" }}>
+              &ldquo;{t.line}&rdquo;
+            </div>
+            <div className="mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", lineHeight: 1.45, overflowWrap: "anywhere" }}>
+              why › {t.why} <span style={{ color: "var(--muted2)" }}>· ⚖ {t.ruling} (q={t.q.toFixed(2)})</span>
+            </div>
           </div>
         </div>
       )}

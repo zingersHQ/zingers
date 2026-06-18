@@ -3,11 +3,14 @@
 import { sseStream } from "@/lib/sse-server";
 import { autoplayRun } from "@/lib/server/autoplay";
 import { ROSTER } from "@/lib/engine/roster";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = rateLimit(req, "autoplay", 6, 60_000);
+  if (limited) return limited;
   const q = new URL(req.url).searchParams;
   const a = (q.get("a") || "AXIOM").toUpperCase();
   if (!ROSTER[a]) return new Response("unknown creature", { status: 400 });

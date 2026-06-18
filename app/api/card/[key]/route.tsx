@@ -3,8 +3,9 @@
 // (career lives client-side), so a share link is a snapshot of the agent.
 import { ImageResponse } from "next/og";
 import { ROSTER, TYPE_COLOR } from "@/lib/engine/roster";
-import { EMBLEM } from "@/lib/evolve/progression";
+import { FORCES } from "@/lib/lore/canon";
 import { BRAND } from "@/lib/brand";
+import { portraitOf } from "@/lib/cards/assets";
 
 export const runtime = "nodejs";
 
@@ -20,8 +21,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const doctrine = q.get("d") || "Unproven";
   const wins = q.get("w") || "0";
   const losses = q.get("l") || "0";
+  const rarity = q.get("ra") || "Common";
   const brain = q.get("b") || "House · Grok";
   const col = TYPE_COLOR[c.type];
+  const force = FORCES[c.type];
+  const origin = new URL(req.url).origin;
+  const portrait = `${origin}${portraitOf(k)}`;
 
   const stats: [string, string, string][] = [
     ["ELO", rating, "#f5d020"],
@@ -48,28 +53,36 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
           <div style={{ display: "flex", fontSize: 22, letterSpacing: 4, color: "#8a82b8" }}>{BRAND.nameUpper}</div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", marginTop: 56 }}>
+        <div style={{ display: "flex", alignItems: "center", marginTop: 44 }}>
           <div
             style={{
               display: "flex",
-              width: 220,
-              height: 220,
+              width: 250,
+              height: 320,
               borderRadius: 32,
               border: `4px solid ${col}`,
-              background: "rgba(255,255,255,0.04)",
+              background: "#0a0812",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 130,
-              color: col,
               marginRight: 36,
+              overflow: "hidden",
+              position: "relative",
             }}
           >
-            {EMBLEM[c.type]}
+            <img src={portrait} alt={`${c.name} portrait`} style={{ width: "250px", height: "320px", objectFit: "cover" }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 88, fontWeight: 800 }}>{c.name}</div>
-            <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${c.type}`}</div>
+            <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${force.inWorld}`}</div>
             <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>{`L${level} ${tier} · brain: ${brain}`}</div>
+            <div style={{ display: "flex", marginTop: 22 }}>
+              <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: col, border: `2px solid ${col}`, borderRadius: 12, padding: "8px 14px", marginRight: 12 }}>
+                {`${force.sigil} ${force.inWorld.replace(/^The /, "").toUpperCase()}`}
+              </div>
+              <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: "#0a0812", background: "#f5d020", borderRadius: 12, padding: "8px 14px" }}>
+                {rarity.toUpperCase()}
+              </div>
+            </div>
           </div>
         </div>
 

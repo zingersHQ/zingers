@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ROSTER, TYPE_COLOR } from "@/lib/engine/roster";
-import { EMBLEM } from "@/lib/evolve/progression";
+import { FORCES } from "@/lib/lore/canon";
 import { BRAND, pageTitle } from "@/lib/brand";
+import { portraitOf } from "@/lib/cards/assets";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -13,7 +15,7 @@ function str(sp: SP, k: string, d: string) {
 }
 
 function cardQuery(sp: SP): string {
-  const keys = ["r", "lv", "t", "d", "w", "l", "b"];
+  const keys = ["r", "lv", "t", "d", "w", "l", "ra", "b"];
   const p = new URLSearchParams();
   for (const k of keys) p.set(k, str(sp, k, ""));
   return p.toString();
@@ -49,10 +51,12 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   const doctrine = str(sp, "d", "Unproven");
   const wins = str(sp, "w", "0");
   const losses = str(sp, "l", "0");
+  const rarity = str(sp, "ra", "Common");
   const brain = str(sp, "b", "House · Grok");
+  const force = FORCES[c.type];
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto", padding: "40px 22px 80px" }}>
+    <main style={{ maxWidth: 940, margin: "0 auto", padding: "40px 22px 80px" }}>
       <div
         className="panel pop"
         style={{
@@ -64,29 +68,27 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         }}
       >
         <div style={{ position: "absolute", top: -120, right: -80, width: 360, height: 360, borderRadius: 999, background: col, opacity: 0.16, filter: "blur(50px)" }} />
-        <div style={{ padding: 32, position: "relative" }}>
+        <div style={{ padding: 28, position: "relative" }}>
           <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "var(--muted2)" }}>{BRAND.nameUpper} · AGENT CARD</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 22 }}>
-            <div
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: 22,
-                border: `3px solid ${col}`,
-                display: "grid",
-                placeItems: "center",
-                fontSize: 64,
-                color: col,
-                boxShadow: `0 0 60px -12px ${col}`,
-                flexShrink: 0,
-              }}
-            >
-              {EMBLEM[c.type]}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 320px) minmax(0, 1fr)", alignItems: "center", gap: 28, marginTop: 22 }}>
+            <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 24, overflow: "hidden", border: `2px solid ${col}`, boxShadow: `0 0 70px -22px ${col}` }}>
+              <Image src={portraitOf(k)} alt={`${c.name} card portrait`} fill sizes="320px" style={{ objectFit: "cover" }} priority />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 55%, rgba(8,6,16,.9) 100%)" }} />
+              <div className="mono" style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, alignItems: "center", color: col, border: `1px solid ${col}`, borderRadius: 8, padding: "4px 8px", background: "rgba(8,6,16,.65)", fontSize: 10, letterSpacing: 1 }}>
+                <span>{force.sigil}</span>
+                {force.inWorld.replace(/^The /, "").toUpperCase()}
+              </div>
+              <div className="mono" style={{ position: "absolute", top: 12, right: 12, background: "var(--gold)", color: "#0a0812", borderRadius: 8, padding: "4px 8px", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>
+                {rarity.toUpperCase()}
+              </div>
             </div>
             <div>
               <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>{c.name}</div>
-              <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {c.type}</div>
+              <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.inWorld}</div>
               <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>L{level} {tier} · brain: {brain}</div>
+              <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "18px 0 0" }}>
+                A snapshot of a raised Zingers mind: its rank, rarity, doctrine, and portrait are all derived from the champion's career.
+              </p>
             </div>
           </div>
 

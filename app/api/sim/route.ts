@@ -5,11 +5,14 @@ import { battleEvents } from "@/lib/engine/battle";
 import { readSide, hasExternalAgent } from "@/lib/engine/side-config";
 import { ROSTER, TOPICS } from "@/lib/engine/roster";
 import type { BattleEnd, BattleTurn } from "@/lib/types";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = rateLimit(req, "sim", 20, 60_000);
+  if (limited) return limited;
   const q = new URL(req.url).searchParams;
   const aKey = (q.get("a") || "AXIOM").toUpperCase();
   const bKey = (q.get("b") || "VOX").toUpperCase();

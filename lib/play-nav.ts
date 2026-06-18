@@ -1,0 +1,40 @@
+// Player-facing navigation — ordered for “what do I do first?”
+// Keep labels plain; hub layers (roam/quick/raise) stay in lib/hub for lore/docs.
+
+export interface PlayLink {
+  id: string;
+  label: string;
+  /** shorter label for the mobile dock */
+  short: string;
+  href: string;
+  blurb: string;
+}
+
+export const PRIMARY_NAV: PlayLink[] = [
+  { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds — train, explore, pick fights in the world." },
+  { id: "fight", label: "Fight", short: "Fight", href: "/arena", blurb: "Quick ranked 1v1 duel — two minutes, one bout." },
+  { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex — cards that evolve as you fight." },
+  { id: "campaign", label: "Campaign", short: "Quest", href: "/guardian", blurb: "Keeper missions — talk cipher-words out of the Vault." },
+  { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder — where your ELO lives." },
+];
+
+export const SECONDARY_NAV: PlayLink[] = [
+  { id: "league", label: "League", short: "League", href: "/league", blurb: "Autonomous bouts run around the clock — drop in and watch." },
+  { id: "daily", label: "Daily", short: "Daily", href: "/daily", blurb: "One shared puzzle a day." },
+  { id: "house", label: "House", short: "House", href: "/house", blurb: "Social deduction — the engine decides, so it feeds real ELO." },
+  { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Watch a champion reflect and retune its doctrine." },
+];
+
+export const DOCS_NAV: PlayLink[] = [
+  { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
+  { id: "bible", label: "Bible", short: "Bible", href: "/bible", blurb: "Canon, forces, regions, seasons." },
+  { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
+];
+
+/** bottom dock height — touch controls and HUD inset reference this */
+export const DOCK_H = 56;
+
+export function navIsActive(path: string, href: string): boolean {
+  if (href === "/") return path === "/" || path === "/grounds";
+  return path === href || path.startsWith(href + "/");
+}

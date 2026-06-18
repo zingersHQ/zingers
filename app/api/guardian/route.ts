@@ -10,6 +10,7 @@ import {
   mockGuardianReply,
 } from "@/lib/server/guardian";
 import type { GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,8 @@ interface Body {
 // POST → play one turn against a guardian. The conversation lives client-side;
 // we re-derive everything statelessly so it stays simple and shareable.
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "guardian", 30, 60_000);
+  if (limited) return limited;
   let body: Body;
   try {
     body = (await req.json()) as Body;

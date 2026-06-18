@@ -6,6 +6,7 @@ import { ROSTER, TOPICS } from "@/lib/engine/roster";
 import { hasExternalAgent } from "@/lib/engine/side-config";
 import type { CreatureType } from "@/lib/types";
 import { getStore, type FeedEntry, type LadderChampion } from "./store";
+import { safeHttpAgentEndpoint } from "./url-safety";
 
 export const BASE_RATING = 1000;
 const ELO_K = 32;
@@ -66,7 +67,9 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
   const base = ROSTER[key];
   if (!base) return { error: "unknown creature" };
   if (!input.ownerToken) return { error: "missing owner token" };
-  const brain = input.brain?.provider === "http" && input.brain.endpoint ? { provider: "http" as const, endpoint: input.brain.endpoint.slice(0, 400) } : { provider: "grok" as const };
+  const endpoint = input.brain?.provider === "http" && input.brain.endpoint ? await safeHttpAgentEndpoint(input.brain.endpoint) : null;
+  if (input.brain?.provider === "http" && input.brain.endpoint && !endpoint) return { error: "agent endpoint must be a public https URL" };
+  const brain = endpoint ? { provider: "http" as const, endpoint } : { provider: "grok" as const };
   const champ: LadderChampion = {
     id: shortId(),
     key,
@@ -117,9 +120,11 @@ export async function trainChampion(input: TrainInput): Promise<LadderChampion |
     };
   }
   if (input.brain) {
+    const endpoint = input.brain.provider === "http" && input.brain.endpoint ? await safeHttpAgentEndpoint(input.brain.endpoint) : null;
+    if (input.brain.provider === "http" && input.brain.endpoint && !endpoint) return { error: "agent endpoint must be a public https URL" };
     champ.brain =
-      input.brain.provider === "http" && input.brain.endpoint
-        ? { provider: "http", endpoint: input.brain.endpoint.slice(0, 400) }
+      endpoint
+        ? { provider: "http", endpoint }
         : { provider: "grok" };
   }
   await store.putChampion(champ);

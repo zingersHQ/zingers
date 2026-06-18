@@ -59,6 +59,11 @@ body {
   height: calc(100dvh - var(--nav-h));
 }
 
+/* immersive game surfaces hide the site nav — use the full viewport */
+.fill-shell.fill-shell--immersive {
+  height: 100dvh;
+}
+
 /* the WebGL world should own its touch gestures, not the browser */
 canvas[data-engine] {
   touch-action: none;
@@ -238,6 +243,19 @@ a {
   font-size: 18px;
   line-height: 1;
 }
+.site-nav__section {
+  display: none;
+}
+.site-nav__link--secondary {
+  /* collapsed on desktop — see media query below */
+}
+
+@media (min-width: 721px) {
+  .site-nav__section,
+  .site-nav__link--secondary:not(.site-nav__link--guide) {
+    display: none;
+  }
+}
 
 @media (max-width: 720px) {
   .site-nav {
@@ -250,6 +268,18 @@ a {
   }
   .site-nav__burger {
     display: grid;
+  }
+  .site-nav__section {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--muted2);
+    padding: 10px 14px 4px;
+  }
+  .site-nav__section--also {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    margin-top: 6px;
   }
   .site-nav__links {
     position: absolute;
@@ -284,4 +314,119 @@ a {
     font-size: 9px !important;
     max-width: 60vw;
   }
+}
+
+/* ── in-game mode dock (grounds, arena, campaign…) ─────────────────── */
+.game-dock {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 2px;
+  height: var(--dock-h, 56px);
+  padding: 0 6px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.game-dock--fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+}
+.game-dock__link,
+.game-dock__more {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 2px 4px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 10px;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.game-dock__link:hover,
+.game-dock__more:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.game-dock__label {
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.game-dock__link.is-on,
+.game-dock__more.is-on {
+  color: var(--ink);
+  background: rgba(240, 169, 58, 0.08);
+}
+.game-dock__link.is-on .game-dock__label {
+  color: var(--gold);
+}
+.game-dock__sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: rgba(5, 4, 10, 0.45);
+  backdrop-filter: blur(2px);
+}
+.game-dock__sheet {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--dock-h, 56px) + env(safe-area-inset-bottom, 0px) + 8px);
+  z-index: 201;
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+  padding: 14px;
+}
+.game-dock__sheet-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  padding: 4px;
+}
+.game-dock__sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.game-dock__sheet-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+.game-dock__sheet-item:hover {
+  border-color: var(--line2);
+}
+.game-dock__sheet-item.is-on {
+  border-color: var(--gold);
+  background: rgba(240, 169, 58, 0.06);
 }

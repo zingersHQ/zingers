@@ -6,6 +6,8 @@ import { TYPE_COLOR, blankStyle, accrue } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
+import { GameDock } from "@/components/game-dock";
+import { DOCK_H } from "@/lib/play-nav";
 
 interface ByoAgent {
   provider: "grok" | "openai" | "http";
@@ -133,10 +135,7 @@ export default function ArenaPage() {
   const bcol = b ? TYPE_COLOR[b.type] : "#888";
 
   return (
-    <main style={{ maxWidth: 1120, margin: "0 auto", padding: "26px 22px 80px" }}>
-      <Link href="/grounds" className="mono" style={{ position: "fixed", top: 14, left: 16, zIndex: 20, fontSize: 12, color: "var(--muted)" }}>
-        ← Zingers
-      </Link>
+    <main style={{ maxWidth: 1120, margin: "0 auto", padding: `26px 22px ${80 + DOCK_H}px` }}>
       <Header streak={predict.streak} best={predict.best} />
 
       {view === "setup" && (
@@ -176,6 +175,7 @@ export default function ArenaPage() {
           progress={progress}
         />
       )}
+      <GameDock fixed />
     </main>
   );
 }

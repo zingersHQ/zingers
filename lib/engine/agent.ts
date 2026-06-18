@@ -5,6 +5,7 @@
 import "server-only";
 import { chat, chatWith, chatRawWith, houseCfg, parseJson, type ChatCfg, type RawMessage, type ToolFunctionSpec } from "./xai";
 import type { AgentConfig, Strat, ToolStep } from "@/lib/types";
+import { safeHttpAgentEndpoint } from "@/lib/server/url-safety";
 
 export interface AgentMoveView {
   id: string;
@@ -293,9 +294,11 @@ class HttpAgent implements Agent {
   }
   async act(v: AgentView) {
     try {
+      const endpoint = await safeHttpAgentEndpoint(this.endpoint);
+      if (!endpoint) return null;
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 20000);
-      const res = await fetch(this.endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(v),

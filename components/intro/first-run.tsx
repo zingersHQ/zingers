@@ -197,9 +197,11 @@ function Agents() {
       <Arrow style={{ top: "50%", left: "4%" }} dir="right" small>wins</Arrow>
       <Arrow style={{ bottom: "14%", right: "8%" }} dir="left" small>tier</Arrow>
 
-      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, pointerEvents: "none", textAlign: "center" }}>
-        <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.3 }}>
+      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, pointerEvents: "none", textAlign: "center", padding: "0 16px" }}>
+        <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.3, lineHeight: 1.5 }}>
           silhouette computed from its career
+          <br />
+          after you claim · use the dock below — Play · Fight · Dex · Quest · Rank
         </p>
       </div>
     </div>

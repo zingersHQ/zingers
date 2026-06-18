@@ -1,7 +1,7 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
-import { useGLTF, Environment, Lightformer, Html } from "@react-three/drei";
+import { useGLTF, Environment, Lightformer, Html, PerformanceMonitor, AdaptiveDpr } from "@react-three/drei";
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
@@ -145,6 +145,7 @@ export default function World({
   biome,
   towerAgents = [],
   onAltitude,
+  touchBottomInset = 0,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -154,6 +155,7 @@ export default function World({
   biome: BiomeConfig;
   towerAgents?: TowerAgent[];
   onAltitude?: (y: number) => void;
+  touchBottomInset?: number;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false });
@@ -199,6 +201,10 @@ export default function World({
       }}
     >
       <ExposureSync exposure={biome.exposure} />
+      {/* auto-scale render resolution when the GPU can't keep up, so frame drops
+          (which read as movement stutter) self-correct instead of compounding */}
+      <PerformanceMonitor />
+      <AdaptiveDpr pixelated={false} />
       <color attach="background" args={[biome.bg]} />
       <fog attach="fog" args={[biome.fog.color, biome.fog.near, biome.fog.far]} />
 
@@ -290,7 +296,7 @@ export default function World({
 
       <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
     </Canvas>
-    {isTouch && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} />}
+    {isTouch && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
     </>
   );
 }
@@ -902,8 +908,8 @@ const ACCEL_GROUND = 22, ACCEL_AIR = 9, ACCEL_FLY = 16;
 const STOP_GROUND = 16, STOP_AIR = 1.4, STOP_FLY = 4.5;
 // how quickly the character pivots toward the move direction (per second)
 const TURN_GROUND = 22, TURN_AIR = 16;
-// jetpack flight (unlocked after 4 consecutive jumps): hold to thrust smoothly
-const FLY_TRIGGER = 4;     // consecutive jumps needed before the pack deploys
+// jetpack flight (unlocked on the 2nd jump): hold to thrust smoothly
+const FLY_TRIGGER = 1;     // jumps past this deploy the pack (so 2 jumps → fly)
 const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
 const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead of full gravity)
 const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
@@ -924,7 +930,7 @@ interface TouchMove { x: number; y: number }   // analog stick, x = strafe, y = 
 interface TouchBtn { sprint: boolean; jump: number; jumpHeld: boolean } // jump = tap counter (edge); jumpHeld = button currently down (hold-to-fly)
 interface CamDrag { dx: number; dy: number; pinch: number } // orbit + pinch deltas, drained each frame
 
-// Jetpack worn during sustained flight (5+ consecutive jumps). The pack springs
+// Jetpack worn during sustained flight (from the 2nd jump on). The pack springs
 // out of the character's back; every jump stroke fires a downward smoke burst.
 // Driven entirely by refs (no re-renders): `flyingRef` toggles the pack in/out,
 // `burstRef` is a counter the Handler bumps on each flight stroke.
@@ -1073,6 +1079,11 @@ function Handler({
   const built = useMemo(() => buildCharacter(scene, animations, blank(), "#cfd2e8"), [scene, animations]);
   const body = useRef<RapierRigidBody>(null);
   const inner = useRef<THREE.Group>(null);
+  // zero-offset child of the RigidBody. Rapier writes the INTERPOLATED transform
+  // onto the body's object every frame; reading this anchor's world position (vs
+  // the raw, 60Hz-stepped rb.translation()) keeps the camera locked to the body
+  // the eye actually sees, killing the relative judder on >60Hz / uneven frames.
+  const camAnchor = useRef<THREE.Group>(null);
   const heading = useRef(Math.PI);
   const ground = useRef(0);
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
@@ -1080,7 +1091,7 @@ function Handler({
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
-  // jetpack flight: kicks in past 4 consecutive jumps; bursts on every stroke
+  // jetpack flight: kicks in on the 2nd jump; bursts on every stroke
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
@@ -1162,7 +1173,15 @@ function Handler({
     if (!rb) return;
 
     const t = rb.translation();
-    handlerPos.current.set(t.x, t.y, t.z);
+    // feed the camera the INTERPOLATED body position (matches the rendered mesh),
+    // not the raw stepped physics translation — that mismatch was the judder.
+    // Everything else below keeps using `t` (physics truth) on purpose.
+    if (camAnchor.current) {
+      camAnchor.current.updateWorldMatrix(true, false);
+      camAnchor.current.getWorldPosition(handlerPos.current);
+    } else {
+      handlerPos.current.set(t.x, t.y, t.z);
+    }
 
     const fwd = new THREE.Vector3(t.x - camera.position.x, 0, t.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
@@ -1188,7 +1207,17 @@ function Handler({
     const mz = fwd.z * az + right.z * ax;
     const len = Math.hypot(mx, mz);
     const sprint = keys["ShiftLeft"] || keys["ShiftRight"] || touchSprint;
-    const grounded = ground.current > 0;
+    // Robust ground test. The intersection-sensor counter (`ground.current`)
+    // can desync during the jetpack's violent up/down motion (a hard climb then
+    // a sink) — a matching exit/enter event gets dropped, leaving the counter
+    // stuck at 0 even while we're resting on the surface. When that happened the
+    // refund below never fired, so `jumps` stayed above FLY_TRIGGER and the
+    // character was locked in flight forever: space just re-thrusts instead of
+    // jumping and you can't walk. So also treat "settled near the terrain
+    // surface" as grounded, independent of the sensor.
+    const floorY = terrainHeight(t.x, t.z, shape);
+    const restY = floorY + 1.0; // capsule half-height (0.55) + radius (0.45)
+    const grounded = ground.current > 0 || t.y <= restY + 0.2;
     // jetpack flight is active past the trigger — while flying we hold a still
     // hover pose, so the ground walk/run/idle animation must not drive the body
     const flyingMode = jumps.current > FLY_TRIGGER;
@@ -1301,10 +1330,10 @@ function Handler({
     // below the surface height at our (x,z), lift back onto it. Read a fresh
     // translation so this doesn't double-fire after a checkpoint rescue above.
     const p = rb.translation();
-    const floorY = terrainHeight(p.x, p.z, shape);
+    const floorYNet = terrainHeight(p.x, p.z, shape);
     const FEET = 1.0; // capsule half-height (0.55) + radius (0.45)
-    if (p.y < floorY - 0.1) {
-      rb.setTranslation({ x: p.x, y: floorY + FEET + 0.05, z: p.z }, true);
+    if (p.y < floorYNet - 0.1) {
+      rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
       const lv = rb.linvel();
       rb.setLinvel({ x: lv.x, y: Math.max(0, lv.y), z: lv.z }, true);
       ground.current = Math.max(ground.current, 1);
@@ -1396,6 +1425,8 @@ function Handler({
           onIntersectionEnter={() => { ground.current++; }}
           onIntersectionExit={() => { ground.current = Math.max(0, ground.current - 1); }}
         />
+        {/* interpolated camera anchor — origin-aligned with the body, no offset */}
+        <group ref={camAnchor} />
         <group ref={inner} position={[0, -1.0, 0]}>
           <primitive object={built.root} />
           <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
@@ -1547,11 +1578,14 @@ function touchBtnStyle(size: number): CSSProperties {
   };
 }
 
-function TouchControls({ active, move, btn, cam }: {
+function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset = 0 }: {
   active: boolean;
   move: React.RefObject<TouchMove>;
   btn: React.RefObject<TouchBtn>;
   cam: React.RefObject<CamDrag>;
+  bottomInset?: number;
+  /** keep the top-left HUD (world picker) tappable */
+  hudLeftInset?: number;
 }) {
   const R = 56; // stick radius in px
   const joyId = useRef<number | null>(null);
@@ -1653,6 +1687,10 @@ function TouchControls({ active, move, btn, cam }: {
     });
   };
 
+  const joyBottom = Math.max(100, bottomInset);
+  const lookBottom = bottomInset;
+  const jumpBottom = 34 + bottomInset;
+
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}>
       <div
@@ -1660,14 +1698,14 @@ function TouchControls({ active, move, btn, cam }: {
         onPointerMove={joyMove}
         onPointerUp={joyEnd}
         onPointerCancel={joyEnd}
-        style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "50%", pointerEvents: "auto", touchAction: "none" }}
+        style={{ position: "absolute", left: 0, top: hudLeftInset, bottom: joyBottom, width: "50%", pointerEvents: "auto", touchAction: "none" }}
       />
       <div
         onPointerDown={lookDown}
         onPointerMove={lookMove}
         onPointerUp={lookEnd}
         onPointerCancel={lookEnd}
-        style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "50%", pointerEvents: "auto", touchAction: "none" }}
+        style={{ position: "absolute", right: 0, top: 0, bottom: lookBottom, width: "50%", pointerEvents: "auto", touchAction: "none" }}
       />
 
       {base && (
@@ -1677,7 +1715,7 @@ function TouchControls({ active, move, btn, cam }: {
         </div>
       )}
 
-      <div style={{ position: "absolute", right: 22, bottom: 34, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", right: 22, bottom: jumpBottom, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
         <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
           <Zap size={22} strokeWidth={2.2} fill={sprint ? "#0a0810" : "none"} />
         </button>

@@ -6,6 +6,8 @@ import { TYPE_COLOR, EMBLEM, levelFor, tierFor, doctrine, dominant, blankStyle, 
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { useChampions } from "@/store/champions";
+import { GameDock } from "@/components/game-dock";
+import { DOCK_H } from "@/lib/play-nav";
 
 // module-level singleton: only the most-recently-started loop is ever ACTIVE,
 // so StrictMode double-invokes, remounts, or hot-reloads can never stack loops
@@ -152,7 +154,7 @@ export default function LeaguePage() {
 
   if (!mounted) {
     return (
-      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "26px 22px 60px" }}>
+      <main style={{ maxWidth: 1080, margin: "0 auto", padding: `26px 22px ${60 + DOCK_H}px` }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Live League</h1>
         <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>loading the ladder…</p>
       </main>
@@ -160,7 +162,7 @@ export default function LeaguePage() {
   }
 
   return (
-    <main style={{ maxWidth: 1080, margin: "0 auto", padding: "26px 22px 60px" }}>
+    <main style={{ maxWidth: 1080, margin: "0 auto", padding: `26px 22px ${60 + DOCK_H}px` }}>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 14, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Live League</h1>
@@ -274,6 +276,7 @@ export default function LeaguePage() {
           </div>
         </div>
       </div>
+      <GameDock fixed />
     </main>
   );
 }

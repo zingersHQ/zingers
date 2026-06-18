@@ -3,20 +3,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
+import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV } from "@/lib/play-nav";
 
-// The game IS the world. These web pages are docs / utility only — the bar
-// only links back into the game and to the read-this stuff. Everything else
-// (duels, the guardian, the league, training, your agent) is reached by
-// walking through the Grounds, not from a menu.
-const LINKS = [
-  { href: "/", label: "Enter the Grounds" },
-  { href: "/standings", label: "Standings" },
-  { href: "/howitworks", label: "How it works" },
-  { href: "/readme", label: "Whitepaper" },
-];
-
-// Immersive surfaces — the actual game. No SaaS navbar bolted on top of these.
-// The Grounds now live at the root path.
+// Immersive surfaces use the in-game dock instead of this bar.
 const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
 
 export function Nav() {
@@ -24,9 +13,12 @@ export function Nav() {
   const [open, setOpen] = useState(false);
   if (path.startsWith("/slides")) return null;
   if (IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
+
+  const close = () => setOpen(false);
+
   return (
     <header className="site-nav">
-      <Link href="/" className="site-nav__brand" onClick={() => setOpen(false)}>
+      <Link href="/" className="site-nav__brand" onClick={close}>
         <span
           aria-hidden
           style={{
@@ -63,19 +55,42 @@ export function Nav() {
       </button>
 
       <nav className={`site-nav__links${open ? " is-open" : ""}`}>
-        {LINKS.map((l) => {
-          const on = path === l.href || path.startsWith(l.href + "/");
-          return (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className={`site-nav__link mono${on ? " is-on" : ""}`}
-            >
-              {l.label}
-            </Link>
-          );
-        })}
+        <span className="site-nav__section mono">Start here</span>
+        {PRIMARY_NAV.map((l) => (
+          <Link
+            key={l.id}
+            href={l.href}
+            onClick={close}
+            className={`site-nav__link mono${navIsActive(path, l.href) ? " is-on" : ""}`}
+            title={l.blurb}
+          >
+            {l.label}
+          </Link>
+        ))}
+        <span className="site-nav__section mono site-nav__section--also">Also</span>
+        {SECONDARY_NAV.map((l) => (
+          <Link
+            key={l.id}
+            href={l.href}
+            onClick={close}
+            className={`site-nav__link mono site-nav__link--secondary${navIsActive(path, l.href) ? " is-on" : ""}`}
+            title={l.blurb}
+          >
+            {l.label}
+          </Link>
+        ))}
+        <span className="site-nav__section mono site-nav__section--also">Read</span>
+        {DOCS_NAV.map((l) => (
+          <Link
+            key={l.id}
+            href={l.href}
+            onClick={close}
+            className={`site-nav__link mono site-nav__link--secondary${l.id === "how" ? " site-nav__link--guide" : ""}${navIsActive(path, l.href) ? " is-on" : ""}`}
+            title={l.blurb}
+          >
+            {l.label}
+          </Link>
+        ))}
       </nav>
     </header>
   );
