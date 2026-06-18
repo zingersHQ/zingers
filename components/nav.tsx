@@ -3,7 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
-import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV } from "@/lib/play-nav";
+import { isOrgHost } from "@/lib/org/hosts";
+import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive } from "@/lib/play-nav";
 
 // Immersive surfaces use the in-game dock instead of this bar.
 const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
@@ -11,14 +12,18 @@ const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
 export function Nav() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const host = typeof window !== "undefined" ? window.location.hostname : undefined;
+  const onOrg = host ? isOrgHost(host) : false;
   if (path.startsWith("/slides")) return null;
-  if (IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
+  if (!onOrg && IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
+
+  const gameHref = (href: string) => (onOrg ? `${BRAND.site}${href}` : href);
 
   const close = () => setOpen(false);
 
   return (
     <header className="site-nav">
-      <Link href="/" className="site-nav__brand" onClick={close}>
+      <Link href={onOrg ? BRAND.site : "/"} className="site-nav__brand" onClick={close}>
         <span
           aria-hidden
           style={{
@@ -59,7 +64,7 @@ export function Nav() {
         {PRIMARY_NAV.map((l) => (
           <Link
             key={l.id}
-            href={l.href}
+            href={gameHref(l.href)}
             onClick={close}
             className={`site-nav__link mono${navIsActive(path, l.href) ? " is-on" : ""}`}
             title={l.blurb}
@@ -71,7 +76,7 @@ export function Nav() {
         {SECONDARY_NAV.map((l) => (
           <Link
             key={l.id}
-            href={l.href}
+            href={gameHref(l.href)}
             onClick={close}
             className={`site-nav__link mono site-nav__link--secondary${navIsActive(path, l.href) ? " is-on" : ""}`}
             title={l.blurb}
@@ -83,9 +88,9 @@ export function Nav() {
         {DOCS_NAV.map((l) => (
           <Link
             key={l.id}
-            href={l.href}
+            href={l.id === "org" && onOrg ? "/" : l.href}
             onClick={close}
-            className={`site-nav__link mono site-nav__link--secondary${l.id === "how" ? " site-nav__link--guide" : ""}${navIsActive(path, l.href) ? " is-on" : ""}`}
+            className={`site-nav__link mono site-nav__link--secondary${l.id === "how" ? " site-nav__link--guide" : ""}${docsNavIsActive(path, l.id, host) ? " is-on" : navIsActive(path, l.href) ? " is-on" : ""}`}
             title={l.blurb}
           >
             {l.label}

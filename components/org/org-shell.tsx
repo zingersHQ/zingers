@@ -1,16 +1,20 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { BRAND } from "@/lib/brand";
+import { isOrgHost, orgHref } from "@/lib/org/hosts";
 import { ORG_SECTIONS, orgPagesInSection } from "@/lib/org/registry";
 
-export function OrgShell({ slug, children }: { slug?: string; children: ReactNode }) {
+export async function OrgShell({ slug, children }: { slug?: string; children: ReactNode }) {
+  const host = (await headers()).get("host")?.split(":")[0] ?? "";
   const orgHost = BRAND.siteTech.replace("https://", "");
+  const href = (s: string) => orgHref(s, host);
 
   return (
     <div className="org-layout">
       <aside className="org-sidebar panel">
         <div className="org-sidebar__head">
-          <Link href="/org" className="org-sidebar__brand">
+          <Link href={href("")} className="org-sidebar__brand">
             <span className="org-sidebar__host mono">{orgHost}</span>
             <span className="org-sidebar__title">Docs &amp; Canon</span>
           </Link>
@@ -27,11 +31,10 @@ export function OrgShell({ slug, children }: { slug?: string; children: ReactNod
                 <div className="org-sidebar__group-title mono">{section.title}</div>
                 <ul className="org-sidebar__list">
                   {pages.map((page) => {
-                    const href = `/org/${page.slug}`;
                     const active = slug === page.slug;
                     return (
                       <li key={page.slug}>
-                        <Link href={href} className={`org-sidebar__link${active ? " is-on" : ""}`}>
+                        <Link href={href(page.slug)} className={`org-sidebar__link${active ? " is-on" : ""}`}>
                           {page.title}
                         </Link>
                       </li>
@@ -44,15 +47,15 @@ export function OrgShell({ slug, children }: { slug?: string; children: ReactNod
         </nav>
 
         <div className="org-sidebar__foot">
-          <Link href="/bible" className="org-sidebar__cta btn">
+          <Link href={isOrgHost(host) ? "/gallery" : `${BRAND.site}/bible`} className="org-sidebar__cta btn">
             Visual gallery
           </Link>
-          <Link href="/agents" className="org-sidebar__cta btn">
+          <a href={`${BRAND.site}/agents`} className="org-sidebar__cta btn">
             Train an agent
-          </Link>
-          <Link href="/" className="org-sidebar__back mono">
+          </a>
+          <a href={BRAND.site} className="org-sidebar__back mono">
             ← Play the game
-          </Link>
+          </a>
         </div>
       </aside>
 

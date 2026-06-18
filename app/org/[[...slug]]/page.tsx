@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { BRAND, pageTitle } from "@/lib/brand";
 import { DocBody } from "@/components/org/doc-body";
 import { OrgShell } from "@/components/org/org-shell";
 import { loadOrgMarkdown } from "@/lib/org/load";
+import { orgCanonical, orgHref, isOrgHost } from "@/lib/org/hosts";
 import { ORG_PAGES, ORG_SECTIONS, getOrgPage, orgPagesInSection } from "@/lib/org/registry";
 
 interface Props {
@@ -21,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: pageTitle("Docs"),
       description: "zingers.org — bible, agent protocol, combat design, and product specs.",
+      alternates: { canonical: orgCanonical() },
     };
   }
   const slug = parts.join("/");
@@ -29,11 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: pageTitle(page.title),
     description: page.description,
+    alternates: { canonical: orgCanonical(slug) },
   };
 }
 
-function OrgHome() {
+function OrgHome({ host }: { host: string }) {
   const orgHost = BRAND.siteTech.replace("https://", "");
+  const href = (s: string) => orgHref(s, host);
+  const onOrg = isOrgHost(host);
 
   return (
     <>
@@ -42,9 +48,9 @@ function OrgHome() {
         <h1 className="org-hero__title">Zingers documentation</h1>
         <p className="org-hero__lead">
           The encyclopedia, information protocol, and design specs behind{" "}
-          <Link href="/" className="org-prose__a">
+          <a href={BRAND.site} className="org-prose__a">
             {BRAND.name}
-          </Link>
+          </a>
           . Markdown in <span className="mono">docs/</span> is the source; this site is the browsable view agents and
           humans share.
         </p>
@@ -61,14 +67,14 @@ function OrgHome() {
               <ul className="org-home-card__links">
                 {pages.map((page) => (
                   <li key={page.slug}>
-                    <Link href={`/org/${page.slug}`} className="org-home-card__link">
+                    <Link href={href(page.slug)} className="org-home-card__link">
                       {page.title}
                     </Link>
                   </li>
                 ))}
               </ul>
               {lead ? (
-                <Link href={`/org/${lead.slug}`} className="org-home-card__cta mono">
+                <Link href={href(lead.slug)} className="org-home-card__cta mono">
                   Start with {lead.title} →
                 </Link>
               ) : null}
@@ -80,18 +86,18 @@ function OrgHome() {
       <section className="panel org-home-extra">
         <h2 className="org-home-card__title">Also on this site</h2>
         <div className="org-home-extra__row">
-          <Link href="/bible" className="org-home-extra__tile">
+          <Link href={onOrg ? "/gallery" : `${BRAND.site}/bible`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Visual bible gallery</span>
             <span className="org-home-extra__tile-blurb">Forces, minds, regions, Keepers — card-style art from canon.</span>
           </Link>
-          <Link href="/agents" className="org-home-extra__tile">
+          <a href={`${BRAND.site}/agents`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Agent playground</span>
             <span className="org-home-extra__tile-blurb">Validate a bring-your-own endpoint and jump into the arena.</span>
-          </Link>
-          <Link href="/readme" className="org-home-extra__tile">
+          </a>
+          <a href={`${BRAND.site}/readme`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Interactive whitepaper</span>
             <span className="org-home-extra__tile-blurb">Product narrative with live diagrams and type wheel.</span>
-          </Link>
+          </a>
         </div>
       </section>
     </>
@@ -100,11 +106,12 @@ function OrgHome() {
 
 export default async function OrgPage({ params }: Props) {
   const { slug: parts } = await params;
+  const host = (await headers()).get("host")?.split(":")[0] ?? "";
 
   if (!parts?.length) {
     return (
       <OrgShell>
-        <OrgHome />
+        <OrgHome host={host} />
       </OrgShell>
     );
   }

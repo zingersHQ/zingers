@@ -33,11 +33,30 @@ npm run dev
 
 ## Domains (production)
 
-Configure when deploying:
+One Vercel project, two domains (see `middleware.ts`):
 
-- **Game:** zingers.gg
-- **Docs/tech:** zingers.org
-- **Social:** @zingersHQ
+| Domain | Role |
+|--------|------|
+| **zingers.gg** | Game — Grounds, arena, league, APIs |
+| **zingers.org** | Docs — bible, protocol, design specs |
+
+### Vercel setup
+
+1. Open the project → **Settings → Domains**
+2. Add `zingers.gg` (primary) and `zingers.org`
+3. Point both DNS records at Vercel (A/CNAME as shown in the dashboard)
+4. Deploy — middleware handles routing automatically
+
+### URL behaviour
+
+- `zingers.gg/org/*` → **308 redirect** to `zingers.org/*` (production only)
+- `zingers.org/` → docs home
+- `zingers.org/bible/forces` → bible chapter (clean URLs, no `/org` prefix)
+- `zingers.org/gallery` → visual bible gallery
+- `zingers.org/api/*` → **404** (game APIs not exposed on docs domain)
+- Game paths on `.org` → redirect to `zingers.gg`
+
+Local dev: `localhost` keeps `/org/*` without cross-domain redirects.
 
 Brand constants live in `lib/brand.ts`.
 

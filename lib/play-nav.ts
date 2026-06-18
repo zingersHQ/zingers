@@ -1,6 +1,8 @@
 // Player-facing navigation — ordered for “what do I do first?”
 // Keep labels plain; hub layers (roam/quick/raise) stay in lib/hub for lore/docs.
 
+import { ORG_DOC_ROOTS, isOrgHost } from "@/lib/org/hosts";
+
 export interface PlayLink {
   id: string;
   label: string;
@@ -38,4 +40,16 @@ export const DOCK_H = 56;
 export function navIsActive(path: string, href: string): boolean {
   if (href === "/") return path === "/" || path === "/grounds";
   return path === href || path.startsWith(href + "/");
+}
+
+/** Docs nav highlights on /org/* (game domain) and clean paths on zingers.org. */
+export function docsNavIsActive(path: string, id: string, host?: string): boolean {
+  if (id !== "org") return false;
+  if (path === "/org" || path.startsWith("/org/")) return true;
+  if (host && isOrgHost(host)) {
+    if (path === "/") return true;
+    const root = path.split("/").filter(Boolean)[0];
+    return root ? ORG_DOC_ROOTS.has(root) : false;
+  }
+  return false;
 }
