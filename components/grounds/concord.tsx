@@ -32,10 +32,12 @@ export interface ConcordGate {
 export function ConcordScene({
   gates,
   pledged,
+  featuredWorld = null,
   daylight = false,
 }: {
   gates: ConcordGate[];
   pledged: CreatureType | null;
+  featuredWorld?: string | null;
   daylight?: boolean;
 }) {
   return (
@@ -44,7 +46,7 @@ export function ConcordScene({
       <ForceBanners pledged={pledged} />
       <Chronicle />
       {gates.map((g) => (
-        <Vaultgate key={g.world} gate={g} />
+        <Vaultgate key={g.world} gate={g} rising={g.world === featuredWorld} />
       ))}
       {/* a soft neutral key light over the plaza so the hub reads as calm, lit ground */}
       <pointLight position={[0, 12, 0]} intensity={120} color="#cdb8ff" distance={60} />
@@ -190,7 +192,7 @@ function Chronicle() {
 }
 
 // ── A Vaultgate — a portal arch out to a region ──────────────────────────────
-function Vaultgate({ gate }: { gate: ConcordGate }) {
+function Vaultgate({ gate, rising = false }: { gate: ConcordGate; rising?: boolean }) {
   const portalRef = useRef<THREE.Mesh>(null);
   const beamRef = useRef<THREE.Mesh>(null);
   const col = gate.color;
@@ -241,6 +243,7 @@ function Vaultgate({ gate }: { gate: ConcordGate }) {
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
           <div style={{ fontSize: 8, letterSpacing: 2, color: col, fontWeight: 700 }}>VAULTGATE</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 2px 8px #000" }}>{gate.label}</div>
+          {rising && <div style={{ fontSize: 8, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>▲ SEASON SPOTLIGHT</div>}
         </div>
       </Html>
     </group>

@@ -14,6 +14,10 @@ export interface WorldDef {
   // "hub" = the Concord (a built settlement you spawn into, travel out from via
   // gates; no arena/tower of its own). "region" = a playable slab with an arena.
   kind: "hub" | "region";
+  // the canon region this world IS (lib/lore/canon.ts › FOUNDING_REGIONS). Drives
+  // the district growth tier + whether it's the season's featured region. Absent
+  // on the hub.
+  region?: string;
 }
 
 export const WORLDS: WorldDef[] = [
@@ -32,6 +36,7 @@ export const WORLDS: WorldDef[] = [
     biome: BIOMES[0], // Obsidian Colosseum
     scenario: SCENARIOS.duel,
     kind: "region",
+    region: "colosseum",
   },
   {
     id: "gauntlet",
@@ -40,6 +45,7 @@ export const WORLDS: WorldDef[] = [
     biome: BIOMES[1], // Ember Wastes
     scenario: SCENARIOS.gauntlet,
     kind: "region",
+    region: "wastes",
   },
   {
     id: "void",
@@ -48,6 +54,7 @@ export const WORLDS: WorldDef[] = [
     biome: BIOMES[2], // Void Garden
     scenario: SCENARIOS.duel,
     kind: "region",
+    region: "garden",
   },
 ];
 

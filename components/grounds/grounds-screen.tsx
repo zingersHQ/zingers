@@ -15,7 +15,11 @@ import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
-import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES } from "@/components/grounds/worlds";
+import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, REGION_WORLDS } from "@/components/grounds/worlds";
+import { regionGrowth } from "@/lib/lore/growth";
+import { currentSeason } from "@/lib/lore/season";
+import { FOUNDING_REGIONS } from "@/lib/lore/canon";
+import { trainerLevel } from "@/lib/evolve/trainer";
 import { daylightBiome } from "@/components/grounds/biomes";
 import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
@@ -92,6 +96,28 @@ export default function GroundsScreen() {
   const store = useChampions();
   const { progress, getRecipe, owned, setOwned, crowns, fragments, nodes: nodeLedger } = store;
   const bout = useBout();
+
+  // ── World growth: how built-up the current region is, blended from the live
+  // season + your Reader rank (+ the Force war, once a server aggregate exists).
+  const season = useMemo(() => currentSeason(), []);
+  const readerLevel = useMemo(() => trainerLevel(store.trainerXp).level, [store.trainerXp]);
+  const growth = useMemo(() => {
+    if (!world.region) return null;
+    const bias = FOUNDING_REGIONS.find((r) => r.id === world.region)?.bias ?? "LOGIC";
+    return regionGrowth({
+      regionId: world.region,
+      regionBias: bias,
+      seasonNumber: season.n,
+      featuredRegionId: season.region.id,
+      readerLevel,
+      warLeader: null,
+    });
+  }, [world.region, season, readerLevel]);
+  // which region world is this season's spotlight — marked on the Concord gate
+  const featuredWorld = useMemo(
+    () => REGION_WORLDS.find((w) => w.region === season.region.id)?.id ?? null,
+    [season],
+  );
 
   // ── exploration: districts (compass + fast-travel) and discovery caches ──────
   const landmarks = useMemo(() => landmarksOf(biome), [biome]);
@@ -510,6 +536,9 @@ export default function GroundsScreen() {
               nodes={liveNodes}
               gates={isHub ? CONCORD_GATES : []}
               pledged={store.force}
+              tier={growth?.tier ?? 0}
+              featured={growth?.featured ?? false}
+              featuredWorld={isHub ? featuredWorld : null}
               onAltitude={onAltitude}
               onPose={onPose}
               travelRef={travelRef}

@@ -14,6 +14,7 @@ import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } 
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { ConcordScene } from "./concord";
+import { RegionDistrict } from "./districts";
 import type { GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
@@ -182,6 +183,9 @@ export default function World({
   nodes = [],
   gates = [],
   pledged = null,
+  tier = 0,
+  featured = false,
+  featuredWorld = null,
   onAltitude,
   onPose,
   travelRef,
@@ -197,6 +201,9 @@ export default function World({
   nodes?: DiscoveryNode[];
   gates?: GateDef[];
   pledged?: CreatureType | null;
+  tier?: number;
+  featured?: boolean;
+  featuredWorld?: string | null;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
@@ -361,12 +368,13 @@ export default function World({
 
           {/* The Concord (hub): a built settlement of gates + banners around the
               sealed Vault door. No arena/tower/spire/agents/caches. */}
-          {isHub && <ConcordScene gates={hubGates} pledged={pledged} daylight={!!biome.daylight} />}
+          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} />}
 
           {/* A region: arena, tower climb, Keepers' spire, agents & caches. */}
           {!isHub && (
             <>
               <PlazaSurround biome={biome} />
+              <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
               {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
