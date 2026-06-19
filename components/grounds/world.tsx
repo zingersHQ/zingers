@@ -968,8 +968,8 @@ const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate indepe
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
                            // into a uniform hover instead of a per-press sawtooth
-const FLY_FOOT = 1.0;      // ankle tuck (rad) while flying: rotates the feet so the
-                           // toes hang straight down — body stays upright, just the feet
+const FLY_FOOT = 1.25;     // ankle tuck (rad) while airborne (jetpack thrust, jump or
+                           // fall): toes hang straight down — body upright, just the feet
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1234,16 +1234,6 @@ function Handler({
     const dt = Math.min(0.05, dtRaw);
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
-    // ankle tuck while flying: rotate just the feet so the toes hang straight down,
-    // letting the body stay upright instead of pitching the whole model over. Layered
-    // on top of the clip each frame (after the mixer writes the pose); the foot bone's
-    // local +Y points at the toe, so a negative local-X rotation swings it downward.
-    footTuck.current += ((flying.current ? FLY_FOOT : 0) - footTuck.current) * (1 - Math.exp(-12 * dt));
-    if (footTuck.current > 0.001) {
-      const fl = built.bones["foot.l"], fr = built.bones["foot.r"];
-      if (fl) fl.rotation.x -= footTuck.current;
-      if (fr) fr.rotation.x -= footTuck.current;
-    }
     const rb = body.current;
     if (!rb) return;
 
@@ -1408,6 +1398,24 @@ function Handler({
       setAnim(sprint ? "run" : "walk");
     } else {
       setAnim("idle");
+    }
+
+    // ── feet: ankle tuck while airborne ──
+    // Rotate just the feet so the toes hang straight down whenever we're off the
+    // ground — a held spacebar (jetpack thrust), the jump arc, or a fall — and ease
+    // back to flat the moment we land for walking. We OR `flying.current` with the
+    // airborne test on purpose: while jetpacking the ground SENSOR can still read
+    // "grounded" (hovering low, or a sensor desync), which would otherwise drop the
+    // tuck exactly when you're pressing space. `flying.current` is true the whole
+    // flight regardless of the sensor, so the hanging pose holds. Layered on top of
+    // the clip the mixer wrote this frame; the foot bone's local +Y points at the
+    // toe, so a negative local-X rotation swings it downward.
+    const wantFootTuck = flying.current || !grounded || endVy > 1.5;
+    footTuck.current += ((wantFootTuck ? FLY_FOOT : 0) - footTuck.current) * (1 - Math.exp(-12 * dt));
+    if (footTuck.current > 0.001) {
+      const fl = built.bones["foot.l"], fr = built.bones["foot.r"];
+      if (fl) fl.rotation.x -= footTuck.current;
+      if (fr) fr.rotation.x -= footTuck.current;
     }
 
     // ── under-terrain safety net ──
