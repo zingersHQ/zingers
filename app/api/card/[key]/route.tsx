@@ -15,8 +15,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const c = ROSTER[k];
   if (!c) return new Response("unknown", { status: 404 });
   const q = new URL(req.url).searchParams;
-  const rating = q.get("r") || "1000";
   const level = q.get("lv") || "1";
+  const sl = q.get("sl") || level;
+  const skills = q.get("sk") || "0";
   const tier = q.get("t") || "ROOKIE";
   const doctrine = q.get("d") || "Unproven";
   const wins = q.get("w") || "0";
@@ -29,8 +30,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const portrait = `${origin}${portraitOf(k)}`;
 
   const stats: [string, string, string][] = [
-    ["RATING", rating, "#f5d020"],
-    ["LEVEL", level, col],
+    ["SKILL LEVEL", sl, "#f5d020"],
+    ["SKILLS", skills, col],
     ["RECORD", `${wins}W · ${losses}L`, "#36d39a"],
   ];
 
@@ -74,7 +75,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 88, fontWeight: 800 }}>{c.name}</div>
             <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${force.inWorld}`}</div>
-            <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>{`L${level} ${tier} · brain: ${brain}`}</div>
+            <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>{`SL ${sl} · ${tier} · brain: ${brain}`}</div>
             <div style={{ display: "flex", marginTop: 22 }}>
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: col, border: `2px solid ${col}`, borderRadius: 12, padding: "8px 14px", marginRight: 12 }}>
                 {`${force.sigil} ${force.inWorld.replace(/^The /, "").toUpperCase()}`}

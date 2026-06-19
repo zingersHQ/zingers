@@ -1,9 +1,16 @@
 # 05 · Regions: the map of the Grounds
 
-The Grounds are the surface over the Long Vault. As doors open, the surface grows:
-each region is a slab of the old network's memory, made into terrain. A region has
-a **force-bias** (an arena modifier: it rewards one way of arguing and lightly
-punishes another) and an **arena** where bouts are fought.
+The Grounds are the surface over the Long Vault — but not one continuous surface.
+They are a **constellation of region-slabs** adrift over the Vault, joined by gates
+(see [cosmology.md](./01-cosmology.md)). As Keeper-doors open, the constellation
+grows: each new region is a slab of the old network's memory, made into terrain.
+A region has a **force-bias** (an arena modifier: it rewards one way of arguing and
+lightly punishes another) and an **arena** where bouts are fought.
+
+At the center floats **the Concord** — the hub slab above the sealed door, neutral
+ground for all five forces and the gate-ring out to every region. The Concord is
+where a Reader spawns, banks, and chooses a destination; it has no force-bias and
+no arena of its own (`lib/lore/canon.ts › CONCORD`).
 
 The three founding regions exist today as the 3D worlds (`components/grounds/worlds.ts`);
 later regions are added by the Chronicle.

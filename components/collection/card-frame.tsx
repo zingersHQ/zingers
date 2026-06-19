@@ -6,7 +6,8 @@ export { FIRST_MIND_KEYS, portraitOf } from "@/lib/cards/assets";
 
 export function shareQuery(card: Card, brain = "House Grok") {
   const p = new URLSearchParams();
-  p.set("r", String(card.elo));
+  p.set("sl", String(card.skillLevel));
+  p.set("sk", String(card.skills.length));
   p.set("lv", String(card.level));
   p.set("t", card.tier);
   p.set("d", card.doctrine);
@@ -100,8 +101,8 @@ export function ChampionCardFrame({
             {hasRecord ? `${card.wins}W·${card.losses}L · ${wr}%` : "no bouts yet"}
           </span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span style={{ fontSize: compact ? 16 : 20, fontWeight: 700, color: "var(--gold)" }}>{hasRecord ? card.elo : "-"}</span>
-            <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>RATING</span>
+            <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>SL</span>
+            <span style={{ fontSize: compact ? 16 : 20, fontWeight: 700, color: "var(--gold)" }}>{card.skillLevel}</span>
           </span>
         </div>
         {footer}

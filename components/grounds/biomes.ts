@@ -5,6 +5,9 @@ export interface BiomeConfig {
   id: string;
   name: string;
   tagline: string;
+  // true on the daylight skin — lets the ground surfaces (terrain + plaza floor)
+  // switch to a matte, near-white texture instead of their dark night base.
+  daylight?: boolean;
   bg: string;
   sky: { top: string; bottom: string };
   nebula: { colors: string[]; opacity: number };
@@ -102,7 +105,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#cdb8ff", warm: "#f0a93a", cool: "#6a6bff", fill: "#3a2a6a" },
     bloom: 0.85,
     exposure: 1.15,
-    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI * 0.72, dist: 19 } } },
+    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI * 1.5, dist: 19 } } },
   },
   {
     id: "ember",
@@ -144,10 +147,121 @@ export const BIOMES: BiomeConfig[] = [
     exposure: 1.18,
     scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 15, spread: 22, inner: 7, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 1.55, dist: 19 }, spire: { angle: Math.PI * 0.08, dist: 19 } } },
   },
+  {
+    // The Concord — the hub slab (lib/lore/canon.ts › CONCORD). Neutral ground:
+    // a calm slate-violet plaza lit warm gold, near-flat so it reads as a BUILT
+    // place rather than wilds. Most `scene` fields go unused in hub mode (the
+    // World renders the Concord scene, not an arena), but the shape stays gentle.
+    id: "concord",
+    name: "The Concord",
+    tagline: "neutral ground · the gate-ring",
+    bg: "#070611",
+    sky: { top: "#2a2750", bottom: "#0a0816" },
+    nebula: { colors: ["#2a2a5a", "#3a2a6a", "#2a3a6a", "#4a3a6a"], opacity: 0.45 },
+    fog: { color: "#100e22", near: 60, far: 220 },
+    terrain: { low: "#15131f", mid: "#2c2840", high: "#5a5480", heightScale: 0.7, roughness: 0.9, metalness: 0.15, colorBand: 16, seed: 211, rollAmp: 3, ridgeAmp: 4, rollFreq: 0.02, ridgeFreq: 0.01, ridged: false },
+    plaza: { color: "#c4c2d8", emissive: "#1c1a30", emissiveIntensity: 0.5 },
+    scatter: { rock: "#22202e", crystal: "#8a86c0", crystalEmissive: "#6a64b0", crystalEmissiveIntensity: 0.9, crystalRatio: 0.3, count: 150 },
+    obelisk: { color: "#241f38", emissive: "#6a64c0", emissiveIntensity: 0.9 },
+    floatCrystal: { color: "#8a86d0", emissive: "#6a64c0", emissiveIntensity: 1.2 },
+    platform: { a: "#6a6bff", b: "#8a6bff", top: "#f5d020" },
+    lights: { hemiSky: "#bcb8ff", hemiGround: "#15101f", hemiInt: 0.9, ambient: "#3a3858", ambientInt: 0.6, sun: "#fff2d8", sunInt: 2.2, arenaPoint: "#f5d020", trainPoint: "#8a86d0" },
+    ibl: { key: "#d8ccff", warm: "#f5d020", cool: "#6a64c0", fill: "#2a2750" },
+    bloom: 0.7,
+    exposure: 1.12,
+    scene: { towerAngle: Math.PI * 0.5, towerSteps: 0, obeliskCount: 10, platformCount: 0, crystalCount: 14, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 2.4 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI, dist: 19 } } },
+  },
 ];
 
 export const DEFAULT_BIOME = BIOMES[0];
 
 export function biomeById(id: string | null | undefined): BiomeConfig {
   return BIOMES.find((b) => b.id === id) ?? DEFAULT_BIOME;
+}
+
+// ── daylight skin ────────────────────────────────────────────────────────────
+// A generic "turn on the sun" transform: same world, same hues, just lit like a
+// bright day instead of a moody night. Drives the 3D world when the UI is in
+// light mode. We keep every SHAPE/scene field untouched (topology, layout,
+// counts) and only lift the colours + lighting toward daylight, so a world reads
+// as the same place — just at noon.
+
+type RGB = [number, number, number];
+
+function hexToRgb(hex: string): RGB {
+  const h = hex.replace("#", "");
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(v, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function rgbToHex([r, g, b]: RGB): string {
+  const c = (x: number) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0");
+  return `#${c(r)}${c(g)}${c(b)}`;
+}
+
+// mix `hex` toward `target` by amount t (0 = unchanged, 1 = fully target)
+function mix(hex: string, target: string, t: number): string {
+  const a = hexToRgb(hex);
+  const b = hexToRgb(target);
+  return rgbToHex([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]);
+}
+
+const SKY_HI = "#bcd6f4"; // pale blue zenith
+const SKY_LO = "#eef4fb"; // bright horizon haze
+const DAY_FOG = "#dde7f4";
+const SUNLIGHT = "#fff6e6";
+
+// brighten a surface albedo toward white so day-lit faces read lighter while
+// keeping the world's identity hue
+const lift = (hex: string, t = 0.32) => mix(hex, "#ffffff", t);
+// the ground is a calm, matte PALE GREY — light enough to read as daytime, but
+// muted so the colourful props/champions keep strong contrast against it (a
+// near-white floor just blew out under the sun).
+const GROUND_GRAY = "#9c9eac";
+const ground = (hex: string, t = 0.85) => mix(hex, GROUND_GRAY, t);
+
+export function daylightBiome(biome: BiomeConfig): BiomeConfig {
+  return {
+    ...biome,
+    daylight: true,
+    bg: mix(biome.bg, SKY_HI, 0.82),
+    sky: { top: mix(biome.sky.top, SKY_HI, 0.7), bottom: mix(biome.sky.bottom, SKY_LO, 0.8) },
+    // the nebula is a night-sky flourish — fade it right back under daylight
+    nebula: { colors: biome.nebula.colors, opacity: biome.nebula.opacity * 0.18 },
+    fog: { color: mix(biome.fog.color, DAY_FOG, 0.8), near: biome.fog.near * 1.35, far: biome.fog.far * 1.5 },
+    terrain: {
+      ...biome.terrain,
+      low: ground(biome.terrain.low, 0.88),
+      mid: ground(biome.terrain.mid, 0.85),
+      high: ground(biome.terrain.high, 0.8),
+      // matte: kill the metallic sheen so daylight ground is flat, not glossy
+      metalness: 0,
+      roughness: 1,
+    },
+    plaza: { ...biome.plaza, color: mix(biome.plaza.color, "#aaacb8", 0.9), emissiveIntensity: 0 },
+    scatter: { ...biome.scatter, rock: lift(biome.scatter.rock, 0.3), crystalEmissiveIntensity: biome.scatter.crystalEmissiveIntensity * 0.6 },
+    obelisk: { ...biome.obelisk, color: lift(biome.obelisk.color, 0.28), emissiveIntensity: biome.obelisk.emissiveIntensity * 0.5 },
+    floatCrystal: { ...biome.floatCrystal, emissiveIntensity: biome.floatCrystal.emissiveIntensity * 0.65 },
+    platform: { a: lift(biome.platform.a, 0.18), b: lift(biome.platform.b, 0.18), top: biome.platform.top },
+    lights: {
+      ...biome.lights,
+      hemiSky: mix(biome.lights.hemiSky, "#ffffff", 0.4),
+      hemiGround: lift(biome.lights.hemiGround, 0.45),
+      hemiInt: Math.max(biome.lights.hemiInt, 1.0),
+      ambient: mix(biome.lights.ambient, "#ffffff", 0.5),
+      ambientInt: Math.max(biome.lights.ambientInt, 0.7),
+      sun: mix(biome.lights.sun, SUNLIGHT, 0.55),
+      sunInt: biome.lights.sunInt,
+    },
+    ibl: {
+      key: mix(biome.ibl.key, "#ffffff", 0.45),
+      warm: mix(biome.ibl.warm, "#fff2da", 0.4),
+      cool: mix(biome.ibl.cool, "#dbe7f7", 0.5),
+      fill: mix(biome.ibl.fill, "#eef4fb", 0.55),
+    },
+    // bloom reads as a night-time glow; pull it down so daylight stays crisp
+    bloom: biome.bloom * 0.4,
+    exposure: biome.exposure * 0.9,
+  };
 }

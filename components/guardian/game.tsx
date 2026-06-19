@@ -53,6 +53,7 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
   const [mounted, setMounted] = useState(false);
   const [cleared, setCleared] = useState<number[]>([]);
   const [active, setActive] = useState<GuardianPub | null>(null);
+  const crackKeeper = useChampions((s) => s.crackKeeper);
 
   useEffect(() => {
     setMounted(true);
@@ -89,9 +90,10 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
       } catch {
         /* ignore */
       }
+      crackKeeper(); // a Keeper yielded — award the Reader-rank milestone once
       return next;
     });
-  }, []);
+  }, [crackKeeper]);
 
   if (active) {
     return (

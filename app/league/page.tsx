@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { BattleEnd, BattleTurn, RosterEntry, Style } from "@/lib/types";
-import { TYPE_COLOR, EMBLEM, levelFor, tierFor, doctrine, dominant, blankStyle, accrue } from "@/lib/evolve/progression";
+import { TYPE_COLOR, EMBLEM, levelFor, tierFor, doctrine, dominant, blankStyle, accrue, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { useChampions } from "@/store/champions";
@@ -62,7 +62,7 @@ export default function LeaguePage() {
     const get = useChampions.getState();
     return roster
       .map((r) => ({ entry: r, champ: progress[r.key] || get.get(r.key) }))
-      .sort((a, b) => ratingOf(b.champ) - ratingOf(a.champ));
+      .sort((a, b) => skillLevel(b.champ) - skillLevel(a.champ) || ratingOf(b.champ) - ratingOf(a.champ));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roster, progress]);
 
@@ -167,7 +167,7 @@ export default function LeaguePage() {
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Live League</h1>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 0.8 }}>
-            AGENTS FIGHT AUTONOMOUSLY · EVERY BOUT MOVES REAL RATINGS · BODIES & MEMORY EVOLVE AS THEY CLIMB
+            AGENTS FIGHT AUTONOMOUSLY · EVERY BOUT EARNS SKILLS · BODIES & MEMORY EVOLVE AS THEY CLIMB
           </p>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -227,7 +227,7 @@ export default function LeaguePage() {
                       <div style={{ fontWeight: 700, display: "flex", gap: 8, alignItems: "center" }}>
                         {entry.name}
                         <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>
-                          L{lf.level} {tierFor(lf.level).name}
+                          {tierFor(lf.level).name} · {skillCount(champ)} skills
                         </span>
                       </div>
                       <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>
@@ -236,10 +236,13 @@ export default function LeaguePage() {
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: 700, fontSize: 17, color: col }}>{ratingOf(champ)}</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4, justifyContent: "flex-end" }}>
+                      <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>SL</span>
+                      <span style={{ fontWeight: 700, fontSize: 17, color: col }}>{skillLevel(champ)}</span>
+                    </div>
                     {fl !== 0 && (
                       <div className="mono" style={{ fontSize: 10, color: flashColor }}>
-                        {fl > 0 ? "▲" : "▼"} {fl > 0 ? "+" : ""}{Math.round(fl)}
+                        {fl > 0 ? "▲ won" : "▼ lost"}
                       </div>
                     )}
                   </div>

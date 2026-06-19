@@ -99,7 +99,7 @@ export function Terrain({ biome }: { biome: BiomeConfig }) {
   return (
     <RigidBody type="fixed" colliders="trimesh">
       <mesh geometry={geo} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors metalness={biome.terrain.metalness} roughness={biome.terrain.roughness} envMapIntensity={0.5} flatShading />
+        <meshStandardMaterial vertexColors metalness={biome.terrain.metalness} roughness={biome.terrain.roughness} envMapIntensity={biome.daylight ? 0.04 : 0.5} flatShading />
       </mesh>
     </RigidBody>
   );

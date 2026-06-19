@@ -75,7 +75,7 @@ export async function* autoplayRun(
   const live = !!KEY && !mock;
   let strat: Strat = { ...DEFAULT_STRAT };
   const memory: string[] = [];
-  let elo = 1000;
+  let elo = 0; // skill score — accumulates from zero as the agent climbs
   let wins = 0;
   let losses = 0;
 
@@ -137,7 +137,7 @@ export async function* autoplayRun(
     };
 
     const eloDelta = won ? 20 + Math.round(rng.random() * 12) : -(12 + Math.round(rng.random() * 10));
-    elo += eloDelta;
+    elo = Math.max(0, elo + eloDelta);
     if (won) wins++;
     else losses++;
 

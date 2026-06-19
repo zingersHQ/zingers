@@ -354,7 +354,7 @@ function Reasoning() {
             background: "rgba(54,211,154,.08)",
           }}
         >
-          +18 RATING
+          +1 SKILL LEVEL
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
 import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive } from "@/lib/play-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Immersive surfaces use the bottom GameDock — no site chrome.
 const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
@@ -96,6 +97,8 @@ export function Nav() {
             {l.label}
           </Link>
         ))}
+        <span className="site-nav__section mono site-nav__section--also">Display</span>
+        <ThemeToggle />
       </nav>
     </header>
   );

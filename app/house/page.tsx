@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Champion, HouseEnd, RosterEntry } from "@/lib/types";
-import { TYPE_COLOR } from "@/lib/evolve/progression";
-import { ratingOf, type RatingDelta } from "@/lib/evolve/elo";
+import { TYPE_COLOR, skillLevel } from "@/lib/evolve/progression";
+import { type RatingDelta } from "@/lib/evolve/elo";
 import { useChampions } from "@/store/champions";
 import { useHouse, type PlayerView } from "@/components/house/use-house";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -118,7 +118,7 @@ function Setup(props: {
                 <ChampionAvatar ckey={r.key} type={r.type} champion={get(r.key)} size={72} />
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="mono" style={{ fontSize: 10, color: col }}>
-                  {r.type} · {ratingOf(get(r.key))} rating
+                  {r.type} · SL {skillLevel(get(r.key))}
                 </div>
               </button>
             );
@@ -281,7 +281,7 @@ function Verdict({ end, deltas, onAgain }: { end: HouseEnd; deltas: Record<strin
                   {d && (
                     <span className="mono" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 700, color: d.delta >= 0 ? "var(--good)" : "var(--bad)" }}>
                       {d.delta >= 0 ? "+" : ""}
-                      {d.delta} → {d.after}
+                      {d.delta} pts
                     </span>
                   )}
                 </div>

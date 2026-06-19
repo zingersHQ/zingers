@@ -18,6 +18,49 @@
   /* fixed nav height — referenced by full-bleed pages so the 3D viewport
      fills exactly the space below the nav (no hardcoded magic numbers). */
   --nav-h: 56px;
+
+  /* ── semantic tokens (themable) ──────────────────────────────────────────
+     Anything that was a hardcoded colour lives here so a single [data-theme]
+     swap below re-skins the whole 2D UI. */
+  --btn-bg: #15131f;
+  --btn-bg-hover: #1a1828;
+  --code-bg: #0c0a14;
+  --code-ink: #d8d4ea;
+  --hover: rgba(255, 255, 255, 0.03); /* subtle raised tint on dark surfaces */
+  --hover2: rgba(255, 255, 255, 0.06);
+  --overlay: rgba(5, 4, 10, 0.78); /* full-screen modal scrim */
+  --body-grad1: #1a1633; /* the two ambient glows behind the page */
+  --body-grad2: #16122b;
+  color-scheme: dark;
+}
+
+/* Light theme — a daytime palette for reading outdoors / in bright light. The
+   tokens above are the only thing that changes; every component reads them. */
+:root[data-theme="light"] {
+  --bg: #eef0f7;
+  --bg2: #e3e6f1;
+  --panel: #ffffff;
+  --panel2: #f6f7fc;
+  --line: #e2e3ef;
+  --line2: #cdcfe1;
+  --ink: #1b1830;
+  --muted: #56516c;
+  --muted2: #847f99;
+  --gold: #c0860f;
+  --accent: #5455e6;
+  --good: #1f9d6c;
+  --bad: #d83a4a;
+
+  --btn-bg: #ffffff;
+  --btn-bg-hover: #f0eef8;
+  --code-bg: #f1eff8;
+  --code-ink: #36324a;
+  --hover: rgba(20, 16, 40, 0.04);
+  --hover2: rgba(20, 16, 40, 0.07);
+  --overlay: rgba(28, 24, 44, 0.42);
+  --body-grad1: #dfe4f6;
+  --body-grad2: #e8e3f6;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -42,8 +85,8 @@ body {
 
 body {
   background:
-    radial-gradient(1200px 700px at 75% -10%, #1a1633 0%, transparent 55%),
-    radial-gradient(900px 600px at 10% 110%, #16122b 0%, transparent 55%),
+    radial-gradient(1200px 700px at 75% -10%, var(--body-grad1) 0%, transparent 55%),
+    radial-gradient(900px 600px at 10% 110%, var(--body-grad2) 0%, transparent 55%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
@@ -117,7 +160,7 @@ a {
   letter-spacing: 0.6px;
   text-transform: uppercase;
   border: 1px solid var(--line2);
-  background: #15131f;
+  background: var(--btn-bg);
   color: var(--ink);
   border-radius: 11px;
   padding: 11px 16px;
@@ -126,7 +169,7 @@ a {
 }
 .btn:hover {
   border-color: color-mix(in srgb, var(--ac, var(--accent)) 70%, var(--line2));
-  background: #1a1828;
+  background: var(--btn-bg-hover);
 }
 .btn:active {
   transform: translateY(1px);
@@ -361,7 +404,7 @@ a {
   align-items: center;
   justify-content: center;
   padding: clamp(24px, 5vh, 64px) clamp(20px, 5vw, 80px);
-  background: rgba(5, 4, 10, 0.78);
+  background: var(--overlay);
   backdrop-filter: blur(22px);
   animation: gameMenuFade 0.24s ease;
 }
@@ -403,7 +446,7 @@ a {
   place-items: center;
   border: 1px solid var(--line2);
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover);
   color: var(--muted);
   cursor: pointer;
   line-height: 0;
@@ -444,7 +487,7 @@ a {
   margin-top: 6px;
 }
 .game-menu__item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover2);
   border-color: var(--line2);
 }
 .game-menu__item.is-on {
@@ -602,7 +645,7 @@ a {
   transition: background 0.12s ease, color 0.12s ease;
 }
 .org-sidebar__link:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover2);
   color: var(--ink);
 }
 .org-sidebar__link.is-on {
@@ -716,7 +759,7 @@ a {
   padding: 14px;
   border-radius: 11px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--hover);
   text-decoration: none;
   color: inherit;
   transition: border-color 0.15s ease;
@@ -805,7 +848,7 @@ a {
   vertical-align: top;
 }
 .org-prose__thead .org-prose__th {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover);
   color: var(--ink);
   font-weight: 700;
 }
@@ -818,13 +861,13 @@ a {
   overflow-x: auto;
   border-radius: 11px;
   border: 1px solid var(--line);
-  background: #0c0a14;
+  background: var(--code-bg);
 }
 .org-prose__code-block {
   font-family: var(--font-mono), monospace;
   font-size: 12px;
   line-height: 1.55;
-  color: #d8d4ea;
+  color: var(--code-ink);
   white-space: pre;
 }
 .org-prose__code {
@@ -832,7 +875,7 @@ a {
   font-size: 0.88em;
   padding: 2px 6px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hover2);
   color: var(--gold);
 }
 .org-prose__a {

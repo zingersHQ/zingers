@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, Recipe, RosterEntry, Style, TowerAgent } from "@/lib/types";
-import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant } from "@/lib/evolve/progression";
+import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
@@ -15,13 +15,17 @@ import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
-import { WORLDS, DEFAULT_WORLD, worldById } from "@/components/grounds/worlds";
+import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES } from "@/components/grounds/worlds";
+import { daylightBiome } from "@/components/grounds/biomes";
+import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
 import { Compass, type Pose } from "@/components/grounds/compass";
+import { TrainerBadge } from "@/components/grounds/trainer-badge";
 import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { setMood } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
@@ -66,8 +70,15 @@ export default function GroundsScreen() {
   } | null>(null);
   const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
-  const biome = world.biome;
+  const theme = useTheme();
+  // In light mode the 3D world drops into a daylight skin (same place, lit like
+  // noon). Scene topology/layout is untouched, so landmarks + caches still align.
+  const biome = useMemo(
+    () => (theme === "light" ? daylightBiome(world.biome) : world.biome),
+    [world.biome, theme],
+  );
   const scenario = world.scenario;
+  const isHub = world.kind === "hub";
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
@@ -79,8 +90,28 @@ export default function GroundsScreen() {
   const [reloadKey, setReloadKey] = useState(0);
 
   const store = useChampions();
-  const { progress, getRecipe, owned, setOwned, crowns } = store;
+  const { progress, getRecipe, owned, setOwned, crowns, fragments, nodes: nodeLedger } = store;
   const bout = useBout();
+
+  // ── exploration: districts (compass + fast-travel) and discovery caches ──────
+  const landmarks = useMemo(() => landmarksOf(biome), [biome]);
+  const allNodes = useMemo(() => discoveryNodes(biome, dayKey()), [biome]);
+  const claimedToday = useMemo(
+    () => (nodeLedger.day === dayKey() ? nodeLedger.claimed : []),
+    [nodeLedger],
+  );
+  // the Concord is a built, neutral hub — no wild caches there
+  const liveNodes = useMemo(
+    () => (isHub ? [] : allNodes.filter((n) => !claimedToday.includes(n.id))),
+    [isHub, allNodes, claimedToday],
+  );
+  const poseRef = useRef<Pose>({ x: 0, z: 13, heading: Math.PI });
+  const travelRef = useRef<((x: number, z: number) => void) | null>(null);
+  const onPose = useCallback((x: number, z: number, heading: number) => {
+    poseRef.current = { x, z, heading };
+  }, []);
+  const [nodeFlash, setNodeFlash] = useState<{ crowns: number; fragments: number } | null>(null);
+  const nodeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -185,8 +216,25 @@ export default function GroundsScreen() {
       setOpponentId(near.id);
       setDuelMeta({ name: near.name, handle: near.handle });
       setOverlay("arena");
+    } else if (near?.kind === "node") {
+      if (store.claimNode(near.id, { crowns: near.crowns, fragments: near.fragments })) {
+        setNodeFlash({ crowns: near.crowns, fragments: near.fragments });
+        if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
+        nodeFlashTimer.current = setTimeout(() => setNodeFlash(null), 2600);
+      }
+    } else if (near?.kind === "gate") {
+      // step through a Vaultgate → travel to that region (the scene remounts via
+      // its world key, so you land cleanly at the region's spawn)
+      setNear(null);
+      setWorldId(near.world);
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id, store]);
+
+  const fastTravel = useCallback((pos: [number, number, number]) => {
+    travelRef.current?.(pos[0], pos[2]);
+  }, []);
+
+  useEffect(() => () => { if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current); }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -451,14 +499,20 @@ export default function GroundsScreen() {
             )}
           >
             <World
+              key={world.id}
               champions={champions}
               ownedKey={owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
               controlsEnabled={controlsEnabled}
               biome={biome}
-              towerAgents={towerAgents}
+              towerAgents={isHub ? [] : towerAgents}
+              nodes={liveNodes}
+              gates={isHub ? CONCORD_GATES : []}
+              pledged={store.force}
               onAltitude={onAltitude}
+              onPose={onPose}
+              travelRef={travelRef}
               touchBottomInset={isTouch ? dockPad : 0}
             />
           </RenderBoundary>
@@ -519,14 +573,24 @@ export default function GroundsScreen() {
           </div>
         )}
 
+        {!showMatch && overlay === "none" && owned && !gRun && (
+          <div style={{ marginBottom: isMobile ? 6 : 10 }}>
+            <TrainerBadge isMobile={isMobile} />
+          </div>
+        )}
+
         {(owned || !isMobile) && overlay === "none" && !showMatch && !gRun && (
           <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {owned
-              ? isMobile
-                ? "Walk to glowing spots · tap the prompt when near"
-                : scenario.id === "gauntlet"
-                  ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
-                  : "WASD · SPACE / DOUBLE-JUMP TO FLY · CLIMB · E NEAR NPCs · M FOR MENU"
+              ? isHub
+                ? isMobile
+                  ? "Walk to a Vaultgate · tap to travel to a region"
+                  : "THE CONCORD · WALK TO A VAULTGATE · E TO TRAVEL · M FOR MENU"
+                : isMobile
+                  ? "Walk to glowing spots · tap the prompt when near"
+                  : scenario.id === "gauntlet"
+                    ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
+                    : "WASD · SPACE / DOUBLE-JUMP TO FLY · CLIMB · E NEAR NPCs · M FOR MENU"
               : "Claim a champion to enter the world"}
           </p>
         )}
@@ -539,6 +603,7 @@ export default function GroundsScreen() {
       )}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
+        {overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
         {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
@@ -549,7 +614,7 @@ export default function GroundsScreen() {
       )}
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
-      {showHud && !showMatch && overlay === "none" && towerAgents.length > 0 && (
+      {showHud && !showMatch && overlay === "none" && !isHub && towerAgents.length > 0 && (
         <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
@@ -569,6 +634,25 @@ export default function GroundsScreen() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* district compass + fast-travel (regions only; the Concord's gates guide
+          you directly, so no compass is shown in the hub) */}
+      {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && (
+        <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 108 : 168, right: 16, zIndex: 100, pointerEvents: "none" }}>
+          <Compass landmarks={landmarks} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
+        </div>
+      )}
+
+      {/* cache-claimed toast */}
+      {nodeFlash && (
+        <div className="pop" style={{ position: "absolute", top: "32%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60 }}>
+          <div className="panel" style={{ ["--ac" as string]: nodeFlash.fragments > 0 ? "#39e0ff" : "var(--gold)", padding: "10px 18px", display: "flex", alignItems: "center", gap: 10, borderColor: nodeFlash.fragments > 0 ? "#39e0ff" : "var(--gold)" }}>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>Cache claimed</span>
+            {nodeFlash.crowns > 0 && <span style={{ color: "var(--gold)", fontWeight: 700 }}>+{nodeFlash.crowns} 👑</span>}
+            {nodeFlash.fragments > 0 && <span style={{ color: "#39e0ff", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={14} strokeWidth={2} /> +{nodeFlash.fragments}</span>}
+          </div>
         </div>
       )}
 
@@ -617,15 +701,21 @@ export default function GroundsScreen() {
           >
             <FightIcon size={18} strokeWidth={2.2} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-              {near.kind === "train"
+              {near.kind === "gate"
+                ? `Enter ${near.label}`
+                : near.kind === "train"
                 ? "Train your champion"
                 : near.kind === "keeper"
                   ? `Talk to ${near.name}`
                   : near.kind === "challenge"
                     ? `Challenge ${near.name}`
-                    : scenario.id === "gauntlet"
-                      ? "Enter the Gauntlet"
-                      : "House sparring pit"}
+                    : near.kind === "node"
+                      ? near.nodeKind === "fragment"
+                        ? `Claim fragment ×${near.fragments}`
+                        : `Claim cache · +${near.crowns} 👑`
+                      : scenario.id === "gauntlet"
+                        ? "Enter the Gauntlet"
+                        : "House sparring pit"}
             </span>
             {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
           </button>
@@ -771,15 +861,25 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
 
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
-  const doTrain = () => {
-    const before = store.get(ckey);
-    const beforeLevel = levelFor(before.xp).level;
-    if (!store.trainChampion(ckey)) return;
+  const reflectTrain = (before: typeof champ) => {
     const after = store.get(ckey);
+    const beforeLevel = levelFor(before.xp).level;
     const afterLevel = levelFor(after.xp).level;
     setFlash({ xp: after.xp - before.xp, leveledTo: afterLevel > beforeLevel ? afterLevel : null });
     if (flashTimer.current) clearTimeout(flashTimer.current);
     flashTimer.current = setTimeout(() => setFlash(null), 2400);
+  };
+
+  const doTrain = () => {
+    const before = store.get(ckey);
+    if (!store.trainChampion(ckey)) return;
+    reflectTrain(before);
+  };
+
+  const doTrainFragment = () => {
+    const before = store.get(ckey);
+    if (!store.trainWithFragment(ckey)) return;
+    reflectTrain(before);
   };
 
   return (
@@ -842,6 +942,18 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
             Train session: {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} />
           </span>
         </button>
+        {store.fragments > 0 && (
+          <button
+            className="btn"
+            style={{ ["--ac" as string]: "#39e0ff", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            onClick={doTrainFragment}
+          >
+            <Gem size={15} strokeWidth={2.2} color="#39e0ff" />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              Free session · spend 1 fragment ({store.fragments})
+            </span>
+          </button>
+        )}
         {flash && (
           <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
             <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>✦ Trained · +{flash.xp} XP</span>
@@ -945,7 +1057,7 @@ function ChallengeOverlay(props: {
             </button>
           </div>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "8px 0 18px", lineHeight: 1.55 }}>
-            You climbed the Tower to this agent. No picking from a menu — you fight the mind standing in front of you.
+            Next on the ladder. Beat them to keep climbing.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 14, alignItems: "center", marginBottom: 18 }}>
             <div style={{ textAlign: "center" }}>
@@ -1022,12 +1134,12 @@ function ChallengeOverlay(props: {
               >
                 <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={40} />
                 <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                <div className="mono" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12, fontSize: 11, flexShrink: 0 }}>
-                  <span style={{ color: col }}>L{levelFor(c.xp).level}</span>
-                  <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, color: "var(--muted)" }}>
-                    <span style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>RATING</span>
-                    {ratingOf(c)}
+                <div className="mono" style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", gap: 12, fontSize: 11, flexShrink: 0 }}>
+                  <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, color: col, fontWeight: 700 }}>
+                    <span style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>SL</span>
+                    {skillLevel(c)}
                   </span>
+                  <span style={{ color: "var(--muted)" }}>{skillCount(c)} skills</span>
                 </div>
               </button>
             );
@@ -1117,7 +1229,8 @@ function MatchHud(props: {
     const c = get(owned);
     const lvl = levelFor(c.xp).level;
     const p = new URLSearchParams({
-      r: String(ratingOf(c)),
+      sl: String(skillLevel(c)),
+      sk: String(skillCount(c)),
       lv: String(lvl),
       t: tierFor(lvl).name,
       d: doctrine(c, lvl),
@@ -1242,8 +1355,8 @@ function MatchHud(props: {
             )}
             {result.globalDelta !== null && (
               <div className="mono" style={{ fontSize: 12, marginTop: 8, color: result.globalDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
-                global rating {result.globalDelta >= 0 ? "+" : ""}{result.globalDelta}
-                <span style={{ color: "var(--muted2)" }}> → {result.globalRating} · ranks everyone</span>
+                {result.globalDelta >= 0 ? "climbed the global ladder" : "slipped on the global ladder"}
+                <span style={{ color: "var(--muted2)" }}> · {result.globalDelta >= 0 ? "+" : ""}{result.globalDelta} vs every trainer</span>
               </div>
             )}
             {result.leveledTo && (

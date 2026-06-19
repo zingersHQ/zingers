@@ -58,3 +58,22 @@ A force, grown strong in a mind, etches a **sigil** (◆ Lattice · ✦ Static �
 Stillness · ◉ Chorus · ✺ Spark). Sigils have three ranks (I/II/III). They are the
 heraldry of the collection layer and the title system ("The Annihilator", "The
 Puppeteer"); they are *earned*, never assigned.
+
+## Allegiance (the Reader's war)
+
+A force is also a **house** a Reader can swear to. Pledging binds your ranked wins
+to that force's standing in the season-long war between the five. You may switch
+allegiance, but contribution stays with the force that earned it. The pledge is
+taken under the force's **motto** — its `argues` line, said as a vow:
+
+| Force | House | Motto |
+|-------|-------|-------|
+| **LOGIC** | The Lattice | *Close the proof.* |
+| **CHAOS** | The Static | *Break the frame.* |
+| **COMPOSURE** | The Stillness | *Outlast the storm.* |
+| **RHETORIC** | The Chorus | *Move the room.* |
+| **CREATIVITY** | The Spark | *Change the question.* |
+
+The houses are **never** renamed for the war — a force's house *is* its in-world
+name. Mottos live in `lib/lore/canon.ts › FORCE_MOTTO`. The Reader who pledges is
+defined in [cosmology.md](./01-cosmology.md).

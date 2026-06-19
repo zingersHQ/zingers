@@ -1,10 +1,12 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Champion, DailyResult, DailyState, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
+import type { Champion, CreatureType, DailyResult, DailyState, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
 import { applyResult, blank, blankStyle } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
+import { TRAINER_XP } from "@/lib/evolve/trainer";
+import { currentSeasonNumber } from "@/lib/lore/season";
 import { STORAGE } from "@/lib/brand";
 
 // Wild, maximally-distinct starting archetypes (key, xp, axis, val, axis2, val2, w, l)
@@ -58,6 +60,12 @@ interface NodeLedger {
   claimed: string[]; // node ids already grabbed today
 }
 
+// per-season contribution to the player's pledged Force (the meta-war tally)
+interface ForcePoints {
+  season: number;
+  points: number;
+}
+
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
@@ -66,6 +74,10 @@ interface ChampionStore {
   // not the betting/training economy). Client-only for now — not server-synced.
   fragments: number;
   nodes: NodeLedger;
+  // trainer identity — the account-level "I'm level 12" spine, fed by all activity
+  trainerXp: number;
+  force: CreatureType | null; // pledged faction
+  forcePoints: ForcePoints; // this season's contribution to that faction
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
@@ -86,6 +98,10 @@ interface ChampionStore {
   trainChampion: (key: string) => boolean;
   // spend one exploration fragment for a free training session
   trainWithFragment: (key: string) => boolean;
+  // trainer rank + faction
+  awardTrainerXp: (n: number) => void;
+  pledgeForce: (f: CreatureType) => void;
+  crackKeeper: () => void; // a Keeper yielded — award the milestone XP
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
   recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
   predictResult: (correct: boolean) => void;
@@ -102,6 +118,9 @@ export const useChampions = create<ChampionStore>()(
       crowns: STARTING_CROWNS,
       fragments: 0,
       nodes: { day: today(), claimed: [] },
+      trainerXp: 0,
+      force: null,
+      forcePoints: { season: currentSeasonNumber(), points: 0 },
       owned: null,
       predict: { streak: 0, best: 0 },
       daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
@@ -205,15 +224,20 @@ export const useChampions = create<ChampionStore>()(
           crowns: s.crowns + (reward.crowns ?? 0),
           fragments: s.fragments + (reward.fragments ?? 0),
           nodes: { day, claimed: [...claimed, id] },
+          trainerXp: s.trainerXp + (reward.fragments ? TRAINER_XP.cacheFragment : 0) + (reward.crowns ? TRAINER_XP.cacheCrown : 0),
         }));
         return true;
       },
+
+      awardTrainerXp: (n) => set((s) => ({ trainerXp: s.trainerXp + Math.max(0, Math.round(n)) })),
+      pledgeForce: (f) => set({ force: f }),
+      crackKeeper: () => set((s) => ({ trainerXp: s.trainerXp + TRAINER_XP.keeperCracked })),
 
       // a paid training session: spends Crowns, adds XP + nudges style axes toward
       // the recipe dials — so money visibly evolves the body and shifts the build.
       trainChampion: (key) => {
         if (get().crowns < TRAIN_COST) return false;
-        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: s.crowns - TRAIN_COST }));
+        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: s.crowns - TRAIN_COST, trainerXp: s.trainerXp + TRAINER_XP.train }));
         return true;
       },
 
@@ -221,7 +245,7 @@ export const useChampions = create<ChampionStore>()(
       // feeds champion power directly.
       trainWithFragment: (key) => {
         if (get().fragments < 1) return false;
-        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, fragments: s.fragments - 1 }));
+        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, fragments: s.fragments - 1, trainerXp: s.trainerXp + TRAINER_XP.train }));
         return true;
       },
 
@@ -235,7 +259,20 @@ export const useChampions = create<ChampionStore>()(
           progress[winnerKey] = w;
           progress[loserKey] = l;
           recordArena(progress, winnerKey, loserKey); // arena ELO: the honest climb
-          return { progress };
+
+          // trainer rank accrual + Force meta-war contribution (only when the
+          // player's own champion is in the bout)
+          let trainerXp = s.trainerXp;
+          let forcePoints = s.forcePoints;
+          const iWon = s.owned === winnerKey;
+          const iFought = iWon || s.owned === loserKey;
+          if (iFought) trainerXp += iWon ? TRAINER_XP.boutWin : TRAINER_XP.boutLoss;
+          if (iWon && s.force) {
+            const season = currentSeasonNumber();
+            const base = forcePoints.season === season ? forcePoints.points : 0;
+            forcePoints = { season, points: base + 1 };
+          }
+          return { progress, trainerXp, forcePoints };
         }),
 
       recordHouseGame: (end, votesLog) => {
@@ -265,6 +302,7 @@ export const useChampions = create<ChampionStore>()(
               plays: s.daily.plays + 1,
               result: r,
             },
+            trainerXp: s.trainerXp + (r.winnerCorrect ? TRAINER_XP.dailyCorrect : 0),
           };
         });
         return true;

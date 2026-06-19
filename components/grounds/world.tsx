@@ -8,11 +8,13 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { ChevronsUp, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
-import { blank } from "@/lib/evolve/progression";
+import { blank, skillLevel } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
+import { ConcordScene } from "./concord";
+import type { GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
 import { jumpBeep, setJet, stopJet } from "@/lib/sfx";
@@ -42,6 +44,7 @@ export type NearTarget =
   | { kind: "challenge"; key: string; name: string; id: string; handle?: string }
   | { kind: "keeper"; level: number; name: string; title: string }
   | { kind: "node"; id: string; nodeKind: NodeKind; crowns: number; fragments: number; flight: boolean }
+  | { kind: "gate"; world: string; label: string }
   | null;
 
 // the Arena holds the central hub — matches stage here, so it stays at origin.
@@ -71,30 +74,55 @@ const SPAWN: [number, number, number] = [0, 0, 13];
 
 const keys: Record<string, boolean> = {};
 
-function makeGroundTextures() {
+function makeGroundTextures(daylight = false) {
   const S = 512;
   const c = document.createElement("canvas");
   c.width = c.height = S;
   const x = c.getContext("2d")!;
-  x.fillStyle = "#0b0916";
-  x.fillRect(0, 0, S, S);
-  for (let i = 0; i < 22000; i++) {
-    x.fillStyle = `rgba(150,150,210,${Math.random() * 0.05})`;
-    x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
-  }
-  x.strokeStyle = "rgba(96,90,160,.30)";
-  x.lineWidth = 2;
-  for (let i = 0; i <= 8; i++) {
-    const p = (i / 8) * S;
-    x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-    x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
-  }
-  x.strokeStyle = "rgba(80,110,255,.16)";
-  x.lineWidth = 1;
-  for (let i = 0; i <= 16; i++) {
-    const p = (i / 16) * S;
-    x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-    x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
+  if (daylight) {
+    // matte PALE GREY plaza — daytime ground that keeps contrast with the
+    // colourful props; faint darker grid keeps the floor legible, no glow.
+    x.fillStyle = "#b9bbc6";
+    x.fillRect(0, 0, S, S);
+    for (let i = 0; i < 16000; i++) {
+      x.fillStyle = `rgba(70,70,95,${Math.random() * 0.05})`;
+      x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
+    }
+    x.strokeStyle = "rgba(90,94,120,.34)";
+    x.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) {
+      const p = (i / 8) * S;
+      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
+      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
+    }
+    x.strokeStyle = "rgba(140,150,180,.18)";
+    x.lineWidth = 1;
+    for (let i = 0; i <= 16; i++) {
+      const p = (i / 16) * S;
+      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
+      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
+    }
+  } else {
+    x.fillStyle = "#0b0916";
+    x.fillRect(0, 0, S, S);
+    for (let i = 0; i < 22000; i++) {
+      x.fillStyle = `rgba(150,150,210,${Math.random() * 0.05})`;
+      x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
+    }
+    x.strokeStyle = "rgba(96,90,160,.30)";
+    x.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) {
+      const p = (i / 8) * S;
+      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
+      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
+    }
+    x.strokeStyle = "rgba(80,110,255,.16)";
+    x.lineWidth = 1;
+    for (let i = 0; i <= 16; i++) {
+      const p = (i / 16) * S;
+      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
+      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
+    }
   }
   const map = new THREE.CanvasTexture(c);
   map.wrapS = map.wrapT = THREE.RepeatWrapping;
@@ -152,6 +180,8 @@ export default function World({
   biome,
   towerAgents = [],
   nodes = [],
+  gates = [],
+  pledged = null,
   onAltitude,
   onPose,
   travelRef,
@@ -165,6 +195,8 @@ export default function World({
   biome: BiomeConfig;
   towerAgents?: TowerAgent[];
   nodes?: DiscoveryNode[];
+  gates?: GateDef[];
+  pledged?: CreatureType | null;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
@@ -196,6 +228,22 @@ export default function World({
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const sc = biome.scene;
+  // Hub mode: the Concord renders a built settlement (gates/banners/seal) instead
+  // of an arena + tower + spire. Driven by the presence of gates from the world.
+  const isHub = gates.length > 0;
+  const hubGates = useMemo<{ world: string; label: string; color: string; pos: [number, number, number] }[]>(
+    () =>
+      gates.map((g) => {
+        const x = Math.cos(g.angle) * g.dist;
+        const z = Math.sin(g.angle) * g.dist;
+        return { world: g.world, label: g.label, color: g.color, pos: [x, terrainHeight(x, z, shape), z] };
+      }),
+    [gates, shape],
+  );
+  const gateTargets = useMemo(
+    () => hubGates.map((g) => ({ world: g.world, label: g.label, pos: new THREE.Vector3(g.pos[0], g.pos[1] + 1.0, g.pos[2]) })),
+    [hubGates],
+  );
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   const spirePad = useMemo(() => landmarkPos(sc.landmarks.spire), [sc.landmarks.spire]);
   const day = useMemo(() => dayKey(), []);
@@ -271,7 +319,7 @@ export default function World({
       <Nebula biome={biome} />
       <Starfield />
 
-      <Environment resolution={256} frames={1} key={biome.id}>
+      <Environment resolution={256} frames={1} key={`${biome.id}:${biome.bg}`}>
         <Lightformer intensity={1.4} color={biome.ibl.key} position={[0, 8, 0]} scale={[20, 20, 1]} target={[0, 0, 0]} />
         <Lightformer intensity={1.0} color={biome.ibl.warm} position={[14, 4, 0]} scale={[10, 10, 1]} target={[0, 0, 0]} />
         <Lightformer intensity={0.8} color={biome.ibl.cool} position={[-14, 4, 6]} scale={[10, 10, 1]} target={[0, 0, 0]} />
@@ -295,7 +343,7 @@ export default function World({
         shadow-bias={-0.0004}
       />
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
-      <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />
+      {!isHub && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
 
       <Suspense
         fallback={
@@ -307,28 +355,38 @@ export default function World({
         <Physics gravity={[0, -22, 0]}>
           <Terrain biome={biome} />
           <PlazaFloor biome={biome} />
-          <PlazaSurround biome={biome} />
-          <Platforms biome={biome} shape={shape} count={sc.platformCount} />
-          <Tower biome={biome} nodes={towerNodes} />
-          {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
-          <GuardianSpire pad={spirePad} />
           <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
 
-          {/* wayfinding beams over the two open-ground districts (the Tower &
-              Spire carry their own bespoke beacons) */}
-          <Beacon pos={ARENA} color={biome.lights.arenaPoint} />
-          <Beacon pos={trainPad} color={biome.lights.trainPoint} />
+          {/* The Concord (hub): a built settlement of gates + banners around the
+              sealed Vault door. No arena/tower/spire/agents/caches. */}
+          {isHub && <ConcordScene gates={hubGates} pledged={pledged} daylight={!!biome.daylight} />}
 
-          {!match && <DiscoveryNodes nodes={nodes} />}
+          {/* A region: arena, tower climb, Keepers' spire, agents & caches. */}
+          {!isHub && (
+            <>
+              <PlazaSurround biome={biome} />
+              <Platforms biome={biome} shape={shape} count={sc.platformCount} />
+              <Tower biome={biome} nodes={towerNodes} />
+              {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
+              <GuardianSpire pad={spirePad} />
 
-          {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
-          {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
+              {/* wayfinding beams over the two open-ground districts (the Tower &
+                  Spire carry their own bespoke beacons) */}
+              <Beacon pos={ARENA} color={biome.lights.arenaPoint} />
+              <Beacon pos={trainPad} color={biome.lights.trainPoint} />
+
+              {!match && <DiscoveryNodes nodes={nodes} />}
+              {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
+              {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
+            </>
+          )}
 
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
+            !isHub &&
             champions.map((c) => {
               const owned = c.key === ownedKey;
               const home = owned ? trainPad : roamHome(c.key, champions, sc.roam);
@@ -350,7 +408,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} gateTargets={gateTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
         </Physics>
 
         {!glLost && (
@@ -525,11 +583,12 @@ function Starfield() {
 
 // thin textured visual overlay for the flat plaza (the terrain provides the collider)
 function PlazaFloor({ biome }: { biome: BiomeConfig }) {
-  const map = useMemo(() => makeGroundTextures(), []);
+  const day = !!biome.daylight;
+  const map = useMemo(() => makeGroundTextures(day), [day]);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
       <circleGeometry args={[PLAZA_R + 1, 80]} />
-      <meshStandardMaterial map={map} color={biome.plaza.color} emissive={biome.plaza.emissive} emissiveIntensity={biome.plaza.emissiveIntensity} metalness={0.35} roughness={0.6} envMapIntensity={0.8} />
+      <meshStandardMaterial map={map} color={biome.plaza.color} emissive={biome.plaza.emissive} emissiveIntensity={biome.plaza.emissiveIntensity} metalness={day ? 0 : 0.35} roughness={day ? 1 : 0.6} envMapIntensity={day ? 0.04 : 0.8} />
     </mesh>
   );
 }
@@ -980,7 +1039,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
             {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
           </div>
           <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700 }}>
-            {vis.badge} {vis.label} · {agent.rating}
+            {vis.badge} {vis.label} · SL {skillLevel(champ)}
           </div>
         </div>
       </Html>
@@ -1231,11 +1290,13 @@ function Handler({
   camCue,
   touchMove,
   touchBtn,
+  isHub,
   trainPad,
   challengeTargets,
   groundTargets,
   nodeTargets,
   keeperTargets,
+  gateTargets,
   shape,
   onAltitude,
   onPose,
@@ -1249,11 +1310,13 @@ function Handler({
   camCue: React.RefObject<CamCue>;
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
+  isHub: boolean;
   trainPad: [number, number, number];
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   groundTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   nodeTargets: { id: string; kind: NodeKind; crowns: number; fragments: number; flight: boolean; pos: THREE.Vector3 }[];
   keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
+  gateTargets: { world: string; label: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
@@ -1608,7 +1671,19 @@ function Handler({
     }
 
     let next: NearTarget = null;
-    if (!matchActive) {
+    if (!matchActive && isHub) {
+      // The Concord: walk into a Vaultgate footprint to travel to its region.
+      let best: { world: string; label: string } | null = null;
+      let bestD = 3.2;
+      for (const gt of gateTargets) {
+        const dh = Math.hypot(t.x - gt.pos.x, t.z - gt.pos.z);
+        if (dh < bestD) {
+          bestD = dh;
+          best = { world: gt.world, label: gt.label };
+        }
+      }
+      if (best) next = { kind: "gate", ...best };
+    } else if (!matchActive) {
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
@@ -1704,7 +1779,7 @@ function Handler({
 
   return (
     <>
-      <TrainPad pos={trainPad} />
+      {!isHub && <TrainPad pos={trainPad} />}
       <RigidBody
         ref={body}
         type="dynamic"

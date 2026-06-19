@@ -182,16 +182,13 @@ export default function StandingsPage() {
                     {c.type} · {c.handle || (c.house ? "HOUSE" : "anon")} · {c.brain.provider === "http" ? "🔌 agent" : "House Grok"}
                   </div>
                 </div>
-                <div style={{ textAlign: "right", minWidth: 70 }}>
-                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>{c.wins}W·{c.losses}L {c.battles ? `· ${wr}%` : ""}</div>
-                  {/* relative strength bar */}
-                  <div style={{ width: 70, height: 4, borderRadius: 9, background: "var(--line)", marginTop: 6, overflow: "hidden" }}>
+                <div style={{ textAlign: "right", minWidth: 92 }}>
+                  <div className="mono" style={{ fontSize: 12, color: "var(--ink)", fontWeight: 700 }}>{c.wins}W·{c.losses}L</div>
+                  <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 1 }}>{c.battles ? `${wr}% win rate` : "unproven"}</div>
+                  {/* relative ladder strength */}
+                  <div style={{ width: 92, height: 4, borderRadius: 9, background: "var(--line)", marginTop: 6, overflow: "hidden", marginLeft: "auto" }}>
                     <div style={{ width: `${Math.max(6, (c.rating / topRating) * 100)}%`, height: "100%", background: col }} />
                   </div>
-                </div>
-                <div style={{ textAlign: "right", width: 56 }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: "var(--gold)" }}>{c.rating}</div>
-                  <div className="mono" style={{ fontSize: 8, letterSpacing: 1.2, color: "var(--muted2)" }}>RATING</div>
                 </div>
                 {mine && (
                   <button

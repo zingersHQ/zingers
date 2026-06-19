@@ -14,7 +14,7 @@ function str(sp: SP, k: string, d: string) {
 }
 
 function cardQuery(sp: SP): string {
-  const keys = ["r", "lv", "t", "d", "w", "l", "ra", "b"];
+  const keys = ["sl", "sk", "r", "lv", "t", "d", "w", "l", "ra", "b"];
   const p = new URLSearchParams();
   for (const k of keys) p.set(k, str(sp, k, ""));
   return p.toString();
@@ -27,7 +27,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const c = ROSTER[k];
   if (!c) return { title: BRAND.name };
   const img = `/api/card/${k}?${cardQuery(sp)}`;
-  const desc = `${str(sp, "d", "Unproven")} · Rating ${str(sp, "r", "1000")} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
+  const desc = `${str(sp, "d", "Unproven")} · Skill Level ${str(sp, "sl", str(sp, "lv", "1"))} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
   const title = pageTitle(c.name);
   return {
     title,
@@ -44,8 +44,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   const c = ROSTER[k];
   if (!c) notFound();
   const col = TYPE_COLOR[c.type];
-  const rating = str(sp, "r", "1000");
   const level = str(sp, "lv", "1");
+  const sl = str(sp, "sl", level);
+  const skills = str(sp, "sk", "0");
   const tier = str(sp, "t", "ROOKIE");
   const doctrine = str(sp, "d", "Unproven");
   const wins = str(sp, "w", "0");
@@ -84,7 +85,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
             <div>
               <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>{c.name}</div>
               <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.inWorld}</div>
-              <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>L{level} {tier} · brain: {brain}</div>
+              <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>SL {sl} · {tier} · brain: {brain}</div>
               <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "18px 0 0" }}>
                 A snapshot of a raised Zingers mind: its rank, rarity, doctrine, and portrait are all derived from the champion's career.
               </p>
@@ -93,8 +94,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 26 }}>
             {[
-              ["RATING", rating, "var(--gold)"],
-              ["LEVEL", level, col],
+              ["SKILL LEVEL", sl, "var(--gold)"],
+              ["SKILLS", skills, col],
               ["RECORD", `${wins}W·${losses}L`, "var(--good)"],
             ].map(([label, val, c2]) => (
               <div key={label} className="panel" style={{ padding: "14px 16px" }}>

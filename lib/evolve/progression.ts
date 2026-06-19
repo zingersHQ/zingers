@@ -98,6 +98,42 @@ export function sigils(p: Champion) {
     .filter((s) => s.lvl > 0)
     .sort((x, y) => y.lvl - x.lvl);
 }
+
+// ── Skills & Skill Level (SL) ───────────────────────────────────────────────
+// The player-facing replacement for raw ELO. As an agent fights and trains, its
+// style axes grow and cross thresholds (sigilLevel 3/8/18) — each crossing is an
+// acquired SKILL, named from that axis's earned titles. So evolution is literally
+// "the agent learned to do X". SL folds depth (XP level) and breadth (skills) into
+// one legible, monotonic number that never drops the way a rating can.
+export interface Skill {
+  axis: StyleAxis;
+  glyph: string;
+  color: string;
+  name: string; // earned title, e.g. "The Relentless"
+  rank: number; // 1 (I) · 2 (II) · 3 (III)
+}
+
+// Every rank an axis has crossed is a distinct acquired skill, strongest first.
+export function skillsOf(p: Champion): Skill[] {
+  const out: Skill[] = [];
+  for (const a of AXES) {
+    const lvl = sigilLevel(p[a.k]);
+    for (let r = 1; r <= lvl; r++) {
+      out.push({ axis: a.k, glyph: a.glyph, color: a.color, name: a.titles[r - 1], rank: r });
+    }
+  }
+  return out.sort((x, y) => y.rank - x.rank);
+}
+
+// Total acquired skill ranks across all axes (0–15).
+export function skillCount(p: Champion): number {
+  return AXES.reduce((n, a) => n + sigilLevel(p[a.k]), 0);
+}
+
+// Skill Level — the single headline KPI. Depth (XP level) + breadth (skills).
+export function skillLevel(p: Champion): number {
+  return levelFor(p.xp).level + skillCount(p);
+}
 export function doctrine(p: Champion, level: number): string {
   const d = dominant(p);
   if (d.value < 3) return "Unproven";

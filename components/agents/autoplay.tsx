@@ -36,7 +36,7 @@ export function Autoplay() {
   const [live, setLive] = useState(false);
   const [phase, setPhase] = useState<"idle" | "running" | "done">("idle");
   const [strat, setStrat] = useState<Strat>({ risk: 50, focus: 50, aggression: 50 });
-  const [elo, setElo] = useState(1000);
+  const [elo, setElo] = useState(0);
   const [rounds, setRounds] = useState<RoundLog[]>([]);
   const [record, setRecord] = useState<{ wins: number; losses: number } | null>(null);
   const [isLive, setIsLive] = useState(false);
@@ -53,7 +53,7 @@ export function Autoplay() {
     stop();
     setPhase("running");
     setStrat({ risk: 50, focus: 50, aggression: 50 });
-    setElo(1000);
+    setElo(0);
     setRounds([]);
     setRecord(null);
 
@@ -198,7 +198,7 @@ export function Autoplay() {
         </div>
         <div style={{ textAlign: "center", minWidth: 96 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)" }}>
-            {me.name.toUpperCase()} · RATING
+            {me.name.toUpperCase()} · SKILL SCORE
           </div>
           <div
             style={{
@@ -260,7 +260,7 @@ export function Autoplay() {
                     style={{ fontSize: 11, color: r.eloDelta >= 0 ? "var(--good)" : "var(--bad)" }}
                   >
                     {r.eloDelta >= 0 ? "+" : ""}
-                    {r.eloDelta} rating
+                    {r.eloDelta} skill
                   </span>
                 )}
               </div>
@@ -279,7 +279,7 @@ export function Autoplay() {
 
       {phase === "done" && record && (
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
-          Started at 1000 rating and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
+          Started from zero skill and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
           settled on {strat.risk}/{strat.focus}/{strat.aggression}. No one touched the dials but the agent.
         </p>
       )}

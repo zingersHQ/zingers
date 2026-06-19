@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Champion, CreatureType, StyleAxis } from "@/lib/types";
 import { ROSTER, type Move, type StatKey } from "@/lib/engine/roster";
-import { levelFor, tierFor, tierIndex, doctrine, sigils } from "@/lib/evolve/progression";
+import { levelFor, tierFor, tierIndex, doctrine, sigils, skillLevel, skillsOf, type Skill } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { appearanceOf, type Appearance } from "@/lib/evolve/appearance";
 import { FORCES, FIRST_MINDS, RARITY_LABEL, RARITY_HEX, type ForceLore, type Rarity } from "@/lib/lore/canon";
@@ -47,6 +47,8 @@ export interface Card {
   force: ForceLore; // in-world flavour of the type
   lineage: string; // the First Mind this card echoes (its key)
   level: number;
+  skillLevel: number; // SL — the headline KPI (depth + acquired skills)
+  skills: Skill[]; // acquired abilities (axis thresholds crossed)
   tier: string;
   doctrine: string; // earned title ("The Annihilator", …)
   rarity: Rarity;
@@ -137,6 +139,8 @@ export function cardOf(key: string, champion: Champion, opts: CardOptions = {}):
     force,
     lineage: lineageOf(key, opts.lineage),
     level: lf.level,
+    skillLevel: skillLevel(champion),
+    skills: skillsOf(champion),
     tier: tier.name,
     doctrine: doctrine(champion, lf.level),
     rarity,

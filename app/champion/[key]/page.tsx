@@ -1,7 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { AXES, blank } from "@/lib/evolve/progression";
+import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
 import { houseProfile } from "@/lib/evolve/elo";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions } from "@/store/champions";
@@ -71,8 +71,8 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            <Stat n={card.elo} l="RATING" c="var(--gold)" />
-            <Stat n={card.level} l="LEVEL" c={col} />
+            <Stat n={card.skillLevel} l="SKILL LEVEL" c="var(--gold)" />
+            <Stat n={card.skills.length} l="SKILLS" c={col} />
             <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
           </div>
 
@@ -115,6 +115,32 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
 
           <div className="panel" style={{ padding: 20 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
+              SKILLS ACQUIRED · {card.skills.length} · SL {card.skillLevel}
+            </div>
+            {card.skills.length ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {card.skills.map((s) => (
+                  <span
+                    key={`${s.axis}-${s.rank}`}
+                    title={`${s.axis} ${ROMAN[s.rank]}`}
+                    className="mono"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: s.color, border: `1px solid ${s.color}55`, borderRadius: 8, padding: "5px 10px", background: `${s.color}11` }}
+                  >
+                    <span style={{ fontSize: 13 }}>{s.glyph}</span>
+                    {s.name}
+                    <span style={{ color: "var(--muted2)" }}>{ROMAN[s.rank]}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
+                No skills yet. Fight and train to push a fighting axis past its thresholds — each crossing unlocks a named skill.
+              </p>
+            )}
+          </div>
+
+          <div className="panel" style={{ padding: 20 }}>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
               FORM &amp; RECORD
             </div>
             {prof ? (
@@ -126,7 +152,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               </div>
             ) : (
               <p style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
-                No House games yet — play one to generate an objective skill profile and rating.
+                No House games yet — play one to generate an objective skill profile.
               </p>
             )}
 

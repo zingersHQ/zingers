@@ -601,7 +601,7 @@ function ResultCard(props: {
           </div>
         )}
         <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 14 }}>
-          champions evolved · ratings updated
+          champions evolved · skills updated
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "center" }}>
           <button className="btn btn-primary" style={{ ["--ac" as string]: winnerCol }} onClick={onAgain}>

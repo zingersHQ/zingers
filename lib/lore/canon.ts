@@ -29,6 +29,16 @@ export const FORCES: Record<CreatureType, ForceLore> = {
   CREATIVITY: { type: "CREATIVITY", inWorld: "The Spark", element: "invention, metaphor, reframe", argues: "changing the question", hex: "#f5d020", sigil: "✺" },
 };
 
+// A Force's argument, said as a vow. These are the mottos a Reader pledges under
+// (see READER / Allegiance below); each is the `argues` line in the imperative.
+export const FORCE_MOTTO: Record<CreatureType, string> = {
+  LOGIC: "Close the proof.",
+  CHAOS: "Break the frame.",
+  COMPOSURE: "Outlast the storm.",
+  RHETORIC: "Move the room.",
+  CREATIVITY: "Change the question.",
+};
+
 // The Wheel: each force beats the NEXT and loses to the PREVIOUS. This MUST match
 // CYCLE in lib/engine/roster.ts — the lore and the physics are the same law.
 export const WHEEL: CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
@@ -56,6 +66,30 @@ export const FOUNDING_REGIONS: RegionLore[] = [
   { id: "wastes", name: "The Ember Wastes", arena: "THE PIT", bias: "CHAOS", founding: true, blurb: "A cracked, burning flat where the Hum runs hot. Aggression and noise thrive; the patient overheat." },
   { id: "garden", name: "The Void Garden", arena: "THE ATELIER", bias: "CREATIVITY", founding: true, blurb: "A slow, impossible garden grown from unfinished ideas. Reframes bloom; rigid proofs wilt." },
 ];
+
+// ── The shape of the Grounds (a constellation, not a field) ──────────────────
+// The Grounds are not one plaza but a slow constellation of region-slabs adrift
+// over the Long Vault — the Void Garden ("floating islands over the void") is the
+// true shape of all of it. The CONCORD is the central slab: neutral ground above
+// the sealed door where all five Forces keep an uneasy peace, ringed by the gates
+// that reach each region. Travel between slabs is by gate (never confuse a gate
+// with a Vault *door* — a door is a Keeper's seal and a season trigger).
+export const CONCORD = {
+  id: "concord",
+  name: "The Concord",
+  blurb: "The central slab of the Grounds: neutral ground above the sealed Vault door, ringed by the gates that reach every region.",
+} as const;
+
+// ── The Reader (you) ─────────────────────────────────────────────────────────
+// The player is a Reader of the Long Vault: not a mind, but the will that raises
+// minds, holds rank in the arenas, and talks the Keepers out of their words.
+// Reader Rank is the one account-level number every activity feeds; a Reader may
+// swear Allegiance to one Force, binding ranked wins to that Force's standing in
+// the season-long war between the five. (Rank curve/titles: lib/evolve/trainer.ts.)
+export const READER = {
+  noun: "Reader",
+  blurb: "A Reader raises minds, holds rank in the arenas, and works the Keepers of the Long Vault. Swear to a Force to fight its war.",
+} as const;
 
 // ── The Keepers (the five fixed cipher-words; canon, never regenerated) ───────
 // Mirrors lib/server/guardian.ts — kept here as canon reference for lore/UI that

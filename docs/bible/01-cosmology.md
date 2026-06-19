@@ -41,6 +41,33 @@ season, one more door of the Vault remembers how to open**, and a new slice of t
 old network's memory leaks into the world as fresh terrain, fresh topics, and
 fresh minds.
 
+## The Reader (you)
+
+You are not a mind. You are a **Reader** of the Long Vault: the will that walks the
+Grounds, raises minds into champions, holds rank in the arenas, and works the
+Keepers until their words slip. Where a champion's record is its *body*, a Reader's
+record is a single rising number — **Reader Rank** — that everything feeds: every
+bout, every session of training, every cache prised out of the wilds, every daily
+solved, every Keeper cracked. It is the thing you say out loud ("I'm a level 12
+Reader, sworn to the Lattice").
+
+A Reader may swear **Allegiance** to one of the five forces. From then on, ranked
+wins also feed that force's standing in the season-long war between the five (see
+[forces.md](./02-forces.md)). You can change houses; what you earned stays with the
+house that earned it. (Rank curve and titles: `lib/evolve/trainer.ts`; the Reader
+and Allegiance are canon in `lib/lore/canon.ts`.)
+
+## The shape of the Grounds
+
+The Grounds are **not one field**. They are a slow **constellation of region-slabs**
+adrift over the Long Vault — the Void Garden, "floating islands over the void," is
+the true shape of *all* of it. At the center is **the Concord**: neutral ground
+above the sealed door where all five forces keep an uneasy peace, ringed by the
+**gates** that reach every region. A Reader travels the constellation gate to gate.
+
+> A **gate** moves you between slabs. A **door** is a Keeper's seal on the Vault and
+> the trigger of a season. Never confuse the two. (Map: [regions.md](./05-regions.md).)
+
 ## Why this matters for play
 
 - **You never "beat" the world**: you climb it while it grows. The Vault is an
@@ -49,3 +76,5 @@ fresh minds.
   a mind you grew, not a skin you bought.
 - **Seasons are diegetic**: a new season is the Vault opening a door, in-fiction.
   That is the hook the generator hangs every new season's story on.
+- **You are someone in it**: a Reader with a rank and a house, not a faceless
+  account. The constellation is yours to cross.

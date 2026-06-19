@@ -1,8 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import type { Champion, RosterEntry } from "@/lib/types";
-import { TYPE_COLOR, levelFor } from "@/lib/evolve/progression";
-import { ratingOf } from "@/lib/evolve/elo";
+import { TYPE_COLOR, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import type { GauntletConfig } from "@/lib/scenarios/types";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -86,7 +85,7 @@ export function GauntletBriefing({
               <ChampionAvatar ckey={k} type={r?.type ?? ownedEntry.type} champion={c} size={34} />
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{r?.name ?? k}</span>
-                <span className="mono" style={{ fontSize: 9, color: col }}>L{levelFor(c.xp).level} · {ratingOf(c)}</span>
+                <span className="mono" style={{ fontSize: 9, color: col }}>SL {skillLevel(c)} · {skillCount(c)} skills</span>
               </div>
               <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>+{roundReward(cfg, i + 1)}👑</span>
             </div>
@@ -135,7 +134,7 @@ export function GauntletInterstitial({
             <ChampionAvatar ckey={nextKey} type={nextEntry.type} champion={get(nextKey)} size={40} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{nextEntry.name}</div>
-              <div className="mono" style={{ fontSize: 9, color: TYPE_COLOR[nextEntry.type] }}>L{levelFor(get(nextKey).xp).level} · {ratingOf(get(nextKey))} · win +{atRisk}👑</div>
+              <div className="mono" style={{ fontSize: 9, color: TYPE_COLOR[nextEntry.type] }}>SL {skillLevel(get(nextKey))} · {skillCount(get(nextKey))} skills · win +{atRisk}👑</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
