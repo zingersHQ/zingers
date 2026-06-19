@@ -13,6 +13,7 @@ import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
+import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
 import { jumpBeep, setJet, stopJet } from "@/lib/sfx";
 
@@ -40,11 +41,17 @@ export type NearTarget =
   | { kind: "arena" }
   | { kind: "challenge"; key: string; name: string; id: string; handle?: string }
   | { kind: "keeper"; level: number; name: string; title: string }
+  | { kind: "node"; id: string; nodeKind: NodeKind; crowns: number; fragments: number; flight: boolean }
   | null;
 
+// the Arena holds the central hub — matches stage here, so it stays at origin.
+// Train + Spire positions are per-world (biome.scene.landmarks), threaded through
+// as props so each world lays its districts out differently.
 const ARENA: [number, number, number] = [0, 0, 0];
-const TRAIN_PAD: [number, number, number] = [-15, 0, 4];
-const GUARDIAN_PAD: [number, number, number] = [15, 0, -6];
+
+function landmarkPos(l: { angle: number; dist: number }): [number, number, number] {
+  return [Math.cos(l.angle) * l.dist, 0, Math.sin(l.angle) * l.dist];
+}
 
 // Client-safe visual roster for the guardians embodied at the shrine. Mirrors the
 // display fields of lib/server/guardian.ts GUARDIANS (names/titles/colours only —
@@ -144,7 +151,10 @@ export default function World({
   controlsEnabled,
   biome,
   towerAgents = [],
+  nodes = [],
   onAltitude,
+  onPose,
+  travelRef,
   touchBottomInset = 0,
 }: {
   champions: GroundChampion[];
@@ -154,7 +164,10 @@ export default function World({
   controlsEnabled: boolean;
   biome: BiomeConfig;
   towerAgents?: TowerAgent[];
+  nodes?: DiscoveryNode[];
   onAltitude?: (y: number) => void;
+  onPose?: (x: number, z: number, heading: number) => void;
+  travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
   touchBottomInset?: number;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
@@ -183,10 +196,21 @@ export default function World({
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const sc = biome.scene;
+  const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
+  const spirePad = useMemo(() => landmarkPos(sc.landmarks.spire), [sc.landmarks.spire]);
+  const day = useMemo(() => dayKey(), []);
+  // split the ladder population: the weakest roam the open ground (walk-up
+  // challenges); the rest hold the Tower, strongest at the summit.
+  const bands = useMemo(() => bandAgents(towerAgents), [towerAgents]);
   // shared, deterministic tower layout — colliders, perched agents and the
   // challenge proximity check all read from this same list.
   const towerNodes = useMemo(() => towerLayout(shape, sc.towerAngle, sc.towerSteps), [shape, sc.towerAngle, sc.towerSteps]);
-  const perched = useMemo(() => assignPerch(towerNodes, towerAgents), [towerNodes, towerAgents]);
+  const perched = useMemo(() => assignPerch(towerNodes, bands.tower), [towerNodes, bands.tower]);
+  // ground roamers stand at deterministic mid-field spots that rotate by day
+  const roamers = useMemo(
+    () => bands.roamers.map((a) => ({ agent: a, pos: roamerSpot(a.id, day, shape) as [number, number, number] })),
+    [bands.roamers, day, shape],
+  );
   const challengeTargets = useMemo(
     () =>
       perched
@@ -200,7 +224,24 @@ export default function World({
         })),
     [perched],
   );
-  const keeperTargets = useMemo(() => spireKeeperTargets(), []);
+  const groundTargets = useMemo(
+    () =>
+      roamers
+        .filter((p) => p.agent.status === "awaiting")
+        .map((p) => ({
+          key: p.agent.key,
+          name: p.agent.name,
+          handle: p.agent.handle,
+          id: p.agent.id,
+          pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.0, p.pos[2]),
+        })),
+    [roamers],
+  );
+  const nodeTargets = useMemo(
+    () => nodes.map((n) => ({ id: n.id, kind: n.kind, crowns: n.crowns, fragments: n.fragments, flight: n.flight, pos: new THREE.Vector3(n.pos[0], n.pos[1], n.pos[2]) })),
+    [nodes],
+  );
+  const keeperTargets = useMemo(() => spireKeeperTargets(spirePad), [spirePad]);
   return (
     <>
     <Canvas
@@ -254,7 +295,7 @@ export default function World({
         shadow-bias={-0.0004}
       />
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
-      <pointLight position={[TRAIN_PAD[0], 6, TRAIN_PAD[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />
+      <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />
 
       <Suspense
         fallback={
@@ -270,19 +311,27 @@ export default function World({
           <Platforms biome={biome} shape={shape} count={sc.platformCount} />
           <Tower biome={biome} nodes={towerNodes} />
           {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
-          <GuardianSpire />
+          <GuardianSpire pad={spirePad} />
           <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
 
+          {/* wayfinding beams over the two open-ground districts (the Tower &
+              Spire carry their own bespoke beacons) */}
+          <Beacon pos={ARENA} color={biome.lights.arenaPoint} />
+          <Beacon pos={trainPad} color={biome.lights.trainPoint} />
+
+          {!match && <DiscoveryNodes nodes={nodes} />}
+
           {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
+          {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
 
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
             champions.map((c) => {
               const owned = c.key === ownedKey;
-              const home = owned ? TRAIN_PAD : roamHome(c.key, champions, sc.roam);
+              const home = owned ? trainPad : roamHome(c.key, champions, sc.roam);
               return (
                 <ChampionMesh
                   key={c.key}
@@ -301,7 +350,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} challengeTargets={challengeTargets} keeperTargets={keeperTargets} shape={shape} onAltitude={onAltitude} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
         </Physics>
 
         {!glLost && (
@@ -355,6 +404,72 @@ function roamHome(key: string, champions: GroundChampion[], roam: BiomeConfig["s
   }
   const a = (idx / n) * Math.PI * 2;
   return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
+}
+
+// ── Beacon ───────────────────────────────────────────────────────────────────
+// A soft sky-beam that marks a district so it's spottable from across the map.
+// Reused for every landmark; the Tower & Spire layer their own richer beacons.
+function Beacon({ pos, color, h = 30 }: { pos: [number, number, number]; color: string; h?: number }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (ref.current) (ref.current.material as THREE.MeshBasicMaterial).opacity = 0.07 + Math.sin(state.clock.elapsedTime * 1.4) * 0.025;
+  });
+  return (
+    <mesh ref={ref} position={[pos[0], pos[1] + h / 2, pos[2]]}>
+      <cylinderGeometry args={[0.4, 1.2, h, 14, 1, true]} />
+      <meshBasicMaterial color={color} transparent opacity={0.08} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+    </mesh>
+  );
+}
+
+// ── Discovery caches ─────────────────────────────────────────────────────────
+// Loot scattered through the wilds: gold crown caches on the ground, cyan
+// fragment caches often perched high (reachable only by jetpack). Walk/fly into
+// one and press E to claim. Refresh daily.
+function DiscoveryNodes({ nodes }: { nodes: DiscoveryNode[] }) {
+  return (
+    <>
+      {nodes.map((n) => (
+        <DiscoveryCache key={n.id} node={n} />
+      ))}
+    </>
+  );
+}
+
+function DiscoveryCache({ node }: { node: DiscoveryNode }) {
+  const spin = useRef<THREE.Group>(null);
+  const col = node.kind === "fragment" ? "#39e0ff" : "#f5d020";
+  useFrame((state, dt) => {
+    if (spin.current) {
+      spin.current.rotation.y += dt * 0.8;
+      spin.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.22;
+    }
+  });
+  return (
+    <group position={node.pos}>
+      <mesh position={[0, 14, 0]}>
+        <cylinderGeometry args={[0.14, 0.5, 28, 10, 1, true]} />
+        <meshBasicMaterial color={col} transparent opacity={0.12} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      </mesh>
+      <group ref={spin}>
+        <mesh castShadow>
+          <octahedronGeometry args={[node.kind === "fragment" ? 0.55 : 0.72, 0]} />
+          <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.5} roughness={0.25} transparent opacity={0.92} />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.78, 0]}>
+          <ringGeometry args={[0.9, 1.12, 32]} />
+          <meshBasicMaterial color={col} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+      </group>
+      <pointLight position={[0, 0.6, 0]} intensity={node.flight ? 18 : 10} color={col} distance={11} />
+      <Html position={[0, 1.9, 0]} center distanceFactor={16} zIndexRange={[18, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.4, color: col, fontWeight: 700 }}>{node.kind === "fragment" ? "◆ FRAGMENT" : "CROWN CACHE"}</div>
+          {node.flight && <div style={{ fontSize: 8, letterSpacing: 1, color: "#9a96b8" }}>fly up to claim</div>}
+        </div>
+      </Html>
+    </group>
+  );
 }
 
 // ---------- environment ----------
@@ -457,17 +572,17 @@ const SPIRE_RADIUS = 1.95; // how far each guardian orbits the core column
 const SPIRE_TWIST = 2.3; // radians of spiral per level
 const SPIRE_TOP_Y = SPIRE_BASE_Y + SPIRE_STEP_Y * (GUARDIAN_ROSTER.length - 1); // boss height
 
-function spireKeeperTargets() {
+function spireKeeperTargets(pad: [number, number, number]) {
   return GUARDIAN_ROSTER.map((g, i) => {
     const theta = i * SPIRE_TWIST;
-    const x = GUARDIAN_PAD[0] + Math.cos(theta) * SPIRE_RADIUS;
-    const z = GUARDIAN_PAD[2] + Math.sin(theta) * SPIRE_RADIUS;
+    const x = pad[0] + Math.cos(theta) * SPIRE_RADIUS;
+    const z = pad[2] + Math.sin(theta) * SPIRE_RADIUS;
     const y = SPIRE_BASE_Y + i * SPIRE_STEP_Y;
     return { level: g.level, name: g.name, title: g.title, pos: new THREE.Vector3(x, y + 1.0, z) };
   });
 }
 
-function GuardianSpire() {
+function GuardianSpire({ pad }: { pad: [number, number, number] }) {
   const coreRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
   useFrame((state) => {
@@ -496,7 +611,7 @@ function GuardianSpire() {
   const coreH = SPIRE_TOP_Y + 3.4;
 
   return (
-    <group position={GUARDIAN_PAD}>
+    <group position={pad}>
       {/* base dais */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} receiveShadow>
         <circleGeometry args={[3.0, 48]} />
@@ -627,9 +742,9 @@ function SpireGuardian({
   );
 }
 
-function TrainPad() {
+function TrainPad({ pos }: { pos: [number, number, number] }) {
   return (
-    <group position={TRAIN_PAD}>
+    <group position={pos}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <circleGeometry args={[2.6, 48]} />
         <meshStandardMaterial color="#6a6bff" transparent opacity={0.14} emissive="#6a6bff" emissiveIntensity={0.5} />
@@ -808,7 +923,7 @@ function pseudoChampion(a: TowerAgent): Champion {
   return c;
 }
 
-function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [number, number, number] }) {
+function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; position: [number, number, number]; ground?: boolean }) {
   const champ = useMemo(() => pseudoChampion(agent), [agent]);
   const vis = STATUS_VIS[agent.status];
   const disabled = agent.status === "disabled";
@@ -859,7 +974,7 @@ function PerchedAgent({ agent, position }: { agent: TowerAgent; position: [numbe
 
       <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>LADDER AGENT</div>
+          <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
           <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
             {agent.name}
             {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
@@ -1116,10 +1231,15 @@ function Handler({
   camCue,
   touchMove,
   touchBtn,
+  trainPad,
   challengeTargets,
+  groundTargets,
+  nodeTargets,
   keeperTargets,
   shape,
   onAltitude,
+  onPose,
+  travelRef,
 }: {
   controlsEnabled: boolean;
   onNear: (n: NearTarget) => void;
@@ -1129,10 +1249,15 @@ function Handler({
   camCue: React.RefObject<CamCue>;
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
+  trainPad: [number, number, number];
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
+  groundTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
+  nodeTargets: { id: string; kind: NodeKind; crowns: number; fragments: number; flight: boolean; pos: THREE.Vector3 }[];
   keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
+  onPose?: (x: number, z: number, heading: number) => void;
+  travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
   const built = useMemo(() => buildCharacter(scene, animations, blank(), "#cfd2e8"), [scene, animations]);
@@ -1168,7 +1293,25 @@ function Handler({
   const wasFlying = useRef(false);
   const altAccum = useRef(0);
   const altLast = useRef(-999);
+  const poseAccum = useRef(0);
   const { camera } = useThree();
+
+  // expose a fast-travel hook: drop the Handler onto a district (used by the
+  // compass). Reads the live body each call, so it survives remounts.
+  useEffect(() => {
+    if (!travelRef) return;
+    travelRef.current = (x, z) => {
+      const rb = body.current;
+      if (!rb) return;
+      const y = terrainHeight(x, z, shape) + 2.4;
+      rb.setTranslation({ x, y, z }, true);
+      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      jumps.current = 0;
+    };
+    return () => {
+      if (travelRef) travelRef.current = null;
+    };
+  }, [travelRef, shape]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
   // points at and fades in the new clip, so the `cur` ref can never desync from
@@ -1466,7 +1609,7 @@ function Handler({
 
     let next: NearTarget = null;
     if (!matchActive) {
-      const dTrain = Math.hypot(t.x - TRAIN_PAD[0], t.z - TRAIN_PAD[2]);
+      const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
       else if (dArena < 6.5) next = { kind: "arena" };
@@ -1502,10 +1645,50 @@ function Handler({
         }
         if (best) next = { kind: "challenge", ...best };
       }
+      // Roaming agents on the open ground — a walk-up challenge, no climb needed.
+      if (!next && ownedKey) {
+        let best: { key: string; name: string; id: string; handle?: string } | null = null;
+        let bestD = 4.5;
+        for (const gt of groundTargets) {
+          const dy = Math.abs(t.y - gt.pos.y);
+          const dh = Math.hypot(t.x - gt.pos.x, t.z - gt.pos.z);
+          if (dy > 3.5 || dh > 4.5) continue;
+          if (dh < bestD) {
+            bestD = dh;
+            best = { key: gt.key, name: gt.name, id: gt.id, handle: gt.handle };
+          }
+        }
+        if (best) next = { kind: "challenge", ...best };
+      }
+      // Discovery caches — walk or fly into one to grab it.
+      if (!next) {
+        let best: (typeof nodeTargets)[number] | null = null;
+        let bestD = 2.8;
+        for (const nt of nodeTargets) {
+          const dy = Math.abs(t.y - nt.pos.y);
+          const dh = Math.hypot(t.x - nt.pos.x, t.z - nt.pos.z);
+          if (dy > 2.8 || dh > 2.8) continue;
+          const d = Math.hypot(dh, dy);
+          if (d < bestD) {
+            bestD = d;
+            best = nt;
+          }
+        }
+        if (best) next = { kind: "node", id: best.id, nodeKind: best.kind, crowns: best.crowns, fragments: best.fragments, flight: best.flight };
+      }
     }
     if (JSON.stringify(next) !== JSON.stringify(near.current)) {
       near.current = next;
       onNear(next);
+    }
+
+    // report pose for the compass (throttled, runs even on flat ground)
+    if (onPose) {
+      poseAccum.current += dt;
+      if (poseAccum.current > 0.1) {
+        poseAccum.current = 0;
+        onPose(t.x, t.z, heading.current);
+      }
     }
 
     // report altitude to the HUD (throttled by time + change)
@@ -1521,7 +1704,7 @@ function Handler({
 
   return (
     <>
-      <TrainPad />
+      <TrainPad pos={trainPad} />
       <RigidBody
         ref={body}
         type="dynamic"

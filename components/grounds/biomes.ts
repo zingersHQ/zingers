@@ -72,6 +72,14 @@ export interface BiomeConfig {
       inner: number; // keep-out radius around the arena (don't walk into the pit/ring)
       speed: number; // wander move speed
     };
+    // where the satellite districts sit, as a bearing + distance from the plaza
+    // centre. The Arena holds the middle (matches stage there); Train + Spire push
+    // out to distinct rim sectors so they read as separate places you travel to,
+    // not a huddle at spawn. Distances stay inside PLAZA_R so they're on flat ground.
+    landmarks: {
+      train: { angle: number; dist: number };
+      spire: { angle: number; dist: number };
+    };
   };
 }
 
@@ -94,7 +102,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#cdb8ff", warm: "#f0a93a", cool: "#6a6bff", fill: "#3a2a6a" },
     bloom: 0.85,
     exposure: 1.15,
-    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 } },
+    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI * 0.72, dist: 19 } } },
   },
   {
     id: "ember",
@@ -114,7 +122,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#ffcaa0", warm: "#ff7a2a", cool: "#a8431a", fill: "#5a1a0a" },
     bloom: 1.0,
     exposure: 1.1,
-    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 17, spread: 21, inner: 11, speed: 2.1 } },
+    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 17, spread: 21, inner: 11, speed: 2.1 }, landmarks: { train: { angle: Math.PI * 1.18, dist: 19 }, spire: { angle: Math.PI * 1.68, dist: 19 } } },
   },
   {
     id: "void",
@@ -134,7 +142,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#aef0e0", warm: "#34ffd0", cool: "#1a7a8a", fill: "#0a4a5a" },
     bloom: 0.95,
     exposure: 1.18,
-    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 15, spread: 22, inner: 7, speed: 3.6 } },
+    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 15, spread: 22, inner: 7, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 1.55, dist: 19 }, spire: { angle: Math.PI * 0.08, dist: 19 } } },
   },
 ];
 

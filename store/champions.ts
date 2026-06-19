@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Champion, DailyResult, DailyState, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
-import { applyResult, blank, blankStyle, levelFor, tierIndex } from "@/lib/evolve/progression";
+import { applyResult, blank, blankStyle } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
 import { STORAGE } from "@/lib/brand";
 
@@ -16,6 +16,20 @@ const SEED: [string, number, keyof Champion, number, keyof Champion, number, num
   ["MUSE", 6000, "creativity", 44, "control", 8, 33, 12],
   ["EMBER", 9000, "aggression", 28, "flair", 12, 40, 18],
 ];
+
+// one training session's worth of growth: +XP and a doctrine-shaped nudge to the
+// style axes. Shared by paid (Crowns) and fragment-funded sessions.
+function evolveTrained(prev: Champion | undefined, strat: Strat | undefined): Champion {
+  const c = { ...(prev || blank()) };
+  const r = strat || DEFAULT_STRAT;
+  c.xp += 220;
+  c.aggression += (r.aggression / 100) * 1.6 + 0.2;
+  c.control += (r.focus / 100) * 1.6 + 0.2;
+  c.flair += (r.risk / 100) * 1.4 + 0.1;
+  c.resilience += ((100 - r.aggression) / 100) * 0.9;
+  c.creativity += 0.3;
+  return c;
+}
 
 function seeded(): Progress {
   const p: Progress = {};
@@ -35,10 +49,23 @@ function seeded(): Progress {
 const STARTING_CROWNS = 500;
 export const TRAIN_COST = 60;
 
+// UTC day index — discovery caches refresh at the rollover, so the ledger of
+// what you've already grabbed resets each day.
+const today = () => Math.floor(Date.now() / 86_400_000);
+
+interface NodeLedger {
+  day: number; // the day the claimed list belongs to
+  claimed: string[]; // node ids already grabbed today
+}
+
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
   crowns: number;
+  // exploration loot: spent for a free training session (feeds champion power,
+  // not the betting/training economy). Client-only for now — not server-synced.
+  fragments: number;
+  nodes: NodeLedger;
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
@@ -54,7 +81,11 @@ interface ChampionStore {
   setOwned: (key: string) => void;
   earn: (n: number) => void;
   spend: (n: number) => boolean;
+  // claim a discovery cache once per day; returns false if already grabbed
+  claimNode: (id: string, reward: { crowns?: number; fragments?: number }) => boolean;
   trainChampion: (key: string) => boolean;
+  // spend one exploration fragment for a free training session
+  trainWithFragment: (key: string) => boolean;
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
   recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
   predictResult: (correct: boolean) => void;
@@ -69,6 +100,8 @@ export const useChampions = create<ChampionStore>()(
       progress: seeded(),
       recipes: {},
       crowns: STARTING_CROWNS,
+      fragments: 0,
+      nodes: { day: today(), claimed: [] },
       owned: null,
       predict: { streak: 0, best: 0 },
       daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
@@ -163,23 +196,32 @@ export const useChampions = create<ChampionStore>()(
         return true;
       },
 
+      claimNode: (id, reward) => {
+        const day = today();
+        const led = get().nodes;
+        const claimed = led.day === day ? led.claimed : [];
+        if (claimed.includes(id)) return false;
+        set((s) => ({
+          crowns: s.crowns + (reward.crowns ?? 0),
+          fragments: s.fragments + (reward.fragments ?? 0),
+          nodes: { day, claimed: [...claimed, id] },
+        }));
+        return true;
+      },
+
       // a paid training session: spends Crowns, adds XP + nudges style axes toward
       // the recipe dials — so money visibly evolves the body and shifts the build.
       trainChampion: (key) => {
         if (get().crowns < TRAIN_COST) return false;
-        set((s) => {
-          const c = { ...(s.progress[key] || blank()) };
-          const r = s.recipes[key]?.strat || DEFAULT_STRAT;
-          const before = tierIndex(levelFor(c.xp).level);
-          c.xp += 220;
-          c.aggression += (r.aggression / 100) * 1.6 + 0.2;
-          c.control += (r.focus / 100) * 1.6 + 0.2;
-          c.flair += (r.risk / 100) * 1.4 + 0.1;
-          c.resilience += ((100 - r.aggression) / 100) * 0.9;
-          c.creativity += 0.3;
-          void before;
-          return { progress: { ...s.progress, [key]: c }, crowns: s.crowns - TRAIN_COST };
-        });
+        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: s.crowns - TRAIN_COST }));
+        return true;
+      },
+
+      // a fragment found in the wilds buys the same session for free — exploration
+      // feeds champion power directly.
+      trainWithFragment: (key) => {
+        if (get().fragments < 1) return false;
+        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, fragments: s.fragments - 1 }));
         return true;
       },
 

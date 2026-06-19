@@ -15,6 +15,7 @@ export const STORAGE = {
   intro: "zingers_intro_v1",
   introLegacy: "battler_intro_v1",
   sound: "zingers_sound_v1",
+  chronicleDismissed: "zingers_chronicle_dismissed_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

@@ -28,6 +28,13 @@ export const WORLDS: WorldDef[] = [
     biome: BIOMES[1], // Ember Wastes
     scenario: SCENARIOS.gauntlet,
   },
+  {
+    id: "void",
+    name: "Void Garden",
+    tagline: "open duels · bioluminescent deep space",
+    biome: BIOMES[2], // Void Garden
+    scenario: SCENARIOS.duel,
+  },
 ];
 
 export const DEFAULT_WORLD = WORLDS[0];

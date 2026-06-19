@@ -68,6 +68,7 @@ export default function GroundsScreen() {
   const scenario = world.scenario;
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+  const [showChronicle, setShowChronicle] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
@@ -98,6 +99,18 @@ export default function GroundsScreen() {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
       if (!seen) setShowIntro(true);
     } catch {}
+    try {
+      setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
+    } catch {
+      setShowChronicle(true);
+    }
+  }, []);
+
+  const dismissChronicle = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.chronicleDismissed, "1");
+    } catch {}
+    setShowChronicle(false);
   }, []);
 
   useEffect(() => {
@@ -504,7 +517,7 @@ export default function GroundsScreen() {
           </div>
         )}
 
-        {(owned || !isMobile) && (
+        {(owned || !isMobile) && overlay === "none" && !showMatch && !gRun && (
           <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {owned
               ? isMobile
@@ -515,16 +528,16 @@ export default function GroundsScreen() {
               : "Claim a champion to enter the world"}
           </p>
         )}
-        {!isMobile && overlay === "none" && !showMatch && (
+        {!isMobile && overlay === "none" && !showMatch && showChronicle && (
           <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
-            <SeasonBanner compact />
+            <SeasonBanner compact onClose={dismissChronicle} />
           </div>
         )}
       </div>
       )}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
-        <AmbientToggle compact={isMobile} />
+        {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
           <span style={{ fontWeight: 700, fontSize: isMobile ? 15 : 18, color: "var(--gold)" }}>{crowns}</span>

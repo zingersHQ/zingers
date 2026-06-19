@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 import { currentSeason, softReset } from "@/lib/lore/season";
 import { FORCES } from "@/lib/lore/canon";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
 import { showcaseChampion, showcaseForRegion } from "@/lib/render/showcase";
 
-export function SeasonBanner({ compact = false }: { compact?: boolean }) {
+export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; onClose?: () => void }) {
   const season = currentSeason();
   const force = FORCES[season.biasForce];
   const sampleOld = 1400;
@@ -29,6 +30,33 @@ export function SeasonBanner({ compact = false }: { compact?: boolean }) {
       }}
     >
       <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 80% 20%, ${force.hex}22, transparent 42%)`, pointerEvents: "none" }} />
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Dismiss the Chronicle"
+          title="Dismiss the Chronicle"
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 2,
+            display: "grid",
+            placeItems: "center",
+            width: 26,
+            height: 26,
+            padding: 0,
+            borderRadius: 8,
+            border: "1px solid var(--line)",
+            background: "rgba(8,6,16,.6)",
+            color: "var(--muted)",
+            cursor: "pointer",
+            touchAction: "manipulation",
+          }}
+        >
+          <X size={14} strokeWidth={2} />
+        </button>
+      )}
       {!compact && (
         <div style={{ position: "relative", minHeight: 160, borderRadius: 14, overflow: "hidden", border: `1px solid ${force.hex}55`, background: "#0a0812" }}>
           <ChampionPortrait
