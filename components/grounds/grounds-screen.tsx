@@ -138,6 +138,8 @@ export default function GroundsScreen() {
   }, []);
   const [nodeFlash, setNodeFlash] = useState<{ crowns: number; fragments: number } | null>(null);
   const nodeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pledgeFlash, setPledgeFlash] = useState<{ name: string; motto: string; color: string } | null>(null);
+  const pledgeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -248,6 +250,15 @@ export default function GroundsScreen() {
         if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
         nodeFlashTimer.current = setTimeout(() => setNodeFlash(null), 2600);
       }
+    } else if (near?.kind === "force") {
+      // swear allegiance to this house — lights its banner and binds ranked wins
+      // to its standing in the season-long war between the five Forces.
+      if (store.force !== near.type) {
+        store.pledgeForce(near.type);
+        setPledgeFlash({ name: near.name, motto: near.motto, color: TYPE_COLOR[near.type] });
+        if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+        pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
+      }
     } else if (near?.kind === "gate") {
       // step through a Vaultgate → travel to that region (the scene remounts via
       // its world key, so you land cleanly at the region's spawn)
@@ -260,7 +271,10 @@ export default function GroundsScreen() {
     travelRef.current?.(pos[0], pos[2]);
   }, []);
 
-  useEffect(() => () => { if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current); }, []);
+  useEffect(() => () => {
+    if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
+    if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -613,8 +627,8 @@ export default function GroundsScreen() {
             {owned
               ? isHub
                 ? isMobile
-                  ? "Walk to a Vaultgate · tap to travel to a region"
-                  : "THE CONCORD · WALK TO A VAULTGATE · E TO TRAVEL · M FOR MENU"
+                  ? "Walk to a Vaultgate to travel · stand under a banner to swear allegiance"
+                  : "THE CONCORD · VAULTGATE → TRAVEL · FORCE BANNER → SWEAR · E TO ACT · M FOR MENU"
                 : isMobile
                   ? "Walk to glowing spots · tap the prompt when near"
                   : scenario.id === "gauntlet"
@@ -685,6 +699,17 @@ export default function GroundsScreen() {
         </div>
       )}
 
+      {/* allegiance-sworn toast */}
+      {pledgeFlash && (
+        <div className="pop" style={{ position: "absolute", top: "32%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60 }}>
+          <div className="panel" style={{ ["--ac" as string]: pledgeFlash.color, padding: "12px 20px", textAlign: "center", borderColor: pledgeFlash.color, boxShadow: `0 0 60px -24px ${pledgeFlash.color}` }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: pledgeFlash.color, fontWeight: 700 }}>ALLEGIANCE SWORN</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{pledgeFlash.name}</div>
+            <div style={{ fontSize: 12, fontStyle: "italic", color: "var(--muted)", marginTop: 2 }}>{pledgeFlash.motto}</div>
+          </div>
+        </div>
+      )}
+
       {/* menu — single visible button, top-left (M to toggle) */}
       <GameDock hidden={!showDock} />
 
@@ -732,6 +757,10 @@ export default function GroundsScreen() {
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {near.kind === "gate"
                 ? `Enter ${near.label}`
+                : near.kind === "force"
+                ? store.force === near.type
+                  ? `Sworn to ${near.name}`
+                  : `Swear to ${near.name}`
                 : near.kind === "train"
                 ? "Train your champion"
                 : near.kind === "keeper"

@@ -90,16 +90,29 @@ function Seal({ daylight }: { daylight: boolean }) {
 }
 
 // ── The five Force banners ring the seal; the pledged one stands tall & lit ──
-const BANNER_R = 7.4;
+// Pushed well clear of the 5.2-radius seal so the houses stand apart from each
+// other and from the door, with room to walk up to one and swear allegiance.
+export const BANNER_R = 12.5;
+
+export interface BannerSpot {
+  type: CreatureType;
+  x: number;
+  z: number;
+  rot: number;
+}
+
+// Shared banner layout — the scene draws from this and the Handler reads the same
+// spots for the walk-up "swear allegiance" prompt, so the flag you see is the
+// flag you pledge under.
+export function concordBanners(): BannerSpot[] {
+  return WHEEL.map((type, i) => {
+    const a = (i / WHEEL.length) * Math.PI * 2 - Math.PI / 2;
+    return { type, x: Math.cos(a) * BANNER_R, z: Math.sin(a) * BANNER_R, rot: -a + Math.PI / 2 };
+  });
+}
+
 function ForceBanners({ pledged }: { pledged: CreatureType | null }) {
-  const banners = useMemo(
-    () =>
-      WHEEL.map((type, i) => {
-        const a = (i / WHEEL.length) * Math.PI * 2 - Math.PI / 2;
-        return { type, x: Math.cos(a) * BANNER_R, z: Math.sin(a) * BANNER_R, rot: -a + Math.PI / 2 };
-      }),
-    [],
-  );
+  const banners = useMemo(() => concordBanners(), []);
   return (
     <>
       {banners.map((b) => (
@@ -120,6 +133,11 @@ function ForceBanner({ type, x, z, rot, lit }: { type: CreatureType; x: number; 
   });
   return (
     <group position={[x, 0, z]}>
+      {/* floor footprint you stand on to swear — pulses on your own house */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <ringGeometry args={[1.4, 1.7, 40]} />
+        <meshBasicMaterial color={col} transparent opacity={lit ? 0.7 : 0.4} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
       {/* base plinth */}
       <mesh position={[0, 0.25, 0]} castShadow>
         <cylinderGeometry args={[0.55, 0.7, 0.5, 8]} />
@@ -148,7 +166,7 @@ function ForceBanner({ type, x, z, rot, lit }: { type: CreatureType; x: number; 
         <octahedronGeometry args={[lit ? 0.34 : 0.24, 0]} />
         <meshStandardMaterial color={col} emissive={col} emissiveIntensity={lit ? 2.6 : 1.2} metalness={0.4} roughness={0.25} />
       </mesh>
-      {lit && (
+      {lit ? (
         <>
           <pointLight position={[0, h * 0.7, 0]} intensity={26} color={col} distance={14} />
           <Html position={[0, h + 1.4, 0]} center distanceFactor={13} zIndexRange={[18, 0]} style={{ pointerEvents: "none" }}>
@@ -158,6 +176,13 @@ function ForceBanner({ type, x, z, rot, lit }: { type: CreatureType; x: number; 
             </div>
           </Html>
         </>
+      ) : (
+        <Html position={[0, 1.0, 0]} center distanceFactor={15} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700, opacity: 0.85 }}>{lore.inWorld.toUpperCase()}</div>
+            <div style={{ fontSize: 7.5, letterSpacing: 1, color: "#cfcdee", opacity: 0.7 }}>walk up · swear allegiance</div>
+          </div>
+        </Html>
       )}
     </group>
   );

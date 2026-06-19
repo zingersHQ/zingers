@@ -13,8 +13,9 @@ import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
-import { ConcordScene } from "./concord";
+import { ConcordScene, concordBanners } from "./concord";
 import { RegionDistrict } from "./districts";
+import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import type { GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
@@ -46,6 +47,7 @@ export type NearTarget =
   | { kind: "keeper"; level: number; name: string; title: string }
   | { kind: "node"; id: string; nodeKind: NodeKind; crowns: number; fragments: number; flight: boolean }
   | { kind: "gate"; world: string; label: string }
+  | { kind: "force"; type: CreatureType; name: string; motto: string }
   | null;
 
 // the Arena holds the central hub — matches stage here, so it stays at origin.
@@ -251,6 +253,21 @@ export default function World({
     () => hubGates.map((g) => ({ world: g.world, label: g.label, pos: new THREE.Vector3(g.pos[0], g.pos[1] + 1.0, g.pos[2]) })),
     [hubGates],
   );
+  // the five Force banners in the Concord — walk up to one to swear allegiance.
+  // Same layout the ConcordScene draws, so the flag you stand under is the house
+  // you pledge.
+  const forceTargets = useMemo(
+    () =>
+      isHub
+        ? concordBanners().map((b) => ({
+            type: b.type,
+            name: FORCES[b.type].inWorld,
+            motto: FORCE_MOTTO[b.type],
+            pos: new THREE.Vector3(b.x, terrainHeight(b.x, b.z, shape), b.z),
+          }))
+        : [],
+    [isHub, shape],
+  );
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   const spirePad = useMemo(() => landmarkPos(sc.landmarks.spire), [sc.landmarks.spire]);
   const day = useMemo(() => dayKey(), []);
@@ -416,7 +433,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} gateTargets={gateTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
         </Physics>
 
         {!glLost && (
@@ -1305,6 +1322,7 @@ function Handler({
   nodeTargets,
   keeperTargets,
   gateTargets,
+  forceTargets,
   shape,
   onAltitude,
   onPose,
@@ -1325,6 +1343,7 @@ function Handler({
   nodeTargets: { id: string; kind: NodeKind; crowns: number; fragments: number; flight: boolean; pos: THREE.Vector3 }[];
   keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   gateTargets: { world: string; label: string; pos: THREE.Vector3 }[];
+  forceTargets: { type: CreatureType; name: string; motto: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
@@ -1691,6 +1710,20 @@ function Handler({
         }
       }
       if (best) next = { kind: "gate", ...best };
+      // no gate underfoot? check the Force banners ringing the seal — stand on a
+      // banner's footprint to swear allegiance to that house.
+      if (!next) {
+        let bestF: { type: CreatureType; name: string; motto: string } | null = null;
+        let bestFd = 2.6;
+        for (const ft of forceTargets) {
+          const dh = Math.hypot(t.x - ft.pos.x, t.z - ft.pos.z);
+          if (dh < bestFd) {
+            bestFd = dh;
+            bestF = { type: ft.type, name: ft.name, motto: ft.motto };
+          }
+        }
+        if (bestF) next = { kind: "force", ...bestF };
+      }
     } else if (!matchActive) {
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
