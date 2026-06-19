@@ -16,6 +16,8 @@ import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById } from "@/components/grounds/worlds";
+import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
+import { Compass, type Pose } from "@/components/grounds/compass";
 import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
@@ -537,7 +539,7 @@ export default function GroundsScreen() {
       )}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
-        {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />
+        {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
           <span style={{ fontWeight: 700, fontSize: isMobile ? 15 : 18, color: "var(--gold)" }}>{crowns}</span>
@@ -1006,17 +1008,26 @@ function ChallengeOverlay(props: {
           You field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b>.
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, margin: "16px 0" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "16px 0" }}>
           {opps.map((r) => {
             const col = TYPE_COLOR[r.type];
             const on = opponent === r.key;
             const c = get(r.key);
             return (
-              <button key={r.key} onClick={() => setOpponent(r.key)} className="panel" style={{ ["--ac" as string]: col, padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", borderColor: on ? col : "var(--line)" }}>
-                <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={60} />
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
-                <div className="mono" style={{ fontSize: 9, color: col }}>
-                  L{levelFor(c.xp).level} · {ratingOf(c)}
+              <button
+                key={r.key}
+                onClick={() => setOpponent(r.key)}
+                className="panel"
+                style={{ ["--ac" as string]: col, padding: "8px 12px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", borderColor: on ? col : "var(--line)", textAlign: "left", width: "100%" }}
+              >
+                <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={40} />
+                <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                <div className="mono" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12, fontSize: 11, flexShrink: 0 }}>
+                  <span style={{ color: col }}>L{levelFor(c.xp).level}</span>
+                  <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, color: "var(--muted)" }}>
+                    <span style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>RATING</span>
+                    {ratingOf(c)}
+                  </span>
                 </div>
               </button>
             );
