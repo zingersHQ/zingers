@@ -10,11 +10,12 @@ import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank, skillLevel } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
-import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, type TerrainShape } from "./terrain";
+import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, TERRAIN_HALF, type TerrainShape } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { ConcordScene, concordBanners } from "./concord";
 import { RegionDistrict } from "./districts";
+import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import type { GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
@@ -46,6 +47,8 @@ export type NearTarget =
   | { kind: "challenge"; key: string; name: string; id: string; handle?: string }
   | { kind: "keeper"; level: number; name: string; title: string }
   | { kind: "node"; id: string; nodeKind: NodeKind; crowns: number; fragments: number; flight: boolean }
+  | { kind: "goal"; id: string; goalKind: GoalKind; label: string; hint: string; crowns: number; fragments: number; trainerXp: number; seasonPoints: number }
+  | { kind: "broker" }
   | { kind: "gate"; world: string; label: string }
   | { kind: "force"; type: CreatureType; name: string; motto: string }
   | null;
@@ -183,6 +186,7 @@ export default function World({
   biome,
   towerAgents = [],
   nodes = [],
+  goals = [],
   gates = [],
   pledged = null,
   tier = 0,
@@ -201,6 +205,7 @@ export default function World({
   biome: BiomeConfig;
   towerAgents?: TowerAgent[];
   nodes?: DiscoveryNode[];
+  goals?: WorldGoal[];
   gates?: GateDef[];
   pledged?: CreatureType | null;
   tier?: number;
@@ -270,6 +275,12 @@ export default function World({
   );
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   const spirePad = useMemo(() => landmarkPos(sc.landmarks.spire), [sc.landmarks.spire]);
+  // the Broker stands on flat ground on a free bearing (offset from the Tower),
+  // an easy walk from spawn — a mind that deals in fragments.
+  const brokerPad = useMemo<[number, number, number]>(() => {
+    const a = sc.towerAngle + 2.4;
+    return [Math.cos(a) * 15, 0, Math.sin(a) * 15];
+  }, [sc.towerAngle]);
   const day = useMemo(() => dayKey(), []);
   // split the ladder population: the weakest roam the open ground (walk-up
   // challenges); the rest hold the Tower, strongest at the summit.
@@ -312,6 +323,10 @@ export default function World({
   const nodeTargets = useMemo(
     () => nodes.map((n) => ({ id: n.id, kind: n.kind, crowns: n.crowns, fragments: n.fragments, flight: n.flight, pos: new THREE.Vector3(n.pos[0], n.pos[1], n.pos[2]) })),
     [nodes],
+  );
+  const goalTargets = useMemo(
+    () => goals.map((g) => ({ id: g.id, goalKind: g.kind, label: g.label, hint: g.hint, radius: g.radius, reward: g.reward, pos: new THREE.Vector3(g.pos[0], g.pos[1], g.pos[2]) })),
+    [goals],
   );
   const keeperTargets = useMemo(() => spireKeeperTargets(spirePad), [spirePad]);
   return (
@@ -392,6 +407,8 @@ export default function World({
             <>
               <PlazaSurround biome={biome} />
               <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
+              <RiftFeature biome={biome} shape={shape} />
+              {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
               {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
@@ -403,6 +420,8 @@ export default function World({
               <Beacon pos={trainPad} color={biome.lights.trainPoint} />
 
               {!match && <DiscoveryNodes nodes={nodes} />}
+              {!match && <BrokerPost pos={brokerPad} biome={biome} />}
+              {!match && <GoalMarkers goals={goals} />}
               {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
               {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
             </>
@@ -433,7 +452,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
+          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
         </Physics>
 
         {!glLost && (
@@ -549,6 +568,187 @@ function DiscoveryCache({ node }: { node: DiscoveryNode }) {
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
           <div style={{ fontSize: 9, letterSpacing: 1.4, color: col, fontWeight: 700 }}>{node.kind === "fragment" ? "◆ FRAGMENT" : "CROWN CACHE"}</div>
           {node.flight && <div style={{ fontSize: 8, letterSpacing: 1, color: "#9a96b8" }}>fly up to claim</div>}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// ── The great rift ───────────────────────────────────────────────────────────
+// A glowing seam running along the canyon floor, themed per region: the Ember
+// Wastes run with LAVA (a hazard you fly across), the Void Garden with a luminous
+// RIVER OF LIGHT, the Colosseum with a violet VAULT-CRACK. Cheap: a ribbon of
+// additive planes following the floor + a few molten lights. Renders only where a
+// region actually has a rift (shape.canyonDepth > 0).
+function RiftFeature({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+  const data = useMemo(() => {
+    if (shape.canyonDepth <= 0) return null;
+    const col = biome.id === "ember" ? "#ff4d14" : biome.id === "void" ? "#34ffd0" : "#8a5cff";
+    const dirx = Math.cos(shape.canyonAngle), dirz = Math.sin(shape.canyonAngle);
+    const start = PLAZA_R + 6, end = TERRAIN_HALF - 16, N = 16;
+    const segs: { r: number; y: number; w: number }[] = [];
+    for (let i = 0; i < N; i++) {
+      const r = start + (i / (N - 1)) * (end - start);
+      const x = dirx * r, z = dirz * r;
+      segs.push({ r, y: terrainHeight(x, z, shape) + 0.08, w: shape.canyonHalfWidth * (0.7 + 0.25 * Math.sin(i)) });
+    }
+    return { col, segs, len: ((end - start) / N) + 1.8, lit: [2, 7, 12] };
+  }, [biome, shape]);
+  if (!data) return null;
+  const hazard = biome.id === "ember";
+  return (
+    <group rotation={[0, -shape.canyonAngle, 0]}>
+      {data.segs.map((s, i) => (
+        <mesh key={i} position={[s.r, s.y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[data.len, s.w]} />
+          <meshBasicMaterial color={data.col} transparent opacity={hazard ? 0.82 : 0.5} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} fog={false} />
+        </mesh>
+      ))}
+      {data.lit.map((li) =>
+        data.segs[li] ? <pointLight key={li} position={[data.segs[li].r, data.segs[li].y + 2.4, 0]} intensity={hazard ? 48 : 30} color={data.col} distance={28} /> : null,
+      )}
+    </group>
+  );
+}
+
+// ── Floating islands (Void Garden) ───────────────────────────────────────────
+// The Void's signature: a constellation of solid sky-islands you platform across
+// by flight, so its peak/secret play happens UP in the air, not on the ground.
+function FloatingIslands({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+  const items = useMemo(() => {
+    const out: { pos: [number, number, number]; r: number }[] = [];
+    const N = 6;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2 + shape.seed * 0.02;
+      const rad = PLAZA_R + 14 + (i % 3) * 12;
+      const x = Math.cos(a) * rad;
+      const z = Math.sin(a) * rad;
+      const y = terrainHeight(x, z, shape) + 12 + (i % 3) * 7;
+      out.push({ pos: [x, y, z], r: 3.2 + (i % 2) * 1.4 });
+    }
+    return out;
+  }, [shape]);
+  return (
+    <>
+      {items.map((it, i) => (
+        <group key={i} position={it.pos}>
+          <RigidBody type="fixed" colliders="hull">
+            <mesh castShadow receiveShadow>
+              <cylinderGeometry args={[it.r, it.r * 0.45, 1.5, 9]} />
+              <meshStandardMaterial color={biome.platform.a} emissive={biome.floatCrystal.emissive} emissiveIntensity={0.4} metalness={0.4} roughness={0.5} flatShading />
+            </mesh>
+          </RigidBody>
+          <mesh position={[0, 1.4, 0]}>
+            <octahedronGeometry args={[0.7, 0]} />
+            <meshStandardMaterial color={biome.floatCrystal.color} emissive={biome.floatCrystal.emissive} emissiveIntensity={1.6} metalness={0.4} roughness={0.25} />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
+// ── The Broker ───────────────────────────────────────────────────────────────
+// A standing mind that deals in fragments: a dark kiosk crowned by a slowly
+// turning fragment, marked by a cyan beacon. Walk up + press E to open the
+// exchange (buy/sell fragments for Crowns).
+const BROKER_COL = "#39e0ff";
+function BrokerPost({ pos, biome }: { pos: [number, number, number]; biome: BiomeConfig }) {
+  const gem = useRef<THREE.Group>(null);
+  useFrame((state, dt) => {
+    if (gem.current) {
+      gem.current.rotation.y += dt * 0.9;
+      gem.current.position.y = 2.7 + Math.sin(state.clock.elapsedTime * 1.3) * 0.16;
+    }
+  });
+  return (
+    <group position={pos}>
+      <RigidBody type="fixed" colliders="cuboid">
+        <mesh position={[0, 1.0, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.9, 1.15, 2.0, 8]} />
+          <meshStandardMaterial color={biome.obelisk.color} emissive={BROKER_COL} emissiveIntensity={0.3} metalness={0.5} roughness={0.45} flatShading />
+        </mesh>
+      </RigidBody>
+      <mesh position={[0, 2.15, 0]}>
+        <torusGeometry args={[0.95, 0.06, 10, 32]} />
+        <meshStandardMaterial color={BROKER_COL} emissive={BROKER_COL} emissiveIntensity={1.4} metalness={0.4} roughness={0.3} />
+      </mesh>
+      <group ref={gem}>
+        <mesh castShadow>
+          <octahedronGeometry args={[0.55, 0]} />
+          <meshStandardMaterial color={BROKER_COL} emissive={BROKER_COL} emissiveIntensity={1.8} metalness={0.5} roughness={0.25} />
+        </mesh>
+      </group>
+      <Beacon pos={[0, 0, 0]} color={BROKER_COL} h={24} />
+      <pointLight position={[0, 2.4, 0]} intensity={18} color={BROKER_COL} distance={14} />
+      <Html position={[0, 3.7, 0]} center distanceFactor={16} zIndexRange={[18, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 11, letterSpacing: 1.4, color: "#fff", fontWeight: 800, textShadow: "0 2px 8px #000" }}>THE BROKER</div>
+          <div style={{ fontSize: 8, letterSpacing: 1, color: BROKER_COL }}>trade fragments &amp; crowns</div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// ── World goals ──────────────────────────────────────────────────────────────
+// The three standing objectives (peak / depth / secret). Peak & depth carry a
+// tall sky-beam so they're spottable from across the map; the secret is a faint,
+// low-key shimmer you have to get close to. Reach one and press E to claim.
+function GoalMarkers({ goals }: { goals: WorldGoal[] }) {
+  return (
+    <>
+      {goals.map((g) => (
+        <GoalBeacon key={g.id} goal={g} />
+      ))}
+    </>
+  );
+}
+
+function GoalBeacon({ goal }: { goal: WorldGoal }) {
+  const spin = useRef<THREE.Group>(null);
+  const beam = useRef<THREE.Mesh>(null);
+  const col = goal.color;
+  const secret = goal.kind === "secret";
+  useFrame((state, dt) => {
+    if (spin.current) {
+      spin.current.rotation.y += dt * (secret ? 1.4 : 0.7);
+      spin.current.position.y = Math.sin(state.clock.elapsedTime * 1.4) * 0.2;
+    }
+    if (beam.current) (beam.current.material as THREE.MeshBasicMaterial).opacity = (secret ? 0.04 : 0.1) + Math.sin(state.clock.elapsedTime * 1.6) * 0.025;
+  });
+  const beamH = 64;
+  const icon = goal.kind === "peak" ? "▲" : goal.kind === "depth" ? "▼" : "◆";
+  return (
+    <group position={goal.pos}>
+      <mesh ref={beam} position={[0, beamH / 2 - 2, 0]}>
+        <cylinderGeometry args={[secret ? 0.1 : 0.32, secret ? 0.4 : 1.0, beamH, 14, 1, true]} />
+        <meshBasicMaterial color={col} transparent opacity={0.08} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      </mesh>
+      <group ref={spin}>
+        <mesh castShadow>
+          <octahedronGeometry args={[secret ? 0.5 : 0.82, 0]} />
+          <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.8} metalness={0.5} roughness={0.25} transparent opacity={secret ? 0.85 : 0.95} />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.95, 0]}>
+          <ringGeometry args={[1.0, 1.26, 36]} />
+          <meshBasicMaterial color={col} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+      </group>
+      {/* a summit landing halo so the flight-gated peak reads as a place to reach */}
+      {goal.kind === "peak" && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.0, 0]}>
+          <ringGeometry args={[3.0, 3.5, 40]} />
+          <meshBasicMaterial color={col} transparent opacity={0.3} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} fog={false} />
+        </mesh>
+      )}
+      <pointLight position={[0, 0.9, 0]} intensity={secret ? 12 : 24} color={col} distance={15} />
+      <Html position={[0, 2.2, 0]} center distanceFactor={18} zIndexRange={[18, 0]} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.4, color: col, fontWeight: 800 }}>
+            {icon} {goal.label.toUpperCase()}
+          </div>
+          <div style={{ fontSize: 8, letterSpacing: 1, color: "#cfcbe8" }}>{goal.hint}</div>
         </div>
       </Html>
     </group>
@@ -1320,6 +1520,8 @@ function Handler({
   challengeTargets,
   groundTargets,
   nodeTargets,
+  goalTargets,
+  brokerPad,
   keeperTargets,
   gateTargets,
   forceTargets,
@@ -1341,6 +1543,8 @@ function Handler({
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   groundTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   nodeTargets: { id: string; kind: NodeKind; crowns: number; fragments: number; flight: boolean; pos: THREE.Vector3 }[];
+  goalTargets: { id: string; goalKind: GoalKind; label: string; hint: string; radius: number; reward: WorldGoal["reward"]; pos: THREE.Vector3 }[];
+  brokerPad: [number, number, number];
   keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   gateTargets: { world: string; label: string; pos: THREE.Vector3 }[];
   forceTargets: { type: CreatureType; name: string; motto: string; pos: THREE.Vector3 }[];
@@ -1729,6 +1933,11 @@ function Handler({
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
       else if (dArena < 6.5) next = { kind: "arena" };
+      // The Broker — a walk-up exchange on flat ground near spawn.
+      if (!next) {
+        const db = Math.hypot(t.x - brokerPad[0], t.z - brokerPad[2]);
+        if (db < 3.0 && Math.abs(t.y - brokerPad[1]) < 3.0) next = { kind: "broker" };
+      }
       // Keeper talk: must climb the spire and stand on the same landing as the Keeper.
       if (!next) {
         let bestK: { level: number; name: string; title: string } | null = null;
@@ -1791,6 +2000,22 @@ function Handler({
           }
         }
         if (best) next = { kind: "node", id: best.id, nodeKind: best.kind, crowns: best.crowns, fragments: best.fragments, flight: best.flight };
+      }
+      // World goals — reach the summit / rift floor / hidden echo, then press E.
+      if (!next) {
+        let best: (typeof goalTargets)[number] | null = null;
+        let bestD = Infinity;
+        for (const gt of goalTargets) {
+          const dy = Math.abs(t.y - gt.pos.y);
+          const dh = Math.hypot(t.x - gt.pos.x, t.z - gt.pos.z);
+          if (dy > gt.radius || dh > gt.radius) continue;
+          const d = Math.hypot(dh, dy);
+          if (d < bestD) {
+            bestD = d;
+            best = gt;
+          }
+        }
+        if (best) next = { kind: "goal", id: best.id, goalKind: best.goalKind, label: best.label, hint: best.hint, crowns: best.reward.crowns, fragments: best.reward.fragments, trainerXp: best.reward.trainerXp, seasonPoints: best.reward.seasonPoints };
       }
     }
     if (JSON.stringify(next) !== JSON.stringify(near.current)) {
@@ -1885,7 +2110,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(60, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(120, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
     el.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointermove", onMove);
@@ -1914,7 +2139,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     if (drag && (drag.dx || drag.dy || drag.pinch)) {
       yaw.current -= drag.dx * 0.005;
       pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - drag.dy * 0.004));
-      if (drag.pinch) dist.current = Math.min(60, Math.max(6, dist.current - drag.pinch * 0.02));
+      if (drag.pinch) dist.current = Math.min(120, Math.max(6, dist.current - drag.pinch * 0.02));
       drag.dx = 0; drag.dy = 0; drag.pinch = 0;
       lastInput.current = performance.now();
     }

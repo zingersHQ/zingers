@@ -27,6 +27,10 @@ export interface BiomeConfig {
     rollFreq: number; // frequency of the rolling layer
     ridgeFreq: number; // frequency of the ridge layer
     ridged: boolean; // true → sharp volcanic spires; false → soft hills
+    // ── the great rift (optional) — a chasm carved outward from the plaza ──
+    canyonAngle?: number; // bearing of the rift (kept clear of tower/train/spire)
+    canyonHalfWidth?: number;
+    canyonDepth?: number; // 0 / omitted → no rift in this region
   };
   plaza: { color: string; emissive: string; emissiveIntensity: number };
   scatter: {
@@ -95,7 +99,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#3a2a66", bottom: "#0a0714" },
     nebula: { colors: ["#3a2a6a", "#5a2a7a", "#2a3a8a", "#6a2a5a"], opacity: 0.7 },
     fog: { color: "#140e2a", near: 50, far: 190 },
-    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17, seed: 0, rollAmp: 6, ridgeAmp: 12, rollFreq: 0.03, ridgeFreq: 0.012, ridged: false },
+    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17, seed: 0, rollAmp: 6, ridgeAmp: 12, rollFreq: 0.03, ridgeFreq: 0.012, ridged: false, canyonAngle: Math.PI * 0.55, canyonHalfWidth: 11, canyonDepth: 9 },
     plaza: { color: "#b6b6d8", emissive: "#1a1838", emissiveIntensity: 0.6 },
     scatter: { rock: "#241f3e", crystal: "#7a5cff", crystalEmissive: "#5a3cff", crystalEmissiveIntensity: 1.1, crystalRatio: 0.32, count: 220 },
     obelisk: { color: "#2a2448", emissive: "#5440c0", emissiveIntensity: 1.1 },
@@ -115,7 +119,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#7a2a14", bottom: "#1a0805" },
     nebula: { colors: ["#7a2a14", "#a8431a", "#5a1a0a", "#c2691a"], opacity: 0.6 },
     fog: { color: "#2a0e06", near: 42, far: 165 },
-    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22, seed: 53, rollAmp: 5, ridgeAmp: 14, rollFreq: 0.055, ridgeFreq: 0.02, ridged: true },
+    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22, seed: 53, rollAmp: 5, ridgeAmp: 14, rollFreq: 0.055, ridgeFreq: 0.02, ridged: true, canyonAngle: Math.PI * 1.45, canyonHalfWidth: 14, canyonDepth: 17 },
     plaza: { color: "#c8b0a0", emissive: "#3a1408", emissiveIntensity: 0.7 },
     scatter: { rock: "#2a1610", crystal: "#ff8a3a", crystalEmissive: "#ff5a1a", crystalEmissiveIntensity: 1.5, crystalRatio: 0.24, count: 250 },
     obelisk: { color: "#2a1208", emissive: "#ff5a1a", emissiveIntensity: 1.25 },
@@ -135,7 +139,7 @@ export const BIOMES: BiomeConfig[] = [
     sky: { top: "#0a2e3e", bottom: "#02060a" },
     nebula: { colors: ["#0a4a5a", "#1a7a6a", "#2a3a8a", "#0a5a4a"], opacity: 0.65 },
     fog: { color: "#06141a", near: 55, far: 205 },
-    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19, seed: 113, rollAmp: 9, ridgeAmp: 8, rollFreq: 0.022, ridgeFreq: 0.009, ridged: false },
+    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19, seed: 113, rollAmp: 9, ridgeAmp: 8, rollFreq: 0.022, ridgeFreq: 0.009, ridged: false, canyonAngle: Math.PI * 1.15, canyonHalfWidth: 12, canyonDepth: 11 },
     plaza: { color: "#a0c8c0", emissive: "#08222a", emissiveIntensity: 0.6 },
     scatter: { rock: "#14242a", crystal: "#34ffd0", crystalEmissive: "#10d0b0", crystalEmissiveIntensity: 1.4, crystalRatio: 0.4, count: 250 },
     obelisk: { color: "#0a2830", emissive: "#18c0a0", emissiveIntensity: 1.1 },

@@ -50,6 +50,10 @@ function seeded(): Progress {
 
 const STARTING_CROWNS = 500;
 export const TRAIN_COST = 60;
+// The Broker's spread — buy a fragment dearer than you can sell one, so the
+// exchange is a convenience, not a money pump.
+export const FRAGMENT_BUY = 140;
+export const FRAGMENT_SELL = 90;
 
 // UTC day index — discovery caches refresh at the rollover, so the ledger of
 // what you've already grabbed resets each day.
@@ -66,6 +70,13 @@ interface ForcePoints {
   points: number;
 }
 
+// world goals cleared this season (peak/depth/secret per region). Resets at the
+// season turn so the spotlight rotates and there's a fresh hunt each season.
+interface GoalLedger {
+  season: number;
+  done: string[]; // goal ids completed this season
+}
+
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
@@ -78,6 +89,7 @@ interface ChampionStore {
   trainerXp: number;
   force: CreatureType | null; // pledged faction
   forcePoints: ForcePoints; // this season's contribution to that faction
+  goals: GoalLedger; // world goals cleared this season
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
@@ -95,9 +107,14 @@ interface ChampionStore {
   spend: (n: number) => boolean;
   // claim a discovery cache once per day; returns false if already grabbed
   claimNode: (id: string, reward: { crowns?: number; fragments?: number }) => boolean;
+  // complete a world goal once per season; returns false if already cleared
+  completeGoal: (id: string, reward: { crowns?: number; fragments?: number; trainerXp?: number; seasonPoints?: number }) => boolean;
   trainChampion: (key: string) => boolean;
   // spend one exploration fragment for a free training session
   trainWithFragment: (key: string) => boolean;
+  // the Broker's exchange — convert between Crowns and Fragments
+  buyFragment: () => boolean; // FRAGMENT_BUY crowns → +1 fragment
+  sellFragment: () => boolean; // −1 fragment → FRAGMENT_SELL crowns
   // trainer rank + faction
   awardTrainerXp: (n: number) => void;
   pledgeForce: (f: CreatureType) => void;
@@ -121,6 +138,7 @@ export const useChampions = create<ChampionStore>()(
       trainerXp: 0,
       force: null,
       forcePoints: { season: currentSeasonNumber(), points: 0 },
+      goals: { season: currentSeasonNumber(), done: [] },
       owned: null,
       predict: { streak: 0, best: 0 },
       daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
@@ -229,6 +247,28 @@ export const useChampions = create<ChampionStore>()(
         return true;
       },
 
+      completeGoal: (id, reward) => {
+        const season = currentSeasonNumber();
+        const led = get().goals;
+        const done = led.season === season ? led.done : [];
+        if (done.includes(id)) return false;
+        set((s) => {
+          let forcePoints = s.forcePoints;
+          if (reward.seasonPoints && s.force) {
+            const base = forcePoints.season === season ? forcePoints.points : 0;
+            forcePoints = { season, points: base + reward.seasonPoints };
+          }
+          return {
+            crowns: s.crowns + (reward.crowns ?? 0),
+            fragments: s.fragments + (reward.fragments ?? 0),
+            trainerXp: s.trainerXp + (reward.trainerXp ?? 0),
+            goals: { season, done: [...done, id] },
+            forcePoints,
+          };
+        });
+        return true;
+      },
+
       awardTrainerXp: (n) => set((s) => ({ trainerXp: s.trainerXp + Math.max(0, Math.round(n)) })),
       pledgeForce: (f) => set({ force: f }),
       crackKeeper: () => set((s) => ({ trainerXp: s.trainerXp + TRAINER_XP.keeperCracked })),
@@ -246,6 +286,17 @@ export const useChampions = create<ChampionStore>()(
       trainWithFragment: (key) => {
         if (get().fragments < 1) return false;
         set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, fragments: s.fragments - 1, trainerXp: s.trainerXp + TRAINER_XP.train }));
+        return true;
+      },
+
+      buyFragment: () => {
+        if (get().crowns < FRAGMENT_BUY) return false;
+        set((s) => ({ crowns: s.crowns - FRAGMENT_BUY, fragments: s.fragments + 1 }));
+        return true;
+      },
+      sellFragment: () => {
+        if (get().fragments < 1) return false;
+        set((s) => ({ fragments: s.fragments - 1, crowns: s.crowns + FRAGMENT_SELL }));
         return true;
       },
 

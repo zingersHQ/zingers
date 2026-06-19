@@ -42,11 +42,28 @@ export interface TerrainShape {
   rollFreq: number;
   ridgeFreq: number;
   ridged: boolean;
+  // ── the great rift (optional) ────────────────────────────────────────────
+  // A chasm carved OUTWARD from the plaza along a single bearing: real low
+  // ground (negative height) you descend into or fly across. Depth 0 = no rift.
+  canyonAngle: number; // bearing of the rift from plaza centre
+  canyonHalfWidth: number; // half the rift's width
+  canyonDepth: number; // how far the floor drops below datum (0 = flat region)
 }
 
 export function shapeOf(biome: BiomeConfig): TerrainShape {
   const t = biome.terrain;
-  return { seed: t.seed, scale: t.heightScale, rollAmp: t.rollAmp, ridgeAmp: t.ridgeAmp, rollFreq: t.rollFreq, ridgeFreq: t.ridgeFreq, ridged: t.ridged };
+  return {
+    seed: t.seed,
+    scale: t.heightScale,
+    rollAmp: t.rollAmp,
+    ridgeAmp: t.ridgeAmp,
+    rollFreq: t.rollFreq,
+    ridgeFreq: t.ridgeFreq,
+    ridged: t.ridged,
+    canyonAngle: t.canyonAngle ?? 0,
+    canyonHalfWidth: t.canyonHalfWidth ?? 0,
+    canyonDepth: t.canyonDepth ?? 0,
+  };
 }
 
 /** World-space terrain height at (x,z). Flat (0) inside the plaza, rising hills beyond. */
@@ -63,7 +80,23 @@ export function terrainHeight(x: number, z: number, t: TerrainShape): number {
     const k = Math.abs(ridges * 2 - 1);
     ridges = (1 - k) * (1 - k);
   }
-  return (rolling * t.rollAmp + ridges * t.ridgeAmp) * ease * t.scale;
+  let h = (rolling * t.rollAmp + ridges * t.ridgeAmp) * ease * t.scale;
+
+  // Carve the great rift: a single-sided chasm running outward from the plaza.
+  // Smootherstep walls, faded in from the plaza edge (so there's no cliff at the
+  // boundary) and tapered before the far rim. The floor drops below datum.
+  if (t.canyonDepth > 0) {
+    const dirx = Math.cos(t.canyonAngle), dirz = Math.sin(t.canyonAngle);
+    const along = x * dirx + z * dirz; // projection along the rift
+    const perp = Math.abs(-dirz * x + dirx * z); // distance from the rift line
+    if (along > 0 && perp < t.canyonHalfWidth) {
+      const wp = 1 - perp / t.canyonHalfWidth; // 1 at centre → 0 at the walls
+      const wall = wp * wp * (3 - 2 * wp);
+      const endFade = Math.max(0, Math.min(1, (TERRAIN_HALF - 6 - along) / 24));
+      h -= t.canyonDepth * wall * ease * endFade;
+    }
+  }
+  return h;
 }
 
 export function Terrain({ biome }: { biome: BiomeConfig }) {

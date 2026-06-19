@@ -56,3 +56,42 @@ proposition from the season's topic bank, and argue to a jury (the judge model).
   (which Keeper, which fragment), but its force-bias is chosen so the map stays
   balanced across the five forces over time.
 - Regions never contradict the Wheel ([forces.md](./02-forces.md)); they only tilt it.
+
+## The shape of a slab: rifts, peaks, and the open wilds
+
+A region is not just its arena. Each slab is a real piece of geography you cross on
+foot and by jetpack (`components/grounds/terrain.tsx`):
+
+- **The plaza** — the flat civic heart (arena, training pad, Keepers' Spire, the
+  Broker), where the district grows as the region matures (see
+  [economy.md](./08-economy.md) on world growth).
+- **The wilds** — rolling hills (or, in the Ember Wastes, sharp volcanic spires)
+  rising beyond the plaza, scattered with caches and roaming minds.
+- **The great rift** — a chasm carved outward from the plaza on a single bearing,
+  themed by region: the Ember Wastes run with **lava** (a hazard you fly across),
+  the Void Garden with a **river of light**, the Obsidian Colosseum with a violet
+  **vault-crack**. The rift is real low ground — you descend into it or cross it.
+
+## Goals: the three standing objectives
+
+Every region offers exactly **three** goals each season, on a template a Reader
+reads at a glance (`components/grounds/goals.ts`):
+
+- **▲ The Peak** — reach the region's highest point (flight-gated).
+- **▼ The Depth** — descend into the rift floor.
+- **◆ The Secret** — find a hidden Keeper echo out in the mid-field (drops lore).
+
+Goals are deterministic and **season-aware**: their placements reseed each season,
+so the hunt refreshes, and the season's **featured region** (the Chronicle's
+spotlight, see [seasons.md](./06-seasons.md)) pays a premium. Clearing one pays
+Crowns, Fragments, Reader XP, and Force-war points; the ledger resets at the season
+turn.
+
+## The Broker
+
+A standing mind in every region that **deals in fragments** — the liquid bridge
+between the betting economy (Crowns) and champion power (Fragments). It buys and
+sells fragments at a spread (`store/champions.ts › buyFragment / sellFragment`), so
+it's a convenience, never a money pump. Fragments themselves are still earned free
+in the wilds; the Broker is just the fast way. It is a *mind*, like everything on
+the Grounds — not a vendor outside the fiction.

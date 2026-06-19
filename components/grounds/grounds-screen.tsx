@@ -8,7 +8,7 @@ import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, 
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
-import { useChampions, TRAIN_COST } from "@/store/champions";
+import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
@@ -16,6 +16,7 @@ import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, REGION_WORLDS } from "@/components/grounds/worlds";
+import { worldGoals, type WorldGoal } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason } from "@/lib/lore/season";
 import { FOUNDING_REGIONS } from "@/lib/lore/canon";
@@ -52,7 +53,7 @@ export default function GroundsScreen() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "guardian">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "guardian" | "broker">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
@@ -86,6 +87,7 @@ export default function GroundsScreen() {
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
+  const [goalCoach, setGoalCoach] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
@@ -119,6 +121,22 @@ export default function GroundsScreen() {
     [season],
   );
 
+  // ── World goals: the three standing objectives (peak/depth/secret) for this
+  // region this season. Cleared goals (per-season ledger) drop off the map; the
+  // compass still lists them so you can see what's left.
+  const allGoals = useMemo<WorldGoal[]>(
+    () => (isHub ? [] : worldGoals(biome, season.n, growth?.featured ?? false)),
+    [isHub, biome, season, growth?.featured],
+  );
+  const doneGoals = useMemo(
+    () => (store.goals.season === season.n ? store.goals.done : []),
+    [store.goals, season],
+  );
+  const liveGoals = useMemo(
+    () => allGoals.filter((g) => !doneGoals.includes(g.id)),
+    [allGoals, doneGoals],
+  );
+
   // ── exploration: districts (compass + fast-travel) and discovery caches ──────
   const landmarks = useMemo(() => landmarksOf(biome), [biome]);
   const allNodes = useMemo(() => discoveryNodes(biome, dayKey()), [biome]);
@@ -138,6 +156,8 @@ export default function GroundsScreen() {
   }, []);
   const [nodeFlash, setNodeFlash] = useState<{ crowns: number; fragments: number } | null>(null);
   const nodeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [goalFlash, setGoalFlash] = useState<{ label: string; crowns: number; fragments: number; trainerXp: number; seasonPoints: number } | null>(null);
+  const goalFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pledgeFlash, setPledgeFlash] = useState<{ name: string; motto: string; color: string } | null>(null);
   const pledgeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
@@ -165,6 +185,9 @@ export default function GroundsScreen() {
     } catch {
       setShowChronicle(true);
     }
+    try {
+      setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
+    } catch {}
   }, []);
 
   const dismissChronicle = useCallback(() => {
@@ -172,6 +195,13 @@ export default function GroundsScreen() {
       localStorage.setItem(STORAGE.chronicleDismissed, "1");
     } catch {}
     setShowChronicle(false);
+  }, []);
+
+  const dismissGoalCoach = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.goalCoach, "1");
+    } catch {}
+    setGoalCoach(false);
   }, []);
 
   useEffect(() => {
@@ -231,6 +261,7 @@ export default function GroundsScreen() {
   const interact = useCallback(() => {
     if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
+    else if (near?.kind === "broker") setOverlay("broker");
     else if (near?.kind === "keeper") {
       setKeeperLevel(near.level);
       setOverlay("guardian");
@@ -249,6 +280,14 @@ export default function GroundsScreen() {
         setNodeFlash({ crowns: near.crowns, fragments: near.fragments });
         if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
         nodeFlashTimer.current = setTimeout(() => setNodeFlash(null), 2600);
+      }
+    } else if (near?.kind === "goal") {
+      const reward = { crowns: near.crowns, fragments: near.fragments, trainerXp: near.trainerXp, seasonPoints: near.seasonPoints };
+      if (store.completeGoal(near.id, reward)) {
+        setGoalFlash({ label: near.label, ...reward });
+        setNear(null);
+        if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
+        goalFlashTimer.current = setTimeout(() => setGoalFlash(null), 3200);
       }
     } else if (near?.kind === "force") {
       // swear allegiance to this house — lights its banner and binds ranked wins
@@ -274,6 +313,7 @@ export default function GroundsScreen() {
   useEffect(() => () => {
     if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
     if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+    if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
   }, []);
 
   useEffect(() => {
@@ -548,6 +588,7 @@ export default function GroundsScreen() {
               biome={biome}
               towerAgents={isHub ? [] : towerAgents}
               nodes={liveNodes}
+              goals={isHub ? [] : liveGoals}
               gates={isHub ? CONCORD_GATES : []}
               pledged={store.force}
               tier={growth?.tier ?? 0}
@@ -684,7 +725,7 @@ export default function GroundsScreen() {
           you directly, so no compass is shown in the hub) */}
       {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && (
         <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 108 : 168, right: 16, zIndex: 100, pointerEvents: "none" }}>
-          <Compass landmarks={landmarks} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
+          <Compass landmarks={landmarks} goals={allGoals} goalsDone={doneGoals} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
         </div>
       )}
 
@@ -695,6 +736,35 @@ export default function GroundsScreen() {
             <span style={{ fontSize: 13, fontWeight: 700 }}>Cache claimed</span>
             {nodeFlash.crowns > 0 && <span style={{ color: "var(--gold)", fontWeight: 700 }}>+{nodeFlash.crowns} 👑</span>}
             {nodeFlash.fragments > 0 && <span style={{ color: "#39e0ff", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={14} strokeWidth={2} /> +{nodeFlash.fragments}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* one-time objectives coachmark */}
+      {goalCoach && owned && !isHub && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
+        <div style={{ position: "absolute", bottom: isMobile ? 96 : 70, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
+            <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
+            <span style={{ fontSize: 12, lineHeight: 1.35 }}>
+              <strong>Objectives.</strong> Reach the peak, descend the rift, find the secret — they&apos;re in your compass, and pay out.
+            </span>
+            <button onClick={dismissGoalCoach} className="btn" style={{ ["--ac" as string]: "var(--gold)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Got it</button>
+          </div>
+        </div>
+      )}
+
+      {/* goal-cleared toast */}
+      {goalFlash && (
+        <div className="pop" style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 61 }}>
+          <div className="panel" style={{ ["--ac" as string]: "var(--gold)", padding: "12px 20px", textAlign: "center", borderColor: "var(--gold)", boxShadow: "0 0 60px -24px var(--gold)" }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", fontWeight: 700 }}>GOAL CLEARED</div>
+            <div style={{ fontSize: 16, fontWeight: 800, margin: "2px 0 6px" }}>{goalFlash.label}</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", fontSize: 12, fontWeight: 700 }}>
+              {goalFlash.crowns > 0 && <span style={{ color: "var(--gold)" }}>+{goalFlash.crowns} 👑</span>}
+              {goalFlash.fragments > 0 && <span style={{ color: "#39e0ff", display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={14} strokeWidth={2} /> +{goalFlash.fragments}</span>}
+              {goalFlash.trainerXp > 0 && <span style={{ color: "#cfcbe8" }}>+{goalFlash.trainerXp} XP</span>}
+              {goalFlash.seasonPoints > 0 && store.force && <span style={{ color: "#c77dff" }}>+{goalFlash.seasonPoints} war</span>}
+            </div>
           </div>
         </div>
       )}
@@ -763,6 +833,8 @@ export default function GroundsScreen() {
                   : `Swear to ${near.name}`
                 : near.kind === "train"
                 ? "Train your champion"
+                : near.kind === "broker"
+                ? "Trade with the Broker"
                 : near.kind === "keeper"
                   ? `Talk to ${near.name}`
                   : near.kind === "challenge"
@@ -771,9 +843,11 @@ export default function GroundsScreen() {
                       ? near.nodeKind === "fragment"
                         ? `Claim fragment ×${near.fragments}`
                         : `Claim cache · +${near.crowns} 👑`
-                      : scenario.id === "gauntlet"
-                        ? "Enter the Gauntlet"
-                        : "House sparring pit"}
+                      : near.kind === "goal"
+                        ? `Claim ${near.label}`
+                        : scenario.id === "gauntlet"
+                          ? "Enter the Gauntlet"
+                          : "House sparring pit"}
             </span>
             {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
           </button>
@@ -795,6 +869,8 @@ export default function GroundsScreen() {
       )}
 
       {/* arena spar (central pit) or locked tower duel */}
+      {overlay === "broker" && <BrokerOverlay onClose={() => setOverlay("none")} />}
+
       {overlay === "arena" && owned && (
         <ChallengeOverlay
           owned={owned}
@@ -852,6 +928,62 @@ export default function GroundsScreen() {
         </div>
       )}
     </main>
+  );
+}
+
+// The Broker's exchange — convert Crowns ↔ Fragments at a spread. A mind that
+// deals: fragments fund free training, so this is the liquid bridge between the
+// betting economy (Crowns) and champion power (Fragments).
+function BrokerOverlay({ onClose }: { onClose: () => void }) {
+  const crowns = useChampions((s) => s.crowns);
+  const fragments = useChampions((s) => s.fragments);
+  const buyFragment = useChampions((s) => s.buyFragment);
+  const sellFragment = useChampions((s) => s.sellFragment);
+  const col = "#39e0ff";
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+      <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(420px, 95vw)", padding: 24, borderColor: col }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, background: `${col}1c`, color: col }}>
+            <Gem size={20} strokeWidth={2.2} />
+          </span>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>The Broker</div>
+            <div className="mono" style={{ fontSize: 10, color: col, letterSpacing: 0.5 }}>a mind that deals in fragments</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
+            <X size={20} strokeWidth={2} />
+          </button>
+        </div>
+
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", display: "flex", justifyContent: "center", gap: 16, margin: "16px 0" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Crown size={14} color="var(--gold)" strokeWidth={2} /> {crowns}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: col }}><Gem size={14} strokeWidth={2} /> {fragments}</span>
+        </div>
+
+        <button
+          className="btn"
+          style={{ ["--ac" as string]: col, width: "100%", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: crowns < FRAGMENT_BUY ? 0.5 : 1 }}
+          disabled={crowns < FRAGMENT_BUY}
+          onClick={() => buyFragment()}
+        >
+          <Gem size={15} strokeWidth={2.2} color={col} />
+          Buy 1 fragment · {FRAGMENT_BUY} 👑
+        </button>
+        <button
+          className="btn"
+          style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: fragments < 1 ? 0.5 : 1 }}
+          disabled={fragments < 1}
+          onClick={() => sellFragment()}
+        >
+          <Crown size={15} strokeWidth={2.2} color="var(--gold)" />
+          Sell 1 fragment · +{FRAGMENT_SELL} 👑
+        </button>
+        <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", textAlign: "center", marginTop: 12, letterSpacing: 0.5, lineHeight: 1.5 }}>
+          Fragments fund free training sessions. Find them free out in the wilds — the Broker is just the quick way.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -1011,6 +1143,11 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
               Free session · spend 1 fragment ({store.fragments})
             </span>
           </button>
+        )}
+        {store.fragments === 0 && (
+          <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", textAlign: "center", marginTop: 8, letterSpacing: 0.5 }}>
+            Fragments fund free sessions — clear world goals &amp; caches in the wilds.
+          </p>
         )}
         {flash && (
           <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>

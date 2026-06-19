@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Gem } from "lucide-react";
+import { Navigation, MapPin, Gem, Check, ChevronUp, ChevronDown, Sparkles } from "lucide-react";
 import type { Landmark } from "./landmarks";
+import type { WorldGoal } from "./goals";
 
 export interface Pose {
   x: number;
@@ -17,6 +18,8 @@ const DISCOVER_RADIUS = 11; // within this, a district counts as "discovered"
 
 export function Compass({
   landmarks,
+  goals = [],
+  goalsDone = [],
   poseRef,
   onTravel,
   fragments,
@@ -24,6 +27,8 @@ export function Compass({
   isMobile,
 }: {
   landmarks: Landmark[];
+  goals?: WorldGoal[];
+  goalsDone?: string[];
   poseRef: React.RefObject<Pose>;
   onTravel: (pos: [number, number, number]) => void;
   fragments: number;
@@ -111,6 +116,48 @@ export function Compass({
           );
         })}
       </div>
+      {goals.length > 0 && (
+        <>
+          <div className="mono" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", margin: "10px 0 7px" }}>
+            <Sparkles size={11} strokeWidth={2} />
+            OBJECTIVES
+            <span style={{ marginLeft: "auto", color: "var(--gold)" }}>{goalsDone.filter((id) => goals.some((g) => g.id === id)).length}/{goals.length}</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            {goals.map((g) => {
+              const dx = g.pos[0] - p.x;
+              const dz = g.pos[2] - p.z;
+              const dist = Math.hypot(dx, dz);
+              const rel = Math.atan2(dx, dz) - p.heading;
+              const done = goalsDone.includes(g.id);
+              const Icon = g.kind === "peak" ? ChevronUp : g.kind === "depth" ? ChevronDown : Sparkles;
+              return (
+                <div
+                  key={g.id}
+                  className="panel"
+                  style={{ ["--ac" as string]: g.color, display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderColor: done ? g.color : "var(--line)", opacity: done ? 0.55 : 1, textAlign: "left" }}
+                >
+                  <span style={{ color: g.color, display: "inline-flex", flexShrink: 0 }}>
+                    {done ? <Check size={13} strokeWidth={2.6} /> : <Icon size={13} strokeWidth={2.4} />}
+                  </span>
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: done ? "var(--muted)" : "#fff", textDecoration: done ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {g.label}
+                      {g.featured && !done && <span style={{ color: "#f5d020", fontSize: 8, marginLeft: 4 }}>★</span>}
+                    </span>
+                    <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>{done ? "CLEARED" : `${Math.round(dist)}m · ${g.hint}`}</span>
+                  </span>
+                  {!done && (
+                    <span style={{ color: g.color, display: "inline-flex", transform: `rotate(${rel}rad)`, transition: "transform .14s linear", flexShrink: 0 }}>
+                      <Navigation size={12} strokeWidth={2.4} style={{ transform: "rotate(-45deg)" }} />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
       {nodesLeft > 0 && (
         <div className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5, marginTop: 7, textAlign: "center" }}>
           {nodesLeft} cache{nodesLeft === 1 ? "" : "s"} hidden in the wilds
