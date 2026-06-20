@@ -5,7 +5,6 @@ import { ImageResponse } from "next/og";
 import { ROSTER, TYPE_COLOR } from "@/lib/engine/roster";
 import { FORCES } from "@/lib/lore/canon";
 import { BRAND } from "@/lib/brand";
-import { portraitOf } from "@/lib/cards/assets";
 
 export const runtime = "nodejs";
 
@@ -26,8 +25,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const brain = q.get("b") || "House · Grok";
   const col = TYPE_COLOR[c.type];
   const force = FORCES[c.type];
-  const origin = new URL(req.url).origin;
-  const portrait = `${origin}${portraitOf(k)}`;
 
   const stats: [string, string, string][] = [
     ["SKILL LEVEL", sl, "#f5d020"],
@@ -62,7 +59,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
               height: 320,
               borderRadius: 32,
               border: `4px solid ${col}`,
-              background: "#0a0812",
+              background: `radial-gradient(120% 120% at 50% 14%, ${col}33 0%, #0a0812 62%)`,
               alignItems: "center",
               justifyContent: "center",
               marginRight: 36,
@@ -70,7 +67,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
               position: "relative",
             }}
           >
-            <img src={portrait} alt={`${c.name} portrait`} style={{ width: "250px", height: "320px", objectFit: "cover" }} />
+            <div style={{ display: "flex", fontSize: 168, color: col, lineHeight: 1, filter: "drop-shadow(0 0 26px " + col + "aa)" }}>{force.sigil}</div>
+            <div style={{ display: "flex", position: "absolute", bottom: 22, fontSize: 26, letterSpacing: 4, color: "#c9c3e8" }}>{c.name}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 88, fontWeight: 800 }}>{c.name}</div>

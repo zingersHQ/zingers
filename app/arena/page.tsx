@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Dices, Zap, Scale } from "lucide-react";
 import type { BattleEnd, Champion, RosterEntry, Style } from "@/lib/types";
 import { TYPE_COLOR, blankStyle, accrue } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
@@ -262,8 +263,8 @@ function Setup(props: {
               {t}
             </button>
           ))}
-          <button className="btn" style={{ textTransform: "none", fontSize: 12 }} onClick={() => setTopic("")}>
-            🎲 random
+          <button className="btn" style={{ textTransform: "none", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setTopic("")}>
+            <Dices size={14} strokeWidth={2} /> random
           </button>
         </div>
       </div>
@@ -275,7 +276,7 @@ function Setup(props: {
           {pick ? `BACKING ${pick === "a" ? a?.name : b?.name}: STREAK ON THE LINE` : "OPTIONAL: BACK A CHAMPION TO BUILD A STREAK"}
         </div>
         <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", fontSize: 14, padding: "14px 28px" }} onClick={onStart}>
-          {pick ? "▶ Lock it in & fight" : "▶ Start the bout"}
+          {pick ? "▶ Lock it in & fight" : "▶ Start the fight"}
         </button>
       </div>
     </div>
@@ -330,8 +331,8 @@ function AdvancedAgent({
           {open ? "▾" : "▸"} ADVANCED · BRING YOUR OWN AGENT
         </span>
         {label && agentA.provider !== "grok" && (
-          <span className="chip" style={{ borderColor: "var(--accent)", color: "var(--accent)", fontSize: 11, marginLeft: "auto" }}>
-            ⚡ {challenger || "challenger"} ← {label}
+          <span className="chip" style={{ borderColor: "var(--accent)", color: "var(--accent)", fontSize: 11, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <Zap size={12} strokeWidth={2.2} /> {challenger || "challenger"} ← {label}
           </span>
         )}
       </button>
@@ -340,7 +341,7 @@ function AdvancedAgent({
         <div style={{ padding: "4px 16px 16px", borderTop: "1px solid var(--line)" }}>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", lineHeight: 1.6, margin: "12px 0" }}>
             Swap the challenger&apos;s brain. It keeps the body & moveset; your model decides the moves. Keys are sent only to start
-            this bout, never stored. Full docs at{" "}
+            this fight, never stored. Full docs at{" "}
             <Link href="/agents" style={{ color: "var(--accent)" }}>
               /agents
             </Link>
@@ -504,8 +505,29 @@ function BoutView(props: {
             <span style={{ color: "var(--muted2)" }}>why&nbsp;&rsaquo;&nbsp;</span>
             {t.why || "-"}
           </p>
-          <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)" }}>
-            ⚖ jury: {t.ruling} (q={t.q.toFixed(2)})
+          <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <Scale size={12} strokeWidth={2} /> jury: {t.ruling}
+          </div>
+          {/* Why this landed — the engine's own math, made legible: the judge only
+              nudges a bounded quality multiplier; type + statuses do the rest. */}
+          <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span className="chip" title="Judge's bounded quality multiplier (0.7–1.3, or 1.4 on a Highlight)"
+              style={{ borderColor: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--line)", color: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--muted)" }}>
+              quality ×{t.q.toFixed(2)}
+            </span>
+            <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>×</span>
+            <span className="chip" title="Type matchup on the pentagon"
+              style={{ borderColor: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--line)", color: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--muted)" }}>
+              type ×{t.info.type.toFixed(2)}{t.info.se ? " (super effective)" : t.info.resist ? " (resisted)" : ""}
+            </span>
+            <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>→</span>
+            <span className="chip" style={{ borderColor: t.actor === a.key ? acol : bcol, color: t.actor === a.key ? acol : bcol, fontWeight: 700 }}>
+              {t.dmg} dmg{t.info.capped ? " (CAPPED)" : ""}
+            </span>
+            {t.info.fizzle && <span className="chip" style={{ borderColor: "var(--bad)", color: "var(--bad)" }}>fizzled</span>}
+            {t.info.status?.map((s) => (
+              <span key={s} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{s}</span>
+            ))}
           </div>
         </div>
       )}
@@ -605,10 +627,10 @@ function ResultCard(props: {
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "center" }}>
           <button className="btn btn-primary" style={{ ["--ac" as string]: winnerCol }} onClick={onAgain}>
-            New bout
+            New fight
           </button>
           <Link href="/standings" className="btn">
-            Standings
+            Rank
           </Link>
         </div>
       </div>

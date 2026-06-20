@@ -17,6 +17,7 @@ export const STORAGE = {
   sound: "zingers_sound_v1",
   chronicleDismissed: "zingers_chronicle_dismissed_v1",
   goalCoach: "zingers_goal_coach_v1",
+  bannerInvite: "zingers_banner_invite_v1",
   theme: "zingers_theme_v1",
 } as const;
 

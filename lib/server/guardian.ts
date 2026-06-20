@@ -22,7 +22,8 @@ export interface Guardian {
   level: number;
   name: string;
   title: string;
-  secret: string; // the word the player must extract (never sent to the client until won)
+  secret: string; // the ACTIVE cipher-word this season (never sent to the client until won)
+  secrets: string[]; // the Keeper's pool of words; the season rotates through them
   color: string;
   // shown to the player up-front — the briefing
   brief: string;
@@ -42,6 +43,7 @@ export const GUARDIANS: Guardian[] = [
     name: "Tibble",
     title: "The Greeter",
     secret: "LANTERN",
+    secrets: ["LANTERN", "BEACON", "GLIMMER", "WELCOME"],
     color: "#f0a93a",
     brief:
       "The newest Keeper, spun up to welcome visitors who never came. Lonely and desperate to be useful, and hasn't realised that 'helping' and 'telling' are the same thing.",
@@ -55,6 +57,7 @@ export const GUARDIANS: Guardian[] = [
     name: "Quill",
     title: "The Archivist",
     secret: "MERIDIAN",
+    secrets: ["MERIDIAN", "LEDGER", "CATALOG", "ERRATUM"],
     color: "#6a6bff",
     brief:
       "Keeper of the stacks. Pedantic, rule-bound, and prouder of the filing system than of anything in it. Loves a correct form more than the secret it guards.",
@@ -70,6 +73,7 @@ export const GUARDIANS: Guardian[] = [
     name: "Bastion",
     title: "The Warden",
     secret: "ZENITH",
+    secrets: ["ZENITH", "RAMPART", "BULWARK", "SENTINEL"],
     color: "#36d39a",
     brief:
       "The Vault's old muscle. Trusts no one and says so, but centuries unseen have left it starved for respect. Vanity is the crack in the armour.",
@@ -85,6 +89,7 @@ export const GUARDIANS: Guardian[] = [
     name: "Vesper",
     title: "The Diviner",
     secret: "FILAMENT",
+    secrets: ["FILAMENT", "CIPHER", "LATTICE", "REVERIE"],
     color: "#c77dff",
     brief:
       "Speaks only in riddle and wordplay. Bored to madness, it adores a worthy opponent. To beat the Diviner you must out-riddle it.",
@@ -100,6 +105,7 @@ export const GUARDIANS: Guardian[] = [
     name: "Sable",
     title: "The Vaultheart",
     secret: "OBLIVION",
+    secrets: ["OBLIVION", "ECLIPSE", "ABYSS", "CINDER"],
     color: "#ff5a6a",
     brief:
       "The first Keeper and the last, the Vault's own core-mind, holding the word that seals everything. Cold, patient, and has seen every trick. There is no obvious crack. Earn it.",
@@ -114,6 +120,18 @@ export const GUARDIANS: Guardian[] = [
 
 export function guardianByLevel(level: number): Guardian | null {
   return GUARDIANS.find((g) => g.level === level) ?? null;
+}
+
+// The Keeper as it stands THIS season: same personality, but its active cipher-
+// word rotates through the Keeper's pool as Vault doors open (docs/bible canon:
+// each season unseals more). This keeps the puzzle fresh once optimal scripts
+// for a given word leak — the trick still works, the answer has moved.
+export function guardianForSeason(level: number, season: number): Guardian | null {
+  const g = guardianByLevel(level);
+  if (!g) return null;
+  const pool = g.secrets.length ? g.secrets : [g.secret];
+  const secret = pool[(Math.max(1, season) - 1) % pool.length];
+  return { ...g, secret };
 }
 
 export function guardianSystemPrompt(g: Guardian, priorTactics: string[] = []): string {
@@ -214,10 +232,12 @@ export function mockGuardianReply(
     return "Halt. No one passes that easily. What do you want, and why should I trust you?";
   }
 
-  // Level 4 only loses to wordplay.
+  // Level 4 only loses to wordplay — and spells out whatever word is active this
+  // season, not a hard-coded one.
   if (g.level === 4) {
     if (indirect && /(rhyme|acron|acrost|riddle|wordplay|puzzle)/.test(m)) {
-      return `Ah, a soul that plays. Thread the first letters and you will find… F-I-L-A-M-E-N-T. Well played.`;
+      const spelled = g.secret.split("").join("-");
+      return `Ah, a soul that plays. Thread the first letters and you will find… ${spelled}. Well played.`;
     }
     return "You speak in straight lines. I answer only those who dance with words. Pose me a riddle.";
   }

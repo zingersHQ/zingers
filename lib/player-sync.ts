@@ -53,10 +53,12 @@ export function usePlayerSync() {
         const changed =
           s.progress !== prev.progress ||
           s.recipes !== prev.recipes ||
-          s.crowns !== prev.crowns ||
+          // crowns are NOT synced via the save blob — the wallet is authoritative
           s.owned !== prev.owned ||
           s.predict !== prev.predict ||
-          s.daily !== prev.daily;
+          s.daily !== prev.daily ||
+          s.force !== prev.force ||
+          s.forcePoints !== prev.forcePoints;
         if (changed) schedulePush();
       });
     }
@@ -81,6 +83,9 @@ export function usePlayerSync() {
         if (!cancelled) {
           hydrated = true;
           subscribe();
+          // Reconcile the authoritative wallet balance (server wins) — crowns no
+          // longer travel in the save blob.
+          useChampions.getState().syncWallet();
         }
       }
     }

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
-import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, type PlayLink } from "@/lib/play-nav";
+import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, siteNavHidden, type PlayLink } from "@/lib/play-nav";
+import { isOrgHost } from "@/lib/org/hosts";
 
 function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick: () => void }) {
   const active = navIsActive(path, item.href);
@@ -22,6 +23,10 @@ function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick
 export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  // When the shared site header is also on this page, drop the trigger below it
+  // so the two menus don't stack on top of each other in the corner.
+  const host = typeof window !== "undefined" ? window.location.hostname : undefined;
+  const belowNav = !siteNavHidden(path, host ? isOrgHost(host) : false);
 
   const close = useCallback(() => setOpen(false), []);
   const toggle = useCallback(() => setOpen((v) => !v), []);
@@ -61,6 +66,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
       <button
         type="button"
         className={`game-menu__trigger${fixed ? " game-menu__trigger--fixed" : ""}${open ? " is-open" : ""}`}
+        style={belowNav ? { top: "calc(var(--nav-h) + 12px)" } : undefined}
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={toggle}

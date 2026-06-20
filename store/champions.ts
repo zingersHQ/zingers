@@ -1,13 +1,24 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Champion, CreatureType, DailyResult, DailyState, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
+import type { Champion, CreatureType, DailyResult, DailyState, ForcePoints, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
 import { applyResult, blank, blankStyle } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
 import { TRAINER_XP } from "@/lib/evolve/trainer";
 import { currentSeasonNumber } from "@/lib/lore/season";
 import { STORAGE } from "@/lib/brand";
+import {
+  STARTING_CROWNS,
+  TRAIN_COST,
+  FRAGMENT_BUY,
+  FRAGMENT_SELL,
+} from "@/lib/economy";
+import { commitBet as commitBetRequest, fetchBalance, walletEvent } from "@/lib/wallet-client";
+
+// Re-export the canonical economy numbers so existing imports from the store
+// keep working; the single source of truth now lives in lib/economy.ts.
+export { TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL };
 
 // Wild, maximally-distinct starting archetypes (key, xp, axis, val, axis2, val2, w, l)
 const SEED: [string, number, keyof Champion, number, keyof Champion, number, number, number][] = [
@@ -48,13 +59,6 @@ function seeded(): Progress {
   return p;
 }
 
-const STARTING_CROWNS = 500;
-export const TRAIN_COST = 60;
-// The Broker's spread — buy a fragment dearer than you can sell one, so the
-// exchange is a convenience, not a money pump.
-export const FRAGMENT_BUY = 140;
-export const FRAGMENT_SELL = 90;
-
 // UTC day index — discovery caches refresh at the rollover, so the ledger of
 // what you've already grabbed resets each day.
 const today = () => Math.floor(Date.now() / 86_400_000);
@@ -62,12 +66,6 @@ const today = () => Math.floor(Date.now() / 86_400_000);
 interface NodeLedger {
   day: number; // the day the claimed list belongs to
   claimed: string[]; // node ids already grabbed today
-}
-
-// per-season contribution to the player's pledged Force (the meta-war tally)
-interface ForcePoints {
-  season: number;
-  points: number;
 }
 
 // world goals cleared this season (peak/depth/secret per region). Resets at the
@@ -80,6 +78,8 @@ interface GoalLedger {
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
+  // Mirror of the server-authoritative wallet (lib/economy.ts + /api/wallet).
+  // Persisted only as an offline cache; syncWallet() reconciles it (server wins).
   crowns: number;
   // exploration loot: spent for a free training session (feeds champion power,
   // not the betting/training economy). Client-only for now — not server-synced.
@@ -87,7 +87,8 @@ interface ChampionStore {
   nodes: NodeLedger;
   // trainer identity — the account-level "I'm level 12" spine, fed by all activity
   trainerXp: number;
-  force: CreatureType | null; // pledged faction
+  force: CreatureType | null; // pledged Banner (faction)
+  forceSeason: number | null; // the season the current Banner was raised in (locks switching for that season)
   forcePoints: ForcePoints; // this season's contribution to that faction
   goals: GoalLedger; // world goals cleared this season
   owned: string | null;
@@ -103,21 +104,33 @@ interface ChampionStore {
   setAgent: (key: string, agent: Recipe["agent"]) => void;
   learnFromBout: (args: { key: string; opponentName: string; won: boolean; axisLabel: string }) => void;
   setOwned: (key: string) => void;
-  earn: (n: number) => void;
-  spend: (n: number) => boolean;
+  // Mirror the authoritative balance returned by the server (bout reward, sync).
+  setBalance: (n: number) => void;
+  // Pull the authoritative balance from the server into the mirror (server wins).
+  syncWallet: () => Promise<void>;
+  // Credit a Gauntlet payout through the wallet (server clamps the amount).
+  awardGauntlet: (amount: number) => Promise<void>;
+  // Commit-reveal wager: stake is taken server-side BEFORE the bout. Returns true
+  // if the stake was placed (offline: optimistic local debit).
+  commitBet: (stake: number, side: "me" | "opp", nonce: string) => Promise<boolean>;
   // claim a discovery cache once per day; returns false if already grabbed
-  claimNode: (id: string, reward: { crowns?: number; fragments?: number }) => boolean;
+  claimNode: (id: string, reward: { crowns?: number; fragments?: number }) => Promise<boolean>;
   // complete a world goal once per season; returns false if already cleared
-  completeGoal: (id: string, reward: { crowns?: number; fragments?: number; trainerXp?: number; seasonPoints?: number }) => boolean;
-  trainChampion: (key: string) => boolean;
+  completeGoal: (id: string, reward: { crowns?: number; fragments?: number; trainerXp?: number; seasonPoints?: number }) => Promise<boolean>;
+  trainChampion: (key: string) => Promise<boolean>;
   // spend one exploration fragment for a free training session
   trainWithFragment: (key: string) => boolean;
   // the Broker's exchange — convert between Crowns and Fragments
-  buyFragment: () => boolean; // FRAGMENT_BUY crowns → +1 fragment
-  sellFragment: () => boolean; // −1 fragment → FRAGMENT_SELL crowns
+  buyFragment: () => Promise<boolean>; // FRAGMENT_BUY crowns → +1 fragment
+  sellFragment: () => Promise<boolean>; // −1 fragment → FRAGMENT_SELL crowns
   // trainer rank + faction
   awardTrainerXp: (n: number) => void;
-  pledgeForce: (f: CreatureType) => void;
+  // Raise a Banner. Locked to one choice per season: returns false (a no-op) if a
+  // Banner is already raised this season. A new season frees the choice again.
+  pledgeForce: (f: CreatureType) => boolean;
+  // Whether the Reader may choose/switch their Banner right now (no banner yet, or
+  // the locked season has rolled over).
+  canRebanner: () => boolean;
   crackKeeper: () => void; // a Keeper yielded — award the milestone XP
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
   recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
@@ -137,6 +150,7 @@ export const useChampions = create<ChampionStore>()(
       nodes: { day: today(), claimed: [] },
       trainerXp: 0,
       force: null,
+      forceSeason: null,
       forcePoints: { season: currentSeasonNumber(), points: 0 },
       goals: { season: currentSeasonNumber(), done: [] },
       owned: null,
@@ -157,10 +171,14 @@ export const useChampions = create<ChampionStore>()(
           return {
             progress: { ...seeded(), ...(save.progress || {}) },
             recipes,
-            crowns: save.crowns,
+            // crowns intentionally not taken from the save — the wallet is the
+            // authority and is reconciled by syncWallet().
             owned: save.owned ?? null,
             predict: save.predict || { streak: 0, best: 0 },
             daily: save.daily || { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
+            force: save.force ?? null,
+            forceSeason: save.forceSeason ?? null,
+            forcePoints: save.forcePoints || { season: currentSeasonNumber(), points: 0 },
             lastServerSync: save.updatedAt,
           };
         }),
@@ -178,10 +196,12 @@ export const useChampions = create<ChampionStore>()(
           v: SAVE_VERSION,
           progress: s.progress,
           recipes,
-          crowns: s.crowns,
           owned: s.owned,
           predict: s.predict,
           daily: s.daily,
+          force: s.force,
+          forceSeason: s.forceSeason,
+          forcePoints: s.forcePoints,
           updatedAt: Date.now(),
         };
       },
@@ -226,20 +246,44 @@ export const useChampions = create<ChampionStore>()(
 
       setOwned: (key) => set({ owned: key }),
 
-      earn: (n) => set((s) => ({ crowns: s.crowns + n })),
-      spend: (n) => {
-        if (get().crowns < n) return false;
-        set((s) => ({ crowns: s.crowns - n }));
+      setBalance: (n) => set({ crowns: Math.max(0, Math.round(n)) }),
+      syncWallet: async () => {
+        const balance = await fetchBalance();
+        if (balance != null) set({ crowns: balance });
+      },
+      awardGauntlet: async (amount) => {
+        const amt = Math.max(0, Math.round(amount));
+        if (amt <= 0) return;
+        const res = await walletEvent("gauntlet", amt);
+        if (res) set({ crowns: res.balance });
+        else set((s) => ({ crowns: s.crowns + amt })); // offline: optimistic
+      },
+      commitBet: async (stake, side, nonce) => {
+        const res = await commitBetRequest(stake, side, nonce);
+        if (res) {
+          if (!res.ok) return false; // server rejected (can't afford)
+          set({ crowns: res.balance });
+          return true;
+        }
+        // offline: optimistic local debit (reconciled by syncWallet on reconnect)
+        if (get().crowns < stake) return false;
+        set((s) => ({ crowns: s.crowns - stake }));
         return true;
       },
 
-      claimNode: (id, reward) => {
+      claimNode: async (id, reward) => {
         const day = today();
         const led = get().nodes;
         const claimed = led.day === day ? led.claimed : [];
         if (claimed.includes(id)) return false;
+        const crownReward = reward.crowns ?? 0;
+        let balance: number | null = null;
+        if (crownReward > 0) {
+          const res = await walletEvent("cache", crownReward);
+          if (res) balance = res.balance;
+        }
         set((s) => ({
-          crowns: s.crowns + (reward.crowns ?? 0),
+          crowns: balance != null ? balance : s.crowns + crownReward,
           fragments: s.fragments + (reward.fragments ?? 0),
           nodes: { day, claimed: [...claimed, id] },
           trainerXp: s.trainerXp + (reward.fragments ? TRAINER_XP.cacheFragment : 0) + (reward.crowns ? TRAINER_XP.cacheCrown : 0),
@@ -247,11 +291,17 @@ export const useChampions = create<ChampionStore>()(
         return true;
       },
 
-      completeGoal: (id, reward) => {
+      completeGoal: async (id, reward) => {
         const season = currentSeasonNumber();
         const led = get().goals;
         const done = led.season === season ? led.done : [];
         if (done.includes(id)) return false;
+        const crownReward = reward.crowns ?? 0;
+        let balance: number | null = null;
+        if (crownReward > 0) {
+          const res = await walletEvent("goal", crownReward);
+          if (res) balance = res.balance;
+        }
         set((s) => {
           let forcePoints = s.forcePoints;
           if (reward.seasonPoints && s.force) {
@@ -259,7 +309,7 @@ export const useChampions = create<ChampionStore>()(
             forcePoints = { season, points: base + reward.seasonPoints };
           }
           return {
-            crowns: s.crowns + (reward.crowns ?? 0),
+            crowns: balance != null ? balance : s.crowns + crownReward,
             fragments: s.fragments + (reward.fragments ?? 0),
             trainerXp: s.trainerXp + (reward.trainerXp ?? 0),
             goals: { season, done: [...done, id] },
@@ -270,12 +320,35 @@ export const useChampions = create<ChampionStore>()(
       },
 
       awardTrainerXp: (n) => set((s) => ({ trainerXp: s.trainerXp + Math.max(0, Math.round(n)) })),
-      pledgeForce: (f) => set({ force: f }),
+      canRebanner: () => {
+        const s = get();
+        return s.force === null || s.forceSeason !== currentSeasonNumber();
+      },
+      pledgeForce: (f) => {
+        const season = currentSeasonNumber();
+        const s = get();
+        // one Banner per season — already raised this season is a hard no-op
+        if (s.force !== null && s.forceSeason === season) return false;
+        set({
+          force: f,
+          forceSeason: season,
+          // a fresh season resets the contribution tally to the new Banner
+          forcePoints: s.forcePoints.season === season ? s.forcePoints : { season, points: 0 },
+        });
+        return true;
+      },
       crackKeeper: () => set((s) => ({ trainerXp: s.trainerXp + TRAINER_XP.keeperCracked })),
 
       // a paid training session: spends Crowns, adds XP + nudges style axes toward
       // the recipe dials — so money visibly evolves the body and shifts the build.
-      trainChampion: (key) => {
+      trainChampion: async (key) => {
+        const res = await walletEvent("train");
+        if (res) {
+          if (!res.ok) return false; // server says you can't afford it
+          set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: res.balance, trainerXp: s.trainerXp + TRAINER_XP.train }));
+          return true;
+        }
+        // offline fallback: optimistic local spend
         if (get().crowns < TRAIN_COST) return false;
         set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: s.crowns - TRAIN_COST, trainerXp: s.trainerXp + TRAINER_XP.train }));
         return true;
@@ -289,14 +362,21 @@ export const useChampions = create<ChampionStore>()(
         return true;
       },
 
-      buyFragment: () => {
+      buyFragment: async () => {
+        const res = await walletEvent("fragment_buy");
+        if (res) {
+          if (!res.ok) return false;
+          set((s) => ({ crowns: res.balance, fragments: s.fragments + 1 }));
+          return true;
+        }
         if (get().crowns < FRAGMENT_BUY) return false;
         set((s) => ({ crowns: s.crowns - FRAGMENT_BUY, fragments: s.fragments + 1 }));
         return true;
       },
-      sellFragment: () => {
+      sellFragment: async () => {
         if (get().fragments < 1) return false;
-        set((s) => ({ fragments: s.fragments - 1, crowns: s.crowns + FRAGMENT_SELL }));
+        const res = await walletEvent("fragment_sell");
+        set((s) => ({ fragments: s.fragments - 1, crowns: res ? res.balance : s.crowns + FRAGMENT_SELL }));
         return true;
       },
 

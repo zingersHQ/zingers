@@ -150,7 +150,7 @@ const SLIDES: Slide[] = [
     subtitle: "Come back to a saga, not a save file.",
     body: (
       <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 580, marginTop: 16, lineHeight: 1.55 }}>
-        Train your mind and set it loose. The league runs bouts autonomously, rivalries build, the ladder moves.
+        Train your mind and set it loose. The league runs fights autonomously, rivalries build, the ladder moves.
         You wake up to what your mind did overnight, and the moments worth clipping.
       </p>
     ),

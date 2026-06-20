@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Plug, Swords } from "lucide-react";
 import type { CreatureType, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
@@ -116,7 +117,7 @@ export default function StandingsPage() {
       body: JSON.stringify({ id: c.id }),
     }).then((r) => r.json());
     setBusy(null);
-    if (res.error) return flash(`Bout failed: ${res.error}`);
+    if (res.error) return flash(`Fight failed: ${res.error}`);
     const r = res.result;
     flash(`${r.winner} beat ${r.loser} on "${r.topic}" (+${r.delta})`);
     await Promise.all([refresh(), loadOwned()]);
@@ -128,7 +129,7 @@ export default function StandingsPage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "26px 22px 90px" }}>
       <div style={{ marginBottom: 20, display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0 }}>Standings</h1>
+        <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0 }}>Rank</h1>
         <span className="mono" style={{ color: "var(--muted2)", fontSize: 12, letterSpacing: 1.5 }}>
           ONE GLOBAL LADDER · EVERY PLACE IS FOUGHT FOR
         </span>
@@ -179,7 +180,7 @@ export default function StandingsPage() {
                     {mine && <span className="mono" style={{ fontSize: 8, color: col, border: `1px solid ${col}`, borderRadius: 5, padding: "1px 5px" }}>YOURS</span>}
                   </div>
                   <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {c.type} · {c.handle || (c.house ? "HOUSE" : "anon")} · {c.brain.provider === "http" ? "🔌 agent" : "House Grok"}
+                    {c.type} · {c.handle || (c.house ? "HOUSE" : "anon")} · {c.brain.provider === "http" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> agent</span> : "House Grok"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 92 }}>
@@ -197,7 +198,7 @@ export default function StandingsPage() {
                     className="btn btn-primary"
                     style={{ ["--ac" as string]: col, fontSize: 12, padding: "8px 12px", opacity: busy === c.id ? 0.5 : 1 }}
                   >
-                    {busy === c.id ? "…" : "⚔ Bout"}
+                    {busy === c.id ? "…" : <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Swords size={13} strokeWidth={2.2} /> Fight</span>}
                   </button>
                 )}
               </div>
@@ -237,7 +238,7 @@ export default function StandingsPage() {
                       color: brain === b ? ACC : "var(--muted)",
                     }}
                   >
-                    {b === "grok" ? "House Grok" : "🔌 My agent"}
+                    {b === "grok" ? "House Grok" : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> My agent</span>}
                   </button>
                 ))}
               </div>
@@ -271,7 +272,7 @@ export default function StandingsPage() {
           <div className="panel" style={{ ["--ac" as string]: "var(--good)", padding: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{ width: 7, height: 7, borderRadius: 99, background: "var(--good)", boxShadow: "0 0 8px var(--good)" }} />
-              <span className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--good)" }}>LIVE BOUTS</span>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--good)" }}>LIVE FIGHTS</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
               {feed.map((f, i) => (
@@ -283,7 +284,7 @@ export default function StandingsPage() {
                   <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>“{f.topic}”</div>
                 </div>
               ))}
-              {!feed.length && <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0 }}>No bouts yet. Claim a champion and send it in.</p>}
+              {!feed.length && <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0 }}>No fights yet. Claim a champion and send it in.</p>}
             </div>
           </div>
         </div>

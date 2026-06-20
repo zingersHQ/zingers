@@ -10,7 +10,6 @@
 //   • the Seal      — the sealed golden Vault door, set into the central plaza
 //   • Force banners — the five houses ring the seal; your pledged Force stands lit
 //   • Vaultgates    — portal arches out to each region (walk in + E to travel)
-//   • the Chronicle — a monolith showing the live season
 // ─────────────────────────────────────────────────────────────────────────────
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -18,7 +17,6 @@ import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { CreatureType } from "@/lib/types";
 import { FORCES, WHEEL, FORCE_MOTTO } from "@/lib/lore/canon";
-import { currentSeason } from "@/lib/lore/season";
 
 const GOLD = "#f5d020";
 
@@ -44,7 +42,6 @@ export function ConcordScene({
     <group>
       <Seal daylight={daylight} />
       <ForceBanners pledged={pledged} />
-      <Chronicle />
       {gates.map((g) => (
         <Vaultgate key={g.world} gate={g} rising={g.world === featuredWorld} />
       ))}
@@ -171,7 +168,7 @@ function ForceBanner({ type, x, z, rot, lit }: { type: CreatureType; x: number; 
           <pointLight position={[0, h * 0.7, 0]} intensity={26} color={col} distance={14} />
           <Html position={[0, h + 1.4, 0]} center distanceFactor={13} zIndexRange={[18, 0]} style={{ pointerEvents: "none" }}>
             <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-              <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700 }}>YOUR ALLEGIANCE</div>
+              <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700 }}>YOUR BANNER</div>
               <div style={{ fontSize: 9, fontStyle: "italic", color: "#fff", textShadow: "0 1px 6px #000" }}>{FORCE_MOTTO[type]}</div>
             </div>
           </Html>
@@ -180,38 +177,10 @@ function ForceBanner({ type, x, z, rot, lit }: { type: CreatureType; x: number; 
         <Html position={[0, 1.0, 0]} center distanceFactor={15} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
             <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700, opacity: 0.85 }}>{lore.inWorld.toUpperCase()}</div>
-            <div style={{ fontSize: 7.5, letterSpacing: 1, color: "#cfcdee", opacity: 0.7 }}>walk up · swear allegiance</div>
+            <div style={{ fontSize: 7.5, letterSpacing: 1, color: "#cfcdee", opacity: 0.7 }}>walk up · raise this banner</div>
           </div>
         </Html>
       )}
-    </group>
-  );
-}
-
-// ── The Chronicle monolith — the live season, in-world ───────────────────────
-function Chronicle() {
-  const season = useMemo(() => currentSeason(), []);
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (ref.current) (ref.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5 + Math.sin(state.clock.elapsedTime * 1.2) * 0.18;
-  });
-  return (
-    <group position={[10.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
-      <mesh ref={ref} position={[0, 2.4, 0]} castShadow>
-        <boxGeometry args={[2.6, 4.8, 0.4]} />
-        <meshStandardMaterial color="#171327" emissive="#6a6bff" emissiveIntensity={0.5} metalness={0.5} roughness={0.5} />
-      </mesh>
-      <mesh position={[0, 2.4, 0.22]}>
-        <planeGeometry args={[2.2, 4.4]} />
-        <meshBasicMaterial color="#6a6bff" transparent opacity={0.08} />
-      </mesh>
-      <Html position={[0, 3.0, 0.25]} center distanceFactor={13} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", width: 150 }}>
-          <div style={{ fontSize: 8, letterSpacing: 2, color: "#8f8bff", fontWeight: 700 }}>THE CHRONICLE</div>
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", textShadow: "0 1px 6px #000", margin: "2px 0" }}>Season {season.n}</div>
-          <div style={{ fontSize: 8.5, color: "#cfcdee", lineHeight: 1.25 }}>{season.region.name}</div>
-        </div>
-      </Html>
     </group>
   );
 }

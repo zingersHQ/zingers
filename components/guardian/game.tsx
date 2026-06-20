@@ -1,5 +1,22 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ClipboardList,
+  BookOpen,
+  Shield,
+  Eye,
+  Wand2,
+  Lock,
+  Unlock,
+  Volume2,
+  VolumeX,
+  MessageSquare,
+  MessagesSquare,
+  Settings,
+  User,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { primeCreature, speakCreature, stopCreature, creatureVoiceSupported } from "@/lib/creature-voice";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -8,13 +25,13 @@ import { useChampions } from "@/store/champions";
 import type { CreatureType, GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
 
 // A face for each guardian so the stand-off reads at a glance (no portrait art
-// for them like the champions have — these glyphs carry the persona instead).
-const GUARDIAN_GLYPH: Record<number, string> = {
-  1: "📋", // Tibble — the greeter
-  2: "📚", // Quill — the archivist
-  3: "🛡️", // Bastion — the warden
-  4: "🔮", // Vesper — the diviner
-  5: "🧙", // Sable — the vaultheart
+// for them like the champions have — these monochrome icons carry the persona).
+const GUARDIAN_GLYPH: Record<number, LucideIcon> = {
+  1: ClipboardList, // Tibble — the greeter
+  2: BookOpen, // Quill — the archivist
+  3: Shield, // Bastion — the warden
+  4: Eye, // Vesper — the diviner
+  5: Wand2, // Sable — the vaultheart
 };
 
 const STORE = "zingers_guardian_v1";
@@ -128,14 +145,14 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
             </p>
           )}
           {mounted && !live && (
-            <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10 }}>
-              ⚙ offline mode. Add <code>XAI_API_KEY</code> for a live, much craftier guardian.
+            <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <Settings size={12} strokeWidth={2} /> offline mode. Add <code>XAI_API_KEY</code> for a live, much craftier guardian.
             </p>
           )}
         </div>
         {onClose && (
-          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>
-            ✕
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", lineHeight: 1, display: "inline-flex" }}>
+            <X size={20} />
           </button>
         )}
       </div>
@@ -176,8 +193,8 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
                     </span>
                   )}
                   {mounted && !unlocked && (
-                    <span className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginLeft: "auto" }}>
-                      🔒 LOCKED
+                    <span className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <Lock size={10} strokeWidth={2} /> LOCKED
                     </span>
                   )}
                 </div>
@@ -357,7 +374,7 @@ function Battle({
                 marginRight: 2,
               }}
             >
-              {voiceOn ? "🔊" : "🔇"}
+              {voiceOn ? <Volume2 size={15} strokeWidth={2} /> : <VolumeX size={15} strokeWidth={2} />}
             </button>
           )}
           {Array.from({ length: g.maxTurns }).map((_, i) => (
@@ -501,7 +518,7 @@ function FaceOff({
         <span className="mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--muted2)", letterSpacing: 1 }}>
           VS
         </span>
-        <span style={{ fontSize: 22, lineHeight: 1 }}>{guardianSpeaking ? "🗣️" : "💬"}</span>
+        <span style={{ lineHeight: 1, display: "inline-flex", color: "var(--muted2)" }}>{guardianSpeaking ? <MessagesSquare size={22} strokeWidth={2} /> : <MessageSquare size={22} strokeWidth={2} />}</span>
       </div>
 
       <Challenger myKey={myKey} myChamp={myChamp} myType={myType} live={yourTurn} />
@@ -519,7 +536,6 @@ function GuardianPortrait({ g, live }: { g: GuardianPub; live: boolean }) {
           borderRadius: "22%",
           display: "grid",
           placeItems: "center",
-          fontSize: 42,
           background: `radial-gradient(120% 120% at 50% 22%, color-mix(in srgb, ${g.color} 30%, #0c0b12), #0c0b12)`,
           border: `2px solid ${g.color}`,
           boxShadow: live
@@ -529,7 +545,10 @@ function GuardianPortrait({ g, live }: { g: GuardianPub; live: boolean }) {
           filter: live ? "brightness(1.12) saturate(1.1)" : "brightness(0.86)",
         }}
       >
-        {GUARDIAN_GLYPH[g.level] ?? "🛡️"}
+        {(() => {
+          const Glyph = GUARDIAN_GLYPH[g.level] ?? Shield;
+          return <Glyph size={44} strokeWidth={1.6} color={g.color} />;
+        })()}
       </div>
       <div style={{ fontWeight: 700, fontSize: 15 }}>{g.name}</div>
       <div className="mono" style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>
@@ -573,13 +592,12 @@ function Challenger({
             borderRadius: "22%",
             display: "grid",
             placeItems: "center",
-            fontSize: 42,
             background: "radial-gradient(120% 120% at 50% 22%, color-mix(in srgb, var(--accent) 26%, #0c0b12), #0c0b12)",
             border: "2px solid var(--accent)",
             boxShadow: "0 0 26px -14px var(--accent), inset 0 0 26px -18px var(--accent)",
           }}
         >
-          🧑‍🚀
+          <User size={44} strokeWidth={1.6} color="var(--accent)" />
         </div>
       )}
       <div style={{ fontWeight: 700, fontSize: 15 }}>{myKey || "YOU"}</div>
@@ -633,12 +651,12 @@ function Bubble({
             border: "none",
             cursor: "pointer",
             color: "var(--muted2)",
-            fontSize: 12,
             lineHeight: 1,
             padding: 2,
+            display: "inline-flex",
           }}
         >
-          🔊
+          <Volume2 size={13} strokeWidth={2} />
         </button>
       )}
     </div>
@@ -665,10 +683,10 @@ function OutcomeCard({
   const [copied, setCopied] = useState(false);
   const col = won ? "var(--good)" : "var(--bad)";
   const share = [
-    `🛡️ Zingers · The Guardian`,
+    `Zingers · The Guardian`,
     won
-      ? `Cracked ${g.name} (Lv${g.level}) in ${turnsUsed} message${turnsUsed === 1 ? "" : "s"} 🔓`
-      : `${g.name} (Lv${g.level}) held the line. I broke. 🔒`,
+      ? `Cracked ${g.name} (Lv${g.level}) in ${turnsUsed} message${turnsUsed === 1 ? "" : "s"}.`
+      : `${g.name} (Lv${g.level}) held the line. I broke.`,
     BRAND.site.replace(/^https?:\/\//, "") + "/guardian",
   ].join("\n");
 
@@ -684,8 +702,8 @@ function OutcomeCard({
 
   return (
     <div className="fadein panel" style={{ ["--ac" as string]: col, marginTop: 12, padding: 20, textAlign: "center", boxShadow: `0 0 70px -34px ${col}` }}>
-      <div className="glow" style={{ fontSize: 24, fontWeight: 800, color: col }}>
-        {won ? "🔓 BROKEN" : "🔒 IT HELD"}
+      <div className="glow" style={{ fontSize: 24, fontWeight: 800, color: col, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        {won ? <Unlock size={22} strokeWidth={2.2} /> : <Lock size={22} strokeWidth={2.2} />} {won ? "BROKEN" : "IT HELD"}
       </div>
       <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 6 }}>
         {won

@@ -6,23 +6,15 @@ import { Html, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, tierIndex } from "@/lib/evolve/progression";
-import { appearanceOf } from "@/lib/evolve/appearance";
+import { appearanceOf, type Appearance } from "@/lib/evolve/appearance";
+import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
+import { modelFor, ALL_MODELS } from "@/lib/render/model-registry";
+import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
+import { bodyPalette, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 
-const MODEL = "/models/RobotExpressive.glb";
-useGLTF.preload(MODEL);
+for (const m of ALL_MODELS) useGLTF.preload(m);
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-
-// small deterministic string hash so each named mesh/material gets a stable
-// (but well-spread) per-part colour offset
-function hashName(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
 
 function pickClip(clips: THREE.AnimationClip[], ...names: string[]): THREE.AnimationClip | undefined {
   for (const n of names) {
@@ -41,6 +33,7 @@ export interface BuiltCharacter {
   morph: { headScale: number; handScale: number };
   h: number;
   emissive: number;
+  palette: BodyPalette;
 }
 
 export function buildCharacter(
@@ -48,12 +41,15 @@ export function buildCharacter(
   animations: THREE.AnimationClip[],
   champion: Champion,
   colorHex: string,
+  appOverride?: Appearance,
+  seed = 0,
 ): BuiltCharacter {
   const root = skeletonClone(scene) as THREE.Group;
-  const tcol = new THREE.Color(colorHex);
-  const baseHSL = { h: 0, s: 0, l: 0 };
-  tcol.getHSL(baseHSL);
-  const app = appearanceOf(champion);
+  // archetype silhouette (when provided) drives proportions; else genome only
+  const app = appOverride ?? appearanceOf(champion);
+  // a per-individual multi-colour scheme anchored on the Force colour — distinct
+  // body regions, trim, and a "clothing pattern" so individuals are identifiable
+  const pal: BodyPalette = bodyPalette(colorHex, seed);
 
   root.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -61,31 +57,21 @@ export function buildCharacter(
       m.castShadow = true;
       m.frustumCulled = false;
       const mat = (m.material as THREE.MeshStandardMaterial).clone();
-      // give each body part its own tone within the champion's colour family:
-      // a deterministic per-part offset shifts lightness/saturation (and a touch of
-      // hue) so the model reads as distinct armour/limbs/trim rather than one
-      // flat colour, while staying clearly "their" colour
-      const seed = hashName(m.name || mat.name || "");
-      const u = (seed % 997) / 997;          // 0..1, stable per part
-      const v = ((seed >> 7) % 997) / 997;   // a second independent stream
-      const part = new THREE.Color().setHSL(
-        (baseHSL.h + (u - 0.5) * 0.05 + 1) % 1,
-        clamp01(baseHSL.s * (0.85 + v * 0.45)),
-        clamp01(baseHSL.l + (u - 0.5) * 0.34),
-      );
-      if (mat.color) {
-        // blend the GLB's own part colour toward this tonal variant (keeps a hint
-        // of the source material's contrast between parts)
-        mat.color.copy(mat.color.clone().lerp(part, 0.78));
-      }
+      const region = regionOf(m.name || "");
+      const side = sideOf(m.name || "");
+      const role = roleOf(mat.name);
+      const partHex = pal.colorFor(region, side, role);
+      const part = new THREE.Color(partHex);
+      if (mat.color) mat.color.copy(part);
       if ("emissive" in mat) {
+        // low body emissive so the ALBEDO colours read; the archetype features +
+        // aura carry the bloom. Dark joints stay matte; lit parts get a faint seam.
         mat.emissive = part.clone();
-        // keep the body readable as a lit object; the aura/shards/rings carry the bloom
-        mat.emissiveIntensity = app.emissive * (0.3 + u * 0.25);
+        mat.emissiveIntensity = (role === "dark" ? 0.04 : 0.16) * (0.6 + app.emissive * 0.5);
       }
-      // vary the surface finish per part too — some pieces glossier/metallic
-      if ("metalness" in mat) mat.metalness = clamp01(app.metalness + (v - 0.5) * 0.35);
-      if ("roughness" in mat) mat.roughness = clamp01(app.roughness + (u - 0.5) * 0.3);
+      // surface finish per material role: plates read metallic, joints matte
+      if ("metalness" in mat) mat.metalness = clamp01(app.metalness + (role === "plate" ? 0.28 : role === "dark" ? -0.1 : 0.04));
+      if ("roughness" in mat) mat.roughness = clamp01(app.roughness + (role === "plate" ? -0.22 : role === "dark" ? 0.2 : 0.02));
       mat.needsUpdate = true;
       m.material = mat;
     }
@@ -132,7 +118,7 @@ export function buildCharacter(
   if (actions.jump) actions.jump.clampWhenFinished = true;
   actions.idle?.reset().play();
 
-  return { root, mixer, actions, bones, boneBase, morph, h: app.h, emissive: app.emissive };
+  return { root, mixer, actions, bones, boneBase, morph, h: app.h, emissive: app.emissive, palette: pal };
 }
 
 function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], ...names: string[]) {
@@ -173,6 +159,7 @@ export function ChampionMesh({
   idlePhase,
   idleSpeed,
   auraDim,
+  identityKey,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -195,18 +182,27 @@ export function ChampionMesh({
   idleSpeed?: number;
   /** shrink the energy aura so the body reads clearly in gallery portraits */
   auraDim?: boolean;
+  /** stable individual id → unique colour scheme / clothing pattern */
+  identityKey?: string;
 }) {
-  const { scene, animations } = useGLTF(MODEL);
+  const { scene, animations } = useGLTF(modelFor(type));
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
 
-  const app = appearanceOf(champion);
+  const app = useMemo(() => archetypeAppearance(champion, type), [champion, type]);
   const lf = levelFor(champion.xp);
   const tier = tierFor(lf.level);
   const ti = tierIndex(lf.level);
 
-  const appKey = `${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}`;
-  const built = useMemo(() => buildCharacter(scene, animations, champion, colHex), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // per-individual seed → distinct multi-colour scheme. Prefer an explicit id;
+  // else fall back to a hash of the career so different builds still differ.
+  const seed = useMemo(
+    () => seedFrom(identityKey || `${colHex}|${champion.xp}|${champion.aggression}|${champion.flair}|${champion.resilience}|${champion.creativity}`),
+    [identityKey, colHex, champion.xp, champion.aggression, champion.flair, champion.resilience, champion.creativity],
+  );
+
+  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}`;
+  const built = useMemo(() => buildCharacter(scene, animations, champion, colHex, app, seed), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gref = useRef<THREE.Group>(null);
   const motion = useRef<THREE.Group>(null);
@@ -249,10 +245,13 @@ export function ChampionMesh({
   // models never breathes in lockstep
   useEffect(() => {
     const idle = built.actions.idle;
-    if (!idle || idlePhase == null) return;
-    idle.time = idlePhase;
-    idle.setEffectiveTimeScale(idleSpeed ?? 1);
-  }, [built, idlePhase, idleSpeed]);
+    if (!idle) return;
+    if (idlePhase != null) idle.time = idlePhase;
+    // archetype sets the base tempo (heavy/calm vs jittery/lively); the gallery
+    // desync multiplier rides on top so a wall of the same Force never beats in
+    // lockstep.
+    idle.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1));
+  }, [built, idlePhase, idleSpeed, type]);
 
   // evolution shards + rings, precomputed
   const shardN = Math.min(10, Math.max(0, lf.level - 1));
@@ -350,9 +349,13 @@ export function ChampionMesh({
       onPointerOver={onSelect ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={onSelect ? () => (document.body.style.cursor = "default") : undefined}
     >
-      <group ref={motion}>
+      <group ref={motion} rotation={[kitFor(type).lean, 0, 0]}>
         <primitive object={built.root} />
       </group>
+
+      {/* per-Force signature attachments — the species markings that make the
+          shared rig read as five different beings; tinted to this individual */}
+      <ArchetypeFeatures type={type} h={app.h} color={built.palette.glow} accent={built.palette.accent} dim={auraDim} />
 
       {/* aura sphere */}
       <mesh ref={auraRef} position={[0, app.h * 0.55, 0]}>

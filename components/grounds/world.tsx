@@ -5,7 +5,7 @@ import { useGLTF, Environment, Lightformer, Html, PerformanceMonitor, AdaptiveDp
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { ChevronsUp, Zap } from "lucide-react";
+import { ChevronsUp, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
 import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank, skillLevel } from "@/lib/evolve/progression";
@@ -74,8 +74,8 @@ const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: stri
   { level: 4, name: "Vesper", title: "The Diviner", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
   { level: 5, name: "Sable", title: "The Vaultheart", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
 ];
-const PODIUM_A: [number, number, number] = [ARENA[0] - 1.9, 0, 0];
-const PODIUM_B: [number, number, number] = [ARENA[0] + 1.9, 0, 0];
+const PODIUM_A: [number, number, number] = [ARENA[0] - 2.6, 0, 0];
+const PODIUM_B: [number, number, number] = [ARENA[0] + 2.6, 0, 0];
 const SPAWN: [number, number, number] = [0, 0, 13];
 
 const keys: Record<string, boolean> = {};
@@ -196,6 +196,7 @@ export default function World({
   onPose,
   travelRef,
   touchBottomInset = 0,
+  showcase = false,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -215,6 +216,9 @@ export default function World({
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
   touchBottomInset?: number;
+  /** Passive postcard mode: no player avatar, no input — an auto-orbit camera
+      drifts over the region. Used for the docs/org region figures. */
+  showcase?: boolean;
 }) {
   const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false });
@@ -274,7 +278,6 @@ export default function World({
     [isHub, shape],
   );
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
-  const spirePad = useMemo(() => landmarkPos(sc.landmarks.spire), [sc.landmarks.spire]);
   // the Broker stands on flat ground on a free bearing (offset from the Tower),
   // an easy walk from spawn — a mind that deals in fragments.
   const brokerPad = useMemo<[number, number, number]>(() => {
@@ -328,7 +331,7 @@ export default function World({
     () => goals.map((g) => ({ id: g.id, goalKind: g.kind, label: g.label, hint: g.hint, radius: g.radius, reward: g.reward, pos: new THREE.Vector3(g.pos[0], g.pos[1], g.pos[2]) })),
     [goals],
   );
-  const keeperTargets = useMemo(() => spireKeeperTargets(spirePad), [spirePad]);
+  const keeperTargets = useMemo(() => keeperTargetsFrom(keeperSites(shape, sc.landmarks.spire.angle)), [shape, sc.landmarks.spire.angle]);
   return (
     <>
     <Canvas
@@ -412,7 +415,7 @@ export default function World({
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
               {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
-              <GuardianSpire pad={spirePad} />
+              <KeeperGrounds shape={shape} baseAngle={sc.landmarks.spire.angle} />
 
               {/* wayfinding beams over the two open-ground districts (the Tower &
                   Spire carry their own bespoke beacons) */}
@@ -439,6 +442,7 @@ export default function World({
                   key={c.key}
                   type={c.type}
                   champion={c.champion}
+                  identityKey={c.key}
                   label={c.name + (owned ? "  ◆ YOURS" : "  · HOUSE")}
                   position={[home[0], 0, home[2]]}
                   rotation={owned ? Math.atan2(ARENA[0] - home[0], ARENA[2] - home[2]) : 0}
@@ -452,7 +456,7 @@ export default function World({
             })
           )}
 
-          <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />
+          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
         </Physics>
 
         {!glLost && (
@@ -465,9 +469,13 @@ export default function World({
         )}
       </Suspense>
 
-      <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
+      {showcase ? (
+        <ShowcaseCamera shape={shape} />
+      ) : (
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
+      )}
     </Canvas>
-    {isTouch && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
+    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
     </>
   );
 }
@@ -843,186 +851,187 @@ function ArenaPlatform() {
   );
 }
 
-// ── The Guardian's Spire ─────────────────────────────────────────────────────
-// A diegetic entry point to the single-player extraction game. Rather than a flat
-// menu — or a cramped lineup — the five Keepers ascend a glowing spire by level:
-// Tibble near the base, Sable the Vaultheart crowning the top. Each floats on its own
-// dais wrapped in a strong aura + light beacon so they clearly outrank the regular
-// agents perched on the climbing Tower. Walk up to the base to open the full ladder.
+// ── The Keepers' Climbs ──────────────────────────────────────────────────────
+// The five Keepers no longer share one spire — each stands ALONE atop its own
+// staircase, scattered across the wilds on its own bearing. The step count rises
+// with rank (Tibble: 2 steps … Sable the Vaultheart: 6), and the higher Keepers
+// sit deeper out and higher up, so spotting and reaching them is the climb. Walk
+// (or fly) to the top tread and you're face-to-face to open the extraction game.
 const GUARDIAN_COL = "#c77dff";
-const SPIRE_BASE_Y = 2.6; // lowest guardian
-const SPIRE_STEP_Y = 3.0; // vertical gap between guardians
-const SPIRE_RADIUS = 1.95; // how far each guardian orbits the core column
-const SPIRE_TWIST = 2.3; // radians of spiral per level
-const SPIRE_TOP_Y = SPIRE_BASE_Y + SPIRE_STEP_Y * (GUARDIAN_ROSTER.length - 1); // boss height
+const KEEPER_RISER = 0.62; // height gained per step
+const KEEPER_GOING = 1.55; // tread depth — how far the climb advances per step
+const KEEPER_WIDTH = 3.4; // step width
 
-function spireKeeperTargets(pad: [number, number, number]) {
+interface KeeperSite {
+  g: (typeof GUARDIAN_ROSTER)[number];
+  steps: number;
+  dirx: number;
+  dirz: number;
+  bx: number; // foot-of-stairs ground point
+  bz: number;
+  groundY: number;
+  topX: number; // centre of the top tread (where the Keeper stands)
+  topZ: number;
+  topY: number; // walkable height of the top tread
+}
+
+// Disperse the roster: each Keeper takes a distinct bearing (evenly spaced off the
+// region's spire angle) and a radius that grows with rank, so the boss is the
+// furthest, highest climb.
+function keeperSites(shape: TerrainShape, baseAngle: number): KeeperSite[] {
   return GUARDIAN_ROSTER.map((g, i) => {
-    const theta = i * SPIRE_TWIST;
-    const x = pad[0] + Math.cos(theta) * SPIRE_RADIUS;
-    const z = pad[2] + Math.sin(theta) * SPIRE_RADIUS;
-    const y = SPIRE_BASE_Y + i * SPIRE_STEP_Y;
-    return { level: g.level, name: g.name, title: g.title, pos: new THREE.Vector3(x, y + 1.0, z) };
+    const steps = g.level + 1; // 2, 3, 4, 5, 6 in rank order
+    const ang = baseAngle + i * ((Math.PI * 2) / GUARDIAN_ROSTER.length);
+    const rBase = 24 + i * 5; // each Keeper deeper into the wilds
+    const dirx = Math.cos(ang);
+    const dirz = Math.sin(ang);
+    const bx = dirx * rBase;
+    const bz = dirz * rBase;
+    const groundY = terrainHeight(bx, bz, shape);
+    const topOff = (steps - 0.5) * KEEPER_GOING; // centre of the top step
+    const topX = dirx * (rBase + topOff);
+    const topZ = dirz * (rBase + topOff);
+    const topY = groundY + steps * KEEPER_RISER;
+    return { g, steps, dirx, dirz, bx, bz, groundY, topX, topZ, topY };
   });
 }
 
-function GuardianSpire({ pad }: { pad: [number, number, number] }) {
-  const coreRef = useRef<THREE.Mesh>(null);
-  const beaconRef = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (coreRef.current) coreRef.current.rotation.y += 0.004;
-    if (beaconRef.current) {
-      const m = beaconRef.current.material as THREE.MeshBasicMaterial;
-      m.opacity = 0.08 + Math.sin(t * 1.4) * 0.03;
-    }
-  });
+function keeperTargetsFrom(sites: KeeperSite[]) {
+  return sites.map((s) => ({ level: s.g.level, name: s.g.name, title: s.g.title, pos: new THREE.Vector3(s.topX, s.topY + 1.0, s.topZ) }));
+}
 
-  const guardians = useMemo(
-    () =>
-      GUARDIAN_ROSTER.map((g, i) => {
-        const theta = i * SPIRE_TWIST;
-        const x = Math.cos(theta) * SPIRE_RADIUS;
-        const z = Math.sin(theta) * SPIRE_RADIUS;
-        const y = SPIRE_BASE_Y + i * SPIRE_STEP_Y;
-        const champ = blank();
-        champ.xp = g.xp;
-        return { g, x, y, z, champ };
-      }),
-    [],
+function KeeperGrounds({ shape, baseAngle }: { shape: TerrainShape; baseAngle: number }) {
+  const sites = useMemo(() => keeperSites(shape, baseAngle), [shape, baseAngle]);
+  return (
+    <>
+      {sites.map((s, i) => (
+        <KeeperStair key={s.g.level} site={s} top={i === sites.length - 1} />
+      ))}
+    </>
   );
+}
 
-  const coreH = SPIRE_TOP_Y + 3.4;
+// One Keeper's climb: a flight of solid risers (count = rank + 1) ascending to the
+// Keeper waiting on the top tread. Each riser is its own physics collider you can
+// hop up; the whole flight reads as a private little ziggurat in the wilds.
+function KeeperStair({ site, top }: { site: KeeperSite; top: boolean }) {
+  const { g, steps, dirx, dirz, bx, bz, groundY, topX, topZ, topY } = site;
+  const climbYaw = useMemo(() => Math.atan2(dirx, dirz), [dirx, dirz]);
+  // the Keeper faces back down its own stairs, toward the plaza
+  const faceIn = useMemo(() => Math.atan2(-topX, -topZ), [topX, topZ]);
+  const champ = useMemo(() => {
+    const c = blank();
+    c.xp = g.xp;
+    return c;
+  }, [g.xp]);
+
+  const stepBoxes = useMemo(() => {
+    const out: { pos: [number, number, number]; size: [number, number, number] }[] = [];
+    const EMBED = 2.6; // bury each riser so the flight never floats on a slope
+    for (let i = 0; i < steps; i++) {
+      const off = (i + 0.5) * KEEPER_GOING;
+      const cx = bx + dirx * off;
+      const cz = bz + dirz * off;
+      const treadTop = groundY + (i + 1) * KEEPER_RISER;
+      const h = (i + 1) * KEEPER_RISER + EMBED;
+      out.push({ pos: [cx, treadTop - h / 2, cz], size: [KEEPER_WIDTH, h, KEEPER_GOING] });
+    }
+    return out;
+  }, [steps, bx, bz, dirx, dirz, groundY]);
 
   return (
-    <group position={pad}>
-      {/* base dais */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} receiveShadow>
-        <circleGeometry args={[3.0, 48]} />
-        <meshStandardMaterial color="#1a1330" emissive={GUARDIAN_COL} emissiveIntensity={0.35} metalness={0.4} roughness={0.5} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <ringGeometry args={[2.88, 3.04, 48]} />
-        <meshBasicMaterial color={GUARDIAN_COL} side={THREE.DoubleSide} />
-      </mesh>
-
-      {/* the spire core — a tall tapering pillar the guardians orbit; also the
-          solid object you approach to trigger the challenge */}
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh ref={coreRef} position={[0, coreH / 2, 0]} castShadow>
-          <cylinderGeometry args={[0.22, 0.62, coreH, 9]} />
-          <meshStandardMaterial color="#221836" emissive={GUARDIAN_COL} emissiveIntensity={0.5} metalness={0.6} roughness={0.35} flatShading />
-        </mesh>
-      </RigidBody>
-      {/* crowning finial above the boss */}
-      <mesh position={[0, coreH + 0.4, 0]}>
-        <octahedronGeometry args={[0.5, 0]} />
-        <meshStandardMaterial color={GUARDIAN_COL} emissive={GUARDIAN_COL} emissiveIntensity={2.6} metalness={0.3} roughness={0.25} />
-      </mesh>
-
-      {/* full-height wayfinding beacon — spot the spire from across the plaza */}
-      <mesh ref={beaconRef} position={[0, coreH / 2, 0]}>
-        <cylinderGeometry args={[0.5, 1.5, coreH, 16, 1, true]} />
-        <meshBasicMaterial color={GUARDIAN_COL} transparent opacity={0.09} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
-      </mesh>
-      <pointLight position={[0, SPIRE_TOP_Y * 0.6, 0]} intensity={70} color={GUARDIAN_COL} distance={30} />
-
-      {guardians.map(({ g, x, y, z, champ }, i) => (
-        <SpireGuardian key={g.level} g={g} champ={champ} x={x} y={y} z={z} top={i === guardians.length - 1} />
+    <group>
+      {stepBoxes.map((st, i) => (
+        <RigidBody key={i} type="fixed" colliders="cuboid" position={st.pos} rotation={[0, climbYaw, 0]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={st.size} />
+            <meshStandardMaterial color="#221836" emissive={g.color} emissiveIntensity={0.16 + (i / steps) * 0.28} metalness={0.5} roughness={0.45} flatShading />
+          </mesh>
+        </RigidBody>
       ))}
 
-      <Html position={[0, 1.5, 0]} center distanceFactor={15} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 17, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>KEEPERS&apos; SPIRE</div>
-          <div style={{ fontSize: 10, color: GUARDIAN_COL, letterSpacing: 1 }}>climb · face one · talk a secret out of it</div>
-        </div>
-      </Html>
+      <group position={[topX, topY, topZ]}>
+        {/* dais crowning the top step */}
+        <mesh position={[0, 0.06, 0]} receiveShadow>
+          <cylinderGeometry args={[1.3, 1.1, 0.22, 28]} />
+          <meshStandardMaterial color="#15102a" emissive={g.color} emissiveIntensity={0.6} metalness={0.5} roughness={0.4} />
+        </mesh>
+        <KeeperFigure g={g} champ={champ} rot={faceIn} top={top} />
+      </group>
     </group>
   );
 }
 
-// One guardian on the spire: floats on its own glowing dais, tinted its level
-// colour, wrapped in an aura sphere + a vertical light shaft + a point light so it
-// reads as a marked boss, not a regular perched agent.
-function SpireGuardian({
+// The Keeper itself: a hovering, aura-wrapped boss on its dais, with a vault-door
+// halo, a dedicated light, a tall wayfinding beacon (so each scattered climb is
+// spottable from across the wilds), and a floating name/level plate.
+function KeeperFigure({
   g,
   champ,
-  x,
-  y,
-  z,
+  rot,
   top,
 }: {
   g: (typeof GUARDIAN_ROSTER)[number];
   champ: Champion;
-  x: number;
-  y: number;
-  z: number;
+  rot: number;
   top: boolean;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const bobRef = useRef<THREE.Group>(null);
   const auraRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
-  // face outward from the core so it's legible as you orbit the spire
-  const rot = useMemo(() => Math.atan2(x, z), [x, z]);
+  const beaconRef = useRef<THREE.Mesh>(null);
   const phase = useMemo(() => Math.random() * 6.28, []);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    if (groupRef.current) groupRef.current.position.y = y + Math.sin(t * 1.1 + phase) * 0.14;
+    if (bobRef.current) bobRef.current.position.y = 0.5 + Math.sin(t * 1.1 + phase) * 0.12;
     if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.7 + phase) * 0.07);
     if (ringRef.current) ringRef.current.rotation.z += 0.01;
+    if (beaconRef.current) (beaconRef.current.material as THREE.MeshBasicMaterial).opacity = 0.06 + Math.sin(t * 1.4) * 0.02;
   });
 
   const auraR = top ? 1.7 : 1.35;
+  // "behind" the Keeper relative to its facing, for the vault-door halo
+  const back: [number, number, number] = [Math.sin(rot) * -0.55, 1.05, Math.cos(rot) * -0.55];
 
   return (
-    <group ref={groupRef} position={[x, y, z]}>
-      {/* floating dais */}
-      <mesh position={[0, -0.09, 0]}>
-        <cylinderGeometry args={[1.15, 1.0, 0.18, 32]} />
-        <meshStandardMaterial color="#15102a" emissive={g.color} emissiveIntensity={0.6} metalness={0.5} roughness={0.4} />
+    <>
+      {/* tall wayfinding beacon — spot each Keeper from across the wilds */}
+      <mesh ref={beaconRef} position={[0, 15, 0]}>
+        <cylinderGeometry args={[0.4, 1.2, 30, 14, 1, true]} />
+        <meshBasicMaterial color={g.color} transparent opacity={0.07} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
       </mesh>
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <ringGeometry args={[1.18, 1.34, 40]} />
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.18, 0]}>
+        <ringGeometry args={[1.32, 1.5, 40]} />
         <meshBasicMaterial color={g.color} transparent opacity={0.9} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
 
-      <ChampionMesh type={g.type} champion={champ} position={[0, 0.1, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} />
+      <group ref={bobRef} position={[0, 0.5, 0]}>
+        <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0.1, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} />
 
-      {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
-      <mesh rotation={[0, rot, 0]} position={[0, 1.05, -0.55]}>
-        <torusGeometry args={[0.72, 0.06, 8, 48]} />
-        <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.85} roughness={0.2} />
-      </mesh>
-      <mesh rotation={[0, rot, 0]} position={[0, 1.05, -0.52]}>
-        <circleGeometry args={[0.58, 32]} />
-        <meshStandardMaterial color="#1a1330" emissive={g.color} emissiveIntensity={0.35} metalness={0.6} roughness={0.45} side={THREE.DoubleSide} />
-      </mesh>
+        {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
+        <mesh rotation={[0, rot, 0]} position={back}>
+          <torusGeometry args={[0.72, 0.06, 8, 48]} />
+          <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.85} roughness={0.2} />
+        </mesh>
 
-      {/* aura sphere + rising light shaft + dedicated light = "this is a boss" */}
-      <mesh ref={auraRef} position={[0, 0.9, 0]}>
-        <sphereGeometry args={[auraR, 20, 20]} />
-        <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
-      </mesh>
-      <mesh position={[0, 2.4, 0]}>
-        <cylinderGeometry args={[0.18, 0.6, 4.4, 12, 1, true]} />
-        <meshBasicMaterial color={g.color} transparent opacity={0.16} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
-      </mesh>
-      <pointLight position={[0, 1.0, 0]} intensity={top ? 34 : 22} color={g.color} distance={10} />
+        <mesh ref={auraRef} position={[0, 0.9, 0]}>
+          <sphereGeometry args={[auraR, 20, 20]} />
+          <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
+        </mesh>
+      </group>
 
-      <Html position={[0, 2.5, 0]} center distanceFactor={11} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
+      <pointLight position={[0, 1.6, 0]} intensity={top ? 32 : 22} color={g.color} distance={13} />
+
+      <Html position={[0, 3.0, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>
-            {top ? "★ KEEPER · BOSS" : "KEEPER"}
-          </div>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>
-            LEVEL {g.level}
-          </div>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>{top ? "★ KEEPER · BOSS" : "KEEPER"}</div>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
           <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
           <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
         </div>
       </Html>
-    </group>
+    </>
   );
 }
 
@@ -1191,10 +1200,10 @@ function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
   );
 }
 
-const STATUS_VIS: Record<AgentStatus, { color: string; badge: string; label: string }> = {
-  awaiting: { color: "#36d39a", badge: "⚔", label: "AWAITING" },
-  hibernating: { color: "#6a6bff", badge: "🌙", label: "HIBERNATING" },
-  disabled: { color: "#7b7b88", badge: "⛔", label: "OFFLINE" },
+const STATUS_VIS: Record<AgentStatus, { color: string; badge: LucideIcon; label: string }> = {
+  awaiting: { color: "#36d39a", badge: Swords, label: "AWAITING" },
+  hibernating: { color: "#6a6bff", badge: Moon, label: "HIBERNATING" },
+  disabled: { color: "#7b7b88", badge: Ban, label: "OFFLINE" },
 };
 
 function pseudoChampion(a: TowerAgent): Champion {
@@ -1237,6 +1246,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
         <ChampionMesh
           type={agent.type}
           champion={champ}
+          identityKey={agent.key}
           position={[0, 0, 0]}
           rotation={rot}
           showLabel={false}
@@ -1263,8 +1273,8 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
             {agent.name}
             {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
           </div>
-          <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700 }}>
-            {vis.badge} {vis.label} · SL {skillLevel(champ)}
+          <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <vis.badge size={11} strokeWidth={2.2} /> {vis.label} · SL {skillLevel(champ)}
           </div>
         </div>
       </Html>
@@ -1344,8 +1354,8 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   if (!a || !b) return null;
   return (
     <>
-      <ChampionMesh type={a.type} champion={a.champion} label={a.name} position={PODIUM_A} rotation={Math.PI / 2} punchSignal={match.punchA} hitSignal={match.hitA} hpFrac={match.hpA / 100} selected={match.actor === a.key} />
-      <ChampionMesh type={b.type} champion={b.champion} label={b.name} position={PODIUM_B} rotation={-Math.PI / 2} punchSignal={match.punchB} hitSignal={match.hitB} hpFrac={match.hpB / 100} selected={match.actor === b.key} />
+      <ChampionMesh type={a.type} champion={a.champion} identityKey={a.key} label={a.name} position={PODIUM_A} rotation={Math.PI / 2} punchSignal={match.punchA} hitSignal={match.hitA} hpFrac={match.hpA / 100} selected={match.actor === a.key} />
+      <ChampionMesh type={b.type} champion={b.champion} identityKey={b.key} label={b.name} position={PODIUM_B} rotation={-Math.PI / 2} punchSignal={match.punchB} hitSignal={match.hitB} hpFrac={match.hpB / 100} selected={match.actor === b.key} />
     </>
   );
 }
@@ -2084,6 +2094,26 @@ function Handler({
 const PITCH_MIN = -0.5;  // ~ -29°: look up at the sky
 const PITCH_MAX = 1.25;  // ~ 72°: look steeply down
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
+// Passive "postcard" camera for showcase/docs embeds — a slow, high orbit around
+// the plaza so the whole region (arena, tower, spire, rift) reads at a glance.
+// No player to follow, no input; it just drifts.
+function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
+  const { camera } = useThree();
+  const t = useRef(Math.PI * 0.25);
+  const tmp = useRef(new THREE.Vector3());
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    t.current += dt * 0.06;
+    const radius = 34;
+    const cx = Math.sin(t.current) * radius;
+    const cz = Math.cos(t.current) * radius;
+    const cy = Math.max(15, terrainHeight(cx, cz, shape) + 13);
+    camera.position.lerp(tmp.current.set(cx, cy, cz), 0.06);
+    camera.lookAt(ARENA[0], 2.2, ARENA[2]);
+  });
+  return null;
+}
+
 function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag>; shape: TerrainShape }) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);

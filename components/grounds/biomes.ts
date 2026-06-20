@@ -183,6 +183,15 @@ export function biomeById(id: string | null | undefined): BiomeConfig {
   return BIOMES.find((b) => b.id === id) ?? DEFAULT_BIOME;
 }
 
+// Canon region ids (lib/lore/canon.ts › FOUNDING_REGIONS) → the biome skin that
+// renders that slab in the 3D world. Lets lore/UI surfaces draw a region by its
+// real terrain + palette instead of a stand-in.
+const REGION_BIOME: Record<string, string> = { colosseum: "colosseum", wastes: "ember", garden: "void" };
+
+export function biomeForRegion(regionId: string | null | undefined): BiomeConfig {
+  return biomeById(REGION_BIOME[(regionId ?? "").toLowerCase()] ?? regionId);
+}
+
 // ── daylight skin ────────────────────────────────────────────────────────────
 // A generic "turn on the sun" transform: same world, same hues, just lit like a
 // bright day instead of a moody night. Drives the 3D world when the UI is in

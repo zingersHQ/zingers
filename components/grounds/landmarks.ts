@@ -40,14 +40,18 @@ export function landmarksOf(biome: BiomeConfig): Landmark[] {
   const shape = shapeOf(biome);
   const lm = biome.scene.landmarks;
   const train: [number, number, number] = [Math.cos(lm.train.angle) * lm.train.dist, 0, Math.sin(lm.train.angle) * lm.train.dist];
-  const spire: [number, number, number] = [Math.cos(lm.spire.angle) * lm.spire.dist, 0, Math.sin(lm.spire.angle) * lm.spire.dist];
+  // The Keepers are now scattered, each atop its own staircase. The landmark
+  // points at the entry Keeper (Tibble, rank 1) — the closest, lowest climb on the
+  // spire bearing; the other four are found by their beacons further out. (Must
+  // match keeperSites() in world.tsx: i=0 → spire angle, rBase 24.)
+  const keeperEntry: [number, number, number] = [Math.cos(lm.spire.angle) * 24, terrainHeight(Math.cos(lm.spire.angle) * 24, Math.sin(lm.spire.angle) * 24, shape), Math.sin(lm.spire.angle) * 24];
   const tcx = Math.cos(biome.scene.towerAngle) * (PLAZA_R + 9);
   const tcz = Math.sin(biome.scene.towerAngle) * (PLAZA_R + 9);
   const tower: [number, number, number] = [tcx, terrainHeight(tcx, tcz, shape), tcz];
   return [
     { kind: "arena", label: "The Arena", sub: "duels & gauntlet", color: biome.lights.arenaPoint, pos: [0, 0, 0] },
     { kind: "train", label: "Training Pad", sub: "raise your champion", color: biome.lights.trainPoint, pos: train },
-    { kind: "spire", label: "Keepers' Spire", sub: "the guardian climb", color: "#c77dff", pos: spire },
+    { kind: "spire", label: "The Keepers", sub: "five climbs in the wilds", color: "#c77dff", pos: keeperEntry },
     { kind: "tower", label: "The Tower", sub: "ranked ladder climb", color: biome.platform.top, pos: tower },
   ];
 }

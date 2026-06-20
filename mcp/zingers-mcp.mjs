@@ -67,7 +67,7 @@ function ok(summary, data) {
   return { content: [{ type: "text", text }] };
 }
 function fail(message) {
-  return { content: [{ type: "text", text: `⚠ ${message}` }], isError: true };
+  return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
 }
 
 function compactChamp(c) {

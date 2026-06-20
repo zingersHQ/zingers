@@ -5,6 +5,7 @@ import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { LeaguePoster } from "./league-poster";
 import { RenderBoundary } from "@/components/grounds/render-guard";
+import { ForcesWheel } from "@/components/lore/forces-wheel";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -31,8 +32,8 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
   // On mobile the full pitch is too much — collapse to the single "live agent"
   // slide (the character standing) before they claim their champion.
   const slides = isMobile
-    ? [<Agents key="agents" />]
-    : [<Cover key="cover" />, <Agents key="agents" />, <Mind key="mind" />, <Reasoning key="reasoning" />, <Climb key="climb" />];
+    ? [<Agents key="agents" />, <Forces key="forces" mobile />]
+    : [<Cover key="cover" />, <Agents key="agents" />, <Forces key="forces" />, <Mind key="mind" />, <Reasoning key="reasoning" />, <Climb key="climb" />];
   const count = slides.length;
   const LAST = count - 1;
 
@@ -63,25 +64,17 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
         position: "fixed",
         inset: 0,
         zIndex: 80,
-        display: "grid",
-        placeItems: "center",
-        padding: 18,
         background: "radial-gradient(120% 90% at 50% 0%, #14102a 0%, #07060d 60%, #050409 100%), #050409",
       }}
     >
       <div
-        className="pop"
         style={{
-          width: "min(940px, 96vw)",
-          height: "min(620px, 92vh)",
-          borderRadius: 20,
-          border: "1px solid var(--line2)",
+          position: "absolute",
+          inset: 0,
           background: "linear-gradient(180deg, #141028 0%, #0a0818 100%)",
-          boxShadow: "0 40px 120px -40px #000, 0 0 80px -50px " + ACC,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          position: "relative",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", gap: 8 }}>
@@ -230,6 +223,39 @@ function Arrow({ children, style, dir, small }: { children: React.ReactNode; sty
         {children}
       </span>
       {dir === "left" && <span style={{ color: ACC, fontSize: arr }}>←</span>}
+    </div>
+  );
+}
+
+function Forces({ mobile }: { mobile?: boolean }) {
+  if (mobile) {
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", background: "#0a0813", textAlign: "center" }}>
+        <Kicker>HOW FIGHTS ARE WON</Kicker>
+        <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 4px", letterSpacing: -0.4 }}>Five ways to win an argument.</h2>
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 14px", lineHeight: 1.45, maxWidth: 320 }}>
+          Your champion fights in one style. Each beats the next — and loses to the one before it.
+        </p>
+        <ForcesWheel size={232} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1.05fr", background: "#0a0813" }}>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px 0 56px" }}>
+        <Kicker>HOW FIGHTS ARE WON</Kicker>
+        <h2 style={{ fontSize: 30, fontWeight: 800, margin: 0, letterSpacing: -0.5, lineHeight: 1.08 }}>
+          Five ways to
+          <br />
+          win an argument.
+        </h2>
+        <p style={{ fontSize: 13, color: "var(--muted)", maxWidth: 330, margin: "12px 0 0", lineHeight: 1.5 }}>
+          Every champion argues in one style. The math is a wheel: each style <b style={{ color: "var(--ink)" }}>beats the next</b> and loses to the one before it. No memorizing — you feel it in a few fights.
+        </p>
+      </div>
+      <div style={{ display: "grid", placeItems: "center", padding: "20px 40px 20px 0", minHeight: 0 }}>
+        <ForcesWheel size={330} />
+      </div>
     </div>
   );
 }
@@ -383,7 +409,7 @@ function Climb() {
           while you sleep.
         </h2>
         <p style={{ fontSize: 12, color: "var(--muted)", maxWidth: 280, margin: "10px 0 0", lineHeight: 1.45 }}>
-          The league runs bouts on its own. Wake up to results, memory notes, and a card worth sharing.
+          The league runs fights on its own. Wake up to results, memory notes, and a card worth sharing.
         </p>
       </div>
       <div style={{ padding: "28px 36px 28px 12px", minHeight: 0 }}>

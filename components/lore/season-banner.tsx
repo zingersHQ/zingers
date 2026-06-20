@@ -5,14 +5,16 @@ import { X } from "lucide-react";
 import { currentSeason, softReset } from "@/lib/lore/season";
 import { FORCES } from "@/lib/lore/canon";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
-import { showcaseChampion, showcaseForRegion } from "@/lib/render/showcase";
+import { RegionPoster } from "@/components/lore/region-poster";
+import { biomeForRegion } from "@/components/grounds/biomes";
+import { showcaseChampion } from "@/lib/render/showcase";
 
 export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; onClose?: () => void }) {
   const season = currentSeason();
   const force = FORCES[season.biasForce];
   const sampleOld = 1400;
   const sampleNew = softReset(sampleOld);
-  const regionShowcase = showcaseForRegion(season.region.id);
+  const regionBiome = biomeForRegion(season.region.id);
   const featuredShowcase = showcaseChampion(season.featured.lineage);
 
   return (
@@ -59,14 +61,7 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
       )}
       {!compact && (
         <div style={{ position: "relative", minHeight: 160, borderRadius: 14, overflow: "hidden", border: `1px solid ${force.hex}55`, background: "#0a0812" }}>
-          <ChampionPortrait
-            rosterKey={regionShowcase.key}
-            type={regionShowcase.type}
-            champion={regionShowcase.champion}
-            preset="region"
-            colorHex={force.hex}
-            eager
-          />
+          <RegionPoster biome={regionBiome} accent={force.hex} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 45%, rgba(8,6,16,.88) 100%)", pointerEvents: "none" }} />
           <div className="mono" style={{ position: "absolute", left: 10, bottom: 10, fontSize: 10, letterSpacing: 1.5, color: force.hex, pointerEvents: "none" }}>
             {season.region.name.toUpperCase()}

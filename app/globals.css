@@ -219,6 +219,95 @@ a {
   text-shadow: 0 0 24px color-mix(in srgb, var(--ac, var(--gold)) 55%, transparent);
 }
 
+/* ── celebration / outcome reveals ──────────────────────────────────── */
+/* Shared by the <Celebration> overlay and the duel / gauntlet result cards
+   so a "you got something" (or "ouch") moment lands with weight: a card that
+   pops in with overshoot, an expanding shockwave, a confetti burst, and a
+   shake for bad news. Confetti pieces set --tx/--ty/--spin inline. */
+.cel-confetti {
+  animation: cel-confetti var(--cel-dur, 1.4s) cubic-bezier(0.15, 0.6, 0.4, 1) var(--cel-delay, 0s) both;
+}
+@keyframes cel-confetti {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) rotate(var(--spin)) scale(0.4);
+  }
+}
+.cel-reveal {
+  animation: cel-reveal 0.62s cubic-bezier(0.18, 0.9, 0.25, 1.2) both;
+}
+@keyframes cel-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(14px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.07) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.cel-shock {
+  animation: cel-shock 0.9s cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+@keyframes cel-shock {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+.cel-shake {
+  animation: cel-shake 0.55s ease-in-out both;
+}
+@keyframes cel-shake {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1) translateX(-7px) rotate(-1deg);
+  }
+  45% {
+    transform: translateX(6px) rotate(1deg);
+  }
+  65% {
+    transform: translateX(-4px) rotate(-0.5deg);
+  }
+  85% {
+    transform: translateX(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cel-confetti,
+  .cel-shock {
+    animation: none;
+    opacity: 0;
+  }
+  .cel-reveal,
+  .cel-shake {
+    animation: fadein 0.2s ease both;
+  }
+}
+
 /* ── top nav ───────────────────────────────────────────────────────── */
 .site-nav {
   position: sticky;

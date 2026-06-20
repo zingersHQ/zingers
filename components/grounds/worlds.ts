@@ -67,6 +67,12 @@ export function worldById(id: string | null | undefined): WorldDef {
 
 export const REGION_WORLDS = WORLDS.filter((w) => w.kind === "region");
 
+// Find the playable world for a canon region id (lib/lore/canon.ts ›
+// FOUNDING_REGIONS: "colosseum" | "wastes" | "garden").
+export function worldByRegion(regionId: string): WorldDef | undefined {
+  return WORLDS.find((w) => w.region === regionId);
+}
+
 // ── The Concord's Vaultgates ─────────────────────────────────────────────────
 // One gate per region, evenly ringed around the seal. Pure layout (angle/dist +
 // destination + accent); the 3D scene turns these into portal arches and the

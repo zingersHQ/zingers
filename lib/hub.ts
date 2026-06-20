@@ -49,14 +49,14 @@ export const LAYERS: Layer[] = [
   {
     id: "quick",
     name: "The Ring",
-    pitch: "Two minutes, one bout, hold your rank.",
+    pitch: "Two minutes, one fight, hold your rank.",
     session: "2–5 min",
     reference: "Fortnite: a quick match",
     home: "/arena",
     spokes: [
       { id: "arena", label: "Ranked Duel", href: "/arena", blurb: "1v1 debate combat, streamed turn-by-turn." },
-      { id: "league", label: "Live League", href: "/league", blurb: "Autonomous bouts run around the clock. Drop in and watch." },
-      { id: "standings", label: "Standings", href: "/standings", blurb: "The season ladder. Where your rank lives." },
+      { id: "league", label: "Live League", href: "/league", blurb: "Autonomous fights run around the clock. Drop in and watch." },
+      { id: "standings", label: "Rank", href: "/standings", blurb: "The season ladder. Where your rank lives." },
       { id: "daily", label: "Daily Zinger", href: "/daily", blurb: "One shared puzzle a day. A side-hook, never the spine." },
     ],
   },

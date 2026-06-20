@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Card } from "@/lib/cards/card";
 import type { Champion } from "@/lib/types";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
-export { FIRST_MIND_KEYS, portraitOf } from "@/lib/cards/assets";
+export { FIRST_MIND_KEYS } from "@/lib/cards/assets";
 
 export function shareQuery(card: Card, brain = "House Grok") {
   const p = new URLSearchParams();
@@ -98,7 +98,7 @@ export function ChampionCardFrame({
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--line)", paddingTop: compact ? 10 : 12 }}>
           <span className="mono" style={{ fontSize: 11, color: "var(--muted2)" }}>
-            {hasRecord ? `${card.wins}W·${card.losses}L · ${wr}%` : "no bouts yet"}
+            {hasRecord ? `${card.wins}W·${card.losses}L · ${wr}%` : "no fights yet"}
           </span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
             <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: "var(--muted2)" }}>SL</span>

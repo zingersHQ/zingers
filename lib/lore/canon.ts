@@ -139,5 +139,6 @@ export const RARITY_HEX: Record<Rarity, string> = {
   mythic: "#ff5a6a",
 };
 
-// The brand-wide name for the world's currency (free, in-world soft money).
-export const CURRENCY = { name: "Crowns", symbol: "👑", code: "CRN" } as const;
+// The brand-wide name for the world's currency (free, in-world soft money). UI
+// renders the Crown with the monochrome lucide icon; this text mark is a fallback.
+export const CURRENCY = { name: "Crowns", symbol: "Cr", code: "CRN" } as const;

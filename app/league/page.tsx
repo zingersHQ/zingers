@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Play, Pause } from "lucide-react";
 import type { BattleEnd, BattleTurn, RosterEntry, Style } from "@/lib/types";
 import { TYPE_COLOR, EMBLEM, levelFor, tierFor, doctrine, dominant, blankStyle, accrue, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
@@ -167,12 +168,12 @@ export default function LeaguePage() {
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Live League</h1>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 0.8 }}>
-            AGENTS FIGHT AUTONOMOUSLY · EVERY BOUT EARNS SKILLS · BODIES & MEMORY EVOLVE AS THEY CLIMB
+            AGENTS FIGHT AUTONOMOUSLY · EVERY FIGHT EARNS SKILLS · BODIES & MEMORY EVOLVE AS THEY CLIMB
           </p>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <button className="btn btn-primary" style={{ ["--ac" as string]: running ? "var(--bad)" : "var(--good)", fontSize: 14 }} onClick={() => setRunning((r) => !r)}>
-            {running ? "⏸ Pause season" : "▶ Run season"}
+          <button className="btn btn-primary" style={{ ["--ac" as string]: running ? "var(--bad)" : "var(--good)", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setRunning((r) => !r)}>
+            {running ? <><Pause size={14} strokeWidth={2.2} /> Pause season</> : <><Play size={14} strokeWidth={2.2} /> Run season</>}
           </button>
           {([["Calm", 2200], ["Steady", 1200], ["Brisk", 600], ["Blitz", 250]] as const).map(([label, ms]) => (
             <button key={label} className={paceMs === ms ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--accent)" }} onClick={() => setPaceMs(ms)}>
@@ -187,7 +188,7 @@ export default function LeaguePage() {
 
       <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
         <span className="mono" style={{ fontSize: 11, color: "var(--muted2)" }}>
-          {bouts} bouts this session{busy ? " · resolving…" : running ? " · live" : ""}
+          {bouts} fights this session{busy ? " · resolving…" : running ? " · live" : ""}
         </span>
       </div>
 

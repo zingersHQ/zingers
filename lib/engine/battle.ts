@@ -8,8 +8,6 @@ import {
   MAX_HIT,
   Move,
   Q_HIGHLIGHT,
-  Q_MAX,
-  Q_MIN,
   ROSTER,
   TURN_LIMIT,
   TYPE_NEU,
@@ -17,6 +15,7 @@ import {
   type Creature,
 } from "./roster";
 import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
+import { buildJudgePrompt, clampQuality, mockJudge } from "./judge";
 import { banterLine } from "./banter";
 import { makeAgent, type Agent, type AgentTools, type AgentTurnCtx, type AgentView, type ScoutResult, type SimResult } from "./agent";
 import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type BattleHighlight, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
@@ -216,34 +215,26 @@ async function judge(
   rng: Rng,
 ): Promise<[number, boolean, string]> {
   if (mock || !KEY) {
-    const q = Math.round(rng.uniform(0.85, 1.18) * 100) / 100;
-    const hl = rng.random() < 0.1;
-    return [hl ? Q_HIGHLIGHT : q, hl, q > 1.05 ? "sharp and on point" : "lands cleanly"];
+    const m = mockJudge(rng);
+    return [m.quality, m.highlight, m.ruling];
   }
-  const sysP =
-    `You are the judge of ZINGERS, a debate battle on the proposition: "${topic}". ` +
-    "You reward WIT, not term-paper rigor: the funniest, most savage, most quotable bar wins. " +
-    "You are scoring one line for how hard it lands.";
   const oppLast = opp.lines.length ? opp.lines[opp.lines.length - 1] : "(none)";
-  const usr =
-    `${att.name} (arguing ${att.stance}) used ${move.name} and said:\n"${line}"\n` +
-    `Opponent's previous line: "${oppLast}"\n\n` +
-    "Reward: comedic timing, savagery of the roast, turning the opponent's own words/logic " +
-    "against them, and clip-worthiness (would someone screenshot this?). Stay roughly on the " +
-    "proposition, but a hilarious on-topic burn beats a dry correct one. Reply ONLY as JSON: " +
-    '{"quality": <float 0.7-1.3>, "highlight": <true|false>, "ruling": "<max 8 word verdict, may be funny>"}. ' +
-    "Be a STRICT scorer: most lines are 0.9-1.1. Reserve highlight=true for roughly 1 line in 8 — " +
-    "only a truly exceptional, clip-worthy zinger that made you laugh or wince; otherwise false. " +
-    "If it whiffs (not funny AND off-topic), quality 0.7.";
+  const { system, user } = buildJudgePrompt({
+    attName: att.name,
+    stance: att.stance,
+    moveName: move.name,
+    line,
+    oppLast,
+    topic,
+  });
   const out = parseJson<{ quality?: number; highlight?: boolean; ruling?: string }>(
-    await chat([{ role: "system", content: sysP }, { role: "user", content: usr }], 0.2, 120),
+    await chat([{ role: "system", content: system }, { role: "user", content: user }], 0.2, 120),
   );
   if (!out) return [1.0, false, "noted"];
-  let q = Number(out.quality ?? 1.0);
-  if (!Number.isFinite(q)) q = 1.0;
-  q = Math.max(Q_MIN, Math.min(Q_MAX, q));
   const hl = Boolean(out.highlight);
-  return [hl ? Q_HIGHLIGHT : q, hl, String(out.ruling ?? "noted").slice(0, 40)];
+  // clampQuality enforces the [Q_MIN, Q_MAX]/Q_HIGHLIGHT band — the model can
+  // never push damage outside the engine's bounds.
+  return [clampQuality(out.quality, hl), hl, String(out.ruling ?? "noted").slice(0, 40)];
 }
 
 const statScale = (v: number) => 0.5 + v / 100.0;

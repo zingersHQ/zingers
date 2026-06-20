@@ -5,7 +5,12 @@ import { ROSTER, TOPICS } from "@/lib/engine/roster";
 import { sseStream } from "@/lib/sse-server";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { recordGroundsBout } from "@/lib/server/ladder";
-import type { BattleEvent } from "@/lib/types";
+import type { BattleEvent, CreatureType } from "@/lib/types";
+
+const FORCES: CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
+function asForce(v: string | null): CreatureType | null {
+  return v && (FORCES as string[]).includes(v) ? (v as CreatureType) : null;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +22,8 @@ interface RankCtx {
   topic: string;
   handle?: string;
   strat?: { risk: number; focus: number; aggression: number };
+  betNonce?: string;
+  regionBias?: CreatureType | null;
 }
 
 // Tap the live engine stream: when the bout ends, persist the engine-decided
@@ -37,10 +44,24 @@ async function* recordOnEnd(gen: AsyncGenerator<BattleEvent>, ctx: RankCtx): Asy
           topic: ctx.topic,
           handle: ctx.handle,
           strat: ctx.strat,
+          betNonce: ctx.betNonce,
+          regionBias: ctx.regionBias,
         });
-        // hand the client the global swing just before `end` so the result
-        // screen can show it (the stream closes on `end`, so this must precede it)
-        if (r) yield { type: "ranked", mine: r.mine, opp: r.opp, delta: r.delta, iWon: aWon };
+        // hand the client the global swing + server-decided reward + authoritative
+        // wallet balance + bet settlement just before `end` (the stream closes on
+        // `end`, so this must precede it)
+        if (r)
+          yield {
+            type: "ranked",
+            mine: r.mine,
+            opp: r.opp,
+            delta: r.delta,
+            iWon: aWon,
+            crowns: r.crowns,
+            balance: r.balance,
+            bet: r.bet,
+            home: r.home,
+          };
       } catch {
         // ladder write is best-effort — never break the bout reveal over it
       }
@@ -79,6 +100,8 @@ export async function GET(req: Request) {
       topic,
       handle: q.get("h") || undefined,
       strat: sideA.strat,
+      betNonce: q.get("bet") || undefined,
+      regionBias: asForce(q.get("bias")),
     });
   }
 

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Play, RotateCcw } from "lucide-react";
 import type { AutoplayEvent, Strat } from "@/lib/types";
 
 const LEARNERS = [
@@ -145,7 +146,7 @@ export function Autoplay() {
           onClick={() => setLive((v) => !v)}
           disabled={phase === "running"}
           className="btn"
-          title="Live spends real LLM calls; off runs free, deterministic bouts"
+          title="Live spends real LLM calls; off runs free, deterministic fights"
           style={{
             textTransform: "none",
             fontSize: 12.5,
@@ -158,15 +159,15 @@ export function Autoplay() {
         </button>
         <button
           className="btn btn-primary"
-          style={{ ["--ac" as string]: "var(--gold)" }}
+          style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }}
           onClick={run}
           disabled={phase === "running"}
         >
-          {phase === "running" ? "running…" : phase === "done" ? "↻ run again" : "▶ let it run"}
+          {phase === "running" ? "running…" : phase === "done" ? <><RotateCcw size={14} strokeWidth={2.2} /> run again</> : <><Play size={14} strokeWidth={2.2} /> let it run</>}
         </button>
         {phase !== "idle" && (
           <span className="chip" style={{ fontSize: 11, borderColor: "var(--line2)", color: "var(--muted)" }}>
-            {isLive ? "real bouts + reflection" : "offline · deterministic"}
+            {isLive ? "real fights + reflection" : "offline · deterministic"}
           </span>
         )}
       </div>
@@ -279,7 +280,7 @@ export function Autoplay() {
 
       {phase === "done" && record && (
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
-          Started from zero skill and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached bouts it
+          Started from zero skill and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached fights it
           settled on {strat.risk}/{strat.focus}/{strat.aggression}. No one touched the dials but the agent.
         </p>
       )}

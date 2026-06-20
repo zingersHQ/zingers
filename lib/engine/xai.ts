@@ -1,6 +1,15 @@
 // Server-only xAI/Grok client — ported from battle.py chat()/parse_json().
 // Keys never reach the browser; routes that call this are Node-runtime only.
 import "server-only";
+import { recordUsage } from "@/lib/server/cost";
+
+// Record house-model token usage for cost accounting (best-effort, fire-and-
+// forget). Only house calls (our key) count — BYO-agent keys aren't our spend.
+function meter(cfg: { key: string | null }, d: unknown): void {
+  if (cfg.key !== KEY) return;
+  const u = (d as { usage?: { prompt_tokens?: number; completion_tokens?: number } })?.usage;
+  if (u) void recordUsage(u.prompt_tokens ?? 0, u.completion_tokens ?? 0);
+}
 
 export const ENDPOINT = "https://api.x.ai/v1/chat/completions";
 export const MODEL = process.env.ZINGERS_MODEL || process.env.BATTLER_MODEL || "grok-4.20-0309-non-reasoning";
@@ -72,6 +81,7 @@ export async function chatRawWith(
       clearTimeout(t);
       if (!res.ok) throw new Error(`chat ${res.status}`);
       const d = await res.json();
+      meter(cfg, d);
       const msg = d?.choices?.[0]?.message;
       if (!msg) return null;
       return { role: "assistant", content: msg.content ?? null, tool_calls: msg.tool_calls };
@@ -104,6 +114,7 @@ export async function chatWith(
       clearTimeout(t);
       if (!res.ok) throw new Error(`chat ${res.status}`);
       const d = await res.json();
+      meter(cfg, d);
       return d?.choices?.[0]?.message?.content ?? null;
     } catch {
       if (attempt === attempts - 1) return null;

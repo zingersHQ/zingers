@@ -1,10 +1,17 @@
 "use client";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { Crown, Flame, Coins, X } from "lucide-react";
 import type { Champion, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
 import type { GauntletConfig } from "@/lib/scenarios/types";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { Confetti, outcomeSfx } from "@/components/grounds/celebration";
+
+// Inline gold Crown glyph — the Crowns currency mark, monochrome icon pack.
+const Cr = ({ s = 12 }: { s?: number }) => (
+  <Crown size={s} strokeWidth={2.2} style={{ verticalAlign: "-2px", color: "var(--gold)" }} />
+);
 
 // The live run shape the page owns and threads through these panels.
 export type GauntletPhase = "fighting" | "cleared" | "over";
@@ -20,10 +27,11 @@ export interface GauntletRun {
 
 const EMBER = "#ff7a2a";
 
-function modalShell(children: React.ReactNode, ac: string) {
+function modalShell(children: React.ReactNode, ac: string, confettiAccent?: string) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
-      <div className="panel pop" style={{ ["--ac" as string]: ac, width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: ac }}>
+      {confettiAccent && <Confetti accent={confettiAccent} count={70} originTop="32%" />}
+      <div className="panel pop" style={{ ["--ac" as string]: ac, position: "relative", width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: ac }}>
         {children}
       </div>
     </div>
@@ -63,7 +71,7 @@ export function GauntletBriefing({
           <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: EMBER }}>EMBER GAUNTLET</div>
           <div style={{ fontSize: 22, fontWeight: 700 }}>Survive the chain</div>
         </div>
-        <button onClick={onClose} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", fontSize: 18, cursor: "pointer" }}>✕</button>
+        <button onClick={onClose} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "inline-flex" }} aria-label="Close"><X size={18} /></button>
       </div>
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "8px 0 16px" }}>
         Field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b> against {queue.length} agents, weakest first.
@@ -72,7 +80,7 @@ export function GauntletBriefing({
       </p>
 
       <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-        THE CHAIN · clear all {queue.length} for up to {maxPot}👑
+        THE CHAIN · clear all {queue.length} for up to {maxPot}<Cr />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
         {queue.map((k, i) => {
@@ -87,14 +95,14 @@ export function GauntletBriefing({
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{r?.name ?? k}</span>
                 <span className="mono" style={{ fontSize: 9, color: col }}>SL {skillLevel(c)} · {skillCount(c)} skills</span>
               </div>
-              <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>+{roundReward(cfg, i + 1)}👑</span>
+              <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>+{roundReward(cfg, i + 1)}<Cr /></span>
             </div>
           );
         })}
       </div>
 
-      <button className="btn btn-primary" style={{ ["--ac" as string]: EMBER, width: "100%", fontSize: 15 }} disabled={!queue.length} onClick={onStart}>
-        🔥 {queue.length ? "Enter the Gauntlet" : "no opponents available"}
+      <button className="btn btn-primary" style={{ ["--ac" as string]: EMBER, width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} disabled={!queue.length} onClick={onStart}>
+        <Flame size={17} strokeWidth={2.2} /> {queue.length ? "Enter the Gauntlet" : "no opponents available"}
       </button>
     </>,
     EMBER,
@@ -125,7 +133,7 @@ export function GauntletInterstitial({
     <div style={{ textAlign: "center" }}>
       <div className="glow" style={{ fontSize: 26, fontWeight: 700, color: "var(--good)" }}>ROUND {run.idx + 1} CLEARED</div>
       <div className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>streak ×{run.streak}</div>
-      <div style={{ margin: "16px 0", fontSize: 30, fontWeight: 700, color: "var(--gold)" }}>{run.pot}👑 <span style={{ fontSize: 13, color: "var(--muted2)" }}>banked (at risk)</span></div>
+      <div style={{ margin: "16px 0", fontSize: 30, fontWeight: 700, color: "var(--gold)" }}>{run.pot}<Cr s={22} /> <span style={{ fontSize: 13, color: "var(--muted2)" }}>banked (at risk)</span></div>
 
       {nextEntry ? (
         <>
@@ -134,19 +142,19 @@ export function GauntletInterstitial({
             <ChampionAvatar ckey={nextKey} type={nextEntry.type} champion={get(nextKey)} size={40} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{nextEntry.name}</div>
-              <div className="mono" style={{ fontSize: 9, color: TYPE_COLOR[nextEntry.type] }}>SL {skillLevel(get(nextKey))} · {skillCount(get(nextKey))} skills · win +{atRisk}👑</div>
+              <div className="mono" style={{ fontSize: 9, color: TYPE_COLOR[nextEntry.type] }}>SL {skillLevel(get(nextKey))} · {skillCount(get(nextKey))} skills · win +{atRisk}<Cr s={10} /></div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn" style={{ ["--ac" as string]: "var(--gold)" }} onClick={onCashOut}>💰 Cash out {run.pot}👑</button>
-            <button className="btn btn-primary" style={{ ["--ac" as string]: EMBER }} onClick={onPressOn}>🔥 Press on →</button>
+            <button className="btn" style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={onCashOut}><Coins size={15} strokeWidth={2.2} /> Cash out {run.pot}<Cr /></button>
+            <button className="btn btn-primary" style={{ ["--ac" as string]: EMBER, display: "inline-flex", alignItems: "center", gap: 6 }} onClick={onPressOn}><Flame size={15} strokeWidth={2.2} /> Press on →</button>
           </div>
           <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10 }}>
-            lose and you keep only {Math.floor(run.pot * cfg.consolationFrac)}👑
+            lose and you keep only {Math.floor(run.pot * cfg.consolationFrac)}<Cr s={10} />
           </p>
         </>
       ) : (
-        <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)" }} onClick={onCashOut}>collect {run.pot}👑</button>
+        <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)" }} onClick={onCashOut}>collect {run.pot}<Cr /></button>
       )}
     </div>,
     "var(--good)",
@@ -159,6 +167,10 @@ export function GauntletResult({ run, onClose }: { run: GauntletRun; onClose: ()
   const good = run.cashedOut || cleared;
   const ac = good ? "var(--good)" : "var(--bad)";
 
+  // cleared the whole chain = epic fanfare; a cash-out is a solid win; a bust
+  // gets the unlucky sting.
+  useEffect(() => { outcomeSfx(good, cleared); }, [good, cleared]);
+
   return modalShell(
     <div style={{ textAlign: "center" }}>
       <div className="glow" style={{ fontSize: 30, fontWeight: 700, color: ac }}>{title}</div>
@@ -166,7 +178,7 @@ export function GauntletResult({ run, onClose }: { run: GauntletRun; onClose: ()
         {cleared ? `you ran the whole chain · streak ×${run.streak}` : `cleared ${run.streak} of ${run.queue.length} · streak ×${run.streak}`}
       </div>
       <div style={{ margin: "18px 0", fontSize: 26, fontWeight: 700, color: good ? "var(--gold)" : "var(--bad)" }}>
-        {good ? "+" : ""}{run.pot}👑
+        {good ? "+" : ""}{run.pot}<Cr s={20} />
       </div>
       <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16 }}>
         {good ? "banked to your purse" : "the pot scattered: you kept the consolation"}
@@ -174,5 +186,6 @@ export function GauntletResult({ run, onClose }: { run: GauntletRun; onClose: ()
       <button className="btn btn-primary" style={{ ["--ac" as string]: ac }} onClick={onClose}>back to the wastes</button>
     </div>,
     ac,
+    good ? "#f0a93a" : undefined,
   );
 }

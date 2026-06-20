@@ -72,10 +72,12 @@ export interface Axis {
   label: string;
   titles: [string, string, string];
 }
+// Monochrome typographic sigils (no emoji) — each tinted by its axis colour at
+// render time, in the same family as the Force emblems.
 export const AXES: Axis[] = [
-  { k: "aggression", glyph: "🔥", color: "#ff6b4a", label: "Aggression", titles: ["Brawler", "The Relentless", "The Annihilator"] },
-  { k: "control", glyph: "⛓", color: "#b07bff", label: "Control", titles: ["Schemer", "The Manipulator", "The Puppeteer"] },
-  { k: "resilience", glyph: "🛡", color: "#36d39a", label: "Resilience", titles: ["Stonewall", "The Unbroken", "The Immovable"] },
+  { k: "aggression", glyph: "✸", color: "#ff6b4a", label: "Aggression", titles: ["Brawler", "The Relentless", "The Annihilator"] },
+  { k: "control", glyph: "❖", color: "#b07bff", label: "Control", titles: ["Schemer", "The Manipulator", "The Puppeteer"] },
+  { k: "resilience", glyph: "⬢", color: "#36d39a", label: "Resilience", titles: ["Stonewall", "The Unbroken", "The Immovable"] },
   { k: "flair", glyph: "★", color: "#f5d020", label: "Flair", titles: ["Showoff", "The Showman", "The Icon"] },
   { k: "creativity", glyph: "✺", color: "#7fd0ff", label: "Creativity", titles: ["Dreamer", "The Visionary", "The Reality-Bender"] },
 ];

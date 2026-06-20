@@ -1,14 +1,14 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem } from "lucide-react";
-import type { AgentConfig, BattleEnd, Champion, Recipe, RosterEntry, Style, TowerAgent } from "@/lib/types";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale } from "lucide-react";
+import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL } from "@/store/champions";
+import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
@@ -16,11 +16,12 @@ import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, REGION_WORLDS } from "@/components/grounds/worlds";
-import { worldGoals, type WorldGoal } from "@/components/grounds/goals";
+import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason } from "@/lib/lore/season";
-import { FOUNDING_REGIONS } from "@/lib/lore/canon";
-import { trainerLevel } from "@/lib/evolve/trainer";
+import { FOUNDING_REGIONS, FORCES as FORCE_LORE, wheelNeighbors } from "@/lib/lore/canon";
+import { ForcesChain } from "@/components/lore/forces-wheel";
+import { trainerLevel, forceMeta } from "@/lib/evolve/trainer";
 import { daylightBiome } from "@/components/grounds/biomes";
 import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
@@ -35,6 +36,8 @@ import { setMood } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { GameDock } from "@/components/game-dock";
+import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
+import { BannerSheet } from "@/components/grounds/banner-sheet";
 import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -67,11 +70,13 @@ export default function GroundsScreen() {
     won: boolean;
     crowns: number;
     betWon: boolean | null;
+    ladders: string[]; // the progression ladders this bout advanced, named
     ratingDelta: number;
     leveledTo: number | null;
     learned: string | null;
     globalDelta: number | null; // signed swing on the shared ladder (null if unranked)
     globalRating: number | null; // player's new ladder rating
+    home: boolean; // win earned under your Banner's region (home advantage paid)
   } | null>(null);
   const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
@@ -88,12 +93,29 @@ export default function GroundsScreen() {
   const [showIntro, setShowIntro] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
+  // The first-ranked-win Banner invite — deferred so the choice arrives when
+  // "join a team" actually means something. Shown once.
+  const [bannerInvite, setBannerInvite] = useState(false);
+  const bannerInviteSeen = useRef(false);
   const [isTouch, setIsTouch] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
   const [gpu, setGpu] = useState<ReturnType<typeof gpuStatus> | null>(null);
   const [rosterError, setRosterError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [war, setWar] = useState<WarState | null>(null);
+  const warLeader = war?.leader ?? null;
+
+  // Fetch the live war standings + the Reader's OWN authoritative contribution
+  // (`mine`, when a token is present). Called on mount and after every ranked
+  // bout so the badge reflects what actually counted, not the optimistic mirror.
+  const loadWar = useCallback(() => {
+    const tok = getOwnerToken();
+    fetch(`/api/war${tok ? `?token=${encodeURIComponent(tok)}` : ""}`)
+      .then((r) => r.json())
+      .then((d: WarState) => setWar(d))
+      .catch(() => {});
+  }, []);
 
   const store = useChampions();
   const { progress, getRecipe, owned, setOwned, crowns, fragments, nodes: nodeLedger } = store;
@@ -112,9 +134,9 @@ export default function GroundsScreen() {
       seasonNumber: season.n,
       featuredRegionId: season.region.id,
       readerLevel,
-      warLeader: null,
+      warLeader,
     });
-  }, [world.region, season, readerLevel]);
+  }, [world.region, season, readerLevel, warLeader]);
   // which region world is this season's spotlight — marked on the Concord gate
   const featuredWorld = useMemo(
     () => REGION_WORLDS.find((w) => w.region === season.region.id)?.id ?? null,
@@ -156,10 +178,14 @@ export default function GroundsScreen() {
   }, []);
   const [nodeFlash, setNodeFlash] = useState<{ crowns: number; fragments: number } | null>(null);
   const nodeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [goalFlash, setGoalFlash] = useState<{ label: string; crowns: number; fragments: number; trainerXp: number; seasonPoints: number } | null>(null);
+  const [goalFlash, setGoalFlash] = useState<{ label: string; goalKind: GoalKind; crowns: number; fragments: number; trainerXp: number; seasonPoints: number } | null>(null);
   const goalFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pledgeFlash, setPledgeFlash] = useState<{ name: string; motto: string; color: string } | null>(null);
   const pledgeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The Banner decision surface — opened by the Trainer chip or by walking under
+  // a Concord banner (preselecting that Force).
+  const [bannerOpen, setBannerOpen] = useState(false);
+  const [bannerPreselect, setBannerPreselect] = useState<CreatureType | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -188,6 +214,17 @@ export default function GroundsScreen() {
     try {
       setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
     } catch {}
+    try {
+      bannerInviteSeen.current = localStorage.getItem(STORAGE.bannerInvite) === "1";
+    } catch {}
+  }, []);
+
+  const dismissBannerInvite = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.bannerInvite, "1");
+    } catch {}
+    bannerInviteSeen.current = true;
+    setBannerInvite(false);
   }, []);
 
   const dismissChronicle = useCallback(() => {
@@ -221,10 +258,11 @@ export default function GroundsScreen() {
         if (live) setRosterError(e instanceof Error ? e.message : "failed to load roster");
       });
     fetch("/api/grounds").then((r) => r.json()).then((d) => live && setTowerAgents(d.agents ?? [])).catch(() => {});
+    loadWar();
     return () => {
       live = false;
     };
-  }, [reloadKey]);
+  }, [reloadKey, loadWar]);
 
   const closeIntro = useCallback(() => {
     try {
@@ -246,7 +284,7 @@ export default function GroundsScreen() {
   );
 
   const inMatch = bout.phase === "live";
-  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun;
+  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !bannerOpen;
 
   // Swap the soundscape into the tense battle loop whenever a fight is on — the
   // live arena/gauntlet bout or the Guardian face-off — and back to calm after.
@@ -258,7 +296,7 @@ export default function GroundsScreen() {
   // open the nearby interaction (shared by the E key and the on-screen prompt).
   // The central arena routes to the world's scenario; perched-agent challenges
   // are always a single duel regardless of world.
-  const interact = useCallback(() => {
+  const interact = useCallback(async () => {
     if (overlay !== "none" || inMatch || result || gRun) return;
     if (near?.kind === "train") setOverlay("train");
     else if (near?.kind === "broker") setOverlay("broker");
@@ -276,28 +314,27 @@ export default function GroundsScreen() {
       setDuelMeta({ name: near.name, handle: near.handle });
       setOverlay("arena");
     } else if (near?.kind === "node") {
-      if (store.claimNode(near.id, { crowns: near.crowns, fragments: near.fragments })) {
+      // optimistic flash on the local ledger gate; the crown credit settles via
+      // the wallet inside claimNode (server-authoritative when online)
+      if (await store.claimNode(near.id, { crowns: near.crowns, fragments: near.fragments })) {
         setNodeFlash({ crowns: near.crowns, fragments: near.fragments });
         if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
         nodeFlashTimer.current = setTimeout(() => setNodeFlash(null), 2600);
       }
     } else if (near?.kind === "goal") {
       const reward = { crowns: near.crowns, fragments: near.fragments, trainerXp: near.trainerXp, seasonPoints: near.seasonPoints };
-      if (store.completeGoal(near.id, reward)) {
-        setGoalFlash({ label: near.label, ...reward });
+      if (await store.completeGoal(near.id, reward)) {
+        setGoalFlash({ label: near.label, goalKind: near.goalKind, ...reward });
         setNear(null);
         if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
         goalFlashTimer.current = setTimeout(() => setGoalFlash(null), 3200);
       }
     } else if (near?.kind === "force") {
-      // swear allegiance to this house — lights its banner and binds ranked wins
-      // to its standing in the season-long war between the five Forces.
-      if (store.force !== near.type) {
-        store.pledgeForce(near.type);
-        setPledgeFlash({ name: near.name, motto: near.motto, color: TYPE_COLOR[near.type] });
-        if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
-        pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
-      }
+      // Don't silently bind — open the Banner sheet preselected to this house so
+      // the choice is explained and confirmed (and the season lock is enforced
+      // in one place).
+      setBannerPreselect(near.type);
+      setBannerOpen(true);
     } else if (near?.kind === "gate") {
       // step through a Vaultgate → travel to that region (the scene remounts via
       // its world key, so you land cleanly at the region's spawn)
@@ -339,9 +376,17 @@ export default function GroundsScreen() {
     setMatchView({ aKey: owned, bKey: opponent, hpA: bout.hpA, hpB: bout.hpB, actor: t.actor, punchA: c.pa, punchB: c.pb, hitA: c.ha, hitB: c.hb });
   }, [bout.turn, bout.hpA, bout.hpB, opponent, owned]);
 
-  const startMatch = useCallback(() => {
+  const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
-    if (betSide && !store.spend(betAmt)) return; // not enough crowns
+    // Commit-reveal wager: stake is taken server-side BEFORE the bout so it can't
+    // be forged after seeing the outcome. The nonce ties the stake to THIS bout.
+    const betNonce = betSide
+      ? (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`)
+      : "";
+    if (betSide) {
+      const placed = await store.commitBet(betAmt, betSide, betNonce);
+      if (!placed) return; // not enough crowns (server-decided)
+    }
     counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
     setResult(null);
     setMatchView({ aKey: owned, bKey: opponent, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
@@ -353,8 +398,14 @@ export default function GroundsScreen() {
     // server records the engine's verdict so this duel moves the one global rating.
     const tok = getOwnerToken();
     const oid = opponentId ?? `house-${opponent}`;
-    const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}` : "";
+    const betParam = betSide && tok ? `&bet=${encodeURIComponent(betNonce)}` : "";
+    // The region this world rewards — drives the Banner "home advantage" perk,
+    // settled server-side off the player's authoritative pledge.
+    const regionBias = world.region ? FOUNDING_REGIONS.find((r) => r.id === world.region)?.bias ?? null : null;
+    const biasParam = regionBias ? `&bias=${regionBias}` : "";
+    const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}${betParam}${biasParam}` : "";
     const url = `/api/battle?a=${owned}&b=${opponent}&${sideParams("a", ra)}&${sideParams("b", rb)}${rank}`;
+    const homeAdvantage = !!store.force && !!regionBias && store.force === regionBias;
     bout.begin(url, (end: BattleEnd, ranked) => {
       const styles: Record<string, Style> = { [owned]: blankStyle(), [opponent]: blankStyle() };
       for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[opponent], turn);
@@ -366,45 +417,85 @@ export default function GroundsScreen() {
       const beforeC = store.get(owned);
       const beforeRating = ratingOf(beforeC);
       const beforeLevel = levelFor(beforeC.xp).level;
+      const beforeSkill = skillLevel(beforeC);
+      const beforeReader = trainerLevel(useChampions.getState().trainerXp).level;
 
       store.recordBattle(winnerKey, loserKey, styles);
 
       const afterC = store.get(owned);
       const afterRating = ratingOf(afterC);
       const afterLevel = levelFor(afterC.xp).level;
+      const afterSkill = skillLevel(afterC);
+      const afterReader = trainerLevel(useChampions.getState().trainerXp).level;
       const dom = dominant(afterC);
       // the MIND learns: opponent-specific memory + gentle doctrine auto-tune
       store.learnFromBout({ key: owned, opponentName: byKey[opponent]?.name || opponent, won: iWon, axisLabel: dom.axis.label });
       const learned = `Learned from ${byKey[opponent]?.name || opponent} ↗`;
 
+      // Crowns are server-authoritative: the win reward AND the wager were settled
+      // server-side and arrive in the ranked event. The client just mirrors the
+      // returned balance; offline it optimistically credits the canonical amounts.
       let crownsDelta = 0;
-      if (iWon) {
-        crownsDelta += 40;
-        store.earn(40);
-      }
       let betWon: boolean | null = null;
-      if (betSide) {
-        betWon = (betSide === "me" && iWon) || (betSide === "opp" && !iWon);
-        if (betWon) {
-          store.earn(betAmt * 2);
-          crownsDelta += betAmt; // net (stake already spent)
-        } else {
-          crownsDelta -= betAmt;
+      if (ranked) {
+        store.setBalance(ranked.balance);
+        if (iWon) crownsDelta += ranked.crowns;
+        // A ranked win may have fed the season war server-side — refresh standings
+        // + the Reader's authoritative contribution so the badge updates live.
+        if (iWon) loadWar();
+        // First ranked win with no Banner yet → queue the (one-time) invite. It
+        // surfaces after the result card closes, when "join a team" makes sense.
+        if (iWon && !store.force && !bannerInviteSeen.current) setBannerInvite(true);
+        if (ranked.bet) {
+          betWon = ranked.bet.won;
+          crownsDelta += ranked.bet.won ? ranked.bet.payout - ranked.bet.stake : -ranked.bet.stake;
         }
+      } else {
+        // offline fallback: no shared ladder, so settle locally
+        let credit = 0;
+        if (iWon) {
+          const win = GROUNDS_WIN_REWARD + (homeAdvantage ? HOME_WIN_BONUS : 0);
+          crownsDelta += win;
+          credit += win;
+        }
+        if (betSide) {
+          betWon = (betSide === "me" && iWon) || (betSide === "opp" && !iWon);
+          if (betWon) {
+            credit += betAmt * 2; // stake already debited at commit
+            crownsDelta += betAmt;
+          } else {
+            crownsDelta -= betAmt;
+          }
+        }
+        if (credit > 0) store.setBalance(useChampions.getState().crowns + credit);
       }
+      // The four progression ladders a single bout feeds — named explicitly so a
+      // new Reader learns the systems instead of seeing one opaque number move.
+      // Compact progress pills for the result card — the rank delta is shown
+      // separately (one pill, from the global ladder when ranked), so it isn't
+      // duplicated here.
+      const ladders: string[] = [];
+      const xpGain = afterC.xp - beforeC.xp;
+      if (xpGain) ladders.push(`+${xpGain} XP`);
+      if (afterSkill > beforeSkill) ladders.push(`SL ${afterSkill}`);
+      if (afterReader > beforeReader) ladders.push(`Reader L${afterReader}`);
+
       setResult({
         won: iWon,
         crowns: crownsDelta,
         betWon,
+        ladders,
         ratingDelta: afterRating - beforeRating,
         leveledTo: afterLevel > beforeLevel ? afterLevel : null,
         learned,
         globalDelta: ranked ? (iWon ? ranked.delta : -ranked.delta) : null,
         globalRating: ranked ? ranked.mine : null,
+        home: iWon && (ranked ? !!ranked.home : homeAdvantage),
       });
       setOverlay("result");
+      outcomeSfx(iWon);
     });
-  }, [owned, opponent, opponentId, betSide, betAmt, store, getRecipe, bout]);
+  }, [owned, opponent, opponentId, betSide, betAmt, store, getRecipe, bout, world.region]);
 
   function closeMatch() {
     bout.stop();
@@ -437,7 +528,7 @@ export default function GroundsScreen() {
 
       if (!iWon) {
         const consolation = Math.floor(run.pot * gCfg.consolationFrac);
-        if (consolation > 0) store.earn(consolation);
+        if (consolation > 0) store.awardGauntlet(consolation);
         setGRun({ ...run, phase: "over", pot: consolation, lastWon: false });
         return;
       }
@@ -446,7 +537,7 @@ export default function GroundsScreen() {
       const last = run.idx + 1 >= run.queue.length;
       if (last) {
         const total = pot + Math.round(pot * gCfg.clearBonus);
-        store.earn(total);
+        store.awardGauntlet(total);
         setGRun({ ...run, phase: "over", pot: total, streak, lastWon: true, cashedOut: true });
       } else {
         setGRun({ ...run, phase: "cleared", pot, streak, lastWon: true });
@@ -490,7 +581,7 @@ export default function GroundsScreen() {
 
   const cashOut = useCallback(() => {
     if (!gRun || gRun.phase !== "cleared") return;
-    store.earn(gRun.pot);
+    store.awardGauntlet(gRun.pot);
     setGRun({ ...gRun, phase: "over", cashedOut: true });
   }, [gRun, store]);
 
@@ -505,6 +596,9 @@ export default function GroundsScreen() {
   const pickingChampion = mounted && !owned && roster.length > 0;
   const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion;
   const dockPad = showDock ? DOCK_H + 8 : 0;
+  // the bottom-docked compass bar reserves vertical space so the touch controls,
+  // proximity prompt and coachmark always stack cleanly above it (regions only).
+  const compassReserve = !isHub && owned ? (isMobile ? 76 : 92) : 0;
   // Keep the world HUD (season banner, music, crowns, altitude) tucked away
   // until the first-run tutorial and champion claim are done — otherwise its
   // zIndex pokes through on top of those higher-priority overlays.
@@ -597,7 +691,7 @@ export default function GroundsScreen() {
               onAltitude={onAltitude}
               onPose={onPose}
               travelRef={travelRef}
-              touchBottomInset={isTouch ? dockPad : 0}
+              touchBottomInset={isTouch ? dockPad + compassReserve : 0}
             />
           </RenderBoundary>
         </div>
@@ -659,7 +753,7 @@ export default function GroundsScreen() {
 
         {!showMatch && overlay === "none" && owned && !gRun && (
           <div style={{ marginBottom: isMobile ? 6 : 10 }}>
-            <TrainerBadge isMobile={isMobile} />
+            <TrainerBadge isMobile={isMobile} war={war} onOpenBanner={() => { setBannerPreselect(null); setBannerOpen(true); }} />
           </div>
         )}
 
@@ -668,8 +762,8 @@ export default function GroundsScreen() {
             {owned
               ? isHub
                 ? isMobile
-                  ? "Walk to a Vaultgate to travel · stand under a banner to swear allegiance"
-                  : "THE CONCORD · VAULTGATE → TRAVEL · FORCE BANNER → SWEAR · E TO ACT · M FOR MENU"
+                  ? "Walk to a Vaultgate to travel · tap the prompt when near"
+                  : "THE CONCORD · VAULTGATE → TRAVEL · E TO ACT · M FOR MENU"
                 : isMobile
                   ? "Walk to glowing spots · tap the prompt when near"
                   : scenario.id === "gauntlet"
@@ -721,28 +815,33 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {/* district compass + fast-travel (regions only; the Concord's gates guide
-          you directly, so no compass is shown in the hub) */}
+      {/* the compass — a heading tape docked at the bottom (regions only; the
+          Concord's gates guide you directly, so no compass is shown in the hub) */}
       {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && (
-        <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 108 : 168, right: 16, zIndex: 100, pointerEvents: "none" }}>
+        <div
+          className={`grounds-hud${hudDim ? " is-dim" : ""}`}
+          style={{ position: "absolute", left: 0, right: 0, bottom: isMobile ? 12 : 16, display: "flex", justifyContent: "center", padding: isMobile ? "0 12px" : "0 16px", zIndex: 100, pointerEvents: "none" }}
+        >
           <Compass landmarks={landmarks} goals={allGoals} goalsDone={doneGoals} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
         </div>
       )}
 
-      {/* cache-claimed toast */}
+      {/* cache-claimed celebration */}
       {nodeFlash && (
-        <div className="pop" style={{ position: "absolute", top: "32%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60 }}>
-          <div className="panel" style={{ ["--ac" as string]: nodeFlash.fragments > 0 ? "#39e0ff" : "var(--gold)", padding: "10px 18px", display: "flex", alignItems: "center", gap: 10, borderColor: nodeFlash.fragments > 0 ? "#39e0ff" : "var(--gold)" }}>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>Cache claimed</span>
-            {nodeFlash.crowns > 0 && <span style={{ color: "var(--gold)", fontWeight: 700 }}>+{nodeFlash.crowns} 👑</span>}
-            {nodeFlash.fragments > 0 && <span style={{ color: "#39e0ff", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={14} strokeWidth={2} /> +{nodeFlash.fragments}</span>}
-          </div>
-        </div>
+        <Celebration
+          tone="good"
+          accent={nodeFlash.fragments > 0 ? "#39e0ff" : "#f0a93a"}
+          kicker={nodeFlash.fragments > 0 ? "FRAGMENT SECURED" : "CACHE CLAIMED"}
+          title={nodeFlash.fragments > 0 ? "Memory fragment" : "Crown cache"}
+        >
+          {nodeFlash.crowns > 0 && <span style={{ color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 4 }}>+{nodeFlash.crowns} <Crown size={15} strokeWidth={2} /></span>}
+          {nodeFlash.fragments > 0 && <span style={{ color: "#39e0ff", display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={15} strokeWidth={2} /> +{nodeFlash.fragments}</span>}
+        </Celebration>
       )}
 
       {/* one-time objectives coachmark */}
       {goalCoach && owned && !isHub && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
-        <div style={{ position: "absolute", bottom: isMobile ? 96 : 70, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
             <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
@@ -753,31 +852,61 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {/* goal-cleared toast */}
-      {goalFlash && (
-        <div className="pop" style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 61 }}>
-          <div className="panel" style={{ ["--ac" as string]: "var(--gold)", padding: "12px 20px", textAlign: "center", borderColor: "var(--gold)", boxShadow: "0 0 60px -24px var(--gold)" }}>
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", fontWeight: 700 }}>GOAL CLEARED</div>
-            <div style={{ fontSize: 16, fontWeight: 800, margin: "2px 0 6px" }}>{goalFlash.label}</div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", fontSize: 12, fontWeight: 700 }}>
-              {goalFlash.crowns > 0 && <span style={{ color: "var(--gold)" }}>+{goalFlash.crowns} 👑</span>}
-              {goalFlash.fragments > 0 && <span style={{ color: "#39e0ff", display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={14} strokeWidth={2} /> +{goalFlash.fragments}</span>}
-              {goalFlash.trainerXp > 0 && <span style={{ color: "#cfcbe8" }}>+{goalFlash.trainerXp} XP</span>}
-              {goalFlash.seasonPoints > 0 && store.force && <span style={{ color: "#c77dff" }}>+{goalFlash.seasonPoints} war</span>}
-            </div>
+      {/* first-ranked-win Banner invite — one-time, surfaces after the result
+          card closes (deferred so the choice arrives when it means something) */}
+      {bannerInvite && owned && !store.force && !showMatch && overlay === "none" && !result && !gRun && !bannerOpen && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
+            <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
+            <span style={{ fontSize: 12, lineHeight: 1.35 }}>
+              <strong>First ranked win!</strong> Pick a Banner to fight for — your wins build its season war, and home turf pays extra.
+            </span>
+            <button onClick={() => { dismissBannerInvite(); setBannerPreselect(null); setBannerOpen(true); }} className="btn btn-primary" style={{ ["--ac" as string]: "#c77dff", fontSize: 11, padding: "4px 11px", flexShrink: 0 }}>Choose</button>
+            <button onClick={dismissBannerInvite} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 9px", flexShrink: 0 }}>Later</button>
           </div>
         </div>
       )}
 
-      {/* allegiance-sworn toast */}
+      {/* goal-cleared celebration (peak / depth / secret) */}
+      {goalFlash && (
+        <Celebration
+          tone="epic"
+          accent={goalFlash.goalKind === "secret" ? "#c77dff" : goalFlash.goalKind === "depth" ? "#39e0ff" : "#f0a93a"}
+          kicker={goalFlash.goalKind === "secret" ? "SECRET UNCOVERED" : goalFlash.goalKind === "depth" ? "RIFT CONQUERED" : "SUMMIT REACHED"}
+          title={goalFlash.label}
+        >
+          {goalFlash.crowns > 0 && <span style={{ color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 4 }}>+{goalFlash.crowns} <Crown size={15} strokeWidth={2} /></span>}
+          {goalFlash.fragments > 0 && <span style={{ color: "#39e0ff", display: "inline-flex", alignItems: "center", gap: 4 }}><Gem size={15} strokeWidth={2} /> +{goalFlash.fragments}</span>}
+          {goalFlash.trainerXp > 0 && <span style={{ color: "#cfcbe8" }}>+{goalFlash.trainerXp} XP</span>}
+          {goalFlash.seasonPoints > 0 && store.force && <span style={{ color: "#c77dff" }}>+{goalFlash.seasonPoints} war</span>}
+        </Celebration>
+      )}
+
+      {/* the Banner decision surface — one place to choose / review / lock */}
+      {bannerOpen && (
+        <BannerSheet
+          preselect={bannerPreselect}
+          suggested={owned ? byKey[owned]?.type ?? null : null}
+          war={war}
+          onClose={() => setBannerOpen(false)}
+          onPledged={(f) => {
+            const fm = forceMeta(f);
+            setPledgeFlash({ name: fm.house, motto: fm.motto, color: TYPE_COLOR[f] });
+            if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+            pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
+          }}
+        />
+      )}
+
+      {/* banner-raised celebration */}
       {pledgeFlash && (
-        <div className="pop" style={{ position: "absolute", top: "32%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60 }}>
-          <div className="panel" style={{ ["--ac" as string]: pledgeFlash.color, padding: "12px 20px", textAlign: "center", borderColor: pledgeFlash.color, boxShadow: `0 0 60px -24px ${pledgeFlash.color}` }}>
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: pledgeFlash.color, fontWeight: 700 }}>ALLEGIANCE SWORN</div>
-            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{pledgeFlash.name}</div>
-            <div style={{ fontSize: 12, fontStyle: "italic", color: "var(--muted)", marginTop: 2 }}>{pledgeFlash.motto}</div>
-          </div>
-        </div>
+        <Celebration
+          tone="pledge"
+          accent={pledgeFlash.color}
+          kicker="BANNER RAISED"
+          title={pledgeFlash.name}
+          subtitle={pledgeFlash.motto}
+        />
       )}
 
       {/* menu — single visible button, top-left (M to toggle) */}
@@ -795,7 +924,7 @@ export default function GroundsScreen() {
         <div
           style={{
             position: "absolute",
-            bottom: isTouch ? 132 + dockPad : 96 + dockPad,
+            bottom: (isTouch ? 132 : 96) + dockPad + compassReserve,
             left: 0,
             right: 0,
             display: "flex",
@@ -829,8 +958,8 @@ export default function GroundsScreen() {
                 ? `Enter ${near.label}`
                 : near.kind === "force"
                 ? store.force === near.type
-                  ? `Sworn to ${near.name}`
-                  : `Swear to ${near.name}`
+                  ? `Your Banner · ${near.name}`
+                  : `Banner of ${near.name}`
                 : near.kind === "train"
                 ? "Train your champion"
                 : near.kind === "broker"
@@ -842,7 +971,7 @@ export default function GroundsScreen() {
                     : near.kind === "node"
                       ? near.nodeKind === "fragment"
                         ? `Claim fragment ×${near.fragments}`
-                        : `Claim cache · +${near.crowns} 👑`
+                        : `Claim cache · +${near.crowns} Crowns`
                       : near.kind === "goal"
                         ? `Claim ${near.label}`
                         : scenario.id === "gauntlet"
@@ -916,17 +1045,6 @@ export default function GroundsScreen() {
         <MatchHud bout={bout} owned={owned!} opponent={opponent!} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
       )}
 
-      {/* footer hints — only when HUD is awake */}
-      {!showMatch && overlay === "none" && !isTouch && !hudDim && (
-        <div className="mono" style={{ position: "absolute", bottom: 14, right: 16, fontSize: 11, display: "flex", alignItems: "center", gap: 14, opacity: 0.45 }}>
-          <button onClick={() => setShowIntro(true)} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 11 }}>
-            intro
-          </button>
-          <Link href="/standings" style={{ color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            standings <ArrowUpRight size={13} strokeWidth={2} />
-          </Link>
-        </div>
-      )}
     </main>
   );
 }
@@ -968,7 +1086,7 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
           onClick={() => buyFragment()}
         >
           <Gem size={15} strokeWidth={2.2} color={col} />
-          Buy 1 fragment · {FRAGMENT_BUY} 👑
+          Buy 1 fragment · {FRAGMENT_BUY} Crowns
         </button>
         <button
           className="btn"
@@ -977,7 +1095,7 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
           onClick={() => sellFragment()}
         >
           <Crown size={15} strokeWidth={2.2} color="var(--gold)" />
-          Sell 1 fragment · +{FRAGMENT_SELL} 👑
+          Sell 1 fragment · +{FRAGMENT_SELL} Crowns
         </button>
         <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", textAlign: "center", marginTop: 12, letterSpacing: 0.5, lineHeight: 1.5 }}>
           Fragments fund free training sessions. Find them free out in the wilds — the Broker is just the quick way.
@@ -995,22 +1113,35 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
           STEP 1 · CLAIM YOUR CHAMPION
         </div>
         <h2 style={{ fontSize: 26, fontWeight: 700, margin: "8px 0 4px" }}>Pick the agent you&apos;ll train.</h2>
-        <p style={{ color: "var(--muted)", fontSize: 14, margin: "0 0 18px" }}>
-          It becomes yours. You tune how it thinks, send it to fight, and watch its body change as it climbs.
+        <p style={{ color: "var(--muted)", fontSize: 14, margin: "0 0 14px" }}>
+          It becomes yours. Each champion fights in one Force — the wheel below decides what beats what.
         </p>
+
+        {/* the one lesson that matters before you choose: each Force beats the next */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, margin: "0 0 18px" }}>
+          <ForcesChain />
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
           {roster.map((r) => {
             const c = get(r.key);
             const col = TYPE_COLOR[r.type];
             const lf = levelFor(c.xp);
+            const nb = wheelNeighbors(r.type);
+            const prey = FORCE_LORE[nb.prey];
+            const pred = FORCE_LORE[nb.predator];
             return (
-              <button key={r.key} className="panel" onClick={() => onPick(r.key)} style={{ ["--ac" as string]: col, padding: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <button key={r.key} className="panel" onClick={() => onPick(r.key)} style={{ ["--ac" as string]: col, padding: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 7, cursor: "pointer" }}>
                 <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={84} />
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="mono" style={{ fontSize: 10, color: col }}>
-                  {r.type} · L{lf.level} {tierFor(lf.level).name}
+                  {FORCE_LORE[r.type].inWorld} · L{lf.level} {tierFor(lf.level).name}
                 </div>
                 <div style={{ fontSize: 12, fontStyle: "italic" }}>{doctrine(c, lf.level)}</div>
+                <div className="mono" style={{ display: "flex", gap: 9, fontSize: 9, color: "var(--muted2)", marginTop: 1 }}>
+                  <span>beats <span style={{ color: prey.hex }}>{prey.sigil}</span></span>
+                  <span>loses to <span style={{ color: pred.hex }}>{pred.sigil}</span></span>
+                </div>
               </button>
             );
           })}
@@ -1060,9 +1191,9 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
     flashTimer.current = setTimeout(() => setFlash(null), 2400);
   };
 
-  const doTrain = () => {
+  const doTrain = async () => {
     const before = store.get(ckey);
-    if (!store.trainChampion(ckey)) return;
+    if (!(await store.trainChampion(ckey))) return;
     reflectTrain(before);
   };
 
@@ -1155,7 +1286,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
             {flash.leveledTo && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{flash.leveledTo}</span>}
           </div>
         )}
-        {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns. Win a bout in the Arena.</p>}
+        {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns. Win a fight in the Arena.</p>}
       </div>
     </div>
   );
@@ -1282,8 +1413,8 @@ function ChallengeOverlay(props: {
             {betSide && (
               <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
                 {[25, 50, 100].map((n) => (
-                  <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
-                    {n}👑
+                  <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 3 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
+                    {n} <Crown size={12} strokeWidth={2.2} />
                   </button>
                 ))}
               </div>
@@ -1292,7 +1423,7 @@ function ChallengeOverlay(props: {
           <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onFight}>
             <FightIcon size={18} strokeWidth={2.2} />
             Fight {duelMeta?.name ?? oppEntry.name}
-            {betSide ? ` (staking ${betAmt}👑)` : ""}
+            {betSide && <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>(staking {betAmt} <Crown size={13} strokeWidth={2.2} />)</span>}
           </button>
         </div>
       </div>
@@ -1355,8 +1486,8 @@ function ChallengeOverlay(props: {
           {betSide && (
             <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
               {[25, 50, 100].map((n) => (
-                <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
-                  {n}👑
+                <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 3 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
+                  {n} <Crown size={12} strokeWidth={2.2} />
                 </button>
               ))}
             </div>
@@ -1366,7 +1497,7 @@ function ChallengeOverlay(props: {
         <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} disabled={!opponent} onClick={onFight}>
           <FightIcon size={18} strokeWidth={2.2} />
           {opponent ? "Fight!" : "pick an opponent"}
-          {betSide ? ` (staking ${betAmt}👑)` : ""}
+          {betSide && <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>(staking {betAmt} <Crown size={13} strokeWidth={2.2} />)</span>}
         </button>
       </div>
     </div>
@@ -1389,12 +1520,12 @@ function MomentumMeter({ momentum, surge, aName, bName, aColor, bColor, isMobile
   return (
     <div style={{ marginTop: 8, width: isMobile ? "86vw" : 420, maxWidth: "94vw", marginInline: "auto", pointerEvents: "none" }}>
       <div className="mono" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 9, letterSpacing: 1, marginBottom: 3, gap: 8 }}>
-        <span style={{ color: aColor, fontWeight: surge === "a" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "b" ? 0.55 : 1, whiteSpace: "nowrap" }}>
-          {surge === "a" ? "🔥 " : ""}{aName}
+        <span style={{ color: aColor, fontWeight: surge === "a" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "b" ? 0.55 : 1, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 3 }}>
+          {surge === "a" && <Flame size={11} strokeWidth={2.4} />}{aName}
         </span>
         <span style={{ color: surge ? "var(--gold)" : "var(--muted2)", letterSpacing: 1.5, whiteSpace: "nowrap" }}>{surge ? "ON A ROLL" : "MOMENTUM"}</span>
-        <span style={{ color: bColor, fontWeight: surge === "b" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "a" ? 0.55 : 1, whiteSpace: "nowrap" }}>
-          {bName}{surge === "b" ? " 🔥" : ""}
+        <span style={{ color: bColor, fontWeight: surge === "b" ? 800 : 600, textShadow: "0 1px 4px #000", opacity: surge === "a" ? 0.55 : 1, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 3 }}>
+          {bName}{surge === "b" && <Flame size={11} strokeWidth={2.4} />}
         </span>
       </div>
       <div style={{ position: "relative", height: 9, borderRadius: 5, overflow: "hidden", background: bColor, boxShadow: surge ? `0 0 14px -3px ${surge === "a" ? aColor : bColor}` : "none" }}>
@@ -1411,7 +1542,7 @@ function MatchHud(props: {
   opponent: string;
   byKey: Record<string, RosterEntry>;
   get: (k: string) => Champion;
-  result: { won: boolean; crowns: number; betWon: boolean | null; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null } | null;
+  result: { won: boolean; crowns: number; betWon: boolean | null; ladders: string[]; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null; home: boolean } | null;
   onClose: () => void;
   isMobile: boolean;
 }) {
@@ -1513,72 +1644,91 @@ function MatchHud(props: {
               &ldquo;{t.line}&rdquo;
             </div>
             <div className="mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", lineHeight: 1.45, overflowWrap: "anywhere" }}>
-              why › {t.why} <span style={{ color: "var(--muted2)" }}>· ⚖ {t.ruling} (q={t.q.toFixed(2)})</span>
+              why › {t.why} <span style={{ color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 4 }}>· <Scale size={11} strokeWidth={2} /> {t.ruling} (q={t.q.toFixed(2)})</span>
             </div>
           </div>
         </div>
       )}
 
-      {result && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.55)", zIndex: 55 }}>
-          <div className="panel pop" style={{ ["--ac" as string]: result.won ? "var(--good)" : "var(--bad)", padding: 28, width: "min(420px, 92vw)", textAlign: "center", boxShadow: `0 0 80px -30px ${result.won ? "var(--good)" : "var(--bad)"}` }}>
-            <div className="glow" style={{ fontSize: 30, fontWeight: 700, color: result.won ? "var(--good)" : "var(--bad)" }}>
+      {result && (() => {
+        const ac = result.won ? "var(--good)" : "var(--bad)";
+        const hl = bout.end?.highlights?.[0];
+        const hlLabel = hl ? (hl.kind === "ko" ? "THE FINISH" : hl.kind === "crit" ? "HARDEST BAR" : "TURNING POINT") : "";
+        const rankDelta = result.globalDelta ?? result.ratingDelta;
+        return (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.6)", zIndex: 55, padding: 16 }}>
+          {result.won && <Confetti accent="#f0a93a" count={70} originTop="34%" />}
+          <div className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`} style={{ ["--ac" as string]: ac, position: "relative", padding: 22, width: "min(380px, 92vw)", textAlign: "center", boxShadow: `0 0 80px -30px ${ac}` }}>
+            {/* header */}
+            <div className="glow" style={{ fontSize: 28, fontWeight: 800, color: ac, letterSpacing: 1 }}>
               {result.won ? "VICTORY" : "DEFEAT"}
             </div>
-            <div className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-              {bout.end?.winner_name} wins in {bout.end?.rounds} rounds
+            <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+              {bout.end?.winner_name} wins · {bout.end?.rounds} rounds
             </div>
-            {bout.end?.highlights?.[0] && (
+
+            {/* the signature moment */}
+            {hl && (
               <div style={{ margin: "14px 0", padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid var(--line2)", textAlign: "left" }}>
-                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)" }}>
-                  {bout.end.highlights[0].kind === "ko" ? "THE FINISH" : bout.end.highlights[0].kind === "crit" ? "HARDEST BAR" : "TURNING POINT"} · R{bout.end.highlights[0].round}
-                </div>
-                <div style={{ fontStyle: "italic", fontSize: 14, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{bout.end.highlights[0].line}&rdquo;</div>
-                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 3 }}>{bout.end.highlights[0].actor_name}</div>
+                <div className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--gold)" }}>{hlLabel} · R{hl.round}</div>
+                <div style={{ fontStyle: "italic", fontSize: 13.5, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{hl.line}&rdquo;</div>
+                <div className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", marginTop: 3 }}>— {hl.actor_name}</div>
               </div>
             )}
-            {result.crowns !== 0 && (
-              <div style={{ margin: "16px 0", fontSize: 22, fontWeight: 700, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)" }}>
-                {result.crowns >= 0 ? "+" : ""}
-                {result.crowns} 👑
+
+            {/* reward — crowns + wager, one line */}
+            {(result.crowns !== 0 || result.betWon !== null) && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, margin: "12px 0" }}>
+                {result.crowns !== 0 && (
+                  <span style={{ fontSize: 24, fontWeight: 800, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    {result.crowns >= 0 ? "+" : ""}{result.crowns} <Crown size={20} strokeWidth={2.2} />
+                  </span>
+                )}
+                {result.betWon !== null && (
+                  <span className="chip" style={{ borderColor: result.betWon ? "var(--good)" : "var(--bad)", color: result.betWon ? "var(--good)" : "var(--bad)" }}>
+                    bet {result.betWon ? "won" : "lost"}
+                  </span>
+                )}
+                {result.home && (
+                  <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>
+                    home advantage · +{HOME_WIN_BONUS}
+                  </span>
+                )}
               </div>
             )}
-            {result.betWon !== null && (
-              <div className="mono" style={{ fontSize: 12, color: result.betWon ? "var(--good)" : "var(--bad)" }}>
-                bet {result.betWon ? "won" : "lost"}
-              </div>
-            )}
-            {result.globalDelta !== null && (
-              <div className="mono" style={{ fontSize: 12, marginTop: 8, color: result.globalDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
-                {result.globalDelta >= 0 ? "climbed the global ladder" : "slipped on the global ladder"}
-                <span style={{ color: "var(--muted2)" }}> · {result.globalDelta >= 0 ? "+" : ""}{result.globalDelta} vs every trainer</span>
-              </div>
-            )}
-            {result.leveledTo && (
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "12px 0 4px", flexWrap: "wrap" }}>
-                <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{result.leveledTo}</span>
-              </div>
-            )}
-            {result.learned && (
-              <div className="mono" style={{ fontSize: 11, color: "var(--acc, #6a6bff)", marginTop: 2 }}>
-                ⟳ {result.learned}
-              </div>
-            )}
-            <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 8 }}>
-              {result.won ? "your champion gained XP, reshaped & learned" : "your champion learns from the loss"}
+
+            {/* one tidy progress strip — XP, skills, rank, reader, level-up */}
+            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 4 }}>
+              {result.leveledTo && (
+                <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)", fontSize: 11 }}>LEVEL UP · L{result.leveledTo}</span>
+              )}
+              {result.ladders.map((l) => (
+                <span key={l} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)", fontSize: 11 }}>{l}</span>
+              ))}
+              {rankDelta !== null && rankDelta !== undefined && (
+                <span className="chip" style={{ borderColor: "var(--line)", color: rankDelta >= 0 ? "var(--good)" : "var(--bad)", fontSize: 11 }}>
+                  Ladder {rankDelta >= 0 ? "+" : ""}{rankDelta}
+                </span>
+              )}
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
+            {result.learned && (
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", fontStyle: "italic", marginTop: 9 }}>{result.learned}</div>
+            )}
+
+            {/* actions */}
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 18, flexWrap: "wrap" }}>
               <button className="btn" style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={share}>
                 {copied ? <Check size={15} strokeWidth={2.4} /> : <ArrowUpRight size={15} strokeWidth={2.2} />}
                 {copied ? "link copied" : "share card"}
               </button>
-              <button className="btn btn-primary" style={{ ["--ac" as string]: result.won ? "var(--good)" : "var(--bad)" }} onClick={onClose}>
+              <button className="btn btn-primary" style={{ ["--ac" as string]: ac }} onClick={onClose}>
                 back to The Grounds
               </button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
   );
 }

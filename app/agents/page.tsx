@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Swords, Check, X, AlertTriangle } from "lucide-react";
 import { Autoplay } from "@/components/agents/autoplay";
 
 type Provider = "openai" | "http";
@@ -115,12 +116,12 @@ export default function AgentsPage() {
           <Code>{RESPONSE_SHAPE}</Code>
         </div>
         <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10, lineHeight: 1.6 }}>
-          Pick an illegal (or no) move and the engine falls back to its own heuristic. Your agent never breaks a bout.
+          Pick an illegal (or no) move and the engine falls back to its own heuristic. Your agent never breaks a fight.
         </p>
       </Section>
 
       {/* connect + validate */}
-      <Section title="Connect your agent" hint="Wire it up, smoke-test it, then send it into a live bout.">
+      <Section title="Connect your agent" hint="Wire it up, smoke-test it, then send it into a live fight.">
         <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
           <Toggle on={provider === "http"} onClick={() => setProvider("http")} label="HTTP agent" />
           <Toggle on={provider === "openai"} onClick={() => setProvider("openai")} label="OpenAI-compatible" />
@@ -140,7 +141,7 @@ export default function AgentsPage() {
             {check.phase === "done" && check.result?.decision && (
               <Code>{`// your agent answered (${check.result.ms}ms)
 ${JSON.stringify(check.result.decision, null, 2)}${
-                check.result.moveValid ? "" : "\n// ⚠ move id wasn't legal — engine would use its heuristic"
+                check.result.moveValid ? "" : "\n// note: move id wasn't legal — engine would use its heuristic"
               }`}</Code>
             )}
           </div>
@@ -152,15 +153,15 @@ ${JSON.stringify(check.result.decision, null, 2)}${
             <Field label="Base URL">
               <input style={inp} placeholder="https://api.openai.com/v1" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
             </Field>
-            <Field label="API key (sent only to start the bout, never stored server-side)">
+            <Field label="API key (sent only to start the fight, never stored server-side)">
               <input style={inp} type="password" placeholder="sk-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
             </Field>
           </div>
         )}
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 18, flexWrap: "wrap" }}>
-          <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", opacity: ready ? 1 : 0.45 }} disabled={!ready} onClick={toArena}>
-            ⚔ Fight a house champion →
+          <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", opacity: ready ? 1 : 0.45, display: "inline-flex", alignItems: "center", gap: 8 }} disabled={!ready} onClick={toArena}>
+            <Swords size={15} strokeWidth={2.2} /> Fight a house champion →
           </button>
           <span className="mono" style={{ fontSize: 11, color: "var(--muted2)" }}>
             opens the Arena with your agent pre-loaded as the challenger
@@ -278,8 +279,8 @@ function CheckBadge({ r }: { r: CheckResult }) {
   const col = ok ? "var(--good)" : warn ? "var(--gold)" : "var(--bad)";
   const txt = r.ok ? (r.moveValid === false ? `responded in ${r.ms}ms · illegal move` : `valid · ${r.ms}ms`) : r.error || "failed";
   return (
-    <span className="chip" style={{ borderColor: col, color: col, fontSize: 12 }}>
-      {ok ? "✓" : warn ? "⚠" : "✗"} {txt}
+    <span className="chip" style={{ borderColor: col, color: col, fontSize: 12, display: "inline-flex", alignItems: "center", gap: 5 }}>
+      {ok ? <Check size={13} strokeWidth={2.4} /> : warn ? <AlertTriangle size={13} strokeWidth={2.4} /> : <X size={13} strokeWidth={2.4} />} {txt}
     </span>
   );
 }

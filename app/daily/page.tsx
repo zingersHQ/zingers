@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Lock, Scale, Mic } from "lucide-react";
 import type { BattleEnd, BattleTurn, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
@@ -86,7 +87,7 @@ export default function DailyPage() {
 
       {!plan || !mounted ? (
         <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 60 }}>
-          loading today&apos;s bout…
+          loading today&apos;s fight…
         </div>
       ) : view === "predict" ? (
         <Predict
@@ -115,7 +116,7 @@ function Header({ day, date, streak, best }: { day?: number; date?: string; stre
           Daily Zinger{day ? <span style={{ color: ACC }}> #{day}</span> : null}
         </h1>
         <p className="mono" style={{ color: "var(--muted2)", fontSize: 12, letterSpacing: 1.5, margin: "6px 0 0" }}>
-          ONE SHARED BOUT · CALL IT BEFORE YOU WATCH{date ? ` · ${date}` : ""}
+          ONE SHARED FIGHT · CALL IT BEFORE YOU WATCH{date ? ` · ${date}` : ""}
         </p>
       </div>
       <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
@@ -206,14 +207,14 @@ function Predict(props: {
         <button
           className="btn btn-primary"
           disabled={!winnerPick}
-          style={{ ["--ac" as string]: "var(--gold)", fontSize: 15, padding: "14px 30px", opacity: winnerPick ? 1 : 0.45 }}
+          style={{ ["--ac" as string]: "var(--gold)", fontSize: 15, padding: "14px 30px", opacity: winnerPick ? 1 : 0.45, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           onClick={onStart}
         >
-          🔒 Lock it in &amp; watch
+          <Lock size={15} strokeWidth={2.2} /> Lock it in &amp; watch
         </button>
       </div>
       <p className="mono" style={{ textAlign: "center", fontSize: 10, color: "var(--muted2)", marginTop: 12, letterSpacing: 0.5 }}>
-        SAME BOUT FOR EVERYONE TODAY · ONE CALL · COME BACK TOMORROW
+        SAME FIGHT FOR EVERYONE TODAY · ONE CALL · COME BACK TOMORROW
       </p>
     </div>
   );
@@ -266,7 +267,7 @@ function BoutView({ plan, get, bout }: { plan: DailyResponse; get: GetFn; bout: 
             {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
             {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
           </div>
-          <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)" }}>⚖ jury: {t.ruling} (q={t.q.toFixed(2)})</div>
+          <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}><Scale size={12} strokeWidth={2} /> jury: {t.ruling} (q={t.q.toFixed(2)})</div>
         </div>
       )}
     </div>
@@ -300,13 +301,13 @@ function BoutFighter(props: { entry: DailyResponse["a"]; get: GetFn; col: string
 }
 
 function gridText(r: DailyResult, topic: string, streak: number, best: number): string {
-  const w = r.winnerCorrect ? "✅" : "❌";
-  const d = r.dunkCorrect == null ? "➖" : r.dunkCorrect ? "🎤" : "❌";
+  const w = r.winnerCorrect ? "✓" : "✗";
+  const d = r.dunkCorrect == null ? "—" : r.dunkCorrect ? "✓" : "✗";
   return [
-    `🎤 Zingers Daily #${r.day}`,
+    `Zingers Daily #${r.day}`,
     `"${topic}"`,
     `Winner ${w} · Dunk ${d}`,
-    `streak ${streak} 🔥 · best ${best}`,
+    `streak ${streak} · best ${best}`,
     BRAND.site.replace(/^https?:\/\//, "") + "/daily",
   ].join("\n");
 }
@@ -351,8 +352,8 @@ function Done(props: {
         </div>
 
         <div style={{ marginTop: 18, padding: 16, borderRadius: 12, background: "#100e1a", border: "1px solid var(--line)" }}>
-          <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
-            🎤 ZINGER OF THE DAY · {result.dunkName}
+          <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6, display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <Mic size={11} strokeWidth={2} /> ZINGER OF THE DAY · {result.dunkName}
           </div>
           <div style={{ fontStyle: "italic", fontSize: 16, lineHeight: 1.5 }}>&ldquo;{result.dunkLine}&rdquo;</div>
         </div>
@@ -376,7 +377,7 @@ function Done(props: {
       </div>
 
       <p className="mono" style={{ textAlign: "center", fontSize: 11, color: "var(--muted2)", marginTop: 16, letterSpacing: 0.5 }}>
-        NEXT ZINGER DROPS AT MIDNIGHT UTC · <Link href="/arena" style={{ color: ACC }}>fight your own bout →</Link>
+        NEXT ZINGER DROPS AT MIDNIGHT UTC · <Link href="/arena" style={{ color: ACC }}>start your own fight →</Link>
       </p>
     </div>
   );

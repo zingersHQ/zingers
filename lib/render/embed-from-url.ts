@@ -69,3 +69,9 @@ export function canonEmbedFromUrl(url: string): CanonEmbedSpec | null {
 export function showcaseForEmbed(spec: CanonEmbedSpec) {
   return showcaseChampion(spec.rosterKey);
 }
+
+/** Region figure URLs (org markdown) → canon region id, for live region scenes. */
+export function regionIdFromUrl(url: string): string | null {
+  const r = url.match(/^\/renders\/regions\/region-([a-z]+)\.png$/i);
+  return r ? r[1].toLowerCase() : null;
+}

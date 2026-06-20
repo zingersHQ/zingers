@@ -222,7 +222,7 @@ HP 100 · type LOGIC↔RHETORIC = neutral (×1.0) · `quality`/`jitter` assumed 
 | 1 | VOX | Strawman | *Rattle the Logician early* | "He thinks soup must be *hot*. Adorable, and why we ate cereal dry for centuries." | **15** | Axiom 85 · **Axiom Tilted** |
 | 2 | AXIOM | Reductio | *Pry them open for the finish* | "Name milk's stock, its mirepoix, its simmer. You can't. Not soup." *(Tilted −0.2)* | **11** | Vox 89 · **Vox Exposed** |
 | 3 | VOX | Appeal | *Bank Hyped for the closer* | "Forget definitions: the bowl, the morning light, age seven. That warmth is soup." | **10** | Axiom 75 · **Vox Hyped** |
-| 4 | AXIOM | **Checkmate** | *HIGHLIGHT: their own broth logic, weaponized* | "By your broth rule, a glass of milk is bisque. Absurd. The case collapses." | **45** ⚡CAPPED | Vox 44 |
+| 4 | AXIOM | **Checkmate** | *HIGHLIGHT: their own broth logic, weaponized* | "By your broth rule, a glass of milk is bisque. Absurd. The case collapses." | **45** CAPPED | Vox 44 |
 | 5 | VOX | **Mic Drop** | *Close before they compound* | "You brought a dictionary to a feeling. I rest my case. *mic drop*" *(Hyped)* | **37** | Axiom 38 |
 | 6 | AXIOM | Syllogism | *No theatrics, just compound* | "Soup is cooked; cereal is assembled. No transformation, no soup." | **23** | Vox 21 |
 | 7 | VOX | Crowd Swell | *Ride momentum to verdict* | "Jury, one of us made you *feel* breakfast." | **21** | Axiom 17 |
@@ -231,12 +231,12 @@ HP 100 · type LOGIC↔RHETORIC = neutral (×1.0) · `quality`/`jitter` assumed 
 **Result:** AXIOM wins on turn 8, after trailing most of the match. The gated **Checkmate Highlight** (T4, hit the damage cap) was the swing; Vox's **Appeal→Mic Drop** combo nearly closed it.
 
 **What this demonstrates (the "it's a game" checklist):**
-- ✅ **Lead changed hands**: Vox led through T3; Axiom's Exposed→Checkmate Highlight flipped it.
-- ✅ **Statuses + combos decided it**: Tilted, Exposed, and Hyped each visibly moved a number; both finishers required setup.
-- ✅ **Smarts were legible**: every turn showed an *intent* before the line; the win came from planning (pry open → finisher), not luck.
-- ✅ **The arena mattered**: Rhetoric ×1.1 kept the Orator competitive in a courtroom.
-- ✅ **The LLM mattered but didn't decide alone**: `quality` only nudged a bounded multiplier (and a Highlight) over a stat-driven core; the cap stopped a feel-bad one-shot.
-- ✅ **It's watchable**: short, in-character, on-topic, clip-able lines; a Highlight cut-in and a CAPPED moment to screenshot.
+- ✓ **Lead changed hands**: Vox led through T3; Axiom's Exposed→Checkmate Highlight flipped it.
+- ✓ **Statuses + combos decided it**: Tilted, Exposed, and Hyped each visibly moved a number; both finishers required setup.
+- ✓ **Smarts were legible**: every turn showed an *intent* before the line; the win came from planning (pry open → finisher), not luck.
+- ✓ **The arena mattered**: Rhetoric ×1.1 kept the Orator competitive in a courtroom.
+- ✓ **The LLM mattered but didn't decide alone**: `quality` only nudged a bounded multiplier (and a Highlight) over a stat-driven core; the cap stopped a feel-bad one-shot.
+- ✓ **It's watchable**: short, in-character, on-topic, clip-able lines; a Highlight cut-in and a CAPPED moment to screenshot.
 
 ---
 

@@ -5,7 +5,28 @@
 // local dev, but the real shared ladder requires the Redis env vars.
 import "server-only";
 import { Redis } from "@upstash/redis";
-import type { CreatureType, PlayerSave, Recipe } from "@/lib/types";
+import type { CreatureType, ForcePoints, PlayerSave, Recipe } from "@/lib/types";
+import { STARTING_CROWNS } from "@/lib/economy";
+
+const FORCES: readonly CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
+
+// Coerce an untrusted pledge into a valid Force or null — the server is the last
+// line of defence, so a junk `force` can never poison the war aggregation.
+function cleanForce(raw: unknown): CreatureType | null {
+  return typeof raw === "string" && (FORCES as readonly string[]).includes(raw) ? (raw as CreatureType) : null;
+}
+
+function cleanForcePoints(raw: unknown): ForcePoints {
+  const p = (raw ?? {}) as Partial<ForcePoints>;
+  const season = Number(p.season);
+  const points = Number(p.points);
+  return {
+    season: Number.isFinite(season) && season >= 1 ? Math.floor(season) : 1,
+    // clamp: points can't go negative, and a sane ceiling stops a forged blob
+    // from ever dominating the season war.
+    points: Number.isFinite(points) ? Math.max(0, Math.min(100_000, Math.floor(points))) : 0,
+  };
+}
 
 export interface LadderChampion {
   id: string;
@@ -44,6 +65,46 @@ export interface Store {
   getOwned(token: string): Promise<LadderChampion[]>;
   getSave(token: string): Promise<PlayerSave | null>;
   putSave(token: string, save: PlayerSave): Promise<void>;
+  // Force war: per-season tally of ranked-win contributions per Force, the input
+  // to the season's warLeader. Authoritative — only the server increments it.
+  incrWar(season: number, force: CreatureType, by?: number): Promise<void>;
+  warStandings(season: number): Promise<Record<CreatureType, number>>;
+  // The single Reader's own contribution to the season war — the authoritative
+  // counterpart to the client's optimistic forcePoints mirror. Incremented in the
+  // SAME path as incrWar so the shown number always matches what actually counted.
+  incrWarMember(token: string, season: number, by?: number): Promise<void>;
+  warMember(token: string, season: number): Promise<number>;
+  // LLM usage accounting: per-UTC-day token/call totals for the house model, so
+  // spend is MEASURED (not guessed) before any aggressive monetization.
+  incrUsage(day: number, calls: number, inTok: number, outTok: number): Promise<void>;
+  getUsage(day: number): Promise<UsageDay>;
+  // Server-authoritative wallet (online-first): the balance lives here, not in
+  // the client save blob. adjustWallet is atomic and rejects overdraft.
+  getWallet(token: string): Promise<number>;
+  adjustWallet(token: string, delta: number): Promise<WalletResult>;
+  // Pending bet for commit-reveal betting: staked BEFORE the outcome is known,
+  // settled by the server when the engine decides the bout.
+  getPendingBet(token: string): Promise<PendingBet | null>;
+  setPendingBet(token: string, bet: PendingBet): Promise<void>;
+  clearPendingBet(token: string): Promise<void>;
+}
+
+export interface UsageDay {
+  calls: number;
+  inTok: number;
+  outTok: number;
+}
+
+export interface WalletResult {
+  ok: boolean; // false = overdraft rejected, balance unchanged
+  balance: number;
+}
+
+export interface PendingBet {
+  stake: number;
+  side: "me" | "opp";
+  nonce: string; // ties the bet to one specific bout
+  ts: number;
 }
 
 const K = {
@@ -52,7 +113,24 @@ const K = {
   feed: "z:feed",
   owner: (token: string) => `z:owner:${token}`,
   save: (token: string) => `z:save:${token}`,
+  war: (season: number) => `z:war:${season}`,
+  warMember: (token: string, season: number) => `z:warme:${season}:${token}`,
+  usage: (day: number) => `z:cost:${day}`,
+  wallet: (token: string) => `z:wallet:${token}`,
+  bet: (token: string) => `z:bet:${token}`,
 };
+
+// A pending bet self-expires so an abandoned wager can never settle on a later bout.
+const BET_TTL_SECONDS = 15 * 60;
+
+const USAGE_TTL_SECONDS = 400 * 86_400; // keep ~13 months of daily spend history
+
+// Old season war tallies expire so the store doesn't accrete dead keys forever.
+const WAR_TTL_SECONDS = 120 * 86_400; // ~4 months (a season is 28 days)
+
+function zeroWar(): Record<CreatureType, number> {
+  return { LOGIC: 0, CHAOS: 0, COMPOSURE: 0, RHETORIC: 0, CREATIVITY: 0 };
+}
 
 const FEED_CAP = 60;
 // Defensive caps so one owner's blob can't grow unbounded in the store.
@@ -91,7 +169,8 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
     v: typeof s.v === "number" ? s.v : 1,
     progress: trim(s.progress as Record<string, unknown>, MAX_PROGRESS_KEYS) as PlayerSave["progress"],
     recipes,
-    crowns: typeof s.crowns === "number" && isFinite(s.crowns) ? Math.max(0, Math.floor(s.crowns)) : 0,
+    // Crowns intentionally not read from the client blob — the wallet is the
+    // authority (see /api/wallet). Any client-supplied balance is ignored.
     owned: typeof s.owned === "string" ? s.owned.slice(0, 64) : null,
     predict:
       s.predict && typeof s.predict === "object"
@@ -101,6 +180,9 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
       s.daily && typeof s.daily === "object"
         ? s.daily
         : { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
+    force: cleanForce(s.force),
+    forceSeason: typeof s.forceSeason === "number" && Number.isFinite(s.forceSeason) ? Math.floor(s.forceSeason) : null,
+    forcePoints: cleanForcePoints(s.forcePoints),
     updatedAt: Date.now(),
   };
 }
@@ -147,6 +229,67 @@ class UpstashStore implements Store {
   async putSave(token: string, save: PlayerSave) {
     await this.r.set(K.save(token), save);
   }
+  async incrWar(season: number, force: CreatureType, by = 1) {
+    await this.r.zincrby(K.war(season), by, force);
+    await this.r.expire(K.war(season), WAR_TTL_SECONDS);
+  }
+  async warStandings(season: number) {
+    const out = zeroWar();
+    // zrange withScores returns a flat [member, score, member, score, …] array.
+    const flat = (await this.r.zrange<(string | number)[]>(K.war(season), 0, -1, { withScores: true })) || [];
+    for (let i = 0; i < flat.length; i += 2) {
+      const f = String(flat[i]) as CreatureType;
+      if (f in out) out[f] = Number(flat[i + 1]) || 0;
+    }
+    return out;
+  }
+  async incrWarMember(token: string, season: number, by = 1) {
+    await this.r.incrby(K.warMember(token, season), by);
+    await this.r.expire(K.warMember(token, season), WAR_TTL_SECONDS);
+  }
+  async warMember(token: string, season: number) {
+    return Number(await this.r.get<number>(K.warMember(token, season))) || 0;
+  }
+  async incrUsage(day: number, calls: number, inTok: number, outTok: number) {
+    const k = K.usage(day);
+    await Promise.all([
+      this.r.hincrby(k, "calls", calls),
+      this.r.hincrby(k, "in", inTok),
+      this.r.hincrby(k, "out", outTok),
+    ]);
+    await this.r.expire(k, USAGE_TTL_SECONDS);
+  }
+  async getUsage(day: number) {
+    const h = (await this.r.hgetall<Record<string, string>>(K.usage(day))) || {};
+    return { calls: Number(h.calls) || 0, inTok: Number(h.in) || 0, outTok: Number(h.out) || 0 };
+  }
+  private async ensureWallet(token: string) {
+    await this.r.set(K.wallet(token), STARTING_CROWNS, { nx: true });
+  }
+  async getWallet(token: string) {
+    await this.ensureWallet(token);
+    return Number(await this.r.get<number>(K.wallet(token))) || 0;
+  }
+  async adjustWallet(token: string, delta: number) {
+    await this.ensureWallet(token);
+    const d = Math.round(delta);
+    const balance = await this.r.incrby(K.wallet(token), d);
+    if (balance < 0) {
+      // overdraft: atomically undo and report failure with the unchanged balance
+      const reverted = await this.r.incrby(K.wallet(token), -d);
+      return { ok: false, balance: reverted };
+    }
+    return { ok: true, balance };
+  }
+  async getPendingBet(token: string) {
+    return (await this.r.get<PendingBet>(K.bet(token))) ?? null;
+  }
+  async setPendingBet(token: string, bet: PendingBet) {
+    await this.r.set(K.bet(token), bet, { ex: BET_TTL_SECONDS });
+  }
+  async clearPendingBet(token: string) {
+    await this.r.del(K.bet(token));
+  }
 }
 
 // ── In-memory fallback (per-instance; not shared across serverless workers) ────
@@ -155,6 +298,11 @@ class MemoryStore implements Store {
   private feed: FeedEntry[] = [];
   private owners = new Map<string, Set<string>>();
   private saves = new Map<string, PlayerSave>();
+  private war = new Map<number, Record<CreatureType, number>>();
+  private warMembers = new Map<string, number>(); // `${season}:${token}` → points
+  private usage = new Map<number, UsageDay>();
+  private wallets = new Map<string, number>();
+  private bets = new Map<string, PendingBet>();
 
   async getChampion(id: string) {
     return this.champs.get(id) ?? null;
@@ -188,6 +336,48 @@ class MemoryStore implements Store {
   }
   async putSave(token: string, save: PlayerSave) {
     this.saves.set(token, save);
+  }
+  async incrWar(season: number, force: CreatureType, by = 1) {
+    const cur = this.war.get(season) ?? zeroWar();
+    cur[force] = (cur[force] ?? 0) + by;
+    this.war.set(season, cur);
+  }
+  async warStandings(season: number) {
+    return { ...zeroWar(), ...(this.war.get(season) ?? {}) };
+  }
+  async incrWarMember(token: string, season: number, by = 1) {
+    const k = `${season}:${token}`;
+    this.warMembers.set(k, (this.warMembers.get(k) ?? 0) + by);
+  }
+  async warMember(token: string, season: number) {
+    return this.warMembers.get(`${season}:${token}`) ?? 0;
+  }
+  async incrUsage(day: number, calls: number, inTok: number, outTok: number) {
+    const cur = this.usage.get(day) ?? { calls: 0, inTok: 0, outTok: 0 };
+    this.usage.set(day, { calls: cur.calls + calls, inTok: cur.inTok + inTok, outTok: cur.outTok + outTok });
+  }
+  async getUsage(day: number) {
+    return this.usage.get(day) ?? { calls: 0, inTok: 0, outTok: 0 };
+  }
+  async getWallet(token: string) {
+    if (!this.wallets.has(token)) this.wallets.set(token, STARTING_CROWNS);
+    return this.wallets.get(token)!;
+  }
+  async adjustWallet(token: string, delta: number) {
+    const cur = await this.getWallet(token);
+    const next = cur + Math.round(delta);
+    if (next < 0) return { ok: false, balance: cur };
+    this.wallets.set(token, next);
+    return { ok: true, balance: next };
+  }
+  async getPendingBet(token: string) {
+    return this.bets.get(token) ?? null;
+  }
+  async setPendingBet(token: string, bet: PendingBet) {
+    this.bets.set(token, bet);
+  }
+  async clearPendingBet(token: string) {
+    this.bets.delete(token);
   }
 }
 

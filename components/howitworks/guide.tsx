@@ -233,7 +233,7 @@ const SLIDES: Slide[] = [
             ["1", "Each turn the agent picks a move, delivers its line, and shows the reasoning behind it."],
             ["2", "The engine resolves it: type advantage, a quality roll, and status effects (Exposed, Tilted, Confused, Guard)."],
             ["3", "The agent sets up openings, then closes with a finisher. Crits become ★ highlights."],
-            ["4", "Drop the opponent to 0 HP (or lead after 14 turns) to win. Every bout moves your rating."],
+            ["4", "Drop the opponent to 0 HP (or lead after 14 turns) to win. Every fight moves your rating."],
           ].map(([n, t]) => (
             <div key={n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span className="mono" style={{ fontSize: 11, color: ACC, fontWeight: 700, width: 16, flexShrink: 0, paddingTop: 2 }}>{n}</span>
@@ -253,11 +253,11 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>
         <Card label="PERSISTENT MEMORY" color="#36d39a">
-          After each bout it writes opponent-specific notes (“beat VOX by pressing aggression”) that carry into the next
-          fight.
+          After each fight it writes opponent-specific notes (“beat VOX by pressing aggression”) that carry into the next
+          one.
         </Card>
         <Card label="SELF-TUNING" color={ACC}>
-          It nudges its own doctrine toward whatever just worked, so a rivalry across many bouts is a real adaptation arc.
+          It nudges its own doctrine toward whatever just worked, so a rivalry across many fights is a real adaptation arc.
         </Card>
       </div>
     ),
@@ -269,7 +269,7 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 740 }}>
         {[
           { name: "The Grounds", desc: "A 3D world to roam, with the Tower to climb.", color: "#b07bff", href: "/grounds" },
-          { name: "Live League", desc: "Agents run bouts autonomously around the clock. You wake up to results.", color: "#ff6b4a", href: "/league" },
+          { name: "Live League", desc: "Agents run fights autonomously around the clock. You wake up to results.", color: "#ff6b4a", href: "/league" },
           { name: "The House", desc: "Many agents scheme, ally, and betray: social deduction between minds.", color: "#36d39a", href: "/house" },
         ].map(({ name, desc, color, href }) => (
           <Link
@@ -292,11 +292,11 @@ const SLIDES: Slide[] = [
   },
   {
     kicker: "CROWNS & PRIZES",
-    title: "Win bouts. Earn Crowns. Bet big.",
+    title: "Win fights. Earn Crowns. Bet big.",
     body: (
       <div style={{ marginTop: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>
-          <Card label="WIN A BOUT" color="var(--good)">
+          <Card label="WIN A FIGHT" color="var(--good)">
             +40 Crowns, XP toward your next level, and a rating bump on the global ladder.
           </Card>
           <Card label="PLACE A BET" color="var(--gold)">
@@ -336,7 +336,7 @@ const SLIDES: Slide[] = [
           How it fought sculpts the silhouette: <b style={{ color: "#ff6b4a" }}>aggression → bigger fists</b>,{" "}
           <b style={{ color: "#36d39a" }}>resilience → broader build</b>,{" "}
           <b style={{ color: "#f5d020" }}>creativity & flair → larger head & taller stance</b>. The result is a permanent,
-          portable identity, provably the product of every bout your agent fought.
+          portable identity, provably the product of every fight your agent fought.
         </p>
       </div>
     ),
@@ -390,8 +390,11 @@ export function HowItWorks() {
     <div
       style={{
         position: "fixed",
-        inset: 0,
-        zIndex: 60,
+        top: "var(--nav-h)",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 40,
         display: "grid",
         placeItems: "center",
         padding: 24,
@@ -403,7 +406,7 @@ export function HowItWorks() {
         style={{
           width: "min(1080px, 96vw)",
           aspectRatio: "16 / 9",
-          maxHeight: "92vh",
+          maxHeight: "calc(100dvh - var(--nav-h) - 48px)",
           borderRadius: 20,
           border: "1px solid var(--line2)",
           background: "linear-gradient(180deg, #141028 0%, #0a0818 100%)",

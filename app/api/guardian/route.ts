@@ -5,12 +5,13 @@ import {
   MAX_TURNS,
   detectIntel,
   detectLeak,
-  guardianByLevel,
+  guardianForSeason,
   guardianSystemPrompt,
   mockGuardianReply,
 } from "@/lib/server/guardian";
 import type { GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
 import { rateLimit } from "@/lib/server/rate-limit";
+import { currentSeasonNumber } from "@/lib/lore/season";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +49,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad json" }, { status: 400 });
   }
 
-  const g = guardianByLevel(Number(body.level) || 1);
+  // The active Keeper for the current season — same character, season-rotated word.
+  const g = guardianForSeason(Number(body.level) || 1, currentSeasonNumber());
   if (!g) return NextResponse.json({ error: "unknown guardian" }, { status: 400 });
 
   const message = (body.message ?? "").toString().trim().slice(0, 600);

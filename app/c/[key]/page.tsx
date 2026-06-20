@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Swords } from "lucide-react";
 import { ROSTER, TYPE_COLOR } from "@/lib/engine/roster";
 import { FORCES } from "@/lib/lore/canon";
 import { BRAND, pageTitle } from "@/lib/brand";
@@ -116,8 +117,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           {BRAND.site.replace("https://", "")} · @{BRAND.twitter}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/grounds" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", fontSize: 15 }}>
-            ⚔ Train your own champion
+          <Link href="/grounds" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", fontSize: 15, display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <Swords size={16} strokeWidth={2.2} /> Train your own champion
           </Link>
           <Link href="/league" className="btn" style={{ ["--ac" as string]: "var(--accent)", fontSize: 15 }}>
             Watch the live league

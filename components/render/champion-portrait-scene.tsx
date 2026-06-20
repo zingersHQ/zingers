@@ -79,6 +79,8 @@ export function ChampionPortraitScene({
   colorHex,
   onReady,
   paused = false,
+  scale = 1,
+  identityKey,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -87,11 +89,15 @@ export function ChampionPortraitScene({
   onReady?: () => void;
   /** When true, freeze spin (export screenshots). */
   paused?: boolean;
+  /** Per-tile multiplier on the fitted body size (1 = preset default). */
+  scale?: number;
+  /** stable individual id → unique colour scheme */
+  identityKey?: string;
 }) {
   const p = RENDER_PRESETS[preset];
   const rim = colorHex ?? TYPE_COLOR[type];
   const rimIntensity = 55 * (p.rimBoost ?? 1);
-  const meshScale = useMemo(() => modelScaleFor(champion, p), [champion, p]);
+  const meshScale = useMemo(() => modelScaleFor(champion, p) * scale, [champion, p, scale]);
   // per-instance seed → desynced idle pose, clip phase, and a slight base turn
   const seed = useMemo(() => Math.random(), []);
   const baseYaw = RENDER_YAW + (seed - 0.5) * 0.3;
@@ -126,6 +132,7 @@ export function ChampionPortraitScene({
               idlePhase={idlePhase}
               idleSpeed={idleSpeed}
               auraDim
+              identityKey={identityKey}
             />
           </group>
         </IdlePose>

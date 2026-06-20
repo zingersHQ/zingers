@@ -171,6 +171,10 @@ export interface BattleRanked {
   opp: number; // opponent's new ladder rating
   delta: number; // magnitude of the swing (winner's gain)
   iWon: boolean; // did the player (side A) win
+  crowns: number; // server-decided Crown award for this bout (0 on a loss)
+  balance: number; // authoritative wallet balance after reward + bet settlement
+  bet: { stake: number; won: boolean; payout: number } | null; // commit-reveal wager result
+  home?: boolean; // win earned in a region aligned to the player's Banner (home advantage)
 }
 
 export type BattleEvent = BattleStart | BattleTurn | BattleEnd | BattleRanked;
@@ -422,15 +426,41 @@ export interface PredictState {
   best: number;
 }
 
+// The Reader's allegiance: a pledged Force and this season's contribution to it.
+// Persisted so the pledge follows the trainer across devices AND so the server
+// can aggregate every Reader's points into the season-long war (the warLeader).
+export interface ForcePoints {
+  season: number; // the season these points belong to (resets at the season turn)
+  points: number; // ranked-win contribution to the pledged Force this season
+}
+
+// ── The Force War (server-aggregated season standing between the five) ────────
+export interface WarStanding {
+  force: CreatureType;
+  points: number;
+}
+
+export interface WarState {
+  season: number;
+  standings: WarStanding[]; // sorted high → low
+  leader: CreatureType | null; // null until a Force is genuinely ahead
+  mine?: number; // the requesting Reader's authoritative contribution this season
+}
+
 export interface PlayerSave {
   v: number; // schema version
   progress: Progress;
   recipes: Record<string, Recipe>;
-  crowns: number;
+  // NOTE: Crowns are NOT here. Online-first, the balance is server-authoritative
+  // (see /api/wallet) so a forged save can never touch it. The save blob carries
+  // only progress/identity; the wallet is reconciled separately.
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
+  force: CreatureType | null; // pledged Banner / Force (null = no banner)
+  forceSeason: number | null; // the season the current Banner was raised in (locks the choice for that season)
+  forcePoints: ForcePoints; // this season's contribution to the pledged Force
   updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
 }
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 3;

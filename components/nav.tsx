@@ -2,21 +2,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
-import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive } from "@/lib/play-nav";
+import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive, siteNavHidden } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-// Immersive surfaces use the bottom GameDock — no site chrome.
-const IMMERSIVE = ["/", "/grounds", "/arena", "/guardian", "/house", "/league"];
 
 export function Nav() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
   const onOrg = host ? isOrgHost(host) : false;
-  if (path.startsWith("/slides") || path.startsWith("/render")) return null;
-  if (!onOrg && IMMERSIVE.some((p) => path === p || path.startsWith(p + "/"))) return null;
+  // The immersive 3D world (/, /grounds) and pure render/slide surfaces keep
+  // their own chrome; everything else shares this header.
+  if (siteNavHidden(path, onOrg)) return null;
 
   const gameHref = (href: string) => (onOrg ? `${BRAND.site}${href}` : href);
 
@@ -57,7 +56,7 @@ export function Nav() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {open ? "✕" : "☰"}
+        {open ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       <nav className={`site-nav__links${open ? " is-open" : ""}`}>

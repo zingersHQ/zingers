@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff, VenetianMask, MessageCircle } from "lucide-react";
 import type { Champion, HouseEnd, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR, skillLevel } from "@/lib/evolve/progression";
 import { type RatingDelta } from "@/lib/evolve/elo";
@@ -67,11 +68,11 @@ export default function HousePage() {
           </p>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <button className="btn" style={{ borderColor: peek ? "var(--gold)" : "var(--line2)", color: peek ? "var(--gold)" : "var(--ink)" }} onClick={() => setPeek((v) => !v)}>
-            {peek ? "👁 peek: on" : "👁 peek: off"}
+          <button className="btn" style={{ borderColor: peek ? "var(--gold)" : "var(--line2)", color: peek ? "var(--gold)" : "var(--ink)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setPeek((v) => !v)}>
+            {peek ? <Eye size={14} strokeWidth={2} /> : <EyeOff size={14} strokeWidth={2} />} {peek ? "peek: on" : "peek: off"}
           </button>
           <Link href="/standings" className="btn">
-            standings
+            rank
           </Link>
         </div>
       </div>
@@ -242,9 +243,9 @@ function ContestantCard({ p, peek, champ, speaking, votes }: { p: PlayerView; pe
       {peek && p.thought && (
         <div
           className="mono"
-          style={{ marginTop: 8, fontSize: 11, color: isTraitor ? "var(--bad)" : "#7fd0ff", borderTop: "1px dashed var(--line2)", paddingTop: 8 }}
+          style={{ marginTop: 8, fontSize: 11, color: isTraitor ? "var(--bad)" : "#7fd0ff", borderTop: "1px dashed var(--line2)", paddingTop: 8, display: "flex", alignItems: "center", gap: 6 }}
         >
-          {isTraitor ? "🔪" : "💭"} {p.thought}
+          {isTraitor ? <VenetianMask size={13} strokeWidth={2} /> : <MessageCircle size={13} strokeWidth={2} />} {p.thought}
         </div>
       )}
     </div>
@@ -293,7 +294,7 @@ function Verdict({ end, deltas, onAgain }: { end: HouseEnd; deltas: Record<strin
             New game
           </button>
           <Link href="/standings" className="btn">
-            Standings
+            Rank
           </Link>
         </div>
       </div>

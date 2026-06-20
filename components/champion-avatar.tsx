@@ -1,4 +1,5 @@
 "use client";
+import { Crown } from "lucide-react";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, sigils, ROMAN, doctrine } from "@/lib/evolve/progression";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
@@ -28,7 +29,7 @@ export function ChampionAvatar({
         <div key={i} className="evo-ring" style={{ animationDelay: i * 0.7 + "s", ["--rk" as string]: i }} />
       ))}
       <div className="evo-port" aria-label={`${ckey} live portrait`}>
-        <ChampionPortraitScene type={type} champion={champion} preset="portrait" />
+        <ChampionPortraitScene type={type} champion={champion} preset="portrait" identityKey={ckey} />
         <div className="evo-wear" style={{ opacity: wear }} />
       </div>
       {tier.crest && (
@@ -36,7 +37,11 @@ export function ChampionAvatar({
           <span className="evo-lv mono">{lf.level}</span>
         </div>
       )}
-      {tier.crown && <div className="evo-crown">♛</div>}
+      {tier.crown && (
+        <div className="evo-crown">
+          <Crown size={Math.round(size * 0.24)} strokeWidth={2} fill="#f5d020" />
+        </div>
+      )}
       <AvatarStyles />
     </div>
   );

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:agents": "node scripts/test-agents.mjs",
-    "render:canon": "node scripts/render-canon.mjs",
+    "test:judge": "node scripts/judge-check.mjs",
     "mcp": "node mcp/zingers-mcp.mjs"
   },
   "dependencies": {

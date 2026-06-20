@@ -5,7 +5,9 @@ import { battleEvents, type SideConfig } from "@/lib/engine/battle";
 import { ROSTER, TOPICS } from "@/lib/engine/roster";
 import { hasExternalAgent } from "@/lib/engine/side-config";
 import type { CreatureType } from "@/lib/types";
+import { BET_PAYOUT_MULT, GROUNDS_WIN_REWARD, HOME_WIN_BONUS, HOME_WAR_WEIGHT } from "@/lib/economy";
 import { getStore, type FeedEntry, type LadderChampion } from "./store";
+import { creditWarWin } from "./war";
 import { safeHttpAgentEndpoint } from "./url-safety";
 
 export const BASE_RATING = 1000;
@@ -141,6 +143,16 @@ export async function ensureMirror(
 // Apply a KNOWN bout outcome (decided by the live engine, not claimed by the
 // client) to the shared ladder: bumps both ratings, records W/L, pushes the
 // feed. This is how a fight in the 3D Grounds moves the one global rating.
+export interface BoutSettlement {
+  mine: number;
+  opp: number;
+  delta: number;
+  crowns: number; // win reward credited to the wallet (0 on a loss)
+  balance: number; // authoritative wallet balance after reward + bet settlement
+  bet: { stake: number; won: boolean; payout: number } | null; // null = no wager on this bout
+  home: boolean; // win earned in a region aligned to the player's Banner (home advantage)
+}
+
 export async function recordGroundsBout(args: {
   ownerToken: string;
   myKey: string;
@@ -149,7 +161,9 @@ export async function recordGroundsBout(args: {
   topic?: string;
   handle?: string;
   strat?: { risk: number; focus: number; aggression: number };
-}): Promise<{ mine: number; opp: number; delta: number } | null> {
+  betNonce?: string; // settles the matching commit-reveal wager, if any
+  regionBias?: CreatureType | null; // the Force this region rewards (for home advantage)
+}): Promise<BoutSettlement | null> {
   await ensureSeeded();
   const store = getStore();
   const mine = await ensureMirror(args.ownerToken, args.myKey, args.handle, args.strat);
@@ -177,7 +191,49 @@ export async function recordGroundsBout(args: {
     delta,
     mode: "ladder",
   });
-  return { mine: mine.rating, opp: opp.rating, delta };
+  // Home advantage: a win in a region aligned to the player's pledged Banner pays
+  // bonus Crowns and counts double in the war. The pledge is read from the
+  // authoritative save (sanitised server-side), so the perk can't be forged.
+  let home = false;
+  if (args.iWon) {
+    let force: CreatureType | null = null;
+    try {
+      const save = await store.getSave(args.ownerToken);
+      force = save?.force ?? null;
+    } catch {
+      /* save read is best-effort */
+    }
+    home = !!force && !!args.regionBias && force === args.regionBias;
+    try {
+      // credit the season war (double when fighting under your own Banner's region)
+      await creditWarWin(args.ownerToken, force, home ? HOME_WAR_WEIGHT : 1);
+    } catch {
+      // war credit is best-effort — never break the bout result over it
+    }
+  }
+
+  // The bout reward is decided HERE, off the engine-verified outcome, and CREDITED
+  // to the authoritative wallet — the client just mirrors the returned balance.
+  const crowns = args.iWon ? GROUNDS_WIN_REWARD + (home ? HOME_WIN_BONUS : 0) : 0;
+  let balance = await store.getWallet(args.ownerToken);
+  if (crowns > 0) balance = (await store.adjustWallet(args.ownerToken, crowns)).balance;
+
+  // Settle a commit-reveal wager, but only the one tied to THIS bout (nonce match)
+  // so an abandoned bet can never settle on a later, unrelated fight.
+  let bet: BoutSettlement["bet"] = null;
+  const pending = await store.getPendingBet(args.ownerToken);
+  if (pending && args.betNonce && pending.nonce === args.betNonce) {
+    const betWon = (pending.side === "me" && args.iWon) || (pending.side === "opp" && !args.iWon);
+    let payout = 0;
+    if (betWon) {
+      payout = pending.stake * BET_PAYOUT_MULT;
+      balance = (await store.adjustWallet(args.ownerToken, payout)).balance;
+    }
+    await store.clearPendingBet(args.ownerToken);
+    bet = { stake: pending.stake, won: betWon, payout };
+  }
+
+  return { mine: mine.rating, opp: opp.rating, delta, crowns, balance, bet, home };
 }
 
 export interface TrainInput {

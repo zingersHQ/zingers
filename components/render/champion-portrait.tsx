@@ -14,6 +14,7 @@ export function ChampionPortrait({
   colorHex,
   className,
   eager = false,
+  scale = 1,
 }: {
   rosterKey: string;
   type: CreatureType;
@@ -23,6 +24,8 @@ export function ChampionPortrait({
   className?: string;
   /** Skip intersection lazy-mount (single hero tiles). */
   eager?: boolean;
+  /** Per-tile multiplier on the fitted body size (1 = preset default). */
+  scale?: number;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(eager);
@@ -69,7 +72,7 @@ export function ChampionPortrait({
       aria-label={`${rosterKey} living portrait`}
     >
       {live ? (
-        <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} />
+        <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} identityKey={rosterKey} />
       ) : (
         <div
           style={{

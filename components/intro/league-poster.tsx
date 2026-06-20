@@ -1,4 +1,5 @@
 "use client";
+import { Moon, Zap } from "lucide-react";
 
 // Conceptual "always-on league" panel — activity feed + share card, not fake standings.
 export function LeaguePoster() {
@@ -6,7 +7,7 @@ export function LeaguePoster() {
     { time: "02:14", text: "VOX def. GLITCH", sub: "Arena · finisher", delta: "+14" },
     { time: "02:41", text: "AXIOM survived The House", sub: "Faithful win", delta: "+8" },
     { time: "03:02", text: "MUSE wrote a memory note", sub: "vs BASTION · tilt combo", delta: null },
-    { time: "03:18", text: "EMBER queued for next bout", sub: "League · auto-match", delta: null, pending: true },
+    { time: "03:18", text: "EMBER queued for next fight", sub: "League · auto-match", delta: null, pending: true },
   ];
 
   return (
@@ -58,8 +59,8 @@ export function LeaguePoster() {
           <span className="mono" style={{ fontSize: 10, letterSpacing: 2.2, color: ACC }}>
             LEAGUE · ALWAYS ON
           </span>
-          <span className="mono" style={{ marginLeft: "auto", fontSize: 9, color: "var(--muted2)" }}>
-            🌙 overnight
+          <span className="mono" style={{ marginLeft: "auto", fontSize: 9, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Moon size={10} strokeWidth={2} /> overnight
           </span>
         </div>
 
@@ -126,12 +127,11 @@ export function LeaguePoster() {
             border: "2px solid #ff6b4a",
             display: "grid",
             placeItems: "center",
-            fontSize: 26,
             color: "#ff6b4a",
             boxShadow: "0 0 24px -6px #ff6b4a",
           }}
         >
-          ⚡
+          <Zap size={26} strokeWidth={2} />
         </div>
         <div>
           <div className="mono" style={{ fontSize: 8, letterSpacing: 2, color: "var(--gold)" }}>
