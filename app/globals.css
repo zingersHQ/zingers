@@ -95,6 +95,23 @@ body {
   /* no rubber-band / pull-to-refresh fighting the 3D world's touch controls */
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  /* kill the iOS long-press magnifier/loupe + "copy/look up" callout that pops
+     up on press-and-hold. It's useless on a game/app surface and fights the
+     touch controls. Text that's meant to be read/selected re-enables it below. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* re-enable selection where it's actually wanted: form fields and the docs
+   prose so people can still read, copy and select real content. */
+input,
+textarea,
+[contenteditable="true"],
+.org-prose {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* full-bleed pages (e.g. the grounds) fill exactly below the fixed-height nav */

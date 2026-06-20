@@ -150,6 +150,8 @@ export function ChampionMesh({
   showLabel = true,
   punchSignal = 0,
   hitSignal = 0,
+  actSignal = 0,
+  actName = "wave",
   hpFrac,
   baseColorOverride,
   wander = false,
@@ -171,6 +173,9 @@ export function ChampionMesh({
   showLabel?: boolean;
   punchSignal?: number;
   hitSignal?: number;
+  /** increment to trigger a one-shot gesture (wave/jump/punch) then fade back to idle */
+  actSignal?: number;
+  actName?: "wave" | "jump" | "punch";
   hpFrac?: number;
   baseColorOverride?: string;
   wander?: boolean;
@@ -240,6 +245,27 @@ export function ChampionMesh({
   useEffect(() => {
     if (hitSignal) recoil.current = 1;
   }, [hitSignal]);
+
+  // generic one-shot gesture (wave / jump / punch) for showcases & the intro.
+  // Additive: existing callers that never bump actSignal are unaffected.
+  useEffect(() => {
+    if (!actSignal) return;
+    const a = built.actions[actName];
+    const idle = built.actions.idle;
+    if (a) {
+      a.setLoop(THREE.LoopOnce, 1);
+      a.clampWhenFinished = true;
+      idle?.fadeOut(0.14);
+      a.reset().setEffectiveTimeScale(actName === "wave" ? 1 : 1.35).setEffectiveWeight(1).fadeIn(0.14).play();
+      const onFin = () => {
+        a.fadeOut(0.3);
+        idle?.reset().fadeIn(0.3).play();
+        built.mixer.removeEventListener("finished", onFin);
+      };
+      built.mixer.addEventListener("finished", onFin);
+    }
+    if (actName === "punch") lunge.current = 1;
+  }, [actSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // gallery portraits: offset the idle clip + nudge its speed so a wall of
   // models never breathes in lockstep

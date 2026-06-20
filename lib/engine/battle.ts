@@ -18,7 +18,11 @@ import { chat, KEY, makeRng, parseJson, type Rng } from "./xai";
 import { buildJudgePrompt, clampQuality, mockJudge } from "./judge";
 import { banterLine } from "./banter";
 import { makeAgent, type Agent, type AgentTools, type AgentTurnCtx, type AgentView, type ScoutResult, type SimResult } from "./agent";
-import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type BattleHighlight, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
+import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type BattleHighlight, type CreatureType, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
+
+// A force-bias map: per-type damage multiplier the arena applies (favoured ↑,
+// punished ↓). Defaults to the arena's own bias when a bout doesn't override it.
+type ForceBias = Partial<Record<CreatureType, number>>;
 
 class Fighter {
   key: string;
@@ -174,12 +178,12 @@ function houseLine(att: Fighter, opp: Fighter, moveId: string, topic: string, rn
 
 // One turn: ask the side's Agent to decide, validate, and fall back to the
 // trained-doctrine heuristic if the agent fails or returns an illegal move.
-async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number, rng: Rng): Promise<AgentChoice> {
+async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number, rng: Rng, bias: ForceBias): Promise<AgentChoice> {
   const moves = legalMoves(att, opp);
   const valid = Object.fromEntries(moves.map((m) => [m.id, m]));
   const trace: ToolStep[] = [];
   const ctx: AgentTurnCtx = {
-    tools: buildTools(att, opp),
+    tools: buildTools(att, opp, bias),
     onStep: (s) => {
       if (trace.length < 8) trace.push(s);
     },
@@ -239,7 +243,7 @@ async function judge(
 
 const statScale = (v: number) => 0.5 + v / 100.0;
 
-function resolve(att: Fighter, opp: Fighter, move: Move, quality: number, rng: Rng): [number, ResolveInfo] {
+function resolve(att: Fighter, opp: Fighter, move: Move, quality: number, rng: Rng, bias: ForceBias): [number, ResolveInfo] {
   const fizzle = att.confused > 0 && rng.random() < 0.3;
   const base = move.base;
   const info: ResolveInfo = {
@@ -259,7 +263,7 @@ function resolve(att: Fighter, opp: Fighter, move: Move, quality: number, rng: R
     info.type = tm;
     info.se = tm > 1.0;
     info.resist = tm < 1.0;
-    const arena = ARENA.mult[att.type] ?? 1.0;
+    const arena = bias[att.type] ?? 1.0;
     let mult = 1.0;
     if (opp.exposed) {
       mult *= 1.2;
@@ -333,7 +337,7 @@ function matchupLabel(tm: number): SimResult["matchup"] {
 // The deterministic EXPECTATION of a move against the live state: the same math
 // resolve() uses, with mean quality/jitter (1.0) and no RNG or mutation. Honest
 // preview — what the engine would do on average — handed to the agent as a tool.
-function previewMove(att: Fighter, opp: Fighter, move: Move): SimResult {
+function previewMove(att: Fighter, opp: Fighter, move: Move, bias: ForceBias): SimResult {
   const utility: string[] = [];
   if (move.self_hyped) utility.push("self Hyped");
   if (move.self_guard) utility.push(`self Guard+${move.self_guard[0]}`);
@@ -345,7 +349,7 @@ function previewMove(att: Fighter, opp: Fighter, move: Move): SimResult {
   let expected = 0;
   if (move.base > 0) {
     const sc = statScale(att.stats[move.stat]);
-    const arena = ARENA.mult[att.type] ?? 1.0;
+    const arena = bias[att.type] ?? 1.0;
     let mult = 1.0;
     if (opp.exposed) mult *= 1.2;
     if (att.hyped) mult *= 1.2;
@@ -372,14 +376,14 @@ function previewMove(att: Fighter, opp: Fighter, move: Move): SimResult {
   };
 }
 
-function buildTools(att: Fighter, opp: Fighter): AgentTools {
+function buildTools(att: Fighter, opp: Fighter, bias: ForceBias): AgentTools {
   const legal = legalMoves(att, opp);
   const byId = new Map(legal.map((m) => [m.id, m]));
   return {
     simulateMove: (id: string): SimResult => {
       const m = byId.get(id);
       if (!m) return { moveId: id, legal: false, note: "not a legal move this turn" };
-      return previewMove(att, opp, m);
+      return previewMove(att, opp, m, bias);
     },
     scoutOpponent: (): ScoutResult => ({
       name: opp.name,
@@ -399,6 +403,15 @@ export interface SideConfig {
   memory?: string[];
 }
 
+export interface BattleOpts {
+  // Which side the PLAYER (side A) argues — the assigned stance in a Tribunal.
+  // B always takes the opposite side. Defaults to A=for, B=against.
+  stanceA?: "for" | "against";
+  // The arena's force-bias for THIS bout (scenario-driven). Defaults to the
+  // arena's own bias (ARENA.mult) when a scenario doesn't override it.
+  forceBias?: ForceBias;
+}
+
 export async function* battleEvents(
   aKey: string,
   bKey: string,
@@ -407,10 +420,14 @@ export async function* battleEvents(
   seed?: number | null,
   cfgA: SideConfig = {},
   cfgB: SideConfig = {},
+  opts: BattleOpts = {},
 ): AsyncGenerator<BattleEvent> {
   const rng = makeRng(seed);
-  const a = new Fighter(aKey, "for", cfgA, mock);
-  const b = new Fighter(bKey, "against", cfgB, mock);
+  const stanceA = opts.stanceA ?? "for";
+  const stanceB: "for" | "against" = stanceA === "for" ? "against" : "for";
+  const bias = opts.forceBias ?? ARENA.mult;
+  const a = new Fighter(aKey, stanceA, cfgA, mock);
+  const b = new Fighter(bKey, stanceB, cfgB, mock);
   yield { type: "start", topic, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
   let mvp = { dmg: 0, line: "", round: 0, actor_name: "" };
   let lastHl = -10;
@@ -428,14 +445,14 @@ export async function* battleEvents(
     rnd += 1;
     const att = order[(rnd - 1) % 2];
     const opp = order[rnd % 2];
-    const { move, intent, line, why, trace } = await agentTurn(att, opp, topic, rnd, rng);
+    const { move, intent, line, why, trace } = await agentTurn(att, opp, topic, rnd, rng, bias);
     att.lines.push(line);
     let [q, hl, ruling] = await judge(att, opp, move, line, topic, mock, rng);
     if (hl) {
       if (rnd - lastHl < 3 || rng.random() < 0.5) q = Math.min(q, 1.28);
       else lastHl = rnd;
     }
-    const [dmg, info] = resolve(att, opp, move, q, rng);
+    const [dmg, info] = resolve(att, opp, move, q, rng, bias);
     if (dmg > mvp.dmg) mvp = { dmg, line, round: rnd, actor_name: att.name };
     if (dmg > att.best[0]) att.best = [dmg, line];
 

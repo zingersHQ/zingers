@@ -32,9 +32,9 @@ export const WORLDS: WorldDef[] = [
   {
     id: "grounds",
     name: "The Grounds",
-    tagline: "open duels · the home arena",
+    tagline: "the tribunal · assigned-stance debate",
     biome: BIOMES[0], // Obsidian Colosseum
-    scenario: SCENARIOS.duel,
+    scenario: SCENARIOS.tribunal, // the Colosseum's canon arena (05-regions.md)
     kind: "region",
     region: "colosseum",
   },

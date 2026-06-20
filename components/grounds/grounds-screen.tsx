@@ -27,8 +27,9 @@ import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
 import { Compass, type Pose } from "@/components/grounds/compass";
 import { TrainerBadge } from "@/components/grounds/trainer-badge";
-import { roundReward, gauntletQueue } from "@/lib/scenarios/registry";
+import { roundReward, gauntletQueue, tribunalDraw } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
+import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/tribunal";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -56,7 +57,7 @@ export default function GroundsScreen() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "guardian" | "broker">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
@@ -142,6 +143,14 @@ export default function GroundsScreen() {
     () => REGION_WORLDS.find((w) => w.region === season.region.id)?.id ?? null,
     [season],
   );
+
+  // ── The Tribunal (scenario: "tribunal") ────────────────────────────────────
+  // The case of the day: a deterministic proposition that becomes the bout's real
+  // topic, so the flagship arena argues an assigned case instead of a random one.
+  // Stable per region+day; the player's stance locks to the chosen respondent.
+  const isTribunal = scenario.id === "tribunal";
+  const tribunalSeed = useMemo(() => `${world.id}:s${season.n}:${dayKey()}`, [world.id, season]);
+  const tribunalProp = useMemo(() => tribunalDraw(tribunalSeed, tribunalSeed).proposition, [tribunalSeed]);
 
   // ── World goals: the three standing objectives (peak/depth/secret) for this
   // region this season. Cleared goals (per-season ledger) drop off the map; the
@@ -307,7 +316,7 @@ export default function GroundsScreen() {
       setOpponent(null);
       setOpponentId(null);
       setDuelMeta(null);
-      setOverlay(scenario.id === "gauntlet" ? "gauntlet" : "arena");
+      setOverlay(scenario.id === "gauntlet" ? "gauntlet" : scenario.id === "tribunal" ? "tribunal" : "arena");
     } else if (near?.kind === "challenge") {
       setOpponent(near.key);
       setOpponentId(near.id);
@@ -404,7 +413,18 @@ export default function GroundsScreen() {
     const regionBias = world.region ? FOUNDING_REGIONS.find((r) => r.id === world.region)?.bias ?? null : null;
     const biasParam = regionBias ? `&bias=${regionBias}` : "";
     const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}${betParam}${biasParam}` : "";
-    const url = `/api/battle?a=${owned}&b=${opponent}&${sideParams("a", ra)}&${sideParams("b", rb)}${rank}`;
+    // The Tribunal argues an ASSIGNED case: the proposition becomes the bout's
+    // real topic, the player holds their drawn stance, and the room's force-bias
+    // is passed down — so holding your side + staying on topic move the score
+    // (a central-arena hearing, never a perched-agent challenge).
+    let tribunalParam = "";
+    if (isTribunal && !opponentId && scenario.tribunal) {
+      const { myStance } = tribunalDraw(tribunalSeed, `${tribunalSeed}:${opponent}`);
+      tribunalParam =
+        `&topic=${encodeURIComponent(tribunalProp)}&sa=${myStance}` +
+        `&fav=${scenario.tribunal.favored}&pun=${scenario.tribunal.punished}`;
+    }
+    const url = `/api/battle?a=${owned}&b=${opponent}&${sideParams("a", ra)}&${sideParams("b", rb)}${tribunalParam}${rank}`;
     const homeAdvantage = !!store.force && !!regionBias && store.force === regionBias;
     bout.begin(url, (end: BattleEnd, ranked) => {
       const styles: Record<string, Style> = { [owned]: blankStyle(), [opponent]: blankStyle() };
@@ -495,7 +515,7 @@ export default function GroundsScreen() {
       setOverlay("result");
       outcomeSfx(iWon);
     });
-  }, [owned, opponent, opponentId, betSide, betAmt, store, getRecipe, bout, world.region]);
+  }, [owned, opponent, opponentId, betSide, betAmt, store, getRecipe, bout, world.region, isTribunal, tribunalProp, tribunalSeed, scenario.tribunal]);
 
   function closeMatch() {
     bout.stop();
@@ -976,7 +996,9 @@ export default function GroundsScreen() {
                         ? `Claim ${near.label}`
                         : scenario.id === "gauntlet"
                           ? "Enter the Gauntlet"
-                          : "House sparring pit"}
+                          : scenario.id === "tribunal"
+                            ? "Enter the Tribunal"
+                            : "House sparring pit"}
             </span>
             {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
           </button>
@@ -1032,6 +1054,26 @@ export default function GroundsScreen() {
         />
       )}
 
+      {/* tribunal briefing — assigned-stance hearing on the case of the day */}
+      {overlay === "tribunal" && owned && byKey[owned] && scenario.tribunal && (
+        <TribunalBriefing
+          ownedEntry={byKey[owned]}
+          roster={roster}
+          get={store.get}
+          cfg={scenario.tribunal}
+          seed={tribunalSeed}
+          opponent={opponent}
+          setOpponent={(k) => { setOpponent(k); setOpponentId(null); setDuelMeta(null); }}
+          betSide={betSide}
+          setBetSide={setBetSide}
+          betAmt={betAmt}
+          setBetAmt={setBetAmt}
+          crowns={crowns}
+          onClose={() => setOverlay("none")}
+          onFight={startMatch}
+        />
+      )}
+
       {/* gauntlet between-rounds: press your luck or cash out */}
       {gRun?.phase === "cleared" && gCfg && (
         <GauntletInterstitial run={gRun} byKey={byKey} get={store.get} cfg={gCfg} onPressOn={pressOn} onCashOut={cashOut} />
@@ -1039,6 +1081,15 @@ export default function GroundsScreen() {
 
       {/* gauntlet run resolved */}
       {gRun?.phase === "over" && <GauntletResult run={gRun} onClose={closeGauntlet} />}
+
+      {/* the case on the wall while a Tribunal hearing runs */}
+      {showMatch && matchView && isTribunal && !opponentId && !result && (
+        <TribunalMatchBanner
+          proposition={tribunalProp}
+          myStance={tribunalDraw(tribunalSeed, `${tribunalSeed}:${opponent ?? "_"}`).myStance}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
@@ -1108,7 +1159,7 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
 function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: string) => Champion; onPick: (k: string) => void }) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.8)", backdropFilter: "blur(6px)", zIndex: 40, padding: 20 }}>
-      <div className="panel" style={{ padding: 26, width: "min(760px, 95vw)", textAlign: "center" }}>
+      <div className="panel" style={{ padding: 26, width: "min(760px, 95vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center" }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: "var(--muted2)" }}>
           STEP 1 · CLAIM YOUR CHAMPION
         </div>
@@ -1375,7 +1426,7 @@ function ChallengeOverlay(props: {
     const oppChamp = get(opponent);
     return (
       <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
-        <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(520px, 95vw)", padding: 24, borderColor: col }}>
+        <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(520px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ fontSize: 22, fontWeight: 700 }}>Face to face</div>
             <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
@@ -1658,7 +1709,7 @@ function MatchHud(props: {
         return (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.6)", zIndex: 55, padding: 16 }}>
           {result.won && <Confetti accent="#f0a93a" count={70} originTop="34%" />}
-          <div className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`} style={{ ["--ac" as string]: ac, position: "relative", padding: 22, width: "min(380px, 92vw)", textAlign: "center", boxShadow: `0 0 80px -30px ${ac}` }}>
+          <div className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`} style={{ ["--ac" as string]: ac, position: "relative", padding: 22, width: "min(380px, 92vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center", boxShadow: `0 0 80px -30px ${ac}` }}>
             {/* header */}
             <div className="glow" style={{ fontSize: 28, fontWeight: 800, color: ac, letterSpacing: 1 }}>
               {result.won ? "VICTORY" : "DEFEAT"}

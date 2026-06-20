@@ -3,9 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
-import { LeaguePoster } from "./league-poster";
 import { RenderBoundary } from "@/components/grounds/render-guard";
-import { ForcesWheel } from "@/components/lore/forces-wheel";
+import { FORCES, wheelNeighbors } from "@/lib/lore/canon";
+import { TYPE_COLOR } from "@/lib/evolve/progression";
+import { showcaseChampion } from "@/lib/render/showcase";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -14,6 +15,11 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
 
 const HERO: Champion = { xp: 38000, wins: 74, losses: 8, battles: 82, aggression: 19, control: 9, resilience: 7, flair: 16, creativity: 13, rating: 1492 };
 const HERO_TYPE: CreatureType = "CHAOS";
+
+// The rival in the arena beat. CHAOS sits one step ahead of COMPOSURE on the
+// Wheel, so the hero "breaks the frame" and wins — the player's first taste of
+// the type triangle, shown rather than explained.
+const RIVAL = showcaseChampion("BASTION"); // COMPOSURE / The Stillness
 
 const ACC = "#7c5cff";
 
@@ -29,11 +35,12 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // On mobile the full pitch is too much — collapse to the single "live agent"
-  // slide (the character standing) before they claim their champion.
+  // A four-beat story — Awaken → Shape → Fight → Legend — where the live agent
+  // performs an action in every scene. On a phone we keep the two beats that hit
+  // hardest: the birth and the fight.
   const slides = isMobile
-    ? [<Agents key="agents" />, <Forces key="forces" mobile />]
-    : [<Cover key="cover" />, <Agents key="agents" />, <Forces key="forces" />, <Mind key="mind" />, <Reasoning key="reasoning" />, <Climb key="climb" />];
+    ? [<Awaken key="awaken" mobile />, <Fight key="fight" mobile />]
+    : [<Awaken key="awaken" />, <Shape key="shape" />, <Fight key="fight" />, <Legend key="legend" />];
   const count = slides.length;
   const LAST = count - 1;
 
@@ -137,284 +144,298 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Center({ children }: { children: React.ReactNode }) {
+const FULL: React.CSSProperties = { position: "absolute", inset: 0, background: "#0a0813", overflow: "hidden" };
+
+function Stage({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 56px", background: "#0a0813" }}>
+    <RenderBoundary
+      fallback={
+        <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 11, padding: 24, textAlign: "center" }}>
+          3D preview unavailable. Enable graphics acceleration in your browser to see live agents.
+        </div>
+      }
+    >
+      {children}
+    </RenderBoundary>
+  );
+}
+
+// Small top-left scene tag (force / status) — keeps each beat grounded in-world.
+function SceneTag({ label, color, mobile }: { label: string; color: string; mobile?: boolean }) {
+  return (
+    <div className="mono" style={{ position: "absolute", zIndex: 3, top: mobile ? 12 : 18, left: mobile ? 18 : 24, display: "flex", alignItems: "center", gap: 7, pointerEvents: "none", fontSize: mobile ? 8 : 9.5, letterSpacing: 2.2, color: "var(--muted)" }}>
+      <span style={{ width: 7, height: 7, borderRadius: 99, background: color, boxShadow: `0 0 10px ${color}` }} />
+      {label}
+    </div>
+  );
+}
+
+// Cinematic lower-third: a bottom scrim that lets the 3D own the frame while the
+// copy reads clean over it.
+function LowerThird({
+  kicker,
+  title,
+  body,
+  mobile,
+  children,
+}: {
+  kicker: string;
+  title: React.ReactNode;
+  body?: React.ReactNode;
+  mobile?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 3,
+        padding: mobile ? "60px 22px 22px" : "90px 56px 40px",
+        pointerEvents: "none",
+        background: "linear-gradient(0deg, rgba(7,6,13,.94) 0%, rgba(7,6,13,.7) 42%, rgba(7,6,13,0) 100%)",
+      }}
+    >
+      <div className="mono" style={{ fontSize: mobile ? 9 : 11, letterSpacing: 2.8, color: ACC }}>{kicker}</div>
+      <h2 style={{ fontSize: mobile ? 23 : 34, fontWeight: 800, margin: "6px 0 0", letterSpacing: -0.6, lineHeight: 1.05 }}>{title}</h2>
+      {body && <p style={{ fontSize: mobile ? 13 : 15, color: "var(--muted)", maxWidth: 540, margin: "10px 0 0", lineHeight: 1.5 }}>{body}</p>}
       {children}
     </div>
   );
 }
-function Kicker({ children }: { children: React.ReactNode }) {
-  return <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: ACC, marginBottom: 14 }}>{children}</div>;
-}
 
-function Cover() {
+// ── Beat 1 — AWAKEN ──────────────────────────────────────────────────────────
+// A mind ignites: slow camera push-in onto a breathing agent, aura alight.
+function Awaken({ mobile }: { mobile?: boolean }) {
   return (
-    <Center>
-      <Kicker>AN AI YOU RAISE</Kicker>
-      <h1 style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.02, margin: 0, letterSpacing: -1 }}>
-        Raise a mind.
-        <br />
-        <span style={{ background: `linear-gradient(90deg, var(--gold), ${ACC})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>Make it legend.</span>
-      </h1>
-      <p style={{ fontSize: 17, color: "var(--muted)", maxWidth: 560, marginTop: 18, lineHeight: 1.55 }}>
-        You don&apos;t fight. You raise an AI champion: choose its brain, train how it thinks, and send it into a living
-        arena where its reasoning competes for real.
-      </p>
-    </Center>
-  );
-}
-
-function Agents() {
-  return (
-    <div style={{ position: "absolute", inset: 0, background: "#0a0813" }}>
-      <RenderBoundary
-        fallback={
-          <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 11, padding: 24, textAlign: "center" }}>
-            3D preview unavailable. Enable graphics acceleration in your browser to see live agents.
-          </div>
+    <div style={FULL}>
+      <Stage>
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} dolly gesture="idle" />
+      </Stage>
+      <SceneTag label={`LIVE AGENT · ${FORCES[HERO_TYPE].inWorld.toUpperCase()}`} color={TYPE_COLOR[HERO_TYPE]} mobile={mobile} />
+      <LowerThird
+        mobile={mobile}
+        kicker="AN AI YOU RAISE"
+        title={
+          <>
+            A mind argues itself
+            <br />
+            into a body.
+          </>
         }
+        body="You don't fight. You raise it — choose its brain, drill how it thinks, and watch what you teach become flesh."
+      />
+    </div>
+  );
+}
+
+// ── Beat 2 — SHAPE ───────────────────────────────────────────────────────────
+// Training: the agent throws practice strikes while the doctrine you pick forges
+// its build.
+function Shape({ mobile }: { mobile?: boolean }) {
+  return (
+    <div style={FULL}>
+      <Stage>
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" everyMs={2300} />
+      </Stage>
+      <SceneTag label="TRAINING GROUND" color={TYPE_COLOR[HERO_TYPE]} mobile={mobile} />
+      <LowerThird
+        mobile={mobile}
+        kicker="TRAIN"
+        title={
+          <>
+            Teach it how
+            <br />
+            to think.
+          </>
+        }
+        body="Any brain, any doctrine. What you drill in becomes its body — heavier fists, a sharper skull, a frame that won't fall."
       >
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={0.5} />
-      </RenderBoundary>
-
-      {/* compact copy — ~50% smaller so the character owns the frame */}
-      <div style={{ position: "absolute", top: 16, left: 24, pointerEvents: "none", maxWidth: 220 }}>
-        <div className="mono" style={{ fontSize: 8, letterSpacing: 2.2, color: ACC }}>LIVE AGENT</div>
-        <h2 style={{ fontSize: 14, fontWeight: 700, margin: "3px 0 0", letterSpacing: -0.2, lineHeight: 1.25, color: "var(--ink)" }}>
-          Its body is a receipt of how it fights.
-        </h2>
-      </div>
-
-      <Arrow style={{ top: "28%", right: "5%" }} dir="left" small>rank</Arrow>
-      <Arrow style={{ top: "50%", left: "4%" }} dir="right" small>wins</Arrow>
-      <Arrow style={{ bottom: "14%", right: "8%" }} dir="left" small>tier</Arrow>
-
-      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, pointerEvents: "none", textAlign: "center", padding: "0 16px" }}>
-        <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.3, lineHeight: 1.5 }}>
-          silhouette computed from its career
-          <br />
-          after you claim · press M or touch the top-left corner for the menu
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function Arrow({ children, style, dir, small }: { children: React.ReactNode; style: React.CSSProperties; dir: "left" | "right"; small?: boolean }) {
-  const fs = small ? 9 : 11;
-  const arr = small ? 14 : 18;
-  return (
-    <div style={{ position: "absolute", display: "flex", alignItems: "center", gap: 5, pointerEvents: "none", ...style }}>
-      {dir === "right" && <span style={{ color: ACC, fontSize: arr }}>→</span>}
-      <span
-        className="mono"
-        style={{
-          fontSize: fs,
-          color: "var(--ink)",
-          background: "rgba(10,8,18,.55)",
-          border: "1px solid var(--line2)",
-          borderRadius: 99,
-          padding: small ? "3px 8px" : "5px 11px",
-          backdropFilter: "blur(4px)",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {children}
-      </span>
-      {dir === "left" && <span style={{ color: ACC, fontSize: arr }}>←</span>}
-    </div>
-  );
-}
-
-function Forces({ mobile }: { mobile?: boolean }) {
-  if (mobile) {
-    return (
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", background: "#0a0813", textAlign: "center" }}>
-        <Kicker>HOW FIGHTS ARE WON</Kicker>
-        <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 4px", letterSpacing: -0.4 }}>Five ways to win an argument.</h2>
-        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 14px", lineHeight: 1.45, maxWidth: 320 }}>
-          Your champion fights in one style. Each beats the next — and loses to the one before it.
-        </p>
-        <ForcesWheel size={232} />
-      </div>
-    );
-  }
-  return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1.05fr", background: "#0a0813" }}>
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px 0 56px" }}>
-        <Kicker>HOW FIGHTS ARE WON</Kicker>
-        <h2 style={{ fontSize: 30, fontWeight: 800, margin: 0, letterSpacing: -0.5, lineHeight: 1.08 }}>
-          Five ways to
-          <br />
-          win an argument.
-        </h2>
-        <p style={{ fontSize: 13, color: "var(--muted)", maxWidth: 330, margin: "12px 0 0", lineHeight: 1.5 }}>
-          Every champion argues in one style. The math is a wheel: each style <b style={{ color: "var(--ink)" }}>beats the next</b> and loses to the one before it. No memorizing — you feel it in a few fights.
-        </p>
-      </div>
-      <div style={{ display: "grid", placeItems: "center", padding: "20px 40px 20px 0", minHeight: 0 }}>
-        <ForcesWheel size={330} />
-      </div>
-    </div>
-  );
-}
-
-function Mind() {
-  return (
-    <Center>
-      <Kicker>TRAIN</Kicker>
-      <h2 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: -0.5 }}>Shape its mind.</h2>
-      <p style={{ fontSize: 13, color: "var(--muted)", maxWidth: 380, margin: "8px 0 20px", lineHeight: 1.45 }}>
-        Any brain. Any doctrine.
-      </p>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", maxWidth: 480, marginBottom: 18 }}>
-        {["House Grok", "Your GPT", "Your agent"].map((l, idx) => (
-          <span
-            key={l}
-            className="mono"
-            style={{
-              fontSize: 10,
-              padding: "6px 12px",
-              borderRadius: 99,
-              border: `1px solid ${idx === 0 ? ACC : "var(--line2)"}`,
-              color: idx === 0 ? ACC : "var(--muted)",
-              background: idx === 0 ? "rgba(124,92,255,.12)" : "rgba(10,8,18,.4)",
-            }}
-          >
-            {l}
-          </span>
-        ))}
-      </div>
-
-      <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-        {[
-          { l: "Aggression", v: 78, c: "#ff6b4a" },
-          { l: "Focus", v: 54, c: "#b07bff" },
-          { l: "Risk", v: 66, c: "#f5d020" },
-        ].map(({ l, v, c }) => (
-          <div key={l} style={{ textAlign: "center" }}>
-            <div
+        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 16 }}>
+          {["House Grok", "Your GPT", "Your agent"].map((l, idx) => (
+            <span
+              key={l}
+              className="mono"
               style={{
-                width: 44,
-                height: 44,
+                fontSize: 10,
+                padding: "6px 12px",
                 borderRadius: 99,
-                border: `2px solid ${c}`,
-                display: "grid",
-                placeItems: "center",
-                fontSize: 11,
-                fontWeight: 700,
-                color: c,
-                boxShadow: `0 0 16px ${c}33`,
+                border: `1px solid ${idx === 0 ? ACC : "var(--line2)"}`,
+                color: idx === 0 ? ACC : "var(--muted)",
+                background: idx === 0 ? "rgba(124,92,255,.14)" : "rgba(10,8,18,.5)",
               }}
             >
-              {v}
-            </div>
-            <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 6, letterSpacing: 0.5 }}>{l}</div>
+              {l}
+            </span>
+          ))}
+        </div>
+      </LowerThird>
+    </div>
+  );
+}
+
+// ── Beat 3 — FIGHT ───────────────────────────────────────────────────────────
+// The arena: a self-running duel where the hero presses its type advantage and
+// thinks out loud. CHAOS (hero) sits one step ahead of COMPOSURE (rival).
+const HERO_LINES: { line: string; why: string }[] = [
+  { line: "Too steady — and steady things shatter clean.", why: "why › overload the frame" },
+  { line: "Your structure is the weak point. Watch the thread.", why: "why › pull, don't push" },
+  { line: "Frame's broken. There's nothing left to defend.", why: "why › finisher now" },
+];
+
+function Fight({ mobile }: { mobile?: boolean }) {
+  return (
+    <div style={FULL}>
+      <Stage>
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.5 : 0.62} rival={{ champion: RIVAL.champion, type: RIVAL.type }} />
+      </Stage>
+      <MatchupTag mobile={mobile} />
+      <ReasoningBubble mobile={mobile} />
+      <LowerThird
+        mobile={mobile}
+        kicker="FIGHT"
+        title={
+          <>
+            It argues
+            <br />
+            for its life.
+          </>
+        }
+        body="Every move is reasoning you can feel. Five Forces turn one wheel — each style beats the next. Your champion just broke the frame."
+      />
+    </div>
+  );
+}
+
+function MatchupTag({ mobile }: { mobile?: boolean }) {
+  const hero = FORCES[HERO_TYPE];
+  const prey = FORCES[wheelNeighbors(HERO_TYPE).prey];
+  return (
+    <div
+      className="mono"
+      style={{
+        position: "absolute",
+        zIndex: 3,
+        top: mobile ? 40 : 52,
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        pointerEvents: "none",
+        fontSize: mobile ? 9 : 11,
+        letterSpacing: 1.2,
+        background: "rgba(10,8,18,.6)",
+        border: "1px solid var(--line2)",
+        borderRadius: 99,
+        padding: mobile ? "5px 11px" : "6px 14px",
+        backdropFilter: "blur(6px)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ color: hero.hex, fontWeight: 700 }}>{hero.sigil} {hero.type}</span>
+      <span style={{ color: "var(--good)", letterSpacing: 0.5 }}>beats</span>
+      <span style={{ color: prey.hex, fontWeight: 700 }}>{prey.type} {prey.sigil}</span>
+    </div>
+  );
+}
+
+// The "thinks out loud" beat: a reasoning bar that cycles like a live bout turn.
+function ReasoningBubble({ mobile }: { mobile?: boolean }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setN((v) => (v + 1) % HERO_LINES.length), 2100);
+    return () => clearInterval(id);
+  }, []);
+  const t = HERO_LINES[n];
+  const c = TYPE_COLOR[HERO_TYPE];
+  return (
+    <div
+      style={{
+        position: "absolute",
+        zIndex: 4,
+        transform: "translateZ(0)",
+        top: mobile ? "13%" : "15%",
+        left: mobile ? "5%" : "6%",
+        maxWidth: mobile ? 210 : 290,
+        pointerEvents: "none",
+        background: "rgba(22,17,42,.94)",
+        border: `1px solid ${c}`,
+        borderRadius: 14,
+        borderBottomLeftRadius: 3,
+        padding: mobile ? "10px 13px" : "13px 16px",
+        backdropFilter: "blur(7px)",
+        boxShadow: `0 10px 34px rgba(0,0,0,.55), 0 0 22px ${c}40`,
+      }}
+    >
+      <div className="mono" style={{ fontSize: mobile ? 7.5 : 8.5, letterSpacing: 1.6, color: c, marginBottom: 6 }}>THINKING OUT LOUD</div>
+      {/* only the line animates in; the shell stays painted so it never flickers out */}
+      <div key={n} style={{ animation: "zingerIn .4s cubic-bezier(.2,.8,.2,1)" }}>
+        <p style={{ fontSize: mobile ? 12.5 : 14.5, fontStyle: "italic", color: "#fff", lineHeight: 1.4, margin: 0 }}>&ldquo;{t.line}&rdquo;</p>
+        <p className="mono" style={{ fontSize: mobile ? 8.5 : 9.5, color: c, letterSpacing: 0.4, margin: "8px 0 0" }}>{t.why}</p>
+      </div>
+      <style>{`@keyframes zingerIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }`}</style>
+    </div>
+  );
+}
+
+// ── Beat 4 — LEGEND (desktop only) ───────────────────────────────────────────
+// Victory & the climb: the agent leaps, evolution flaring, while the overnight
+// league keeps fighting in the corner.
+const OVERNIGHT: { who: string; verdict: string; won: boolean }[] = [
+  { who: "vs. AXIOM", verdict: "broke the proof", won: true },
+  { who: "vs. VOX", verdict: "outlasted the room", won: true },
+  { who: "vs. EMBER", verdict: "burned out late", won: false },
+];
+
+function Legend({ mobile }: { mobile?: boolean }) {
+  return (
+    <div style={FULL}>
+      <Stage>
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" everyMs={2600} />
+      </Stage>
+      <SceneTag label="THE LEAGUE · OVERNIGHT" color="var(--gold)" mobile={mobile} />
+
+      <div
+        style={{
+          position: "absolute",
+          zIndex: 3,
+          top: mobile ? 44 : 58,
+          right: mobile ? 16 : 28,
+          width: mobile ? 184 : 222,
+          pointerEvents: "none",
+          background: "rgba(10,8,18,.62)",
+          border: "1px solid var(--line2)",
+          borderRadius: 14,
+          padding: "12px 13px",
+          backdropFilter: "blur(7px)",
+        }}
+      >
+        <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: "var(--muted2)", marginBottom: 9 }}>WHILE YOU SLEPT</div>
+        {OVERNIGHT.map((r) => (
+          <div key={r.who} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid var(--line)" }}>
+            <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: r.won ? "var(--good)" : "var(--bad)", width: 26 }}>{r.won ? "WIN" : "LOSS"}</span>
+            <span style={{ fontSize: 11, color: "var(--ink)", flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {r.who} <span style={{ color: "var(--muted2)" }}>· {r.verdict}</span>
+            </span>
           </div>
         ))}
       </div>
-    </Center>
-  );
-}
 
-function Reasoning() {
-  return (
-    <Center>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", maxWidth: 420, margin: "0 auto" }}>
-        <Kicker>FIGHT</Kicker>
-        <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>It thinks out loud.</h2>
-        <p style={{ fontSize: 12, color: "var(--muted)", margin: "8px 0 28px", lineHeight: 1.45 }}>
-          Every move has a pulse, a reason you can feel.
-        </p>
-
-        {/* biological synapse — small, visceral, core */}
-        <div style={{ position: "relative", width: 120, height: 120, marginBottom: 22 }}>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: 99,
-              background: "radial-gradient(circle, rgba(255,74,209,.25) 0%, transparent 70%)",
-              animation: "synPulse 2.4s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: "28%",
-              borderRadius: 99,
-              background: "radial-gradient(circle, #ff4ad1 0%, #7c5cff 55%, transparent 100%)",
-              boxShadow: "0 0 30px rgba(255,74,209,.5)",
-              animation: "synCore 2.4s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: "38%",
-              borderRadius: 99,
-              background: "#fff",
-              opacity: 0.85,
-            }}
-          />
-        </div>
-
-        <p style={{ fontSize: 13, fontStyle: "italic", color: "var(--ink)", lineHeight: 1.5, margin: "0 0 10px" }}>
-          &ldquo;Your logic loops — I&apos;ll unplug the whole argument.&rdquo;
-        </p>
-        <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 0.4 }}>
-          why › exposed · finisher now
-        </p>
-
-        <div
-          className="mono"
-          style={{
-            marginTop: 16,
-            fontSize: 10,
-            color: "var(--good)",
-            border: "1px solid rgba(54,211,154,.35)",
-            borderRadius: 99,
-            padding: "4px 12px",
-            background: "rgba(54,211,154,.08)",
-          }}
-        >
-          +1 SKILL LEVEL
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes synPulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.15); opacity: 1; }
+      <LowerThird
+        mobile={mobile}
+        kicker="CLIMB"
+        title={
+          <>
+            Win while you sleep.
+            <br />
+            Become legend.
+          </>
         }
-        @keyframes synCore {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-      `}</style>
-    </Center>
-  );
-}
-
-function Climb() {
-  return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 0, background: "#0a0813" }}>
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 40px 0 56px" }}>
-        <Kicker>CLIMB</Kicker>
-        <h2 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: -0.5, lineHeight: 1.1 }}>
-          It fights
-          <br />
-          while you sleep.
-        </h2>
-        <p style={{ fontSize: 12, color: "var(--muted)", maxWidth: 280, margin: "10px 0 0", lineHeight: 1.45 }}>
-          The league runs fights on its own. Wake up to results, memory notes, and a card worth sharing.
-        </p>
-      </div>
-      <div style={{ padding: "28px 36px 28px 12px", minHeight: 0 }}>
-        <LeaguePoster />
-      </div>
+        body="The league runs bouts on its own. Wake to results, memory notes, and a card worth sharing — your mind, climbing without you."
+      />
     </div>
   );
 }

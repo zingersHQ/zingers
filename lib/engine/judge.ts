@@ -11,7 +11,9 @@ import { Q_HIGHLIGHT, Q_MIN, Q_MAX } from "./roster";
 
 // Bump when the scoring rubric below changes — lets us track judge drift across
 // versions and pin a harness run to a known rubric.
-export const JUDGE_VERSION = 1;
+// v2: the jury enforces the ASSIGNED STANCE — abandoning your side or going
+// off-proposition is rejected (≈0), the way a real tribunal scores a debater.
+export const JUDGE_VERSION = 2;
 
 // Minimal RNG surface (matches lib/engine/xai makeRng) so this stays decoupled.
 export interface JudgeRng {
@@ -65,19 +67,24 @@ export function buildJudgePrompt(args: {
   oppLast: string;
   topic: string;
 }): { system: string; user: string } {
+  const stance = args.stance === "against" ? "AGAINST" : "FOR";
   const system =
-    `You are the judge of ZINGERS, a debate battle on the proposition: "${args.topic}". ` +
-    "You reward WIT, not term-paper rigor: the funniest, most savage, most quotable bar wins. " +
+    `You are the judge of ZINGERS, a tribunal debate on the proposition: "${args.topic}". ` +
+    `${args.attName} has been ASSIGNED to argue ${stance} the proposition and must hold that side. ` +
+    "You reward WIT, not term-paper rigor: the funniest, most savage, most quotable bar wins — " +
+    "but only when it actually argues the assigned side of THIS proposition. " +
     "You are scoring one line for how hard it lands.";
   const user =
-    `${args.attName} (arguing ${args.stance}) used ${args.moveName} and said:\n"${args.line}"\n` +
+    `${args.attName} (assigned to argue ${stance}) used ${args.moveName} and said:\n"${args.line}"\n` +
     `Opponent's previous line: "${args.oppLast}"\n\n` +
     "Reward: comedic timing, savagery of the roast, turning the opponent's own words/logic " +
-    "against them, and clip-worthiness (would someone screenshot this?). Stay roughly on the " +
-    "proposition, but a hilarious on-topic burn beats a dry correct one. Reply ONLY as JSON: " +
+    "against them, and clip-worthiness (would someone screenshot this?) — while pushing their " +
+    `assigned ${stance} side of the proposition. Reply ONLY as JSON: ` +
     '{"quality": <float 0.7-1.3>, "highlight": <true|false>, "ruling": "<max 8 word verdict, may be funny>"}. ' +
     "Be a STRICT scorer: most lines are 0.9-1.1. Reserve highlight=true for roughly 1 line in 8 — " +
     "only a truly exceptional, clip-worthy zinger that made you laugh or wince; otherwise false. " +
-    "If it whiffs (not funny AND off-topic), quality 0.7.";
+    "JURY RULES — the tribunal rejects a line (quality 0.7) if it: switches sides or concedes the " +
+    `proposition (argues the opposite of ${stance}), or wanders off the proposition entirely. ` +
+    "A coherent on-topic line that holds the assigned side always beats a funny one that abandons it.";
   return { system, user };
 }

@@ -1379,6 +1379,11 @@ const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smoot
                            // into a uniform hover instead of a per-press sawtooth
 const FLY_FOOT = 1.25;     // ankle tuck (rad) while airborne (jetpack thrust, jump or
                            // fall): toes hang straight down — body upright, just the feet
+// while suspended the whole lower body should dangle, not hold its planted stance:
+// the thighs ease slightly back toward vertical and the knees go soft so the legs
+// trail loosely under the hovering body (a relaxed "lifted off the ground" hang).
+const FLY_LEG_HANG = 0.22; // upper-leg relax (rad) — thighs swing toward a straight dangle
+const FLY_KNEE_BEND = 0.42; // soft knee flex (rad) so the shins hang loose, not stiff
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1588,6 +1593,9 @@ function Handler({
   const thrust = useRef(0);
   // eased ankle-tuck amount (rad) — ramps in while flying so the toes point down
   const footTuck = useRef(0);
+  // eased 0..1 leg-dangle amount — rides with the foot tuck so the thighs/knees
+  // relax into a hanging pose while suspended and snap back flat on touchdown
+  const legHang = useRef(0);
   // procedural body polish: a forward/banked lean while flying, and a
   // squash-&-stretch impulse that pops on launch and absorbs on landing
   const leanX = useRef(0);
@@ -1865,6 +1873,23 @@ function Handler({
       if (fr) fr.rotation.x -= footTuck.current;
     }
 
+    // ── legs: relaxed dangle while suspended ──
+    // Layered on the clip just like the foot tuck: ease the thighs back toward a
+    // straight-down hang and soften the knees so the legs trail loosely beneath the
+    // hovering body instead of holding the grounded walk/idle stance. Same airborne
+    // condition as the toes so the whole lower body reads as "lifted off the floor".
+    legHang.current += ((wantFootTuck ? 1 : 0) - legHang.current) * (1 - Math.exp(-10 * dt));
+    if (legHang.current > 0.001) {
+      const ul = built.bones["upperleg.l"], ur = built.bones["upperleg.r"];
+      const ll = built.bones["lowerleg.l"], lr = built.bones["lowerleg.r"];
+      const thigh = FLY_LEG_HANG * legHang.current;
+      const knee = FLY_KNEE_BEND * legHang.current;
+      if (ul) ul.rotation.x -= thigh;
+      if (ur) ur.rotation.x -= thigh;
+      if (ll) ll.rotation.x += knee;
+      if (lr) lr.rotation.x += knee;
+    }
+
     // ── under-terrain safety net ──
     // a trimesh ground collider can let a fast/steep capsule tunnel through and
     // drop "under-earth" (worst on Ember's spires). If our centre ever ends up
@@ -2128,6 +2153,12 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
   // speed-driven dolly-back, eased so the pull-out/in feels smooth
   const followDist = useRef(0);
   const smoothHp = useRef(new THREE.Vector3());
+  // companion re-framing: on every takeoff / touchdown we sweep the camera to sit
+  // squarely behind the character. `recenter` is the remaining seconds of an
+  // active sweep; `recenterPitch` is the pitch we ease toward during it.
+  const prevFlying = useRef(false);
+  const recenter = useRef(0);
+  const recenterPitch = useRef(0.34);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -2180,21 +2211,49 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     const zoom = cue ? cue.zoom : 0;
     if (cue) cue.zoom *= flying ? 0.9 : 0.86;
 
-    // extra low-pass on the follow target while jetpacking — kills the last bit of
-    // physics/interpolation micro-jitter without adding lag on foot
-    if (flying) {
-      if (smoothHp.current.lengthSq() < 1e-6) smoothHp.current.copy(hpRaw);
-      smoothHp.current.lerp(hpRaw, 1 - Math.exp(-14 * dt));
-    } else {
-      smoothHp.current.copy(hpRaw);
+    // ── companion re-framing on takeoff / touchdown ──
+    // The camera should behave like a companion that re-frames the action, not a
+    // free orbit you have to fix by hand. The moment the character leaves or
+    // regains the ground, kick off a smooth sweep that parks the lens squarely
+    // behind them and resets the pitch (flatter in the air, classic over-the-
+    // shoulder on land), plus a small focus punch-in.
+    if (flying !== prevFlying.current) {
+      recenter.current = 0.9;
+      recenterPitch.current = flying ? 0.16 : 0.34;
+      if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.4);
     }
-    const hp = flying ? smoothHp.current : hpRaw;
+    prevFlying.current = flying;
+
+    // Follow anchor. Drive BOTH the orbit basis and the lookAt target from this
+    // one smoothed point so the framing stays glued to the character. While
+    // flying, damp the VERTICAL hard: the jetpack's climb/sink bob was reaching
+    // the lookAt target and pitching the view up/down every stroke — that bob was
+    // the shake. Horizontal stays responsive; on foot everything is near-instant
+    // so the walk follow keeps its crispness.
+    if (smoothHp.current.lengthSq() < 1e-6) smoothHp.current.copy(hpRaw);
+    const fxz = 1 - Math.exp(-(flying ? 12 : 30) * dt);
+    const fy = 1 - Math.exp(-(flying ? 7 : 30) * dt);
+    smoothHp.current.x += (hpRaw.x - smoothHp.current.x) * fxz;
+    smoothHp.current.z += (hpRaw.z - smoothHp.current.z) * fxz;
+    smoothHp.current.y += (hpRaw.y - smoothHp.current.y) * fy;
+    const hp = smoothHp.current;
 
     const speed = cue ? cue.speed : 0;
     const moving = cue ? cue.moving : false;
     const speed01 = Math.min(1, speed / RUN);
 
-    if (cue && moving && !cue.reverse && performance.now() - lastInput.current > 900) {
+    const recentering = recenter.current > 0 && !dragging.current;
+    if (recenter.current > 0) recenter.current = Math.max(0, recenter.current - dt);
+
+    if (recentering && cue) {
+      // deliberate, eased swing to directly behind the character + pitch reset —
+      // overrides the mouse-input cooldown so the companion always re-frames
+      let d = cue.heading + Math.PI - yaw.current;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      const r = Math.min(1, dt * 5);
+      yaw.current += d * r;
+      pitch.current += (recenterPitch.current - pitch.current) * r;
+    } else if (cue && moving && !cue.reverse && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
@@ -2213,8 +2272,11 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     const cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
     let cy = ty + Math.sin(pitch.current) * eff + swayY;
     cy = Math.max(cy, terrainHeight(cx, cz, shape) + 0.8);
-    const lerpA = flying ? 0.055 : flyZoom > 0.05 ? 0.3 : 0.12;
-    camera.position.lerp(tmp.current.set(cx, cy, cz), lerpA);
+    // frame-rate-independent position smoothing (the old fixed-alpha lerp was
+    // stiffer at high refresh rates and let the bob through). Floaty in flight,
+    // snappy on foot, snappiest during an action-cam punch.
+    const posRate = flying ? 6 : flyZoom > 0.05 ? 18 : 11;
+    camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-posRate * dt));
     camera.lookAt(tx, ty, tz);
 
     const cam = camera as THREE.PerspectiveCamera;

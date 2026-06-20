@@ -1,7 +1,7 @@
-import { battleEvents } from "@/lib/engine/battle";
+import { battleEvents, type BattleOpts } from "@/lib/engine/battle";
 import { readSide, hasExternalAgent } from "@/lib/engine/side-config";
 import { KEY } from "@/lib/engine/xai";
-import { ROSTER, TOPICS } from "@/lib/engine/roster";
+import { ROSTER, TOPICS, forceBiasMap } from "@/lib/engine/roster";
 import { sseStream } from "@/lib/sse-server";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { recordGroundsBout } from "@/lib/server/ladder";
@@ -86,7 +86,17 @@ export async function GET(req: Request) {
   // no key AND nobody brought their own agent
   const mock = q.get("mock") === "1" || (!KEY && !hasExternalAgent(sideA, sideB));
 
-  let gen = battleEvents(aKey, bKey, topic, mock, seed, sideA, sideB);
+  // Tribunal: the player (side A) holds an ASSIGNED stance, and the room carries a
+  // scenario-driven force-bias. Both default to the arena's own behaviour when
+  // absent, so a plain duel is unchanged.
+  const opts: BattleOpts = {};
+  const saRaw = q.get("sa");
+  if (saRaw === "for" || saRaw === "against") opts.stanceA = saRaw;
+  const fav = asForce(q.get("fav"));
+  const pun = asForce(q.get("pun"));
+  if (fav && pun) opts.forceBias = forceBiasMap(fav, pun);
+
+  let gen = battleEvents(aKey, bKey, topic, mock, seed, sideA, sideB, opts);
 
   // Ranked bout: side A is the player, oid is the opponent's ladder id. Recording
   // is what makes the 3D world feed the one global ladder.

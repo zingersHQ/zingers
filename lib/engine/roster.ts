@@ -161,8 +161,20 @@ export const TOPICS = [
   "silence is a sound",
 ];
 
+// The force-bias an arena applies: the favoured way of arguing gets a small
+// multiplier, its opposite a small penalty. Single-sourced so the engine, the
+// scenario config, and the Tribunal briefing all quote the SAME numbers.
+export const FORCE_FAVORED = 1.1;
+export const FORCE_PUNISHED = 0.95;
+
+// Build a per-type multiplier map for a force-bias (favoured ↑, punished ↓).
+export function forceBiasMap(favored: CreatureType, punished: CreatureType): Partial<Record<CreatureType, number>> {
+  return { [favored]: FORCE_FAVORED, [punished]: FORCE_PUNISHED };
+}
+
 export const ARENA: { name: string; desc: string; mult: Partial<Record<CreatureType, number>> } = {
   name: "THE TRIBUNAL",
   desc: "a mock courtroom arguing to a jury",
-  mult: { RHETORIC: 1.1, CHAOS: 0.95 },
+  // the canon Tribunal bias (05-regions.md): rewards persuasion, punishes noise
+  mult: forceBiasMap("RHETORIC", "CHAOS"),
 };
