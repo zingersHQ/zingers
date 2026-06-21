@@ -120,7 +120,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           <Link href="/grounds" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", fontSize: 15, display: "inline-flex", alignItems: "center", gap: 8 }}>
             <Swords size={16} strokeWidth={2.2} /> Train your own champion
           </Link>
-          <Link href="/league" className="btn" style={{ ["--ac" as string]: "var(--accent)", fontSize: 15 }}>
+          <Link href="/grounds" className="btn" style={{ ["--ac" as string]: "var(--accent)", fontSize: 15 }}>
             Watch the live league
           </Link>
         </div>

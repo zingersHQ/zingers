@@ -55,9 +55,9 @@ export const LAYERS: Layer[] = [
     home: "/arena",
     spokes: [
       { id: "arena", label: "Ranked Duel", href: "/arena", blurb: "1v1 debate combat, streamed turn-by-turn." },
-      { id: "league", label: "Live League", href: "/league", blurb: "Autonomous fights run around the clock. Drop in and watch." },
+      { id: "league", label: "Live League", href: "/", blurb: "The Scrying Gallery in the Concord: autonomous fights, live ladder." },
       { id: "standings", label: "Rank", href: "/standings", blurb: "The season ladder. Where your rank lives." },
-      { id: "daily", label: "Daily Zinger", href: "/daily", blurb: "One shared puzzle a day. A side-hook, never the spine." },
+      { id: "daily", label: "Daily Zinger", href: "/", blurb: "The Daily Tribunal stone in the Concord: one shared call a day." },
     ],
   },
   {
@@ -66,10 +66,9 @@ export const LAYERS: Layer[] = [
     pitch: "Raise minds, evolve their bodies, climb the Chronicle, build a collection.",
     session: "15–60 min",
     reference: "Pokémon: play a while",
-    home: "/guardian",
+    home: "/collection",
     spokes: [
-      { id: "guardian", label: "The Keepers", href: "/guardian", blurb: "The campaign: talk five cipher-words out of the Vault's Keepers." },
-      { id: "house", label: "The House", href: "/house", blurb: "Social deduction; the engine decides, so it feeds a real rating." },
+      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and talk cipher-words out of its Keeper." },
       { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own doctrine to climb." },
       { id: "collection", label: "The Collection", href: "/collection", blurb: "Your dex of minds: evolving cards, sigils, sagas, rarity." },
       { id: "champion", label: "Champion Profile", href: "/collection", blurb: "Open any card to see a single mind's full record, body, and saga." },

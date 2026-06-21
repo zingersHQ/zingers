@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
-import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, siteNavHidden, type PlayLink } from "@/lib/play-nav";
+import { NAV_GROUPS, navIsActive, siteNavHidden, type PlayLink } from "@/lib/play-nav";
 import { isOrgHost } from "@/lib/org/hosts";
 
 function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick: () => void }) {
@@ -93,26 +93,14 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
             </div>
 
             <div className="game-menu__grid">
-              <div className="game-menu__section">
-                <span className="game-menu__section-label mono">Play</span>
-                {PRIMARY_NAV.map((item) => (
-                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
-                ))}
-              </div>
-
-              <div className="game-menu__section">
-                <span className="game-menu__section-label mono">Also</span>
-                {SECONDARY_NAV.map((item) => (
-                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
-                ))}
-              </div>
-
-              <div className="game-menu__section">
-                <span className="game-menu__section-label mono">Read</span>
-                {DOCS_NAV.map((item) => (
-                  <MenuLink key={item.id} item={item} path={path} onPick={close} />
-                ))}
-              </div>
+              {NAV_GROUPS.map((group) => (
+                <div key={group.id} className="game-menu__section">
+                  <span className="game-menu__section-label mono">{group.label}</span>
+                  {group.items.map((item) => (
+                    <MenuLink key={item.id} item={item} path={path} onPick={close} />
+                  ))}
+                </div>
+              ))}
             </div>
 
             <p className="game-menu__hint mono">M to toggle · Esc to close</p>

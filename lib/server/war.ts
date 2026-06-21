@@ -11,7 +11,7 @@ import { getStore } from "./store";
 // Credit a pledged Force for one ranked win — both the collective Force tally and
 // the Reader's own season contribution, in one authoritative step. No-op for
 // unsworn Readers (an unsworn win feeds no Force). `weight` lets a home-advantage
-// win (fought in a region aligned to the Banner) count for more.
+// win (fought in a region aligned to the Clan) count for more.
 export async function creditWarWin(token: string, force: CreatureType | null, weight = 1, season = currentSeasonNumber()): Promise<void> {
   if (!force || weight <= 0) return;
   const store = getStore();

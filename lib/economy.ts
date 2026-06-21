@@ -11,8 +11,8 @@ export const STARTING_CROWNS = 500;
 export const GROUNDS_WIN_REWARD = 40;
 
 // Home advantage: a ranked win earned in a region aligned to the player's pledged
-// Banner pays this many BONUS Crowns (on top of GROUNDS_WIN_REWARD) and counts
-// double in the season war. The perk for committing to a Banner — purely
+// Clan pays this many BONUS Crowns (on top of GROUNDS_WIN_REWARD) and counts
+// double in the season war. The perk for committing to a Clan — purely
 // economic/meta, so ranked ELO stays a fair fight. Decided server-side.
 export const HOME_WIN_BONUS = 20;
 export const HOME_WAR_WEIGHT = 2;

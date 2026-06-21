@@ -687,7 +687,7 @@ function OutcomeCard({
     won
       ? `Cracked ${g.name} (Lv${g.level}) in ${turnsUsed} message${turnsUsed === 1 ? "" : "s"}.`
       : `${g.name} (Lv${g.level}) held the line. I broke.`,
-    BRAND.site.replace(/^https?:\/\//, "") + "/guardian",
+    BRAND.site.replace(/^https?:\/\//, ""),
   ].join("\n");
 
   const copy = async () => {

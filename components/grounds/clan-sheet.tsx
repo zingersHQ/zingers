@@ -1,10 +1,10 @@
 "use client";
-// The one place you choose a Banner — the optional season-long team a Reader
-// fights for in the Force War. Opened both by the Trainer chip and by walking
-// under a banner in the Concord, so there's a single, explained decision surface
-// instead of two silent ones. Choosing is locked to once per season, so this is
-// a real commitment: it confirms, explains the payoff (home advantage), and
-// shows the live war it feeds.
+// The one place you choose a Clan — the optional season-long team a Reader
+// fights for in the Clan War. Opened both by the Trainer chip and by walking
+// under a clan flag in the Concord, so there's a single, explained decision
+// surface instead of two silent ones. Choosing is locked to once per season, so
+// this is a real commitment: it confirms, explains the payoff (home advantage),
+// and shows the live war it feeds.
 import { useEffect, useState } from "react";
 import { Check, Crown, Lock, Star, X } from "lucide-react";
 import { useChampions } from "@/store/champions";
@@ -13,7 +13,7 @@ import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
 import { HOME_WIN_BONUS } from "@/lib/economy";
 import type { CreatureType, WarState } from "@/lib/types";
 
-export function BannerSheet({
+export function ClanSheet({
   preselect = null,
   suggested = null,
   war = null,
@@ -29,9 +29,9 @@ export function BannerSheet({
   const force = useChampions((s) => s.force);
   const forcePoints = useChampions((s) => s.forcePoints);
   const pledgeForce = useChampions((s) => s.pledgeForce);
-  const canRebanner = useChampions((s) => s.canRebanner);
+  const canChangeClan = useChampions((s) => s.canChangeClan);
 
-  const locked = !canRebanner();
+  const locked = !canChangeClan();
   const [sel, setSel] = useState<CreatureType | null>(preselect ?? force ?? suggested ?? null);
 
   useEffect(() => {
@@ -72,24 +72,24 @@ export function BannerSheet({
 
         {/* header */}
         <div className="mono" style={{ fontSize: 9.5, letterSpacing: 2.4, color: accent, fontWeight: 700 }}>
-          {locked ? "YOUR BANNER" : force ? "CHANGE YOUR BANNER" : "CHOOSE YOUR BANNER"}
+          {locked ? "YOUR CLAN" : force ? "CHANGE YOUR CLAN" : "CHOOSE YOUR CLAN"}
         </div>
         <h2 style={{ fontSize: 21, fontWeight: 800, margin: "3px 0 4px", letterSpacing: -0.4 }}>
           Pick a side to fight for.
         </h2>
         <p style={{ fontSize: 12.5, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-          Your Banner is an optional team in the season-long <b style={{ color: "var(--ink)" }}>Force War</b>. Every ranked win you score is counted toward it — and the winning Banner reshapes the world.
+          Your Clan is an optional team in the season-long <b style={{ color: "var(--ink)" }}>Clan War</b>. Every ranked win you score is counted toward it — and the winning Clan reshapes the world.
         </p>
 
         {/* home-advantage payoff */}
         <div style={{ display: "flex", alignItems: "center", gap: 9, margin: "14px 0", padding: "9px 12px", borderRadius: 10, border: `1px solid ${accent}55`, background: `${accent}12` }}>
           <Crown size={16} strokeWidth={2.2} style={{ color: accent, flexShrink: 0 }} />
           <span style={{ fontSize: 11.5, lineHeight: 1.4 }}>
-            <b style={{ color: "var(--ink)" }}>Home advantage.</b> Win in a region that favors your Banner for <b style={{ color: accent }}>+{HOME_WIN_BONUS} Crowns</b> and <b style={{ color: accent }}>double</b> war points.
+            <b style={{ color: "var(--ink)" }}>Home advantage.</b> Win in a region that favors your Clan for <b style={{ color: accent }}>+{HOME_WIN_BONUS} Crowns</b> and <b style={{ color: accent }}>double</b> war points.
           </span>
         </div>
 
-        {/* the five banners */}
+        {/* the five clans */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {FORCES.map((f) => {
             const col = TYPE_COLOR[f.id];
@@ -169,7 +169,7 @@ export function BannerSheet({
         {locked ? (
           <div className="mono" style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 16, fontSize: 10.5, color: "var(--muted)", lineHeight: 1.4 }}>
             <Lock size={13} strokeWidth={2.2} style={{ flexShrink: 0, color: accent }} />
-            <span>Your Banner is locked for this season. You can switch when the next season opens.</span>
+            <span>Your Clan is locked for this season. You can switch when the next season opens.</span>
           </div>
         ) : (
           <>
@@ -183,11 +183,11 @@ export function BannerSheet({
                 className="btn btn-primary"
                 style={{ ["--ac" as string]: accent, flex: 1, opacity: sel ? 1 : 0.5, cursor: sel ? "pointer" : "not-allowed" }}
               >
-                {sel ? `Raise the ${forceMeta(sel).house} banner` : "Select a Banner"}
+                {sel ? `Fight for ${forceMeta(sel).house}` : "Select a Clan"}
               </button>
             </div>
             <div className="mono" style={{ fontSize: 8.5, color: "var(--muted2)", letterSpacing: 0.4, marginTop: 9, lineHeight: 1.4 }}>
-              One Banner per season — choose with intent. Your contribution always stays with the Banner that earned it.
+              One Clan per season — choose with intent. Your contribution always stays with the Clan that earned it.
             </div>
           </>
         )}

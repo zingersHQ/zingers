@@ -6,10 +6,10 @@ import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
 import type { WarState } from "@/lib/types";
 
-// The account-identity chip: your Reader rank + Banner. Tap to open the profile
-// panel (rank progress + the live season war); choosing/changing your Banner
-// happens in the dedicated BannerSheet, opened via onOpenBanner.
-export function TrainerBadge({ isMobile, war, onOpenBanner }: { isMobile: boolean; war?: WarState | null; onOpenBanner: () => void }) {
+// The account-identity chip: your Reader rank + Clan. Tap to open the profile
+// panel (rank progress + the live season war); choosing/changing your Clan
+// happens in the dedicated ClanSheet, opened via onOpenClan.
+export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean; war?: WarState | null; onOpenClan: () => void }) {
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const forcePoints = useChampions((s) => s.forcePoints);
@@ -40,7 +40,7 @@ export function TrainerBadge({ isMobile, war, onOpenBanner }: { isMobile: boolea
         </span>
         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
-          {!isMobile && <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>{fm ? fm.house.toUpperCase() : "NO BANNER"}</span>}
+          {!isMobile && <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>{fm ? fm.house.toUpperCase() : "NO CLAN"}</span>}
         </span>
         <ChevronDown size={13} strokeWidth={2} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", opacity: 0.6 }} />
       </button>
@@ -92,25 +92,25 @@ export function TrainerBadge({ isMobile, war, onOpenBanner }: { isMobile: boolea
             </>
           )}
 
-          {/* banner — choosing/changing happens in the dedicated BannerSheet so
+          {/* clan — choosing/changing happens in the dedicated ClanSheet so
               there's one explained decision surface (and the season lock lives
               in one place). */}
           <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", margin: "14px 0 7px" }}>
-            BANNER {force ? `· you've added ${war?.mine ?? forcePoints.points} this season` : "· none yet"}
+            CLAN {force ? `· you've added ${war?.mine ?? forcePoints.points} this season` : "· none yet"}
           </div>
           <button
-            onClick={() => { setOpen(false); onOpenBanner(); }}
+            onClick={() => { setOpen(false); onOpenClan(); }}
             className="btn btn-primary"
             style={{ ["--ac" as string]: fc, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
           >
             {force ? (
               <><span style={{ fontWeight: 800 }}>{EMBLEM[force]}</span> {fm?.house}</>
             ) : (
-              "Choose your Banner"
+              "Choose your Clan"
             )}
           </button>
           <div className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5, marginTop: 9, lineHeight: 1.4 }}>
-            {force ? "Review your Banner and the season war it feeds." : "Pick a side to fight for — your ranked wins feed its war."}
+            {force ? "Review your Clan and the season war it feeds." : "Pick a side to fight for — your ranked wins feed its war."}
           </div>
         </div>
       )}

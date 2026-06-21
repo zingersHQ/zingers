@@ -150,7 +150,7 @@ export interface BoutSettlement {
   crowns: number; // win reward credited to the wallet (0 on a loss)
   balance: number; // authoritative wallet balance after reward + bet settlement
   bet: { stake: number; won: boolean; payout: number } | null; // null = no wager on this bout
-  home: boolean; // win earned in a region aligned to the player's Banner (home advantage)
+  home: boolean; // win earned in a region aligned to the player's Clan (home advantage)
 }
 
 export async function recordGroundsBout(args: {
@@ -191,7 +191,7 @@ export async function recordGroundsBout(args: {
     delta,
     mode: "ladder",
   });
-  // Home advantage: a win in a region aligned to the player's pledged Banner pays
+  // Home advantage: a win in a region aligned to the player's pledged Clan pays
   // bonus Crowns and counts double in the war. The pledge is read from the
   // authoritative save (sanitised server-side), so the perk can't be forged.
   let home = false;
@@ -205,7 +205,7 @@ export async function recordGroundsBout(args: {
     }
     home = !!force && !!args.regionBias && force === args.regionBias;
     try {
-      // credit the season war (double when fighting under your own Banner's region)
+      // credit the season war (double when fighting under your own Clan's region)
       await creditWarWin(args.ownerToken, force, home ? HOME_WAR_WEIGHT : 1);
     } catch {
       // war credit is best-effort — never break the bout result over it

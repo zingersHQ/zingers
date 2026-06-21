@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
-import { DOCS_NAV, navIsActive, PRIMARY_NAV, SECONDARY_NAV, docsNavIsActive, siteNavHidden } from "@/lib/play-nav";
+import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Nav() {
@@ -60,41 +60,23 @@ export function Nav() {
       </button>
 
       <nav className={`site-nav__links${open ? " is-open" : ""}`}>
-        <span className="site-nav__section mono">Start here</span>
-        {PRIMARY_NAV.map((l) => (
-          <Link
-            key={l.id}
-            href={gameHref(l.href)}
-            onClick={close}
-            className={`site-nav__link mono${navIsActive(path, l.href) ? " is-on" : ""}`}
-            title={l.blurb}
-          >
-            {l.label}
-          </Link>
-        ))}
-        <span className="site-nav__section mono site-nav__section--also">Also</span>
-        {SECONDARY_NAV.map((l) => (
-          <Link
-            key={l.id}
-            href={gameHref(l.href)}
-            onClick={close}
-            className={`site-nav__link mono site-nav__link--secondary${navIsActive(path, l.href) ? " is-on" : ""}`}
-            title={l.blurb}
-          >
-            {l.label}
-          </Link>
-        ))}
-        <span className="site-nav__section mono site-nav__section--also">Read</span>
-        {DOCS_NAV.map((l) => (
-          <Link
-            key={l.id}
-            href={l.id === "org" && onOrg ? "/" : l.href}
-            onClick={close}
-            className={`site-nav__link mono site-nav__link--secondary${l.id === "how" ? " site-nav__link--guide" : ""}${docsNavIsActive(path, l.id, host) ? " is-on" : navIsActive(path, l.href) ? " is-on" : ""}`}
-            title={l.blurb}
-          >
-            {l.label}
-          </Link>
+        {NAV_GROUPS.map((group, gi) => (
+          <Fragment key={group.id}>
+            <span className={`site-nav__section mono${gi > 0 ? " site-nav__section--also" : ""}`}>{group.label}</span>
+            {group.items.map((l) => (
+              <Link
+                key={l.id}
+                href={l.id === "org" && onOrg ? "/" : gameHref(l.href)}
+                onClick={close}
+                className={`site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
+                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) ? " is-on" : ""
+                }`}
+                title={l.blurb}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </Fragment>
         ))}
         <span className="site-nav__section mono site-nav__section--also">Display</span>
         <ThemeToggle />

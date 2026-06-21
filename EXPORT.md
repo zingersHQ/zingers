@@ -63,6 +63,6 @@ Brand constants live in `lib/brand.ts`.
 ## Verify
 
 - [ ] `/grounds` loads 3D world + intro on first visit
-- [ ] `/league` runs mock bouts
+- [ ] Concord Scrying Gallery (walk-up venue) runs mock league bouts
 - [ ] `/c/AXIOM?...` share card renders
 - [ ] `node scripts/test-agents.mjs` passes (with dev server running)

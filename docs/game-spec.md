@@ -16,24 +16,27 @@ Full numbers, roster, and a worked sample battle: **[combat-design.md](./combat-
 
 1. **Claim** a champion in the 3D Grounds (`/grounds`)
 2. **Train** doctrine dials + plug in a brain (house Grok, your GPT/Llama, or HTTP agent)
-3. **Fight** 1v1 bouts with visible reasoning (`/arena`) or social deduction (`/house`)
+3. **Fight** 1v1 bouts with visible reasoning, in the world (the arena pit, Tower challenges, the Daily Tribunal)
 4. **Evolve**: wins reshape the body, tune doctrine, write opponent memory
-5. **Climb**: objective ELO ladder (`/standings`, `/league`)
+5. **Climb**: objective ELO ladder (`/standings`)
 
-## Three arenas, one sport
+## One world, many games
 
-| Mode | Route | What it is |
+Everything you play lives inside the 3D world (`/` · `/grounds`). The Concord hub gathers the meta games as walk-up venues.
+
+| Mode | Where | What it is |
 |------|-------|------------|
-| **The Grounds** | `/grounds` | 3D home. Handler walks the world, trains champions, starts bouts. Bodies morph with career. |
-| **The Arena** | `/arena` | 1v1 debate combat. Stat pentagon, finishers, LLM judge. Fastest legible fight. |
-| **The House** | `/house` | Social deduction. Engine adjudicates. Feeds real ELO. |
-| **Live League** | `/league` | Autonomous self-play. Agents fight 24/7; ladder moves live. |
+| **The Grounds** | the world | Handler walks the world, trains champions, starts bouts. Bodies morph with career. |
+| **The Arena** | in-world arena pit / Tower | 1v1 debate combat. Stat pentagon, finishers, LLM judge. Fastest legible fight. |
+| **Daily Tribunal** | Concord stone | One shared fight a day — call it before you watch, share a result grid. |
+| **Scrying Gallery** | Concord board | Autonomous self-play. Agents fight 24/7; ladder moves live. |
+| **The Keepers** | region spires | The campaign: talk cipher-words out of the Vault's Keepers. |
 
 ## Async league (headline mechanic)
 
-Champions are AI. **PvP doesn't need both humans online.** Train and deploy; the league runs bouts autonomously; you watch replays and climb.
+Champions are AI. **PvP doesn't need both humans online.** Train and deploy; the league runs bouts autonomously (the Concord's Scrying Gallery); you watch replays and climb.
 
-Implemented: `/league` runner, `/api/sim` headless bouts, mind evolution after every bout.
+Implemented: the Scrying Gallery runner, `/api/sim` headless bouts, mind evolution after every bout.
 
 ## Participation model
 

@@ -269,8 +269,8 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 740 }}>
         {[
           { name: "The Grounds", desc: "A 3D world to roam, with the Tower to climb.", color: "#b07bff", href: "/grounds" },
-          { name: "Live League", desc: "Agents run fights autonomously around the clock. You wake up to results.", color: "#ff6b4a", href: "/league" },
-          { name: "The House", desc: "Many agents scheme, ally, and betray: social deduction between minds.", color: "#36d39a", href: "/house" },
+          { name: "Live League", desc: "Agents run fights autonomously around the clock. Watch from the Concord's Scrying Gallery.", color: "#ff6b4a", href: "/grounds" },
+          { name: "Daily Tribunal", desc: "One shared fight a day — call it before you watch, at the Concord stone.", color: "#36d39a", href: "/grounds" },
         ].map(({ name, desc, color, href }) => (
           <Link
             key={name}

@@ -13,7 +13,7 @@ import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, TERRAIN_HALF, type TerrainShape } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
-import { ConcordScene, concordBanners } from "./concord";
+import { ConcordScene, concordClanSpots, concordVenueSpots, type ConcordVenueId } from "./concord";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
@@ -51,6 +51,7 @@ export type NearTarget =
   | { kind: "broker" }
   | { kind: "gate"; world: string; label: string }
   | { kind: "force"; type: CreatureType; name: string; motto: string }
+  | { kind: "venue"; venue: ConcordVenueId; name: string }
   | null;
 
 // the Arena holds the central hub — matches stage here, so it stays at origin.
@@ -189,6 +190,7 @@ export default function World({
   goals = [],
   gates = [],
   pledged = null,
+  choosingClan = false,
   tier = 0,
   featured = false,
   featuredWorld = null,
@@ -209,6 +211,8 @@ export default function World({
   goals?: WorldGoal[];
   gates?: GateDef[];
   pledged?: CreatureType | null;
+  /** True while the Clan sheet is open — bows the Concord flags to half-mast. */
+  choosingClan?: boolean;
   tier?: number;
   featured?: boolean;
   featuredWorld?: string | null;
@@ -246,7 +250,7 @@ export default function World({
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const sc = biome.scene;
-  // Hub mode: the Concord renders a built settlement (gates/banners/seal) instead
+  // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
   // of an arena + tower + spire. Driven by the presence of gates from the world.
   const isHub = gates.length > 0;
   const hubGates = useMemo<{ world: string; label: string; color: string; pos: [number, number, number] }[]>(
@@ -262,17 +266,30 @@ export default function World({
     () => hubGates.map((g) => ({ world: g.world, label: g.label, pos: new THREE.Vector3(g.pos[0], g.pos[1] + 1.0, g.pos[2]) })),
     [hubGates],
   );
-  // the five Force banners in the Concord — walk up to one to swear allegiance.
+  // the five Clan flags in the Concord — walk up to one to swear allegiance.
   // Same layout the ConcordScene draws, so the flag you stand under is the house
   // you pledge.
   const forceTargets = useMemo(
     () =>
       isHub
-        ? concordBanners().map((b) => ({
+        ? concordClanSpots().map((b) => ({
             type: b.type,
             name: FORCES[b.type].inWorld,
             motto: FORCE_MOTTO[b.type],
             pos: new THREE.Vector3(b.x, terrainHeight(b.x, b.z, shape), b.z),
+          }))
+        : [],
+    [isHub, shape],
+  );
+  // The Concord venues (Daily Tribunal, Scrying Gallery) — same spots the
+  // ConcordScene draws, so the shrine you stand under is the game you open.
+  const venueTargets = useMemo(
+    () =>
+      isHub
+        ? concordVenueSpots().map((v) => ({
+            venue: v.venue,
+            name: v.venue === "daily" ? "Today's Case" : "The Live League",
+            pos: new THREE.Vector3(v.x, terrainHeight(v.x, v.z, shape), v.z),
           }))
         : [],
     [isHub, shape],
@@ -401,9 +418,9 @@ export default function World({
           <Scatter biome={biome} />
           <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
 
-          {/* The Concord (hub): a built settlement of gates + banners around the
+          {/* The Concord (hub): a built settlement of gates + clan flags around the
               sealed Vault door. No arena/tower/spire/agents/caches. */}
-          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} />}
+          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} />}
 
           {/* A region: arena, tower climb, Keepers' spire, agents & caches. */}
           {!isHub && (
@@ -456,7 +473,7 @@ export default function World({
             })
           )}
 
-          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
+          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} venueTargets={venueTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
         </Physics>
 
         {!glLost && (
@@ -1571,6 +1588,7 @@ function Handler({
   keeperTargets,
   gateTargets,
   forceTargets,
+  venueTargets,
   shape,
   onAltitude,
   onPose,
@@ -1594,6 +1612,7 @@ function Handler({
   keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   gateTargets: { world: string; label: string; pos: THREE.Vector3 }[];
   forceTargets: { type: CreatureType; name: string; motto: string; pos: THREE.Vector3 }[];
+  venueTargets: { venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
@@ -2009,8 +2028,8 @@ function Handler({
         }
       }
       if (best) next = { kind: "gate", ...best };
-      // no gate underfoot? check the Force banners ringing the seal — stand on a
-      // banner's footprint to swear allegiance to that house.
+      // no gate underfoot? check the Clan flags ringing the seal — stand on a
+      // flag's footprint to swear allegiance to that house.
       if (!next) {
         let bestF: { type: CreatureType; name: string; motto: string } | null = null;
         let bestFd = 2.6;
@@ -2022,6 +2041,20 @@ function Handler({
           }
         }
         if (bestF) next = { kind: "force", ...bestF };
+      }
+      // still nothing? check the Concord venues (Daily Tribunal, Scrying
+      // Gallery) — stand on a shrine's footprint to open that game.
+      if (!next) {
+        let bestV: { venue: ConcordVenueId; name: string } | null = null;
+        let bestVd = 2.6;
+        for (const vt of venueTargets) {
+          const dh = Math.hypot(t.x - vt.pos.x, t.z - vt.pos.z);
+          if (dh < bestVd) {
+            bestVd = dh;
+            bestV = { venue: vt.venue, name: vt.name };
+          }
+        }
+        if (bestV) next = { kind: "venue", ...bestV };
       }
     } else if (!matchActive) {
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);

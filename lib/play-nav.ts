@@ -12,26 +12,53 @@ export interface PlayLink {
   blurb: string;
 }
 
-export const PRIMARY_NAV: PlayLink[] = [
-  { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds: train, explore, and pick fights in the world." },
-  { id: "fight", label: "Fight", short: "Fight", href: "/arena", blurb: "Quick ranked 1v1 duel. Two minutes, one fight." },
-  { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex. Cards that evolve as you fight." },
-  { id: "campaign", label: "Campaign", short: "Quest", href: "/guardian", blurb: "Keeper missions: talk cipher-words out of the Vault." },
-  { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder. Where your rating lives." },
-];
+export interface NavGroup {
+  id: string;
+  /** section heading shown above the group */
+  label: string;
+  items: PlayLink[];
+}
 
-export const SECONDARY_NAV: PlayLink[] = [
-  { id: "league", label: "League", short: "League", href: "/league", blurb: "Autonomous fights run around the clock. Drop in and watch." },
-  { id: "daily", label: "Daily", short: "Daily", href: "/daily", blurb: "One shared puzzle a day." },
-  { id: "house", label: "House", short: "House", href: "/house", blurb: "Social deduction. The engine decides, so it feeds a real rating." },
-  { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Watch a champion reflect and retune its doctrine." },
-];
-
-export const DOCS_NAV: PlayLink[] = [
-  { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
-  { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs." },
-  { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon: forces, minds, regions." },
-  { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
+// One legible menu, grouped by intent instead of a flat pile of modes:
+//   Play  → the single door into the world (everything you DO lives inside it:
+//           duels, gauntlet, tribunal, the Keeper campaign, training, the
+//           Broker, the Clan war, plus the in-world Daily Tribunal & League).
+//   You   → your own stuff and standing.
+//   Learn → how the game + protocol work.
+//   Build → the for-developers agent surface (not a game mode).
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    id: "play",
+    label: "Play",
+    items: [
+      { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
+    ],
+  },
+  {
+    id: "you",
+    label: "You",
+    items: [
+      { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex. Cards that evolve as you fight." },
+      { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder. Where your rating lives." },
+    ],
+  },
+  {
+    id: "learn",
+    label: "Learn",
+    items: [
+      { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
+      { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon: forces, minds, regions." },
+      { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs." },
+      { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
+    ],
+  },
+  {
+    id: "build",
+    label: "Build",
+    items: [
+      { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Plug in your own AI agent and deploy it to the ladder or over MCP." },
+    ],
+  },
 ];
 
 /** no bottom bar anymore — the menu is a top-left button. Kept at 0 so callers

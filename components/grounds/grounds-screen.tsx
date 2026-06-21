@@ -39,7 +39,9 @@ import { SeasonBanner } from "@/components/lore/season-banner";
 import { GameDock } from "@/components/game-dock";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
 import { ArrivalSequence } from "@/components/grounds/arrival";
-import { BannerSheet } from "@/components/grounds/banner-sheet";
+import { ClanSheet } from "@/components/grounds/clan-sheet";
+import { DailySheet } from "@/components/grounds/daily-sheet";
+import { LeagueSheet } from "@/components/grounds/league-sheet";
 import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -58,7 +60,7 @@ export default function GroundsScreen() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker" | "daily" | "league">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
@@ -78,7 +80,7 @@ export default function GroundsScreen() {
     learned: string | null;
     globalDelta: number | null; // signed swing on the shared ladder (null if unranked)
     globalRating: number | null; // player's new ladder rating
-    home: boolean; // win earned under your Banner's region (home advantage paid)
+    home: boolean; // win earned under your Clan's region (home advantage paid)
   } | null>(null);
   const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
@@ -98,10 +100,10 @@ export default function GroundsScreen() {
   const [claiming, setClaiming] = useState<string | null>(null);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
-  // The first-ranked-win Banner invite — deferred so the choice arrives when
+  // The first-ranked-win Clan invite — deferred so the choice arrives when
   // "join a team" actually means something. Shown once.
-  const [bannerInvite, setBannerInvite] = useState(false);
-  const bannerInviteSeen = useRef(false);
+  const [clanInvite, setClanInvite] = useState(false);
+  const clanInviteSeen = useRef(false);
   const [isTouch, setIsTouch] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
@@ -195,10 +197,10 @@ export default function GroundsScreen() {
   const goalFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pledgeFlash, setPledgeFlash] = useState<{ name: string; motto: string; color: string } | null>(null);
   const pledgeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // The Banner decision surface — opened by the Trainer chip or by walking under
-  // a Concord banner (preselecting that Force).
-  const [bannerOpen, setBannerOpen] = useState(false);
-  const [bannerPreselect, setBannerPreselect] = useState<CreatureType | null>(null);
+  // The Clan decision surface — opened by the Trainer chip or by walking under
+  // a Concord clan flag (preselecting that Force).
+  const [clanOpen, setClanOpen] = useState(false);
+  const [clanPreselect, setClanPreselect] = useState<CreatureType | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -228,16 +230,16 @@ export default function GroundsScreen() {
       setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
     } catch {}
     try {
-      bannerInviteSeen.current = localStorage.getItem(STORAGE.bannerInvite) === "1";
+      clanInviteSeen.current = localStorage.getItem(STORAGE.clanInvite) === "1";
     } catch {}
   }, []);
 
-  const dismissBannerInvite = useCallback(() => {
+  const dismissClanInvite = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE.bannerInvite, "1");
+      localStorage.setItem(STORAGE.clanInvite, "1");
     } catch {}
-    bannerInviteSeen.current = true;
-    setBannerInvite(false);
+    clanInviteSeen.current = true;
+    setClanInvite(false);
   }, []);
 
   const dismissChronicle = useCallback(() => {
@@ -297,7 +299,7 @@ export default function GroundsScreen() {
   );
 
   const inMatch = bout.phase === "live";
-  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !bannerOpen;
+  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen;
 
   // Swap the soundscape into the tense battle loop whenever a fight is on — the
   // live arena/gauntlet bout or the Guardian face-off — and back to calm after.
@@ -343,11 +345,14 @@ export default function GroundsScreen() {
         goalFlashTimer.current = setTimeout(() => setGoalFlash(null), 3200);
       }
     } else if (near?.kind === "force") {
-      // Don't silently bind — open the Banner sheet preselected to this house so
+      // Don't silently bind — open the Clan sheet preselected to this house so
       // the choice is explained and confirmed (and the season lock is enforced
       // in one place).
-      setBannerPreselect(near.type);
-      setBannerOpen(true);
+      setClanPreselect(near.type);
+      setClanOpen(true);
+    } else if (near?.kind === "venue") {
+      // a Concord shrine → open its game as an overlay (Daily / League)
+      setOverlay(near.venue);
     } else if (near?.kind === "gate") {
       // step through a Vaultgate → travel to that region (the scene remounts via
       // its world key, so you land cleanly at the region's spawn)
@@ -412,7 +417,7 @@ export default function GroundsScreen() {
     const tok = getOwnerToken();
     const oid = opponentId ?? `house-${opponent}`;
     const betParam = betSide && tok ? `&bet=${encodeURIComponent(betNonce)}` : "";
-    // The region this world rewards — drives the Banner "home advantage" perk,
+    // The region this world rewards — drives the Clan "home advantage" perk,
     // settled server-side off the player's authoritative pledge.
     const regionBias = world.region ? FOUNDING_REGIONS.find((r) => r.id === world.region)?.bias ?? null : null;
     const biasParam = regionBias ? `&bias=${regionBias}` : "";
@@ -467,9 +472,9 @@ export default function GroundsScreen() {
         // A ranked win may have fed the season war server-side — refresh standings
         // + the Reader's authoritative contribution so the badge updates live.
         if (iWon) loadWar();
-        // First ranked win with no Banner yet → queue the (one-time) invite. It
+        // First ranked win with no Clan yet → queue the (one-time) invite. It
         // surfaces after the result card closes, when "join a team" makes sense.
-        if (iWon && !store.force && !bannerInviteSeen.current) setBannerInvite(true);
+        if (iWon && !store.force && !clanInviteSeen.current) setClanInvite(true);
         if (ranked.bet) {
           betWon = ranked.bet.won;
           crownsDelta += ranked.bet.won ? ranked.bet.payout - ranked.bet.stake : -ranked.bet.stake;
@@ -709,6 +714,7 @@ export default function GroundsScreen() {
               goals={isHub ? [] : liveGoals}
               gates={isHub ? CONCORD_GATES : []}
               pledged={store.force}
+              choosingClan={clanOpen}
               tier={growth?.tier ?? 0}
               featured={growth?.featured ?? false}
               featuredWorld={isHub ? featuredWorld : null}
@@ -777,7 +783,7 @@ export default function GroundsScreen() {
 
         {!showMatch && overlay === "none" && owned && !gRun && (
           <div style={{ marginBottom: isMobile ? 6 : 10 }}>
-            <TrainerBadge isMobile={isMobile} war={war} onOpenBanner={() => { setBannerPreselect(null); setBannerOpen(true); }} />
+            <TrainerBadge isMobile={isMobile} war={war} onOpenClan={() => { setClanPreselect(null); setClanOpen(true); }} />
           </div>
         )}
 
@@ -876,17 +882,17 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {/* first-ranked-win Banner invite — one-time, surfaces after the result
+      {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
-      {bannerInvite && owned && !store.force && !showMatch && overlay === "none" && !result && !gRun && !bannerOpen && (
+      {clanInvite && owned && !store.force && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
-              <strong>First ranked win!</strong> Pick a Banner to fight for — your wins build its season war, and home turf pays extra.
+              <strong>First ranked win!</strong> Pick a Clan to fight for — your wins build its season war, and home turf pays extra.
             </span>
-            <button onClick={() => { dismissBannerInvite(); setBannerPreselect(null); setBannerOpen(true); }} className="btn btn-primary" style={{ ["--ac" as string]: "#c77dff", fontSize: 11, padding: "4px 11px", flexShrink: 0 }}>Choose</button>
-            <button onClick={dismissBannerInvite} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 9px", flexShrink: 0 }}>Later</button>
+            <button onClick={() => { dismissClanInvite(); setClanPreselect(null); setClanOpen(true); }} className="btn btn-primary" style={{ ["--ac" as string]: "#c77dff", fontSize: 11, padding: "4px 11px", flexShrink: 0 }}>Choose</button>
+            <button onClick={dismissClanInvite} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 9px", flexShrink: 0 }}>Later</button>
           </div>
         </div>
       )}
@@ -906,13 +912,13 @@ export default function GroundsScreen() {
         </Celebration>
       )}
 
-      {/* the Banner decision surface — one place to choose / review / lock */}
-      {bannerOpen && (
-        <BannerSheet
-          preselect={bannerPreselect}
+      {/* the Clan decision surface — one place to choose / review / lock */}
+      {clanOpen && (
+        <ClanSheet
+          preselect={clanPreselect}
           suggested={owned ? byKey[owned]?.type ?? null : null}
           war={war}
-          onClose={() => setBannerOpen(false)}
+          onClose={() => setClanOpen(false)}
           onPledged={(f) => {
             const fm = forceMeta(f);
             setPledgeFlash({ name: fm.house, motto: fm.motto, color: TYPE_COLOR[f] });
@@ -922,12 +928,12 @@ export default function GroundsScreen() {
         />
       )}
 
-      {/* banner-raised celebration */}
+      {/* clan-joined celebration */}
       {pledgeFlash && (
         <Celebration
           tone="pledge"
           accent={pledgeFlash.color}
-          kicker="BANNER RAISED"
+          kicker="CLAN JOINED"
           title={pledgeFlash.name}
           subtitle={pledgeFlash.motto}
         />
@@ -993,10 +999,14 @@ export default function GroundsScreen() {
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {near.kind === "gate"
                 ? `Enter ${near.label}`
+                : near.kind === "venue"
+                ? near.venue === "daily"
+                  ? "Read today's Tribunal"
+                  : "Enter the Scrying Gallery"
                 : near.kind === "force"
                 ? store.force === near.type
-                  ? `Your Banner · ${near.name}`
-                  : `Banner of ${near.name}`
+                  ? `Your Clan · ${near.name}`
+                  : `Clan of ${near.name}`
                 : near.kind === "train"
                 ? "Train your champion"
                 : near.kind === "broker"
@@ -1038,6 +1048,10 @@ export default function GroundsScreen() {
 
       {/* arena spar (central pit) or locked tower duel */}
       {overlay === "broker" && <BrokerOverlay onClose={() => setOverlay("none")} />}
+
+      {/* Concord venues — the meta games, now walk-up shrines in the hub */}
+      {overlay === "daily" && <DailySheet onClose={() => setOverlay("none")} />}
+      {overlay === "league" && <LeagueSheet onClose={() => setOverlay("none")} />}
 
       {overlay === "arena" && owned && (
         <ChallengeOverlay

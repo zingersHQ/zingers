@@ -24,11 +24,7 @@ export function orgCanonical(slug?: string): string {
 /** Game-only paths — not served on zingers.org. */
 export const GAME_PATH_PREFIXES = [
   "/arena",
-  "/league",
   "/standings",
-  "/guardian",
-  "/house",
-  "/daily",
   "/collection",
   "/grounds",
   "/champion",

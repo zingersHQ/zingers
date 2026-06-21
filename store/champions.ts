@@ -87,8 +87,8 @@ interface ChampionStore {
   nodes: NodeLedger;
   // trainer identity — the account-level "I'm level 12" spine, fed by all activity
   trainerXp: number;
-  force: CreatureType | null; // pledged Banner (faction)
-  forceSeason: number | null; // the season the current Banner was raised in (locks switching for that season)
+  force: CreatureType | null; // pledged Clan (faction)
+  forceSeason: number | null; // the season the current Clan was joined in (locks switching for that season)
   forcePoints: ForcePoints; // this season's contribution to that faction
   goals: GoalLedger; // world goals cleared this season
   owned: string | null;
@@ -125,12 +125,12 @@ interface ChampionStore {
   sellFragment: () => Promise<boolean>; // −1 fragment → FRAGMENT_SELL crowns
   // trainer rank + faction
   awardTrainerXp: (n: number) => void;
-  // Raise a Banner. Locked to one choice per season: returns false (a no-op) if a
-  // Banner is already raised this season. A new season frees the choice again.
+  // Join a Clan. Locked to one choice per season: returns false (a no-op) if a
+  // Clan is already joined this season. A new season frees the choice again.
   pledgeForce: (f: CreatureType) => boolean;
-  // Whether the Reader may choose/switch their Banner right now (no banner yet, or
+  // Whether the Reader may choose/switch their Clan right now (no clan yet, or
   // the locked season has rolled over).
-  canRebanner: () => boolean;
+  canChangeClan: () => boolean;
   crackKeeper: () => void; // a Keeper yielded — award the milestone XP
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
   recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
@@ -320,19 +320,19 @@ export const useChampions = create<ChampionStore>()(
       },
 
       awardTrainerXp: (n) => set((s) => ({ trainerXp: s.trainerXp + Math.max(0, Math.round(n)) })),
-      canRebanner: () => {
+      canChangeClan: () => {
         const s = get();
         return s.force === null || s.forceSeason !== currentSeasonNumber();
       },
       pledgeForce: (f) => {
         const season = currentSeasonNumber();
         const s = get();
-        // one Banner per season — already raised this season is a hard no-op
+        // one Clan per season — already joined this season is a hard no-op
         if (s.force !== null && s.forceSeason === season) return false;
         set({
           force: f,
           forceSeason: season,
-          // a fresh season resets the contribution tally to the new Banner
+          // a fresh season resets the contribution tally to the new Clan
           forcePoints: s.forcePoints.season === season ? s.forcePoints : { season, points: 0 },
         });
         return true;

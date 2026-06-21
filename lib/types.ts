@@ -174,7 +174,7 @@ export interface BattleRanked {
   crowns: number; // server-decided Crown award for this bout (0 on a loss)
   balance: number; // authoritative wallet balance after reward + bet settlement
   bet: { stake: number; won: boolean; payout: number } | null; // commit-reveal wager result
-  home?: boolean; // win earned in a region aligned to the player's Banner (home advantage)
+  home?: boolean; // win earned in a region aligned to the player's Clan (home advantage)
 }
 
 export type BattleEvent = BattleStart | BattleTurn | BattleEnd | BattleRanked;
@@ -457,8 +457,8 @@ export interface PlayerSave {
   owned: string | null;
   predict: PredictState;
   daily: DailyState;
-  force: CreatureType | null; // pledged Banner / Force (null = no banner)
-  forceSeason: number | null; // the season the current Banner was raised in (locks the choice for that season)
+  force: CreatureType | null; // pledged Clan / Force (null = no clan)
+  forceSeason: number | null; // the season the current Clan was joined in (locks the choice for that season)
   forcePoints: ForcePoints; // this season's contribution to the pledged Force
   updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
 }

@@ -123,8 +123,8 @@ const SLIDES: Slide[] = [
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 26, maxWidth: 720 }}>
         {[
           { name: "The Grounds", desc: "Live in the world & climb the Tower", href: "/grounds", color: "#b07bff" },
-          { name: "The House", desc: "Scheme, ally, betray: social deduction", href: "/house", color: "#36d39a" },
-          { name: "Live League", desc: "The world fights 24/7 on its own", href: "/league", color: "#ff6b4a" },
+          { name: "The Concord", desc: "The hub: Clan war, Daily Tribunal, Keepers", href: "/grounds", color: "#36d39a" },
+          { name: "Live League", desc: "The world fights 24/7 on its own", href: "/grounds", color: "#ff6b4a" },
         ].map(({ name, desc, href, color }) => (
           <Link
             key={name}

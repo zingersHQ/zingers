@@ -1,7 +1,10 @@
 "use client";
+// The Daily Tribunal — one shared fight per day you call before you watch, with
+// a Wordle-style shareable result. Lived at /daily as a flat page; now it's an
+// in-world overlay opened by walking up to the Daily stone in the Concord, so
+// it's part of the world instead of a separate screen.
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Lock, Scale, Mic } from "lucide-react";
+import { Lock, Scale, Mic, X } from "lucide-react";
 import type { BattleEnd, BattleTurn, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
@@ -11,7 +14,7 @@ import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
 
 const ACC = "#7c5cff";
 
-export default function DailyPage() {
+export function DailySheet({ onClose }: { onClose: () => void }) {
   const [plan, setPlan] = useState<DailyResponse | null>(null);
   const [mounted, setMounted] = useState(false);
   const [winnerPick, setWinnerPick] = useState<"a" | "b" | null>(null);
@@ -32,6 +35,13 @@ export default function DailyPage() {
   useEffect(() => {
     fetch("/api/daily").then((r) => r.json()).then(setPlan);
   }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const solvedToday = mounted && plan != null && daily.result != null && daily.result.day === plan.day;
 
@@ -43,7 +53,6 @@ export default function DailyPage() {
     (end: BattleEnd) => {
       if (!plan) return;
       const hist = historyRef.current;
-      // the "dunk" = the single hardest-landing line of the bout (deterministic)
       let best = { dmg: -1, key: end.winner, line: end.mvp.line, name: end.winner_name };
       for (const t of hist) if (t.dmg > best.dmg) best = { dmg: t.dmg, key: t.actor, line: t.line, name: t.actor_name };
       const { winner, dunk } = pickRef.current;
@@ -57,7 +66,7 @@ export default function DailyPage() {
         dunkName: best.name,
         dunkLine: best.line,
       };
-      recordDaily(result); // no-ops if already solved (e.g. a replay)
+      recordDaily(result);
       setView("done");
     },
     [plan, recordDaily],
@@ -82,35 +91,48 @@ export default function DailyPage() {
   }, [plan, bout]);
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: "26px 22px 90px" }}>
-      <Header day={plan?.day} date={plan?.date} streak={mounted ? daily.streak : 0} best={mounted ? daily.best : 0} />
+    <div
+      style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(8px)", zIndex: 60, padding: 16 }}
+      onClick={onClose}
+    >
+      <div
+        className="panel pop"
+        onClick={(e) => e.stopPropagation()}
+        style={{ ["--ac" as string]: ACC, position: "relative", width: "min(880px, 96vw)", maxHeight: "92vh", overflow: "auto", padding: 24, borderColor: ACC }}
+      >
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, zIndex: 2 }}>
+          <X size={20} strokeWidth={2} />
+        </button>
 
-      {!plan || !mounted ? (
-        <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 60 }}>
-          loading today&apos;s fight…
-        </div>
-      ) : view === "predict" ? (
-        <Predict
-          plan={plan}
-          get={get}
-          winnerPick={winnerPick}
-          setWinnerPick={setWinnerPick}
-          dunkPick={dunkPick}
-          setDunkPick={setDunkPick}
-          onStart={startBout}
-        />
-      ) : view === "bout" ? (
-        <BoutView plan={plan} get={get} bout={bout} />
-      ) : (
-        <Done plan={plan} get={get} result={daily.result} streak={daily.streak} best={daily.best} onReplay={replay} />
-      )}
-    </main>
+        <Header day={plan?.day} date={plan?.date} streak={mounted ? daily.streak : 0} best={mounted ? daily.best : 0} />
+
+        {!plan || !mounted ? (
+          <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 60 }}>
+            loading today&apos;s fight…
+          </div>
+        ) : view === "predict" ? (
+          <Predict
+            plan={plan}
+            get={get}
+            winnerPick={winnerPick}
+            setWinnerPick={setWinnerPick}
+            dunkPick={dunkPick}
+            setDunkPick={setDunkPick}
+            onStart={startBout}
+          />
+        ) : view === "bout" ? (
+          <BoutView plan={plan} get={get} bout={bout} />
+        ) : (
+          <Done plan={plan} get={get} result={daily.result} streak={daily.streak} best={daily.best} onReplay={replay} />
+        )}
+      </div>
+    </div>
   );
 }
 
 function Header({ day, date, streak, best }: { day?: number; date?: string; streak: number; best: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", marginBottom: 22, flexWrap: "wrap", gap: 12 }}>
+    <div style={{ display: "flex", alignItems: "center", marginBottom: 22, flexWrap: "wrap", gap: 12, paddingRight: 28 }}>
       <div>
         <h1 style={{ fontSize: 30, fontWeight: 800, margin: 0, letterSpacing: -0.5 }}>
           Daily Zinger{day ? <span style={{ color: ACC }}> #{day}</span> : null}
@@ -308,7 +330,7 @@ function gridText(r: DailyResult, topic: string, streak: number, best: number): 
     `"${topic}"`,
     `Winner ${w} · Dunk ${d}`,
     `streak ${streak} · best ${best}`,
-    BRAND.site.replace(/^https?:\/\//, "") + "/daily",
+    BRAND.site.replace(/^https?:\/\//, ""),
   ].join("\n");
 }
 
@@ -347,8 +369,8 @@ function Done(props: {
         <div className="glow" style={{ fontSize: 30, fontWeight: 800, color: wcol }}>{result.winnerName} wins</div>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
-          <Verdict ok={result.winnerCorrect} label="Your winner call" />
-          {result.dunkCorrect != null && <Verdict ok={result.dunkCorrect} label="Your dunk call" />}
+          <VerdictPill ok={result.winnerCorrect} label="Your winner call" />
+          {result.dunkCorrect != null && <VerdictPill ok={result.dunkCorrect} label="Your dunk call" />}
         </div>
 
         <div style={{ marginTop: 18, padding: 16, borderRadius: 12, background: "#100e1a", border: "1px solid var(--line)" }}>
@@ -377,13 +399,13 @@ function Done(props: {
       </div>
 
       <p className="mono" style={{ textAlign: "center", fontSize: 11, color: "var(--muted2)", marginTop: 16, letterSpacing: 0.5 }}>
-        NEXT ZINGER DROPS AT MIDNIGHT UTC · <Link href="/arena" style={{ color: ACC }}>start your own fight →</Link>
+        NEXT ZINGER DROPS AT MIDNIGHT UTC · WALK THE GROUNDS TO PICK YOUR OWN FIGHT
       </p>
     </div>
   );
 }
 
-function Verdict({ ok, label }: { ok: boolean; label: string }) {
+function VerdictPill({ ok, label }: { ok: boolean; label: string }) {
   const col = ok ? "var(--good)" : "var(--bad)";
   return (
     <div style={{ padding: "8px 14px", borderRadius: 10, border: `1px solid ${col}`, color: col, fontWeight: 700, fontSize: 13 }}>
