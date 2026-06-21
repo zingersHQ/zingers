@@ -38,6 +38,7 @@ import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { GameDock } from "@/components/game-dock";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
+import { ArrivalSequence } from "@/components/grounds/arrival";
 import { BannerSheet } from "@/components/grounds/banner-sheet";
 import { DOCK_H } from "@/lib/play-nav";
 
@@ -92,6 +93,9 @@ export default function GroundsScreen() {
   const isHub = world.kind === "hub";
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+  // mid-claim: a champion was picked but the arrival cinematic is still running,
+  // so we hold off mounting the world UI until the veil lifts.
+  const [claiming, setClaiming] = useState<string | null>(null);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
   // The first-ranked-win Banner invite — deferred so the choice arrives when
@@ -860,7 +864,7 @@ export default function GroundsScreen() {
       )}
 
       {/* one-time objectives coachmark */}
-      {goalCoach && owned && !isHub && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
+      {goalCoach && owned && !claiming && !isHub && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
             <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
@@ -933,7 +937,20 @@ export default function GroundsScreen() {
       <GameDock hidden={!showDock} />
 
       {/* onboarding: choose your champion */}
-      {mounted && !owned && roster.length > 0 && <Onboarding roster={roster} get={store.get} onPick={setOwned} />}
+      {mounted && !owned && roster.length > 0 && !claiming && <Onboarding roster={roster} get={store.get} onPick={setClaiming} />}
+
+      {/* arrival cinematic: claim → wipe → reveal → welcome (hides the figure pop-in) */}
+      {mounted && claiming && byKey[claiming] && (
+        <ArrivalSequence
+          key={claiming}
+          ckey={claiming}
+          type={byKey[claiming].type}
+          name={byKey[claiming].name}
+          champion={store.get(claiming)}
+          onEnter={() => setOwned(claiming)}
+          onDone={() => setClaiming(null)}
+        />
+      )}
 
       {/* first-run tutorial / elevator pitch */}
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}

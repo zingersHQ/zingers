@@ -85,7 +85,7 @@ export interface GateDef {
   dist: number; // radius from centre
 }
 
-export const GATE_DIST = 17;
+export const GATE_DIST = 20;
 export const CONCORD_GATES: GateDef[] = REGION_WORLDS.map((w, i, arr) => ({
   world: w.id,
   label: w.biome.name,

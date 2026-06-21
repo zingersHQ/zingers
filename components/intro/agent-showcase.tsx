@@ -39,9 +39,9 @@ export default function AgentShowcase({
   const duel = !!rival;
   // These champions carry oversized heads/auras, so frame loose enough to keep
   // the whole silhouette (feet to crown) in view.
-  const camY = duel ? 2.0 : 1.7;
-  const camZ = duel ? 12.5 : 9.6;
-  const lookY = duel ? 1.35 : 1.4;
+  const camY = duel ? 1.9 : 1.7;
+  const camZ = duel ? 13 : 9.6;
+  const lookY = duel ? 1.3 : 1.4;
 
   return (
     <Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [0, camY, camZ], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
@@ -144,7 +144,7 @@ function Duel({ hero, rival, scale }: { hero: { champion: Champion; type: Creatu
     };
   }, []);
 
-  const off = 2.3;
+  const off = 1.55;
   return (
     <>
       <group position={[-off, 0, 0]} scale={scale}>

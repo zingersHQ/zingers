@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
@@ -78,13 +78,16 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(180deg, #141028 0%, #0a0818 100%)",
-          display: "flex",
-          flexDirection: "column",
           overflow: "hidden",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", gap: 8 }}>
+        {/* full-bleed scene with cinematic dip-transition between beats */}
+        <div style={{ position: "absolute", inset: 0, background: "#0a0813" }}>
+          <SlideStage active={i} slides={slides} />
+        </div>
+
+        {/* transparent header overlay: brand · progress dots · skip */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, display: "flex", alignItems: "center", padding: "16px 20px", gap: 8, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <span aria-hidden style={{ width: 18, height: 18, borderRadius: 5, border: "2px solid var(--gold)", display: "grid", placeItems: "center" }}>
               <span style={{ width: 5, height: 5, borderRadius: 9, background: ACC }} />
@@ -92,7 +95,7 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
             <span className="mono" style={{ fontSize: 10, letterSpacing: 2.5, color: "var(--muted2)" }}>{BRAND.nameUpper}</span>
           </div>
           {count > 1 && (
-            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6, pointerEvents: "auto" }}>
               {slides.map((_, d) => (
                 <button
                   key={d}
@@ -111,36 +114,96 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           )}
-          <button onClick={onClose} className="mono" style={{ marginLeft: count > 1 ? 14 : "auto", background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
+          <button onClick={onClose} className="mono" style={{ marginLeft: count > 1 ? 14 : "auto", pointerEvents: "auto", background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
             SKIP
           </button>
         </div>
 
-        <div style={{ flex: 1, position: "relative", minHeight: 0, background: "#0a0813" }}>
-          {slides[i]}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", padding: "16px 22px", borderTop: "1px solid var(--line)" }}>
-          <button
-            onClick={back}
-            className="mono"
-            style={{ visibility: i === 0 ? "hidden" : "visible", background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer", letterSpacing: 0.5 }}
-          >
-            ← back
-          </button>
-          <span className="mono" style={{ marginLeft: "auto", marginRight: 16, fontSize: 11, color: "var(--muted2)", visibility: count > 1 ? "visible" : "hidden" }}>
-            {i + 1} / {count}
-          </span>
-          <button
-            onClick={() => (i >= LAST ? onClose() : next())}
-            className="btn btn-primary"
-            style={{ ["--ac" as string]: i >= LAST ? "var(--gold)" : ACC, fontSize: 15, padding: "11px 22px" }}
-          >
-            {i >= LAST ? "Claim your champion →" : "Next →"}
-          </button>
-        </div>
+        {/* side navigation — transparent, white outline */}
+        {i > 0 && <NavArrow side="left" onClick={back} />}
+        <NavArrow side="right" onClick={() => (i >= LAST ? onClose() : next())} />
       </div>
     </div>
+  );
+}
+
+// Cinematic beat-to-beat transition. A hard swap of `slides[i]` felt mechanic
+// and also flashed the 3D scene as it remounted. Instead we "dip": the outgoing
+// beat eases out + fades into the dark stage, the swap happens hidden in that
+// dark beat, then the incoming beat eases in from the travel direction. Because
+// the remount lands at opacity 0, you never see the agent pop or the loader.
+const EXIT_MS = 300;
+const ENTER_MS = 560;
+
+function SlideStage({ active, slides }: { active: number; slides: React.ReactNode[] }) {
+  const [shown, setShown] = useState(active);
+  const [mode, setMode] = useState<"in" | "out">("in");
+  const dirRef = useRef(1);
+
+  useEffect(() => {
+    if (active === shown) return;
+    dirRef.current = active > shown ? 1 : -1;
+    setMode("out");
+    const t = setTimeout(() => {
+      // swap + enter in one commit so the new beat never flickers through "out"
+      setShown(active);
+      setMode("in");
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [active, shown]);
+
+  const dir = dirRef.current;
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div
+        key={shown}
+        style={{
+          position: "absolute",
+          inset: 0,
+          willChange: "opacity, transform",
+          ["--dx" as string]: `${dir * 46}px`,
+          animation:
+            mode === "out"
+              ? `deckOut ${EXIT_MS}ms cubic-bezier(.4,0,1,1) forwards`
+              : `deckIn ${ENTER_MS}ms cubic-bezier(.16,.84,.32,1) both`,
+        }}
+      >
+        {slides[shown]}
+      </div>
+      <style>{`
+        @keyframes deckIn { from { opacity: 0; transform: translateX(var(--dx)) scale(.99); } to { opacity: 1; transform: none; } }
+        @keyframes deckOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(calc(var(--dx) * -1)) scale(.99); } }
+      `}</style>
+    </div>
+  );
+}
+
+function NavArrow({ side, onClick }: { side: "left" | "right"; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={side === "left" ? "previous" : "next"}
+      style={{
+        position: "absolute",
+        zIndex: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        [side]: "clamp(10px, 3vw, 28px)",
+        width: 48,
+        height: 48,
+        borderRadius: 99,
+        background: "transparent",
+        border: "1px solid rgba(255,255,255,.7)",
+        color: "#fff",
+        fontSize: 20,
+        lineHeight: 1,
+        cursor: "pointer",
+        display: "grid",
+        placeItems: "center",
+      }}
+    >
+      {side === "left" ? "←" : "→"}
+    </button>
   );
 }
 
@@ -157,16 +220,6 @@ function Stage({ children }: { children: React.ReactNode }) {
     >
       {children}
     </RenderBoundary>
-  );
-}
-
-// Small top-left scene tag (force / status) — keeps each beat grounded in-world.
-function SceneTag({ label, color, mobile }: { label: string; color: string; mobile?: boolean }) {
-  return (
-    <div className="mono" style={{ position: "absolute", zIndex: 3, top: mobile ? 12 : 18, left: mobile ? 18 : 24, display: "flex", alignItems: "center", gap: 7, pointerEvents: "none", fontSize: mobile ? 8 : 9.5, letterSpacing: 2.2, color: "var(--muted)" }}>
-      <span style={{ width: 7, height: 7, borderRadius: 99, background: color, boxShadow: `0 0 10px ${color}` }} />
-      {label}
-    </div>
   );
 }
 
@@ -214,7 +267,6 @@ function Awaken({ mobile }: { mobile?: boolean }) {
       <Stage>
         <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} dolly gesture="idle" />
       </Stage>
-      <SceneTag label={`LIVE AGENT · ${FORCES[HERO_TYPE].inWorld.toUpperCase()}`} color={TYPE_COLOR[HERO_TYPE]} mobile={mobile} />
       <LowerThird
         mobile={mobile}
         kicker="AN AI YOU RAISE"
@@ -240,7 +292,6 @@ function Shape({ mobile }: { mobile?: boolean }) {
       <Stage>
         <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" everyMs={2300} />
       </Stage>
-      <SceneTag label="TRAINING GROUND" color={TYPE_COLOR[HERO_TYPE]} mobile={mobile} />
       <LowerThird
         mobile={mobile}
         kicker="TRAIN"
@@ -289,7 +340,7 @@ function Fight({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.5 : 0.62} rival={{ champion: RIVAL.champion, type: RIVAL.type }} />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.46 : 0.56} rival={{ champion: RIVAL.champion, type: RIVAL.type }} />
       </Stage>
       <MatchupTag mobile={mobile} />
       <ReasoningBubble mobile={mobile} />
@@ -396,8 +447,6 @@ function Legend({ mobile }: { mobile?: boolean }) {
       <Stage>
         <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" everyMs={2600} />
       </Stage>
-      <SceneTag label="THE LEAGUE · OVERNIGHT" color="var(--gold)" mobile={mobile} />
-
       <div
         style={{
           position: "absolute",

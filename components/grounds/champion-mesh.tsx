@@ -16,6 +16,18 @@ for (const m of ALL_MODELS) useGLTF.preload(m);
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
+// ── animation level-of-detail ────────────────────────────────────────────────
+// Every non-owned champion runs its own AnimationMixer + bone-morph + decorative
+// motion each frame. Skinning is one of the heaviest per-object costs, and a full
+// Tower can hold dozens of these. We gate that work by camera distance:
+//   • near  → full-rate skeletal update + decorative motion
+//   • mid   → skeletal update throttled to ~15Hz, decorations frozen
+//   • far   → fully frozen (you can't read the animation at that range anyway)
+// The owned champion + any in a live match are exempt (always full).
+const LOD_NEAR_SQ = 32 * 32;
+const LOD_MID_SQ = 64 * 64;
+const LOD_MID_STEP = 1 / 15; // seconds between mid-range skeletal updates
+
 function pickClip(clips: THREE.AnimationClip[], ...names: string[]): THREE.AnimationClip | undefined {
   for (const n of names) {
     const c = clips.find((c) => c.name.toLowerCase() === n) || clips.find((c) => c.name.toLowerCase().includes(n));
@@ -288,11 +300,35 @@ export function ChampionMesh({
   const shardRefs = useRef<(THREE.Mesh | null)[]>([]);
   const ringN = tier.rings;
   const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
+  // scratch + accumulator for the distance LOD (no per-frame allocation)
+  const lodPos = useRef(new THREE.Vector3());
+  const lodAccum = useRef(0);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
-    built.mixer.update(dt);
-    applyBoneMorph(built.bones, built.boneBase, built.morph);
+
+    // resolve animation LOD from camera distance (owned / in-match always full)
+    let lod = 0;
+    const alwaysFull = selected || hpFrac != null;
+    if (!alwaysFull && gref.current) {
+      gref.current.getWorldPosition(lodPos.current);
+      const d2 = lodPos.current.distanceToSquared(state.camera.position);
+      lod = d2 > LOD_MID_SQ ? 2 : d2 > LOD_NEAR_SQ ? 1 : 0;
+    }
+
+    // skeletal update: full-rate near, throttled at mid, frozen far
+    if (lod === 0) {
+      built.mixer.update(dt);
+      applyBoneMorph(built.bones, built.boneBase, built.morph);
+    } else if (lod === 1) {
+      lodAccum.current += dt;
+      if (lodAccum.current >= LOD_MID_STEP) {
+        built.mixer.update(lodAccum.current);
+        applyBoneMorph(built.bones, built.boneBase, built.morph);
+        lodAccum.current = 0;
+      }
+    }
+    const decorate = lod === 0;
 
     // lunge / recoil
     lunge.current = Math.max(0, lunge.current - dt * 3.2);
@@ -343,23 +379,25 @@ export function ChampionMesh({
       }
     }
 
-    // evo animations
-    if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.6 + phase) * 0.06);
-    for (let i = 0; i < shardRefs.current.length; i++) {
-      const m = shardRefs.current[i];
-      const s = shards[i];
-      if (!m || !s) continue;
-      s.a += s.spd * 0.012;
-      m.position.set(Math.cos(s.a) * s.r, s.y + Math.sin(t * 0.8 + s.r) * 0.12, Math.sin(s.a) * s.r);
-      m.rotation.y += 0.04;
-    }
-    for (let i = 0; i < ringRefs.current.length; i++) {
-      const m = ringRefs.current[i];
-      if (m) m.rotation.z += (0.2 + i * 0.15) * 0.012;
-    }
-    if (crownRef.current) {
-      crownRef.current.rotation.y += 0.01;
-      crownRef.current.position.y = app.h + 0.3 + Math.sin(t * 1.4) * 0.05;
+    // evo animations — cosmetic only, so freeze them past the near band
+    if (decorate) {
+      if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.6 + phase) * 0.06);
+      for (let i = 0; i < shardRefs.current.length; i++) {
+        const m = shardRefs.current[i];
+        const s = shards[i];
+        if (!m || !s) continue;
+        s.a += s.spd * 0.012;
+        m.position.set(Math.cos(s.a) * s.r, s.y + Math.sin(t * 0.8 + s.r) * 0.12, Math.sin(s.a) * s.r);
+        m.rotation.y += 0.04;
+      }
+      for (let i = 0; i < ringRefs.current.length; i++) {
+        const m = ringRefs.current[i];
+        if (m) m.rotation.z += (0.2 + i * 0.15) * 0.012;
+      }
+      if (crownRef.current) {
+        crownRef.current.rotation.y += 0.01;
+        crownRef.current.position.y = app.h + 0.3 + Math.sin(t * 1.4) * 0.05;
+      }
     }
   });
 
@@ -385,7 +423,7 @@ export function ChampionMesh({
 
       {/* aura sphere */}
       <mesh ref={auraRef} position={[0, app.h * 0.55, 0]}>
-        <sphereGeometry args={[auraR, 20, 20]} />
+        <sphereGeometry args={[auraR, 16, 12]} />
         <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
       </mesh>
 
@@ -406,7 +444,7 @@ export function ChampionMesh({
       {/* tier rings */}
       {Array.from({ length: ringN }).map((_, i) => (
         <mesh key={i} ref={(el) => { ringRefs.current[i] = el; }} rotation={[Math.PI / 2 + i * 0.45, 0, 0]} position={[0, app.h * 0.5, 0]}>
-          <torusGeometry args={[1.0 + i * 0.25, 0.02, 10, 80]} />
+          <torusGeometry args={[1.0 + i * 0.25, 0.02, 6, 32]} />
           <meshBasicMaterial color={col} transparent opacity={0.3} />
         </mesh>
       ))}

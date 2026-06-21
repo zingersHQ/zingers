@@ -131,7 +131,7 @@ export function Terrain({ biome }: { biome: BiomeConfig }) {
 
   return (
     <RigidBody type="fixed" colliders="trimesh">
-      <mesh geometry={geo} receiveShadow castShadow>
+      <mesh geometry={geo} receiveShadow>
         <meshStandardMaterial vertexColors metalness={biome.terrain.metalness} roughness={biome.terrain.roughness} envMapIntensity={biome.daylight ? 0.04 : 0.5} flatShading />
       </mesh>
     </RigidBody>
@@ -182,11 +182,11 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
 
   return (
     <>
-      <instancedMesh key={`r${biome.id}`} args={[undefined, undefined, Math.max(1, rocks.length)]} castShadow receiveShadow ref={(im) => applyMatrices(im, rocks)}>
+      <instancedMesh key={`r${biome.id}`} args={[undefined, undefined, Math.max(1, rocks.length)]} receiveShadow ref={(im) => applyMatrices(im, rocks)}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial color={biome.scatter.rock} roughness={0.9} metalness={0.1} flatShading />
       </instancedMesh>
-      <instancedMesh key={`c${biome.id}`} args={[undefined, undefined, Math.max(1, crystals.length)]} castShadow ref={(im) => applyMatrices(im, crystals)}>
+      <instancedMesh key={`c${biome.id}`} args={[undefined, undefined, Math.max(1, crystals.length)]} ref={(im) => applyMatrices(im, crystals)}>
         <octahedronGeometry args={[0.5, 0]} />
         <meshStandardMaterial color={biome.scatter.crystal} emissive={biome.scatter.crystalEmissive} emissiveIntensity={biome.scatter.crystalEmissiveIntensity} roughness={0.3} metalness={0.4} />
       </instancedMesh>

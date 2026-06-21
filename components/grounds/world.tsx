@@ -335,10 +335,10 @@ export default function World({
   return (
     <>
     <Canvas
-      shadows="percentage"
+      shadows={{ type: THREE.PCFSoftShadowMap }}
       camera={{ position: [0, 8, 18], fov: 52, near: 0.1, far: 600 }}
-      dpr={[1, 2]}
-      gl={{ antialias: true }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = biome.exposure;
@@ -375,13 +375,13 @@ export default function World({
         intensity={biome.lights.sunInt}
         color={biome.lights.sun}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
-        shadow-camera-far={200}
-        shadow-camera-left={-60}
-        shadow-camera-right={60}
-        shadow-camera-top={60}
-        shadow-camera-bottom={-60}
+        shadow-camera-far={160}
+        shadow-camera-left={-44}
+        shadow-camera-right={44}
+        shadow-camera-top={44}
+        shadow-camera-bottom={-44}
         shadow-bias={-0.0004}
       />
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
@@ -981,6 +981,10 @@ function KeeperFigure({
   const ringRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
   const phase = useMemo(() => Math.random() * 6.28, []);
+  // distance-cull the Keeper name plate (same rationale as the ladder agents)
+  const [labelOn, setLabelOn] = useState(true);
+  const labelShown = useRef(true);
+  const lodPos = useRef(new THREE.Vector3());
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
@@ -988,6 +992,15 @@ function KeeperFigure({
     if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.7 + phase) * 0.07);
     if (ringRef.current) ringRef.current.rotation.z += 0.01;
     if (beaconRef.current) (beaconRef.current.material as THREE.MeshBasicMaterial).opacity = 0.06 + Math.sin(t * 1.4) * 0.02;
+    if (bobRef.current) {
+      bobRef.current.getWorldPosition(lodPos.current);
+      const d2 = lodPos.current.distanceToSquared(state.camera.position);
+      const want = labelShown.current ? d2 < 72 * 72 : d2 < 62 * 62;
+      if (want !== labelShown.current) {
+        labelShown.current = want;
+        setLabelOn(want);
+      }
+    }
   });
 
   const auraR = top ? 1.7 : 1.35;
@@ -1016,21 +1029,23 @@ function KeeperFigure({
         </mesh>
 
         <mesh ref={auraRef} position={[0, 0.9, 0]}>
-          <sphereGeometry args={[auraR, 20, 20]} />
+          <sphereGeometry args={[auraR, 16, 12]} />
           <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
         </mesh>
       </group>
 
       <pointLight position={[0, 1.6, 0]} intensity={top ? 32 : 22} color={g.color} distance={13} />
 
-      <Html position={[0, 3.0, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>{top ? "★ KEEPER · BOSS" : "KEEPER"}</div>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
-          <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
-        </div>
-      </Html>
+      {labelOn && (
+        <Html position={[0, 3.0, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>{top ? "★ KEEPER · BOSS" : "KEEPER"}</div>
+            <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
+            <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
+            <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
+          </div>
+        </Html>
+      )}
     </>
   );
 }
@@ -1177,7 +1192,7 @@ function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
         const topY = n.pos[1] + n.size[1] / 2;
         return (
           <RigidBody key={i} type="fixed" colliders="cuboid">
-            <mesh position={n.pos} castShadow receiveShadow>
+            <mesh position={n.pos} receiveShadow>
               <boxGeometry args={n.size} />
               <meshStandardMaterial color={color} emissive={color} emissiveIntensity={top ? 0.6 : cp ? 0.5 : 0.32} metalness={0.4} roughness={0.5} />
             </mesh>
@@ -1224,6 +1239,11 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
   const ringRef = useRef<THREE.Mesh>(null);
   const beamRef = useRef<THREE.Mesh>(null);
   const rot = useMemo(() => Math.atan2(-position[0], -position[2]), [position]);
+  // Distance-cull the floating name plate: drei <Html> recomputes a CSS matrix
+  // every frame, and a populated Tower can hold dozens. Past reading range we
+  // unmount the DOM node entirely (hysteresis so it doesn't thrash on the edge).
+  const [labelOn, setLabelOn] = useState(true);
+  const labelShown = useRef(true);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
@@ -1232,6 +1252,15 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
       ringRef.current.scale.set(sc, sc, sc);
     }
     if (beamRef.current) beamRef.current.rotation.y += 0.01;
+    const dx = state.camera.position.x - position[0];
+    const dy = state.camera.position.y - position[1];
+    const dz = state.camera.position.z - position[2];
+    const d2 = dx * dx + dy * dy + dz * dz;
+    const want = labelShown.current ? d2 < 56 * 56 : d2 < 48 * 48;
+    if (want !== labelShown.current) {
+      labelShown.current = want;
+      setLabelOn(want);
+    }
   });
 
   return (
@@ -1266,18 +1295,20 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
         </mesh>
       )}
 
-      <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
-            {agent.name}
-            {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
+      {labelOn && (
+        <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
+            <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
+              {agent.name}
+              {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
+            </div>
+            <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <vis.badge size={11} strokeWidth={2.2} /> {vis.label} · SL {skillLevel(champ)}
+            </div>
           </div>
-          <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <vis.badge size={11} strokeWidth={2.2} /> {vis.label} · SL {skillLevel(champ)}
-          </div>
-        </div>
-      </Html>
+        </Html>
+      )}
     </group>
   );
 }
@@ -1579,6 +1610,12 @@ function Handler({
   const camAnchor = useRef<THREE.Group>(null);
   const heading = useRef(Math.PI);
   const ground = useRef(0);
+  // spawn settle guard: pin the capsule at standing height until the floor
+  // sensor confirms the ground collider is actually under us (a cold-load race
+  // where the body spawns before the terrain/plaza collider is ready was letting
+  // it free-fall and flash "under the ground" on refresh).
+  const settled = useRef(false);
+  const spawnAt = useRef(0);
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
   const jumps = useRef(0);
@@ -1606,6 +1643,9 @@ function Handler({
   const altAccum = useRef(0);
   const altLast = useRef(-999);
   const poseAccum = useRef(0);
+  // scratch vectors reused each frame so the movement loop allocates nothing
+  const fwdV = useRef(new THREE.Vector3());
+  const rightV = useRef(new THREE.Vector3());
   const { camera } = useThree();
 
   // expose a fast-travel hook: drop the Handler onto a district (used by the
@@ -1704,10 +1744,10 @@ function Handler({
     }
 
     const hp = handlerPos.current;
-    const fwd = new THREE.Vector3(hp.x - camera.position.x, 0, hp.z - camera.position.z);
+    const fwd = fwdV.current.set(hp.x - camera.position.x, 0, hp.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
     fwd.normalize();
-    const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    const right = rightV.current.set(-fwd.z, 0, fwd.x);
     // gather input as analog axes (ax = strafe, az = forward) from keys + touch stick
     let ax = 0, az = 0;
     let touchSprint = false;
@@ -1739,6 +1779,26 @@ function Handler({
     const floorY = terrainHeight(t.x, t.z, shape);
     const restY = floorY + 1.0; // capsule half-height (0.55) + radius (0.45)
     const sensorGround = ground.current > 0;
+
+    // ── spawn settle guard ──
+    // Hold the capsule at standing height until the ground sensor fires (collider
+    // confirmed beneath us). Without this, on some refreshes the body spawns a
+    // frame or two before the plaza/terrain collider mounts, free-falls, and the
+    // heightfield safety net only catches it once fully submerged — a visible
+    // "spawned under the floor" flash. Bails out after 1.2s so a missed sensor
+    // can never pin the player forever.
+    if (!settled.current) {
+      if (spawnAt.current === 0) spawnAt.current = performance.now();
+      if (sensorGround) {
+        settled.current = true;
+      } else if (performance.now() - spawnAt.current < 1200) {
+        rb.setTranslation({ x: t.x, y: restY, z: t.z }, true);
+        rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        return;
+      } else {
+        settled.current = true;
+      }
+    }
     // height fallback only before jetpack deploy — while flying it flickers over
     // hills and was resetting jumps mid-air, yanking between thrust and gravity
     const grounded = sensorGround || (jumps.current <= FLY_TRIGGER && t.y <= restY + 0.2);
@@ -2085,7 +2145,13 @@ function Handler({
         ref={body}
         type="dynamic"
         colliders={false}
-        position={[SPAWN[0], 2.5, SPAWN[2]]}
+        // Spawn the capsule already resting on the ground (centre = floor + foot
+        // offset, +0.1 clearance) instead of dropping it in from a fixed height.
+        // The old 2.5 free-fall could land mid-air on the reveal — or punch
+        // through before the terrain collider was ready — and read as spawning
+        // under the floor. `terrainHeight` is 0 across the flat plaza, so this is
+        // the standing height in every world.
+        position={[SPAWN[0], terrainHeight(SPAWN[0], SPAWN[2], shape) + 1.1, SPAWN[2]]}
         enabledRotations={[false, false, false]}
         canSleep={false}
         ccd
@@ -2172,17 +2238,36 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
       lastInput.current = performance.now();
     };
     const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(120, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
+    // Q — snap the camera back behind the character (classic third-person
+    // recenter). Reuses the takeoff/landing sweep so it eases in cleanly: swings
+    // the lens directly behind the player, resets to the over-the-shoulder pitch
+    // + default distance, and punches focus in for a beat.
+    const isTyping = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "KeyQ" || e.repeat || isTyping(e.target)) return;
+      recenter.current = 0.7;
+      recenterPitch.current = 0.34;
+      dist.current = 12;
+      if (camCue.current) camCue.current.zoom = Math.min(1.2, camCue.current.zoom + 0.4);
+    };
     el.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointermove", onMove);
     el.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKey);
     return () => {
       el.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointermove", onMove);
       el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
     };
-  }, [gl]);
+  }, [gl, camCue]);
 
   useFrame((_, dtRaw) => {
     const dt = Math.min(0.05, dtRaw);

@@ -87,9 +87,9 @@ function Seal({ daylight }: { daylight: boolean }) {
 }
 
 // ── The five Force banners ring the seal; the pledged one stands tall & lit ──
-// Pushed well clear of the 5.2-radius seal so the houses stand apart from each
-// other and from the door, with room to walk up to one and swear allegiance.
-export const BANNER_R = 12.5;
+// Pulled in toward the centre so the allegiance flags frame the seal closely,
+// while still clear of the 5.2-radius door with room to walk up and swear.
+export const BANNER_R = 10.5;
 
 export interface BannerSpot {
   type: CreatureType;
