@@ -234,7 +234,7 @@ export default function World({
       instead of the playable region (no Tower / Keepers / training / caches). */
   spectator?: boolean;
 }) {
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -1545,6 +1545,7 @@ interface CamCue {
   flying: boolean;     // jetpack hover — camera eases off sway / zoom dolly
   climb: number;       // vertical velocity while flying (+up / −down) → camera tilt
   superrun: boolean;   // sustained sprint past SUPERRUN_DELAY — double speed + smoke trail
+  headingSteer: boolean; // movement locked to body heading — suppress camera follow/sway
 }
 
 // on-screen touch control channels (mobile)
@@ -1910,6 +1911,7 @@ function Handler({
   const superrunArmed = useRef(false);
   const superrun = useRef(false);
   const wasSuperrun = useRef(false);
+  const wasHeadingSteer = useRef(false);
   const runBurst = useRef(0);
   const runEmit = useRef(0);
   // X taps the pack off (drop into a normal gravity fall); idleFly counts seconds
@@ -2049,7 +2051,7 @@ function Handler({
     const fwd = fwdV.current.set(hp.x - camera.position.x, 0, hp.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
     fwd.normalize();
-    const right = rightV.current.set(-fwd.z, 0, fwd.x);
+    const right = rightV.current.set(fwd.z, 0, -fwd.x);
     // gather input as analog axes (ax = strafe, az = forward) from keys + touch stick
     let ax = 0, az = 0;
     let touchSprint = false;
@@ -2167,19 +2169,24 @@ function Handler({
     const superrunStart = superActive && !wasSuperrun.current;
     wasSuperrun.current = superActive;
 
-    // Superrun locks to the character heading so camera sway / auto-follow can't
-    // feed back into camera-relative steering and snake the path side to side.
+    // Lock movement to body heading when going straight on the ground (W only) or
+    // superrunning — camera sway / auto-follow can't pull camera-relative steer
+    // into a side-to-side weave.
+    const forwardOnly = grounded && !flyingMode && len > 0 && Math.abs(ax) < 0.15;
+    const headingSteer = superActive || forwardOnly;
     let moveX = mx;
     let moveZ = mz;
     let moveLen = len;
-    if (superActive && len > 0) {
-      if (superrunStart) heading.current = Math.atan2(mx, mz);
+    if (headingSteer && len > 0) {
+      const steerStart = superrunStart || (forwardOnly && !wasHeadingSteer.current);
+      if (steerStart) heading.current = Math.atan2(mx, mz);
       const hf = Math.sin(heading.current);
       const hb = Math.cos(heading.current);
       moveX = hf * az + hb * ax;
       moveZ = hb * az - hf * ax;
       moveLen = Math.hypot(moveX, moveZ);
     }
+    wasHeadingSteer.current = headingSteer;
 
     if (moveLen > 0) {
       const sp = superActive ? SUPERRUN : sprint ? RUN : WALK;
@@ -2196,7 +2203,7 @@ function Handler({
       const want = Math.atan2(moveX, moveZ);
       let d = want - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
-      const turn = superActive ? TURN_GROUND * 0.55 : grounded ? TURN_GROUND : TURN_AIR;
+      const turn = headingSteer ? TURN_GROUND * 0.55 : grounded ? TURN_GROUND : TURN_AIR;
       heading.current += d * (1 - Math.exp(-turn * dt));
     } else {
       // stickier stop on the ground, a gentle brake while flying, long glide mid-jump
@@ -2346,6 +2353,7 @@ function Handler({
       // sink → look down). Zero on the ground so the tilt only applies aloft.
       camCue.current.climb = flyingMode ? lv.y : 0;
       camCue.current.superrun = superActive;
+      camCue.current.headingSteer = headingSteer;
       // `az` is exactly the move's forward component (fwd ⟂ right): negative means
       // we're heading back toward the camera. Flag it so the auto-follow stands
       // down — chasing "behind" a player who's facing the camera spins endlessly.
@@ -2781,7 +2789,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
         pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
       }
       pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
-    } else if (cue && moving && !cue.reverse && !cue.superrun && performance.now() - lastInput.current > 900) {
+    } else if (cue && moving && !cue.reverse && !cue.headingSteer && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
@@ -2791,10 +2799,10 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
     const flyZoom = flying ? 0 : zoom;
     const eff = Math.max(5, dist.current + followDist.current - flyZoom * 6);
 
-    const superrunCam = cue?.superrun ?? false;
-    const ts = performance.now() * 0.001;
-    const swayX = flying || superrunCam ? 0 : Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
-    const swayY = flying || superrunCam ? 0 : Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
+    // Sway reads nice in a cutscene but shifts the camera-relative steer basis —
+    // keep the rig steady on foot so W walks in a straight line.
+    const swayX = 0;
+    const swayY = 0;
 
     let tx = hp.x, ty = hp.y + 0.4 + flyZoom * 0.3, tz = hp.z;
     let cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
