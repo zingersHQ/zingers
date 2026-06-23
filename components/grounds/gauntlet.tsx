@@ -29,7 +29,7 @@ const EMBER = "#ff7a2a";
 
 function modalShell(children: React.ReactNode, ac: string, confettiAccent?: string) {
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
       {confettiAccent && <Confetti accent={confettiAccent} count={70} originTop="32%" />}
       <div className="panel pop" style={{ ["--ac" as string]: ac, position: "relative", width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: ac }}>
         {children}

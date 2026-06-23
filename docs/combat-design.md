@@ -72,9 +72,10 @@ Advantage ×1.25, neutral ×1.0, disadvantage ×0.8.
 
 ---
 
-## 5. Roster (6 starters)
+## 5. Roster (8 starters)
 
 Stat budget = 300 each (balanced). Each has 4 moves; movesets carry **setup → payoff** combos so play has texture.
+Two minds share each of **LOGIC**, **RHETORIC**, and **CHAOS**; **CREATIVITY** and **COMPOSURE** have one each.
 
 ### AXIOM: Logician (LOGIC)
 *Cold, precise, faintly condescending. Treats every argument as a proof to close.*
@@ -141,6 +142,28 @@ Stat budget = 300 each (balanced). Each has 4 moves; movesets carry **setup → 
 | Burn | CHA | 22 | Clean damage |
 | Double Down | RHE | 14 | + self **Hyped** |
 | Inferno | CHA | 26 | +30% if opponent is **Tilted** |
+
+### PARADOX: Contrarian (LOGIC)
+*A Socratic gadfly. Dismantles arguments by hunting contradictions and false premises — not by closing proofs.*
+`LOG 88 · CMP 58 · CRE 52 · CHA 48 · RHE 54`
+
+| Move | Stat | Base | Effect |
+|---|---|---|---|
+| Premise Break | LOG | 18 | + applies **Exposed** |
+| Socratic | LOG | 14 | + applies **Tilted** |
+| Concede Pivot | CMP | 8 | Self **Guard** (+10) + heal 6 Resolve |
+| Liar Paradox | LOG | 27 | Finisher, only if opponent is **Tilted** or **Exposed** |
+
+### WIT: Blade (RHETORIC)
+*A razor-tongued debater. Wins on timing and surgical comebacks, not crowd volume.*
+`RHE 86 · LOG 58 · CMP 56 · CHA 52 · CRE 48`
+
+| Move | Stat | Base | Effect |
+|---|---|---|---|
+| Riposte | RHE | 20 | Clean damage |
+| Setup | RHE | 12 | + self **Hyped** |
+| Needle | RHE | 16 | + applies **Tilted** |
+| Kill Shot | RHE | 24 | +25% if opponent is **Tilted** |
 
 ---
 

@@ -8,6 +8,7 @@ import type { CreatureType } from "@/lib/types";
 import { BET_PAYOUT_MULT, GROUNDS_WIN_REWARD, HOME_WIN_BONUS, HOME_WAR_WEIGHT } from "@/lib/economy";
 import { getStore, type FeedEntry, type LadderChampion } from "./store";
 import { creditWarWin } from "./war";
+import { track } from "./track";
 import { safeHttpAgentEndpoint } from "./url-safety";
 
 export const BASE_RATING = 1000;
@@ -27,16 +28,18 @@ function sideOf(c: LadderChampion): SideConfig {
   return cfg;
 }
 
-// Seed the six base creatures as permanent house champions so the ladder is
-// never empty and there are always opponents for the cron league.
+// Seed the First Minds as permanent house champions so the ladder is never empty
+// and there are always opponents for the cron league. Idempotent per roster key —
+// new minds added to ROSTER are backfilled on the next ensureSeeded() call.
 export async function ensureSeeded(): Promise<void> {
   const store = getStore();
-  if ((await store.getChampion("house-AXIOM"))) return;
   const entries = Object.entries(ROSTER);
   await Promise.all(
-    entries.map(([key, c], i) =>
-      store.putChampion({
-        id: `house-${key}`,
+    entries.map(async ([key, c], i) => {
+      const id = `house-${key}`;
+      if (await store.getChampion(id)) return;
+      await store.putChampion({
+        id,
         key,
         name: c.name,
         handle: "HOUSE",
@@ -50,8 +53,8 @@ export async function ensureSeeded(): Promise<void> {
         house: true,
         ownerToken: "",
         createdAt: Date.now(),
-      }),
-    ),
+      });
+    }),
   );
 }
 
@@ -95,6 +98,7 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
   const store = getStore();
   await store.putChampion(champ);
   await store.addOwned(champ.ownerToken, champ.id);
+  await track("claim", champ.ownerToken);
   return champ;
 }
 
@@ -233,6 +237,13 @@ export async function recordGroundsBout(args: {
     bet = { stake: pending.stake, won: betWon, payout };
   }
 
+  // Behaviour analytics (best-effort, never blocks the result): a player bout
+  // happened, who won, Crowns earned, and any winning wager.
+  await track("bout", args.ownerToken);
+  if (args.iWon) await track("bout_win");
+  if (crowns > 0) await track("earn", undefined, crowns);
+  if (bet?.won) await track("bet_win", undefined, 1);
+
   return { mine: mine.rating, opp: opp.rating, delta, crowns, balance, bet, home };
 }
 
@@ -268,6 +279,7 @@ export async function trainChampion(input: TrainInput): Promise<LadderChampion |
         : { provider: "grok" };
   }
   await store.putChampion(champ);
+  await track("train", champ.ownerToken);
   return champ;
 }
 

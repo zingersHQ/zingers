@@ -6,6 +6,7 @@
 // engine-authoritative path (lib/server/ladder.ts) once the outcome is known.
 import { getStore } from "@/lib/server/store";
 import { rateLimit } from "@/lib/server/rate-limit";
+import { track } from "@/lib/server/track";
 import { isLegalBet, walletDelta, type WalletEventType } from "@/lib/economy";
 
 export const runtime = "nodejs";
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
       return Response.json({ ok: false, balance: r.balance });
     }
     await store.setPendingBet(token, { stake, side, nonce, ts: Date.now() });
+    await track("bet", token);
     return Response.json({ ok: true, balance: r.balance });
   }
 
@@ -63,5 +65,15 @@ export async function POST(req: Request) {
   if (delta === null) return Response.json({ error: "unknown event" }, { status: 400 });
 
   const r = await store.adjustWallet(token, delta);
+
+  // Behaviour analytics (best-effort): economy flow + the action behind it.
+  if (r.ok) {
+    if (delta < 0) await track("spend", token, -delta);
+    else if (delta > 0) await track("earn", token, delta);
+    if (type === "train") await track("train", token);
+    else if (type === "cache") await track("node", token);
+    else if (type === "goal") await track("goal", token);
+  }
+
   return Response.json({ ok: r.ok, balance: r.balance });
 }

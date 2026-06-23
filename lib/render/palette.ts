@@ -13,10 +13,34 @@
 // region + material role.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { CreatureType } from "@/lib/types";
+
 export type Region = "head" | "torso" | "shoulder" | "arm" | "hand" | "thigh" | "shin" | "foot";
 export type Side = "L" | "R" | "";
 export type MatRole = "main" | "plate" | "dark";
 type Slot = "primary" | "secondary" | "accent" | "trim" | "dark";
+
+// ── Force colour identity ─────────────────────────────────────────────────────
+// Each Force owns a two-tone pair: a PRIMARY (the canon Force hue, dominates the
+// body) and a curated SECONDARY companion. Regular minds are restrained to this
+// pair so a Force reads as ONE recognisable scheme at a glance; Keepers ignore it
+// and get a richer, patterned, multi-colour treatment so bosses stand apart.
+// Note the companions deliberately split the warm Chorus/Spark twins: Chorus
+// leans burnt-orange, Spark leans hot-pink.
+export interface ForceColors {
+  primary: string;
+  secondary: string;
+}
+export const FORCE_COLORS: Record<CreatureType, ForceColors> = {
+  LOGIC: { primary: "#4aa3ff", secondary: "#bfe6ff" }, // force blue + ice
+  CHAOS: { primary: "#ff4ad1", secondary: "#8a3bff" }, // force magenta + violet
+  COMPOSURE: { primary: "#36d39a", secondary: "#0f6f63" }, // force jade + deep teal
+  RHETORIC: { primary: "#f0a93a", secondary: "#b5481f" }, // force amber + burnt sienna
+  CREATIVITY: { primary: "#f5d020", secondary: "#ff5db0" }, // force gold + hot pink
+};
+export function forceColors(type: CreatureType): ForceColors {
+  return FORCE_COLORS[type] ?? FORCE_COLORS.LOGIC;
+}
 
 // ── colour math (dependency-free; mirrors the helpers in biomes.ts) ───────────
 function hexToRgb(hex: string): [number, number, number] {
@@ -118,6 +142,12 @@ const SCHEMES: Scheme[] = [
   },
 ];
 
+// Regular minds draw only from the CALM schemes so a Force reads as a clean
+// two-tone family. Keepers get the full set (incl. the louder harlequin/panel/
+// racer patterns) for a richer, unmistakably-boss look.
+const CALM_SCHEME_IDS = new Set(["suit", "helm", "twoTone"]);
+const CALM_SCHEMES = SCHEMES.filter((s) => CALM_SCHEME_IDS.has(s.id));
+
 export interface BodyPalette {
   scheme: string;
   primary: string;
@@ -130,34 +160,60 @@ export interface BodyPalette {
   colorFor: (region: Region, side: Side, role: MatRole) => string;
 }
 
-/** Build a coherent individual palette from a Force anchor colour + a stable seed. */
-export function bodyPalette(forceHex: string, seed: number): BodyPalette {
+export interface PaletteOpts {
+  /** the Force's curated companion colour (minds are restrained to this) */
+  secondary?: string;
+  /** keepers: ignore the restrained pair, use richer patterns + multi-colour */
+  rich?: boolean;
+}
+
+const clampS = (v: number) => Math.min(0.95, Math.max(0, v));
+const clampL = (v: number) => Math.min(1, Math.max(0, v));
+
+/** Build a coherent individual palette from a Force anchor colour + a stable
+ *  seed. With a curated `secondary` and `rich:false` the result is a restrained
+ *  two-tone Force scheme; with `rich:true` (Keepers) it roams to a louder,
+ *  patterned, multi-colour look. */
+export function bodyPalette(forceHex: string, seed: number, opts: PaletteOpts = {}): BodyPalette {
+  const { secondary: companion, rich = false } = opts;
   const rnd = mulberry32(seed || 1);
-  const [bh, bs, bl] = hexToHsl(forceHex);
+  const [bh, bs] = hexToHsl(forceHex);
 
   // primary: the Force hue, lightly individualised
-  const primary = hslToHex(bh + (rnd() - 0.5) * 0.05, Math.min(0.95, bs * (0.85 + rnd() * 0.25)), 0.46 + rnd() * 0.12);
+  const primary = hslToHex(bh + (rnd() - 0.5) * 0.05, clampS(bs * (0.85 + rnd() * 0.25)), 0.46 + rnd() * 0.12);
 
-  // secondary: a true NEAR-TONE of the Force colour — essentially the same hue,
-  // but a clearly different SHADE (lighter or darker, slightly de/­saturated).
-  // This is what keeps a LOGIC mind unmistakably blue while still giving it
-  // two-tone panelling, instead of drifting into a neighbouring Force's colour.
-  const dir = rnd() > 0.5 ? 1 : -1;
-  const lighter = rnd() > 0.5;
-  const secL = lighter ? 0.6 + rnd() * 0.16 : 0.24 + rnd() * 0.1;
-  const secondary = hslToHex(bh + dir * 0.025, Math.min(0.95, bs * (0.6 + rnd() * 0.35)), secL);
+  // secondary: minds use the CURATED companion (lightly individualised) so the
+  // Force reads as one fixed two-tone family; keepers (or anything without a
+  // companion) roam to a free near-tone for variety.
+  let secondary: string;
+  if (companion && !rich) {
+    const [sh, ss, sl] = hexToHsl(companion);
+    secondary = hslToHex(sh + (rnd() - 0.5) * 0.03, clampS(ss * (0.85 + rnd() * 0.2)), clampL(sl + (rnd() - 0.5) * 0.1));
+  } else {
+    const dir = rnd() > 0.5 ? 1 : -1;
+    const lighter = rnd() > 0.5;
+    const secL = lighter ? 0.6 + rnd() * 0.16 : 0.24 + rnd() * 0.1;
+    const hueSpread = rich ? 0.08 : 0.025; // keepers roam further → more variety
+    secondary = hslToHex(bh + dir * hueSpread, clampS(bs * (0.6 + rnd() * 0.35)), secL);
+  }
 
-  // accent: a small-area pop on extremities/plates — a personal marking. Kept to
-  // gold (the canon restraint colour) or the Force's complement so it always
-  // reads as a deliberate accent and never drifts into a neighbouring Force's
-  // hue (an analogous shift here is what made blue minds look green).
-  const accent = rnd() < 0.65 ? hslToHex(0.13, 0.82 + rnd() * 0.13, 0.5 + rnd() * 0.12) : hslToHex(bh + 0.5, 0.7, 0.58 + rnd() * 0.1);
+  // accent: keepers get the canon gold (or a hot in-family) pop; minds stay
+  // inside their two-colour identity — a brighter tint of the companion — so they
+  // never sprout a third hue and muddy the Force read.
+  let accent: string;
+  if (rich) {
+    accent = rnd() < 0.6 ? hslToHex(0.13, 0.82 + rnd() * 0.13, 0.5 + rnd() * 0.12) : hslToHex(bh + (rnd() - 0.5) * 0.04, clampS(bs + 0.15), 0.62 + rnd() * 0.12);
+  } else {
+    const [ah, as0, al] = hexToHsl(companion || secondary);
+    accent = hslToHex(ah, clampS(as0 + 0.12), Math.min(0.74, al + 0.18));
+  }
 
   const trim = hslToHex(bh, 0.12 + rnd() * 0.15, 0.66 + rnd() * 0.12); // light metallic, faintly tinted
   const dark = hslToHex(bh, 0.35 + rnd() * 0.2, 0.1 + rnd() * 0.05); // tinted near-black joints
-  const glow = hslToHex(bh + (rnd() - 0.5) * 0.04, Math.min(1, bs + 0.1), 0.55);
+  const glow = hslToHex(bh + (rnd() - 0.5) * 0.04, clampS(bs + 0.1), 0.55);
 
-  const scheme = SCHEMES[Math.floor(rnd() * SCHEMES.length)];
+  const pool = rich ? SCHEMES : CALM_SCHEMES;
+  const scheme = pool[Math.floor(rnd() * pool.length)];
   const slot: Record<Slot, string> = { primary, secondary, accent, trim, dark };
 
   return {

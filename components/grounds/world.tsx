@@ -10,17 +10,20 @@ import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank, skillLevel } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
-import { Terrain, Scatter, terrainHeight, shapeOf, PLAZA_R, TERRAIN_HALF, type TerrainShape } from "./terrain";
+import { keeperKindForName } from "./keeper-regalia";
+import { Terrain, Scatter, terrainHeight, shapeOf, spawnKnollFor, riftDir, riftAlong, riftDepthEnd, hasRift, PLAZA_R, TERRAIN_HALF, type TerrainShape, type SpawnKnoll } from "./terrain";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
-import { ConcordScene, concordClanSpots, concordVenueSpots, type ConcordVenueId } from "./concord";
+import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
+import { type GalleryFocus } from "./gallery";
+import { Amphitheatre, DAILY_HERALD_POS } from "./amphitheatre";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import type { GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
-import { jumpBeep, setJet, stopJet } from "@/lib/sfx";
+import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
 
 export interface GroundChampion {
   key: string;
@@ -77,7 +80,7 @@ const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: stri
 ];
 const PODIUM_A: [number, number, number] = [ARENA[0] - 2.6, 0, 0];
 const PODIUM_B: [number, number, number] = [ARENA[0] + 2.6, 0, 0];
-const SPAWN: [number, number, number] = [0, 0, 13];
+// The Reader spawns on the crest of the per-world spawn knoll (see spawnKnollFor).
 
 const keys: Record<string, boolean> = {};
 
@@ -191,6 +194,7 @@ export default function World({
   gates = [],
   pledged = null,
   choosingClan = false,
+  clanPreview = null,
   tier = 0,
   featured = false,
   featuredWorld = null,
@@ -199,6 +203,7 @@ export default function World({
   travelRef,
   touchBottomInset = 0,
   showcase = false,
+  spectator = false,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -211,8 +216,10 @@ export default function World({
   goals?: WorldGoal[];
   gates?: GateDef[];
   pledged?: CreatureType | null;
-  /** True while the Clan sheet is open — bows the Concord flags to half-mast. */
+  /** True while the Clan sheet is open — lowers every flag except the preview. */
   choosingClan?: boolean;
+  /** Clan highlighted in the open picker — its flag stays raised. */
+  clanPreview?: CreatureType | null;
   tier?: number;
   featured?: boolean;
   featuredWorld?: string | null;
@@ -223,9 +230,14 @@ export default function World({
   /** Passive postcard mode: no player avatar, no input — an auto-orbit camera
       drifts over the region. Used for the docs/org region figures. */
   showcase?: boolean;
+  /** The Amphitheatre: a spectator venue. Renders the league arena + standings
+      instead of the playable region (no Tower / Keepers / training / caches). */
+  spectator?: boolean;
 }) {
-  const handlerPos = useRef(new THREE.Vector3(SPAWN[0], 0, SPAWN[2]));
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false });
+  // the Scrying Gallery flags when its bout is live + where the ring sits, so the
+  // camera can ease onto the fight while the player stands close (released on leave)
+  const galleryFocus = useRef<GalleryFocus | null>(null);
   // touch input channels, mutated by the on-screen controls and read each frame
   const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
   const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
@@ -249,6 +261,16 @@ export default function World({
   // the SHAPE of the land + the per-world scene composition. Switching world
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
+  const knoll = useMemo(() => spawnKnollFor(biome), [biome]);
+  const spawnCam = useMemo(() => {
+    if (hasRift(shape)) {
+      const { dirx, dirz } = riftDir(shape);
+      // sit further out behind spawn, looking inward toward the plaza
+      return [knoll.x + dirx * 14, knoll.peak + 7, knoll.z + dirz * 14] as [number, number, number];
+    }
+    return [knoll.x, knoll.peak + 7, knoll.z + 14] as [number, number, number];
+  }, [shape, knoll]);
+  const handlerPos = useRef(new THREE.Vector3(knoll.x, 0, knoll.z));
   const sc = biome.scene;
   // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
   // of an arena + tower + spire. Driven by the presence of gates from the world.
@@ -283,23 +305,24 @@ export default function World({
   );
   // The Concord venues (Daily Tribunal, Scrying Gallery) — same spots the
   // ConcordScene draws, so the shrine you stand under is the game you open.
-  const venueTargets = useMemo(
-    () =>
-      isHub
-        ? concordVenueSpots().map((v) => ({
-            venue: v.venue,
-            name: v.venue === "daily" ? "Today's Case" : "The Live League",
-            pos: new THREE.Vector3(v.x, terrainHeight(v.x, v.z, shape), v.z),
-          }))
-        : [],
-    [isHub, shape],
+  // The Concord no longer holds meta-game shrines; the only walk-up "venue" left
+  // is the Daily herald, relocated into the Amphitheatre as today's marquee case.
+  const venueTargets = useMemo<{ venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[]>(
+    () => {
+      if (spectator) {
+        const [hx, , hz] = DAILY_HERALD_POS;
+        return [{ venue: "daily", name: "Today's Marquee", pos: new THREE.Vector3(hx, terrainHeight(hx, hz, shape) + 1, hz) }];
+      }
+      return [];
+    },
+    [spectator, shape],
   );
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   // the Broker stands on flat ground on a free bearing (offset from the Tower),
   // an easy walk from spawn — a mind that deals in fragments.
   const brokerPad = useMemo<[number, number, number]>(() => {
     const a = sc.towerAngle + 2.4;
-    return [Math.cos(a) * 15, 0, Math.sin(a) * 15];
+    return [Math.cos(a) * 24, 0, Math.sin(a) * 24];
   }, [sc.towerAngle]);
   const day = useMemo(() => dayKey(), []);
   // split the ladder population: the weakest roam the open ground (walk-up
@@ -317,7 +340,7 @@ export default function World({
   const challengeTargets = useMemo(
     () =>
       perched
-        .filter((p) => p.agent.status === "awaiting")
+        .filter((p) => p.agent.status === "awaiting" && p.agent.key !== ownedKey)
         .map((p) => ({
           key: p.agent.key,
           name: p.agent.name,
@@ -325,12 +348,12 @@ export default function World({
           id: p.agent.id,
           pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]),
         })),
-    [perched],
+    [perched, ownedKey],
   );
   const groundTargets = useMemo(
     () =>
       roamers
-        .filter((p) => p.agent.status === "awaiting")
+        .filter((p) => p.agent.status === "awaiting" && p.agent.key !== ownedKey)
         .map((p) => ({
           key: p.agent.key,
           name: p.agent.name,
@@ -338,7 +361,7 @@ export default function World({
           id: p.agent.id,
           pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.0, p.pos[2]),
         })),
-    [roamers],
+    [roamers, ownedKey],
   );
   const nodeTargets = useMemo(
     () => nodes.map((n) => ({ id: n.id, kind: n.kind, crowns: n.crowns, fragments: n.fragments, flight: n.flight, pos: new THREE.Vector3(n.pos[0], n.pos[1], n.pos[2]) })),
@@ -353,7 +376,7 @@ export default function World({
     <>
     <Canvas
       shadows={{ type: THREE.PCFSoftShadowMap }}
-      camera={{ position: [0, 8, 18], fov: 52, near: 0.1, far: 600 }}
+      camera={{ position: spawnCam, fov: 52, near: 0.1, far: 600 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
@@ -402,7 +425,7 @@ export default function World({
         shadow-bias={-0.0004}
       />
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
-      {!isHub && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
+      {!isHub && !spectator && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
 
       <Suspense
         fallback={
@@ -420,12 +443,17 @@ export default function World({
 
           {/* The Concord (hub): a built settlement of gates + clan flags around the
               sealed Vault door. No arena/tower/spire/agents/caches. */}
-          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} />}
+          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />}
 
-          {/* A region: arena, tower climb, Keepers' spire, agents & caches. */}
-          {!isHub && (
+          {/* The Amphitheatre — a spectator venue: the autonomous league fights in
+              the centre of a built stone bowl and the ladder lives on the banners. */}
+          {spectator && !showcase && <Amphitheatre champions={champions} focus={galleryFocus} />}
+
+          {/* A playable region: arena, tower climb, Keepers' spire, agents & caches. */}
+          {!isHub && !spectator && (
             <>
               <PlazaSurround biome={biome} />
+              <SpawnPath shape={shape} color={biome.lights.arenaPoint} knoll={knoll} />
               <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
               <RiftFeature biome={biome} shape={shape} />
               {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
@@ -450,7 +478,7 @@ export default function World({
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
-            !isHub &&
+            !isHub && !spectator &&
             champions.map((c) => {
               const owned = c.key === ownedKey;
               const home = owned ? trainPad : roamHome(c.key, champions, sc.roam);
@@ -473,7 +501,7 @@ export default function World({
             })
           )}
 
-          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} venueTargets={venueTargets} shape={shape} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
+          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} spectator={spectator} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} venueTargets={venueTargets} shape={shape} spawnKnoll={knoll} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
         </Physics>
 
         {!glLost && (
@@ -489,7 +517,7 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} />
       )}
     </Canvas>
     {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
@@ -843,22 +871,29 @@ function PlazaFloor({ biome }: { biome: BiomeConfig }) {
   );
 }
 
+// Radius of the central combat space (the ring platform / the pit basin). Bumped
+// up so the arena reads as a proper coliseum floor, not a small dais. Keep the
+// biomes' roam `inner` keep-out at or above this so champions never stand in it.
+const ARENA_R = 8.6;
+
 function ArenaPlatform() {
   const tex = useMemo(() => arenaTexture(), []);
+  const R = ARENA_R;
+  const posts = 18;
   return (
     <group position={ARENA}>
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
-        <torusGeometry args={[6.5, 0.2, 16, 160]} />
+        <torusGeometry args={[R, 0.22, 16, 180]} />
         <meshStandardMaterial color="#f0a93a" emissive="#f0a93a" emissiveIntensity={2.6} metalness={0.3} roughness={0.4} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
-        <circleGeometry args={[6.5, 80]} />
+        <circleGeometry args={[R, 96]} />
         <meshStandardMaterial color="#16112a" emissive="#f0a93a" emissiveMap={tex} emissiveIntensity={1.15} metalness={0.45} roughness={0.5} envMapIntensity={0.9} />
       </mesh>
-      {Array.from({ length: 14 }).map((_, i) => {
-        const a = (i / 14) * Math.PI * 2;
+      {Array.from({ length: posts }).map((_, i) => {
+        const a = (i / posts) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.cos(a) * 6.5, 0.85, Math.sin(a) * 6.5]} castShadow>
+          <mesh key={i} position={[Math.cos(a) * R, 0.85, Math.sin(a) * R]} castShadow>
             <boxGeometry args={[0.16, 1.7, 0.16]} />
             <meshStandardMaterial color="#f0a93a" emissive="#f0a93a" emissiveIntensity={1.1} />
           </mesh>
@@ -899,7 +934,7 @@ function keeperSites(shape: TerrainShape, baseAngle: number): KeeperSite[] {
   return GUARDIAN_ROSTER.map((g, i) => {
     const steps = g.level + 1; // 2, 3, 4, 5, 6 in rank order
     const ang = baseAngle + i * ((Math.PI * 2) / GUARDIAN_ROSTER.length);
-    const rBase = 24 + i * 5; // each Keeper deeper into the wilds
+    const rBase = PLAZA_R + i * 8; // each Keeper deeper into the wilds (i=0 sits on the plaza rim)
     const dirx = Math.cos(ang);
     const dirz = Math.sin(ang);
     const bx = dirx * rBase;
@@ -1037,7 +1072,10 @@ function KeeperFigure({
       </mesh>
 
       <group ref={bobRef} position={[0, 0.5, 0]}>
-        <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0.1, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} />
+        {/* boss scale: each Keeper towers a little more than the last */}
+        <group position={[0, 0.1, 0]} scale={1.12 + g.level * 0.07}>
+          <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} keeper={keeperKindForName(g.name)} />
+        </group>
 
         {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
         <mesh rotation={[0, rot, 0]} position={back}>
@@ -1064,6 +1102,64 @@ function KeeperFigure({
         </Html>
       )}
     </>
+  );
+}
+
+// The approach trail: from the outer rift lip inward to claim the Depth, then
+// through the colosseum entrance to the arena.
+function SpawnPath({ shape, color, knoll }: { shape: TerrainShape; color: string; knoll: SpawnKnoll }) {
+  const studs = useMemo(() => {
+    const out: { pos: [number, number, number]; s: number }[] = [];
+    const ARENA_RIM = 9.2;
+    const STEP = 2.2;
+    const W = 1.4;
+
+    const pushStud = (x: number, z: number) => {
+      out.push({ pos: [x, terrainHeight(x, z, shape, knoll) + 0.06, z], s: 0.34 });
+    };
+
+    if (hasRift(shape)) {
+      const { dirx, dirz } = riftDir(shape);
+      const perpx = -dirz;
+      const perpz = dirx;
+      const spawnAlong = riftAlong(knoll.x, knoll.z, shape);
+      const [dx, , dz] = riftDepthEnd(shape, knoll);
+      const depthAlong = riftAlong(dx, dz, shape);
+
+      // inward from outer spawn → deepest point (claim the Depth)
+      for (let along = spawnAlong - STEP; along >= depthAlong; along -= STEP) {
+        for (const side of [-1, 1] as const) {
+          pushStud(dirx * along + perpx * side * W, dirz * along + perpz * side * W);
+        }
+      }
+      // inward from depth floor → arena rim (enter the colosseum)
+      for (let along = depthAlong - STEP; along >= ARENA_RIM; along -= STEP) {
+        const widen = along < PLAZA_R ? 1 + (PLAZA_R - along) * 0.06 : 1;
+        for (const side of [-1, 1] as const) {
+          pushStud(dirx * along + perpx * side * W * widen, dirz * along + perpz * side * W * widen);
+        }
+      }
+      return out;
+    }
+
+    // no rift — walk inward from the far +z edge to the arena
+    for (let z = knoll.z - STEP; z >= ARENA_RIM; z -= STEP) {
+      const widen = z > PLAZA_R ? 1 : 1 + (PLAZA_R - z) * 0.06;
+      for (const side of [-1, 1] as const) {
+        pushStud(side * W * widen, z);
+      }
+    }
+    return out;
+  }, [shape, knoll]);
+  return (
+    <group>
+      {studs.map((m, i) => (
+        <mesh key={i} position={m.pos} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[m.s, 20]} />
+          <meshBasicMaterial color={color} transparent opacity={0.85} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
@@ -1408,7 +1504,7 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   );
 }
 
-const WALK = 8.6, RUN = 15.2, JUMP = 10.4, AIR_JUMP = 9.6;
+const WALK = 8.6, RUN = 15.2, SUPERRUN = RUN * 2, SUPERRUN_DELAY = 3, JUMP = 10.4, AIR_JUMP = 9.6;
 // acceleration rates (per second) for dt-based, frame-rate-independent smoothing —
 // higher = snappier response to the stick. Ground is punchy; air is lighter; the
 // jetpack gives strong horizontal authority so you can steer your flight path.
@@ -1425,13 +1521,18 @@ const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate indepe
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
                            // into a uniform hover instead of a per-press sawtooth
-const FLY_FOOT = 1.25;     // ankle tuck (rad) while airborne (jetpack thrust, jump or
+const FLY_FOOT = 1.45;     // ankle tuck (rad) while airborne (jetpack thrust, jump or
                            // fall): toes hang straight down — body upright, just the feet
 // while suspended the whole lower body should dangle, not hold its planted stance:
 // the thighs ease slightly back toward vertical and the knees go soft so the legs
 // trail loosely under the hovering body (a relaxed "lifted off the ground" hang).
-const FLY_LEG_HANG = 0.22; // upper-leg relax (rad) — thighs swing toward a straight dangle
-const FLY_KNEE_BEND = 0.42; // soft knee flex (rad) so the shins hang loose, not stiff
+const FLY_LEG_HANG = 0.55; // upper-leg relax (rad) — thighs swing toward a straight dangle
+const FLY_KNEE_BEND = 0.75; // soft knee flex (rad) so the shins hang loose, not stiff
+
+// RobotExpressive bones are FootL/FootR (→ footl/footr); other rigs may use foot.l
+function legBone(bones: Record<string, THREE.Bone>, part: "foot" | "upperleg" | "lowerleg", side: "l" | "r") {
+  return bones[`${part}.${side}`] ?? bones[`${part}${side}`];
+}
 
 // shared channel from Handler → CameraController for action-cam cues +
 // the live movement state the smart-follow camera steers from
@@ -1442,6 +1543,8 @@ interface CamCue {
   moving: boolean;     // actively pressing movement keys this frame
   reverse: boolean;    // moving back toward the camera — suppress auto-follow (else it spins)
   flying: boolean;     // jetpack hover — camera eases off sway / zoom dolly
+  climb: number;       // vertical velocity while flying (+up / −down) → camera tilt
+  superrun: boolean;   // sustained sprint past SUPERRUN_DELAY — double speed + smoke trail
 }
 
 // on-screen touch control channels (mobile)
@@ -1472,24 +1575,44 @@ function Jetpack({ h, flyingRef, burstRef }: { h: number; flyingRef: React.RefOb
     })),
   );
   const cursor = useRef(0);
+  // scratch reused while orienting each flame tongue along its velocity
+  const flameUp = useRef(new THREE.Vector3(0, 1, 0));
+  const flameDir = useRef(new THREE.Vector3());
+  const flameQuat = useRef(new THREE.Quaternion());
 
-  // two exhaust nozzles, tucked under the (small) pack on the character's back
-  const nozzle = useMemo(
+  // deposit (fuel tank) + two rocket cylinders on its left/right sides (visual only).
+  // Exhaust/smoke stays at the original ports on the deposit — unchanged height.
+  const depositW = h * 0.22;
+  const depositH = h * 0.32;
+  const depositD = h * 0.13;
+  const depositY = h * 0.56;
+  const depositZ = -h * 0.18;
+  const depositTop = depositY + depositH * 0.5;
+  const rocketH = depositH * 0.25;
+  const rocketR = h * 0.038;
+  // sit OUTSIDE the deposit faces — not at ±depositW/2 (that buried them in the box)
+  const rocketX = depositW * 0.5 + rocketR * 0.92;
+  // upper side of the tank: rocket top flush with deposit top, hanging down the flank
+  const rocketY = depositTop - rocketH * 0.5;
+
+  // original exhaust ports on the deposit — smoke + flames emit here, not from the rockets
+  const exhaust = useMemo(
     () => [new THREE.Vector3(-h * 0.09, h * 0.36, -h * 0.2), new THREE.Vector3(h * 0.09, h * 0.36, -h * 0.2)],
     [h],
   );
 
   function emitBurst(n = 4) {
-    // a small cluster, alternating nozzles, kicked down + back
+    // a tight jet, alternating nozzles, fired straight down + slightly back —
+    // narrow spread so the tongues read as a flame plume, not a scatter of puffs
     for (let i = 0; i < n; i++) {
       const p = puffState.current[cursor.current % PUFFS];
       cursor.current++;
-      const noz = nozzle[i % 2];
-      p.pos.set(noz.x + (Math.random() - 0.5) * h * 0.05, noz.y, noz.z);
-      p.vel.set((Math.random() - 0.5) * 0.6, -2.6 - Math.random() * 1.4, -0.35 - Math.random() * 0.5);
-      p.max = 0.28 + Math.random() * 0.16;
+      const noz = exhaust[i % 2];
+      p.pos.set(noz.x + (Math.random() - 0.5) * h * 0.03, noz.y, noz.z);
+      p.vel.set((Math.random() - 0.5) * 0.22, -4.2 - Math.random() * 1.6, -0.25 - Math.random() * 0.35);
+      p.max = 0.22 + Math.random() * 0.12;
       p.life = p.max;
-      p.size = h * (0.08 + Math.random() * 0.07);
+      p.size = h * (0.09 + Math.random() * 0.06);
     }
   }
 
@@ -1512,59 +1635,177 @@ function Jetpack({ h, flyingRef, burstRef }: { h: number; flyingRef: React.RefOb
     const b = burstRef.current || 0;
     if (b > lastBurst.current) { lastBurst.current = b; emitBurst(3); }
 
-    // advance live smoke puffs
+    // advance live flame tongues
     for (let i = 0; i < PUFFS; i++) {
       const p = puffState.current[i];
       const m = puffRefs.current[i];
       if (!m) continue;
       if (p.life <= 0) { if (m.visible) m.visible = false; continue; }
       p.life -= dt;
-      p.vel.multiplyScalar(0.9); // air drag
+      p.vel.multiplyScalar(0.86); // exhaust slows fast as it leaves the nozzle
       p.pos.addScaledVector(p.vel, dt);
       const age = 1 - Math.max(0, p.life) / p.max; // 0 = ignition, 1 = gone
       m.visible = true;
       m.position.copy(p.pos);
-      m.scale.setScalar(p.size * (0.5 + age * 1.9));
+      // point the cone's long axis (+Y) along the exhaust velocity, so each
+      // tongue licks downward/back from the nozzle instead of puffing outward
+      const dir = flameDir.current.copy(p.vel);
+      if (dir.lengthSq() > 1e-6) {
+        dir.normalize();
+        m.quaternion.copy(flameQuat.current.setFromUnitVectors(flameUp.current, dir));
+      }
+      // a long, thin tongue at ignition that shortens + slims as it burns out
+      const len = p.size * (3.4 - age * 2.2);
+      const wid = p.size * (0.85 - age * 0.5);
+      m.scale.set(wid, len, wid);
       const mat = m.material as THREE.MeshBasicMaterial;
-      // bright cyan at ignition, cooling to grey smoke as it expands
-      mat.color.setRGB(0.5 + age * 0.2, 0.95 - age * 0.23, 1.0 - age * 0.22);
-      mat.opacity = (1 - age) * 0.6;
+      // white-hot core → cyan → deep blue as it cools (additive, so it glows)
+      mat.color.setRGB(0.55 + (1 - age) * 0.45, 0.95 - age * 0.45, 1.0);
+      mat.opacity = (1 - age) * 0.92;
     }
   });
 
   return (
     <group>
-      {/* pack body — springs in/out of the back (kept compact) */}
+      {/* pack body — springs in/out of the back */}
       <group ref={grp} visible={false}>
-        <mesh position={[0, h * 0.56, -h * 0.18]} castShadow>
-          <boxGeometry args={[h * 0.22, h * 0.32, h * 0.13]} />
+        {/* deposit / fuel tank */}
+        <mesh position={[0, depositY, depositZ]} castShadow>
+          <boxGeometry args={[depositW, depositH, depositD]} />
           <meshStandardMaterial color="#20242e" metalness={0.7} roughness={0.35} emissive="#39e0ff" emissiveIntensity={0.3} />
         </mesh>
-        {nozzle.map((n, i) => (
-          <mesh key={i} position={[n.x, n.y + h * 0.04, n.z]}>
-            <cylinderGeometry args={[h * 0.034, h * 0.05, h * 0.1, 12]} />
-            <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} />
-          </mesh>
-        ))}
-        {/* thruster flames (point downward) */}
-        <mesh ref={flameL} position={[nozzle[0].x, nozzle[0].y - h * 0.1, nozzle[0].z]} rotation={[Math.PI, 0, 0]}>
+        {/* rocket bodies — vertical cylinders on the deposit flanks (left + right) */}
+        <mesh position={[-rocketX, rocketY, depositZ]} castShadow>
+          <cylinderGeometry args={[rocketR, rocketR * 1.12, rocketH, 12]} />
+          <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} emissive="#39e0ff" emissiveIntensity={0.15} />
+        </mesh>
+        <mesh position={[rocketX, rocketY, depositZ]} castShadow>
+          <cylinderGeometry args={[rocketR, rocketR * 1.12, rocketH, 12]} />
+          <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} emissive="#39e0ff" emissiveIntensity={0.15} />
+        </mesh>
+        {/* thruster flames — original deposit exhaust ports (below the rockets) */}
+        <mesh ref={flameL} position={[exhaust[0].x, exhaust[0].y - h * 0.1, exhaust[0].z]} rotation={[Math.PI, 0, 0]}>
           <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
           <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
-        <mesh ref={flameR} position={[nozzle[1].x, nozzle[1].y - h * 0.1, nozzle[1].z]} rotation={[Math.PI, 0, 0]}>
+        <mesh ref={flameR} position={[exhaust[1].x, exhaust[1].y - h * 0.1, exhaust[1].z]} rotation={[Math.PI, 0, 0]}>
           <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
           <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
       </group>
 
-      {/* smoke puffs — pooled, unscaled so the spring doesn't squash them */}
+      {/* exhaust flame tongues — pooled cones (apex points down the velocity),
+          oriented + stretched per-frame so the jet reads as fire, not bubbles */}
       {puffState.current.map((_, i) => (
         <mesh key={i} ref={(el) => { puffRefs.current[i] = el; }} visible={false}>
-          <sphereGeometry args={[1, 8, 8]} />
-          <meshBasicMaterial color="#aeefff" transparent opacity={0} depthWrite={false} />
+          <coneGeometry args={[1, 1, 9]} />
+          <meshBasicMaterial color="#aeefff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
       ))}
     </group>
+  );
+}
+
+// Ground smoke left behind during superrun — puffs spawn in world space so they
+// linger as the character blasts past. `superrunRef` gates emission; `burstRef`
+// is bumped by the Handler for paced spawns while superrun is active.
+function SuperrunTrail({
+  superrunRef,
+  posRef,
+  headingRef,
+  burstRef,
+  h,
+}: {
+  superrunRef: React.RefObject<boolean>;
+  posRef: React.RefObject<THREE.Vector3>;
+  headingRef: React.RefObject<number>;
+  burstRef: React.RefObject<number>;
+  h: number;
+}) {
+  const PUFFS = 48;
+  const puffRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const puffState = useRef(
+    Array.from({ length: PUFFS }, () => ({
+      pos: new THREE.Vector3(),
+      vel: new THREE.Vector3(),
+      life: 0,
+      max: 1,
+      size: 1,
+    })),
+  );
+  const cursor = useRef(0);
+  const lastBurst = useRef(0);
+
+  function emitPuffs(n = 2) {
+    const pos = posRef.current;
+    if (!pos) return;
+    const hd = headingRef.current;
+    const backX = -Math.sin(hd);
+    const backZ = -Math.cos(hd);
+    // handlerPos is the capsule centre (~1 u above feet) — spawn at foot level
+    const footY = pos.y - 1.0;
+    for (let i = 0; i < n; i++) {
+      const p = puffState.current[cursor.current % PUFFS];
+      cursor.current++;
+      const lateral = (Math.random() - 0.5) * h * 0.22;
+      const rightX = Math.cos(hd);
+      const rightZ = -Math.sin(hd);
+      p.pos.set(
+        pos.x + backX * h * 0.28 + rightX * lateral,
+        footY + 0.12 + Math.random() * h * 0.08,
+        pos.z + backZ * h * 0.28 + rightZ * lateral,
+      );
+      p.vel.set(
+        backX * (0.25 + Math.random() * 0.35) + (Math.random() - 0.5) * 0.25,
+        0.55 + Math.random() * 0.85,
+        backZ * (0.25 + Math.random() * 0.35) + (Math.random() - 0.5) * 0.25,
+      );
+      p.max = 0.75 + Math.random() * 0.45;
+      p.life = p.max;
+      p.size = h * (0.2 + Math.random() * 0.14);
+    }
+  }
+
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    const b = burstRef.current || 0;
+    if (b > lastBurst.current) {
+      lastBurst.current = b;
+      if (superrunRef.current) emitPuffs(5);
+    }
+
+    for (let i = 0; i < PUFFS; i++) {
+      const p = puffState.current[i];
+      const m = puffRefs.current[i];
+      if (!m) continue;
+      if (p.life <= 0) {
+        if (m.visible) m.visible = false;
+        continue;
+      }
+      p.life -= dt;
+      p.vel.multiplyScalar(0.94);
+      p.pos.addScaledVector(p.vel, dt);
+      const age = 1 - Math.max(0, p.life) / p.max;
+      m.visible = true;
+      m.position.copy(p.pos);
+      const s = p.size * (0.65 + age * 1.85);
+      m.scale.setScalar(s);
+      const mat = m.material as THREE.MeshBasicMaterial;
+      const g = 0.88 - age * 0.18;
+      mat.color.setRGB(g, g, g + 0.06);
+      mat.opacity = (1 - age * age) * 0.92;
+    }
+  });
+
+  return (
+    <>
+      {puffState.current.map((_, i) => (
+        <mesh key={i} ref={(el) => { puffRefs.current[i] = el; }} visible={false} renderOrder={10}>
+          <sphereGeometry args={[1, 10, 10]} />
+          <meshBasicMaterial color="#e8e8f0" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+      ))}
+    </>
   );
 }
 
@@ -1579,6 +1820,7 @@ function Handler({
   touchMove,
   touchBtn,
   isHub,
+  spectator,
   trainPad,
   challengeTargets,
   groundTargets,
@@ -1590,6 +1832,7 @@ function Handler({
   forceTargets,
   venueTargets,
   shape,
+  spawnKnoll,
   onAltitude,
   onPose,
   travelRef,
@@ -1603,6 +1846,7 @@ function Handler({
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
   isHub: boolean;
+  spectator: boolean;
   trainPad: [number, number, number];
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   groundTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
@@ -1614,12 +1858,29 @@ function Handler({
   forceTargets: { type: CreatureType; name: string; motto: string; pos: THREE.Vector3 }[];
   venueTargets: { venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[];
   shape: TerrainShape;
+  spawnKnoll: SpawnKnoll;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
-  const built = useMemo(() => buildCharacter(scene, animations, blank(), "#cfd2e8"), [scene, animations]);
+  // bind foot quats + scratch pose math (feet aren't reset by the idle mixer)
+  const footBind = useRef({ l: new THREE.Quaternion(), r: new THREE.Quaternion() });
+  const qFootHang = useRef(new THREE.Quaternion());
+  const qThighHang = useRef(new THREE.Quaternion());
+  const qKneeHang = useRef(new THREE.Quaternion());
+  const eHang = useRef(new THREE.Euler());
+  const built = useMemo(() => {
+    const b = buildCharacter(scene, animations, blank(), "#cfd2e8");
+    // feet aren't keyed in the idle clip — capture bind quats once so we can SET
+    // the hang pose each frame instead of subtracting euler (which accumulated and
+    // spun the right foot through gimbal lock).
+    const fl = legBone(b.bones, "foot", "l");
+    const fr = legBone(b.bones, "foot", "r");
+    if (fl) footBind.current.l.copy(fl.quaternion);
+    if (fr) footBind.current.r.copy(fr.quaternion);
+    return b;
+  }, [scene, animations]);
   const body = useRef<RapierRigidBody>(null);
   const inner = useRef<THREE.Group>(null);
   // zero-offset child of the RigidBody. Rapier writes the INTERPOLATED transform
@@ -1644,6 +1905,17 @@ function Handler({
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
+  // superrun: sustained ground sprint past SUPERRUN_DELAY → double speed + smoke trail
+  const sprintTime = useRef(0);
+  const superrunArmed = useRef(false);
+  const superrun = useRef(false);
+  const wasSuperrun = useRef(false);
+  const runBurst = useRef(0);
+  const runEmit = useRef(0);
+  // X taps the pack off (drop into a normal gravity fall); idleFly counts seconds
+  // aloft with NO control input — past 3s the pack cuts out on its own.
+  const prevX = useRef(false);
+  const idleFly = useRef(0);
   // smoothed 0..1 thrust command — eases toward 1 while the jump key is held and
   // back to 0 when released, so tapping doesn't snap the climb target each frame
   const thrust = useRef(0);
@@ -1674,7 +1946,7 @@ function Handler({
     travelRef.current = (x, z) => {
       const rb = body.current;
       if (!rb) return;
-      const y = terrainHeight(x, z, shape) + 2.4;
+      const y = terrainHeight(x, z, shape, spawnKnoll) + 2.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
@@ -1693,13 +1965,17 @@ function Handler({
     name: "idle" | "walk" | "run" | "jump",
     opts?: { force?: boolean; fade?: number; timeScale?: number },
   ) {
-    if (cur.current === name && !opts?.force) return;
+    const ts = opts?.timeScale ?? 1;
+    if (cur.current === name && !opts?.force) {
+      built.actions[name]?.setEffectiveTimeScale(ts);
+      return;
+    }
     const fade = opts?.fade ?? 0.18;
     const prev = built.actions[cur.current];
     const next = built.actions[name] || built.actions.idle;
     if (prev && prev !== next) prev.fadeOut(fade);
     if (next) {
-      next.setEffectiveTimeScale(opts?.timeScale ?? 1);
+      next.setEffectiveTimeScale(ts);
       next.reset().setEffectiveWeight(1).fadeIn(fade).play();
     }
     cur.current = name;
@@ -1718,12 +1994,19 @@ function Handler({
     const down = (e: KeyboardEvent) => {
       if (isTyping(e.target)) return;
       const code = e.code;
-      if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"].includes(code)) {
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight", "KeyX"].includes(code)) {
         keys[code] = true;
         if (code === "Space" || code.startsWith("Arrow")) e.preventDefault();
       }
+      if (e.shiftKey) { keys["ShiftLeft"] = true; keys["ShiftRight"] = true; }
     };
-    const up = (e: KeyboardEvent) => { keys[e.code] = false; };
+    const up = (e: KeyboardEvent) => {
+      keys[e.code] = false;
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight" || e.shiftKey) {
+        keys["ShiftLeft"] = e.shiftKey;
+        keys["ShiftRight"] = e.shiftKey;
+      }
+    };
     // when the window loses focus (alt-tab, switching apps/tabs, an overlay
     // grabbing focus) the matching keyup never reaches us, so a held movement
     // key would stay `true` and the character walks forever. Drop every key the
@@ -1795,7 +2078,7 @@ function Handler({
     // character was locked in flight forever: space just re-thrusts instead of
     // jumping and you can't walk. So also treat "settled near the terrain
     // surface" as grounded, independent of the sensor.
-    const floorY = terrainHeight(t.x, t.z, shape);
+    const floorY = terrainHeight(t.x, t.z, shape, spawnKnoll);
     const restY = floorY + 1.0; // capsule half-height (0.55) + radius (0.45)
     const sensorGround = ground.current > 0;
 
@@ -1818,6 +2101,32 @@ function Handler({
         settled.current = true;
       }
     }
+    // ── jetpack cut-out ──
+    // Two ways to drop out of flight back into a plain gravity fall (identical
+    // speed/accel to a normal jump, since killing the pack just restores gravity
+    // scale): pressing X, or 3 seconds aloft without touching any control. We
+    // reset `jumps` to 0 so `flyingMode` below reads false and gravity resumes.
+    {
+      const flyingNow = jumps.current > FLY_TRIGGER;
+      const xNow = controlsEnabled && !!keys["KeyX"];
+      const xEdge = xNow && !prevX.current;
+      prevX.current = xNow;
+      const jumpActive = controlsEnabled && (!!keys["Space"] || !!touchBtn.current?.jumpHeld);
+      const anyInput = len > 0 || sprint || jumpActive || xNow;
+      if (flyingNow) {
+        idleFly.current = anyInput ? 0 : idleFly.current + dt;
+        if (xEdge || idleFly.current >= 3) {
+          jumps.current = 0;
+          flying.current = false;
+          thrust.current = 0;
+          idleFly.current = 0;
+          jetFallSfx();
+        }
+      } else {
+        idleFly.current = 0;
+      }
+    }
+
     // height fallback only before jetpack deploy — while flying it flickers over
     // hills and was resetting jumps mid-air, yanking between thrust and gravity
     const grounded = sensorGround || (jumps.current <= FLY_TRIGGER && t.y <= restY + 0.2);
@@ -1830,20 +2139,65 @@ function Handler({
     // we launched), so a multi-jump isn't refunded mid-takeoff
     if (grounded && v.y <= 0.6) jumps.current = 0;
 
-    if (len > 0) {
-      const sp = sprint ? RUN : WALK;
-      // mx/mz already carry the analog throttle (their length is 0..1)
-      const tvx = mx * sp, tvz = mz * sp;
+    // sustained sprint on the ground → superrun (double speed + smoke trail).
+    // Once armed, superrun LATCHES until sprint/movement stops — brief ground-
+    // sensor flicker at high speed was resetting the timer and halving velocity.
+    const sprinting = sprint && len > 0 && !flyingMode;
+    if (sprinting) {
+      if (grounded) sprintTime.current += dt;
+      if (sprintTime.current >= SUPERRUN_DELAY) superrunArmed.current = true;
+    } else {
+      sprintTime.current = 0;
+      superrunArmed.current = false;
+    }
+    const superActive = superrunArmed.current && sprinting;
+    superrun.current = superActive;
+    if (superActive) {
+      runEmit.current += dt;
+      if (runEmit.current > 0.028) {
+        runEmit.current = 0;
+        runBurst.current++;
+      }
+    } else {
+      runEmit.current = 0;
+    }
+    if (superActive && !wasSuperrun.current && camCue.current) {
+      camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.3);
+    }
+    const superrunStart = superActive && !wasSuperrun.current;
+    wasSuperrun.current = superActive;
+
+    // Superrun locks to the character heading so camera sway / auto-follow can't
+    // feed back into camera-relative steering and snake the path side to side.
+    let moveX = mx;
+    let moveZ = mz;
+    let moveLen = len;
+    if (superActive && len > 0) {
+      if (superrunStart) heading.current = Math.atan2(mx, mz);
+      const hf = Math.sin(heading.current);
+      const hb = Math.cos(heading.current);
+      moveX = hf * az + hb * ax;
+      moveZ = hb * az - hf * ax;
+      moveLen = Math.hypot(moveX, moveZ);
+    }
+
+    if (moveLen > 0) {
+      const sp = superActive ? SUPERRUN : sprint ? RUN : WALK;
+      // moveX/moveZ carry the analog throttle (their length is 0..1)
+      const tvx = moveX * sp, tvz = moveZ * sp;
       // exponential smoothing toward the target velocity, frame-rate independent.
       // ground is punchy; flying keeps strong authority so you can steer the pack;
       // a plain jump keeps lighter air control
-      const accel = grounded ? ACCEL_GROUND : flyingMode ? ACCEL_FLY : ACCEL_AIR;
+      const accel = superActive
+        ? (grounded ? ACCEL_GROUND * 1.45 : ACCEL_AIR * 1.6)
+        : grounded ? ACCEL_GROUND : flyingMode ? ACCEL_FLY : ACCEL_AIR;
       const k = 1 - Math.exp(-accel * dt);
       rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
-      const want = Math.atan2(mx, mz);
+      const want = Math.atan2(moveX, moveZ);
       let d = want - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
-      heading.current += d * (1 - Math.exp(-(grounded ? TURN_GROUND : TURN_AIR) * dt));
+      const turn = superActive ? TURN_GROUND * 0.55 : grounded ? TURN_GROUND : TURN_AIR;
+      heading.current += d * (1 - Math.exp(-turn * dt));
     } else {
       // stickier stop on the ground, a gentle brake while flying, long glide mid-jump
       const stop = grounded ? STOP_GROUND : flyingMode ? STOP_FLY : STOP_AIR;
@@ -1890,9 +2244,7 @@ function Handler({
       const cv = rb.linvel();
       rb.setLinvel({ x: cv.x, y: air ? AIR_JUMP : JUMP, z: cv.z }, true);
       jumpBeep(jumps.current - 1);
-      // snappy leap; force so a second/third jump re-pops the clip
-      setAnim("jump", { force: true, fade: 0.06, timeScale: air ? 1.9 : 1.5 });
-      // launch pop — the body stretches upward as it leaps
+      // launch pop — the body stretches upward as it leaps (idle + leg hang sell the arc)
       stretch.current = 1;
       // action-cam: punch the camera in toward the character on every air jump
       if (air && camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.85);
@@ -1917,56 +2269,55 @@ function Handler({
 
     // ── resolve the body animation from the REAL locomotion state ──
     // One place, every frame, so the playing clip always matches the state:
-    //  • flying  → still hover pose (lean sells the motion, legs don't walk)
-    //  • airborne (jumped or walked off an edge) → the leap/fall pose
+    //  • flying / airborne → still hover pose (legs dangle, feet point down)
     //  • grounded + moving → walk / run
     //  • grounded + still → idle
     // `endVy > 1.5` treats the launch frame (ground sensor may still read true)
-    // as airborne so the jump pose isn't instantly overwritten by walk.
+    // as airborne so the hang pose isn't instantly overwritten by walk.
     const endVy = rb.linvel().y;
-    if (flying.current) {
+    if (flying.current || !grounded || endVy > 1.5) {
       setAnim("idle");
-    } else if (!grounded || endVy > 1.5) {
-      if (cur.current !== "jump") setAnim("jump");
     } else if (len > 0) {
-      setAnim(sprint ? "run" : "walk");
+      setAnim(sprint ? "run" : "walk", { timeScale: superActive && sprint ? 2 : 1 });
     } else {
       setAnim("idle");
     }
 
     // ── feet: ankle tuck while airborne ──
-    // Rotate just the feet so the toes hang straight down whenever we're off the
-    // ground — a held spacebar (jetpack thrust), the jump arc, or a fall — and ease
-    // back to flat the moment we land for walking. We OR `flying.current` with the
-    // airborne test on purpose: while jetpacking the ground SENSOR can still read
-    // "grounded" (hovering low, or a sensor desync), which would otherwise drop the
-    // tuck exactly when you're pressing space. `flying.current` is true the whole
-    // flight regardless of the sensor, so the hanging pose holds. Layered on top of
-    // the clip the mixer wrote this frame; the foot bone's local +Y points at the
-    // toe, so a negative local-X rotation swings it downward.
+    // Feet aren't keyed in the idle clip, so the mixer never resets them — we SET
+    // bind × hang offset each frame (not subtract euler, which accumulated and
+    // made the right foot spin through gimbal lock at z ≈ π).
     const wantFootTuck = flying.current || !grounded || endVy > 1.5;
     footTuck.current += ((wantFootTuck ? FLY_FOOT : 0) - footTuck.current) * (1 - Math.exp(-12 * dt));
-    if (footTuck.current > 0.001) {
-      const fl = built.bones["foot.l"], fr = built.bones["foot.r"];
-      if (fl) fl.rotation.x -= footTuck.current;
-      if (fr) fr.rotation.x -= footTuck.current;
+    legHang.current += ((wantFootTuck ? 1 : 0) - legHang.current) * (1 - Math.exp(-10 * dt));
+
+    const fl = legBone(built.bones, "foot", "l");
+    const fr = legBone(built.bones, "foot", "r");
+    if (fl && fr) {
+      if (footTuck.current > 0.001) {
+        eHang.current.set(-FLY_FOOT * footTuck.current, 0, 0);
+        qFootHang.current.setFromEuler(eHang.current);
+        fl.quaternion.copy(footBind.current.l).multiply(qFootHang.current);
+        fr.quaternion.copy(footBind.current.r).multiply(qFootHang.current);
+      } else {
+        fl.quaternion.copy(footBind.current.l);
+        fr.quaternion.copy(footBind.current.r);
+      }
     }
 
     // ── legs: relaxed dangle while suspended ──
-    // Layered on the clip just like the foot tuck: ease the thighs back toward a
-    // straight-down hang and soften the knees so the legs trail loosely beneath the
-    // hovering body instead of holding the grounded walk/idle stance. Same airborne
-    // condition as the toes so the whole lower body reads as "lifted off the floor".
-    legHang.current += ((wantFootTuck ? 1 : 0) - legHang.current) * (1 - Math.exp(-10 * dt));
+    // Layered on the clip the mixer wrote this frame via a local quat multiply.
     if (legHang.current > 0.001) {
-      const ul = built.bones["upperleg.l"], ur = built.bones["upperleg.r"];
-      const ll = built.bones["lowerleg.l"], lr = built.bones["lowerleg.r"];
+      const ul = legBone(built.bones, "upperleg", "l");
+      const ur = legBone(built.bones, "upperleg", "r");
+      const ll = legBone(built.bones, "lowerleg", "l");
+      const lr = legBone(built.bones, "lowerleg", "r");
       const thigh = FLY_LEG_HANG * legHang.current;
       const knee = FLY_KNEE_BEND * legHang.current;
-      if (ul) ul.rotation.x -= thigh;
-      if (ur) ur.rotation.x -= thigh;
-      if (ll) ll.rotation.x += knee;
-      if (lr) lr.rotation.x += knee;
+      if (ul) { eHang.current.set(-thigh, 0, 0); qThighHang.current.setFromEuler(eHang.current); ul.quaternion.multiply(qThighHang.current); }
+      if (ur) { eHang.current.set(-thigh, 0, 0); qThighHang.current.setFromEuler(eHang.current); ur.quaternion.multiply(qThighHang.current); }
+      if (ll) { eHang.current.set(knee, 0, 0); qKneeHang.current.setFromEuler(eHang.current); ll.quaternion.multiply(qKneeHang.current); }
+      if (lr) { eHang.current.set(knee, 0, 0); qKneeHang.current.setFromEuler(eHang.current); lr.quaternion.multiply(qKneeHang.current); }
     }
 
     // ── under-terrain safety net ──
@@ -1975,7 +2326,7 @@ function Handler({
     // below the surface height at our (x,z), lift back onto it. Read a fresh
     // translation so this doesn't double-fire after a checkpoint rescue above.
     const p = rb.translation();
-    const floorYNet = terrainHeight(p.x, p.z, shape);
+    const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
     const FEET = 1.0; // capsule half-height (0.55) + radius (0.45)
     if (p.y < floorYNet - 0.1) {
       rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
@@ -1991,6 +2342,10 @@ function Handler({
       camCue.current.speed = Math.hypot(lv.x, lv.z);
       camCue.current.moving = len > 0;
       camCue.current.flying = flyingMode;
+      // vertical velocity drives the in-flight camera tilt (climb → look up,
+      // sink → look down). Zero on the ground so the tilt only applies aloft.
+      camCue.current.climb = flyingMode ? lv.y : 0;
+      camCue.current.superrun = superActive;
       // `az` is exactly the move's forward component (fwd ⟂ right): negative means
       // we're heading back toward the camera. Flag it so the auto-follow stands
       // down — chasing "behind" a player who's facing the camera spins endlessly.
@@ -2002,7 +2357,7 @@ function Handler({
     // still in the hover pose); decays to upright the instant we touch down
     const lv2 = rb.linvel();
     const hspeed = Math.hypot(lv2.x, lv2.z);
-    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : 0;
+    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : superActive ? Math.min(0.42, hspeed * 0.035) : 0;
     const tgtLeanZ = flyingMode ? Math.max(-0.35, Math.min(0.35, -ax * 0.35)) : 0;
     const ls = 1 - Math.exp(-10 * dt);
     leanX.current += (tgtLeanX - leanX.current) * ls;
@@ -2056,6 +2411,19 @@ function Handler({
         }
         if (bestV) next = { kind: "venue", ...bestV };
       }
+    } else if (!matchActive && spectator) {
+      // The Amphitheatre is a place to WATCH — the only walk-up is the Daily
+      // herald (today's marquee case). The league fights itself in the ring.
+      let bestV: { venue: ConcordVenueId; name: string } | null = null;
+      let bestVd = 2.6;
+      for (const vt of venueTargets) {
+        const dh = Math.hypot(t.x - vt.pos.x, t.z - vt.pos.z);
+        if (dh < bestVd) {
+          bestVd = dh;
+          bestV = { venue: vt.venue, name: vt.name };
+        }
+      }
+      if (bestV) next = { kind: "venue", ...bestV };
     } else if (!matchActive) {
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
@@ -2174,6 +2542,7 @@ function Handler({
   return (
     <>
       {!isHub && <TrainPad pos={trainPad} />}
+      <SuperrunTrail superrunRef={superrun} posRef={handlerPos} headingRef={heading} burstRef={runBurst} h={built.h} />
       <RigidBody
         ref={body}
         type="dynamic"
@@ -2184,7 +2553,7 @@ function Handler({
         // through before the terrain collider was ready — and read as spawning
         // under the floor. `terrainHeight` is 0 across the flat plaza, so this is
         // the standing height in every world.
-        position={[SPAWN[0], terrainHeight(SPAWN[0], SPAWN[2], shape) + 1.1, SPAWN[2]]}
+        position={[spawnKnoll.x, terrainHeight(spawnKnoll.x, spawnKnoll.z, shape, spawnKnoll) + 1.1, spawnKnoll.z]}
         enabledRotations={[false, false, false]}
         canSleep={false}
         ccd
@@ -2217,6 +2586,12 @@ function Handler({
 // tilts UP past the horizon toward the sky; positive looks down from above.
 const PITCH_MIN = -0.5;  // ~ -29°: look up at the sky
 const PITCH_MAX = 1.25;  // ~ 72°: look steeply down
+// jetpack camera tilt: while flying, the rig sits behind the character and the
+// pitch rides the climb — ascending dips the lens BELOW the player so the view
+// tilts up to chase the rise; sinking lifts it ABOVE to look down on the drop.
+const PITCH_FLY_UP = -0.12;   // climbing → camera low, looking up ("back & slightly down")
+const PITCH_FLY_HOVER = 0.14; // steady hover → near-level over-the-shoulder
+const PITCH_FLY_DOWN = 0.46;  // sinking → camera high, looking down ("back & slightly up")
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
 // Passive "postcard" camera for showcase/docs embeds — a slow, high orbit around
 // the plaza so the whole region (arena, tower, spire, rift) reads at a glance.
@@ -2238,7 +2613,7 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
   return null;
 }
 
-function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag>; shape: TerrainShape }) {
+function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFocus }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag>; shape: TerrainShape; galleryFocus?: React.RefObject<GalleryFocus | null> }) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
@@ -2256,8 +2631,12 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
   // squarely behind the character. `recenter` is the remaining seconds of an
   // active sweep; `recenterPitch` is the pitch we ease toward during it.
   const prevFlying = useRef(false);
+  const prevSuperrun = useRef(false);
   const recenter = useRef(0);
   const recenterPitch = useRef(0.34);
+  // eased 0..1 weight of "frame the Scrying Gallery ring" — ramps up as the player
+  // nears the live bout and decays back to free third-person on leave
+  const galleryW = useRef(0);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -2337,10 +2716,19 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     // shoulder on land), plus a small focus punch-in.
     if (flying !== prevFlying.current) {
       recenter.current = 0.9;
-      recenterPitch.current = flying ? 0.16 : 0.34;
+      // deploying/retaking flight always begins with an upward stroke, so sweep
+      // behind AND toward the climb pose (camera low, looking up); landing returns
+      // to the classic over-the-shoulder pitch.
+      recenterPitch.current = flying ? PITCH_FLY_UP : 0.34;
       if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.4);
     }
     prevFlying.current = flying;
+
+    if (cue?.superrun && !prevSuperrun.current) {
+      recenter.current = 0.55;
+      recenterPitch.current = 0.34;
+    }
+    prevSuperrun.current = cue?.superrun ?? false;
 
     // Follow anchor. Drive BOTH the orbit basis and the lookAt target from this
     // one smoothed point so the framing stays glued to the character. While
@@ -2358,7 +2746,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
 
     const speed = cue ? cue.speed : 0;
     const moving = cue ? cue.moving : false;
-    const speed01 = Math.min(1, speed / RUN);
+    const speed01 = Math.min(1, speed / (cue?.superrun ? SUPERRUN : RUN));
 
     const recentering = recenter.current > 0 && !dragging.current;
     if (recenter.current > 0) recenter.current = Math.max(0, recenter.current - dt);
@@ -2371,7 +2759,29 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
       const r = Math.min(1, dt * 5);
       yaw.current += d * r;
       pitch.current += (recenterPitch.current - pitch.current) * r;
-    } else if (cue && moving && !cue.reverse && performance.now() - lastInput.current > 900) {
+    } else if (flying && cue && performance.now() - lastInput.current > 600) {
+      // ── in-flight companion follow ──
+      // While the pack is lit, keep the lens planted behind the character even
+      // when hovering straight up/down (no WASD), and tilt the pitch with the
+      // climb: rising → ease toward look-up (camera dips below), sinking → ease
+      // toward look-down (camera lifts above). Eased so it reads as a smooth
+      // camera move, not a snap, and yields to manual drags for a beat.
+      if (!cue.reverse) {
+        let d = cue.heading + Math.PI - yaw.current;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        yaw.current += d * Math.min(1, dt * (1.8 + speed01 * 2.0));
+      }
+      const climb = cue.climb;
+      let pitchTarget = PITCH_FLY_HOVER;
+      if (climb > 0.15) {
+        const up = Math.min(1, climb / FLY_CLIMB);
+        pitchTarget = PITCH_FLY_HOVER + up * (PITCH_FLY_UP - PITCH_FLY_HOVER);
+      } else if (climb < -0.15) {
+        const dn = Math.min(1, -climb / Math.abs(FLY_SINK));
+        pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
+      }
+      pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
+    } else if (cue && moving && !cue.reverse && !cue.superrun && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
@@ -2381,14 +2791,40 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape }: { match
     const flyZoom = flying ? 0 : zoom;
     const eff = Math.max(5, dist.current + followDist.current - flyZoom * 6);
 
+    const superrunCam = cue?.superrun ?? false;
     const ts = performance.now() * 0.001;
-    const swayX = flying ? 0 : Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
-    const swayY = flying ? 0 : Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
+    const swayX = flying || superrunCam ? 0 : Math.sin(ts * 0.9) * (0.18 + speed01 * 0.7);
+    const swayY = flying || superrunCam ? 0 : Math.sin(ts * 1.7) * (0.1 + speed01 * 0.28);
 
-    const tx = hp.x, ty = hp.y + 0.4 + flyZoom * 0.3, tz = hp.z;
-    const cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
-    const cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
+    let tx = hp.x, ty = hp.y + 0.4 + flyZoom * 0.3, tz = hp.z;
+    let cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
+    let cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
     let cy = ty + Math.sin(pitch.current) * eff + swayY;
+
+    // ── Scrying Gallery framing ──
+    // While a league bout is live and the player is standing close, blend the
+    // look target toward the ring centre and orbit a touch further out, so the
+    // camera "settles in to watch" the fight, then releases as they walk away.
+    const gf = galleryFocus?.current;
+    const gActive = gf?.active && !flying && !recentering;
+    let gTarget = 0;
+    if (gf && gActive) {
+      const dx = hp.x - gf.center.x, dz = hp.z - gf.center.z;
+      const d = Math.hypot(dx, dz);
+      gTarget = THREE.MathUtils.clamp((13 - d) / 6, 0, 1); // 0 @ ~13u → 1 @ ~7u
+    }
+    galleryW.current += (gTarget - galleryW.current) * Math.min(1, dt * 2.2);
+    const gw = galleryW.current;
+    if (gf && gw > 0.01) {
+      const gtx = gf.center.x, gtz = gf.center.z, gty = 1.5;
+      const gEff = Math.max(eff, 11);
+      const gcx = gtx + Math.sin(yaw.current) * Math.cos(pitch.current) * gEff;
+      const gcz = gtz + Math.cos(yaw.current) * Math.cos(pitch.current) * gEff;
+      const gcy = gty + Math.sin(pitch.current) * gEff;
+      tx += (gtx - tx) * gw; ty += (gty - ty) * gw; tz += (gtz - tz) * gw;
+      cx += (gcx - cx) * gw; cy += (gcy - cy) * gw; cz += (gcz - cz) * gw;
+    }
+
     cy = Math.max(cy, terrainHeight(cx, cz, shape) + 0.8);
     // frame-rate-independent position smoothing (the old fixed-alpha lerp was
     // stiffer at high refresh rates and let the bob through). Floaty in flight,
@@ -2528,14 +2964,18 @@ function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset =
     e.stopPropagation();
     if (btn.current) btn.current.jumpHeld = false;
   };
-  const toggleSprint = (e: ReactPointerEvent) => {
+  const startSprint = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setSprint((s) => {
-      const n = !s;
-      if (btn.current) btn.current.sprint = n;
-      return n;
-    });
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setSprint(true);
+    if (btn.current) btn.current.sprint = true;
+  };
+  const stopSprint = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSprint(false);
+    if (btn.current) btn.current.sprint = false;
   };
 
   const joyBottom = Math.max(100, bottomInset);
@@ -2567,7 +3007,7 @@ function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset =
       )}
 
       <div style={{ position: "absolute", right: 22, bottom: jumpBottom, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
-        <button onPointerDown={toggleSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
+        <button onPointerDown={startSprint} onPointerUp={stopSprint} onPointerCancel={stopSprint} onPointerLeave={stopSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
           <Zap size={22} strokeWidth={2.2} fill={sprint ? "#0a0810" : "none"} />
         </button>
         <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>

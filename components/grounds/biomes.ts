@@ -98,8 +98,8 @@ export const BIOMES: BiomeConfig[] = [
     bg: "#06050b",
     sky: { top: "#3a2a66", bottom: "#0a0714" },
     nebula: { colors: ["#3a2a6a", "#5a2a7a", "#2a3a8a", "#6a2a5a"], opacity: 0.7 },
-    fog: { color: "#140e2a", near: 50, far: 190 },
-    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17, seed: 0, rollAmp: 6, ridgeAmp: 12, rollFreq: 0.03, ridgeFreq: 0.012, ridged: false, canyonAngle: Math.PI * 0.55, canyonHalfWidth: 11, canyonDepth: 9 },
+    fog: { color: "#140e2a", near: 60, far: 270 },
+    terrain: { low: "#15122a", mid: "#3a2c63", high: "#8a52ff", heightScale: 1, roughness: 0.85, metalness: 0.2, colorBand: 17, seed: 0, rollAmp: 6, ridgeAmp: 12, rollFreq: 0.03, ridgeFreq: 0.012, ridged: false, canyonAngle: Math.PI / 2, canyonHalfWidth: 11, canyonDepth: 9 },
     plaza: { color: "#b6b6d8", emissive: "#1a1838", emissiveIntensity: 0.6 },
     scatter: { rock: "#241f3e", crystal: "#7a5cff", crystalEmissive: "#5a3cff", crystalEmissiveIntensity: 1.1, crystalRatio: 0.32, count: 220 },
     obelisk: { color: "#2a2448", emissive: "#5440c0", emissiveIntensity: 1.1 },
@@ -109,7 +109,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#cdb8ff", warm: "#f0a93a", cool: "#6a6bff", fill: "#3a2a6a" },
     bloom: 0.85,
     exposure: 1.15,
-    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 3.0 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI * 1.5, dist: 19 } } },
+    scene: { towerAngle: Math.PI * 1.15, towerSteps: 170, obeliskCount: 16, platformCount: 6, crystalCount: 26, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 23, spread: 31, inner: 16, speed: 3.0 }, landmarks: { train: { angle: 0, dist: 32 }, spire: { angle: Math.PI * 1.5, dist: 32 } } },
   },
   {
     id: "ember",
@@ -118,8 +118,8 @@ export const BIOMES: BiomeConfig[] = [
     bg: "#100503",
     sky: { top: "#7a2a14", bottom: "#1a0805" },
     nebula: { colors: ["#7a2a14", "#a8431a", "#5a1a0a", "#c2691a"], opacity: 0.6 },
-    fog: { color: "#2a0e06", near: 42, far: 165 },
-    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22, seed: 53, rollAmp: 5, ridgeAmp: 14, rollFreq: 0.055, ridgeFreq: 0.02, ridged: true, canyonAngle: Math.PI * 1.45, canyonHalfWidth: 14, canyonDepth: 17 },
+    fog: { color: "#2a0e06", near: 52, far: 235 },
+    terrain: { low: "#1a0d08", mid: "#5a2410", high: "#ff7a2a", heightScale: 1.3, roughness: 0.92, metalness: 0.12, colorBand: 22, seed: 53, rollAmp: 5, ridgeAmp: 14, rollFreq: 0.055, ridgeFreq: 0.02, ridged: true, canyonAngle: Math.PI / 2, canyonHalfWidth: 14, canyonDepth: 17 },
     plaza: { color: "#c8b0a0", emissive: "#3a1408", emissiveIntensity: 0.7 },
     scatter: { rock: "#2a1610", crystal: "#ff8a3a", crystalEmissive: "#ff5a1a", crystalEmissiveIntensity: 1.5, crystalRatio: 0.24, count: 250 },
     obelisk: { color: "#2a1208", emissive: "#ff5a1a", emissiveIntensity: 1.25 },
@@ -129,7 +129,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#ffcaa0", warm: "#ff7a2a", cool: "#a8431a", fill: "#5a1a0a" },
     bloom: 1.0,
     exposure: 1.1,
-    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 17, spread: 21, inner: 11, speed: 2.1 }, landmarks: { train: { angle: Math.PI * 1.18, dist: 19 }, spire: { angle: Math.PI * 1.68, dist: 19 } } },
+    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 28, spread: 35, inner: 18, speed: 2.1 }, landmarks: { train: { angle: Math.PI * 1.18, dist: 32 }, spire: { angle: Math.PI * 1.68, dist: 32 } } },
   },
   {
     id: "void",
@@ -138,8 +138,8 @@ export const BIOMES: BiomeConfig[] = [
     bg: "#03060a",
     sky: { top: "#0a2e3e", bottom: "#02060a" },
     nebula: { colors: ["#0a4a5a", "#1a7a6a", "#2a3a8a", "#0a5a4a"], opacity: 0.65 },
-    fog: { color: "#06141a", near: 55, far: 205 },
-    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19, seed: 113, rollAmp: 9, ridgeAmp: 8, rollFreq: 0.022, ridgeFreq: 0.009, ridged: false, canyonAngle: Math.PI * 1.15, canyonHalfWidth: 12, canyonDepth: 11 },
+    fog: { color: "#06141a", near: 66, far: 290 },
+    terrain: { low: "#08161a", mid: "#0e3a44", high: "#34ffd0", heightScale: 1.15, roughness: 0.8, metalness: 0.28, colorBand: 19, seed: 113, rollAmp: 9, ridgeAmp: 8, rollFreq: 0.022, ridgeFreq: 0.009, ridged: false, canyonAngle: Math.PI / 2, canyonHalfWidth: 12, canyonDepth: 11 },
     plaza: { color: "#a0c8c0", emissive: "#08222a", emissiveIntensity: 0.6 },
     scatter: { rock: "#14242a", crystal: "#34ffd0", crystalEmissive: "#10d0b0", crystalEmissiveIntensity: 1.4, crystalRatio: 0.4, count: 250 },
     obelisk: { color: "#0a2830", emissive: "#18c0a0", emissiveIntensity: 1.1 },
@@ -149,7 +149,7 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#aef0e0", warm: "#34ffd0", cool: "#1a7a8a", fill: "#0a4a5a" },
     bloom: 0.95,
     exposure: 1.18,
-    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 15, spread: 22, inner: 7, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 1.55, dist: 19 }, spire: { angle: Math.PI * 0.08, dist: 19 } } },
+    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 24, spread: 36, inner: 16, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 1.55, dist: 32 }, spire: { angle: Math.PI * 0.08, dist: 32 } } },
   },
   {
     // The Concord — the hub slab (lib/lore/canon.ts › CONCORD). Neutral ground:
@@ -173,7 +173,31 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#d8ccff", warm: "#f5d020", cool: "#6a64c0", fill: "#2a2750" },
     bloom: 0.7,
     exposure: 1.12,
-    scene: { towerAngle: Math.PI * 0.5, towerSteps: 0, obeliskCount: 10, platformCount: 0, crystalCount: 14, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 14, spread: 18, inner: 8, speed: 2.4 }, landmarks: { train: { angle: 0, dist: 19 }, spire: { angle: Math.PI, dist: 19 } } },
+    scene: { towerAngle: Math.PI * 0.5, towerSteps: 0, obeliskCount: 10, platformCount: 0, crystalCount: 14, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 23, spread: 30, inner: 16, speed: 2.4 }, landmarks: { train: { angle: 0, dist: 32 }, spire: { angle: Math.PI, dist: 32 } } },
+  },
+  {
+    // The Amphitheatre — a built spectator venue (not wilds): a torchlit stone
+    // ring at dusk where the autonomous league fights and the ladder is read off
+    // the banners. Near-flat floor so the arena reads as architecture, warm gold
+    // braziers against a deep indigo evening sky.
+    id: "amphitheatre",
+    name: "The Amphitheatre",
+    tagline: "torchlit stone · the world fights itself",
+    bg: "#080610",
+    sky: { top: "#241d4a", bottom: "#0c0918" },
+    nebula: { colors: ["#3a2d5a", "#5a3a4a", "#2a2a5a", "#6a4a3a"], opacity: 0.4 },
+    fog: { color: "#15101f", near: 46, far: 175 },
+    terrain: { low: "#181320", mid: "#3a2c34", high: "#9a7a52", heightScale: 0.5, roughness: 0.95, metalness: 0.08, colorBand: 14, seed: 311, rollAmp: 2, ridgeAmp: 3, rollFreq: 0.02, ridgeFreq: 0.01, ridged: false },
+    plaza: { color: "#cdbfa0", emissive: "#2a1c10", emissiveIntensity: 0.5 },
+    scatter: { rock: "#2a2218", crystal: "#ffb858", crystalEmissive: "#ff8a2a", crystalEmissiveIntensity: 1.0, crystalRatio: 0.12, count: 90 },
+    obelisk: { color: "#2c2418", emissive: "#d89a3a", emissiveIntensity: 0.8 },
+    floatCrystal: { color: "#ffcf7a", emissive: "#ff9a3a", emissiveIntensity: 1.2 },
+    platform: { a: "#8a6a3a", b: "#6a4a28", top: "#ffce6a" },
+    lights: { hemiSky: "#e8d6b0", hemiGround: "#1a1410", hemiInt: 0.7, ambient: "#3a3048", ambientInt: 0.5, sun: "#ffe6b8", sunInt: 1.9, arenaPoint: "#ffb14a", trainPoint: "#ffb14a" },
+    ibl: { key: "#ffe2b0", warm: "#ffb14a", cool: "#5a4a7a", fill: "#2a2148" },
+    bloom: 0.8,
+    exposure: 1.12,
+    scene: { towerAngle: Math.PI * 0.5, towerSteps: 0, obeliskCount: 0, platformCount: 0, crystalCount: 6, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "ring", radius: 23, spread: 30, inner: 16, speed: 2.4 }, landmarks: { train: { angle: 0, dist: 32 }, spire: { angle: Math.PI, dist: 32 } } },
   },
 ];
 

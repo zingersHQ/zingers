@@ -79,7 +79,7 @@ export function TribunalBriefing(props: {
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: GOLD, position: "relative", width: "min(600px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: GOLD }}>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div>
@@ -197,7 +197,7 @@ export function TribunalMatchBanner({ proposition, myStance, isMobile }: { propo
         width: isMobile ? "92vw" : "min(560px, 90vw)",
       }}
     >
-      <div className="panel" style={{ ["--ac" as string]: GOLD, borderColor: GOLD, padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: 10, background: "rgba(10,8,16,.82)" }}>
+      <div className="panel" style={{ ["--ac" as string]: GOLD, borderColor: GOLD, padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: 10 }}>
         <Scale size={isMobile ? 14 : 16} color={GOLD} strokeWidth={2.2} style={{ flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, fontStyle: "italic", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>

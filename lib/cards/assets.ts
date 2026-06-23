@@ -1,1 +1,1 @@
-export const FIRST_MIND_KEYS = ["AXIOM", "VOX", "GLITCH", "MUSE", "BASTION", "EMBER"] as const;
+export { FIRST_MIND_KEYS } from "@/lib/engine/roster";

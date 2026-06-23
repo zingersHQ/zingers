@@ -35,7 +35,7 @@ tricks hardens against them. You do not grind a Keeper down; you out-think it.
 
 ## Canon notes
 
-- The Keepers are **not** the six First Minds, even where names rhyme (the Warden
+- The Keepers are **not** the eight First Minds, even where names rhyme (the Warden
   borrowed "Bastion"; see [champions.md](./03-champions.md)).
 - The five ciphers are the **only** five fixed secrets in the game. Seasons may add
   *lesser* wardens (echoes of a Keeper) with generated secrets, but the five

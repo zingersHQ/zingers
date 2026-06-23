@@ -18,6 +18,10 @@ export interface WorldDef {
   // the district growth tier + whether it's the season's featured region. Absent
   // on the hub.
   region?: string;
+  // A spectator venue (the Amphitheatre): a built place you travel to and WATCH,
+  // not a playable wilds. No Tower / Keepers / training / caches / goals — just
+  // the arena where the autonomous league fights and the ladder lives as banners.
+  spectator?: boolean;
 }
 
 export const WORLDS: WorldDef[] = [
@@ -56,6 +60,15 @@ export const WORLDS: WorldDef[] = [
     kind: "region",
     region: "garden",
   },
+  {
+    id: "amphitheatre",
+    name: "The Amphitheatre",
+    tagline: "the live league · watch the world fight",
+    biome: BIOMES[4], // The Amphitheatre (spectator venue)
+    scenario: SCENARIOS.duel, // kept for type/HUD compatibility; the league runs itself
+    kind: "region",
+    spectator: true,
+  },
 ];
 
 // The Concord spawns you in — the hub-first design (docs/bible/01-cosmology.md).
@@ -85,11 +98,16 @@ export interface GateDef {
   dist: number; // radius from centre
 }
 
-export const GATE_DIST = 20;
+export const GATE_DIST = 28;
+// Ring the gates evenly, but rotated a HALF-step off the cardinal axes so no gate
+// sits dead-ahead of the spawn mound. The Reader looks down the open +z lane
+// straight at the seal (the gates flank the approach as diagonals), so walking
+// forward leads into the heart of the Concord instead of onto a gate's travel
+// footprint — you choose a Vaultgate by veering to one, not by walking in.
 export const CONCORD_GATES: GateDef[] = REGION_WORLDS.map((w, i, arr) => ({
   world: w.id,
   label: w.biome.name,
   color: w.biome.lights.arenaPoint,
-  angle: (i / arr.length) * Math.PI * 2 - Math.PI / 2,
+  angle: (i / arr.length) * Math.PI * 2 - Math.PI / 2 + Math.PI / arr.length,
   dist: GATE_DIST,
 }));

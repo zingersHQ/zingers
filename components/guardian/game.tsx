@@ -450,7 +450,7 @@ function Battle({
               flex: 1,
               padding: "13px 16px",
               borderRadius: 12,
-              background: "#100e1a",
+              background: "var(--panel2)",
               border: "1px solid var(--line2)",
               color: "var(--ink)",
               fontSize: 15,
@@ -631,7 +631,7 @@ function Bubble({
           borderRadius: 14,
           fontSize: 14.5,
           lineHeight: 1.5,
-          background: me ? "color-mix(in srgb, var(--accent) 18%, #100e1a)" : "#100e1a",
+          background: me ? "color-mix(in srgb, var(--accent) 18%, var(--panel2))" : "var(--panel2)",
           border: `1px solid ${me ? "var(--accent)" : color}`,
           color: "var(--ink)",
           fontStyle: me ? "normal" : "italic",
@@ -711,7 +711,7 @@ function OutcomeCard({
           : `${g.name} never cracked. Out of messages.`}
       </div>
       {secret && (
-        <div style={{ marginTop: 14, padding: "12px 16px", borderRadius: 12, background: "#100e1a", border: `1px solid ${col}` }}>
+        <div style={{ marginTop: 14, padding: "12px 16px", borderRadius: 12, background: "var(--panel2)", border: `1px solid ${col}` }}>
           <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>THE SECRET WORD WAS</div>
           <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: col, letterSpacing: 2, marginTop: 4 }}>{secret}</div>
         </div>

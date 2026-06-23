@@ -19,7 +19,9 @@ const CYCLE = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"] as const
 
 const STARTERS: { name: string; type: keyof typeof TYPE_COLOR; blurb: string }[] = [
   { name: "AXIOM", type: "LOGIC", blurb: "cold, precise logician" },
+  { name: "PARADOX", type: "LOGIC", blurb: "Socratic contradiction-hunter" },
   { name: "VOX", type: "RHETORIC", blurb: "grandiose orator" },
+  { name: "WIT", type: "RHETORIC", blurb: "razor-tongued debater" },
   { name: "GLITCH", type: "CHAOS", blurb: "gremlin of non-sequiturs" },
   { name: "BASTION", type: "COMPOSURE", blurb: "unflappable stoic" },
   { name: "MUSE", type: "CREATIVITY", blurb: "lateral-thinking trickster" },
@@ -148,7 +150,7 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ marginTop: 18 }}>
         <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 700, lineHeight: 1.55, margin: "0 0 18px" }}>
-          Six fighters wait in The Grounds. Claim one: its moveset, persona, and starting record become yours, and your
+          Eight fighters wait in The Grounds. Claim one: its moveset, persona, and starting record become yours, and your
           agent takes the controls. Each has a <b style={{ color: "var(--ink)" }}>type</b> that shapes the matchup.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, maxWidth: 720 }}>

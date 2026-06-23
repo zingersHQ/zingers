@@ -7,9 +7,11 @@ const LEARNERS = [
   { key: "AXIOM", name: "Axiom", type: "LOGIC" },
   { key: "VOX", name: "Vox", type: "RHETORIC" },
   { key: "GLITCH", name: "Glitch", type: "CHAOS" },
-  { key: "MUSE", name: "Muse", type: "CREATIVE" },
+  { key: "MUSE", name: "Muse", type: "CREATIVITY" },
   { key: "BASTION", name: "Bastion", type: "COMPOSURE" },
   { key: "EMBER", name: "Ember", type: "CHAOS" },
+  { key: "PARADOX", name: "Paradox", type: "LOGIC" },
+  { key: "WIT", name: "Wit", type: "RHETORIC" },
 ];
 
 interface RoundLog {

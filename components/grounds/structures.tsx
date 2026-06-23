@@ -60,8 +60,15 @@ function ColosseumWall({ biome }: { biome: BiomeConfig }) {
   const stone = biome.plaza.color;
   const stoneDark = biome.terrain.mid;
   const trim = biome.lights.arenaPoint;
+  const entrance = biome.terrain.canyonAngle ?? Math.PI / 2;
   const archN = 30;
-  const arches = useMemo(() => Array.from({ length: archN }, (_, i) => (i / archN) * TWO_PI), []);
+  const arches = useMemo(
+    () =>
+      Array.from({ length: archN }, (_, i) => (i / archN) * TWO_PI).filter(
+        (a) => Math.abs(Math.atan2(Math.sin(a - entrance), Math.cos(a - entrance))) >= 0.48,
+      ),
+    [entrance],
+  );
   return (
     <group>
       {/* lower colonnade — a ring of columns with a cornice */}
@@ -96,20 +103,23 @@ function ColosseumWall({ biome }: { biome: BiomeConfig }) {
 }
 
 // ── Ember: a jagged volcanic caldera rim ─────────────────────────────────────
+// The player approaches along the rift bearing; leave a gap in the teeth there.
 function CalderaRim({ biome }: { biome: BiomeConfig }) {
   const R = PLAZA_R + 2;
   const rock = biome.obelisk.color;
   const lava = biome.lights.arenaPoint;
+  const entrance = biome.terrain.canyonAngle ?? Math.PI / 2;
   const spikes = useMemo(() => {
     const r = mulberry(53);
     return Array.from({ length: 54 }, (_, i) => {
       const a = (i / 54) * TWO_PI + (r() - 0.5) * 0.08;
+      if (Math.abs(Math.atan2(Math.sin(a - entrance), Math.cos(a - entrance))) < 0.48) return null;
       const rad = R + (r() - 0.4) * 2.4;
       const h = 4 + r() * 11;
       const w = 1.1 + r() * 1.8;
       return { x: Math.cos(a) * rad, z: Math.sin(a) * rad, h, w, rot: r() * TWO_PI, lean: (r() - 0.5) * 0.3 };
-    });
-  }, [R]);
+    }).filter((s): s is NonNullable<typeof s> => !!s);
+  }, [R, entrance]);
   return (
     <group>
       {/* dark continuous lip with a molten seam at the base */}
@@ -121,6 +131,17 @@ function CalderaRim({ biome }: { biome: BiomeConfig }) {
         <ringGeometry args={[R - 1.3, R - 0.9, 96]} />
         <meshBasicMaterial color={lava} />
       </mesh>
+      {/* flanking entrance markers on the rift gap */}
+      {([-3.2, 3.2] as const).map((off) => {
+        const ex = Math.cos(entrance) * (R + 0.6) + -Math.sin(entrance) * off;
+        const ez = Math.sin(entrance) * (R + 0.6) + Math.cos(entrance) * off;
+        return (
+          <mesh key={off} position={[ex, 2.4, ez]} castShadow>
+            <coneGeometry args={[0.55, 4.8, 5]} />
+            <meshStandardMaterial color={rock} emissive={lava} emissiveIntensity={0.55} roughness={0.92} flatShading />
+          </mesh>
+        );
+      })}
       {/* jagged basalt teeth around the rim */}
       {spikes.map((s, i) => (
         <mesh key={i} position={[s.x, s.h / 2, s.z]} rotation={[s.lean, s.rot, s.lean]} castShadow>
@@ -137,26 +158,31 @@ export function PlazaSurround({ biome }: { biome: BiomeConfig }) {
 }
 
 // ── central arena: a lava pit instead of a gilded ring ───────────────────────
+// radius of the central combat space — kept in sync with world.tsx ARENA_R so
+// the pit and the ring platform read at the same (larger) coliseum scale.
+const ARENA_R = 8.6;
+
 export function PitArena({ biome }: { biome: BiomeConfig }) {
   const lava = biome.lights.arenaPoint;
   const rock = biome.obelisk.color;
   const tex = useMemo(() => crackTexture(lava, "#fff2cc"), [lava]);
-  const teeth = useMemo(() => Array.from({ length: 22 }, (_, i) => (i / 22) * TWO_PI), []);
+  const teeth = useMemo(() => Array.from({ length: 28 }, (_, i) => (i / 28) * TWO_PI), []);
+  const R = ARENA_R;
   return (
     <group>
       {/* sunken molten basin */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.35, 0]} receiveShadow>
-        <circleGeometry args={[6.5, 80]} />
+        <circleGeometry args={[R, 96]} />
         <meshStandardMaterial color="#1a0a06" emissive={lava} emissiveMap={tex} emissiveIntensity={1.8} roughness={0.5} metalness={0.3} />
       </mesh>
       {/* glowing rim */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <torusGeometry args={[6.6, 0.24, 16, 160]} />
+        <torusGeometry args={[R + 0.1, 0.26, 16, 180]} />
         <meshStandardMaterial color={lava} emissive={lava} emissiveIntensity={2.8} metalness={0.3} roughness={0.4} />
       </mesh>
       {/* basalt teeth ringing the pit */}
       {teeth.map((a, i) => (
-        <mesh key={i} position={[Math.cos(a) * 6.6, 0.55, Math.sin(a) * 6.6]} rotation={[0, a, 0]} castShadow>
+        <mesh key={i} position={[Math.cos(a) * (R + 0.1), 0.55, Math.sin(a) * (R + 0.1)]} rotation={[0, a, 0]} castShadow>
           <coneGeometry args={[0.34, 1.5 + (i % 3) * 0.4, 4]} />
           <meshStandardMaterial color={rock} emissive={lava} emissiveIntensity={0.2} roughness={0.95} flatShading />
         </mesh>

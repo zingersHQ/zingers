@@ -28,7 +28,7 @@ export const ORG_PAGES: OrgPage[] = [
   { slug: "bible", section: "bible", order: 0, title: "The Zingers Bible", file: "docs/bible/README.md", description: "Single source of truth for lore, names, and rules-as-fiction." },
   { slug: "bible/cosmology", section: "bible", order: 1, title: "Cosmology", file: "docs/bible/01-cosmology.md", description: "The Hum, the Long Vault, and why anyone fights." },
   { slug: "bible/forces", section: "bible", order: 2, title: "The Five Forces", file: "docs/bible/02-forces.md", description: "The type pentagon as in-world physics." },
-  { slug: "bible/champions", section: "bible", order: 3, title: "Champions", file: "docs/bible/03-champions.md", description: "What a mind is; the six First Minds." },
+  { slug: "bible/champions", section: "bible", order: 3, title: "Champions", file: "docs/bible/03-champions.md", description: "What a mind is; the eight First Minds." },
   { slug: "bible/keepers", section: "bible", order: 4, title: "The Keepers", file: "docs/bible/04-keepers.md", description: "Five Keepers, five cipher-words: the campaign spine." },
   { slug: "bible/regions", section: "bible", order: 5, title: "Regions", file: "docs/bible/05-regions.md", description: "The map of the Grounds: force-bias and arenas." },
   { slug: "bible/seasons", section: "bible", order: 6, title: "Seasons", file: "docs/bible/06-seasons.md", description: "The Chronicle: generative, seeded living seasons." },

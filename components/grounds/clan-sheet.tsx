@@ -19,12 +19,14 @@ export function ClanSheet({
   war = null,
   onClose,
   onPledged,
+  onSelectionChange,
 }: {
   preselect?: CreatureType | null;
   suggested?: CreatureType | null;
   war?: WarState | null;
   onClose: () => void;
   onPledged?: (f: CreatureType) => void;
+  onSelectionChange?: (f: CreatureType | null) => void;
 }) {
   const force = useChampions((s) => s.force);
   const forcePoints = useChampions((s) => s.forcePoints);
@@ -33,6 +35,10 @@ export function ClanSheet({
 
   const locked = !canChangeClan();
   const [sel, setSel] = useState<CreatureType | null>(preselect ?? force ?? suggested ?? null);
+
+  useEffect(() => {
+    onSelectionChange?.(sel);
+  }, [sel, onSelectionChange]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,9 +62,14 @@ export function ClanSheet({
 
   const accent = sel ? TYPE_COLOR[sel] : "#9a96b8";
 
+  // When locked you've already pledged this season — `force` is guaranteed set,
+  // so the sheet becomes a focused review of your own Clan rather than a picker.
+  const mine = force ? forceMeta(force) : null;
+  const myPoints = war?.mine ?? forcePoints.points;
+
   return (
     <div
-      style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.66)", backdropFilter: "blur(8px)", zIndex: 64, padding: 16 }}
+      style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(8px)", zIndex: 64, padding: 16 }}
       onClick={onClose}
     >
       <div
@@ -74,12 +85,33 @@ export function ClanSheet({
         <div className="mono" style={{ fontSize: 9.5, letterSpacing: 2.4, color: accent, fontWeight: 700 }}>
           {locked ? "YOUR CLAN" : force ? "CHANGE YOUR CLAN" : "CHOOSE YOUR CLAN"}
         </div>
-        <h2 style={{ fontSize: 21, fontWeight: 800, margin: "3px 0 4px", letterSpacing: -0.4 }}>
-          Pick a side to fight for.
-        </h2>
-        <p style={{ fontSize: 12.5, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-          Your Clan is an optional team in the season-long <b style={{ color: "var(--ink)" }}>Clan War</b>. Every ranked win you score is counted toward it — and the winning Clan reshapes the world.
-        </p>
+        {locked && mine ? (
+          /* you're pledged for the season — review your Clan, don't re-pick it */
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 13, marginTop: 6 }}>
+              <span style={{ width: 50, height: 50, borderRadius: 13, display: "grid", placeItems: "center", background: `${accent}22`, color: accent, fontSize: 27, fontWeight: 800, flexShrink: 0, boxShadow: `0 0 30px -12px ${accent}` }}>
+                {EMBLEM[force!]}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>{mine.house}</h2>
+                <div className="mono" style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 2 }}>{mine.motto}</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 13 }}>
+              <span style={{ fontSize: 26, fontWeight: 800, color: accent, lineHeight: 1 }}>{myPoints}</span>
+              <span className="mono" style={{ fontSize: 10.5, letterSpacing: 0.4, color: "var(--muted)" }}>war points you&apos;ve added this season</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 style={{ fontSize: 21, fontWeight: 800, margin: "3px 0 4px", letterSpacing: -0.4 }}>
+              Pick a side to fight for.
+            </h2>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+              Your Clan is an optional team in the season-long <b style={{ color: "var(--ink)" }}>Clan War</b>. Every ranked win you score is counted toward it — and the winning Clan reshapes the world.
+            </p>
+          </>
+        )}
 
         {/* home-advantage payoff */}
         <div style={{ display: "flex", alignItems: "center", gap: 9, margin: "14px 0", padding: "9px 12px", borderRadius: 10, border: `1px solid ${accent}55`, background: `${accent}12` }}>
@@ -89,7 +121,8 @@ export function ClanSheet({
           </span>
         </div>
 
-        {/* the five clans */}
+        {/* the five clans — only a live picker when you can actually choose */}
+        {!locked && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {FORCES.map((f) => {
             const col = TYPE_COLOR[f.id];
@@ -122,7 +155,7 @@ export function ClanSheet({
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>{f.house}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{f.house}</span>
                     {isSuggested && (
                       <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, letterSpacing: 0.8, color: col, border: `1px solid ${col}`, borderRadius: 5, padding: "1px 5px" }}>
                         <Star size={8} strokeWidth={2.6} /> YOUR FORCE
@@ -136,6 +169,7 @@ export function ClanSheet({
             );
           })}
         </div>
+        )}
 
         {/* live war standing — the thing your wins feed */}
         {war && (

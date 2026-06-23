@@ -161,6 +161,17 @@ a {
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+/* inset fields & chat bubbles — always read against the active theme */
+.inset {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted2);
+  opacity: 1;
+}
 .chip {
   font-family: var(--font-mono), monospace;
   font-size: 10px;
@@ -234,6 +245,15 @@ a {
 
 .glow {
   text-shadow: 0 0 24px color-mix(in srgb, var(--ac, var(--gold)) 55%, transparent);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── celebration / outcome reveals ──────────────────────────────────── */

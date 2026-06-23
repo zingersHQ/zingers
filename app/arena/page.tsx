@@ -302,7 +302,7 @@ function AdvancedAgent({
     width: "100%",
     padding: "10px 12px",
     borderRadius: 9,
-    background: "#100e1a",
+    background: "var(--panel2)",
     border: "1px solid var(--line2)",
     color: "var(--ink)",
     fontSize: 13,
@@ -570,7 +570,7 @@ function FighterPanel(props: { entry: RosterEntry; champ: Champion; col: string;
           minHeight: 52,
           padding: "10px 14px",
           borderRadius: 12,
-          background: speaking ? `color-mix(in srgb, ${col} 14%, #100e1a)` : "#100e1a",
+          background: speaking ? `color-mix(in srgb, ${col} 14%, var(--panel2))` : "var(--panel2)",
           border: `1px solid ${speaking ? col : "var(--line)"}`,
           fontStyle: "italic",
           fontSize: 14,
@@ -598,7 +598,7 @@ function ResultCard(props: {
   const winnerCol = end.winner === a.key ? acol : bcol;
   const correct = resultMsg?.won;
   return (
-    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.72)", backdropFilter: "blur(8px)", zIndex: 60 }}>
+    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(8px)", zIndex: 60 }}>
       <div className="panel pop" style={{ ["--ac" as string]: winnerCol, padding: 30, width: "min(440px, 92vw)", textAlign: "center", boxShadow: `0 0 80px -30px ${winnerCol}` }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: "var(--muted2)" }}>
           THE TRIBUNAL RULES
@@ -610,7 +610,7 @@ function ResultCard(props: {
           defeats {end.loser_name} in {end.rounds} rounds
         </div>
         {end.mvp.line && (
-          <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: "#100e1a", border: "1px solid var(--line)" }}>
+          <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: "var(--panel2)", border: "1px solid var(--line)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
               DUNK OF THE MATCH · {end.mvp.dmg} DMG
             </div>

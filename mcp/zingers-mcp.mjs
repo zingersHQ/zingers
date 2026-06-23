@@ -122,7 +122,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        key: { type: "string", description: "base creature key, e.g. AXIOM, VOX, GLITCH, MUSE, BASTION, EMBER" },
+        key: { type: "string", description: "base creature key, e.g. AXIOM, PARADOX, VOX, WIT, GLITCH, MUSE, BASTION, EMBER" },
         name: { type: "string", description: "display name (optional)" },
         handle: { type: "string", description: "your public handle on the ladder (optional)" },
         agentEndpoint: { type: "string", description: "optional URL we POST the AgentView to each turn; omit to use House Grok" },

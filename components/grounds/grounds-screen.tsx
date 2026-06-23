@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
-import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount } from "@/lib/evolve/progression";
+import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
@@ -14,6 +14,7 @@ import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
 import { STORAGE } from "@/lib/brand";
 import { getOwnerToken, getHandle } from "@/lib/owner";
+import { track } from "@/lib/track";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, REGION_WORLDS } from "@/components/grounds/worlds";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
@@ -41,7 +42,6 @@ import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebrat
 import { ArrivalSequence } from "@/components/grounds/arrival";
 import { ClanSheet } from "@/components/grounds/clan-sheet";
 import { DailySheet } from "@/components/grounds/daily-sheet";
-import { LeagueSheet } from "@/components/grounds/league-sheet";
 import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -53,6 +53,27 @@ const World = dynamic(() => import("@/components/grounds/world"), {
   ),
 });
 
+// Ladder agents reuse a roster creature key for moves/body — when you own that
+// same creature, match visuals need the agent's unique ladder id so both sides
+// don't collapse into one champion.
+function ladderChampion(agent: TowerAgent): Champion {
+  const c = blank();
+  c.battles = agent.battles;
+  c.wins = Math.round(agent.battles * 0.5);
+  c.losses = agent.battles - c.wins;
+  c.xp = agent.battles * 60;
+  c.rating = agent.rating;
+  return c;
+}
+
+function matchOpponentKey(creatureKey: string, ladderId: string | null): string {
+  return ladderId ?? creatureKey;
+}
+
+function battleActorToMatchKey(actor: string, owned: string, creatureKey: string, ladderId: string | null): string {
+  return actor === owned ? owned : matchOpponentKey(creatureKey, ladderId);
+}
+
 export default function GroundsScreen() {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [towerAgents, setTowerAgents] = useState<TowerAgent[]>([]);
@@ -60,7 +81,7 @@ export default function GroundsScreen() {
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker" | "daily" | "league">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker" | "daily">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
@@ -93,6 +114,9 @@ export default function GroundsScreen() {
   );
   const scenario = world.scenario;
   const isHub = world.kind === "hub";
+  // The Amphitheatre: a spectator venue. Like the hub, it has no playable region
+  // machinery (Tower / Keepers / training / caches / goals) — you go there to watch.
+  const spectator = !!world.spectator;
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   // mid-claim: a champion was picked but the arrival cinematic is still running,
@@ -162,8 +186,8 @@ export default function GroundsScreen() {
   // region this season. Cleared goals (per-season ledger) drop off the map; the
   // compass still lists them so you can see what's left.
   const allGoals = useMemo<WorldGoal[]>(
-    () => (isHub ? [] : worldGoals(biome, season.n, growth?.featured ?? false)),
-    [isHub, biome, season, growth?.featured],
+    () => (isHub || spectator ? [] : worldGoals(biome, season.n, growth?.featured ?? false)),
+    [isHub, spectator, biome, season, growth?.featured],
   );
   const doneGoals = useMemo(
     () => (store.goals.season === season.n ? store.goals.done : []),
@@ -183,10 +207,10 @@ export default function GroundsScreen() {
   );
   // the Concord is a built, neutral hub — no wild caches there
   const liveNodes = useMemo(
-    () => (isHub ? [] : allNodes.filter((n) => !claimedToday.includes(n.id))),
-    [isHub, allNodes, claimedToday],
+    () => (isHub || spectator ? [] : allNodes.filter((n) => !claimedToday.includes(n.id))),
+    [isHub, spectator, allNodes, claimedToday],
   );
-  const poseRef = useRef<Pose>({ x: 0, z: 13, heading: Math.PI });
+  const poseRef = useRef<Pose>({ x: 0, z: 34, heading: Math.PI });
   const travelRef = useRef<((x: number, z: number) => void) | null>(null);
   const onPose = useCallback((x: number, z: number, heading: number) => {
     poseRef.current = { x, z, heading };
@@ -201,6 +225,7 @@ export default function GroundsScreen() {
   // a Concord clan flag (preselecting that Force).
   const [clanOpen, setClanOpen] = useState(false);
   const [clanPreselect, setClanPreselect] = useState<CreatureType | null>(null);
+  const [clanPreview, setClanPreview] = useState<CreatureType | null>(null);
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -208,6 +233,7 @@ export default function GroundsScreen() {
   useEffect(() => {
     setMounted(true);
     setGpu(gpuStatus());
+    track("explore"); // entered the 3D Grounds (behaviour analytics)
     if (typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0)) {
       setIsTouch(true);
     }
@@ -297,6 +323,16 @@ export default function GroundsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [roster, progress],
   );
+  const matchBKey = matchOpponentKey(opponent ?? "", opponentId);
+  const matchChampions = useMemo(() => {
+    if (!opponentId) return champions;
+    const agent = towerAgents.find((a) => a.id === opponentId);
+    if (!agent) return champions;
+    return [
+      ...champions,
+      { key: agent.id, type: agent.type, name: agent.name, champion: ladderChampion(agent) },
+    ];
+  }, [champions, opponentId, towerAgents]);
 
   const inMatch = bout.phase === "live";
   const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen;
@@ -307,6 +343,11 @@ export default function GroundsScreen() {
     const inBattle = inMatch || overlay === "guardian";
     setMood(inBattle ? "battle" : "grounds");
   }, [inMatch, overlay]);
+
+  // Behaviour analytics: opening the Daily Tribunal shrine.
+  useEffect(() => {
+    if (overlay === "daily") track("daily");
+  }, [overlay]);
 
   // open the nearby interaction (shared by the E key and the on-screen prompt).
   // The central arena routes to the world's scenario; perched-agent challenges
@@ -351,8 +392,9 @@ export default function GroundsScreen() {
       setClanPreselect(near.type);
       setClanOpen(true);
     } else if (near?.kind === "venue") {
-      // a Concord shrine → open its game as an overlay (Daily / League)
-      setOverlay(near.venue);
+      // a Concord shrine. The Daily Tribunal opens its sheet; the Scrying Gallery
+      // is watched in-world — the league fights on its dais — so nothing to open.
+      if (near.venue === "daily") setOverlay("daily");
     } else if (near?.kind === "gate") {
       // step through a Vaultgate → travel to that region (the scene remounts via
       // its world key, so you land cleanly at the region's spawn)
@@ -391,8 +433,19 @@ export default function GroundsScreen() {
       c.pb++;
       if (t.dmg > 0) c.ha++;
     }
-    setMatchView({ aKey: owned, bKey: opponent, hpA: bout.hpA, hpB: bout.hpB, actor: t.actor, punchA: c.pa, punchB: c.pb, hitA: c.ha, hitB: c.hb });
-  }, [bout.turn, bout.hpA, bout.hpB, opponent, owned]);
+    const bKey = matchOpponentKey(opponent, opponentId);
+    setMatchView({
+      aKey: owned,
+      bKey,
+      hpA: bout.hpA,
+      hpB: bout.hpB,
+      actor: battleActorToMatchKey(t.actor, owned, opponent, opponentId),
+      punchA: c.pa,
+      punchB: c.pb,
+      hitA: c.ha,
+      hitB: c.hb,
+    });
+  }, [bout.turn, bout.hpA, bout.hpB, opponent, opponentId, owned]);
 
   const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
@@ -407,7 +460,8 @@ export default function GroundsScreen() {
     }
     counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
     setResult(null);
-    setMatchView({ aKey: owned, bKey: opponent, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+    const bKey = matchOpponentKey(opponent, opponentId);
+    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
     setOverlay("none");
     const ra = getRecipe(owned);
     const rb = getRecipe(opponent);
@@ -685,6 +739,7 @@ export default function GroundsScreen() {
       {mounted && gpu?.ok && !rosterError && roster.length > 0 && (
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           <RenderBoundary
+            onError={() => track("error")}
             fallback={(error, reset) => (
               <RenderNotice
                 title="The Grounds couldn’t render"
@@ -703,18 +758,20 @@ export default function GroundsScreen() {
           >
             <World
               key={world.id}
-              champions={champions}
+              champions={showMatch ? matchChampions : champions}
               ownedKey={owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
               controlsEnabled={controlsEnabled}
               biome={biome}
-              towerAgents={isHub ? [] : towerAgents}
+              spectator={spectator}
+              towerAgents={isHub || spectator ? [] : towerAgents}
               nodes={liveNodes}
               goals={isHub ? [] : liveGoals}
               gates={isHub ? CONCORD_GATES : []}
               pledged={store.force}
               choosingClan={clanOpen}
+              clanPreview={clanOpen ? clanPreview : null}
               tier={growth?.tier ?? 0}
               featured={growth?.featured ?? false}
               featuredWorld={isHub ? featuredWorld : null}
@@ -794,11 +851,15 @@ export default function GroundsScreen() {
                 ? isMobile
                   ? "Walk to a Vaultgate to travel · tap the prompt when near"
                   : "THE CONCORD · VAULTGATE → TRAVEL · E TO ACT · M FOR MENU"
-                : isMobile
-                  ? "Walk to glowing spots · tap the prompt when near"
-                  : scenario.id === "gauntlet"
-                    ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
-                    : "WASD · SPACE / DOUBLE-JUMP TO FLY · CLIMB · E NEAR NPCs · M FOR MENU"
+                : spectator
+                  ? isMobile
+                    ? "The Amphitheatre · watch the league · tap the herald for today's case"
+                    : "THE AMPHITHEATRE · THE LEAGUE FIGHTS ITSELF · WALK TO THE HERALD FOR TODAY'S CASE · M TO LEAVE"
+                  : isMobile
+                    ? "Walk to glowing spots · tap the prompt when near"
+                    : scenario.id === "gauntlet"
+                      ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
+                      : "WASD · SPACE / DOUBLE-JUMP TO FLY · X TO DROP · CLIMB · E NEAR NPCs · M FOR MENU"
               : "Claim a champion to enter the world"}
           </p>
         )}
@@ -918,7 +979,8 @@ export default function GroundsScreen() {
           preselect={clanPreselect}
           suggested={owned ? byKey[owned]?.type ?? null : null}
           war={war}
-          onClose={() => setClanOpen(false)}
+          onClose={() => { setClanOpen(false); setClanPreview(null); }}
+          onSelectionChange={setClanPreview}
           onPledged={(f) => {
             const fm = forceMeta(f);
             setPledgeFlash({ name: fm.house, motto: fm.motto, color: TYPE_COLOR[f] });
@@ -963,7 +1025,7 @@ export default function GroundsScreen() {
 
       {/* proximity action — centered above the touch controls so it never
           overlaps the jump / sprint cluster. Tap on touch, E on desktop. */}
-      {owned && near && overlay === "none" && !inMatch && !result && !gRun && (
+      {owned && near && overlay === "none" && !inMatch && !result && !gRun && !(near.kind === "venue" && near.venue === "league") && (
         <div
           style={{
             position: "absolute",
@@ -1039,7 +1101,7 @@ export default function GroundsScreen() {
 
       {/* guardian duel overlay — opened from the Shrine in the world */}
       {overlay === "guardian" && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.78)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 20 }}>
             <GuardianGame embedded startLevel={keeperLevel ?? undefined} onClose={() => { setOverlay("none"); setKeeperLevel(null); }} />
           </div>
@@ -1051,7 +1113,6 @@ export default function GroundsScreen() {
 
       {/* Concord venues — the meta games, now walk-up shrines in the hub */}
       {overlay === "daily" && <DailySheet onClose={() => setOverlay("none")} />}
-      {overlay === "league" && <LeagueSheet onClose={() => setOverlay("none")} />}
 
       {overlay === "arena" && owned && (
         <ChallengeOverlay
@@ -1124,7 +1185,7 @@ export default function GroundsScreen() {
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
-        <MatchHud bout={bout} owned={owned!} opponent={opponent!} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
+        <MatchHud bout={bout} owned={owned!} opponent={matchBKey} foeMeta={duelMeta} foeType={towerAgents.find((a) => a.id === opponentId)?.type} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
       )}
 
     </main>
@@ -1141,7 +1202,7 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
   const sellFragment = useChampions((s) => s.sellFragment);
   const col = "#39e0ff";
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(420px, 95vw)", padding: 24, borderColor: col }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, background: `${col}1c`, color: col }}>
@@ -1189,7 +1250,7 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
 
 function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: string) => Champion; onPick: (k: string) => void }) {
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.8)", backdropFilter: "blur(6px)", zIndex: 40, padding: 20 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 40, padding: 20 }}>
       <div className="panel" style={{ padding: 26, width: "min(760px, 95vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center" }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: "var(--muted2)" }}>
           STEP 1 · CLAIM YOUR CHAMPION
@@ -1286,7 +1347,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <ChampionAvatar ckey={ckey} type={entry.type} champion={champ} size={84} />
@@ -1317,7 +1378,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           onBlur={() => store.setPersona(ckey, persona)}
           placeholder={entry.persona}
           rows={2}
-          style={{ width: "100%", background: "#100e1a", border: "1px solid var(--line2)", borderRadius: 10, color: "var(--ink)", padding: 10, fontFamily: "inherit", fontSize: 13, resize: "vertical" }}
+          style={{ width: "100%", background: "var(--panel2)", border: "1px solid var(--line2)", borderRadius: 10, color: "var(--ink)", padding: 10, fontFamily: "inherit", fontSize: 13, resize: "vertical" }}
         />
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
@@ -1383,7 +1444,7 @@ function AgentPicker({ ckey, recipe }: { ckey: string; recipe: Recipe }) {
   };
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    background: "#100e1a",
+    background: "var(--panel2)",
     border: "1px solid var(--line2)",
     borderRadius: 8,
     color: "var(--ink)",
@@ -1456,7 +1517,7 @@ function ChallengeOverlay(props: {
     const col = TYPE_COLOR[oppEntry.type];
     const oppChamp = get(opponent);
     return (
-      <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+      <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
         <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(520px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ fontSize: 22, fontWeight: 700 }}>Face to face</div>
@@ -1513,7 +1574,7 @@ function ChallengeOverlay(props: {
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", width: "min(620px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24 }}>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ fontSize: 22, fontWeight: 700 }}>House sparring pit</div>
@@ -1622,16 +1683,21 @@ function MatchHud(props: {
   bout: ReturnType<typeof useBout>;
   owned: string;
   opponent: string;
+  foeMeta?: { name: string; handle?: string } | null;
+  foeType?: CreatureType;
   byKey: Record<string, RosterEntry>;
   get: (k: string) => Champion;
   result: { won: boolean; crowns: number; betWon: boolean | null; ladders: string[]; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null; home: boolean } | null;
   onClose: () => void;
   isMobile: boolean;
 }) {
-  const { bout, owned, opponent, byKey, get, result, onClose, isMobile } = props;
+  const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile } = props;
   const t = bout.turn;
   const a = byKey[owned];
   const b = byKey[opponent];
+  const aName = a?.name ?? owned;
+  const bName = foeMeta?.name ?? b?.name ?? opponent;
+  const bColor = foeType ? TYPE_COLOR[foeType] : b ? TYPE_COLOR[b.type] : "var(--muted2)";
   const [copied, setCopied] = useState(false);
   const share = () => {
     const c = get(owned);
@@ -1667,7 +1733,7 @@ function MatchHud(props: {
       >
         <div style={{ textAlign: "center", maxWidth: "min(640px, 94vw)" }}>
           <div className="mono" style={{ fontSize: isMobile ? 11 : 12, color: "var(--gold)", letterSpacing: 1 }}>
-            {a?.name} <span style={{ color: "var(--muted2)" }}>vs</span> {b?.name}
+            {aName} <span style={{ color: "var(--muted2)" }}>vs</span> {bName}
           </div>
           {bout.start && (
             <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.35 }}>
@@ -1678,10 +1744,10 @@ function MatchHud(props: {
             <MomentumMeter
               momentum={t.momentum}
               surge={t.surge ?? null}
-              aName={a?.name}
-              bName={b?.name}
+              aName={aName}
+              bName={bName}
               aColor={a ? TYPE_COLOR[a.type] : "var(--gold)"}
-              bColor={b ? TYPE_COLOR[b.type] : "var(--muted2)"}
+              bColor={bColor}
               isMobile={isMobile}
             />
           )}
@@ -1738,7 +1804,7 @@ function MatchHud(props: {
         const hlLabel = hl ? (hl.kind === "ko" ? "THE FINISH" : hl.kind === "crit" ? "HARDEST BAR" : "TURNING POINT") : "";
         const rankDelta = result.globalDelta ?? result.ratingDelta;
         return (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.6)", zIndex: 55, padding: 16 }}>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", zIndex: 55, padding: 16 }}>
           {result.won && <Confetti accent="#f0a93a" count={70} originTop="34%" />}
           <div className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`} style={{ ["--ac" as string]: ac, position: "relative", padding: 22, width: "min(380px, 92vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center", boxShadow: `0 0 80px -30px ${ac}` }}>
             {/* header */}

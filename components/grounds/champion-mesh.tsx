@@ -5,16 +5,31 @@ import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.j
 import { Html, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Champion, CreatureType } from "@/lib/types";
-import { TYPE_COLOR, levelFor, tierFor, tierIndex } from "@/lib/evolve/progression";
-import { appearanceOf, type Appearance } from "@/lib/evolve/appearance";
+import { TYPE_COLOR, levelFor, tierFor, tierIndex, dominant } from "@/lib/evolve/progression";
+import { appearanceOf, type Appearance, type BoneMorph } from "@/lib/evolve/appearance";
 import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
-import { modelFor, ALL_MODELS } from "@/lib/render/model-registry";
+import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
 import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
-import { bodyPalette, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
+import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
+import { PhenotypeParts } from "@/components/grounds/phenotype-parts";
+import { phenotypeOf } from "@/lib/render/phenotype";
+import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 
 for (const m of ALL_MODELS) useGLTF.preload(m);
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+// module-level deterministic RNG (kept out of render so the React Compiler doesn't
+// flag the internal state reassignment) — identity-stable shard layouts.
+function seededRng(seed: number) {
+  let a = (seed || 1) >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 // ── animation level-of-detail ────────────────────────────────────────────────
 // Every non-owned champion runs its own AnimationMixer + bone-morph + decorative
@@ -42,7 +57,7 @@ export interface BuiltCharacter {
   actions: Record<string, THREE.AnimationAction | undefined>;
   bones: Record<string, THREE.Bone>;
   boneBase: Record<string, THREE.Vector3>;
-  morph: { headScale: number; handScale: number };
+  morph: BoneMorph;
   h: number;
   emissive: number;
   palette: BodyPalette;
@@ -55,13 +70,16 @@ export function buildCharacter(
   colorHex: string,
   appOverride?: Appearance,
   seed = 0,
+  paletteOverride?: BodyPalette,
 ): BuiltCharacter {
   const root = skeletonClone(scene) as THREE.Group;
   // archetype silhouette (when provided) drives proportions; else genome only
   const app = appOverride ?? appearanceOf(champion);
   // a per-individual multi-colour scheme anchored on the Force colour — distinct
-  // body regions, trim, and a "clothing pattern" so individuals are identifiable
-  const pal: BodyPalette = bodyPalette(colorHex, seed);
+  // body regions, trim, and a "clothing pattern" so individuals are identifiable.
+  // The caller passes the SAME palette it uses for features/parts so the painted
+  // body and the bolt-ons always agree.
+  const pal: BodyPalette = paletteOverride ?? bodyPalette(colorHex, seed);
 
   root.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -72,18 +90,22 @@ export function buildCharacter(
       const region = regionOf(m.name || "");
       const side = sideOf(m.name || "");
       const role = roleOf(mat.name);
-      const partHex = pal.colorFor(region, side, role);
+      // the head's dark face IS the eyes — make them SHINE in the Force glow
+      // instead of staying matte black, so each species has lit, coloured eyes
+      const isEye = region === "head" && role === "dark";
+      const partHex = isEye ? pal.glow : pal.colorFor(region, side, role);
       const part = new THREE.Color(partHex);
-      if (mat.color) mat.color.copy(part);
+      if (mat.color) mat.color.copy(isEye ? part.clone().multiplyScalar(0.55) : part);
       if ("emissive" in mat) {
         // low body emissive so the ALBEDO colours read; the archetype features +
         // aura carry the bloom. Dark joints stay matte; lit parts get a faint seam.
+        // The eyes are the exception — they blaze.
         mat.emissive = part.clone();
-        mat.emissiveIntensity = (role === "dark" ? 0.04 : 0.16) * (0.6 + app.emissive * 0.5);
+        mat.emissiveIntensity = isEye ? 2.4 * (0.7 + app.emissive * 0.4) : (role === "dark" ? 0.04 : 0.16) * (0.6 + app.emissive * 0.5);
       }
       // surface finish per material role: plates read metallic, joints matte
       if ("metalness" in mat) mat.metalness = clamp01(app.metalness + (role === "plate" ? 0.28 : role === "dark" ? -0.1 : 0.04));
-      if ("roughness" in mat) mat.roughness = clamp01(app.roughness + (role === "plate" ? -0.22 : role === "dark" ? 0.2 : 0.02));
+      if ("roughness" in mat) mat.roughness = clamp01(app.roughness + (role === "plate" ? -0.22 : isEye ? -0.1 : role === "dark" ? 0.2 : 0.02));
       mat.needsUpdate = true;
       m.material = mat;
     }
@@ -92,9 +114,10 @@ export function buildCharacter(
   root.updateMatrixWorld(true);
   const size = new THREE.Vector3();
   new THREE.Box3().setFromObject(root).getSize(size);
-  const unitScale = 1 / (size.y || 1);
-  const base = unitScale * app.h;
-  root.scale.set(base * app.width, base, base * app.width);
+  // UNIFORM model scale only — girth/length now live in the per-bone genome, so
+  // the whole figure no longer gets squashed into a pancake (the old flatten bug).
+  const base = (1 / (size.y || 1)) * app.h;
+  root.scale.setScalar(base);
 
   const bones: Record<string, THREE.Bone> = {};
   const boneBase: Record<string, THREE.Vector3> = {};
@@ -106,7 +129,7 @@ export function buildCharacter(
       boneBase[nm] = b.scale.clone();
     }
   });
-  const morph = { headScale: app.headScale, handScale: app.handScale };
+  const morph = app.morph;
   applyBoneMorph(bones, boneBase, morph);
 
   root.position.y = 0;
@@ -138,16 +161,49 @@ function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], .
   return c ? mixer.clipAction(c) : undefined;
 }
 
-export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Record<string, THREE.Vector3>, morph: { headScale: number; handScale: number }) {
-  for (const nm in bones) {
+// Drive the whole skeleton from the genome. Bone scales compound down the chain
+// (a child inherits its parent's scale), so we counter the inherited factors on
+// the head, neck, shoulders and arms — that way each group lands on its intended
+// NET size and a barrel chest never balloons the skull. Legs hang off the hips
+// (unscaled) so they need no correction.
+export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Record<string, THREE.Vector3>, m: BoneMorph) {
+  const set = (nm: string, x: number, y: number, z: number) => {
     const b = bones[nm];
     const bb = boneBase[nm];
-    if (!bb) continue;
-    let s = 1;
-    if (nm === "head") s = morph.headScale;
-    else if (nm.includes("palm") || nm === "thumbl" || nm === "thumbr") s = morph.handScale;
-    else continue;
-    b.scale.set(bb.x * s, bb.y * s, bb.z * s);
+    if (!b || !bb) return;
+    b.scale.set(bb.x * x, bb.y * y, bb.z * z);
+  };
+
+  const g = m.torsoGirth;
+  const gAb = Math.sqrt(g); // abdomen + chest split so their product == torsoGirth
+  const gCh = g / gAb;
+  set("abdomen", gAb, m.torsoLen, gAb);
+  set("torso", gCh, 1, gCh);
+  // neck: counter the inherited chest girth so it stays slim; lengthen on Y
+  set("neck", 1 / g, m.neckLen, 1 / g);
+  // head: counter inherited girth (XZ → 1 after the neck) and the abdomen+neck
+  // length so it reads as a clean uniform-size skull
+  set("head", m.headScale, m.headScale / (m.torsoLen * m.neckLen), m.headScale);
+
+  for (const s of ["l", "r"] as const) {
+    const asym = s === "l" ? m.asymL : m.asymR;
+    // shoulder pad sized to m.shoulder (counter inherited torso girth/length)
+    set(`shoulder.${s}`, m.shoulder / g, m.shoulder / m.torsoLen, m.shoulder / g);
+    // upper arm: counter the shoulder's net scale so girth/length land on intent
+    set(`upperarm.${s}`, (m.armGirth / m.shoulder) * asym, m.armLen / m.shoulder, (m.armGirth / m.shoulder) * asym);
+    // fore-arm inherits the upper arm's net size; leave it at base
+    set(`lowerarm.${s}`, 1, 1, 1);
+    // legs hang off the (unscaled) hips → apply girth/length directly
+    set(`upperleg.${s}`, m.legGirth * asym, m.legLen, m.legGirth * asym);
+    set(`lowerleg.${s}`, 1, 1, 1);
+  }
+
+  // hands — every palm/finger bone scaled uniformly
+  for (const nm in bones) {
+    if (/palm|thumb|index|middle|ring/.test(nm)) {
+      const bb = boneBase[nm];
+      bones[nm].scale.set(bb.x * m.handScale, bb.y * m.handScale, bb.z * m.handScale);
+    }
   }
 }
 
@@ -174,6 +230,7 @@ export function ChampionMesh({
   idleSpeed,
   auraDim,
   identityKey,
+  keeper,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -201,31 +258,53 @@ export function ChampionMesh({
   auraDim?: boolean;
   /** stable individual id → unique colour scheme / clothing pattern */
   identityKey?: string;
+  /** when set, marks this figure as a campaign Keeper and bolts on its signature
+   *  regalia (lantern / tomes / shield / orb / scythe) so bosses are unmistakable */
+  keeper?: KeeperKind;
 }) {
-  const { scene, animations } = useGLTF(modelFor(type));
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
 
-  const app = useMemo(() => archetypeAppearance(champion, type), [champion, type]);
+  const { scene, animations } = useGLTF(modelFor(type));
+
   const lf = levelFor(champion.xp);
   const tier = tierFor(lf.level);
   const ti = tierIndex(lf.level);
 
-  // per-individual seed → distinct multi-colour scheme. Prefer an explicit id;
-  // else fall back to a hash of the career so different builds still differ.
+  // per-individual seed → distinct multi-colour scheme + skeletal jitter. Prefer
+  // an explicit id; else fall back to a hash of the career so different builds
+  // still differ.
   const seed = useMemo(
     () => seedFrom(identityKey || `${colHex}|${champion.xp}|${champion.aggression}|${champion.flair}|${champion.resilience}|${champion.creativity}`),
     [identityKey, colHex, champion.xp, champion.aggression, champion.flair, champion.resilience, champion.creativity],
   );
 
-  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}`;
-  const built = useMemo(() => buildCharacter(scene, animations, champion, colHex, app, seed), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const app = useMemo(() => archetypeAppearance(champion, type, seed), [champion, type, seed]);
+  // Colour identity: regular minds are restrained to their Force's two-tone pair;
+  // Keepers ignore the pair and get the richer, patterned, multi-colour treatment.
+  const isKeeper = !!keeper;
+  const palette = useMemo(
+    () => bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper }),
+    [colHex, seed, type, isKeeper],
+  );
+
+  // seeded, tier-gated, skill-flavoured solid anatomy (helmet / visor / shoulders
+  // / chest / back) — the "this is a different model of robot" layer. Cheap + pure,
+  // so it's left for the compiler to memoize.
+  const domAxis = dominant(champion);
+  const pheno = phenotypeOf(type, seed, ti, domAxis.axis.k, domAxis.value);
+
+  // Build the real rigged body: clone the shared RobotExpressive rig, recolour it
+  // per region, scale to height + morph the SKELETON to this Force's proportions,
+  // and wire its idle / walk / punch clips. Rebuilds only when the identity changes.
+  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}|${isKeeper}`;
+  const built = useMemo(() => buildCharacter(scene, animations, champion, colHex, app, seed, palette), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gref = useRef<THREE.Group>(null);
   const motion = useRef<THREE.Group>(null);
-  const evoRef = useRef<THREE.Group>(null);
   const crownRef = useRef<THREE.Group>(null);
   const auraRef = useRef<THREE.Mesh>(null);
+  // one-shot melee impulses applied to the body group (decayed each frame)
   const lunge = useRef(0);
   const recoil = useRef(0);
 
@@ -237,6 +316,7 @@ export function ChampionMesh({
   const movingPrev = useRef(false);
   const phase = useMemo(() => Math.random() * 6.28, []);
 
+  // punch → play the clip + lunge forward; on finish, ease back to idle
   useEffect(() => {
     if (!punchSignal) return;
     const p = built.actions.punch;
@@ -258,8 +338,7 @@ export function ChampionMesh({
     if (hitSignal) recoil.current = 1;
   }, [hitSignal]);
 
-  // generic one-shot gesture (wave / jump / punch) for showcases & the intro.
-  // Additive: existing callers that never bump actSignal are unaffected.
+  // generic one-shot gesture (wave / jump / punch) for showcases & the intro
   useEffect(() => {
     if (!actSignal) return;
     const a = built.actions[actName];
@@ -279,28 +358,28 @@ export function ChampionMesh({
     if (actName === "punch") lunge.current = 1;
   }, [actSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // gallery portraits: offset the idle clip + nudge its speed so a wall of
-  // models never breathes in lockstep
+  // gallery portraits: offset + tempo the idle clip so a wall never beats in lockstep
   useEffect(() => {
     const idle = built.actions.idle;
     if (!idle) return;
     if (idlePhase != null) idle.time = idlePhase;
-    // archetype sets the base tempo (heavy/calm vs jittery/lively); the gallery
-    // desync multiplier rides on top so a wall of the same Force never beats in
-    // lockstep.
     idle.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1));
   }, [built, idlePhase, idleSpeed, type]);
 
-  // evolution shards + rings, precomputed
-  const shardN = Math.min(10, Math.max(0, lf.level - 1));
+  // evolution shards + rings, precomputed. Kept sparse on purpose — a few drifting
+  // motes read as "evolved" without burying the body in floating clutter.
+  const shardN = Math.min(4, Math.max(0, Math.ceil((lf.level - 1) / 2)));
   const shards = useMemo(
-    () => Array.from({ length: shardN }, (_, i) => ({ a: (i / Math.max(1, shardN)) * 6.28, r: 1.0 + Math.random() * 0.4, y: app.h * 0.45 + (Math.random() - 0.3) * 0.9, spd: 0.3 + Math.random() * 0.6 })),
-    [shardN], // eslint-disable-line react-hooks/exhaustive-deps
+    () => {
+      const rnd = seededRng(seed ^ 0x5a3d); // identity-stable orbit so a mind keeps its shards
+      return Array.from({ length: shardN }, (_, i) => ({ a: (i / Math.max(1, shardN)) * 6.28, r: 1.0 + rnd() * 0.4, y: app.h * 0.45 + (rnd() - 0.3) * 0.9, spd: 0.3 + rnd() * 0.6 }));
+    },
+    [shardN, seed], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const shardRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const ringN = tier.rings;
+  const ringN = Math.min(2, tier.rings);
   const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
-  // scratch + accumulator for the distance LOD (no per-frame allocation)
+  // scratch vector + accumulator for the distance LOD (no per-frame allocation)
   const lodPos = useRef(new THREE.Vector3());
   const lodAccum = useRef(0);
 
@@ -315,8 +394,8 @@ export function ChampionMesh({
       const d2 = lodPos.current.distanceToSquared(state.camera.position);
       lod = d2 > LOD_MID_SQ ? 2 : d2 > LOD_NEAR_SQ ? 1 : 0;
     }
-
-    // skeletal update: full-rate near, throttled at mid, frozen far
+    // skeletal update: full-rate near, throttled at mid, frozen far. Re-apply the
+    // bone morph after each tick so the clip never washes out the proportions.
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
@@ -330,12 +409,13 @@ export function ChampionMesh({
     }
     const decorate = lod === 0;
 
-    // lunge / recoil
+    // lunge / recoil melee impulses on the body group
     lunge.current = Math.max(0, lunge.current - dt * 3.2);
     recoil.current = Math.max(0, recoil.current - dt * 3.0);
     if (motion.current) motion.current.position.z = lunge.current * 0.5 - recoil.current * 0.4;
 
     // wander
+    let moving = false;
     if (wander && gref.current) {
       if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2) {
         if (still.current <= 0) {
@@ -346,7 +426,6 @@ export function ChampionMesh({
           still.current = 0.6 + Math.random() * 2.2;
         }
       }
-      let moving = false;
       if (still.current > 0 && (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2)) {
         still.current -= dt;
       } else if (wtarget.current) {
@@ -365,6 +444,7 @@ export function ChampionMesh({
       }
       gref.current.position.set(wpos.current.x, 0, wpos.current.z);
       gref.current.rotation.y = wheading.current;
+      // crossfade walk / idle clips on locomotion state change
       if (moving !== movingPrev.current) {
         movingPrev.current = moving;
         const idle = built.actions.idle;
@@ -386,8 +466,8 @@ export function ChampionMesh({
         const m = shardRefs.current[i];
         const s = shards[i];
         if (!m || !s) continue;
-        s.a += s.spd * 0.012;
-        m.position.set(Math.cos(s.a) * s.r, s.y + Math.sin(t * 0.8 + s.r) * 0.12, Math.sin(s.a) * s.r);
+        const ang = s.a + t * s.spd; // derive from time — never mutate the seed
+        m.position.set(Math.cos(ang) * s.r, s.y + Math.sin(t * 0.8 + s.r) * 0.12, Math.sin(ang) * s.r);
         m.rotation.y += 0.04;
       }
       for (let i = 0; i < ringRefs.current.length; i++) {
@@ -401,7 +481,7 @@ export function ChampionMesh({
     }
   });
 
-  const auraOpacity = (0.05 + ti * 0.045) * 0.5 * (auraDim ? 0.32 : 1);
+  const auraOpacity = (0.05 + ti * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
   const auraR = app.h * (auraDim ? 0.46 : 0.62);
 
   return (
@@ -417,9 +497,24 @@ export function ChampionMesh({
         <primitive object={built.root} />
       </group>
 
-      {/* per-Force signature attachments — the species markings that make the
-          shared rig read as five different beings; tinted to this individual */}
-      <ArchetypeFeatures type={type} h={app.h} color={built.palette.glow} accent={built.palette.accent} dim={auraDim} />
+      {/* per-Force signature attachments — the species markings that make each
+          Force read as a different being; tinted to this individual */}
+      <ArchetypeFeatures type={type} h={app.h} color={palette.glow} accent={palette.accent} dim={auraDim} seed={seed} />
+
+      {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
+          back, gated by tier so the body visibly grows as the mind evolves */}
+      <PhenotypeParts
+        pheno={pheno}
+        h={app.h}
+        headScale={app.morph.headScale}
+        shoulder={app.morph.shoulder}
+        pal={palette}
+        dim={auraDim}
+      />
+
+      {/* Keeper regalia — the signature weapon/item that makes a campaign boss
+          read as itself, not a recoloured ladder agent */}
+      {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
 
       {/* aura sphere */}
       <mesh ref={auraRef} position={[0, app.h * 0.55, 0]}>
@@ -430,14 +525,14 @@ export function ChampionMesh({
       {/* ground aura ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[0.78, 0.92, 48]} />
-        <meshBasicMaterial color={col} transparent opacity={selected ? 0.95 : 0.4} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
       </mesh>
 
       {/* orbiting shards */}
       {shards.map((s, i) => (
         <mesh key={i} ref={(el) => { shardRefs.current[i] = el; }} position={[Math.cos(s.a) * s.r, s.y, Math.sin(s.a) * s.r]}>
           <octahedronGeometry args={[0.12, 0]} />
-          <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.4} roughness={0.3} transparent opacity={0.5} />
+          <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.4} roughness={0.3} transparent opacity={0.32} />
         </mesh>
       ))}
 
@@ -445,7 +540,7 @@ export function ChampionMesh({
       {Array.from({ length: ringN }).map((_, i) => (
         <mesh key={i} ref={(el) => { ringRefs.current[i] = el; }} rotation={[Math.PI / 2 + i * 0.45, 0, 0]} position={[0, app.h * 0.5, 0]}>
           <torusGeometry args={[1.0 + i * 0.25, 0.02, 6, 32]} />
-          <meshBasicMaterial color={col} transparent opacity={0.3} />
+          <meshBasicMaterial color={col} transparent opacity={0.15} />
         </mesh>
       ))}
 

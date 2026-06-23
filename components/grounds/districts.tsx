@@ -15,7 +15,7 @@ import { Html } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import type { BiomeConfig } from "./biomes";
-import { PLAZA_R, terrainHeight, type TerrainShape } from "./terrain";
+import { PLAZA_R, terrainHeight, spawnKnollFor, riftDir, riftPerp, type TerrainShape } from "./terrain";
 
 const TWO_PI = Math.PI * 2;
 
@@ -58,25 +58,42 @@ interface Lot {
   rot: number;
 }
 
-// Place the town deterministically on the ramp / low hills (radius ~25..37),
-// skipping the Tower's sector so the climb stays clear. Buildings further out sit
-// higher on the rising ground and stand taller — a hillside settlement.
+// Houses sit at the inner end of the rift (near the plaza) so the outer entrance
+// corridor stays clear. Without a rift, buildings ring the plaza rim as before.
 function layoutLots(biome: BiomeConfig, shape: TerrainShape, count: number): Lot[] {
+  const knoll = spawnKnollFor(biome);
   const rng = mulberry((biome.terrain.seed + 17) * 2654435761);
   const towerA = biome.scene.towerAngle;
+  const rift = shape.canyonDepth > 0;
   const out: Lot[] = [];
   let guard = 0;
   while (out.length < count && guard < 600) {
     guard++;
-    const a = rng()* TWO_PI;
-    // keep a clear corridor around the Tower base (PLAZA_R+9 along towerAngle)
-    const da = Math.abs(((a - towerA + Math.PI) % TWO_PI) - Math.PI);
-    if (da < 0.55) continue;
-    const r = 25 + rng() * 12;
-    const x = Math.cos(a) * r;
-    const z = Math.sin(a) * r;
-    const y = terrainHeight(x, z, shape);
-    const tall = (r - 25) * 0.16; // hillside buildings reach higher
+    let x: number;
+    let z: number;
+    let r: number;
+
+    if (rift) {
+      const { dirx, dirz } = riftDir(shape);
+      const alongMin = PLAZA_R + 38;
+      const alongMax = PLAZA_R + 58;
+      const along = alongMin + rng() * (alongMax - alongMin);
+      const perpOff = (rng() - 0.5) * shape.canyonHalfWidth * 1.5;
+      x = dirx * along + -dirz * perpOff;
+      z = dirz * along + dirx * perpOff;
+      r = Math.hypot(x, z);
+      if (riftPerp(x, z, shape) < shape.canyonHalfWidth * 0.85) continue;
+    } else {
+      const a = rng() * TWO_PI;
+      const da = Math.abs(((a - towerA + Math.PI) % TWO_PI) - Math.PI);
+      if (da < 0.55) continue;
+      r = PLAZA_R + 4 + rng() * 20;
+      x = Math.cos(a) * r;
+      z = Math.sin(a) * r;
+    }
+
+    const y = terrainHeight(x, z, shape, knoll);
+    const tall = (r - PLAZA_R - 4) * 0.16;
     out.push({
       x,
       y,
@@ -101,6 +118,7 @@ export function RegionDistrict({
   featured?: boolean;
   shape: TerrainShape;
 }) {
+  const knoll = useMemo(() => spawnKnollFor(biome), [biome]);
   const style = useMemo(() => styleFor(biome), [biome]);
   const count = COUNT_BY_TIER[Math.max(0, Math.min(4, tier))];
   const lots = useMemo(() => layoutLots(biome, shape, count), [biome, shape, count]);
@@ -110,7 +128,7 @@ export function RegionDistrict({
   // the season-spotlight banner when this is the featured region.
   const cx = lots.reduce((s, l) => s + l.x, 0) / lots.length;
   const cz = lots.reduce((s, l) => s + l.z, 0) / lots.length;
-  const cy = terrainHeight(cx, cz, shape);
+  const cy = terrainHeight(cx, cz, shape, knoll);
 
   return (
     <group>

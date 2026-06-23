@@ -28,6 +28,8 @@ const SEED: [string, number, keyof Champion, number, keyof Champion, number, num
   ["BASTION", 30000, "resilience", 30, "aggression", 6, 71, 7],
   ["MUSE", 6000, "creativity", 44, "control", 8, 33, 12],
   ["EMBER", 9000, "aggression", 28, "flair", 12, 40, 18],
+  ["PARADOX", 8000, "control", 40, "creativity", 36, 35, 13],
+  ["WIT", 11000, "flair", 36, "aggression", 32, 52, 15],
 ];
 
 // one training session's worth of growth: +XP and a doctrine-shaped nudge to the

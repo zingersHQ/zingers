@@ -148,7 +148,44 @@ export const ROSTER: Record<string, Creature> = {
       M("inferno", "Inferno", "CHA", 26, { bonus_if_tilted: 0.3 }),
     ],
   },
+  PARADOX: {
+    name: "PARADOX",
+    type: "LOGIC",
+    persona:
+      "a Socratic gadfly who dismantles arguments by hunting contradictions and false premises",
+    stats: { LOG: 88, CMP: 58, CRE: 52, CHA: 48, RHE: 54 },
+    moves: [
+      M("premise_break", "Premise Break", "LOG", 18, { apply: ["exposed", 1.0] }),
+      M("socratic", "Socratic", "LOG", 14, { apply: ["tilted", 1.0] }),
+      M("concede_pivot", "Concede Pivot", "CMP", 8, { self_guard: [10, 2], heal: 6 }),
+      M("liar_paradox", "Liar Paradox", "LOG", 27, { requires: "opp_open", finisher: true }),
+    ],
+  },
+  WIT: {
+    name: "WIT",
+    type: "RHETORIC",
+    persona: "a razor-tongued debater who wins on timing and surgical comebacks, not volume",
+    stats: { RHE: 86, LOG: 58, CMP: 56, CHA: 52, CRE: 48 },
+    moves: [
+      M("riposte", "Riposte", "RHE", 20),
+      M("setup", "Setup", "RHE", 12, { self_hyped: true }),
+      M("needle", "Needle", "RHE", 16, { apply: ["tilted", 1.0] }),
+      M("kill_shot", "Kill Shot", "RHE", 24, { bonus_if_tilted: 0.25 }),
+    ],
+  },
 };
+
+/** Canonical starter roster order — onboarding, collection, bible gallery. */
+export const FIRST_MIND_KEYS = [
+  "AXIOM",
+  "VOX",
+  "GLITCH",
+  "MUSE",
+  "BASTION",
+  "EMBER",
+  "PARADOX",
+  "WIT",
+] as const satisfies readonly (keyof typeof ROSTER)[];
 
 export const TOPICS = [
   "cereal is soup",

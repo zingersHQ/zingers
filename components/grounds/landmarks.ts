@@ -7,7 +7,7 @@
 //   3. discoveryNodes — deterministic loot caches scattered through the wilds
 import type { TowerAgent } from "@/lib/types";
 import type { BiomeConfig } from "./biomes";
-import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, type TerrainShape } from "./terrain";
+import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, spawnKnollFor, type TerrainShape } from "./terrain";
 
 const TWO_PI = Math.PI * 2;
 
@@ -38,16 +38,17 @@ export interface Landmark {
 // distinct rim sectors per biome; the tower sits out on the hills.
 export function landmarksOf(biome: BiomeConfig): Landmark[] {
   const shape = shapeOf(biome);
+  const knoll = spawnKnollFor(biome);
   const lm = biome.scene.landmarks;
   const train: [number, number, number] = [Math.cos(lm.train.angle) * lm.train.dist, 0, Math.sin(lm.train.angle) * lm.train.dist];
   // The Keepers are now scattered, each atop its own staircase. The landmark
   // points at the entry Keeper (Tibble, rank 1) — the closest, lowest climb on the
   // spire bearing; the other four are found by their beacons further out. (Must
-  // match keeperSites() in world.tsx: i=0 → spire angle, rBase 24.)
-  const keeperEntry: [number, number, number] = [Math.cos(lm.spire.angle) * 24, terrainHeight(Math.cos(lm.spire.angle) * 24, Math.sin(lm.spire.angle) * 24, shape), Math.sin(lm.spire.angle) * 24];
+  // match keeperSites() in world.tsx: i=0 → spire angle, rBase PLAZA_R.)
+  const keeperEntry: [number, number, number] = [Math.cos(lm.spire.angle) * PLAZA_R, terrainHeight(Math.cos(lm.spire.angle) * PLAZA_R, Math.sin(lm.spire.angle) * PLAZA_R, shape, knoll), Math.sin(lm.spire.angle) * PLAZA_R];
   const tcx = Math.cos(biome.scene.towerAngle) * (PLAZA_R + 9);
   const tcz = Math.sin(biome.scene.towerAngle) * (PLAZA_R + 9);
-  const tower: [number, number, number] = [tcx, terrainHeight(tcx, tcz, shape), tcz];
+  const tower: [number, number, number] = [tcx, terrainHeight(tcx, tcz, shape, knoll), tcz];
   return [
     { kind: "arena", label: "The Arena", sub: "duels & gauntlet", color: biome.lights.arenaPoint, pos: [0, 0, 0] },
     { kind: "train", label: "Training Pad", sub: "raise your champion", color: biome.lights.trainPoint, pos: train },
@@ -80,7 +81,7 @@ export function bandAgents(agents: TowerAgent[]): AgentBands {
 // day so the open ground feels alive without being random noise.
 export function roamerSpot(id: string, day: number, shape: TerrainShape): [number, number, number] {
   const a = hash01(`${id}@${day}`) * TWO_PI;
-  const r = 11 + hash01(`${id}#${day}`) * 8; // 11..19 — out of the arena, inside the rim
+  const r = 18 + hash01(`${id}#${day}`) * 16; // 18..34 — out of the arena, spread across the plaza
   const x = Math.cos(a) * r;
   const z = Math.sin(a) * r;
   return [x, terrainHeight(x, z, shape), z];
@@ -102,17 +103,18 @@ export interface DiscoveryNode {
 // player on a given day shares the same hunt and it refreshes at the UTC rollover.
 export function discoveryNodes(biome: BiomeConfig, day: number): DiscoveryNode[] {
   const shape = shapeOf(biome);
+  const knoll = spawnKnollFor(biome);
   const COUNT = 9;
   const out: DiscoveryNode[] = [];
   for (let i = 0; i < COUNT; i++) {
     const id = `${biome.id}-${day}-${i}`;
     const a = hash01(`${id}:a`) * TWO_PI;
     const rr = hash01(`${id}:r`);
-    const r = 28 + rr * (TERRAIN_HALF - 40); // 28..~88: out in the wilds
+    const r = PLAZA_R + 8 + rr * (TERRAIN_HALF - PLAZA_R - 30); // out in the wilds, spread to the far rim
     const x = Math.cos(a) * r;
     const z = Math.sin(a) * r;
     const flight = hash01(`${id}:f`) < 0.4; // ~40% perched high — flight-gated
-    const ground = terrainHeight(x, z, shape);
+    const ground = terrainHeight(x, z, shape, knoll);
     const y = flight ? ground + 15 + hash01(`${id}:h`) * 12 : ground + 1.1;
     // fragments are rarer & worth more reach; crowns are the common find
     const kind: NodeKind = hash01(`${id}:k`) < (flight ? 0.6 : 0.35) ? "fragment" : "crown";

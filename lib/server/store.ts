@@ -87,6 +87,15 @@ export interface Store {
   getPendingBet(token: string): Promise<PendingBet | null>;
   setPendingBet(token: string, bet: PendingBet): Promise<void>;
   clearPendingBet(token: string): Promise<void>;
+  // Behaviour analytics: per-UTC-day event counters (a hash of {event → count})
+  // plus a daily set of distinct owner tokens for active-player counts. Counts
+  // are aggregate-only (no per-user trails), so this is privacy-light by design.
+  trackEvent(day: number, field: string, by?: number): Promise<void>;
+  getEvents(day: number): Promise<Record<string, number>>;
+  // Distinct active players. Backed by Redis HyperLogLog (≈12KB/day regardless
+  // of volume); uniqueCount unions the given days (DAU/WAU/MAU all fall out).
+  trackUnique(day: number, token: string): Promise<void>;
+  uniqueCount(days: number[]): Promise<number>;
 }
 
 export interface UsageDay {
@@ -118,12 +127,18 @@ const K = {
   usage: (day: number) => `z:cost:${day}`,
   wallet: (token: string) => `z:wallet:${token}`,
   bet: (token: string) => `z:bet:${token}`,
+  events: (day: number) => `z:ev:${day}`,
+  dau: (day: number) => `z:dau:${day}`,
 };
 
 // A pending bet self-expires so an abandoned wager can never settle on a later bout.
 const BET_TTL_SECONDS = 15 * 60;
 
 const USAGE_TTL_SECONDS = 400 * 86_400; // keep ~13 months of daily spend history
+
+// Daily analytics keys self-expire on the same ~13-month horizon as spend, so a
+// long history is queryable without the store growing forever.
+const ANALYTICS_TTL_SECONDS = 400 * 86_400;
 
 // Old season war tallies expire so the store doesn't accrete dead keys forever.
 const WAR_TTL_SECONDS = 120 * 86_400; // ~4 months (a season is 28 days)
@@ -290,6 +305,30 @@ class UpstashStore implements Store {
   async clearPendingBet(token: string) {
     await this.r.del(K.bet(token));
   }
+  async trackEvent(day: number, field: string, by = 1) {
+    const k = K.events(day);
+    await this.r.hincrby(k, field, by);
+    await this.r.expire(k, ANALYTICS_TTL_SECONDS);
+  }
+  async getEvents(day: number) {
+    const h = (await this.r.hgetall<Record<string, string | number>>(K.events(day))) || {};
+    const out: Record<string, number> = {};
+    for (const [f, v] of Object.entries(h)) out[f] = Number(v) || 0;
+    return out;
+  }
+  async trackUnique(day: number, token: string) {
+    const k = K.dau(day);
+    await this.r.pfadd(k, token);
+    await this.r.expire(k, ANALYTICS_TTL_SECONDS);
+  }
+  async uniqueCount(days: number[]) {
+    if (!days.length) return 0;
+    // PFCOUNT over multiple keys returns the cardinality of their UNION, so
+    // WAU/MAU are a single round-trip over the relevant day keys. The client
+    // types the first key separately, hence the head/tail split.
+    const keys = days.map(K.dau);
+    return Number(await this.r.pfcount(keys[0], ...keys.slice(1))) || 0;
+  }
 }
 
 // ── In-memory fallback (per-instance; not shared across serverless workers) ────
@@ -303,6 +342,8 @@ class MemoryStore implements Store {
   private usage = new Map<number, UsageDay>();
   private wallets = new Map<string, number>();
   private bets = new Map<string, PendingBet>();
+  private events = new Map<number, Map<string, number>>();
+  private dau = new Map<number, Set<string>>();
 
   async getChampion(id: string) {
     return this.champs.get(id) ?? null;
@@ -378,6 +419,27 @@ class MemoryStore implements Store {
   }
   async clearPendingBet(token: string) {
     this.bets.delete(token);
+  }
+  async trackEvent(day: number, field: string, by = 1) {
+    const m = this.events.get(day) ?? new Map<string, number>();
+    m.set(field, (m.get(field) ?? 0) + by);
+    this.events.set(day, m);
+  }
+  async getEvents(day: number) {
+    return Object.fromEntries(this.events.get(day) ?? []);
+  }
+  async trackUnique(day: number, token: string) {
+    const s = this.dau.get(day) ?? new Set<string>();
+    s.add(token);
+    this.dau.set(day, s);
+  }
+  async uniqueCount(days: number[]) {
+    const u = new Set<string>();
+    for (const d of days) {
+      const s = this.dau.get(d);
+      if (s) for (const t of s) u.add(t);
+    }
+    return u.size;
   }
 }
 

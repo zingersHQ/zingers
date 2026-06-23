@@ -78,6 +78,9 @@ export function isWorldRoute(path: string): boolean {
  *  Single source of truth so the header and the in-game menu agree on chrome. */
 export function siteNavHidden(path: string, onOrg: boolean): boolean {
   if (path.startsWith("/slides") || path.startsWith("/render")) return true;
+  // The Observatory is a full-screen, console-style 3D dashboard with its own
+  // chrome (incl. a "Game" back button), so the web header would only fight it.
+  if (path === "/stats" || path.startsWith("/stats/")) return true;
   if (!onOrg && isWorldRoute(path)) return true;
   return false;
 }

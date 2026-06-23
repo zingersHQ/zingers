@@ -6,7 +6,9 @@ import * as THREE from "three";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { ChampionMesh } from "@/components/grounds/champion-mesh";
+import type { KeeperKind } from "@/components/grounds/keeper-regalia";
 import { modelScaleFor } from "@/lib/render/fit";
+import { seedFrom } from "@/lib/render/palette";
 import { RENDER_PRESETS, RENDER_YAW, type RenderPresetId } from "@/lib/render/presets";
 
 function Rig({ lookY }: { lookY: number }) {
@@ -81,6 +83,7 @@ export function ChampionPortraitScene({
   paused = false,
   scale = 1,
   identityKey,
+  keeper,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -93,13 +96,21 @@ export function ChampionPortraitScene({
   scale?: number;
   /** stable individual id → unique colour scheme */
   identityKey?: string;
+  /** render this figure as a Keeper boss with its signature regalia */
+  keeper?: KeeperKind;
 }) {
   const p = RENDER_PRESETS[preset];
   const rim = colorHex ?? TYPE_COLOR[type];
   const rimIntensity = 55 * (p.rimBoost ?? 1);
-  const meshScale = useMemo(() => modelScaleFor(champion, p) * scale, [champion, p, scale]);
-  // per-instance seed → desynced idle pose, clip phase, and a slight base turn
-  const seed = useMemo(() => Math.random(), []);
+  const meshScale = useMemo(() => modelScaleFor(champion, p, type) * scale, [champion, p, scale, type]);
+  // identity-stable seed → the same mind always strikes the same pose/clip phase
+  // (the bible's "deterministic function of a raised career" promise), while a
+  // wall of different minds still stays desynced. Falls back to random when
+  // there's no stable id.
+  const seed = useMemo(() => {
+    const key = identityKey || `${type}|${champion.xp}|${champion.aggression}|${champion.flair}|${champion.resilience}|${champion.creativity}`;
+    return (seedFrom(key) % 100000) / 100000;
+  }, [identityKey, type, champion]);
   const baseYaw = RENDER_YAW + (seed - 0.5) * 0.3;
   const idlePhase = seed * 4.2;
   const idleSpeed = 0.82 + seed * 0.34;
@@ -133,6 +144,7 @@ export function ChampionPortraitScene({
               idleSpeed={idleSpeed}
               auraDim
               identityKey={identityKey}
+              keeper={keeper}
             />
           </group>
         </IdlePose>

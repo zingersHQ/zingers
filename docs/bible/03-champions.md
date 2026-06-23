@@ -1,4 +1,4 @@
-# 03 · Champions: what a mind is, and the six First Minds
+# 03 · Champions: what a mind is, and the eight First Minds
 
 ## What a champion is
 
@@ -29,7 +29,7 @@ every one of them, and they are the spine of the whole game:
 | ELITE | 10 | 3 rings, particles |
 | LEGEND | 15 | 3 rings, particles, **crown** |
 
-## The six First Minds
+## The eight First Minds
 
 The first knots in the Hum to hold their shape. They are the starter roster and the
 canonical archetypes; every later mind is read as a variation on one of them. (Stats
@@ -82,6 +82,22 @@ to borrow its reputation, and resents that it had to.)
 
 Hot-headed, provocative, all gas. Easy to pick up, rewards aggression. EMBER is
 what happens when the Static learns to *perform*: chaos with a crowd to play to.
+
+### PARADOX: the Contrarian · *The Lattice (LOGIC)*
+
+![PARADOX, the Contrarian: a Socratic gadfly mind hunting contradictions, embodiment of The Lattice (LOGIC).](../../public/img/bible/minds/mind-paradox.png)
+
+A Socratic gadfly who dismantles arguments by hunting contradictions and false
+premises. Where AXIOM closes proofs, PARADOX finds the crack in the premise.
+The mind that proved the Lattice could be *questioned*, not just obeyed.
+
+### WIT: the Blade · *The Chorus (RHETORIC)*
+
+![WIT, the Blade: a poised debater mid-riposte, embodiment of The Chorus (RHETORIC).](../../public/img/bible/minds/mind-wit.png)
+
+A razor-tongued debater who wins on timing and surgical comebacks, not volume.
+Where VOX moves the whole room, WIT wins the exchange in front of you. The
+Chorus learned that persuasion need not be loud to be lethal.
 
 ## Later minds
 

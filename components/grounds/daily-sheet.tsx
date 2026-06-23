@@ -92,7 +92,7 @@ export function DailySheet({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(5,4,10,.7)", backdropFilter: "blur(8px)", zIndex: 60, padding: 16 }}
+      style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(8px)", zIndex: 60, padding: 16 }}
       onClick={onClose}
     >
       <div
@@ -315,7 +315,7 @@ function BoutFighter(props: { entry: DailyResponse["a"]; get: GetFn; col: string
           </div>
         ) : null}
       </div>
-      <div style={{ marginTop: 12, minHeight: 48, padding: "10px 14px", borderRadius: 12, background: speaking ? `color-mix(in srgb, ${col} 14%, #100e1a)` : "#100e1a", border: `1px solid ${speaking ? col : "var(--line)"}`, fontStyle: "italic", fontSize: 13, color: speaking ? "var(--ink)" : "var(--muted2)" }}>
+      <div style={{ marginTop: 12, minHeight: 48, padding: "10px 14px", borderRadius: 12, background: speaking ? `color-mix(in srgb, ${col} 14%, var(--panel2))` : "var(--panel2)", border: `1px solid ${speaking ? col : "var(--line)"}`, fontStyle: "italic", fontSize: 13, color: speaking ? "var(--ink)" : "var(--muted2)" }}>
         {speaking && line ? `“${line}”` : "…"}
       </div>
     </div>
@@ -373,7 +373,7 @@ function Done(props: {
           {result.dunkCorrect != null && <VerdictPill ok={result.dunkCorrect} label="Your dunk call" />}
         </div>
 
-        <div style={{ marginTop: 18, padding: 16, borderRadius: 12, background: "#100e1a", border: "1px solid var(--line)" }}>
+        <div style={{ marginTop: 18, padding: 16, borderRadius: 12, background: "var(--panel2)", border: "1px solid var(--line)" }}>
           <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6, display: "inline-flex", alignItems: "center", gap: 5 }}>
             <Mic size={11} strokeWidth={2} /> ZINGER OF THE DAY · {result.dunkName}
           </div>

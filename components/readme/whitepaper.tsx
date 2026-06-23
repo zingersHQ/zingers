@@ -92,7 +92,7 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <P>
-          You start by claiming one of six champions. Each comes with a moveset, a persona, a starting record, and a{" "}
+          You start by claiming one of eight champions. Each comes with a moveset, a persona, a starting record, and a{" "}
           <Em>type</Em>. The type system is a five-way cycle. Rock-paper-scissors with five hands:
         </P>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", margin: "8px 0 18px" }}>

@@ -343,3 +343,44 @@ export function stopJet() {
   }
   jet = null;
 }
+
+// one-shot rush when the jetpack cuts out and the Handler drops into free fall
+export function jetFallSfx() {
+  if (!enabled()) return;
+  const c = ensure();
+  if (!c || !master) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  const t = c.currentTime + 0.005;
+
+  // wind whoosh — band-passed noise that slides down as you plunge
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.setValueAtTime(2200, t);
+  bp.frequency.exponentialRampToValueAtTime(380, t + 0.38);
+  bp.Q.value = 0.55;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.exponentialRampToValueAtTime(0.15, t + 0.018);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.44);
+  src.connect(bp);
+  bp.connect(ng);
+  ng.connect(master);
+  src.start(t);
+  src.stop(t + 0.48);
+
+  // low thump as the thrusters spool off
+  const o = c.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(165, t);
+  o.frequency.exponentialRampToValueAtTime(62, t + 0.22);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.11, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(g);
+  g.connect(master);
+  o.start(t);
+  o.stop(t + 0.27);
+}

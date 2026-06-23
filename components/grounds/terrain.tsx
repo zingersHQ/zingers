@@ -5,9 +5,84 @@ import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 
 // flat central plaza (arena + champions live here); procedural wilds beyond
-export const PLAZA_R = 22;
-export const TERRAIN_HALF = 100; // terrain spans 200 x 200
-export const RAMP = 16; // transition band width from plaza into the hills
+export const PLAZA_R = 36; // flat central plaza radius (+50% layout)
+export const TERRAIN_HALF = 165; // terrain spans 330 x 330 (+50% layout)
+export const RAMP = 27; // transition band width from plaza into the hills (+50%)
+
+// ── the spawn knoll ─────────────────────────────────────────────────────────
+// The Reader spawns at the outer extreme of the rift (+z for flat regions),
+// then walks inward toward the plaza. The dome gives a clear opening view down
+// the chasm and tapers to 0 at its foot.
+export interface SpawnKnoll {
+  x: number;
+  z: number;
+  radius: number;
+  peak: number;
+}
+
+export const SPAWN_KNOLL: SpawnKnoll = { x: 0, z: 52, radius: 16, peak: 6 };
+
+// The rift's outer lip — furthest from the plaza, where the Depth approach begins.
+export const RIFT_OUTER_MARGIN = 22;
+export const RIFT_OUTER_ALONG = TERRAIN_HALF - RIFT_OUTER_MARGIN;
+
+export function hasRift(t: TerrainShape): boolean {
+  return t.canyonDepth > 0;
+}
+
+export function riftDir(t: TerrainShape): { dirx: number; dirz: number } {
+  return { dirx: Math.cos(t.canyonAngle), dirz: Math.sin(t.canyonAngle) };
+}
+
+export function riftAlong(x: number, z: number, t: TerrainShape): number {
+  const { dirx, dirz } = riftDir(t);
+  return x * dirx + z * dirz;
+}
+
+export function riftPerp(x: number, z: number, t: TerrainShape): number {
+  const { dirx, dirz } = riftDir(t);
+  return Math.abs(-dirz * x + dirx * z);
+}
+
+/** Deepest point on the rift centreline — where the Depth goal sits. */
+export function riftDepthEnd(t: TerrainShape, knoll: SpawnKnoll = SPAWN_KNOLL): [number, number, number] {
+  const { dirx, dirz } = riftDir(t);
+  let bestY = Infinity;
+  let best: [number, number, number] = [0, 0, 0];
+  const start = PLAZA_R + 16;
+  const end = TERRAIN_HALF - 24;
+  for (let along = start; along <= end; along += 2) {
+    const x = dirx * along;
+    const z = dirz * along;
+    const y = terrainHeight(x, z, t, knoll);
+    if (y < bestY) {
+      bestY = y;
+      best = [x, y, z];
+    }
+  }
+  return best;
+}
+
+// Spawn at the outer extreme of the rift (+z for flat regions) — the far lip where
+// the Depth begins. You walk inward toward the plaza to claim it and enter.
+export function spawnKnollFor(biome: BiomeConfig): SpawnKnoll {
+  const shape = shapeOf(biome);
+  if (hasRift(shape)) {
+    const { dirx, dirz } = riftDir(shape);
+    return { x: dirx * RIFT_OUTER_ALONG, z: dirz * RIFT_OUTER_ALONG, radius: 14, peak: 6 };
+  }
+  return { x: 0, z: RIFT_OUTER_ALONG, radius: 14, peak: 6 };
+}
+
+// height contribution of the spawn knoll at (x,z): a smooth dome that tops out at
+// `peak` over its centre and tapers to 0 at its foot (which lands on the plaza
+// rim, so it never pokes through the flat plaza floor disc).
+function knollHeight(x: number, z: number, knoll: SpawnKnoll): number {
+  const d = Math.hypot(x - knoll.x, z - knoll.z);
+  if (d >= knoll.radius) return 0;
+  const w = 1 - d / knoll.radius; // 1 at the peak → 0 at the foot
+  return knoll.peak * w * w * (3 - 2 * w); // smoothstep dome
+}
 
 // ---- deterministic value-noise fbm ----
 function hash(x: number, z: number) {
@@ -67,9 +142,11 @@ export function shapeOf(biome: BiomeConfig): TerrainShape {
 }
 
 /** World-space terrain height at (x,z). Flat (0) inside the plaza, rising hills beyond. */
-export function terrainHeight(x: number, z: number, t: TerrainShape): number {
+export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: SpawnKnoll = SPAWN_KNOLL): number {
+  const kh = knollHeight(x, z, knoll);
   const d = Math.hypot(x, z);
-  if (d <= PLAZA_R) return 0;
+  // flat plaza, save for the spawn knoll riding on its outer rim
+  if (d <= PLAZA_R) return kh;
   const e = Math.min(1, (d - PLAZA_R) / RAMP);
   const ease = e * e * (3 - 2 * e);
   const s = t.seed;
@@ -96,13 +173,16 @@ export function terrainHeight(x: number, z: number, t: TerrainShape): number {
       h -= t.canyonDepth * wall * ease * endFade;
     }
   }
-  return h;
+  // the knoll rises proud of whatever the wilds do here, so the spawn mound reads
+  // as a clean hill in every biome (it tapers to 0 by the plaza rim anyway)
+  return Math.max(h, kh);
 }
 
 export function Terrain({ biome }: { biome: BiomeConfig }) {
   const geo = useMemo(() => {
     const SEG = 128;
     const shape = shapeOf(biome);
+    const knoll = spawnKnollFor(biome);
     const low = new THREE.Color(biome.terrain.low);
     const mid = new THREE.Color(biome.terrain.mid);
     const high = new THREE.Color(biome.terrain.high);
@@ -115,7 +195,7 @@ export function Terrain({ biome }: { biome: BiomeConfig }) {
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      const h = terrainHeight(x, z, shape);
+      const h = terrainHeight(x, z, shape, knoll);
       pos.setY(i, h);
       const t = Math.max(0, Math.min(1, h / band));
       if (t < 0.5) c.lerpColors(low, mid, t / 0.5);
@@ -149,6 +229,7 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
     const s = new THREE.Vector3();
     const p = new THREE.Vector3();
     const shape = shapeOf(biome);
+    const knoll = spawnKnollFor(biome);
     let placed = 0;
     let guard = 0;
     while (placed < biome.scatter.count && guard < 5000) {
@@ -157,7 +238,7 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
       const r = PLAZA_R + 4 + Math.random() * (TERRAIN_HALF - PLAZA_R - 10);
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
-      const y = terrainHeight(x, z, shape);
+      const y = terrainHeight(x, z, shape, knoll);
       if (y < 1.2) continue; // keep scatter on the risen hills
       const isCrystal = Math.random() < biome.scatter.crystalRatio;
       e.set(0, Math.random() * Math.PI * 2, isCrystal ? 0 : Math.random() * 0.4);

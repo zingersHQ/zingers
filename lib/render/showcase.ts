@@ -15,6 +15,8 @@ const MIND_SHOWCASE: Record<string, Partial<Champion>> = {
   MUSE: { aggression: 28, control: 40, resilience: 32, flair: 70, creativity: 95, wins: 39, losses: 11, battles: 50 },
   BASTION: { aggression: 20, control: 75, resilience: 92, flair: 15, creativity: 10, wins: 42, losses: 8, battles: 50 },
   EMBER: { aggression: 85, control: 25, resilience: 55, flair: 48, creativity: 35, wins: 38, losses: 12, battles: 50 },
+  PARADOX: { aggression: 26, control: 78, resilience: 42, flair: 22, creativity: 48, wins: 37, losses: 13, battles: 50 },
+  WIT: { aggression: 58, control: 48, resilience: 28, flair: 82, creativity: 38, wins: 45, losses: 14, battles: 59 },
 };
 
 function baseShowcase(key: string, patch: Partial<Champion> = {}): Champion {

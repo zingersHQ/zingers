@@ -17,7 +17,7 @@ of it lives in [`lib/lore/canon.ts`](../../lib/lore/canon.ts); the prose lives h
 |---|------|---------------------|
 | 01 | [cosmology.md](./01-cosmology.md) | The world, the Hum, the Long Vault: why anything exists |
 | 02 | [forces.md](./02-forces.md) | The Five Forces (the type pentagon), as in-world physics |
-| 03 | [champions.md](./03-champions.md) | What a champion *is*; the six First Minds |
+| 03 | [champions.md](./03-champions.md) | What a champion *is*; the eight First Minds |
 | 04 | [keepers.md](./04-keepers.md) | The five Keepers of the Long Vault (the campaign spine) |
 | 05 | [regions.md](./05-regions.md) | The map: regions, their force-bias, their arenas |
 | 06 | [seasons.md](./06-seasons.md) | The Chronicle: how living seasons are generated |
@@ -40,7 +40,7 @@ is the point.
 
 ## Canon discipline (for writers and the generator alike)
 
-- **Names are fixed.** Forces, Keepers, regions, and the six First Minds do not
+- **Names are fixed.** Forces, Keepers, regions, and the eight First Minds do not
   get renamed by a season. Seasons add; they do not overwrite.
 - **The engine is the physics.** Damage, types, and statuses in
   `docs/combat-design.md` are *literally true* in-world. Argument shapes reality.

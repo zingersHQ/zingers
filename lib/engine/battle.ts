@@ -428,6 +428,9 @@ export async function* battleEvents(
   const bias = opts.forceBias ?? ARENA.mult;
   const a = new Fighter(aKey, stanceA, cfgA, mock);
   const b = new Fighter(bKey, stanceB, cfgB, mock);
+  // same creature on both sides (e.g. your VOX vs a ladder agent on VOX) — give B a
+  // distinct actor id so turn events, punches, and HP attribution don't collapse.
+  if (aKey === bKey) b.key = `${bKey}:opp`;
   yield { type: "start", topic, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
   let mvp = { dmg: 0, line: "", round: 0, actor_name: "" };
   let lastHl = -10;

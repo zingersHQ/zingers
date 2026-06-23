@@ -7,6 +7,7 @@
 // must never rename a force, Keeper, region, or First Mind. See docs/bible/README.md.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CreatureType } from "@/lib/types";
+import { FIRST_MIND_KEYS, ROSTER } from "@/lib/engine/roster";
 
 // ── The Five Forces (the type pentagon, as in-world physics) ─────────────────
 export interface ForceLore {
@@ -109,14 +110,10 @@ export const KEEPERS: KeeperLore[] = [
 ];
 
 // ── Lineage (every later mind echoes a First Mind) ───────────────────────────
-export const FIRST_MINDS: { key: string; force: CreatureType }[] = [
-  { key: "AXIOM", force: "LOGIC" },
-  { key: "VOX", force: "RHETORIC" },
-  { key: "GLITCH", force: "CHAOS" },
-  { key: "MUSE", force: "CREATIVITY" },
-  { key: "BASTION", force: "COMPOSURE" },
-  { key: "EMBER", force: "CHAOS" },
-];
+export const FIRST_MINDS: { key: string; force: CreatureType }[] = FIRST_MIND_KEYS.map((key) => ({
+  key,
+  force: ROSTER[key].type,
+}));
 
 // ── Rarity (earned, then scarce — not a gacha roll) ──────────────────────────
 export const RARITIES = ["common", "uncommon", "rare", "epic", "legendary", "mythic"] as const;

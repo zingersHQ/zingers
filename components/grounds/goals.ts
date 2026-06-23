@@ -10,7 +10,7 @@
 // the store all agree on where a goal is and what it's worth.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { BiomeConfig } from "./biomes";
-import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, type TerrainShape } from "./terrain";
+import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, spawnKnollFor, riftDepthEnd, type TerrainShape, type SpawnKnoll } from "./terrain";
 import { hash01 } from "./landmarks";
 
 const TWO_PI = Math.PI * 2;
@@ -40,7 +40,7 @@ export interface WorldGoal {
 // Sweep a coarse polar grid of the wilds and return the highest / lowest sampled
 // point. Cheap (runs once per region per season, memoised by the caller) and
 // robust — the peak naturally avoids the rift, the depth naturally finds it.
-function extreme(shape: TerrainShape, want: "high" | "low"): [number, number, number] {
+function extreme(shape: TerrainShape, want: "high" | "low", knoll: SpawnKnoll): [number, number, number] {
   let bestY = want === "high" ? -Infinity : Infinity;
   let best: [number, number, number] = [0, 0, 0];
   const ANGLES = 36;
@@ -51,7 +51,7 @@ function extreme(shape: TerrainShape, want: "high" | "low"): [number, number, nu
     for (let r = rMin; r <= rMax; r += 3) {
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
-      const y = terrainHeight(x, z, shape);
+      const y = terrainHeight(x, z, shape, knoll);
       if (want === "high" ? y > bestY : y < bestY) {
         bestY = y;
         best = [x, y, z];
@@ -83,21 +83,22 @@ const BASE: Record<GoalKind, GoalReward> = {
  */
 export function worldGoals(biome: BiomeConfig, season: number, featured: boolean): WorldGoal[] {
   const shape = shapeOf(biome);
+  const knoll = spawnKnollFor(biome);
   const sk = `${biome.id}:s${season}`;
 
   // PEAK — the highest standing point; reached by flight.
-  const peak = extreme(shape, "high");
+  const peak = extreme(shape, "high", knoll);
 
-  // DEPTH — the lowest point (the rift floor if the region has one).
-  const depth = extreme(shape, "low");
+  // DEPTH — the rift floor at the far end of the chasm (on the approach route).
+  const depth = shape.canyonDepth > 0 ? riftDepthEnd(shape, knoll) : extreme(shape, "low", knoll);
 
   // SECRET — a hidden Keeper echo on the ground, mid-field, on a seeded bearing
   // kept away from the peak so the three goals don't pile up.
   const sa = hash01(`${sk}:secret:a`) * TWO_PI;
-  const sr = 30 + hash01(`${sk}:secret:r`) * 24; // 30..54
+  const sr = PLAZA_R + 8 + hash01(`${sk}:secret:r`) * 36; // out past the plaza, spread mid-field
   const sx = Math.cos(sa) * sr;
   const sz = Math.sin(sa) * sr;
-  const secretPos: [number, number, number] = [sx, terrainHeight(sx, sz, shape) + 0.9, sz];
+  const secretPos: [number, number, number] = [sx, terrainHeight(sx, sz, shape, knoll) + 0.9, sz];
 
   return [
     {

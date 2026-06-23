@@ -4,7 +4,9 @@ import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
 import { FIRST_MIND_KEYS } from "@/lib/cards/assets";
 import { ROSTER } from "@/lib/engine/roster";
 import { CanonRenderTile } from "@/components/bible/canon-render-tile";
-import { showcaseChampion, showcaseForForce, showcaseForKeeper, showcaseForRegion } from "@/lib/render/showcase";
+import { keeperKindForName } from "@/components/grounds/keeper-regalia";
+import { RegionScene } from "@/components/lore/region-scene";
+import { showcaseChampion, showcaseForForce, showcaseForKeeper } from "@/lib/render/showcase";
 
 const FORCE_SLUG: Record<string, string> = {
   LOGIC: "lattice",
@@ -40,7 +42,7 @@ export function BibleGallery() {
         </div>
       </Section>
 
-      <Section title="The Six First Minds" kicker="starter roster · evolving bodies">
+      <Section title="The Eight First Minds" kicker="starter roster · evolving bodies">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {FIRST_MIND_KEYS.map((key) => {
             const r = ROSTER[key];
@@ -65,11 +67,10 @@ export function BibleGallery() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
           {FOUNDING_REGIONS.map((region) => {
             const force = FORCES[region.bias];
-            const { key, type, champion } = showcaseForRegion(region.id);
             return (
               <article key={region.id} className="panel" style={{ ["--ac" as string]: force.hex, overflow: "hidden", padding: 0 }}>
-                <div style={{ aspectRatio: "16 / 9" }}>
-                  <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="region" colorHex={force.hex} label={region.name} />
+                <div style={{ position: "relative", aspectRatio: "16 / 9" }}>
+                  <RegionScene regionId={region.id} />
                 </div>
                 <div style={{ padding: 14 }}>
                   <div style={{ fontWeight: 800 }}>{region.name}</div>
@@ -89,7 +90,7 @@ export function BibleGallery() {
             return (
               <article key={keeper.name} className="panel" style={{ ["--ac" as string]: keeper.hex, overflow: "hidden", padding: 0 }}>
                 <div style={{ aspectRatio: "4 / 5" }}>
-                  <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="keeper" colorHex={accentHex} label={`${keeper.name}, ${keeper.title}`} />
+                  <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="keeper" colorHex={accentHex} label={`${keeper.name}, ${keeper.title}`} keeper={keeperKindForName(keeper.name)} />
                 </div>
                 <div style={{ padding: 13 }}>
                   <div style={{ fontWeight: 800 }}>{keeper.name}</div>
