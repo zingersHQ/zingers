@@ -2051,7 +2051,7 @@ function Handler({
     const fwd = fwdV.current.set(hp.x - camera.position.x, 0, hp.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
     fwd.normalize();
-    const right = rightV.current.set(fwd.z, 0, -fwd.x);
+    const right = rightV.current.set(-fwd.z, 0, fwd.x);
     // gather input as analog axes (ax = strafe, az = forward) from keys + touch stick
     let ax = 0, az = 0;
     let touchSprint = false;
