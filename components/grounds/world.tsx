@@ -17,6 +17,7 @@ import type { BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
 import { type GalleryFocus } from "./gallery";
 import { Amphitheatre, DAILY_HERALD_POS } from "./amphitheatre";
+import { MATCH_SPREAD } from "./match-stage";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
@@ -54,6 +55,8 @@ export interface MatchView {
   punchB: number;
   hitA: number;
   hitB: number;
+  /** Tighter director camera — first journey and spotlight fights. */
+  cinematic?: boolean;
 }
 
 export type NearTarget =
@@ -77,6 +80,10 @@ export type NearTarget =
 // as props so each world lays its districts out differently.
 const ARENA: [number, number, number] = [0, 0, 0];
 
+// Horizontal spacing between fighters — see match-stage.ts (shared with amphitheatre).
+const PODIUM_A: [number, number, number] = [ARENA[0] - MATCH_SPREAD, 0, 0];
+const PODIUM_B: [number, number, number] = [ARENA[0] + MATCH_SPREAD, 0, 0];
+
 function landmarkPos(l: { angle: number; dist: number }): [number, number, number] {
   return [Math.cos(l.angle) * l.dist, 0, Math.sin(l.angle) * l.dist];
 }
@@ -93,8 +100,6 @@ const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: stri
   { level: 4, name: "Vesper", title: "The Diviner", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
   { level: 5, name: "Sable", title: "The Vaultheart", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
 ];
-const PODIUM_A: [number, number, number] = [ARENA[0] - 2.6, 0, 0];
-const PODIUM_B: [number, number, number] = [ARENA[0] + 2.6, 0, 0];
 // The Reader spawns on the crest of the per-world spawn knoll (see spawnKnollFor).
 
 const keys: Record<string, boolean> = {};
@@ -527,7 +532,7 @@ export default function World({
           {!inVenue && <Scatter biome={biome} />}
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
-          {isHub && !inVenue && (
+          {isHub && !inVenue && !match && (
             <>
               <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
               {CONCORD_VENUE_SPOTS.map((s) => {
@@ -535,6 +540,13 @@ export default function World({
                 const z = Math.sin(s.angle) * s.dist;
                 return <ConcordVenuePortal key={s.venue} venue={s.venue} pos={[x, terrainHeight(x, z, shape), z]} />;
               })}
+            </>
+          )}
+
+          {isHub && !inVenue && match && (
+            <>
+              <ArenaPlatform />
+              <Beacon pos={ARENA} color={biome.lights.arenaPoint} />
             </>
           )}
 
@@ -2924,11 +2936,14 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
   useFrame((_, dtRaw) => {
     const dt = Math.min(0.05, dtRaw);
     if (match) {
-      dirYaw.current += 0.003;
-      const tx = ARENA[0], ty = 1.6, tz = ARENA[2];
-      const cx = tx + Math.sin(dirYaw.current) * 9;
-      const cz = tz + Math.cos(dirYaw.current) * 9;
-      camera.position.lerp(tmp.current.set(cx, 4.4, cz), 0.04);
+      const cin = !!match.cinematic;
+      dirYaw.current += cin ? 0.0018 : 0.003;
+      const tx = ARENA[0], ty = cin ? 1.45 : 1.6, tz = ARENA[2];
+      const orbit = cin ? 10.5 : 14;
+      const cy = cin ? 4.85 : 6.2;
+      const cx = tx + Math.sin(dirYaw.current) * orbit;
+      const cz = tz + Math.cos(dirYaw.current) * orbit;
+      camera.position.lerp(tmp.current.set(cx, cy, cz), cin ? 0.055 : 0.04);
       camera.lookAt(tx, ty, tz);
       return;
     }

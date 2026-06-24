@@ -13,6 +13,7 @@ import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
 import { FirstDuelHubCta, FirstDuelOverlay, type FirstDuelPhase } from "@/components/intro/first-duel";
+import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { STORAGE } from "@/lib/brand";
 import {
   firstDuelOpponent,
@@ -20,6 +21,7 @@ import {
   isFirstDuelComplete,
   markFirstDuelComplete,
   FIRST_DUEL_TAGLINE,
+  FIRST_FIGHT_WORLD,
 } from "@/lib/first-duel";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
@@ -150,11 +152,13 @@ export default function GroundsScreen() {
   const [modeLockToast, setModeLockToast] = useState<string | null>(null);
   const evolveBeforeRef = useRef<Champion | null>(null);
   const inFirstDuelFight = useRef(false);
+  const firstFightWorldRef = useRef<string | null>(null);
   // mid-claim: a champion was picked but the arrival cinematic is still running,
   // so we hold off mounting the world UI until the veil lifts.
   const [claiming, setClaiming] = useState<string | null>(null);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
+  const [concordCoach, setConcordCoach] = useState(false);
   // The first-ranked-win Clan invite — deferred so the choice arrives when
   // "join a team" actually means something. Shown once.
   const [clanInvite, setClanInvite] = useState(false);
@@ -499,12 +503,8 @@ export default function GroundsScreen() {
       mq.addEventListener("change", sync);
     }
     try {
-      if (!isFirstDuelComplete()) {
-        localStorage.setItem(STORAGE.intro, "1");
-      } else {
-        const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
-        if (!seen) setShowIntro(true);
-      }
+      const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
+      if (!seen) setShowIntro(true);
     } catch {}
     try {
       setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
@@ -513,6 +513,11 @@ export default function GroundsScreen() {
     }
     try {
       setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
+    } catch {}
+    try {
+      if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
+        setConcordCoach(true);
+      }
     } catch {}
     try {
       clanInviteSeen.current = localStorage.getItem(STORAGE.clanInvite) === "1";
@@ -541,6 +546,13 @@ export default function GroundsScreen() {
     setGoalCoach(false);
   }, []);
 
+  const dismissConcordCoach = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.concordCoach, "1");
+    } catch {}
+    setConcordCoach(false);
+  }, []);
+
   useEffect(() => {
     let live = true;
     setRosterError(null);
@@ -564,18 +576,21 @@ export default function GroundsScreen() {
     };
   }, [reloadKey, loadWar]);
 
-  // New players: open the guided funnel once roster is ready (skip if they already own).
+  // New players: open the guided funnel once roster is ready (after FirstRun if shown).
   useEffect(() => {
-    if (!mounted || isFirstDuelComplete() || owned || roster.length === 0) return;
+    if (!mounted || isFirstDuelComplete() || owned || roster.length === 0 || showIntro) return;
     if (firstDuelPhase === null) setFirstDuelPhase("pitch");
-  }, [mounted, owned, roster.length, firstDuelPhase]);
+  }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
   const closeIntro = useCallback(() => {
     try {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
     setShowIntro(false);
-  }, []);
+    if (!isFirstDuelComplete() && !owned && roster.length > 0) {
+      setFirstDuelPhase("pitch");
+    }
+  }, [owned, roster.length]);
 
   const onAltitude = useCallback((y: number) => {
     setAltitude(y);
@@ -589,7 +604,8 @@ export default function GroundsScreen() {
     firstDuelPhase === "pitch" ||
     firstDuelPhase === "pick" ||
     firstDuelPhase === "train" ||
-    firstDuelPhase === "evolve";
+    firstDuelPhase === "evolve" ||
+    firstDuelPhase === "concord";
   const champions: GroundChampion[] = useMemo(
     () => roster.map((r) => ({ key: r.key, type: r.type, name: r.name, champion: progress[r.key] || store.get(r.key) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -730,7 +746,7 @@ export default function GroundsScreen() {
       if (t.dmg > 0) c.ha++;
     }
     const bKey = matchOpponentKey(opponent, opponentId);
-    setMatchView({
+    setMatchView((prev) => ({
       aKey: owned,
       bKey,
       hpA: bout.hpA,
@@ -740,7 +756,8 @@ export default function GroundsScreen() {
       punchB: c.pb,
       hitA: c.ha,
       hitB: c.hb,
-    });
+      cinematic: inFirstDuelFight.current ? true : prev?.cinematic,
+    }));
   }, [bout.turn, bout.hpA, bout.hpB, opponent, opponentId, owned]);
 
   const completeFirstDuel = useCallback(() => {
@@ -749,11 +766,31 @@ export default function GroundsScreen() {
     setFirstDuelEvolve(null);
     setFirstDuelPick(null);
     evolveBeforeRef.current = null;
+    firstFightWorldRef.current = null;
     bout.stop();
     setMatchView(null);
     setOpponent(null);
     setResult(null);
-  }, [bout]);
+    setConcordCoach(true);
+    if (worldId !== "concord") {
+      travelToWorld("concord", false);
+      setTimeout(() => travelRef.current?.(0, 52), 120);
+    }
+  }, [bout, travelToWorld, worldId]);
+
+  const stageFirstFightArena = useCallback(() => {
+    if (worldId !== FIRST_FIGHT_WORLD) {
+      firstFightWorldRef.current = worldId;
+      travelToWorld(FIRST_FIGHT_WORLD, false);
+    }
+    setTimeout(() => travelRef.current?.(0, 10), 160);
+  }, [travelToWorld, worldId]);
+
+  const returnToConcordAfterFirstFight = useCallback(() => {
+    firstFightWorldRef.current = null;
+    travelToWorld("concord", false);
+    setTimeout(() => travelRef.current?.(0, 52), 160);
+  }, [travelToWorld]);
 
   const finishFirstDuelTrain = useCallback(
     async (key: string, strat: { risk: number; focus: number; aggression: number }) => {
@@ -770,8 +807,9 @@ export default function GroundsScreen() {
       inFirstDuelFight.current = true;
       counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
       setResult(null);
+      stageFirstFightArena();
       const bKey = matchOpponentKey(opp, null);
-      setMatchView({ aKey: key, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+      setMatchView({ aKey: key, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0, cinematic: true });
       const ra = getRecipe(key);
       const rb = getRecipe(opp);
       const url = `/api/battle?a=${key}&b=${opp}&mock=1&seed=42&${sideParams("a", ra)}&${sideParams("b", rb)}`;
@@ -789,11 +827,13 @@ export default function GroundsScreen() {
         store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
         setFirstDuelEvolve({ before, after, key, type: byKey[key]?.type ?? "LOGIC" });
         setMatchView(null);
+        setOpponent(null);
+        returnToConcordAfterFirstFight();
         setFirstDuelPhase("evolve");
         outcomeSfx(winnerKey === key);
       });
     },
-    [store, roster, getRecipe, bout, byKey],
+    [store, roster, getRecipe, bout, byKey, stageFirstFightArena, returnToConcordAfterFirstFight],
   );
 
   const launchFirstDuelFight = useCallback(() => {
@@ -806,8 +846,9 @@ export default function GroundsScreen() {
     inFirstDuelFight.current = true;
     counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
     setResult(null);
+    stageFirstFightArena();
     const bKey = matchOpponentKey(opp, null);
-    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0, cinematic: true });
     const ra = getRecipe(owned);
     const rb = getRecipe(opp);
     const url = `/api/battle?a=${owned}&b=${opp}&mock=1&seed=42&${sideParams("a", ra)}&${sideParams("b", rb)}`;
@@ -830,10 +871,12 @@ export default function GroundsScreen() {
         type: byKey[owned]?.type ?? "LOGIC",
       });
       setMatchView(null);
+      setOpponent(null);
+      returnToConcordAfterFirstFight();
       setFirstDuelPhase("evolve");
       outcomeSfx(winnerKey === owned);
     });
-  }, [owned, roster, store, getRecipe, bout, byKey]);
+  }, [owned, roster, store, getRecipe, bout, byKey, stageFirstFightArena, returnToConcordAfterFirstFight]);
 
   const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
@@ -1374,6 +1417,18 @@ export default function GroundsScreen() {
         </div>
       )}
 
+      {concordCoach && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 500, borderColor: "#cdb8ff" }}>
+            <span style={{ fontSize: 16, color: "#cdb8ff", flexShrink: 0 }}>◎</span>
+            <span style={{ fontSize: 12, lineHeight: 1.35 }}>
+              <strong>The Concord.</strong> Walk inward to the seal, then out through a Vaultgate to reach a region. Press <span className="mono">E</span> near arches and flags.
+            </span>
+            <button onClick={dismissConcordCoach} className="btn" style={{ ["--ac" as string]: "#cdb8ff", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
       {clanInvite && owned && !store.force && !modesLocked && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
@@ -1456,7 +1511,8 @@ export default function GroundsScreen() {
             setFirstDuelPhase("train");
           }}
           onTrain={finishFirstDuelTrain}
-          onDone={completeFirstDuel}
+          onEvolveDone={() => setFirstDuelPhase("concord")}
+          onConcordDone={completeFirstDuel}
         />
       )}
 
@@ -1768,24 +1824,6 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
   );
 }
 
-function Dial({ label, value, onChange, color, hints }: { label: string; value: number; onChange: (v: number) => void; color: string; hints: [string, string] }) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-        <span style={{ fontWeight: 600 }}>{label}</span>
-        <span className="mono" style={{ color }}>
-          {value}
-        </span>
-      </div>
-      <input type="range" min={0} max={100} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ width: "100%", accentColor: color }} />
-      <div className="mono" style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted2)" }}>
-        <span>{hints[0]}</span>
-        <span>{hints[1]}</span>
-      </div>
-    </div>
-  );
-}
-
 function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEntry; onClose: () => void }) {
   const store = useChampions();
   const champ = store.get(ckey);
@@ -1839,9 +1877,9 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 10px" }}>
           DOCTRINE · how it fights (free to tune anytime)
         </div>
-        <Dial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
-        <Dial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
-        <Dial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
+        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
+        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
+        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
           PERSONA · its voice (optional)

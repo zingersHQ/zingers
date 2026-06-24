@@ -3,7 +3,7 @@
 // entered at three session-lengths (docs/bible/README.md).
 //
 //   Roam  (open-ended)  → the Grounds: live in the world, watch the league
-//   Quick (2–5 min)     → drop in, fight one ranked bout, hold your rank
+//   Quick (2–5 min)     → drop in, fight one ranked duel, hold your rank
 //   Raise (15–60 min)   → the growing RPG: campaign, collection, self-improvement
 //
 // This is pure data so the Grounds (the hub) and any menu can route consistently.

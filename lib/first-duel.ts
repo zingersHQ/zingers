@@ -1,24 +1,58 @@
 // First-duel onboarding — localStorage gate + starter roster helpers.
-import type { RosterEntry } from "@/lib/types";
+import type { CreatureType, RosterEntry, Strat } from "@/lib/types";
 import { STORAGE } from "@/lib/brand";
-import { wheelNeighbors } from "@/lib/lore/canon";
+import { WHEEL, wheelNeighbors } from "@/lib/lore/canon";
+import { FIGHT } from "@/lib/player-copy";
 
 export const FIRST_DUEL_TAGLINE = "Train a champion. Watch it fight.";
+
+/** Region arena used for the guided first fight (proper ring, not the Concord seal). */
+export const FIRST_FIGHT_WORLD = "void";
 
 /** Short player-facing hook per onboarding pick (not the roster key). */
 export const FIRST_DUEL_HOOKS: Record<string, string> = {
   AXIOM: "Cold proofs. Closes every argument.",
+  PARADOX: "Socratic trap. Hunts contradictions.",
   GLITCH: "Chaos lines. Breaks every frame.",
+  EMBER: "Hot provocation. All gas, no brake.",
   BASTION: "Patient guard. Outlasts the rush.",
+  VOX: "Grand oratory. Plays to the crowd.",
+  WIT: "Surgical timing. Needle and riposte.",
+  MUSE: "Lateral leaps. Reframes the fight.",
 };
 
-/** Three maximally distinct champions (not all eight). */
-export const FIRST_DUEL_STARTERS = ["AXIOM", "GLITCH", "BASTION"] as const;
+/** Champions eligible per Force — weekly rotation picks one per spoke. */
+export const STARTERS_BY_FORCE: Record<CreatureType, readonly string[]> = {
+  LOGIC: ["AXIOM", "PARADOX"],
+  CHAOS: ["GLITCH", "EMBER"],
+  COMPOSURE: ["BASTION"],
+  RHETORIC: ["VOX", "WIT"],
+  CREATIVITY: ["MUSE"],
+};
 
 /** Pitch-screen hero — visually loud, legend-tier silhouette. */
 export const FIRST_DUEL_HERO_KEY = "GLITCH";
 
-export const QUICK_START_STRAT = { risk: 55, focus: 50, aggression: 52 };
+export const QUICK_START_STRAT: Strat = { risk: 55, focus: 50, aggression: 52 };
+
+/** Copy beats for the post-win Concord landing (Act 1 coda). */
+export const CONCORD_LANDING = [
+  {
+    kicker: "THE CONCORD",
+    title: "Neutral ground above the Vault.",
+    body: "You spawn on the approach. The golden seal is the Long Vault — sealed, for now. Every Force keeps an uneasy peace here.",
+  },
+  {
+    kicker: "VAULTGATES",
+    title: "Walk out to the regions.",
+    body: "The arches ring the plaza. Each gate reaches a founding region — colosseum tribunals, ember gauntlets, void gardens. Your champion fights where you take it.",
+  },
+  {
+    kicker: "YOUR SESSION",
+    title: "Roam, duel, raise.",
+    body: `Train doctrine anytime. Step through a gate for a ${FIGHT.rankedDuel}. Climb the Tower in a region when you're ready for the long game.`,
+  },
+] as const;
 
 export function isFirstDuelComplete(): boolean {
   if (typeof window === "undefined") return true;
@@ -35,9 +69,20 @@ export function markFirstDuelComplete(): void {
   } catch {}
 }
 
+/** One champion per Force for the current week (seasonal rotation). */
+export function firstDuelStarterKeys(at = Date.now()): string[] {
+  const week = Math.floor(at / (7 * 86_400_000));
+  return WHEEL.map((type) => {
+    const pool = STARTERS_BY_FORCE[type];
+    return pool[week % pool.length]!;
+  });
+}
+
 export function firstDuelStarters(roster: RosterEntry[]): RosterEntry[] {
-  const set = new Set<string>(FIRST_DUEL_STARTERS);
-  return roster.filter((r) => set.has(r.key));
+  const byKey = Object.fromEntries(roster.map((r) => [r.key, r]));
+  return firstDuelStarterKeys()
+    .map((k) => byKey[k])
+    .filter((r): r is RosterEntry => !!r);
 }
 
 /** Pick an opponent whose Force loses to the player's on the wheel. */

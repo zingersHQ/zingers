@@ -1,21 +1,27 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowUpRight, Check, Crown, Swords } from "lucide-react";
 import type { Champion, RosterEntry, Strat } from "@/lib/types";
 import { TYPE_COLOR, doctrine, levelFor, skillCount, skillLevel, tierFor } from "@/lib/evolve/progression";
 import { FORCES as FORCE_LORE, wheelNeighbors } from "@/lib/lore/canon";
 import { ForcesChain } from "@/components/lore/forces-wheel";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import { showcaseChampion } from "@/lib/render/showcase";
 import {
+  CONCORD_LANDING,
   FIRST_DUEL_HERO_KEY,
   FIRST_DUEL_HOOKS,
   QUICK_START_STRAT,
 } from "@/lib/first-duel";
+import { FIGHT } from "@/lib/player-copy";
 import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
+import { ICON, ONBOARDING_BG, forceHex, forceSigil } from "@/lib/iconography";
+import { OnboardingAudio } from "@/components/intro/onboarding-audio";
+import { armOnboardingAudio, playOnboardingSound } from "@/lib/sound-gallery";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -26,9 +32,9 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ),
 });
 
-export type FirstDuelPhase = "pitch" | "pick" | "train" | "evolve";
+export type FirstDuelPhase = "pitch" | "pick" | "train" | "evolve" | "concord";
 
-const ACC = "#7c5cff";
+const ACC = ICON.accent;
 const PITCH_HERO = showcaseChampion(FIRST_DUEL_HERO_KEY);
 
 const shell: React.CSSProperties = {
@@ -37,9 +43,13 @@ const shell: React.CSSProperties = {
   zIndex: 85,
   display: "grid",
   placeItems: "center",
-  background: "radial-gradient(120% 90% at 50% 0%, #14102a 0%, #07060d 60%, #050409 100%), #050409",
+  background: ONBOARDING_BG,
   padding: 16,
 };
+
+function armPitchAudio() {
+  playOnboardingSound("pitch");
+}
 
 export function FirstDuelOverlay({
   phase,
@@ -52,7 +62,8 @@ export function FirstDuelOverlay({
   onPitchContinue,
   onPick,
   onTrain,
-  onDone,
+  onEvolveDone,
+  onConcordDone,
 }: {
   phase: FirstDuelPhase;
   starters: RosterEntry[];
@@ -64,12 +75,56 @@ export function FirstDuelOverlay({
   onPitchContinue: () => void;
   onPick: (key: string) => void;
   onTrain: (key: string, strat: Strat) => void;
-  onDone: () => void;
+  onEvolveDone: () => void;
+  onConcordDone: () => void;
 }) {
+  const [strat, setStrat] = useState<Strat>(QUICK_START_STRAT);
+  const [concordStep, setConcordStep] = useState(0);
+
+  useEffect(() => {
+    if (phase === "train" && selected) setStrat(QUICK_START_STRAT);
+  }, [phase, selected]);
+
+  useEffect(() => {
+    if (phase === "concord") setConcordStep(0);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "pitch") return;
+    return armOnboardingAudio();
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === "evolve") playOnboardingSound("evolve");
+    if (phase === "concord") playOnboardingSound("concord");
+  }, [phase]);
+
+  const handlePitchContinue = useCallback(() => {
+    armPitchAudio();
+    onPitchContinue();
+  }, [onPitchContinue]);
+
+  const handlePick = useCallback(
+    (key: string) => {
+      playOnboardingSound("pick");
+      onPick(key);
+    },
+    [onPick],
+  );
+
+  const handleTrain = useCallback(
+    (key: string, s: Strat) => {
+      playOnboardingSound("train");
+      onTrain(key, s);
+    },
+    [onTrain],
+  );
+
   if (phase === "pitch") {
     return (
       <div style={{ ...shell, padding: 0, display: "block" }}>
-        <div style={{ position: "relative", height: isMobile ? "min(52vh, 420px)" : "min(58vh, 480px)", background: "#0a0813" }}>
+        <OnboardingAudio compact={isMobile} />
+        <div style={{ position: "relative", height: isMobile ? "min(52vh, 420px)" : "min(58vh, 480px)", background: ICON.void }}>
           <RenderBoundary
             fallback={
               <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
@@ -94,15 +149,15 @@ export function FirstDuelOverlay({
             Your champion fights for you.
           </h1>
           <p style={{ fontSize: isMobile ? 15 : 17, color: "var(--muted)", lineHeight: 1.55, margin: "0 0 10px" }}>
-            Pick a fighter, tune how it battles, and watch your first bout play out. Every win feeds XP and reshapes the body on screen.
+            Pick a fighter, set how it {FIGHT.fights}, and watch your {FIGHT.firstDuel} play out in a real arena. Wins feed XP — and over time, the body on screen becomes a record of that career.
           </p>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: "0 0 24px" }}>
-            About a minute · watch the duel · clip the result
+            About a minute · tune doctrine · watch the {FIGHT.duel}
           </p>
           <button
             className="btn btn-primary pop"
             style={{ ["--ac" as string]: ACC, fontSize: 16, padding: "14px 28px", display: "inline-flex", alignItems: "center", gap: 8 }}
-            onClick={onPitchContinue}
+            onClick={handlePitchContinue}
           >
             Choose your champion
           </button>
@@ -112,21 +167,23 @@ export function FirstDuelOverlay({
   }
 
   if (phase === "pick") {
+    const cols = isMobile ? "1fr" : starters.length > 3 ? "repeat(auto-fit, minmax(148px, 1fr))" : "repeat(3, 1fr)";
     return (
       <div style={shell}>
-        <div className="panel" style={{ padding: isMobile ? 20 : 28, width: "min(720px, 96vw)", maxHeight: "92vh", overflow: "auto", textAlign: "center" }}>
+        <OnboardingAudio compact={isMobile} />
+        <div className="panel" style={{ padding: isMobile ? 20 : 28, width: "min(860px, 96vw)", maxHeight: "92vh", overflow: "auto", textAlign: "center" }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · CHOOSE YOUR CHAMPION</div>
           <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, margin: "8px 0 6px" }}>Who goes first?</h2>
           <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 6px" }}>
-            Three champions, three styles. Each Force beats the next on the wheel.
+            One champion per Force — five styles on the wheel. Each beats the next.
           </p>
           <p style={{ color: "var(--muted2)", fontSize: 12, lineHeight: 1.45, margin: "0 0 14px" }}>
-            You will pledge a Clan later in the Concord. This is your fighter.
+            One mind per Force this week — the roster rotates. You will pledge a Clan later in the Concord.
           </p>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
             <ForcesChain />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12 }}>
             {starters.map((r) => {
               const c = get(r.key);
               const col = TYPE_COLOR[r.type];
@@ -139,7 +196,7 @@ export function FirstDuelOverlay({
                 <button
                   key={r.key}
                   className="panel"
-                  onClick={() => onPick(r.key)}
+                  onClick={() => handlePick(r.key)}
                   style={{
                     ["--ac" as string]: col,
                     padding: 16,
@@ -154,7 +211,10 @@ export function FirstDuelOverlay({
                 >
                   <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={isMobile ? 72 : 88} />
                   <div style={{ fontWeight: 700, fontSize: 16 }}>{r.name}</div>
-                  <div className="mono" style={{ fontSize: 10, color: col }}>
+                  <div className="mono" style={{ fontSize: 14, color: col, lineHeight: 1 }}>
+                    {forceSigil(r.type)}
+                  </div>
+                  <div className="mono" style={{ fontSize: 10, color: forceHex(r.type) }}>
                     {FORCE_LORE[r.type].inWorld}
                   </div>
                   {hook && <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>{hook}</div>}
@@ -176,31 +236,36 @@ export function FirstDuelOverlay({
     const col = TYPE_COLOR[entry.type];
     const champ = get(selected);
     const canAfford = crowns >= TRAIN_COST;
+    const patchStrat = (patch: Partial<Strat>) => setStrat((s) => ({ ...s, ...patch }));
     return (
       <div style={shell}>
-        <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(520px, 96vw)", borderColor: col }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col }}>STEP 2 · FIRST BOUT</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Tune {entry.name}, then watch it fight.</h2>
+        <OnboardingAudio compact={isMobile} />
+        <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(560px, 96vw)", maxHeight: "92vh", overflow: "auto", borderColor: col }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col }}>STEP 2 · TUNE & FIGHT</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s doctrine.</h2>
           <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-            Quick Start sets a balanced fight plan. The bout runs on its own while you watch. Training shifts the body before the bell.
+            Drag the three dials — how your champion {FIGHT.fights} in the arena. Training costs Crowns and nudges the body before the bell.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
             <ChampionAvatar ckey={selected} type={entry.type} champion={champ} size={72} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{entry.name}</div>
               <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].inWorld}</div>
-              <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 4 }}>
-                Agg {QUICK_START_STRAT.aggression} · Focus {QUICK_START_STRAT.focus} · Risk {QUICK_START_STRAT.risk}
-              </div>
             </div>
           </div>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>
+            DOCTRINE · free to adjust
+          </div>
+          <DoctrineDial label="Aggression" value={strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => patchStrat({ aggression: v })} />
+          <DoctrineDial label="Focus" value={strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => patchStrat({ focus: v })} />
+          <DoctrineDial label="Risk" value={strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => patchStrat({ risk: v })} />
           <button
             className="btn btn-primary"
-            style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", opacity: canAfford ? 1 : 0.55 }}
+            style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 8, opacity: canAfford ? 1 : 0.55 }}
             disabled={!canAfford}
-            onClick={() => onTrain(selected, QUICK_START_STRAT)}
+            onClick={() => handleTrain(selected, strat)}
           >
-            Train & watch the bout · {TRAIN_COST} <Crown size={14} strokeWidth={2.2} style={{ display: "inline", verticalAlign: "middle" }} />
+            Train & enter the arena · {TRAIN_COST} <Crown size={14} strokeWidth={2.2} style={{ display: "inline", verticalAlign: "middle" }} />
           </button>
           {!canAfford && (
             <p className="mono" style={{ fontSize: 10, color: "var(--bad)", marginTop: 10, textAlign: "center" }}>
@@ -213,7 +278,45 @@ export function FirstDuelOverlay({
   }
 
   if (phase === "evolve" && evolve) {
-    return <EvolveStep evolve={evolve} isMobile={isMobile} onDone={onDone} />;
+    return <EvolveStep evolve={evolve} isMobile={isMobile} onDone={onEvolveDone} />;
+  }
+
+  if (phase === "concord") {
+    const beat = CONCORD_LANDING[concordStep];
+    const last = concordStep >= CONCORD_LANDING.length - 1;
+    return (
+      <div style={shell}>
+        <OnboardingAudio compact={isMobile} />
+        <div className="panel pop" style={{ ["--ac" as string]: ACC, padding: isMobile ? 22 : 28, width: "min(560px, 96vw)", textAlign: "center", borderColor: ACC }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 8 }}>
+            {beat.kicker} · {concordStep + 1}/{CONCORD_LANDING.length}
+          </div>
+          <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, margin: "0 0 10px", lineHeight: 1.15 }}>{beat.title}</h2>
+          <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.55, margin: "0 0 22px" }}>{beat.body}</p>
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 18 }}>
+            {CONCORD_LANDING.map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: i === concordStep ? 22 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  background: i <= concordStep ? ACC : "var(--line2)",
+                  transition: "width .2s ease",
+                }}
+              />
+            ))}
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ ["--ac" as string]: ACC, width: "100%", fontSize: 15, padding: "14px 16px" }}
+            onClick={() => (last ? onConcordDone() : setConcordStep((s) => s + 1))}
+          >
+            {last ? "Enter the Concord" : "Continue"}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return null;
@@ -274,7 +377,7 @@ function EvolveStep({
           {name} {leveled ? "leveled up" : "grew from the win"}.
         </h2>
         <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-          Training set the build. The bout added {xpGain > 0 ? `${xpGain} XP` : "XP"} and a {after.wins}W record. Compare the silhouettes: the body is your champion&apos;s career made visible.
+          Your doctrine shaped the fight. The {FIGHT.duel} added {xpGain > 0 ? `${xpGain} XP` : "XP"} and a {after.wins}W record. The silhouette is your champion&apos;s career made visible.
         </p>
         <div
           style={{
@@ -333,7 +436,7 @@ function EvolveStep({
             </button>
           </div>
           <button className="btn btn-primary" style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px" }} onClick={onDone}>
-            Enter the Grounds
+            Continue to the Concord
           </button>
         </div>
       </div>
@@ -371,15 +474,19 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
         }}
       >
         <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: ACC, marginBottom: 6 }}>START HERE</div>
-        <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.35 }}>Win one bout. Watch your champion grow.</p>
-        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>Pick a fighter, tune it, watch the duel play out.</p>
+        <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.35 }}>
+          Win your {FIGHT.firstDuel}. Watch your champion grow.
+        </p>
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
+          Pick a fighter, tune doctrine, watch the {FIGHT.duel} play out.
+        </p>
         <button
           className="btn btn-primary"
           style={{ ["--ac" as string]: ACC, width: "100%", fontSize: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           onClick={onStart}
         >
           <Swords size={16} strokeWidth={2.2} />
-          Start your first bout
+          Start your {FIGHT.firstDuel}
         </button>
       </div>
     </div>

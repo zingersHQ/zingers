@@ -23,3 +23,8 @@ export function setMood(mood: Mood) {
 export function currentMood(): Mood {
   return current;
 }
+
+/** Start the registered engine (call from a user gesture — e.g. onboarding CTA). */
+export function startAmbience() {
+  engine?.start();
+}

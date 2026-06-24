@@ -15,7 +15,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
     id: "gauntlet",
     name: "The Gauntlet",
     blurb: "A rising chain of fighters. Press your luck or cash out.",
-    objective: "Win consecutive bouts against ever-stronger agents.",
+    objective: "Win consecutive duels against ever-stronger agents.",
     gauntlet: { maxRounds: 5, baseReward: 30, rewardGrowth: 1.6, clearBonus: 0.5, consolationFrac: 0.25 },
   },
   tribunal: {

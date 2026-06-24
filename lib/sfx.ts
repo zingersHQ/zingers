@@ -384,3 +384,62 @@ export function jetFallSfx() {
   o.start(t);
   o.stop(t + 0.27);
 }
+
+// Bright two-note welcome sting for onboarding slides (pairs with ambience start).
+export function pitchStinger() {
+  if (!enabled()) return;
+  const c = ensure();
+  const out = master;
+  if (!c || !out) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  const t = c.currentTime + 0.01;
+  const notes = [523.25, 659.25, 783.99];
+  notes.forEach((freq, i) => {
+    const at = t + i * 0.11;
+    const o = c.createOscillator();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(freq, at);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(0.09, at + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.28);
+    o.connect(g);
+    g.connect(out);
+    o.start(at);
+    o.stop(at + 0.3);
+  });
+}
+
+function blipStinger(freq: number, dur = 0.14, vol = 0.07) {
+  if (!enabled()) return;
+  const c = ensure();
+  const out = master;
+  if (!c || !out) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+  const t = c.currentTime + 0.005;
+  const o = c.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(freq, t);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g);
+  g.connect(out);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+
+export function pickStinger() {
+  blipStinger(740, 0.1, 0.08);
+}
+
+export function trainStinger() {
+  blipStinger(523.25, 0.12, 0.09);
+  setTimeout(() => blipStinger(659.25, 0.14, 0.07), 70);
+}
+
+export function evolveStinger() {
+  [659.25, 783.99, 987.77].forEach((f, i) => setTimeout(() => blipStinger(f, 0.18, 0.06), i * 90));
+}

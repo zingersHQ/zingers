@@ -16,6 +16,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Champion } from "@/lib/types";
 import type { GroundChampion } from "@/components/grounds/world";
+import { PODIUM_A, PODIUM_B } from "@/components/grounds/match-stage";
 import { ChampionMesh } from "@/components/grounds/champion-mesh";
 import { useLeague, type GalleryFocus } from "@/components/grounds/gallery";
 import { TYPE_COLOR, EMBLEM, levelFor, tierFor, skillLevel } from "@/lib/evolve/progression";
@@ -29,8 +30,6 @@ const GOLD = "#ffb14a";
 
 const FLOOR_R = 15; // the sanded combat floor
 const DAIS_R = 4.4; // the raised ring at its centre
-const PODIUM_A: [number, number, number] = [-3.6, 0, 0];
-const PODIUM_B: [number, number, number] = [3.6, 0, 0];
 const THRONE: [number, number, number] = [0, 0, -11.5];
 // the player enters from the south (+z); keep that arc clear of structure
 const ENTRANCE = Math.PI / 2; // bearing of the gap (+z), in scene angle terms

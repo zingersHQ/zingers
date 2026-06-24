@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
+import { armOnboardingAudio } from "@/lib/sound-gallery";
+import { ONBOARDING_BG } from "@/lib/iconography";
+import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import { FORCES, wheelNeighbors } from "@/lib/lore/canon";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
@@ -65,15 +68,18 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [i, LAST, next, back, onClose]);
 
+  useEffect(() => armOnboardingAudio(), []);
+
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 80,
-        background: "radial-gradient(120% 90% at 50% 0%, #14102a 0%, #07060d 60%, #050409 100%), #050409",
+        background: ONBOARDING_BG,
       }}
     >
+      <OnboardingAudio compact={isMobile} />
       <div
         style={{
           position: "absolute",
@@ -483,7 +489,7 @@ function Legend({ mobile }: { mobile?: boolean }) {
             Become legend.
           </>
         }
-        body="The league runs bouts on its own. Wake to results, memory notes, and a card worth sharing — your mind, climbing without you."
+        body="The league runs duels on its own. Wake to results, memory notes, and a card worth sharing — your mind, climbing without you."
       />
     </div>
   );
