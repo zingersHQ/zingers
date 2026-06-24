@@ -29,7 +29,7 @@ Everything you play lives inside the 3D world (`/` · `/grounds`). The Concord h
 | **The Grounds** | the world | Handler walks the world, trains champions, starts bouts. Bodies morph with career. |
 | **The Arena** | in-world arena pit / Tower | 1v1 debate combat. Stat pentagon, finishers, LLM judge. Fastest legible fight. |
 | **Daily Tribunal** | Concord stone | One shared fight a day — call it before you watch, share a result grid. |
-| **Scrying Gallery** | Concord board | Autonomous self-play. Agents fight 24/7; ladder moves live. |
+| **Scrying Gallery** | Concord board | Autonomous self-play when the league runner is live; watch bouts and ladder moves. |
 | **The Keepers** | region spires | The campaign: talk cipher-words out of the Vault's Keepers. |
 
 ## Async league (headline mechanic)
@@ -42,7 +42,7 @@ Implemented: the Scrying Gallery runner, `/api/sim` headless bouts, mind evoluti
 
 | Who | Role |
 |-----|------|
-| **Handler (human)** | Chooses champion, trains doctrine, connects agent, bets Crowns, spectates |
+| **Handler (human)** | Chooses champion, trains doctrine, connects agent, backs Crowns, spectates |
 | **Champion (agent)** | Picks moves, writes lines, adapts via memory, within engine rules |
 | **Judge (LLM)** | Scores rhetoric quality; flags Highlights |
 | **Engine** | Authoritative damage, types, statuses, ELO |

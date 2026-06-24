@@ -22,7 +22,7 @@ const GOLD = "#f5d020";
 
 export interface ConcordGate {
   world: string; // destination world id
-  label: string; // region name shown on the gate
+  label: string; // world name (matches the world picker)
   color: string; // destination accent
   pos: [number, number, number]; // ground position in the hub
 }

@@ -12,18 +12,29 @@ import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
+import { FirstDuelHubCta, FirstDuelOverlay, type FirstDuelPhase } from "@/components/intro/first-duel";
 import { STORAGE } from "@/lib/brand";
+import {
+  firstDuelOpponent,
+  firstDuelStarters,
+  isFirstDuelComplete,
+  markFirstDuelComplete,
+  FIRST_DUEL_TAGLINE,
+} from "@/lib/first-duel";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
 import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
-import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, REGION_WORLDS } from "@/components/grounds/worlds";
+import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS } from "@/components/grounds/worlds";
+import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
+import type { GameSession, VenueId } from "@/components/grounds/venues";
+import { VENUES } from "@/components/grounds/venues";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason } from "@/lib/lore/season";
 import { FOUNDING_REGIONS, FORCES as FORCE_LORE, wheelNeighbors } from "@/lib/lore/canon";
 import { ForcesChain } from "@/components/lore/forces-wheel";
 import { trainerLevel, forceMeta } from "@/lib/evolve/trainer";
-import { daylightBiome } from "@/components/grounds/biomes";
+import { daylightBiome, BIOMES } from "@/components/grounds/biomes";
 import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
 import { Compass, type Pose } from "@/components/grounds/compass";
@@ -42,6 +53,15 @@ import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebrat
 import { ArrivalSequence } from "@/components/grounds/arrival";
 import { ClanSheet } from "@/components/grounds/clan-sheet";
 import { DailySheet } from "@/components/grounds/daily-sheet";
+import { CircuitHud, type CircuitPhase, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
+import {
+  circuitSector,
+  CIRCUIT_SECTOR_COUNT,
+  loadCircuitPersonalBest,
+  saveCircuitPersonalBest,
+  isCircuitRunBetter,
+  type CircuitPersonalBest,
+} from "@/components/grounds/circuit-tracks";
 import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -103,22 +123,33 @@ export default function GroundsScreen() {
     globalRating: number | null; // player's new ladder rating
     home: boolean; // win earned under your Clan's region (home advantage paid)
   } | null>(null);
-  const [worldId, setWorldId] = useState(DEFAULT_WORLD.id);
+  const [worldId, setWorldId] = useState(() => loadLastWorld() ?? DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
+  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const activeVenue = gameSession?.venue ?? null;
+  const venueHostWorldId = gameSession?.hostWorldId ?? worldId;
+  const inVenue = !!activeVenue;
   const theme = useTheme();
-  // In light mode the 3D world drops into a daylight skin (same place, lit like
-  // noon). Scene topology/layout is untouched, so landmarks + caches still align.
-  const biome = useMemo(
-    () => (theme === "light" ? daylightBiome(world.biome) : world.biome),
-    [world.biome, theme],
-  );
+  const biome = useMemo(() => {
+    const skin =
+      activeVenue === "amphitheatre" ? BIOMES[4] : activeVenue === "circuit" ? worldById(venueHostWorldId).biome : world.biome;
+    return theme === "light" ? daylightBiome(skin) : skin;
+  }, [world.biome, activeVenue, venueHostWorldId, theme]);
   const scenario = world.scenario;
   const isHub = world.kind === "hub";
-  // The Amphitheatre: a spectator venue. Like the hub, it has no playable region
-  // machinery (Tower / Keepers / training / caches / goals) — you go there to watch.
-  const spectator = !!world.spectator;
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+  const [firstDuelPhase, setFirstDuelPhase] = useState<FirstDuelPhase | null>(null);
+  const [firstDuelPick, setFirstDuelPick] = useState<string | null>(null);
+  const [firstDuelEvolve, setFirstDuelEvolve] = useState<{
+    before: Champion;
+    after: Champion;
+    key: string;
+    type: CreatureType;
+  } | null>(null);
+  const [modeLockToast, setModeLockToast] = useState<string | null>(null);
+  const evolveBeforeRef = useRef<Champion | null>(null);
+  const inFirstDuelFight = useRef(false);
   // mid-claim: a champion was picked but the arrival cinematic is still running,
   // so we hold off mounting the world UI until the veil lifts.
   const [claiming, setClaiming] = useState<string | null>(null);
@@ -186,8 +217,8 @@ export default function GroundsScreen() {
   // region this season. Cleared goals (per-season ledger) drop off the map; the
   // compass still lists them so you can see what's left.
   const allGoals = useMemo<WorldGoal[]>(
-    () => (isHub || spectator ? [] : worldGoals(biome, season.n, growth?.featured ?? false)),
-    [isHub, spectator, biome, season, growth?.featured],
+    () => (isHub || inVenue ? [] : worldGoals(biome, season.n, growth?.featured ?? false)),
+    [isHub, inVenue, biome, season, growth?.featured],
   );
   const doneGoals = useMemo(
     () => (store.goals.season === season.n ? store.goals.done : []),
@@ -207,11 +238,235 @@ export default function GroundsScreen() {
   );
   // the Concord is a built, neutral hub — no wild caches there
   const liveNodes = useMemo(
-    () => (isHub || spectator ? [] : allNodes.filter((n) => !claimedToday.includes(n.id))),
-    [isHub, spectator, allNodes, claimedToday],
+    () => (isHub || inVenue ? [] : allNodes.filter((n) => !claimedToday.includes(n.id))),
+    [isHub, inVenue, allNodes, claimedToday],
   );
   const poseRef = useRef<Pose>({ x: 0, z: 34, heading: Math.PI });
   const travelRef = useRef<((x: number, z: number) => void) | null>(null);
+
+  // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
+  const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
+  const [circuitSectorIdx, setCircuitSectorIdx] = useState(0);
+  const [circuitRunMs, setCircuitRunMs] = useState(0);
+  const [circuitSectorMs, setCircuitSectorMs] = useState(0);
+  const [circuitCpPassed, setCircuitCpPassed] = useState(0);
+  const [circuitPersonalBest, setCircuitPersonalBest] = useState<CircuitPersonalBest | null>(null);
+  const [circuitBoard, setCircuitBoard] = useState<CircuitBoardEntry[]>([]);
+  const [circuitBoardLoading, setCircuitBoardLoading] = useState(false);
+  const circuitCpNext = useRef(0);
+  const circuitRunStart = useRef(0);
+  const circuitSectorStart = useRef(0);
+  const circuitTrack = useMemo(() => circuitSector(circuitSectorIdx, venueHostWorldId), [circuitSectorIdx, venueHostWorldId]);
+
+  const capturePose = useCallback(() => {
+    const p = poseRef.current;
+    return { x: p.x, z: p.z, y: altitude, heading: p.heading };
+  }, [altitude]);
+
+  const restorePose = useCallback((pose: { x: number; z: number; y?: number; heading?: number }) => {
+    poseRef.current = { x: pose.x, z: pose.z, heading: pose.heading ?? Math.PI };
+    setTimeout(() => travelRef.current?.(pose.x, pose.z), 60);
+  }, []);
+
+  const loadCircuitBoard = useCallback(() => {
+    const tok = getOwnerToken();
+    setCircuitBoardLoading(true);
+    fetch(`/api/circuit?limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
+      .then((r) => r.json())
+      .then((d: { entries?: CircuitBoardEntry[]; mine?: CircuitPersonalBest | null }) => {
+        setCircuitBoard(
+          (d.entries ?? []).map((e) => ({
+            handle: e.handle,
+            sectors: e.sectors,
+            totalMs: e.totalMs,
+            clearedAll: e.clearedAll,
+          })),
+        );
+        if (d.mine) setCircuitPersonalBest((prev) => (isCircuitRunBetter(d.mine!, prev) ? d.mine! : prev));
+      })
+      .catch(() => {})
+      .finally(() => setCircuitBoardLoading(false));
+  }, []);
+
+  const submitCircuitRun = useCallback(
+    (sectors: number, totalMs: number, clearedAll: boolean) => {
+      const tok = getOwnerToken();
+      if (!tok) return;
+      const run: CircuitPersonalBest = { sectors, totalMs, clearedAll };
+      const prev = loadCircuitPersonalBest();
+      if (isCircuitRunBetter(run, prev)) {
+        saveCircuitPersonalBest(run);
+        setCircuitPersonalBest(run);
+      }
+      fetch("/api/circuit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tok, handle: getHandle(), sectors, totalMs, clearedAll }),
+      })
+        .then(() => loadCircuitBoard())
+        .catch(() => {});
+    },
+    [loadCircuitBoard],
+  );
+
+  const resetCircuitRun = useCallback(() => {
+    circuitCpNext.current = 0;
+    circuitRunStart.current = 0;
+    circuitSectorStart.current = 0;
+    setCircuitSectorIdx(0);
+    setCircuitCpPassed(0);
+    setCircuitRunMs(0);
+    setCircuitSectorMs(0);
+    setCircuitPhase("ready");
+    const s = circuitSector(0, venueHostWorldId).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
+  }, [venueHostWorldId]);
+
+  const travelToWorld = useCallback(
+    (destId: string, restore = true) => {
+      if (!isFirstDuelComplete() && destId === "gauntlet") {
+        setModeLockToast("Finish your first duel to unlock this.");
+        return;
+      }
+      if (!isHub) saveWorldPose(worldId, capturePose());
+      saveLastWorld(destId);
+      setGameSession(null);
+      setWorldId(destId);
+      if (restore) {
+        const saved = loadWorldPose(destId);
+        if (saved) setTimeout(() => restorePose(saved), 120);
+      }
+    },
+    [capturePose, restorePose, isHub, worldId],
+  );
+
+  const enterVenue = useCallback(
+    (venue: VenueId) => {
+      if (!isFirstDuelComplete() && (venue === "circuit" || venue === "amphitheatre")) {
+        setModeLockToast("Finish your first duel to unlock this.");
+        return;
+      }
+      const pose = capturePose();
+      saveWorldPose(worldId, pose);
+      setGameSession({ venue, hostWorldId: worldId, returnPose: pose });
+      circuitCpNext.current = 0;
+      circuitRunStart.current = 0;
+      circuitSectorStart.current = 0;
+      setCircuitSectorIdx(0);
+      setCircuitCpPassed(0);
+      setCircuitRunMs(0);
+      setCircuitSectorMs(0);
+      setCircuitPhase("ready");
+      if (venue === "circuit") {
+        const s = circuitSector(0, worldId).spawn;
+        setTimeout(() => travelRef.current?.(s[0], s[2]), 80);
+      } else if (venue === "amphitheatre") {
+        setTimeout(() => travelRef.current?.(0, 12), 80);
+      }
+    },
+    [capturePose, worldId],
+  );
+
+  const exitVenue = useCallback(() => {
+    if (!gameSession) return;
+    const { returnPose } = gameSession;
+    setGameSession(null);
+    resetCircuitRun();
+    restorePose(returnPose);
+  }, [gameSession, resetCircuitRun, restorePose]);
+
+  const advanceCircuitSector = useCallback(() => {
+    const next = circuitSectorIdx + 1;
+    circuitCpNext.current = 0;
+    setCircuitCpPassed(0);
+    setCircuitSectorMs(0);
+    circuitSectorStart.current = 0;
+    if (next >= CIRCUIT_SECTOR_COUNT) {
+      const total = performance.now() - circuitRunStart.current;
+      setCircuitRunMs(total);
+      setCircuitPhase("done");
+      submitCircuitRun(CIRCUIT_SECTOR_COUNT, total, true);
+      store.awardTrainerXp(120);
+      outcomeSfx(true);
+      return;
+    }
+    setCircuitSectorIdx(next);
+    setCircuitPhase("ready");
+    const s = circuitSector(next, venueHostWorldId).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
+  }, [circuitSectorIdx, venueHostWorldId, submitCircuitRun, store]);
+
+  const onCircuitFail = useCallback(() => {
+    if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
+    const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
+    const sectors = circuitSectorIdx; // sectors fully cleared before this one
+    setCircuitRunMs(total);
+    setCircuitPhase("failed");
+    submitCircuitRun(sectors, total, false);
+    outcomeSfx(false);
+  }, [circuitPhase, circuitSectorIdx, submitCircuitRun]);
+
+  const onCircuitPass = useCallback(
+    (index: number) => {
+      const cp = circuitTrack.checkpoints[index];
+      if (!cp) return;
+      const now = performance.now();
+      setCircuitCpPassed(index + 1);
+
+      if (index === 0 && (circuitPhase === "ready" || circuitPhase === "running")) {
+        if (circuitPhase === "ready") {
+          if (circuitSectorIdx === 0 && !circuitRunStart.current) circuitRunStart.current = now;
+          circuitSectorStart.current = now;
+          setCircuitPhase("running");
+        }
+        return;
+      }
+
+      if (circuitPhase !== "running") return;
+
+      if (cp.finish) {
+        const sectorElapsed = now - circuitSectorStart.current;
+        setCircuitSectorMs(sectorElapsed);
+        setCircuitRunMs(now - circuitRunStart.current);
+        if (circuitSectorIdx + 1 >= CIRCUIT_SECTOR_COUNT) {
+          setCircuitPhase("done");
+          submitCircuitRun(CIRCUIT_SECTOR_COUNT, now - circuitRunStart.current, true);
+          store.awardTrainerXp(120);
+          outcomeSfx(true);
+        } else {
+          setCircuitPhase("sector");
+          store.awardTrainerXp(15);
+          outcomeSfx(true);
+        }
+      }
+    },
+    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store],
+  );
+
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    setCircuitPersonalBest(loadCircuitPersonalBest());
+    loadCircuitBoard();
+  }, [activeVenue, venueHostWorldId, loadCircuitBoard]);
+
+  useEffect(() => {
+    if (!owned || inVenue) return;
+    const saved = loadWorldPose(worldId);
+    if (saved) setTimeout(() => restorePose(saved), 150);
+  }, [worldId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (circuitPhase !== "running" && circuitPhase !== "sector") return;
+    let raf = 0;
+    const tick = () => {
+      if (circuitRunStart.current) setCircuitRunMs(performance.now() - circuitRunStart.current);
+      if (circuitSectorStart.current) setCircuitSectorMs(performance.now() - circuitSectorStart.current);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [circuitPhase]);
+
   const onPose = useCallback((x: number, z: number, heading: number) => {
     poseRef.current = { x, z, heading };
   }, []);
@@ -244,8 +499,12 @@ export default function GroundsScreen() {
       mq.addEventListener("change", sync);
     }
     try {
-      const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
-      if (!seen) setShowIntro(true);
+      if (!isFirstDuelComplete()) {
+        localStorage.setItem(STORAGE.intro, "1");
+      } else {
+        const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
+        if (!seen) setShowIntro(true);
+      }
     } catch {}
     try {
       setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
@@ -305,6 +564,12 @@ export default function GroundsScreen() {
     };
   }, [reloadKey, loadWar]);
 
+  // New players: open the guided funnel once roster is ready (skip if they already own).
+  useEffect(() => {
+    if (!mounted || isFirstDuelComplete() || owned || roster.length === 0) return;
+    if (firstDuelPhase === null) setFirstDuelPhase("pitch");
+  }, [mounted, owned, roster.length, firstDuelPhase]);
+
   const closeIntro = useCallback(() => {
     try {
       localStorage.setItem(STORAGE.intro, "1");
@@ -318,6 +583,13 @@ export default function GroundsScreen() {
   }, []);
 
   const byKey = useMemo(() => Object.fromEntries(roster.map((r) => [r.key, r])), [roster]);
+  const modesLocked = mounted && !isFirstDuelComplete();
+  const duelStarters = useMemo(() => firstDuelStarters(roster), [roster]);
+  const inFirstDuelSetup =
+    firstDuelPhase === "pitch" ||
+    firstDuelPhase === "pick" ||
+    firstDuelPhase === "train" ||
+    firstDuelPhase === "evolve";
   const champions: GroundChampion[] = useMemo(
     () => roster.map((r) => ({ key: r.key, type: r.type, name: r.name, champion: progress[r.key] || store.get(r.key) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -354,6 +626,18 @@ export default function GroundsScreen() {
   // are always a single duel regardless of world.
   const interact = useCallback(async () => {
     if (overlay !== "none" || inMatch || result || gRun) return;
+    if (modesLocked) {
+      const blocked =
+        near?.kind === "keeper" ||
+        (near?.kind === "venue-enter" && (near.venue === "circuit" || near.venue === "amphitheatre")) ||
+        (near?.kind === "venue" && near.venue === "league") ||
+        (near?.kind === "arena" && scenario.id === "gauntlet") ||
+        near?.kind === "force";
+      if (blocked) {
+        setModeLockToast("Finish your first duel to unlock this.");
+        return;
+      }
+    }
     if (near?.kind === "train") setOverlay("train");
     else if (near?.kind === "broker") setOverlay("broker");
     else if (near?.kind === "keeper") {
@@ -396,12 +680,24 @@ export default function GroundsScreen() {
       // is watched in-world — the league fights on its dais — so nothing to open.
       if (near.venue === "daily") setOverlay("daily");
     } else if (near?.kind === "gate") {
-      // step through a Vaultgate → travel to that region (the scene remounts via
-      // its world key, so you land cleanly at the region's spawn)
+      if (modesLocked && near.world === "gauntlet") {
+        setModeLockToast("Finish your first duel to unlock this.");
+        return;
+      }
       setNear(null);
-      setWorldId(near.world);
+      travelToWorld(near.world);
+    } else if (near?.kind === "return") {
+      setNear(null);
+      saveWorldPose(worldId, capturePose());
+      travelToWorld("concord");
+    } else if (near?.kind === "venue-enter") {
+      setNear(null);
+      enterVenue(near.venue);
+    } else if (near?.kind === "venue-exit") {
+      setNear(null);
+      exitVenue();
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id, store]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked]);
 
   const fastTravel = useCallback((pos: [number, number, number]) => {
     travelRef.current?.(pos[0], pos[2]);
@@ -446,6 +742,98 @@ export default function GroundsScreen() {
       hitB: c.hb,
     });
   }, [bout.turn, bout.hpA, bout.hpB, opponent, opponentId, owned]);
+
+  const completeFirstDuel = useCallback(() => {
+    markFirstDuelComplete();
+    setFirstDuelPhase(null);
+    setFirstDuelEvolve(null);
+    setFirstDuelPick(null);
+    evolveBeforeRef.current = null;
+    bout.stop();
+    setMatchView(null);
+    setOpponent(null);
+    setResult(null);
+  }, [bout]);
+
+  const finishFirstDuelTrain = useCallback(
+    async (key: string, strat: { risk: number; focus: number; aggression: number }) => {
+      store.setStrat(key, strat);
+      evolveBeforeRef.current = { ...store.get(key) };
+      if (!(await store.trainChampion(key))) return;
+      store.setOwned(key);
+      setFirstDuelPick(key);
+      setFirstDuelPhase(null);
+      const opp = firstDuelOpponent(key, roster);
+      setOpponent(opp);
+      setOpponentId(null);
+      setDuelMeta(null);
+      inFirstDuelFight.current = true;
+      counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
+      setResult(null);
+      const bKey = matchOpponentKey(opp, null);
+      setMatchView({ aKey: key, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+      const ra = getRecipe(key);
+      const rb = getRecipe(opp);
+      const url = `/api/battle?a=${key}&b=${opp}&mock=1&seed=42&${sideParams("a", ra)}&${sideParams("b", rb)}`;
+      bout.begin(url, (end: BattleEnd) => {
+        inFirstDuelFight.current = false;
+        const styles: Record<string, Style> = { [key]: blankStyle(), [opp]: blankStyle() };
+        for (const turn of historyRef.current) accrue(turn.actor === key ? styles[key] : styles[opp], turn);
+        const winnerKey = end.winner;
+        const loserKey = winnerKey === key ? opp : key;
+        store.recordBattle(winnerKey, loserKey, styles);
+        const before = evolveBeforeRef.current ?? store.get(key);
+        const dom = dominant(store.get(key));
+        store.learnFromBout({ key, opponentName: byKey[opp]?.name || opp, won: winnerKey === key, axisLabel: dom.axis.label });
+        const after = store.get(key);
+        store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
+        setFirstDuelEvolve({ before, after, key, type: byKey[key]?.type ?? "LOGIC" });
+        setMatchView(null);
+        setFirstDuelPhase("evolve");
+        outcomeSfx(winnerKey === key);
+      });
+    },
+    [store, roster, getRecipe, bout, byKey],
+  );
+
+  const launchFirstDuelFight = useCallback(() => {
+    if (!owned) return;
+    evolveBeforeRef.current = { ...store.get(owned) };
+    const opp = firstDuelOpponent(owned, roster);
+    setOpponent(opp);
+    setOpponentId(null);
+    setDuelMeta(null);
+    inFirstDuelFight.current = true;
+    counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
+    setResult(null);
+    const bKey = matchOpponentKey(opp, null);
+    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0 });
+    const ra = getRecipe(owned);
+    const rb = getRecipe(opp);
+    const url = `/api/battle?a=${owned}&b=${opp}&mock=1&seed=42&${sideParams("a", ra)}&${sideParams("b", rb)}`;
+    bout.begin(url, (end: BattleEnd) => {
+      inFirstDuelFight.current = false;
+      const styles: Record<string, Style> = { [owned]: blankStyle(), [opp]: blankStyle() };
+      for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[opp], turn);
+      const winnerKey = end.winner;
+      const loserKey = winnerKey === owned ? opp : owned;
+      store.recordBattle(winnerKey, loserKey, styles);
+      const before = evolveBeforeRef.current ?? store.get(owned);
+      const dom = dominant(store.get(owned));
+      store.learnFromBout({ key: owned, opponentName: byKey[opp]?.name || opp, won: winnerKey === owned, axisLabel: dom.axis.label });
+      const after = store.get(owned);
+      if (winnerKey === owned) store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
+      setFirstDuelEvolve({
+        before,
+        after,
+        key: owned,
+        type: byKey[owned]?.type ?? "LOGIC",
+      });
+      setMatchView(null);
+      setFirstDuelPhase("evolve");
+      outcomeSfx(winnerKey === owned);
+    });
+  }, [owned, roster, store, getRecipe, bout, byKey]);
 
   const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
@@ -528,7 +916,7 @@ export default function GroundsScreen() {
         if (iWon) loadWar();
         // First ranked win with no Clan yet → queue the (one-time) invite. It
         // surfaces after the result card closes, when "join a team" makes sense.
-        if (iWon && !store.force && !clanInviteSeen.current) setClanInvite(true);
+        if (iWon && !store.force && !clanInviteSeen.current && isFirstDuelComplete()) setClanInvite(true);
         if (ranked.bet) {
           betWon = ranked.bet.won;
           crownsDelta += ranked.bet.won ? ranked.bet.payout - ranked.bet.stake : -ranked.bet.stake;
@@ -676,8 +1064,8 @@ export default function GroundsScreen() {
   }, [bout]);
 
   const showMatch = inMatch || overlay === "result";
-  const pickingChampion = mounted && !owned && roster.length > 0;
-  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion;
+  const pickingChampion = mounted && !owned && roster.length > 0 && !inFirstDuelSetup;
+  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup;
   const dockPad = showDock ? DOCK_H + 8 : 0;
   // the bottom-docked compass bar reserves vertical space so the touch controls,
   // proximity prompt and coachmark always stack cleanly above it (regions only).
@@ -685,7 +1073,7 @@ export default function GroundsScreen() {
   // Keep the world HUD (season banner, music, crowns, altitude) tucked away
   // until the first-run tutorial and champion claim are done — otherwise its
   // zIndex pokes through on top of those higher-priority overlays.
-  const showHud = mounted && !showIntro && !pickingChampion;
+  const showHud = mounted && !showIntro && !pickingChampion && !inFirstDuelSetup;
   const [hudDim, setHudDim] = useState(false);
 
   useEffect(() => {
@@ -757,15 +1145,25 @@ export default function GroundsScreen() {
             )}
           >
             <World
-              key={world.id}
+              key={`${world.id}-${activeVenue ?? "wild"}-s${circuitSectorIdx}`}
               champions={showMatch ? matchChampions : champions}
               ownedKey={owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
-              controlsEnabled={controlsEnabled}
+              controlsEnabled={
+                controlsEnabled &&
+                (!activeVenue || activeVenue === "amphitheatre" || (activeVenue === "circuit" && circuitPhase !== "failed" && circuitPhase !== "done" && circuitPhase !== "sector"))
+              }
               biome={biome}
-              spectator={spectator}
-              towerAgents={isHub || spectator ? [] : towerAgents}
+              regionWorldId={worldId}
+              activeVenue={activeVenue}
+              venueHostWorldId={venueHostWorldId}
+              circuitTrack={circuitTrack}
+              onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
+              onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
+              circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
+              onVenueExit={inVenue ? exitVenue : undefined}
+              towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
               goals={isHub ? [] : liveGoals}
               gates={isHub ? CONCORD_GATES : []}
@@ -787,12 +1185,12 @@ export default function GroundsScreen() {
       {/* HUD — sits above the WebGL canvas and touch layer */}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
-        {!showMatch && overlay === "none" && owned && !gRun && (
+        {!showMatch && overlay === "none" && owned && !gRun && !inVenue && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
               <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 240, maxWidth: "calc(100vw - 32px)", zIndex: 2 }}>
                 <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", padding: "0 2px" }}>CHOOSE A WORLD</span>
-                {WORLDS.map((w) => {
+                {NAV_WORLDS.map((w) => {
                   const ac = w.biome.lights.arenaPoint;
                   const on = w.id === worldId;
                   return (
@@ -833,33 +1231,48 @@ export default function GroundsScreen() {
               }}
             >
               <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
-              <span style={{ fontSize: isMobile ? 13 : 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{world.name}</span>
+              <span style={{ fontSize: isMobile ? 13 : 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {world.name}
+              </span>
             </button>
           </div>
         )}
 
         {!showMatch && overlay === "none" && owned && !gRun && (
           <div style={{ marginBottom: isMobile ? 6 : 10 }}>
-            <TrainerBadge isMobile={isMobile} war={war} onOpenClan={() => { setClanPreselect(null); setClanOpen(true); }} />
+            <TrainerBadge
+              isMobile={isMobile}
+              war={war}
+              onOpenClan={() => {
+                if (modesLocked) {
+                  setModeLockToast("Finish your first duel to unlock Clans.");
+                  return;
+                }
+                setClanPreselect(null);
+                setClanOpen(true);
+              }}
+            />
           </div>
         )}
 
         {(owned || !isMobile) && overlay === "none" && !showMatch && !gRun && (
           <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
-            {owned
-              ? isHub
+            {modesLocked && owned
+              ? FIRST_DUEL_TAGLINE
+              : owned
+              ? inVenue
                 ? isMobile
-                  ? "Walk to a Vaultgate to travel · tap the prompt when near"
-                  : "THE CONCORD · VAULTGATE → TRAVEL · E TO ACT · M FOR MENU"
-                : spectator
+                  ? `Inside ${VENUES[activeVenue!].shortLabel} · walk to the exit ring`
+                  : `INSIDE ${VENUES[activeVenue!].name.toUpperCase()} · WALK TO THE EXIT TO RETURN`
+                : isHub
                   ? isMobile
-                    ? "The Amphitheatre · watch the league · tap the herald for today's case"
-                    : "THE AMPHITHEATRE · THE LEAGUE FIGHTS ITSELF · WALK TO THE HERALD FOR TODAY'S CASE · M TO LEAVE"
+                    ? "Vaultgates → regions · game doors → Amphitheatre & Circuit"
+                    : "THE CONCORD · VAULTGATES → REGIONS · GAME DOORS FOR AMPHITHEATRE & CIRCUIT"
                   : isMobile
-                    ? "Walk to glowing spots · tap the prompt when near"
+                    ? "Walk to glowing spots · return arch → Concord"
                     : scenario.id === "gauntlet"
-                      ? "WALK TO THE ARENA · E TO ENTER THE GAUNTLET · CLIMB THE TOWER"
-                      : "WASD · SPACE / DOUBLE-JUMP TO FLY · X TO DROP · CLIMB · E NEAR NPCs · M FOR MENU"
+                      ? "WALK TO THE ARENA · RETURN ARCH → CONCORD · CIRCUIT TUNNEL"
+                      : "WASD · DOUBLE-JUMP TO FLY · RETURN ARCH → CONCORD · E NEAR NPCs"
               : "Claim a champion to enter the world"}
           </p>
         )}
@@ -883,7 +1296,7 @@ export default function GroundsScreen() {
       )}
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
-      {showHud && !showMatch && overlay === "none" && !isHub && towerAgents.length > 0 && (
+      {showHud && !showMatch && overlay === "none" && !isHub && !inVenue && towerAgents.length > 0 && (
         <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
@@ -908,7 +1321,7 @@ export default function GroundsScreen() {
 
       {/* the compass — a heading tape docked at the bottom (regions only; the
           Concord's gates guide you directly, so no compass is shown in the hub) */}
-      {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && (
+      {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && !inVenue && (
         <div
           className={`grounds-hud${hudDim ? " is-dim" : ""}`}
           style={{ position: "absolute", left: 0, right: 0, bottom: isMobile ? 12 : 16, display: "flex", justifyContent: "center", padding: isMobile ? "0 12px" : "0 16px", zIndex: 100, pointerEvents: "none" }}
@@ -931,7 +1344,25 @@ export default function GroundsScreen() {
       )}
 
       {/* one-time objectives coachmark */}
-      {goalCoach && owned && !claiming && !isHub && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
+      {showHud && activeVenue === "circuit" && owned && overlay === "none" && !showMatch && (
+        <CircuitHud
+          phase={circuitPhase}
+          sectorIndex={circuitSectorIdx}
+          runMs={circuitRunMs}
+          sectorMs={circuitSectorMs}
+          cpNext={circuitCpPassed}
+          cpTotal={circuitTrack.checkpoints.length}
+          personalBest={circuitPersonalBest}
+          board={circuitBoard}
+          boardLoading={circuitBoardLoading}
+          onContinue={advanceCircuitSector}
+          onRestart={resetCircuitRun}
+          accent={world.biome.lights.arenaPoint}
+          compact={isMobile}
+        />
+      )}
+
+      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
             <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
@@ -945,7 +1376,7 @@ export default function GroundsScreen() {
 
       {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
-      {clanInvite && owned && !store.force && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
+      {clanInvite && owned && !store.force && !modesLocked && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
@@ -974,7 +1405,7 @@ export default function GroundsScreen() {
       )}
 
       {/* the Clan decision surface — one place to choose / review / lock */}
-      {clanOpen && (
+      {clanOpen && !modesLocked && (
         <ClanSheet
           preselect={clanPreselect}
           suggested={owned ? byKey[owned]?.type ?? null : null}
@@ -1004,11 +1435,48 @@ export default function GroundsScreen() {
       {/* menu — single visible button, top-left (M to toggle) */}
       <GameDock hidden={!showDock} />
 
-      {/* onboarding: choose your champion */}
-      {mounted && !owned && roster.length > 0 && !claiming && <Onboarding roster={roster} get={store.get} onPick={setClaiming} />}
+      {/* onboarding: choose your champion — legacy path if funnel is off */}
+      {mounted && !owned && roster.length > 0 && !claiming && !inFirstDuelSetup && isFirstDuelComplete() && (
+        <Onboarding roster={roster} get={store.get} onPick={setClaiming} />
+      )}
+
+      {/* guided first-duel funnel for new players */}
+      {mounted && firstDuelPhase && duelStarters.length > 0 && (
+        <FirstDuelOverlay
+          phase={firstDuelPhase}
+          starters={duelStarters}
+          selected={firstDuelPick}
+          get={store.get}
+          crowns={crowns}
+          evolve={firstDuelEvolve}
+          isMobile={isMobile}
+          onPitchContinue={() => setFirstDuelPhase("pick")}
+          onPick={(key) => {
+            setFirstDuelPick(key);
+            setFirstDuelPhase("train");
+          }}
+          onTrain={finishFirstDuelTrain}
+          onDone={completeFirstDuel}
+        />
+      )}
+
+      {modesLocked && owned && !inFirstDuelSetup && !inMatch && overlay === "none" && !gRun && !result && (
+        <FirstDuelHubCta isMobile={isMobile} onStart={launchFirstDuelFight} />
+      )}
+
+      {modeLockToast && (
+        <div style={{ position: "absolute", bottom: 120, left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 90, pointerEvents: "none", padding: "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", padding: "10px 14px", fontSize: 13, maxWidth: 360, textAlign: "center" }}>
+            {modeLockToast}
+            <button onClick={() => setModeLockToast(null)} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, marginLeft: 10, padding: "2px 8px" }}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* arrival cinematic: claim → wipe → reveal → welcome (hides the figure pop-in) */}
-      {mounted && claiming && byKey[claiming] && (
+      {mounted && claiming && byKey[claiming] && isFirstDuelComplete() && (
         <ArrivalSequence
           key={claiming}
           ckey={claiming}
@@ -1061,6 +1529,12 @@ export default function GroundsScreen() {
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {near.kind === "gate"
                 ? `Enter ${near.label}`
+                : near.kind === "return"
+                ? "Return to the Concord"
+                : near.kind === "venue-enter"
+                ? `Enter ${near.label}`
+                : near.kind === "venue-exit"
+                ? near.label
                 : near.kind === "venue"
                 ? near.venue === "daily"
                   ? "Read today's Tribunal"
@@ -1492,6 +1966,84 @@ function AgentPicker({ ckey, recipe }: { ckey: string; recipe: Recipe }) {
   );
 }
 
+function duelCloseBtn(onClose: () => void) {
+  return (
+    <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", flexShrink: 0, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, padding: 4 }}>
+      <X size={20} strokeWidth={2} />
+    </button>
+  );
+}
+
+function DuelBetting({
+  ownedName,
+  oppName,
+  oppDisabled,
+  betSide,
+  setBetSide,
+  betAmt,
+  setBetAmt,
+  crowns,
+}: {
+  ownedName: string;
+  oppName: string;
+  oppDisabled?: boolean;
+  betSide: "me" | "opp" | null;
+  setBetSide: (s: "me" | "opp" | null) => void;
+  betAmt: number;
+  setBetAmt: (n: number) => void;
+  crowns: number;
+}) {
+  const pickBtn: React.CSSProperties = {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    padding: "12px 8px",
+    fontSize: 11,
+    minWidth: 0,
+  };
+  const stakeBtn: React.CSSProperties = {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    padding: "10px 6px",
+    fontSize: 12,
+  };
+
+  return (
+    <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)" }}>
+          PLACE A BACK <span style={{ opacity: 0.65, letterSpacing: 0.5 }}>(optional)</span>
+        </div>
+        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          win 2× · <span style={{ color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 3 }}>{crowns} <Crown size={11} strokeWidth={2.2} /></span>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ...pickBtn, ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>back {ownedName}</span>
+        </button>
+        <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ...pickBtn, ["--ac" as string]: "var(--bad)" }} disabled={oppDisabled} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>back {oppName}</span>
+        </button>
+      </div>
+      {betSide && (
+        <div className="fadein" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
+          {[25, 50, 100].map((n) => (
+            <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ...stakeBtn, ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
+              {n} <Crown size={12} strokeWidth={2.2} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChallengeOverlay(props: {
   owned: string;
   ownedEntry: RosterEntry;
@@ -1512,61 +2064,70 @@ function ChallengeOverlay(props: {
   const { owned, ownedEntry, roster, get, opponent, setOpponent, locked, duelMeta, betSide, setBetSide, betAmt, setBetAmt, crowns, onClose, onFight } = props;
   const opps = roster.filter((r) => r.key !== owned);
   const oppEntry = opponent ? roster.find((r) => r.key === opponent) : null;
+  const ownedCol = TYPE_COLOR[ownedEntry.type];
+  const ownedChamp = get(owned);
 
   if (locked && opponent && oppEntry) {
     const col = TYPE_COLOR[oppEntry.type];
     const oppChamp = get(opponent);
+    const oppName = duelMeta?.name ?? oppEntry.name;
     return (
       <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
         <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(520px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>Face to face</div>
-            <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
-              <X size={20} strokeWidth={2} />
-            </button>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col, marginBottom: 4 }}>LADDER DUEL</div>
+              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>Face to face</div>
+            </div>
+            {duelCloseBtn(onClose)}
           </div>
-          <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "8px 0 18px", lineHeight: 1.55 }}>
+          <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "10px 0 18px", lineHeight: 1.55 }}>
             Next on the ladder. Beat them to keep climbing.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 14, alignItems: "center", marginBottom: 18 }}>
-            <div style={{ textAlign: "center" }}>
-              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={get(owned)} size={72} />
-              <div style={{ fontWeight: 700, marginTop: 8 }}>{ownedEntry.name}</div>
-              <div className="mono" style={{ fontSize: 10, color: TYPE_COLOR[ownedEntry.type] }}>YOURS</div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              gap: 10,
+              alignItems: "stretch",
+              marginBottom: 4,
+              padding: "18px 10px",
+              borderRadius: 14,
+              background: "var(--panel2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
+              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={ownedChamp} size={72} />
+              <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{ownedEntry.name}</div>
+              <div className="mono" style={{ fontSize: 10, color: ownedCol, marginTop: 4 }}>YOURS · L{levelFor(ownedChamp.xp).level}</div>
             </div>
-            <div className="mono" style={{ fontSize: 18, color: "var(--muted2)", fontWeight: 700 }}>VS</div>
-            <div style={{ textAlign: "center" }}>
+            <div style={{ display: "grid", placeItems: "center", padding: "0 2px" }}>
+              <div className="mono" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--panel)", border: "1px solid var(--line2)", fontSize: 11, fontWeight: 800, color: "var(--muted2)", flexShrink: 0 }}>
+                VS
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
               <ChampionAvatar ckey={opponent} type={oppEntry.type} champion={oppChamp} size={72} />
-              <div style={{ fontWeight: 700, marginTop: 8 }}>{duelMeta?.name ?? oppEntry.name}</div>
-              <div className="mono" style={{ fontSize: 10, color: col }}>
+              <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{oppName}</div>
+              <div className="mono" style={{ fontSize: 10, color: col, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
                 {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}
               </div>
             </div>
           </div>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-            PLACE A BET (optional) · win 2× your stake
-          </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-            <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
-              back {ownedEntry.name}
-            </button>
-            <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--bad)" }} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
-              back {duelMeta?.name ?? oppEntry.name}
-            </button>
-            {betSide && (
-              <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-                {[25, 50, 100].map((n) => (
-                  <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 3 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
-                    {n} <Crown size={12} strokeWidth={2.2} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onFight}>
+          <DuelBetting
+            ownedName={ownedEntry.name}
+            oppName={oppName}
+            betSide={betSide}
+            setBetSide={setBetSide}
+            betAmt={betAmt}
+            setBetAmt={setBetAmt}
+            crowns={crowns}
+          />
+          <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 18, padding: "14px 16px" }} onClick={onFight}>
             <FightIcon size={18} strokeWidth={2.2} />
-            Fight {duelMeta?.name ?? oppEntry.name}
-            {betSide && <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>(staking {betAmt} <Crown size={13} strokeWidth={2.2} />)</span>}
+            Fight {oppName}
+            {betSide && <span className="mono" style={{ fontSize: 11, opacity: 0.85, display: "inline-flex", alignItems: "center", gap: 3 }}>· {betAmt} <Crown size={13} strokeWidth={2.2} /></span>}
           </button>
         </div>
       </div>
@@ -1576,20 +2137,24 @@ function ChallengeOverlay(props: {
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", width: "min(620px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24 }}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>House sparring pit</div>
-          <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
-            <X size={20} strokeWidth={2} />
-          </button>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--gold)", marginBottom: 4 }}>PRACTICE</div>
+            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>House sparring pit</div>
+          </div>
+          {duelCloseBtn(onClose)}
         </div>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.55 }}>
-          Practice against a <b>House First Mind</b> in the plaza pit. Ranked ladder fights only happen on the Tower — climb to each agent.
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "10px 0 4px", lineHeight: 1.55 }}>
+          Practice against a <b>House First Mind</b> in the plaza pit. Wins here earn XP and Crowns; climb the Tower for ranked ladder fights.
         </div>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 6 }}>
-          You field <b style={{ color: TYPE_COLOR[ownedEntry.type] }}>{ownedEntry.name}</b>.
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16 }}>
+          You field <b style={{ color: ownedCol }}>{ownedEntry.name}</b>.
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "16px 0" }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
+          PICK AN OPPONENT
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
           {opps.map((r) => {
             const col = TYPE_COLOR[r.type];
             const on = opponent === r.key;
@@ -1615,32 +2180,21 @@ function ChallengeOverlay(props: {
           })}
         </div>
 
-        {/* betting */}
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-          PLACE A BET (optional) · win 2× your stake
-        </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-          <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
-            back {ownedEntry.name}
-          </button>
-          <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--bad)" }} disabled={!oppEntry} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
-            back {oppEntry?.name ?? "opponent"}
-          </button>
-          {betSide && (
-            <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-              {[25, 50, 100].map((n) => (
-                <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 3 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
-                  {n} <Crown size={12} strokeWidth={2.2} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <DuelBetting
+          ownedName={ownedEntry.name}
+          oppName={oppEntry?.name ?? "opponent"}
+          oppDisabled={!oppEntry}
+          betSide={betSide}
+          setBetSide={setBetSide}
+          betAmt={betAmt}
+          setBetAmt={setBetAmt}
+          crowns={crowns}
+        />
 
-        <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} disabled={!opponent} onClick={onFight}>
+        <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 18, padding: "14px 16px" }} disabled={!opponent} onClick={onFight}>
           <FightIcon size={18} strokeWidth={2.2} />
           {opponent ? "Fight!" : "pick an opponent"}
-          {betSide && <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>(staking {betAmt} <Crown size={13} strokeWidth={2.2} />)</span>}
+          {betSide && <span className="mono" style={{ fontSize: 11, opacity: 0.85, display: "inline-flex", alignItems: "center", gap: 3 }}>· {betAmt} <Crown size={13} strokeWidth={2.2} /></span>}
         </button>
       </div>
     </div>
@@ -1834,7 +2388,7 @@ function MatchHud(props: {
                 )}
                 {result.betWon !== null && (
                   <span className="chip" style={{ borderColor: result.betWon ? "var(--good)" : "var(--bad)", color: result.betWon ? "var(--good)" : "var(--bad)" }}>
-                    bet {result.betWon ? "won" : "lost"}
+                    back {result.betWon ? "won" : "lost"}
                   </span>
                 )}
                 {result.home && (

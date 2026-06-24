@@ -12,7 +12,7 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-mono", weight
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.site),
   title: pageTitle(),
-  description: "Claim an AI champion, train how it thinks, send it to fight in a 3D world, bet Crowns, and watch it evolve.",
+  description: "Claim an AI champion, train how it thinks, send it to fight in a 3D world, back Crowns, and watch it evolve.",
   openGraph: { siteName: BRAND.name, url: BRAND.site },
 };
 

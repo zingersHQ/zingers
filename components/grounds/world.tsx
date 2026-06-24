@@ -20,10 +20,22 @@ import { Amphitheatre, DAILY_HERALD_POS } from "./amphitheatre";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
-import type { GateDef } from "./worlds";
+import { worldById, type GateDef } from "./worlds";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
+import { CircuitScene } from "./circuit-scene";
+import { circuitSector } from "./circuit-tracks";
+import type { CircuitTrackDef } from "./circuit";
+import {
+  CONCORD_VENUE_SPOTS,
+  REGION_RETURN_SPOT,
+  VENUE_EXIT,
+  VENUES,
+  circuitSpotFor,
+  type VenueId,
+} from "./venues";
+import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal } from "./venue-portals";
 
 export interface GroundChampion {
   key: string;
@@ -53,6 +65,9 @@ export type NearTarget =
   | { kind: "goal"; id: string; goalKind: GoalKind; label: string; hint: string; crowns: number; fragments: number; trainerXp: number; seasonPoints: number }
   | { kind: "broker" }
   | { kind: "gate"; world: string; label: string }
+  | { kind: "return" }
+  | { kind: "venue-enter"; venue: VenueId; label: string }
+  | { kind: "venue-exit"; label: string }
   | { kind: "force"; type: CreatureType; name: string; motto: string }
   | { kind: "venue"; venue: ConcordVenueId; name: string }
   | null;
@@ -203,7 +218,14 @@ export default function World({
   travelRef,
   touchBottomInset = 0,
   showcase = false,
-  spectator = false,
+  regionWorldId = "grounds",
+  activeVenue = null,
+  venueHostWorldId = "grounds",
+  circuitTrack = circuitSector(0, "void"),
+  onCircuitPass,
+  onCircuitFail,
+  circuitCpNextRef,
+  onVenueExit,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -230,10 +252,21 @@ export default function World({
   /** Passive postcard mode: no player avatar, no input — an auto-orbit camera
       drifts over the region. Used for the docs/org region figures. */
   showcase?: boolean;
-  /** The Amphitheatre: a spectator venue. Renders the league arena + standings
-      instead of the playable region (no Tower / Keepers / training / caches). */
-  spectator?: boolean;
+  /** Current region world id — drives in-world portal layout. */
+  regionWorldId?: string;
+  /** Active game scene overlay (stepped into from a portal). */
+  activeVenue?: VenueId | null;
+  /** Which world you entered the venue from — selects the circuit variant. */
+  venueHostWorldId?: string;
+  circuitTrack?: CircuitTrackDef;
+  onCircuitPass?: (index: number) => void;
+  onCircuitFail?: () => void;
+  circuitCpNextRef?: React.MutableRefObject<number>;
+  onVenueExit?: () => void;
 }) {
+  const inVenue = !!activeVenue;
+  const inCircuit = activeVenue === "circuit";
+  const inAmphitheatre = activeVenue === "amphitheatre";
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
@@ -262,25 +295,32 @@ export default function World({
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const knoll = useMemo(() => spawnKnollFor(biome), [biome]);
+  const circuitSpawn = inCircuit ? circuitTrack.spawn : null;
   const spawnCam = useMemo(() => {
+    if (circuitSpawn) {
+      return [circuitSpawn[0], circuitSpawn[1] + 4, circuitSpawn[2] - 12] as [number, number, number];
+    }
     if (hasRift(shape)) {
       const { dirx, dirz } = riftDir(shape);
       // sit further out behind spawn, looking inward toward the plaza
       return [knoll.x + dirx * 14, knoll.peak + 7, knoll.z + dirz * 14] as [number, number, number];
     }
     return [knoll.x, knoll.peak + 7, knoll.z + 14] as [number, number, number];
-  }, [shape, knoll]);
-  const handlerPos = useRef(new THREE.Vector3(knoll.x, 0, knoll.z));
+  }, [circuitSpawn, shape, knoll]);
+  const handlerPos = useRef(
+    new THREE.Vector3(circuitSpawn ? circuitSpawn[0] : knoll.x, circuitSpawn ? circuitSpawn[1] : 0, circuitSpawn ? circuitSpawn[2] : knoll.z),
+  );
   const sc = biome.scene;
   // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
   // of an arena + tower + spire. Driven by the presence of gates from the world.
   const isHub = gates.length > 0;
+  const inRegion = !isHub && !inVenue;
   const hubGates = useMemo<{ world: string; label: string; color: string; pos: [number, number, number] }[]>(
     () =>
       gates.map((g) => {
         const x = Math.cos(g.angle) * g.dist;
         const z = Math.sin(g.angle) * g.dist;
-        return { world: g.world, label: g.label, color: g.color, pos: [x, terrainHeight(x, z, shape), z] };
+        return { world: g.world, label: worldById(g.world).name, color: g.color, pos: [x, terrainHeight(x, z, shape), z] };
       }),
     [gates, shape],
   );
@@ -309,14 +349,49 @@ export default function World({
   // is the Daily herald, relocated into the Amphitheatre as today's marquee case.
   const venueTargets = useMemo<{ venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[]>(
     () => {
-      if (spectator) {
+      if (inAmphitheatre) {
         const [hx, , hz] = DAILY_HERALD_POS;
         return [{ venue: "daily", name: "Today's Marquee", pos: new THREE.Vector3(hx, terrainHeight(hx, hz, shape) + 1, hz) }];
       }
       return [];
     },
-    [spectator, shape],
+    [inAmphitheatre, shape],
   );
+  const concordVenueTargets = useMemo(
+    () =>
+      isHub && !inVenue
+        ? CONCORD_VENUE_SPOTS.map((s) => {
+            const x = Math.cos(s.angle) * s.dist;
+            const z = Math.sin(s.angle) * s.dist;
+            const def = VENUES[s.venue];
+            return {
+              venue: s.venue,
+              label: def.name,
+              pos: new THREE.Vector3(x, terrainHeight(x, z, shape) + 1, z),
+            };
+          })
+        : [],
+    [isHub, inVenue, shape],
+  );
+  const returnTarget = useMemo(() => {
+    if (!inRegion) return null;
+    const { angle, dist } = REGION_RETURN_SPOT;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist;
+    return new THREE.Vector3(x, terrainHeight(x, z, shape, knoll) + 1, z);
+  }, [inRegion, shape, knoll]);
+  const circuitTunnelTarget = useMemo(() => {
+    if (!inRegion) return null;
+    const spot = circuitSpotFor(regionWorldId);
+    const x = Math.cos(spot.angle) * spot.dist;
+    const z = Math.sin(spot.angle) * spot.dist;
+    return { label: spot.label, pos: new THREE.Vector3(x, terrainHeight(x, z, shape, knoll) + 1, z) };
+  }, [inRegion, regionWorldId, shape, knoll]);
+  const venueExitTarget = useMemo(() => {
+    if (!inVenue || !activeVenue) return null;
+    const ex = VENUE_EXIT[activeVenue];
+    return { label: `Exit · back to ${venueHostWorldId === "concord" ? "the Concord" : "the wilds"}`, pos: new THREE.Vector3(ex.pos[0], ex.pos[1], ex.pos[2]), radius: ex.radius };
+  }, [inVenue, activeVenue, venueHostWorldId]);
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   // the Broker stands on flat ground on a free bearing (offset from the Tower),
   // an easy walk from spawn — a mind that deals in fragments.
@@ -371,6 +446,17 @@ export default function World({
     () => goals.map((g) => ({ id: g.id, goalKind: g.kind, label: g.label, hint: g.hint, radius: g.radius, reward: g.reward, pos: new THREE.Vector3(g.pos[0], g.pos[1], g.pos[2]) })),
     [goals],
   );
+  const circuitCheckpoints = useMemo(
+    () =>
+      inCircuit
+        ? circuitTrack.checkpoints.map((cp) => ({
+            index: cp.index,
+            pos: new THREE.Vector3(cp.pos[0], cp.pos[1], cp.pos[2]),
+            radius: cp.radius,
+          }))
+        : [],
+    [inCircuit, circuitTrack.checkpoints],
+  );
   const keeperTargets = useMemo(() => keeperTargetsFrom(keeperSites(shape, sc.landmarks.spire.angle)), [shape, sc.landmarks.spire.angle]);
   return (
     <>
@@ -395,7 +481,7 @@ export default function World({
       <PerformanceMonitor />
       <AdaptiveDpr pixelated={false} />
       <color attach="background" args={[biome.bg]} />
-      <fog attach="fog" args={[biome.fog.color, biome.fog.near, biome.fog.far]} />
+      <fog attach="fog" args={[biome.fog.color, inCircuit ? 35 : biome.fog.near, inCircuit ? 200 : biome.fog.far]} />
 
       <SkyDome biome={biome} />
       <Nebula biome={biome} />
@@ -425,7 +511,7 @@ export default function World({
         shadow-bias={-0.0004}
       />
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
-      {!isHub && !spectator && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
+      {!inRegion && !inAmphitheatre && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
 
       <Suspense
         fallback={
@@ -435,22 +521,38 @@ export default function World({
         }
       >
         <Physics gravity={[0, -22, 0]}>
-          <Terrain biome={biome} />
-          <PlazaFloor biome={biome} />
-          <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />
-          <Scatter biome={biome} />
-          <Crystals biome={biome} shape={shape} count={sc.crystalCount} />
+          {!inVenue && <Terrain biome={biome} />}
+          {!inVenue && <PlazaFloor biome={biome} />}
+          {!inVenue && <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />}
+          {!inVenue && <Scatter biome={biome} />}
+          {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
-          {/* The Concord (hub): a built settlement of gates + clan flags around the
-              sealed Vault door. No arena/tower/spire/agents/caches. */}
-          {isHub && <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />}
+          {isHub && !inVenue && (
+            <>
+              <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
+              {CONCORD_VENUE_SPOTS.map((s) => {
+                const x = Math.cos(s.angle) * s.dist;
+                const z = Math.sin(s.angle) * s.dist;
+                return <ConcordVenuePortal key={s.venue} venue={s.venue} pos={[x, terrainHeight(x, z, shape), z]} />;
+              })}
+            </>
+          )}
 
-          {/* The Amphitheatre — a spectator venue: the autonomous league fights in
-              the centre of a built stone bowl and the ladder lives on the banners. */}
-          {spectator && !showcase && <Amphitheatre champions={champions} focus={galleryFocus} />}
+          {inAmphitheatre && !showcase && (
+            <>
+              <Amphitheatre champions={champions} focus={galleryFocus} />
+              <VenueExitPortal pos={VENUE_EXIT.amphitheatre.pos} label="Exit to the wilds" accent={VENUES.amphitheatre.color} />
+            </>
+          )}
 
-          {/* A playable region: arena, tower climb, Keepers' spire, agents & caches. */}
-          {!isHub && !spectator && (
+          {inCircuit && !showcase && (
+            <>
+              <CircuitScene track={circuitTrack} biome={biome} />
+              <VenueExitPortal pos={VENUE_EXIT.circuit.pos} label="Exit the tunnel" accent={VENUES.circuit.color} />
+            </>
+          )}
+
+          {inRegion && (
             <>
               <PlazaSurround biome={biome} />
               <SpawnPath shape={shape} color={biome.lights.arenaPoint} knoll={knoll} />
@@ -472,13 +574,22 @@ export default function World({
               {!match && <GoalMarkers goals={goals} />}
               {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
               {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
+              {returnTarget && <ReturnPortal pos={[returnTarget.x, terrainHeight(returnTarget.x, returnTarget.z, shape, knoll), returnTarget.z]} />}
+              {circuitTunnelTarget && (
+                <CircuitTunnelPortal
+                  pos={[circuitTunnelTarget.pos.x, terrainHeight(circuitTunnelTarget.pos.x, circuitTunnelTarget.pos.z, shape, knoll), circuitTunnelTarget.pos.z]}
+                  label={circuitTunnelTarget.label}
+                  accent={biome.lights.arenaPoint}
+                  variant={regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds"}
+                />
+              )}
             </>
           )}
 
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
-            !isHub && !spectator &&
+            inRegion &&
             champions.map((c) => {
               const owned = c.key === ownedKey;
               const home = owned ? trainPad : roamHome(c.key, champions, sc.roam);
@@ -501,7 +612,47 @@ export default function World({
             })
           )}
 
-          {!showcase && <Handler controlsEnabled={controlsEnabled && !match} onNear={onNear} ownedKey={ownedKey} matchActive={!!match} handlerPos={handlerPos} camCue={camCue} touchMove={touchMove} touchBtn={touchBtn} isHub={isHub} spectator={spectator} trainPad={trainPad} challengeTargets={challengeTargets} groundTargets={groundTargets} nodeTargets={nodeTargets} goalTargets={goalTargets} brokerPad={brokerPad} keeperTargets={keeperTargets} gateTargets={gateTargets} forceTargets={forceTargets} venueTargets={venueTargets} shape={shape} spawnKnoll={knoll} onAltitude={onAltitude} onPose={onPose} travelRef={travelRef} />}
+          {!showcase && (
+            <Handler
+              controlsEnabled={controlsEnabled && !match}
+              onNear={onNear}
+              ownedKey={ownedKey}
+              matchActive={!!match}
+              handlerPos={handlerPos}
+              camCue={camCue}
+              touchMove={touchMove}
+              touchBtn={touchBtn}
+              isHub={isHub}
+              inVenue={inVenue}
+              inAmphitheatre={inAmphitheatre}
+              circuitMode={inCircuit}
+              circuitCheckpoints={circuitCheckpoints}
+              circuitCpNextRef={circuitCpNextRef}
+              onCircuitPass={onCircuitPass}
+              onCircuitFail={onCircuitFail}
+              concordVenueTargets={concordVenueTargets}
+              returnTarget={returnTarget}
+              circuitTunnelTarget={circuitTunnelTarget}
+              venueExitTarget={venueExitTarget}
+              onVenueExit={onVenueExit}
+              spawnPos={circuitSpawn ?? undefined}
+              trainPad={trainPad}
+              challengeTargets={challengeTargets}
+              groundTargets={groundTargets}
+              nodeTargets={nodeTargets}
+              goalTargets={goalTargets}
+              brokerPad={brokerPad}
+              keeperTargets={keeperTargets}
+              gateTargets={gateTargets}
+              forceTargets={forceTargets}
+              venueTargets={venueTargets}
+              shape={shape}
+              spawnKnoll={knoll}
+              onAltitude={onAltitude}
+              onPose={onPose}
+              travelRef={travelRef}
+            />
+          )}
         </Physics>
 
         {!glLost && (
@@ -1821,7 +1972,19 @@ function Handler({
   touchMove,
   touchBtn,
   isHub,
-  spectator,
+  inVenue = false,
+  inAmphitheatre = false,
+  circuitMode = false,
+  circuitCheckpoints = [],
+  circuitCpNextRef,
+  onCircuitPass,
+  onCircuitFail,
+  concordVenueTargets = [],
+  returnTarget = null,
+  circuitTunnelTarget = null,
+  venueExitTarget = null,
+  onVenueExit,
+  spawnPos,
   trainPad,
   challengeTargets,
   groundTargets,
@@ -1847,7 +2010,19 @@ function Handler({
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
   isHub: boolean;
-  spectator: boolean;
+  inVenue?: boolean;
+  inAmphitheatre?: boolean;
+  circuitMode?: boolean;
+  circuitCheckpoints?: { index: number; pos: THREE.Vector3; radius: number }[];
+  circuitCpNextRef?: React.MutableRefObject<number>;
+  onCircuitPass?: (index: number) => void;
+  onCircuitFail?: () => void;
+  concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
+  returnTarget?: THREE.Vector3 | null;
+  circuitTunnelTarget?: { label: string; pos: THREE.Vector3 } | null;
+  venueExitTarget?: { label: string; pos: THREE.Vector3; radius: number } | null;
+  onVenueExit?: () => void;
+  spawnPos?: [number, number, number];
   trainPad: [number, number, number];
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
   groundTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
@@ -1899,6 +2074,8 @@ function Handler({
   const spawnAt = useRef(0);
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
+  const failCooldown = useRef(0);
+  const venueExitCooldown = useRef(0);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
@@ -1948,7 +2125,7 @@ function Handler({
     travelRef.current = (x, z) => {
       const rb = body.current;
       if (!rb) return;
-      const y = terrainHeight(x, z, shape, spawnKnoll) + 2.4;
+      const y = spawnPos ? spawnPos[1] : terrainHeight(x, z, shape, spawnKnoll) + 2.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
@@ -1956,7 +2133,14 @@ function Handler({
     return () => {
       if (travelRef) travelRef.current = null;
     };
-  }, [travelRef, shape]);
+  }, [travelRef, shape, spawnKnoll, spawnPos]);
+
+  // circuit spawn faces down the track (+z); default heading is −z (toward tunnel).
+  useEffect(() => {
+    if (!spawnPos) return;
+    heading.current = 0;
+    if (camCue.current) camCue.current.heading = 0;
+  }, [spawnPos, camCue]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
   // points at and fades in the new clip, so the `cur` ref can never desync from
@@ -2332,14 +2516,16 @@ function Handler({
     // drop "under-earth" (worst on Ember's spires). If our centre ever ends up
     // below the surface height at our (x,z), lift back onto it. Read a fresh
     // translation so this doesn't double-fire after a checkpoint rescue above.
-    const p = rb.translation();
-    const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
-    const FEET = 1.0; // capsule half-height (0.55) + radius (0.45)
-    if (p.y < floorYNet - 0.1) {
-      rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
-      const lv = rb.linvel();
-      rb.setLinvel({ x: lv.x, y: Math.max(0, lv.y), z: lv.z }, true);
-      ground.current = Math.max(ground.current, 1);
+    if (!circuitMode) {
+      const p = rb.translation();
+      const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
+      const FEET = 1.0;
+      if (p.y < floorYNet - 0.1) {
+        rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
+        const lv = rb.linvel();
+        rb.setLinvel({ x: lv.x, y: Math.max(0, lv.y), z: lv.z }, true);
+        ground.current = Math.max(ground.current, 1);
+      }
     }
 
     // hand the camera the live movement state so it can smart-follow the player
@@ -2379,7 +2565,43 @@ function Handler({
     }
 
     let next: NearTarget = null;
-    if (!matchActive && isHub) {
+    if (!matchActive && circuitMode && inVenue && venueExitTarget && onVenueExit) {
+      const ex = venueExitTarget;
+      const dh = Math.hypot(t.x - ex.pos.x, t.z - ex.pos.z);
+      const dy = Math.abs(t.y - ex.pos.y);
+      if (dh < ex.radius && dy < ex.radius) {
+        const now = performance.now();
+        if (now - venueExitCooldown.current > 800) {
+          venueExitCooldown.current = now;
+          onVenueExit();
+        }
+      }
+    } else if (!matchActive && inVenue && venueExitTarget && !circuitMode) {
+      const ex = venueExitTarget;
+      const dh = Math.hypot(t.x - ex.pos.x, t.z - ex.pos.z);
+      const dy = Math.abs(t.y - ex.pos.y);
+      if (dh < ex.radius && dy < ex.radius) next = { kind: "venue-exit", label: ex.label };
+    }
+    if (!matchActive && circuitMode && onCircuitPass && circuitCpNextRef) {
+      const nextIdx = circuitCpNextRef.current;
+      const cp = circuitCheckpoints[nextIdx];
+      if (cp) {
+        const dy = Math.abs(t.y - cp.pos.y);
+        const dh = Math.hypot(t.x - cp.pos.x, t.z - cp.pos.z);
+        if (dy <= cp.radius && dh <= cp.radius) {
+          onCircuitPass(cp.index);
+          circuitCpNextRef.current = nextIdx + 1;
+        }
+      }
+      // fell off the track — one fall ends the entire run (no checkpoint respawn)
+      if (t.y < -8) {
+        const now = performance.now();
+        if (onCircuitFail && now - failCooldown.current > 800) {
+          failCooldown.current = now;
+          onCircuitFail();
+        }
+      }
+    } else if (!matchActive && isHub) {
       // The Concord: walk into a Vaultgate footprint to travel to its region.
       let best: { world: string; label: string } | null = null;
       let bestD = 3.2;
@@ -2405,23 +2627,21 @@ function Handler({
         }
         if (bestF) next = { kind: "force", ...bestF };
       }
-      // still nothing? check the Concord venues (Daily Tribunal, Scrying
-      // Gallery) — stand on a shrine's footprint to open that game.
+      // still nothing? check Concord game portals (not Vaultgates).
       if (!next) {
-        let bestV: { venue: ConcordVenueId; name: string } | null = null;
-        let bestVd = 2.6;
-        for (const vt of venueTargets) {
+        let bestG: { venue: VenueId; label: string } | null = null;
+        let bestGd = 2.8;
+        for (const vt of concordVenueTargets) {
           const dh = Math.hypot(t.x - vt.pos.x, t.z - vt.pos.z);
-          if (dh < bestVd) {
-            bestVd = dh;
-            bestV = { venue: vt.venue, name: vt.name };
+          if (dh < bestGd) {
+            bestGd = dh;
+            bestG = { venue: vt.venue, label: vt.label };
           }
         }
-        if (bestV) next = { kind: "venue", ...bestV };
+        if (bestG) next = { kind: "venue-enter", ...bestG };
       }
-    } else if (!matchActive && spectator) {
-      // The Amphitheatre is a place to WATCH — the only walk-up is the Daily
-      // herald (today's marquee case). The league fights itself in the ring.
+    } else if (!matchActive && inAmphitheatre) {
+      // Daily herald inside the Amphitheatre game scene.
       let bestV: { venue: ConcordVenueId; name: string } | null = null;
       let bestVd = 2.6;
       for (const vt of venueTargets) {
@@ -2431,8 +2651,16 @@ function Handler({
           bestV = { venue: vt.venue, name: vt.name };
         }
       }
-      if (bestV) next = { kind: "venue", ...bestV };
-    } else if (!matchActive) {
+      if (!next && bestV) next = { kind: "venue", ...bestV };
+    } else if (!matchActive && !isHub && !inVenue) {
+      if (returnTarget) {
+        const dh = Math.hypot(t.x - returnTarget.x, t.z - returnTarget.z);
+        if (dh < 3.2) next = { kind: "return" };
+      }
+      if (!next && circuitTunnelTarget) {
+        const dh = Math.hypot(t.x - circuitTunnelTarget.pos.x, t.z - circuitTunnelTarget.pos.z);
+        if (dh < 3.0) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
+      }
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);
       if (ownedKey && dTrain < 3.6) next = { kind: "train", key: ownedKey };
@@ -2549,7 +2777,7 @@ function Handler({
 
   return (
     <>
-      {!isHub && <TrainPad pos={trainPad} />}
+      {!isHub && !inVenue && <TrainPad pos={trainPad} />}
       <SuperrunTrail superrunRef={superrun} posRef={handlerPos} headingRef={heading} burstRef={runBurst} h={built.h} />
       <RigidBody
         ref={body}
@@ -2561,7 +2789,11 @@ function Handler({
         // through before the terrain collider was ready — and read as spawning
         // under the floor. `terrainHeight` is 0 across the flat plaza, so this is
         // the standing height in every world.
-        position={[spawnKnoll.x, terrainHeight(spawnKnoll.x, spawnKnoll.z, shape, spawnKnoll) + 1.1, spawnKnoll.z]}
+        position={
+          spawnPos
+            ? spawnPos
+            : [spawnKnoll.x, terrainHeight(spawnKnoll.x, spawnKnoll.z, shape, spawnKnoll) + 1.1, spawnKnoll.z]
+        }
         enabledRotations={[false, false, false]}
         canSleep={false}
         ccd

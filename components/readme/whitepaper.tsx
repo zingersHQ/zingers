@@ -293,7 +293,7 @@ const SECTIONS: Section[] = [
         <ul style={{ margin: "0 0 16px", padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
           {[
             ["Win a fight", "+40 Crowns, XP, and a rating bump.", "var(--good)"],
-            ["Place a bet", "Stake 25 / 50 / 100 before a fight; a correct call pays 2×.", "var(--gold)"],
+            ["Back a champion", "Stake 25 / 50 / 100 before a fight; a correct call pays 2×.", "var(--gold)"],
             ["Train", "Spend 60 to add XP and reshape the body toward your doctrine.", ACC],
             ["Share", "Each champion has a public card at zingers.gg/c/<key>. Share it, get challenged.", "#ff6b4a"],
           ].map(([h, d, c]) => (

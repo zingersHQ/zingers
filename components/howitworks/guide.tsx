@@ -294,7 +294,7 @@ const SLIDES: Slide[] = [
   },
   {
     kicker: "CROWNS & PRIZES",
-    title: "Win fights. Earn Crowns. Bet big.",
+    title: "Win fights. Earn Crowns. Back big.",
     body: (
       <div style={{ marginTop: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>

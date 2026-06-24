@@ -4,7 +4,7 @@
 // something instead of just swapping colours.
 import type { CreatureType } from "@/lib/types";
 
-export type ScenarioId = "duel" | "gauntlet" | "tribunal";
+export type ScenarioId = "duel" | "gauntlet" | "tribunal" | "circuit";
 
 export interface GauntletConfig {
   maxRounds: number; // how many opponents the chain can hold

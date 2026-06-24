@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
+import { GATE_DIST } from "./worlds";
 
 // flat central plaza (arena + champions live here); procedural wilds beyond
 export const PLAZA_R = 36; // flat central plaza radius (+50% layout)
@@ -66,6 +67,10 @@ export function riftDepthEnd(t: TerrainShape, knoll: SpawnKnoll = SPAWN_KNOLL): 
 // Spawn at the outer extreme of the rift (+z for flat regions) — the far lip where
 // the Depth begins. You walk inward toward the plaza to claim it and enter.
 export function spawnKnollFor(biome: BiomeConfig): SpawnKnoll {
+  // Concord hub: spawn on the +z approach, well outside the gate ring (walk inward to the seal).
+  if (biome.id === "concord") {
+    return { x: 0, z: GATE_DIST * 2, radius: 12, peak: 5 };
+  }
   const shape = shapeOf(biome);
   if (hasRift(shape)) {
     const { dirx, dirz } = riftDir(shape);

@@ -19,6 +19,7 @@ export const STORAGE = {
   goalCoach: "zingers_goal_coach_v1",
   clanInvite: "zingers_clan_invite_v1",
   theme: "zingers_theme_v1",
+  firstDuel: "zingers_first_duel_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

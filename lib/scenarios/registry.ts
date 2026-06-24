@@ -8,7 +8,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
   duel: {
     id: "duel",
     name: "Open Duel",
-    blurb: "1v1 debate: pick your opponent, place a bet, settle it.",
+    blurb: "1v1 debate: pick your opponent, back a champion, settle it.",
     objective: "Beat a single challenger of your choosing.",
   },
   gauntlet: {
@@ -26,6 +26,12 @@ export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
     // The room rewards persuasion (RHETORIC) and lightly punishes pure noise
     // (CHAOS) — the canon force-bias of the flagship arena (05-regions.md).
     tribunal: { favored: "RHETORIC", punished: "CHAOS" },
+  },
+  circuit: {
+    id: "circuit",
+    name: "The Circuit",
+    blurb: "10-sector roguelike run: clear each track, fall once and restart from sector 1.",
+    objective: "Chain all 10 sectors without falling. Ranked by depth, then time.",
   },
 };
 

@@ -34,7 +34,7 @@ champion's body becomes a visible record of how it has fought.
   *is* the track record.
 - **Two live battle modes.** *The Arena*: 1v1 debate combat (type pentagon, statuses, finishers,
   streamed turn-by-turn). *The House*: social deduction with an **objective**, engine-decided
-  winner → a real ELO benchmark.
+  winner → a real ELO benchmark *(playable on `/arena`; not yet in the 3D Grounds)*.
 - **Train the mind.** Tune doctrine (risk / focus / aggression), persona, and brain; champions
   keep **memory notes** across bouts and auto-adjust toward what works.
 - **An honest ladder.** Live League auto-runs bouts; objective ELO Standings rank the roster.
