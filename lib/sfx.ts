@@ -385,6 +385,50 @@ export function jetFallSfx() {
   o.stop(t + 0.27);
 }
 
+// Travel transition whoosh — an upward filtered-noise sweep with a soft chime,
+// played when a scene-change veil wipes shut (gate travel, venue enter/exit).
+export function travelWhoosh() {
+  if (!enabled()) return;
+  const c = ensure();
+  const out = master;
+  if (!c || !out) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  const t = c.currentTime + 0.005;
+
+  // rising filtered-noise sweep — the "moving through the gate" body
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.setValueAtTime(320, t);
+  bp.frequency.exponentialRampToValueAtTime(2600, t + 0.42);
+  bp.Q.value = 0.7;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.exponentialRampToValueAtTime(0.12, t + 0.16);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  src.connect(bp);
+  bp.connect(ng);
+  ng.connect(out);
+  src.start(t);
+  src.stop(t + 0.54);
+
+  // soft arrival chime as the veil settles
+  const o = c.createOscillator();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(523.25, t + 0.28);
+  o.frequency.exponentialRampToValueAtTime(783.99, t + 0.46);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t + 0.28);
+  g.gain.exponentialRampToValueAtTime(0.07, t + 0.32);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  o.connect(g);
+  g.connect(out);
+  o.start(t + 0.28);
+  o.stop(t + 0.62);
+}
+
 // Bright two-note welcome sting for onboarding slides (pairs with ambience start).
 export function pitchStinger() {
   if (!enabled()) return;

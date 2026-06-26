@@ -40,6 +40,20 @@ FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) �
 | Seasonal starter rotation | ✅ | `firstDuelStarterKeys()` — weekly pick per Force |
 | Onboarding sound toggle visible | ✅ | `OnboardingAudio` on FirstRun + FirstDuel overlays |
 
+## Narrative & cinematics ✅
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Gate/travel transitions | ✅ | `TravelVeil` — force-tinted wipe + name card for gate travel and venue enter/exit (`travelWhoosh` SFX) |
+| Reader's saga spine | ✅ | `lib/lore/saga.ts` — 8-chapter / 4-act arc keyed off Reader rank; `ReaderThread` hub marker |
+| Season-turn cinematic | ✅ | `seasonTurnBeat()` — a Keeper performs the Chronicle when a new door opens (once per season) |
+| Rival system | ✅ | `lib/lore/rival.ts` — recurring named Reader, persistent head-to-head, taunts that escalate; `RivalCard` + pre/post-duel beats |
+| Directed character beats | ✅ | `CharacterBeat` upgraded: letterbox, rising/floating live 3D portrait, per-line glow pulse, typewriter, parallax field (reduced-motion aware) |
+
+The saga (your story) and the Chronicle (the world's story) are deliberately
+distinct: the saga advances off the one Reader-rank number so it moves no matter
+how a player plays, while the Chronicle turns on the season clock.
+
 ## Intentionally unchanged
 
 - **Code/analytics event keys** — still `bout` (stable server tracking)
@@ -68,7 +82,13 @@ Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbience
 ## Key files
 
 - `lib/first-duel.ts` — starters, rotation, arena world, Concord landing copy
+- `lib/lore/saga.ts` — the Reader's saga arc + season-turn beat
+- `lib/lore/rival.ts` — recurring rival identity, memory, taunts
 - `lib/lore/character-beats.ts` — champion + Keeper voice beats
+- `components/grounds/travel-veil.tsx` — scene-change transition
+- `components/grounds/reader-thread.tsx` — saga hub marker
+- `components/grounds/rival-card.tsx` — rival hub presence
+- `components/grounds/character-beat.tsx` — directed narrative beat
 - `lib/ambience-scores.ts` — procedural soundtrack per place
 - `lib/player-copy.ts` — player-facing fight vocabulary
 - `lib/sound-gallery.ts` — onboarding stinger map

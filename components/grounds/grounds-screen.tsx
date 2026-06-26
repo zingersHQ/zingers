@@ -32,10 +32,23 @@ import type { GameSession, VenueId } from "@/components/grounds/venues";
 import { VENUES } from "@/components/grounds/venues";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
-import { currentSeason } from "@/lib/lore/season";
+import { currentSeason, currentSeasonNumber } from "@/lib/lore/season";
+import { seasonTurnBeat } from "@/lib/lore/saga";
+import { ReaderThread } from "@/components/grounds/reader-thread";
+import { RivalCard } from "@/components/grounds/rival-card";
+import {
+  rivalFrom,
+  loadRivalMemory,
+  recordRivalDuel,
+  rivalChallengeBeat,
+  rivalResultBeat,
+  rivalVoiceType,
+  type Rival,
+  type RivalMemory,
+} from "@/lib/lore/rival";
 import { FOUNDING_REGIONS, FORCES as FORCE_LORE, wheelNeighbors } from "@/lib/lore/canon";
 import { ForcesChain } from "@/components/lore/forces-wheel";
-import { trainerLevel, forceMeta } from "@/lib/evolve/trainer";
+import { trainerLevel, forceMeta, TRAINER_XP } from "@/lib/evolve/trainer";
 import { daylightBiome, BIOMES } from "@/components/grounds/biomes";
 import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
@@ -54,6 +67,7 @@ import { GameDock } from "@/components/game-dock";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
 import { ArrivalSequence } from "@/components/grounds/arrival";
 import { CharacterBeat } from "@/components/grounds/character-beat";
+import { TravelVeil, type TravelCard } from "@/components/grounds/travel-veil";
 import {
   championAfterFight,
   championGreeting,
@@ -170,6 +184,13 @@ export default function GroundsScreen() {
     type: CreatureType;
   } | null>(null);
   const [modeLockToast, setModeLockToast] = useState<string | null>(null);
+  const [travelCard, setTravelCard] = useState<TravelCard | null>(null);
+  const [seasonBeat, setSeasonBeat] = useState(false);
+  const [rival, setRival] = useState<Rival | null>(null);
+  const [rivalMemory, setRivalMemory] = useState<RivalMemory | null>(null);
+  // pre/post-duel rival cinematic: "before" gates the launch, "after" reports it
+  const [rivalBeat, setRivalBeat] = useState<{ phase: "before" | "after"; won?: boolean } | null>(null);
+  const inRivalDuel = useRef(false);
   const evolveBeforeRef = useRef<Champion | null>(null);
   const inFirstDuelFight = useRef(false);
   const firstFightWorldRef = useRef<string | null>(null);
@@ -546,6 +567,33 @@ export default function GroundsScreen() {
     try {
       clanInviteSeen.current = localStorage.getItem(STORAGE.clanInvite) === "1";
     } catch {}
+    try {
+      const mem = loadRivalMemory();
+      setRivalMemory(mem);
+      setRival(rivalFrom(mem.seed));
+    } catch {}
+    // Season-turn beat — perform the Chronicle as a Keeper cinematic when the
+    // door rolls over. Brand-new players just record the season (no beat); the
+    // beat is for returning Readers who have finished onboarding.
+    try {
+      const now = currentSeasonNumber();
+      const seenRaw = localStorage.getItem(STORAGE.seasonSeen);
+      const introDone = !!(localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy));
+      if (seenRaw == null) {
+        localStorage.setItem(STORAGE.seasonSeen, String(now));
+      } else if (Number(seenRaw) < now && introDone && isFirstDuelComplete()) {
+        setSeasonBeat(true);
+      } else {
+        localStorage.setItem(STORAGE.seasonSeen, String(now));
+      }
+    } catch {}
+  }, []);
+
+  const dismissSeasonBeat = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.seasonSeen, String(currentSeasonNumber()));
+    } catch {}
+    setSeasonBeat(false);
   }, []);
 
   const dismissClanInvite = useCallback(() => {
@@ -691,6 +739,30 @@ export default function GroundsScreen() {
     prevNearKind.current = kind;
   }, [near, owned, byKey]);
 
+  // ── Scene-change transitions ────────────────────────────────────────────────
+  // Wrap world/venue swaps in a force-tinted veil so travel reads as a directed
+  // scene change rather than a cut. The swap runs while the veil is fully shut.
+  const travelSwap = useRef<(() => void) | null>(null);
+  const playTravel = useCallback((card: TravelCard, swap: () => void) => {
+    if (travelCard) {
+      // already mid-transition — just run the swap, don't stack veils
+      swap();
+      return;
+    }
+    travelSwap.current = swap;
+    setTravelCard(card);
+  }, [travelCard]);
+
+  const worldTravelCard = useCallback((destId: string): TravelCard => {
+    const w = worldById(destId);
+    return {
+      kicker: destId === "concord" ? "RETURNING" : "TRAVELING",
+      title: w.name,
+      sub: w.tagline,
+      color: w.biome.lights.arenaPoint,
+    };
+  }, []);
+
   // open the nearby interaction (shared by the E key and the on-screen prompt).
   // The central arena routes to the world's scenario; perched-agent challenges
   // are always a single duel regardless of world.
@@ -753,20 +825,25 @@ export default function GroundsScreen() {
         setModeLockToast("Finish your first duel to unlock this.");
         return;
       }
+      const dest = near.world;
       setNear(null);
-      travelToWorld(near.world);
+      playTravel(worldTravelCard(dest), () => travelToWorld(dest));
     } else if (near?.kind === "return") {
       setNear(null);
-      saveWorldPose(worldId, capturePose());
-      travelToWorld("concord");
+      playTravel(worldTravelCard("concord"), () => {
+        saveWorldPose(worldId, capturePose());
+        travelToWorld("concord");
+      });
     } else if (near?.kind === "venue-enter") {
+      const v = near.venue;
       setNear(null);
-      enterVenue(near.venue);
+      const venue = VENUES[v];
+      playTravel({ kicker: "ENTERING", title: venue.name, sub: venue.blurb, color: venue.color }, () => enterVenue(v));
     } else if (near?.kind === "venue-exit") {
       setNear(null);
-      exitVenue();
+      playTravel(worldTravelCard(venueHostWorldId), () => exitVenue());
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId]);
 
   const fastTravel = useCallback((pos: [number, number, number]) => {
     travelRef.current?.(pos[0], pos[2]);
@@ -930,6 +1007,46 @@ export default function GroundsScreen() {
       outcomeSfx(winnerKey === owned);
     });
   }, [owned, roster, store, getRecipe, bout, byKey, stageFirstFightArena, returnToConcordAfterFirstFight]);
+
+  // A rival duel — a recurring, named grudge match. Reuses the proven cinematic
+  // mock-battle path (no ranked stakes); the arena platform rises in-place. The
+  // running head-to-head is persisted and drives the rival's taunts.
+  const launchRivalDuel = useCallback(() => {
+    if (!owned || !rival) return;
+    const opp = rival.champion;
+    evolveBeforeRef.current = { ...store.get(owned) };
+    setOpponent(opp);
+    setOpponentId(null);
+    setDuelMeta({ name: rival.name, handle: rival.handle });
+    inRivalDuel.current = true;
+    counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
+    setResult(null);
+    const bKey = matchOpponentKey(opp, null);
+    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0, cinematic: true });
+    const ra = getRecipe(owned);
+    const rb = getRecipe(opp);
+    const seed = 100 + ((rival.seed + (rivalMemory?.wins ?? 0) + (rivalMemory?.losses ?? 0)) % 9000);
+    const url = `/api/battle?a=${owned}&b=${opp}&mock=1&seed=${seed}&${sideParams("a", ra)}&${sideParams("b", rb)}`;
+    bout.begin(url, (end: BattleEnd) => {
+      inRivalDuel.current = false;
+      const styles: Record<string, Style> = { [owned]: blankStyle(), [opp]: blankStyle() };
+      for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[opp], turn);
+      const winnerKey = end.winner;
+      const won = winnerKey === owned;
+      const loserKey = won ? opp : owned;
+      store.recordBattle(winnerKey, loserKey, styles);
+      const dom = dominant(store.get(owned));
+      store.learnFromBout({ key: owned, opponentName: rival.name, won, axisLabel: dom.axis.label });
+      if (won) store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
+      store.awardTrainerXp(won ? TRAINER_XP.boutWin : TRAINER_XP.boutLoss);
+      const mem = recordRivalDuel(won);
+      setRivalMemory(mem);
+      setMatchView(null);
+      setOpponent(null);
+      setRivalBeat({ phase: "after", won });
+      outcomeSfx(won);
+    });
+  }, [owned, rival, rivalMemory, store, getRecipe, bout]);
 
   const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
@@ -1382,6 +1499,12 @@ export default function GroundsScreen() {
           </div>
         )}
 
+        {!showMatch && overlay === "none" && owned && !gRun && !modesLocked && (
+          <div style={{ marginBottom: isMobile ? 6 : 10 }}>
+            <ReaderThread isMobile={isMobile} />
+          </div>
+        )}
+
         {(owned || !isMobile) && overlay === "none" && !showMatch && !gRun && (
           <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {modesLocked && owned
@@ -1406,6 +1529,15 @@ export default function GroundsScreen() {
         {!isMobile && overlay === "none" && !showMatch && showChronicle && (
           <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
             <SeasonBanner compact onClose={dismissChronicle} />
+          </div>
+        )}
+        {!isMobile && overlay === "none" && !showMatch && isHub && owned && !gRun && !modesLocked && rival && rivalMemory && (
+          <div style={{ marginTop: 10 }}>
+            <RivalCard
+              rival={rival}
+              memory={rivalMemory}
+              onFace={() => setRivalBeat({ phase: "before" })}
+            />
           </div>
         )}
       </div>
@@ -1626,6 +1758,51 @@ export default function GroundsScreen() {
           champion={store.get(claiming)}
           onEnter={() => setOwned(claiming)}
           onDone={() => setClaiming(null)}
+        />
+      )}
+
+      {/* scene-change veil for gate travel + venue enter/exit */}
+      {travelCard && (
+        <TravelVeil
+          card={travelCard}
+          onCovered={() => {
+            travelSwap.current?.();
+            travelSwap.current = null;
+          }}
+          onDone={() => setTravelCard(null)}
+        />
+      )}
+
+      {/* season turn — a Keeper performs the Chronicle when a new door opens */}
+      {seasonBeat && !showIntro && (() => {
+        const lvl = ((Math.max(1, currentSeasonNumber()) - 1) % 5) + 1;
+        return (
+          <CharacterBeat
+            script={seasonTurnBeat()}
+            accent={keeperColor(lvl)}
+            voice="keeper"
+            keeperLevel={lvl}
+            onComplete={dismissSeasonBeat}
+          />
+        );
+      })()}
+
+      {/* rival cinematic — the grudge match's pre/post taunts */}
+      {rivalBeat && rival && rivalMemory && (
+        <CharacterBeat
+          script={
+            rivalBeat.phase === "before"
+              ? rivalChallengeBeat(rival, rivalMemory)
+              : rivalResultBeat(rival, rivalMemory, !!rivalBeat.won)
+          }
+          accent={TYPE_COLOR[rival.force]}
+          voice="champion"
+          championType={rivalVoiceType(rival)}
+          onComplete={() => {
+            const phase = rivalBeat.phase;
+            setRivalBeat(null);
+            if (phase === "before") launchRivalDuel();
+          }}
         />
       )}
 
