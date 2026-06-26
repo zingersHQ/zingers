@@ -247,6 +247,8 @@ export default function World({
   tier = 0,
   featured = false,
   featuredWorld = null,
+  guideWorld = null,
+  guideUrgent = false,
   onAltitude,
   onPose,
   travelRef,
@@ -281,6 +283,10 @@ export default function World({
   tier?: number;
   featured?: boolean;
   featuredWorld?: string | null;
+  /** First-run guide: the gate to spotlight as "START HERE" (dims all others). */
+  guideWorld?: string | null;
+  /** Escalate the focus gate once the player has idled near spawn. */
+  guideUrgent?: boolean;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
@@ -570,7 +576,7 @@ export default function World({
 
           {isHub && !inVenue && !match && (
             <>
-              <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
+              <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
               {CONCORD_VENUE_SPOTS.map((s) => {
                 const x = Math.cos(s.angle) * s.dist;
                 const z = Math.sin(s.angle) * s.dist;

@@ -31,6 +31,8 @@ export function ConcordScene({
   gates,
   pledged,
   featuredWorld = null,
+  guideWorld = null,
+  guideUrgent = false,
   daylight = false,
   choosing = false,
   clanPreview = null,
@@ -38,21 +40,39 @@ export function ConcordScene({
   gates: ConcordGate[];
   pledged: CreatureType | null;
   featuredWorld?: string | null;
+  // First-run guide: when set, this gate is spotlit as "START HERE" and every
+  // other gate (plus the seal) is dimmed so the eye is routed to the one door we
+  // want a new player to take first. Overrides the season spotlight while active.
+  guideWorld?: string | null;
+  // The player has idled — escalate the focus gate (brighter beam, faster pulse).
+  guideUrgent?: boolean;
   daylight?: boolean;
   // While the Clan sheet is open every flag drops to the ground except the one
   // you're hovering on in the picker; after pledging, only your Clan stays up.
   choosing?: boolean;
   clanPreview?: CreatureType | null;
 }) {
+  const guiding = guideWorld != null;
   return (
     <group>
-      <Seal daylight={daylight} />
+      <Seal daylight={daylight} dimmed={guiding} />
       <ClanFlags pledged={pledged} choosing={choosing} preview={clanPreview} />
-      {gates.map((g) => (
-        <Vaultgate key={g.world} gate={g} rising={g.world === featuredWorld} />
-      ))}
+      {gates.map((g) => {
+        const focused = guiding ? g.world === guideWorld : g.world === featuredWorld;
+        const dimmed = guiding && g.world !== guideWorld;
+        return (
+          <Vaultgate
+            key={g.world}
+            gate={g}
+            rising={focused}
+            dimmed={dimmed}
+            firstStop={guiding && focused}
+            urgent={guiding && focused && guideUrgent}
+          />
+        );
+      })}
       {/* a soft neutral key light over the plaza so the hub reads as calm, lit ground */}
-      <pointLight position={[0, 12, 0]} intensity={120} color="#cdb8ff" distance={60} />
+      <pointLight position={[0, 12, 0]} intensity={guiding ? 70 : 120} color="#cdb8ff" distance={60} />
     </group>
   );
 }
@@ -65,12 +85,13 @@ export function ConcordScene({
 export type ConcordVenueId = "daily" | "league";
 
 // ── The Seal — the sealed Vault door, flush in the plaza ─────────────────────
-function Seal({ daylight }: { daylight: boolean }) {
+function Seal({ daylight, dimmed = false }: { daylight: boolean; dimmed?: boolean }) {
   const ringRef = useRef<THREE.Mesh>(null);
   useFrame((state) => {
     if (ringRef.current) ringRef.current.rotation.z = state.clock.elapsedTime * 0.06;
   });
-  const e = daylight ? 0.6 : 1.6;
+  // pulled down during the first-run guide so the lit gate reads as the priority
+  const e = (daylight ? 0.6 : 1.6) * (dimmed ? 0.4 : 1);
   return (
     <group>
       {/* outer engraved disc */}
@@ -263,26 +284,61 @@ function ClanFlag({
 }
 
 // ── A Vaultgate — a portal arch out to a region ──────────────────────────────
-function Vaultgate({ gate, rising = false }: { gate: ConcordGate; rising?: boolean }) {
+// `rising` is the season spotlight (raised beam). The first-run guide reuses the
+// same emphasis path: `firstStop` marks the one gate we want a new player to take
+// first (gold "START HERE" call-out), while `dimmed` fades the gates we're steering
+// them away from for now. `urgent` escalates the focus gate once the player idles.
+function Vaultgate({
+  gate,
+  rising = false,
+  dimmed = false,
+  firstStop = false,
+  urgent = false,
+}: {
+  gate: ConcordGate;
+  rising?: boolean;
+  dimmed?: boolean;
+  firstStop?: boolean;
+  urgent?: boolean;
+}) {
   const portalRef = useRef<THREE.Mesh>(null);
   const beamRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
   const col = gate.color;
   // face the gate inward toward the seal at the plaza centre
   const rot = useMemo(() => Math.atan2(-gate.pos[0], -gate.pos[2]), [gate.pos]);
+  // how much this gate is faded back (the doors we don't want taken yet)
+  const dim = dimmed ? 0.3 : 1;
+  // how much this gate is pushed forward (the door we're steering toward)
+  const lift = firstStop ? (urgent ? 1.9 : 1.5) : 1;
   useFrame((state) => {
     const t = state.clock.elapsedTime;
+    const pulse = urgent ? 3.2 : firstStop ? 2.2 : 1.6;
     if (portalRef.current) {
       const m = portalRef.current.material as THREE.MeshBasicMaterial;
-      m.opacity = 0.32 + Math.sin(t * 1.6) * 0.1;
+      const base = (0.32 + Math.sin(t * pulse) * (firstStop ? 0.16 : 0.1)) * dim * lift;
+      m.opacity = Math.min(0.95, base);
     }
-    if (beamRef.current) (beamRef.current.material as THREE.MeshBasicMaterial).opacity = 0.09 + Math.sin(t * 1.3) * 0.03;
+    if (beamRef.current) {
+      const m = beamRef.current.material as THREE.MeshBasicMaterial;
+      // hide the beam on dimmed gates; punch it up on the focus gate
+      m.opacity = dimmed ? 0 : (0.09 + Math.sin(t * 1.3) * 0.03) * lift * (firstStop ? 2.4 : 1);
+    }
+    if (ringRef.current) {
+      const m = ringRef.current.material as THREE.MeshBasicMaterial;
+      const base = firstStop ? 0.55 + (Math.sin(t * pulse) * 0.5 + 0.5) * 0.4 : 0.7;
+      m.opacity = base * dim;
+      const s = firstStop ? 1 + (Math.sin(t * pulse) * 0.5 + 0.5) * 0.12 : 1;
+      ringRef.current.scale.set(s, s, 1);
+    }
   });
   const W = 3.2; // arch inner width
   const H = 4.6; // arch height
+  const structEmissive = (base: number) => base * dim * (firstStop ? 1.4 : 1);
   const pillar = (sx: number) => (
     <mesh position={[sx * (W / 2 + 0.35), H / 2, 0]} castShadow>
       <boxGeometry args={[0.6, H, 0.6]} />
-      <meshStandardMaterial color="#1c1830" emissive={col} emissiveIntensity={0.5} metalness={0.6} roughness={0.4} />
+      <meshStandardMaterial color="#1c1830" emissive={col} emissiveIntensity={structEmissive(0.5)} metalness={0.6} roughness={0.4} />
     </mesh>
   );
   return (
@@ -292,7 +348,7 @@ function Vaultgate({ gate, rising = false }: { gate: ConcordGate; rising?: boole
       {/* lintel */}
       <mesh position={[0, H + 0.3, 0]} castShadow>
         <boxGeometry args={[W + 1.3, 0.6, 0.7]} />
-        <meshStandardMaterial color="#1c1830" emissive={col} emissiveIntensity={0.6} metalness={0.6} roughness={0.4} />
+        <meshStandardMaterial color="#1c1830" emissive={col} emissiveIntensity={structEmissive(0.6)} metalness={0.6} roughness={0.4} />
       </mesh>
       {/* the portal surface */}
       <mesh ref={portalRef} position={[0, H / 2, 0]}>
@@ -300,7 +356,7 @@ function Vaultgate({ gate, rising = false }: { gate: ConcordGate; rising?: boole
         <meshBasicMaterial color={col} transparent opacity={0.35} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
       {/* floor footprint ring you stand on to travel */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
         <ringGeometry args={[1.7, 2.0, 40]} />
         <meshBasicMaterial color={col} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
@@ -309,12 +365,16 @@ function Vaultgate({ gate, rising = false }: { gate: ConcordGate; rising?: boole
         <cylinderGeometry args={[0.4, 1.1, 26, 14, 1, true]} />
         <meshBasicMaterial color={col} transparent opacity={0.1} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
       </mesh>
-      <pointLight position={[0, H * 0.6, 0.4]} intensity={36} color={col} distance={18} />
+      <pointLight position={[0, H * 0.6, 0.4]} intensity={36 * dim * lift} color={col} distance={18} />
       <Html position={[0, H + 1.2, 0]} center distanceFactor={15} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: dimmed ? 0.5 : 1 }}>
           <div style={{ fontSize: 8, letterSpacing: 2, color: col, fontWeight: 700 }}>VAULTGATE</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 2px 8px #000" }}>{gate.label}</div>
-          {rising && <div style={{ fontSize: 8, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>▲ SEASON SPOTLIGHT</div>}
+          {firstStop ? (
+            <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 800 }}>▶ START HERE · YOUR FIRST ARENA</div>
+          ) : (
+            rising && <div style={{ fontSize: 8, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>▲ SEASON SPOTLIGHT</div>
+          )}
         </div>
       </Html>
     </group>

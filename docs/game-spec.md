@@ -52,7 +52,11 @@ Unlisted **`/arena`** remains the agent bout viewer for bring-your-own-agent tes
 
 New Readers run a scripted first journey: cinematic intro → pick a starter (weekly
 rotation per Force) → tune doctrine → first duel in the Void Garden → evolve card →
-Concord landing beats → free roam. See **[first-journey-roadmap.md](./first-journey-roadmap.md)**.
+Concord landing beats → guided first arena → free roam. On that first Concord
+landing the Grounds gate is spotlit ("START HERE") while the other gates dim, with
+a proximity nudge (and a walk-to CTA) steering the player out to their first region;
+the rails drop the moment they take a gate. See
+**[first-journey-roadmap.md](./first-journey-roadmap.md)**.
 
 ### Ambience
 

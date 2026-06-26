@@ -6,7 +6,8 @@ Production pass for Act 1 — from first visit through the Concord landing.
 
 ```
 FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) → Tune (doctrine dials)
-  → Void Garden arena (cinematic camera) → Evolve card → Concord landing (3 beats) → Free roam + coach
+  → Void Garden arena (cinematic camera) → Evolve card → Concord landing (3 beats)
+  → Guided first arena (Grounds gate spotlit, others dimmed) → Free roam + coach
 ```
 
 ## P0 — Broken promises ✅
@@ -34,6 +35,7 @@ FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) �
 |------|--------|-------|
 | Player-facing bout purge (in-app UI) | ✅ | First journey, FirstRun, gauntlet objective, scenarios |
 | Concord goal coach in hub | ✅ | One-time coachmark after Act 1 |
+| Guided first Concord landing | ✅ | First run spotlights the Grounds gate ("▶ START HERE"), dims the other gates + seal, and runs a proximity-aware nudge with a "Take me there" walk-to CTA; escalates to gold once the player idles (`guideWorld`/`guideUrgent`, `FIRST_GUIDE_WORLD`) |
 | Dedicated first-fight vignette camera | ✅ | `MatchView.cinematic` — tighter orbit |
 | Sound gallery | ✅ | `lib/sound-gallery.ts` + stingers per onboarding beat |
 | Iconography alignment | ✅ | `lib/iconography.ts` — art-direction palette + Force sigils |
@@ -96,5 +98,7 @@ Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbience
 - `components/intro/first-duel.tsx` — onboarding overlay
 - `components/intro/onboarding-audio.tsx` — floating mute control
 - `components/shared/doctrine-dial.tsx` — doctrine sliders
-- `components/grounds/grounds-screen.tsx` — sequencing + world travel
-- `components/grounds/world.tsx` — match staging + cinematic camera
+- `components/grounds/grounds-screen.tsx` — sequencing + world travel + first-run guide (focus gate, idle escalation, walk-to nudge)
+- `components/grounds/world.tsx` — match staging + cinematic camera; threads `guideWorld`/`guideUrgent` to the Concord
+- `components/grounds/concord.tsx` — Concord scene; Vaultgate spotlight/dim treatment (`firstStop`/`dimmed`/`urgent`)
+- `components/grounds/worlds.ts` — `FIRST_GUIDE_WORLD` (the steered-to first region)

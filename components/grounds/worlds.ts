@@ -61,6 +61,11 @@ export const WORLDS: WorldDef[] = [
 // The Concord spawns you in — the hub-first design (docs/bible/01-cosmology.md).
 export const DEFAULT_WORLD = WORLDS[0];
 
+// The region a first-time player is steered toward on their first Concord landing:
+// the Grounds (tribunal / Obsidian Colosseum), the canonical first arena. The
+// first-run guide spotlights this gate and dims the rest until the player leaves.
+export const FIRST_GUIDE_WORLD = "grounds";
+
 export function worldById(id: string | null | undefined): WorldDef {
   return WORLDS.find((w) => w.id === id) ?? DEFAULT_WORLD;
 }

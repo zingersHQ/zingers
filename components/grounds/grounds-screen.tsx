@@ -26,7 +26,7 @@ import {
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
 import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/components/grounds/world";
-import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS } from "@/components/grounds/worlds";
+import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS, FIRST_GUIDE_WORLD } from "@/components/grounds/worlds";
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
 import { VENUES } from "@/components/grounds/venues";
@@ -516,7 +516,11 @@ export default function GroundsScreen() {
     return () => cancelAnimationFrame(raf);
   }, [circuitPhase]);
 
+  const lastMoveRef = useRef<number>(Date.now());
+  const [guideIdle, setGuideIdle] = useState(false);
   const onPose = useCallback((x: number, z: number, heading: number) => {
+    const p = poseRef.current;
+    if (Math.hypot(x - p.x, z - p.z) > 0.4) lastMoveRef.current = Date.now();
     poseRef.current = { x, z, heading };
   }, []);
   const [nodeFlash, setNodeFlash] = useState<{ crowns: number; fragments: number } | null>(null);
@@ -621,9 +625,31 @@ export default function GroundsScreen() {
   const dismissConcordCoach = useCallback(() => {
     try {
       localStorage.setItem(STORAGE.concordCoach, "1");
+      localStorage.setItem(STORAGE.firstGuide, "1");
     } catch {}
     setConcordCoach(false);
   }, []);
+
+  // ── First-run guide ─────────────────────────────────────────────────────────
+  // After the first duel the player lands in the Concord with `concordCoach` set.
+  // While it's live we spotlight the Grounds gate (the canonical first arena), dim
+  // the rest, and steer the player toward it — escalating once they idle near spawn.
+  const firstRunGuide = concordCoach && !!owned && isHub && !inVenue;
+  const guideWorld = firstRunGuide ? FIRST_GUIDE_WORLD : null;
+  const groundsGatePos = useMemo<[number, number, number]>(() => {
+    const g = CONCORD_GATES.find((x) => x.world === FIRST_GUIDE_WORLD) ?? CONCORD_GATES[0];
+    return [Math.cos(g.angle) * g.dist, 0, Math.sin(g.angle) * g.dist];
+  }, []);
+  useEffect(() => {
+    if (!firstRunGuide) {
+      setGuideIdle(false);
+      return;
+    }
+    lastMoveRef.current = Date.now();
+    setGuideIdle(false);
+    const t = setInterval(() => setGuideIdle(Date.now() - lastMoveRef.current > 14000), 1000);
+    return () => clearInterval(t);
+  }, [firstRunGuide]);
 
   useEffect(() => {
     let live = true;
@@ -826,6 +852,9 @@ export default function GroundsScreen() {
         return;
       }
       const dest = near.world;
+      // taking any gate ends the first-run guide — the player understood "leave
+      // the hub for a region," which is the whole point of the spotlight.
+      if (concordCoach) dismissConcordCoach();
       setNear(null);
       playTravel(worldTravelCard(dest), () => travelToWorld(dest));
     } else if (near?.kind === "return") {
@@ -843,7 +872,7 @@ export default function GroundsScreen() {
       setNear(null);
       playTravel(worldTravelCard(venueHostWorldId), () => exitVenue());
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach]);
 
   const fastTravel = useCallback((pos: [number, number, number]) => {
     travelRef.current?.(pos[0], pos[2]);
@@ -1416,6 +1445,8 @@ export default function GroundsScreen() {
               tier={growth?.tier ?? 0}
               featured={growth?.featured ?? false}
               featuredWorld={isHub ? featuredWorld : null}
+              guideWorld={guideWorld}
+              guideUrgent={guideIdle}
               onAltitude={onAltitude}
               onPose={onPose}
               travelRef={travelRef}
@@ -1634,14 +1665,39 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {concordCoach && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+      {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
+          Hidden once they're standing on a gate (the big Enter prompt takes over),
+          and escalates to gold once they idle near spawn. */}
+      {concordCoach && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
-          <div className="panel pop" style={{ ["--ac" as string]: "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 500, borderColor: "#cdb8ff" }}>
-            <span style={{ fontSize: 16, color: "#cdb8ff", flexShrink: 0 }}>◎</span>
+          <div
+            className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
+            style={{ ["--ac" as string]: guideIdle ? "var(--gold)" : "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 540, borderColor: guideIdle ? "var(--gold)" : "#cdb8ff" }}
+          >
+            <span style={{ fontSize: 16, color: guideIdle ? "var(--gold)" : "#cdb8ff", flexShrink: 0 }}>{guideIdle ? "▶" : "◎"}</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
-              <strong>The Concord.</strong> Walk inward to the seal, then out through a Vaultgate to reach a region. Press <span className="mono">E</span> near arches and flags.
+              {guideIdle ? (
+                <>
+                  <strong>This way.</strong> Head through the glowing <strong>Grounds</strong> gate — your first arena. Step onto its ring and press <span className="mono">E</span>.
+                </>
+              ) : (
+                <>
+                  <strong>Welcome to the Concord.</strong> The lit <strong>Grounds</strong> gate is your first arena — take it. The other gates can wait.
+                </>
+              )}
             </span>
-            <button onClick={dismissConcordCoach} className="btn" style={{ ["--ac" as string]: "#cdb8ff", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Got it</button>
+            <button
+              onClick={() => {
+                lastMoveRef.current = Date.now();
+                setGuideIdle(false);
+                fastTravel(groundsGatePos);
+              }}
+              className="btn btn-primary"
+              style={{ ["--ac" as string]: "var(--gold)", fontSize: 11, padding: "4px 10px", flexShrink: 0, whiteSpace: "nowrap" }}
+            >
+              Take me there
+            </button>
+            <button onClick={dismissConcordCoach} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Skip</button>
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ export const STORAGE = {
   theme: "zingers_theme_v1",
   firstDuel: "zingers_first_duel_v1",
   concordCoach: "zingers_concord_coach_v1",
+  firstGuide: "zingers_first_guide_v1",
   seasonSeen: "zingers_season_seen_v1",
 } as const;
 
