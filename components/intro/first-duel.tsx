@@ -1,11 +1,12 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowUpRight, Check, Crown, Swords } from "lucide-react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Crown, Swords } from "lucide-react";
 import type { Champion, RosterEntry, Strat } from "@/lib/types";
 import { TYPE_COLOR, doctrine, levelFor, skillCount, skillLevel, tierFor } from "@/lib/evolve/progression";
-import { FORCES as FORCE_LORE, wheelNeighbors } from "@/lib/lore/canon";
-import { ForcesChain } from "@/components/lore/forces-wheel";
+import { FORCES as FORCE_LORE, FORCE_MOTTO, wheelNeighbors } from "@/lib/lore/canon";
+import { ForcesWheel } from "@/components/lore/forces-wheel";
+import { primeCreature, speakCreatureType, stopCreature } from "@/lib/creature-voice";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { RenderBoundary } from "@/components/grounds/render-guard";
@@ -19,7 +20,7 @@ import {
 import { FIGHT } from "@/lib/player-copy";
 import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
-import { ICON, ONBOARDING_BG, forceHex, forceSigil } from "@/lib/iconography";
+import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
 import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { armOnboardingAudio, playOnboardingSound } from "@/lib/sound-gallery";
@@ -167,68 +168,7 @@ export function FirstDuelOverlay({
   }
 
   if (phase === "pick") {
-    const cols = isMobile ? "1fr" : starters.length > 3 ? "repeat(auto-fit, minmax(148px, 1fr))" : "repeat(3, 1fr)";
-    return (
-      <div style={shell}>
-        <OnboardingAudio compact={isMobile} />
-        <div className="panel" style={{ padding: isMobile ? 20 : 28, width: "min(860px, 96vw)", maxHeight: "92vh", overflow: "auto", textAlign: "center" }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · CHOOSE YOUR CHAMPION</div>
-          <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, margin: "8px 0 6px" }}>Who goes first?</h2>
-          <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 6px" }}>
-            One champion per Force — five styles on the wheel. Each beats the next.
-          </p>
-          <p style={{ color: "var(--muted2)", fontSize: 12, lineHeight: 1.45, margin: "0 0 14px" }}>
-            One mind per Force this week — the roster rotates. You will pledge a Clan later in the Concord.
-          </p>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-            <ForcesChain />
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12 }}>
-            {starters.map((r) => {
-              const c = get(r.key);
-              const col = TYPE_COLOR[r.type];
-              const nb = wheelNeighbors(r.type);
-              const prey = FORCE_LORE[nb.prey];
-              const pred = FORCE_LORE[nb.predator];
-              const on = selected === r.key;
-              const hook = FIRST_DUEL_HOOKS[r.key];
-              return (
-                <button
-                  key={r.key}
-                  className="panel"
-                  onClick={() => handlePick(r.key)}
-                  style={{
-                    ["--ac" as string]: col,
-                    padding: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 8,
-                    cursor: "pointer",
-                    borderColor: on ? col : "var(--line)",
-                    boxShadow: on ? `0 0 24px -8px ${col}` : undefined,
-                  }}
-                >
-                  <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={isMobile ? 72 : 88} />
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{r.name}</div>
-                  <div className="mono" style={{ fontSize: 14, color: col, lineHeight: 1 }}>
-                    {forceSigil(r.type)}
-                  </div>
-                  <div className="mono" style={{ fontSize: 10, color: forceHex(r.type) }}>
-                    {FORCE_LORE[r.type].name}
-                  </div>
-                  {hook && <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>{hook}</div>}
-                  <div className="mono" style={{ display: "flex", gap: 8, fontSize: 9, color: "var(--muted2)" }}>
-                    <span>beats {prey.sigil}</span>
-                    <span>weak to {pred.sigil}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
+    return <PickPhase starters={starters} selected={selected} get={get} isMobile={isMobile} onCommit={handlePick} />;
   }
 
   if (phase === "train" && selected) {
@@ -320,6 +260,232 @@ export function FirstDuelOverlay({
   }
 
   return null;
+}
+
+// ── Character-select stage ────────────────────────────────────────────────────
+// A fighting-game roster screen: one living agent center-stage that swaps as you
+// cycle, the wheel reacting to its Force, and a 5-spoke selector strip below. The
+// grid of static thumbnails undersold the one thing that's unique — a mind in a
+// body — so here the highlighted champion steps forward, throws a jab, and says
+// its Force's vow in its own voice before you lock it in.
+function PickPhase({
+  starters,
+  selected,
+  get,
+  isMobile,
+  onCommit,
+}: {
+  starters: RosterEntry[];
+  selected: string | null;
+  get: (k: string) => Champion;
+  isMobile: boolean;
+  onCommit: (key: string) => void;
+}) {
+  const found = starters.findIndex((r) => r.key === selected);
+  const [idx, setIdx] = useState(found < 0 ? 0 : found);
+  const safeIdx = Math.min(idx, starters.length - 1);
+  const go = useCallback(
+    (d: number) => setIdx((v) => (v + d + starters.length) % starters.length),
+    [starters.length],
+  );
+
+  const entry = starters[safeIdx];
+  const champ = get(entry.key);
+  const col = TYPE_COLOR[entry.type];
+  const force = FORCE_LORE[entry.type];
+  const nb = wheelNeighbors(entry.type);
+  const prey = FORCE_LORE[nb.prey];
+  const pred = FORCE_LORE[nb.predator];
+  const hook = FIRST_DUEL_HOOKS[entry.key];
+  const motto = FORCE_MOTTO[entry.type];
+
+  // The fighter "speaks" its vow as it steps forward — re-fires whenever the
+  // highlighted champion changes (and hushes on the way out).
+  useEffect(() => {
+    primeCreature();
+    speakCreatureType(motto, entry.type);
+    return () => stopCreature();
+  }, [entry.key, entry.type, motto]);
+
+  // ← / → cycle the roster, Enter locks in the highlighted fighter.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        go(1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        go(-1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        onCommit(entry.key);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go, onCommit, entry.key]);
+
+  return (
+    <div style={{ ...shell, padding: 0, display: "block", overflow: "hidden" }}>
+      <OnboardingAudio compact={isMobile} />
+      <div style={{ position: "absolute", inset: 0, background: ICON.void, display: "flex", flexDirection: "column" }}>
+        {/* header */}
+        <div style={{ padding: isMobile ? "16px 16px 4px" : "26px 32px 8px", textAlign: "center", flexShrink: 0 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · CHOOSE YOUR CHAMPION</div>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 0" }}>Meet your champions.</h2>
+        </div>
+
+        {/* stage + dossier */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: "stretch",
+            gap: isMobile ? 0 : 16,
+            padding: isMobile ? "0 12px" : "0 24px",
+          }}
+        >
+          {/* living agent */}
+          <div style={{ position: "relative", flex: 1, minHeight: isMobile ? 210 : 0 }}>
+            <RenderBoundary
+              fallback={
+                <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+                  <ChampionAvatar ckey={entry.key} type={entry.type} champion={champ} size={isMobile ? 130 : 200} />
+                </div>
+              }
+            >
+              <AgentShowcase champion={champ} type={entry.type} scale={isMobile ? 0.58 : 0.62} gesture="punch" everyMs={2600} autoFrame interactive bare framingKey={entry.key} />
+            </RenderBoundary>
+
+            {!isMobile && (
+              <div style={{ position: "absolute", top: 8, left: 8, pointerEvents: "none", opacity: 0.96 }}>
+                <ForcesWheel size={184} highlight={entry.type} />
+              </div>
+            )}
+
+            <div className="mono" style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", pointerEvents: "none", fontSize: 9, letterSpacing: 1.4, color: "var(--muted2)", opacity: 0.7 }}>
+              drag to rotate · scroll to zoom
+            </div>
+
+            <CycleArrow side="left" onClick={() => go(-1)} />
+            <CycleArrow side="right" onClick={() => go(1)} />
+          </div>
+
+          {/* dossier */}
+          <div
+            style={{
+              width: isMobile ? "auto" : 360,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 12,
+              padding: isMobile ? "8px 4px 0" : "0 8px",
+              textAlign: isMobile ? "center" : "left",
+            }}
+          >
+            <div>
+              <div className="mono" style={{ fontSize: 12, letterSpacing: 1, color: col, display: "flex", alignItems: "center", gap: 8, justifyContent: isMobile ? "center" : "flex-start" }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{force.sigil}</span>
+                {force.name.toUpperCase()}
+              </div>
+              <div style={{ fontSize: isMobile ? 28 : 42, fontWeight: 800, lineHeight: 1.02, margin: "4px 0 0" }}>{entry.name}</div>
+            </div>
+            {hook && <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: 0 }}>{hook}</p>}
+            <p style={{ color: col, fontStyle: "italic", fontSize: 14, margin: 0 }}>&ldquo;{motto}&rdquo;</p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: isMobile ? "center" : "flex-start" }}>
+              <span className="chip" style={{ borderColor: prey.hex, color: prey.hex, fontSize: 11 }}>beats {prey.sigil} {prey.name}</span>
+              <span className="chip" style={{ borderColor: pred.hex, color: pred.hex, fontSize: 11, opacity: 0.85 }}>weak to {pred.sigil} {pred.name}</span>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 4 }}
+              onClick={() => onCommit(entry.key)}
+            >
+              Choose {entry.name}
+            </button>
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, textAlign: "center" }}>
+              One mind per Force this week · pledge a Clan later in the Concord
+            </p>
+          </div>
+        </div>
+
+        {/* roster strip */}
+        <div
+          style={{
+            flexShrink: 0,
+            padding: isMobile ? "10px 12px 16px" : "12px 24px 22px",
+            display: "flex",
+            gap: 8,
+            justifyContent: "center",
+            overflowX: "auto",
+          }}
+        >
+          {starters.map((r, i) => {
+            const on = i === safeIdx;
+            const rc = TYPE_COLOR[r.type];
+            return (
+              <button
+                key={r.key}
+                onClick={() => setIdx(i)}
+                aria-label={`preview ${r.name}`}
+                className="panel"
+                style={{
+                  ["--ac" as string]: rc,
+                  flexShrink: 0,
+                  padding: 8,
+                  width: isMobile ? 62 : 84,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                  cursor: "pointer",
+                  borderColor: on ? rc : "var(--line)",
+                  boxShadow: on ? `0 0 22px -6px ${rc}` : undefined,
+                  opacity: on ? 1 : 0.6,
+                  transform: on ? "translateY(-3px)" : undefined,
+                  transition: "all .18s ease",
+                }}
+              >
+                <ChampionAvatar ckey={r.key} type={r.type} champion={get(r.key)} size={isMobile ? 40 : 52} />
+                <span className="mono" style={{ fontSize: 10, color: on ? rc : "var(--muted2)", lineHeight: 1 }}>{forceSigil(r.type)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CycleArrow({ side, onClick }: { side: "left" | "right"; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={side === "left" ? "previous champion" : "next champion"}
+      style={{
+        position: "absolute",
+        zIndex: 5,
+        top: "50%",
+        transform: "translateY(-50%)",
+        [side]: 6,
+        width: 40,
+        height: 40,
+        borderRadius: 99,
+        background: "rgba(10,8,18,.55)",
+        border: "1px solid var(--line2)",
+        color: "#fff",
+        cursor: "pointer",
+        display: "grid",
+        placeItems: "center",
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      {side === "left" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+    </button>
+  );
 }
 
 function cardShareUrl(key: string, champion: Champion) {

@@ -85,11 +85,11 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
   RHETORIC: {
     headgear: [["crownRing", 3], ["crest", 3], ["antenna", 1]],
     visor: [["twin", 3], ["band", 2], ["single", 1]],
-    // a speaker, not a linebacker: prefer slim vents, keep big pauldrons rare.
-    shoulders: [["vent", 3], ["none", 2], ["pauldron", 1]],
-    // banner read as a shield strapped to the back — keep it the exception, lean
-    // on lighter wings or a clean back instead.
-    back: [["none", 3], ["wings", 2], ["banner", 1]],
+    // a speaker, not a linebacker: no big pauldron pads or "ears" on the frame —
+    // either bare shoulders or slim vents only.
+    shoulders: [["none", 4], ["vent", 1]],
+    // keep the back clean — no wing panels or banners flaring off the silhouette.
+    back: [["none", 1]],
     chest: [["ring", 3], ["diamond", 1]],
   },
   CREATIVITY: {

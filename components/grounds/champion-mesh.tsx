@@ -197,6 +197,9 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
     // legs hang off the (unscaled) hips → apply girth/length directly
     set(`upperleg.${s}`, m.legGirth * asym, m.legLen, m.legGirth * asym);
     set(`lowerleg.${s}`, 1, 1, 1);
+    // foot inherits the leg's net scale; counter the inherited length/girth so
+    // footScale lands as a clean, uniform "bigger boots" on top of any build
+    set(`foot.${s}`, (m.footScale / (m.legGirth * asym)) || m.footScale, m.footScale / m.legLen || m.footScale, (m.footScale / (m.legGirth * asym)) || m.footScale);
   }
 
   // hands — every palm/finger bone scaled uniformly
@@ -235,6 +238,7 @@ export function ChampionMesh({
   speechLine,
   showForce = false,
   clan = null,
+  hideFloaters = false,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -272,6 +276,10 @@ export function ChampionMesh({
   keeper?: KeeperKind;
   /** in-world speech bubble — companion lines, greetings */
   speechLine?: string | null;
+  /** strip the detached floating decor (archetype constructs, orbiting evo shards,
+   *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
+   *  close-up character-select showcase. */
+  hideFloaters?: boolean;
 }) {
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
@@ -510,7 +518,7 @@ export function ChampionMesh({
 
       {/* per-Force signature attachments — the species markings that make each
           Force read as a different being; tinted to this individual */}
-      <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />
+      {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />}
 
       {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
           back, gated by tier so the body visibly grows as the mind evolves */}
@@ -540,7 +548,7 @@ export function ChampionMesh({
       </mesh>
 
       {/* orbiting shards */}
-      {shards.map((s, i) => (
+      {!hideFloaters && shards.map((s, i) => (
         <mesh key={i} ref={(el) => { shardRefs.current[i] = el; }} position={[Math.cos(s.a) * s.r, s.y, Math.sin(s.a) * s.r]}>
           <octahedronGeometry args={[0.12, 0]} />
           <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.4} roughness={0.3} transparent opacity={0.32} />
@@ -548,7 +556,7 @@ export function ChampionMesh({
       ))}
 
       {/* tier rings */}
-      {Array.from({ length: ringN }).map((_, i) => (
+      {!hideFloaters && Array.from({ length: ringN }).map((_, i) => (
         <mesh key={i} ref={(el) => { ringRefs.current[i] = el; }} rotation={[Math.PI / 2 + i * 0.45, 0, 0]} position={[0, app.h * 0.5, 0]}>
           <torusGeometry args={[1.0 + i * 0.25, 0.02, 6, 32]} />
           <meshBasicMaterial color={col} transparent opacity={0.15} />

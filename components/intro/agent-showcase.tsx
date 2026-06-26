@@ -1,7 +1,10 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows } from "@react-three/drei";
+import { ContactShadows, OrbitControls } from "@react-three/drei";
+
+// minimal shape we touch on the OrbitControls instance (avoids a three-stdlib import)
+type Controls = { enabled: boolean; target: THREE.Vector3; update: () => void };
 import * as THREE from "three";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
@@ -21,6 +24,10 @@ export default function AgentShowcase({
   dolly = false,
   rival,
   colorHex,
+  autoFrame = false,
+  interactive = false,
+  bare = false,
+  framingKey,
 }: {
   champion: Champion;
   type: CreatureType;
@@ -36,6 +43,18 @@ export default function AgentShowcase({
   rival?: { champion: Champion; type: CreatureType };
   /** override force tint — e.g. pitch hero in canon gold instead of type hex */
   colorHex?: string;
+  /** measure the built figure and frame it: vertically centred, pulled back so it
+   *  NEVER overflows the container, while preserving relative size between minds.
+   *  Used by the character-select stage where bodies vary wildly in height. */
+  autoFrame?: boolean;
+  /** let the player orbit + zoom the figure (drag to rotate, wheel/pinch to zoom).
+   *  The camera auto-frames each new champion, then hands control to the player. */
+  interactive?: boolean;
+  /** drop the detached floating constructs (aura shards, archetype motes, tier
+   *  rings) that don't follow the skeleton — keep only the body + crown. */
+  bare?: boolean;
+  /** changes → re-frame the camera on the new champion (then the player is free). */
+  framingKey?: string | number;
 }) {
   const rim = colorHex ?? TYPE_COLOR[type];
   const rim2 = rival ? TYPE_COLOR[rival.type] : null;
@@ -45,12 +64,22 @@ export default function AgentShowcase({
   const camY = duel ? 1.9 : 1.7;
   const camZ = duel ? 13 : 9.6;
   const lookY = duel ? 1.3 : 1.4;
+  const doFit = autoFrame && !duel;
+  const orbit = interactive && doFit;
+  // shared target the measurer writes and the camera rig eases toward
+  const fitRef = useRef<{ y: number; dist: number }>({ y: lookY, dist: camZ });
+  const controlsRef = useRef<Controls | null>(null);
+  // re-frame the camera whenever the shown champion changes
+  const reframe = useRef(true);
+  useEffect(() => {
+    reframe.current = true;
+  }, [framingKey]);
 
   return (
     <Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [0, camY, camZ], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
       <color attach="background" args={["#0a0813"]} />
       <fog attach="fog" args={["#0a0813", 11, 24]} />
-      <CamRig lookY={lookY} camY={camY} camZ={camZ} dolly={dolly} />
+      {!orbit && <CamRig lookY={lookY} camY={camY} camZ={camZ} dolly={dolly} autoFrame={doFit} fitRef={fitRef} />}
       <ambientLight intensity={0.55} />
       <hemisphereLight args={["#b9a7ff", "#160f2c", 0.7]} />
       <directionalLight position={[5, 8, 4]} intensity={1.7} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} />
@@ -62,20 +91,48 @@ export default function AgentShowcase({
           <Duel hero={{ champion, type }} rival={rival!} scale={scale} />
         ) : (
           <Spin enabled={spin}>
-            <Solo champion={champion} type={type} scale={scale} gesture={gesture} everyMs={everyMs} colorHex={colorHex} />
+            <FitMeasure enabled={doFit} fitRef={fitRef} baseZ={camZ} maxFrac={0.8} orbit={orbit} reframe={reframe} controlsRef={controlsRef}>
+              <Solo champion={champion} type={type} scale={scale} gesture={gesture} everyMs={everyMs} colorHex={colorHex} bare={bare} />
+            </FitMeasure>
           </Spin>
         )}
         <ContactShadows position={[0, 0.01, 0]} opacity={0.6} scale={(duel ? 12 : 9) * Math.max(scale, 0.6)} blur={2.6} far={5} resolution={512} color="#000000" />
       </Suspense>
+      {orbit && (
+        <OrbitControls
+          ref={controlsRef as never}
+          makeDefault
+          enablePan={false}
+          enableDamping
+          dampingFactor={0.09}
+          rotateSpeed={0.9}
+          zoomSpeed={0.9}
+          minDistance={camZ * 0.4}
+          maxDistance={camZ * 2.6}
+          minPolarAngle={0.18}
+          maxPolarAngle={Math.PI * 0.92}
+        />
+      )}
     </Canvas>
   );
 }
 
-function CamRig({ lookY, camY, camZ, dolly }: { lookY: number; camY: number; camZ: number; dolly: boolean }) {
+function CamRig({ lookY, camY, camZ, dolly, autoFrame, fitRef }: { lookY: number; camY: number; camZ: number; dolly: boolean; autoFrame?: boolean; fitRef?: React.MutableRefObject<{ y: number; dist: number }> }) {
   const { camera } = useThree();
   const start = useRef<number | null>(null);
   const fromZ = camZ + 4.5;
-  useFrame((state) => {
+  useFrame((state, dt) => {
+    if (autoFrame && fitRef) {
+      // ease toward the measured frame so a body-swap glides rather than snaps
+      const a = 1 - Math.pow(0.0015, dt);
+      const ty = fitRef.current.y;
+      const tz = fitRef.current.dist;
+      camera.position.x += (0 - camera.position.x) * a;
+      camera.position.y += (ty - camera.position.y) * a;
+      camera.position.z += (tz - camera.position.z) * a;
+      camera.lookAt(0, ty, 0);
+      return;
+    }
     if (!dolly) {
       camera.position.set(0, camY, camZ);
       camera.lookAt(0, lookY, 0);
@@ -90,6 +147,80 @@ function CamRig({ lookY, camY, camZ, dolly }: { lookY: number; camY: number; cam
   return null;
 }
 
+// Measures the live figure's bounding box and resolves a camera frame that keeps
+// the whole silhouette inside the viewport with margin. baseZ is the floor (we
+// never dolly closer than the canonical distance, so a small mind stays visibly
+// small); a tall mind only pushes the camera further back — so relative heights
+// read true while nothing ever clips the container.
+function FitMeasure({
+  enabled,
+  fitRef,
+  baseZ,
+  maxFrac,
+  orbit = false,
+  reframe,
+  controlsRef,
+  children,
+}: {
+  enabled: boolean;
+  fitRef: React.MutableRefObject<{ y: number; dist: number }>;
+  baseZ: number;
+  maxFrac: number;
+  /** when true, only re-frame on champion swap; the player drives the camera after */
+  orbit?: boolean;
+  reframe?: React.MutableRefObject<boolean>;
+  controlsRef?: React.MutableRefObject<Controls | null>;
+  children: React.ReactNode;
+}) {
+  const g = useRef<THREE.Group>(null);
+  const box = useRef(new THREE.Box3());
+  const size = useRef(new THREE.Vector3());
+  const ctr = useRef(new THREE.Vector3());
+  const tick = useRef(0);
+  const { camera, size: vp } = useThree();
+  useFrame((_, dt) => {
+    if (!enabled || !g.current) return;
+    // remeasure a few times a second — the idle clip jostles the bbox slightly
+    if (tick.current++ % 8 === 0) {
+      box.current.setFromObject(g.current);
+      if (!box.current.isEmpty() && isFinite(box.current.min.y)) {
+        box.current.getSize(size.current);
+        box.current.getCenter(ctr.current);
+        const cam = camera as THREE.PerspectiveCamera;
+        const tanV = Math.tan(((cam.fov || 32) * Math.PI) / 180 / 2);
+        const aspect = cam.aspect || vp.width / Math.max(1, vp.height);
+        // distance at which the figure fills `maxFrac` of the frame, on whichever
+        // axis binds first (tall figures bind on Y, wide ones on X)
+        const distV = size.current.y / 2 / (tanV * maxFrac);
+        const distH = size.current.x / 2 / (tanV * aspect * maxFrac);
+        fitRef.current.y = ctr.current.y;
+        fitRef.current.dist = Math.max(baseZ, distV, distH);
+      }
+    }
+    // orbit mode: ease to the measured frame once per champion, then hand the
+    // camera to OrbitControls (suspend its input while we re-frame so they don't fight)
+    if (orbit && reframe?.current && controlsRef?.current) {
+      const c = controlsRef.current;
+      c.enabled = false;
+      const ty = fitRef.current.y;
+      const tz = fitRef.current.dist;
+      const a = 1 - Math.pow(0.0008, dt);
+      camera.position.x += (0 - camera.position.x) * a;
+      camera.position.y += (ty - camera.position.y) * a;
+      camera.position.z += (tz - camera.position.z) * a;
+      c.target.x += (0 - c.target.x) * a;
+      c.target.y += (ty - c.target.y) * a;
+      c.target.z += (0 - c.target.z) * a;
+      c.update();
+      if (Math.abs(camera.position.z - tz) < 0.06 && Math.abs(c.target.y - ty) < 0.04) {
+        c.enabled = true;
+        reframe.current = false;
+      }
+    }
+  });
+  return <group ref={g}>{children}</group>;
+}
+
 function Spin({ children, enabled, speed = 0.32 }: { children: React.ReactNode; enabled?: boolean; speed?: number }) {
   const r = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
@@ -98,7 +229,7 @@ function Spin({ children, enabled, speed = 0.32 }: { children: React.ReactNode; 
   return <group ref={r}>{children}</group>;
 }
 
-function Solo({ champion, type, scale, gesture, everyMs, colorHex }: { champion: Champion; type: CreatureType; scale: number; gesture: Gesture; everyMs?: number; colorHex?: string }) {
+function Solo({ champion, type, scale, gesture, everyMs, colorHex, bare = false }: { champion: Champion; type: CreatureType; scale: number; gesture: Gesture; everyMs?: number; colorHex?: string; bare?: boolean }) {
   const [sig, setSig] = useState(0);
   useEffect(() => {
     if (gesture === "idle") return;
@@ -112,7 +243,7 @@ function Solo({ champion, type, scale, gesture, everyMs, colorHex }: { champion:
   }, [gesture, everyMs]);
   return (
     <group scale={scale}>
-      <ChampionMesh type={type} champion={champion} position={[0, 0, 0]} showLabel={false} actSignal={sig} actName={gesture === "idle" ? "wave" : gesture} baseColorOverride={colorHex} />
+      <ChampionMesh type={type} champion={champion} position={[0, 0, 0]} showLabel={false} actSignal={sig} actName={gesture === "idle" ? "wave" : gesture} baseColorOverride={colorHex} hideFloaters={bare} />
     </group>
   );
 }

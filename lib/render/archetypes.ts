@@ -30,6 +30,10 @@ export interface BodyPlan {
   armLen: number;
   legGirth: number;
   legLen: number;
+  /** uniform hand scale (default 1) — multiplies the genome's hand size */
+  handScale?: number;
+  /** uniform foot scale (default 1) — bigger boots / planted stance */
+  footScale?: number;
   /** 0..1 amount of left/right asymmetry baked into the silhouette */
   asym: number;
 }
@@ -54,55 +58,59 @@ export interface ArchetypeKit {
 // One kit per Force. Numbers are tuned to read as five different SPECIES at a
 // glance while staying inside the existing neon-on-void aesthetic.
 export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
-  // The Lattice — a TOWERING spindle: long thin neck, narrow waist, stretched
-  // arms, and near-double-length stilt legs under a small precise head. Tallest of
-  // the five by far. A walking proof, all reach.
+  // The Lattice — the CANONICAL build (e.g. PARADOX). A clean, balanced humanoid
+  // that every other Force is read against: even proportions, a precise head, no
+  // exaggeration. The reference "1.0" silhouette.
   LOGIC: {
     type: "LOGIC",
     featureSet: "lattice",
-    body: { h: 2.0, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.7, shoulder: 0.84, armGirth: 0.7, armLen: 1.6, legGirth: 0.74, legLen: 1.95, asym: 0 },
+    body: { h: 1.0, headScale: 0.96, neckLen: 1.05, torsoGirth: 0.96, shoulder: 0.9, armGirth: 0.94, armLen: 1.06, legGirth: 0.96, legLen: 1.1, asym: 0 },
     material: { metalness: 0.28, roughness: -0.32, emissive: 1.0 },
-    idleSpeed: 0.85,
-    lean: -0.02,
+    idleSpeed: 0.95,
+    lean: 0,
   },
-  // The Static — restless, lopsided: a big head on a sunk neck, mismatched limbs,
-  // a stocky uneven build. Noise made flesh.
+  // The Static — slighter than canonical (e.g. EMBER): a touch shorter, a narrow
+  // waist and shoulders, longer legs, and only a hint of the old lopsided jitter.
+  // Reads lighter and more lithe against the Lattice's even build.
   CHAOS: {
     type: "CHAOS",
     featureSet: "static",
-    body: { h: 0.92, headScale: 1.34, neckLen: 0.68, torsoGirth: 1.14, shoulder: 1.14, armGirth: 1.2, armLen: 1.08, legGirth: 0.9, legLen: 0.86, asym: 1.0 },
+    body: { h: 0.9, headScale: 0.9, neckLen: 1.08, torsoGirth: 0.8, shoulder: 0.82, armGirth: 0.8, armLen: 1.04, legGirth: 0.82, legLen: 1.14, asym: 0.45 },
     material: { metalness: -0.05, roughness: 0.22, emissive: 1.25 },
-    idleSpeed: 1.35,
-    lean: 0.05,
+    idleSpeed: 1.2,
+    lean: 0.03,
   },
-  // The Stillness — squat, monumental: an enormous barrel torso on thick stubby
-  // legs, massive shoulders, a tiny head sunk into the mass. The SHORTEST of the
-  // five — an immovable boulder you have to outlast.
+  // The Stillness — a TOWERING long-LEGGED guard (e.g. BASTION): roughly double the
+  // canonical height, standing tall on long stilt legs with reaching (but not
+  // floor-dragging) arms, neat small hands, a moderate torso, and a small head on a
+  // short neck. Height and reach, not bulk — you crane up at it.
   COMPOSURE: {
     type: "COMPOSURE",
     featureSet: "monolith",
-    body: { h: 0.52, headScale: 0.56, neckLen: 0.38, torsoGirth: 2.3, shoulder: 2.0, armGirth: 1.6, armLen: 0.66, legGirth: 2.0, legLen: 0.62, asym: 0 },
+    body: { h: 2.0, headScale: 0.62, neckLen: 0.92, torsoGirth: 0.95, shoulder: 0.8, armGirth: 0.78, armLen: 0.95, legGirth: 0.9, legLen: 2.0, handScale: 0.45, asym: 0 },
     material: { metalness: -0.12, roughness: 0.36, emissive: 0.7 },
-    idleSpeed: 0.6,
+    idleSpeed: 0.65,
     lean: 0.0,
   },
-  // The Chorus — tall, regal, upright; a poised orator on a very long neck with a
-  // narrow waist and long legs. Bearing, not bulk — shoulders stay modest so it
-  // reads as a speaker, not a linebacker, and never collides with the Spark.
+  // The Chorus — tall and regal (e.g. WIT): a poised orator on a long neck and long
+  // legs, with a SMALLER head (so the big side eye-pods read as a neat face, not
+  // ears), SLIGHT shoulders (no big pauldron pads), and noticeably bigger feet for a
+  // planted, grounded stance. Bearing over bulk.
   RHETORIC: {
     type: "RHETORIC",
     featureSet: "chorus",
-    body: { h: 1.62, headScale: 1.04, neckLen: 1.85, torsoGirth: 0.84, shoulder: 1.18, armGirth: 0.86, armLen: 1.2, legGirth: 0.98, legLen: 1.5, asym: 0 },
+    body: { h: 1.55, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.94, shoulder: 0.6, armGirth: 0.86, armLen: 1.14, legGirth: 0.98, legLen: 1.42, footScale: 1.34, asym: 0 },
     material: { metalness: 0.08, roughness: -0.1, emissive: 1.18 },
     idleSpeed: 1.05,
     lean: -0.04,
   },
-  // The Spark — a tiny floaty body slung under an ENORMOUS head, wispy limbs. All
-  // idea, no ballast. A bobblehead sprite, second-smallest after the Stillness.
+  // The Spark — a light, floaty body under a head that is a little bigger than
+  // canonical (e.g. MUSE): "ideas-heavy" but no longer a giant bobblehead saucer.
+  // Wispy limbs, a small frame.
   CREATIVITY: {
     type: "CREATIVITY",
     featureSet: "spark",
-    body: { h: 0.66, headScale: 2.15, neckLen: 0.82, torsoGirth: 0.52, shoulder: 0.64, armGirth: 0.54, armLen: 1.24, legGirth: 0.58, legLen: 1.1, asym: 0.32 },
+    body: { h: 0.84, headScale: 1.15, neckLen: 0.9, torsoGirth: 0.62, shoulder: 0.66, armGirth: 0.58, armLen: 1.18, legGirth: 0.64, legLen: 1.14, asym: 0.28 },
     material: { metalness: 0.0, roughness: -0.05, emissive: 1.22 },
     idleSpeed: 1.1,
     lean: 0.02,
@@ -126,7 +134,8 @@ function planMorph(base: BoneMorph, plan: BodyPlan): BoneMorph {
     armLen: cl(base.armLen * plan.armLen, 0.55, 2.05),
     legGirth: cl(base.legGirth * plan.legGirth, 0.52, 2.3),
     legLen: cl(base.legLen * plan.legLen, 0.55, 2.35),
-    handScale: cl(base.handScale, 0.35, 0.95),
+    handScale: cl(base.handScale * (plan.handScale ?? 1), 0.3, 0.95),
+    footScale: cl(base.footScale * (plan.footScale ?? 1), 0.6, 1.8),
     asymL: 1,
     asymR: 1,
   };

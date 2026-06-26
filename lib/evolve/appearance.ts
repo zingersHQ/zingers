@@ -37,6 +37,8 @@ export interface BoneMorph {
   legLen: number;
   /** uniform hand/finger bone scale */
   handScale: number;
+  /** uniform foot bone scale (planted mass / stance read) */
+  footScale: number;
   /** left/right limb girth multipliers — asymmetry (CHAOS reads as "broken") */
   asymL: number;
   asymR: number;
@@ -110,6 +112,7 @@ export function appearanceOf(p: Champion): Appearance {
     // the base rig's hands are already oversized — scale them DOWN by default and
     // only let an aggressive build inch them back up. (Old code scaled them up.)
     handScale: cl(0.5 + nAgg * 0.16 * g, 0.4, 0.82),
+    footScale: 1,
     asymL: 1,
     asymR: 1,
   };
@@ -147,6 +150,7 @@ export function jitterMorph(m: BoneMorph, seed: number, asym = 0): BoneMorph {
     legGirth: j(m.legGirth, 0.18, 0.6, 1.95),
     legLen: j(m.legLen, 0.14, 0.64, 1.62),
     handScale: j(m.handScale, 0.16, 0.34, 0.96),
+    footScale: j(m.footScale, 0.1, 0.6, 1.9),
     asymL: 1,
     asymR: 1,
   };

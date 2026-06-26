@@ -12,6 +12,8 @@ import { FORCES, wheelNeighbors } from "@/lib/lore/canon";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
 import { ForcesWheel } from "@/components/lore/forces-wheel";
+import { speakCreatureType, stopCreature, primeCreature } from "@/lib/creature-voice";
+import { setMood } from "@/lib/ambience-bus";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -344,7 +346,17 @@ const HERO_LINES: { line: string; why: string }[] = [
   { line: "Frame's broken. There's nothing left to defend.", why: "why › finisher now" },
 ];
 
+// The rival holds the line between the hero's barbs — COMPOSURE refusing to break —
+// so the beat reads as a two-voice exchange (both creatures "speak"), not a monologue.
+const RIVAL_RETORTS = ["I hold.", "Stay calm.", "You'll tire first."];
+
 function Fight({ mobile }: { mobile?: boolean }) {
+  // Swell the procedural score to combat for the duel beat, then settle it back
+  // to the calm hub mood on the way out (mute toggle still wins via the engine).
+  useEffect(() => {
+    setMood("battle");
+    return () => setMood("concord");
+  }, []);
   return (
     <div style={FULL}>
       <Stage>
@@ -405,9 +417,20 @@ function MatchupTag({ mobile }: { mobile?: boolean }) {
 function ReasoningBubble({ mobile }: { mobile?: boolean }) {
   const [n, setN] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setN((v) => (v + 1) % HERO_LINES.length), 2100);
-    return () => clearInterval(id);
+    primeCreature();
+    const id = setInterval(() => setN((v) => (v + 1) % HERO_LINES.length), 2600);
+    return () => {
+      clearInterval(id);
+      stopCreature();
+    };
   }, []);
+  // Each turn the hero "argues for its life" in its CHAOS voice; the rival mutters
+  // back a beat later in its own voice, so you hear the duel, not just see it.
+  useEffect(() => {
+    speakCreatureType(HERO_LINES[n].line, HERO_TYPE);
+    const id = setTimeout(() => speakCreatureType(RIVAL_RETORTS[n % RIVAL_RETORTS.length], RIVAL.type), 2000);
+    return () => clearTimeout(id);
+  }, [n]);
   const t = HERO_LINES[n];
   const c = TYPE_COLOR[HERO_TYPE];
   return (
