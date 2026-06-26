@@ -12,6 +12,26 @@ ground for all five forces and the gate-ring out to every region. The Concord is
 where a Reader spawns, banks, and chooses a destination; it has no force-bias and
 no arena of its own (`lib/lore/canon.ts › CONCORD`).
 
+## Concord venues: games at the hub
+
+The Concord hosts **venues** — walk-up games ringed around the seal, visually
+distinct from the **gates** that lead to region-slabs
+(`components/grounds/venues.ts`). A Reader steps into a venue from the Concord;
+founding regions also wear themed tunnel mouths back into some of the same games.
+
+| Venue | What it is |
+|-------|------------|
+| **The Amphitheatre** | Watch the autonomous league fight and read today's Tribunal herald. The Scrying Gallery and Daily Tribunal surface here. |
+| **The Circuit** | A ten-sector flying run: clear each track in sequence; one fall sends you back to sector 1. Ranked by depth cleared, then total time (`/api/circuit`). |
+
+**Circuit tunnels** — each founding region also has a themed tunnel mouth: the
+Ascent Tunnel on the Obsidian Colosseum, the Ember Chute on the Wastes, the Void
+Sleeve on the Garden. The run is the same game; the shell reads the host world.
+
+Region-slabs host **arena scenarios** in the plaza (Open Duel, The Gauntlet, The
+Tribunal). The Circuit is a *venue*, not a region — it is reached through Concord
+portals and region tunnel mouths, not a gate.
+
 The three founding regions exist today as the 3D worlds (`components/grounds/worlds.ts`);
 later regions are added by the Chronicle.
 
@@ -95,3 +115,9 @@ sells fragments at a spread (`store/champions.ts › buyFragment / sellFragment`
 it's a convenience, never a money pump. Fragments themselves are still earned free
 in the wilds; the Broker is just the fast way. It is a *mind*, like everything on
 the Grounds — not a vendor outside the fiction.
+
+## The soundtrack of a place
+
+The Hum is audible. Each slab and venue resolves its own procedural mood —
+Concord hub, region biome, Amphitheatre, Circuit, and live fights each carry a
+distinct score (`lib/ambience-scores.ts`). The world sounds like where you are.

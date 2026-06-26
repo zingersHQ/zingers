@@ -93,7 +93,7 @@ export function ClanSheet({
                 {EMBLEM[force!]}
               </span>
               <div style={{ minWidth: 0 }}>
-                <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>{mine.house}</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>{mine.name}</h2>
                 <div className="mono" style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 2 }}>{mine.motto}</div>
               </div>
             </div>
@@ -155,7 +155,7 @@ export function ClanSheet({
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{f.house}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{f.name}</span>
                     {isSuggested && (
                       <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, letterSpacing: 0.8, color: col, border: `1px solid ${col}`, borderRadius: 5, padding: "1px 5px" }}>
                         <Star size={8} strokeWidth={2.6} /> YOUR FORCE
@@ -177,7 +177,7 @@ export function ClanSheet({
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", margin: "16px 0 7px", display: "flex", justifyContent: "space-between" }}>
               <span>SEASON WAR{force ? ` · you've added ${war.mine ?? forcePoints.points}` : ""}</span>
               <span style={{ fontStyle: war.leader ? "normal" : "italic", color: war.leader ? TYPE_COLOR[war.leader] : "var(--muted2)" }}>
-                {war.leader ? `${forceMeta(war.leader).house} leads` : "all even"}
+                {war.leader ? `${forceMeta(war.leader).name} leads` : "all even"}
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -217,7 +217,7 @@ export function ClanSheet({
                 className="btn btn-primary"
                 style={{ ["--ac" as string]: accent, flex: 1, opacity: sel ? 1 : 0.5, cursor: sel ? "pointer" : "not-allowed" }}
               >
-                {sel ? `Fight for ${forceMeta(sel).house}` : "Select a Clan"}
+                {sel ? `Fight for ${forceMeta(sel).name}` : "Select a Clan"}
               </button>
             </div>
             <div className="mono" style={{ fontSize: 8.5, color: "var(--muted2)", letterSpacing: 0.4, marginTop: 9, lineHeight: 1.4 }}>

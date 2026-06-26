@@ -20,6 +20,7 @@ export default function AgentShowcase({
   spin = false,
   dolly = false,
   rival,
+  colorHex,
 }: {
   champion: Champion;
   type: CreatureType;
@@ -33,8 +34,10 @@ export default function AgentShowcase({
   dolly?: boolean;
   /** when set, stages a self-running duel: hero (champion) vs rival */
   rival?: { champion: Champion; type: CreatureType };
+  /** override force tint — e.g. pitch hero in canon gold instead of type hex */
+  colorHex?: string;
 }) {
-  const rim = TYPE_COLOR[type];
+  const rim = colorHex ?? TYPE_COLOR[type];
   const rim2 = rival ? TYPE_COLOR[rival.type] : null;
   const duel = !!rival;
   // These champions carry oversized heads/auras, so frame loose enough to keep
@@ -59,7 +62,7 @@ export default function AgentShowcase({
           <Duel hero={{ champion, type }} rival={rival!} scale={scale} />
         ) : (
           <Spin enabled={spin}>
-            <Solo champion={champion} type={type} scale={scale} gesture={gesture} everyMs={everyMs} />
+            <Solo champion={champion} type={type} scale={scale} gesture={gesture} everyMs={everyMs} colorHex={colorHex} />
           </Spin>
         )}
         <ContactShadows position={[0, 0.01, 0]} opacity={0.6} scale={(duel ? 12 : 9) * Math.max(scale, 0.6)} blur={2.6} far={5} resolution={512} color="#000000" />
@@ -95,7 +98,7 @@ function Spin({ children, enabled, speed = 0.32 }: { children: React.ReactNode; 
   return <group ref={r}>{children}</group>;
 }
 
-function Solo({ champion, type, scale, gesture, everyMs }: { champion: Champion; type: CreatureType; scale: number; gesture: Gesture; everyMs?: number }) {
+function Solo({ champion, type, scale, gesture, everyMs, colorHex }: { champion: Champion; type: CreatureType; scale: number; gesture: Gesture; everyMs?: number; colorHex?: string }) {
   const [sig, setSig] = useState(0);
   useEffect(() => {
     if (gesture === "idle") return;
@@ -109,7 +112,7 @@ function Solo({ champion, type, scale, gesture, everyMs }: { champion: Champion;
   }, [gesture, everyMs]);
   return (
     <group scale={scale}>
-      <ChampionMesh type={type} champion={champion} position={[0, 0, 0]} showLabel={false} actSignal={sig} actName={gesture === "idle" ? "wave" : gesture} />
+      <ChampionMesh type={type} champion={champion} position={[0, 0, 0]} showLabel={false} actSignal={sig} actName={gesture === "idle" ? "wave" : gesture} baseColorOverride={colorHex} />
     </group>
   );
 }

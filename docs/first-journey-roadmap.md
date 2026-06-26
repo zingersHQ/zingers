@@ -44,7 +44,21 @@ FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) �
 
 - **Code/analytics event keys** — still `bout` (stable server tracking)
 - **`useBout` hook name** — internal; no player-facing label
-- **Docs/README/MCP** — dev-facing; not part of in-game copy pass
+- **Docs/README/MCP** — dev-facing; not part of in-game copy pass (see `docs/` sync for canon)
+
+## Soundtrack (procedural, per place)
+
+| Mood | When |
+|------|------|
+| `concord` | The Concord hub |
+| `colosseum` | Obsidian Colosseum / Grounds region |
+| `ember` | Ember Gauntlet |
+| `void` | Void Garden |
+| `amphitheatre` | Amphitheatre venue |
+| `circuit` | Circuit venue |
+| `battle` | Any live fight or Keeper duel |
+
+Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbienceMood()`.
 
 ## Terminology
 
@@ -54,6 +68,8 @@ FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) �
 ## Key files
 
 - `lib/first-duel.ts` — starters, rotation, arena world, Concord landing copy
+- `lib/lore/character-beats.ts` — champion + Keeper voice beats
+- `lib/ambience-scores.ts` — procedural soundtrack per place
 - `lib/player-copy.ts` — player-facing fight vocabulary
 - `lib/sound-gallery.ts` — onboarding stinger map
 - `lib/iconography.ts` — visual canon for UI

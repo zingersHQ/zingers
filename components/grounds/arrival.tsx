@@ -118,7 +118,7 @@ export function ArrivalSequence({
 
             <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.3, marginTop: 6 }}>{name}</div>
             <div className="mono" style={{ fontSize: 11, color: accent, marginTop: 3 }}>
-              {force.sigil} {force.inWorld} · {motto}
+              {force.sigil} {force.name} · {motto}
             </div>
 
             <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--muted)", margin: "12px 2px 16px" }}>

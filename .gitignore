@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+desktop.ini
 
 # debug
 npm-debug.log*
@@ -43,3 +44,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# source asset kits (raw FBX/OBJ not used at runtime)
+Stylized Nature MegaKit\[Standard\]/
+components/grounds/_orig_check.tsx

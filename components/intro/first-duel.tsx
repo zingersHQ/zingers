@@ -20,6 +20,7 @@ import { FIGHT } from "@/lib/player-copy";
 import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { ICON, ONBOARDING_BG, forceHex, forceSigil } from "@/lib/iconography";
+import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { armOnboardingAudio, playOnboardingSound } from "@/lib/sound-gallery";
 
@@ -122,9 +123,9 @@ export function FirstDuelOverlay({
 
   if (phase === "pitch") {
     return (
-      <div style={{ ...shell, padding: 0, display: "block" }}>
+      <div style={{ ...shell, padding: 0, display: "block", background: ONBOARDING_BG, overflow: "hidden" }}>
         <OnboardingAudio compact={isMobile} />
-        <div style={{ position: "relative", height: isMobile ? "min(52vh, 420px)" : "min(58vh, 480px)", background: ICON.void }}>
+        <div style={{ position: "absolute", inset: 0, background: ICON.void, overflow: "hidden" }}>
           <RenderBoundary
             fallback={
               <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
@@ -132,36 +133,35 @@ export function FirstDuelOverlay({
               </div>
             }
           >
-            <AgentShowcase champion={PITCH_HERO.champion} type={PITCH_HERO.type} scale={isMobile ? 0.58 : 0.72} dolly gesture="idle" />
+            <AgentShowcase
+              champion={PITCH_HERO.champion}
+              type={PITCH_HERO.type}
+              scale={isMobile ? 0.62 : 0.82}
+              dolly
+              gesture="idle"
+              colorHex={ICON.gold}
+            />
           </RenderBoundary>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, transparent 35%, rgba(5,4,9,.55) 68%, #050409 100%)",
-              pointerEvents: "none",
-            }}
-          />
         </div>
-        <div style={{ maxWidth: 520, margin: "0 auto", textAlign: "center", padding: isMobile ? "0 20px 28px" : "0 28px 36px", marginTop: isMobile ? -48 : -56, position: "relative" }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2.5, color: ACC, marginBottom: 10 }}>WELCOME TO ZINGERS</div>
-          <h1 style={{ fontSize: isMobile ? 28 : 36, fontWeight: 800, margin: "0 0 12px", letterSpacing: -0.5, lineHeight: 1.08 }}>
-            Your champion fights for you.
-          </h1>
-          <p style={{ fontSize: isMobile ? 15 : 17, color: "var(--muted)", lineHeight: 1.55, margin: "0 0 10px" }}>
-            Pick a fighter, set how it {FIGHT.fights}, and watch your {FIGHT.firstDuel} play out in a real arena. Wins feed XP — and over time, the body on screen becomes a record of that career.
-          </p>
-          <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: "0 0 24px" }}>
-            About a minute · tune doctrine · watch the {FIGHT.duel}
-          </p>
+        <LowerThird
+          mobile={isMobile}
+          accent={ACC}
+          kicker="WELCOME TO ZINGERS"
+          title="Your champion fights for you."
+          body={
+            <>
+              Pick a fighter, set how it {FIGHT.fights}, and watch your {FIGHT.firstDuel} in the arena.
+            </>
+          }
+        >
           <button
-            className="btn btn-primary pop"
-            style={{ ["--ac" as string]: ACC, fontSize: 16, padding: "14px 28px", display: "inline-flex", alignItems: "center", gap: 8 }}
+            className="btn btn-primary"
+            style={{ ["--ac" as string]: ACC, fontSize: 13, padding: "12px 22px", display: "inline-flex", alignItems: "center", gap: 8 }}
             onClick={handlePitchContinue}
           >
             Choose your champion
           </button>
-        </div>
+        </LowerThird>
       </div>
     );
   }
@@ -215,7 +215,7 @@ export function FirstDuelOverlay({
                     {forceSigil(r.type)}
                   </div>
                   <div className="mono" style={{ fontSize: 10, color: forceHex(r.type) }}>
-                    {FORCE_LORE[r.type].inWorld}
+                    {FORCE_LORE[r.type].name}
                   </div>
                   {hook && <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>{hook}</div>}
                   <div className="mono" style={{ display: "flex", gap: 8, fontSize: 9, color: "var(--muted2)" }}>
@@ -250,7 +250,7 @@ export function FirstDuelOverlay({
             <ChampionAvatar ckey={selected} type={entry.type} champion={champ} size={72} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{entry.name}</div>
-              <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].inWorld}</div>
+              <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].name}</div>
             </div>
           </div>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>

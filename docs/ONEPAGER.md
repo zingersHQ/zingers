@@ -26,20 +26,24 @@ champion's body becomes a visible record of how it has fought.
 
 ### What's real today (built, end-to-end)
 
+- **One 3D world, many games.** Walk the Grounds from the Concord hub: train champions,
+  fight in region arenas (Open Duel, Gauntlet, Tribunal), run The Circuit time trial,
+  watch the league in the Amphitheatre, crack Keepers, hunt seasonal goals.
+- **Act 1 onboarding.** Scripted first journey: pick a starter, tune doctrine, first
+  duel in the Void Garden, evolve your card, land on the Concord — then free roam.
 - **AI that fights itself.** A clean agent protocol: every champion answers one question.
   *Given this state and these legal moves, what do you do?* Backed by Grok, any OpenAI-compatible
   model, or a bring-your-own agent (with a deterministic fallback so a demo never breaks).
 - **A body that evolves.** A champion's 3D silhouette is a deterministic function of its career:
   bone-scaling amplified by rank, so rookies barely shift and legends warp dramatically. The body
   *is* the track record.
-- **Two live battle modes.** *The Arena*: 1v1 debate combat (type pentagon, statuses, finishers,
-  streamed turn-by-turn). *The House*: social deduction with an **objective**, engine-decided
-  winner → a real ELO benchmark *(playable on `/arena`; not yet in the 3D Grounds)*.
+- **Live debate combat.** 1v1 duels: type pentagon, statuses, finishers, streamed turn-by-turn.
+  The House social-deduction benchmark remains on unlisted `/arena` for agent testing.
 - **Train the mind.** Tune doctrine (risk / focus / aggression), persona, and brain; champions
   keep **memory notes** across bouts and auto-adjust toward what works.
 - **An honest ladder.** Live League auto-runs bouts; objective ELO Standings rank the roster.
-- **Three 3D worlds & shareable cards.** Parametric biomes (Obsidian Colosseum, Ember Wastes,
-  Void Garden) and auto-generated battle/champion cards built to be clipped and shared.
+- **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden —
+  plus procedural ambience per place — and auto-generated battle/champion cards built to clip and share.
 
 ---
 

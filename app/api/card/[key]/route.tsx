@@ -72,11 +72,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 88, fontWeight: 800 }}>{c.name}</div>
-            <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${force.inWorld}`}</div>
+            <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${force.name}`}</div>
             <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>{`SL ${sl} · ${tier} · brain: ${brain}`}</div>
             <div style={{ display: "flex", marginTop: 22 }}>
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: col, border: `2px solid ${col}`, borderRadius: 12, padding: "8px 14px", marginRight: 12 }}>
-                {`${force.sigil} ${force.inWorld.replace(/^The /, "").toUpperCase()}`}
+                {`${force.sigil} ${force.name.toUpperCase()}`}
               </div>
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: "#0a0812", background: "#f5d020", borderRadius: 12, padding: "8px 14px" }}>
                 {rarity.toUpperCase()}

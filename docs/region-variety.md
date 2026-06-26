@@ -1,8 +1,14 @@
 # Region variety: making each slab worth the trip
 
-> **Status: brainstorm / proposal.** Not canon yet. This sits in `docs/` (design),
-> not `docs/bible/` (the single source of truth). Promote pieces into the bible
-> once we commit to them.
+> **Status: brainstorm / proposal (partially superseded).** Not canon. This sits in
+> `docs/` (design), not `docs/bible/` (the single source of truth). Promote pieces
+> into the bible once we commit to them.
+>
+> **Shipped since this doc was written:** The Tribunal scenario, The Circuit venue,
+> region goals (▲/▼/◆), the Broker, and the great rift — all in
+> [05-regions.md](./bible/05-regions.md). The scenario catalogue is now four entries
+> (`duel`, `gauntlet`, `tribunal`, `circuit`); Circuit is a **venue**, not a
+> region scenario.
 
 ## The problem, stated honestly
 
@@ -18,8 +24,9 @@ out loud: *"One parametric world, many skins."* Every region is the same skeleto
 What actually changes per region is: the **skin** (palette/sky/fog/light), a few
 **terrain params** (`seed`, amplitudes, `ridged`), the **surround** (`tiers` vs
 `caldera`), the **arena form** (`ring` vs `pit`), the **rift** depth, the agent
-**roam pattern** — and exactly **one** real gameplay lever: the **scenario**, of
-which there are only two (`duel`, `gauntlet`).
+**roam pattern**, an assigned **arena scenario**, and a themed **Circuit tunnel**
+mouth. **Venues** (Amphitheatre, Circuit from the Concord) are a separate axis from
+region-slabs — see [05-regions.md](./bible/05-regions.md).
 
 The settlement system in `components/grounds/districts.tsx` already *grows* a town
 (tier 0→4) around each arena, themed per biome — but those buildings are scenery
@@ -60,18 +67,19 @@ axes. We can advance each on its own track.
 
 The cleanest lever we already have. `lib/scenarios/registry.ts` + `types.ts` are
 built for exactly this — a scenario is "the GAME played in a world… independent of
-the biome." Right now `ScenarioId = "duel" | "gauntlet"`. Each new entry is a new
-*reason* to pick a region.
+the biome." Today `ScenarioId = "duel" | "gauntlet" | "tribunal" | "circuit"`.
+(Circuit is implemented as a Concord **venue** with region tunnel variants, not a
+region-bound scenario.) Each new entry is a new *reason* to pick a region or venue.
 
-Candidates that fit the fiction (minds arguing) and reuse `/api/battle`:
-
-| Scenario | One-line | Reuses | New work |
-|---|---|---|---|
-| **The Tribunal** | assigned-stance debate to a jury; switching sides scores ≈0 | battle engine + judge | stance assignment + anti-switch scoring (already specced in `05-regions.md`) |
-| **The Atelier** (Void) | "reframe" mode: Spark-biased, rewards novel framings, punishes rigid proofs | battle + region bias | scoring tilt only |
-| **Siege / King-of-the-hill** | hold the arena vs a queue of challengers for a timer; rank decays | gauntlet queue logic | timer + hold mechanic |
-| **Relay** | 3-champion team, momentum carries between bouts | battle engine | team state, carry-over Resolve |
-| **Open mic / Free roam duel** | the current open duel (default everywhere) | — | — |
+| Scenario / venue | Status | One-line |
+|---|---|---|
+| **Open Duel** | ✅ shipped | pick your opponent, settle it (default everywhere) |
+| **The Gauntlet** | ✅ shipped | rising chain of fighters; press luck or cash out |
+| **The Tribunal** | ✅ shipped | assigned-stance debate to a jury; switching sides scores ≈0 |
+| **The Circuit** | ✅ shipped (venue) | 10-sector flying run; one fall restarts from sector 1 |
+| **The Atelier** (Void) | proposal | "reframe" mode: Spark-biased scoring tilt |
+| **Siege / King-of-the-hill** | proposal | hold the arena vs a queue for a timer |
+| **Relay** | proposal | 3-champion team, momentum carries between bouts |
 
 **Where it slots:** add the id to `ScenarioId`, a `ScenarioDef` to `SCENARIOS`,
 optional config block (mirror `GauntletConfig`), and assign it in `worlds.ts`.
@@ -79,8 +87,8 @@ The HUD/briefing already reads `blurb` + `objective`. The Gauntlet shows the ful
 pattern end-to-end (`components/grounds/gauntlet.tsx`): briefing → interstitial →
 result. A new scenario is ~one component of that shape + a registry entry.
 
-**Biggest bang:** ship **The Tribunal** first — it's already written into canon as
-the *flagship* arena, so it pays double (gameplay + lore alignment).
+**Next bang:** functional settlement walk-ups (Axis B) or a region-specific scoring
+mode like **The Atelier** — Tribunal and Circuit already proved the pattern.
 
 ---
 
@@ -141,13 +149,13 @@ hand-built level.
 
 ## Suggested phasing (smallest valuable step first)
 
-1. **The Tribunal scenario** — highest leverage, already canon, pure registry +
-   one HUD component. Proves "switch region = switch game" beyond duel/gauntlet.
+1. ~~**The Tribunal scenario**~~ ✅ shipped — registry + HUD; flagship Colosseum arena.
 2. **Functional settlement (tier-2 services)** — tag Training + Wager buildings as
    walk-ups inside the existing district. Makes town growth *felt*.
 3. **Rift hazards** — make ▼ Depth descent region-specific (lava/light/crack).
-4. **Per-region traversal course** — seeded parkour line reusing Tower/Platforms.
-5. **One more scenario** (Siege or Relay) once the pattern is proven.
+4. ~~**The Circuit**~~ ✅ shipped as a Concord venue + region tunnel variants.
+5. **Per-region traversal course** — seeded parkour line reusing Tower/Platforms.
+6. **One more scenario** (Siege, Relay, or Atelier) once the pattern is proven.
 
 Each step is independently shippable and reuses code that already exists.
 

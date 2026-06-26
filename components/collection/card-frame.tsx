@@ -60,7 +60,7 @@ export function ChampionCardFrame({
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)" }} />
         <Badge left color={card.force.hex}>
           <span style={{ fontSize: 13, lineHeight: 1 }}>{card.force.sigil}</span>
-          {card.force.inWorld.replace(/^The /, "").toUpperCase()}
+          {card.force.name.toUpperCase()}
         </Badge>
         <Badge color={card.rarityHex} filled>
           {card.rarityLabel.toUpperCase()}

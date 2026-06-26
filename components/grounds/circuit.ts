@@ -59,3 +59,31 @@ export function formatCircuitMs(ms: number): string {
   const r = s - m * 60;
   return m > 0 ? `${m}:${r.toFixed(2).padStart(5, "0")}` : r.toFixed(2);
 }
+
+type CircuitPos = { x: number; y: number; z: number };
+
+/** True when the player passes through the ring hoop (not just the loose volume around it). */
+export function crossedCircuitGate(pos: CircuitPos, cp: CircuitCheckpoint, opts?: { start?: boolean }): boolean {
+  const [cx, cy, cz] = cp.pos;
+  if (opts?.start) {
+    const dh = Math.hypot(pos.x - cx, pos.z - cz);
+    const dy = Math.abs(pos.y - cy);
+    return dh <= cp.radius && dy <= cp.radius;
+  }
+  const horiz = Math.hypot(pos.x - cx, pos.z - cz);
+  if (Math.abs(horiz - cp.radius) > 0.85) return false;
+  if (Math.abs(pos.y - cy) > 1.05) return false;
+  // must be at the gate plane, not just somewhere on the ring's circumference far away
+  if (Math.abs(pos.z - cz) > 1.35) return false;
+  return true;
+}
+
+/** On the finish pad before every prior gate was cleared — a shortcut, not a clear. */
+export function atCircuitFinishEarly(pos: CircuitPos, checkpoints: { pos: [number, number, number]; radius: number; finish?: boolean; index: number }[], nextIdx: number): boolean {
+  const finish = checkpoints[checkpoints.length - 1];
+  if (!finish?.finish || nextIdx >= finish.index) return false;
+  const [fx, fy, fz] = finish.pos;
+  const dh = Math.hypot(pos.x - fx, pos.z - fz);
+  const dy = Math.abs(pos.y - fy);
+  return dh <= finish.radius * 0.9 && dy <= finish.radius * 0.9;
+}

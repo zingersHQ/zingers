@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import { GATE_DIST } from "./worlds";
+import { natureTerrainPalette } from "@/lib/render/nature-kit";
 
 // flat central plaza (arena + champions live here); procedural wilds beyond
 export const PLAZA_R = 36; // flat central plaza radius (+50% layout)
@@ -183,14 +184,15 @@ export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: Spaw
   return Math.max(h, kh);
 }
 
-export function Terrain({ biome }: { biome: BiomeConfig }) {
+export function Terrain({ biome, nature }: { biome: BiomeConfig; nature?: boolean }) {
   const geo = useMemo(() => {
     const SEG = 128;
     const shape = shapeOf(biome);
     const knoll = spawnKnollFor(biome);
-    const low = new THREE.Color(biome.terrain.low);
-    const mid = new THREE.Color(biome.terrain.mid);
-    const high = new THREE.Color(biome.terrain.high);
+    const earth = nature ? natureTerrainPalette(biome.id) : biome.terrain;
+    const low = new THREE.Color(earth.low);
+    const mid = new THREE.Color(earth.mid);
+    const high = new THREE.Color(earth.high);
     const band = biome.terrain.colorBand;
     const g = new THREE.PlaneGeometry(TERRAIN_HALF * 2, TERRAIN_HALF * 2, SEG, SEG);
     g.rotateX(-Math.PI / 2);
@@ -212,12 +214,18 @@ export function Terrain({ biome }: { biome: BiomeConfig }) {
     g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, [biome]);
+  }, [biome, nature]);
 
   return (
     <RigidBody type="fixed" colliders="trimesh">
       <mesh geometry={geo} receiveShadow>
-        <meshStandardMaterial vertexColors metalness={biome.terrain.metalness} roughness={biome.terrain.roughness} envMapIntensity={biome.daylight ? 0.04 : 0.5} flatShading />
+        <meshStandardMaterial
+          vertexColors
+          metalness={nature ? 0.04 : biome.terrain.metalness}
+          roughness={nature ? 0.96 : biome.terrain.roughness}
+          envMapIntensity={biome.daylight ? 0.04 : nature ? 0.15 : 0.5}
+          flatShading={!nature}
+        />
       </mesh>
     </RigidBody>
   );

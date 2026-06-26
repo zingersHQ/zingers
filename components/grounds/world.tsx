@@ -11,7 +11,16 @@ import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/type
 import { blank, skillLevel } from "@/lib/evolve/progression";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { keeperKindForName } from "./keeper-regalia";
-import { Terrain, Scatter, terrainHeight, shapeOf, spawnKnollFor, riftDir, riftAlong, riftDepthEnd, hasRift, PLAZA_R, TERRAIN_HALF, type TerrainShape, type SpawnKnoll } from "./terrain";
+import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
+import {
+  NatureScatter,
+  NatureLandmarks,
+  NatureSpawnPath,
+  NatureRift,
+  NaturePeaks,
+  NatureIslandDressing,
+  NatureGround,
+} from "./nature";
 import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
@@ -22,11 +31,14 @@ import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import { worldById, type GateDef } from "./worlds";
+import { natureGroundPalette } from "@/lib/render/nature-kit";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
 import { CircuitScene } from "./circuit-scene";
 import { circuitSector } from "./circuit-tracks";
+import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
+import { atCircuitFinishEarly, crossedCircuitGate } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
   CONCORD_VENUE_SPOTS,
@@ -37,6 +49,15 @@ import {
   type VenueId,
 } from "./venues";
 import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal } from "./venue-portals";
+
+export interface WorldLife {
+  /** what your champion is saying in-world */
+  companionLine: string | null;
+  /** bump to retrigger a wave when a new line lands */
+  companionAct: number;
+  /** owned champion drills at the train pad */
+  training: boolean;
+}
 
 export interface GroundChampion {
   key: string;
@@ -104,59 +125,67 @@ const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: stri
 
 const keys: Record<string, boolean> = {};
 
-function makeGroundTextures(daylight = false) {
-  const S = 512;
+// Themed central clearing — an organic, matte ground surface (sand / ash / moss /
+// packed earth, per biome) that floors the plaza so the centre matches the
+// natural wilds instead of reading as a sci-fi grid pad. The whole canvas maps
+// ONCE across the disc (no tiling → no repeating rectangles), and its rim fades
+// out so the clearing melts into the surrounding turf rather than reading as a
+// hard-edged pad.
+function makeGroundFloorTexture(pal: { base: string; grain: string; patch: string; pebble: string }) {
+  const S = 1024;
   const c = document.createElement("canvas");
   c.width = c.height = S;
   const x = c.getContext("2d")!;
-  if (daylight) {
-    // matte PALE GREY plaza — daytime ground that keeps contrast with the
-    // colourful props; faint darker grid keeps the floor legible, no glow.
-    x.fillStyle = "#b9bbc6";
-    x.fillRect(0, 0, S, S);
-    for (let i = 0; i < 16000; i++) {
-      x.fillStyle = `rgba(70,70,95,${Math.random() * 0.05})`;
-      x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
-    }
-    x.strokeStyle = "rgba(90,94,120,.34)";
-    x.lineWidth = 2;
-    for (let i = 0; i <= 8; i++) {
-      const p = (i / 8) * S;
-      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
-    }
-    x.strokeStyle = "rgba(140,150,180,.18)";
-    x.lineWidth = 1;
-    for (let i = 0; i <= 16; i++) {
-      const p = (i / 16) * S;
-      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
-    }
-  } else {
-    x.fillStyle = "#0b0916";
-    x.fillRect(0, 0, S, S);
-    for (let i = 0; i < 22000; i++) {
-      x.fillStyle = `rgba(150,150,210,${Math.random() * 0.05})`;
-      x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
-    }
-    x.strokeStyle = "rgba(96,90,160,.30)";
-    x.lineWidth = 2;
-    for (let i = 0; i <= 8; i++) {
-      const p = (i / 8) * S;
-      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
-    }
-    x.strokeStyle = "rgba(80,110,255,.16)";
-    x.lineWidth = 1;
-    for (let i = 0; i <= 16; i++) {
-      const p = (i / 16) * S;
-      x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke();
-      x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke();
-    }
+  x.fillStyle = pal.base;
+  x.fillRect(0, 0, S, S);
+
+  // large-scale organic blotches — uneven earth, lighter (patch) and darker (grain)
+  for (let i = 0; i < 90; i++) {
+    const cx = Math.random() * S, cy = Math.random() * S, r = 60 + Math.random() * 220;
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, i % 2 ? pal.patch : pal.grain);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g;
+    x.globalAlpha = 0.1 + Math.random() * 0.16;
+    x.beginPath(); x.arc(cx, cy, r, 0, 6.28); x.fill();
   }
+  x.globalAlpha = 1;
+
+  // fine grain — dense speckle in the darker grain tone + lighter flecks
+  for (let i = 0; i < 90000; i++) {
+    x.fillStyle = i % 3 === 0 ? pal.pebble : pal.grain;
+    x.globalAlpha = Math.random() * 0.16;
+    const s = Math.random() < 0.92 ? 1 : 2;
+    x.fillRect(Math.random() * S, Math.random() * S, s, s);
+  }
+  x.globalAlpha = 1;
+
+  // scattered grit — small pebbles with a faint shadow for a touch of relief
+  for (let i = 0; i < 520; i++) {
+    const px = Math.random() * S, py = Math.random() * S, r = 1.4 + Math.random() * 3.2;
+    x.fillStyle = "rgba(0,0,0,0.16)";
+    x.beginPath(); x.arc(px + 1.0, py + 1.0, r, 0, 6.28); x.fill();
+    x.fillStyle = pal.pebble;
+    x.globalAlpha = 0.45 + Math.random() * 0.4;
+    x.beginPath(); x.arc(px, py, r, 0, 6.28); x.fill();
+    x.globalAlpha = 1;
+  }
+
+  // soft rim fade — punch the alpha out toward the edge so the clearing blends
+  // into the grass/terrain beneath instead of ending on a hard circle.
+  x.globalCompositeOperation = "destination-out";
+  const fade = x.createRadialGradient(S / 2, S / 2, S * 0.34, S / 2, S / 2, S * 0.5);
+  fade.addColorStop(0, "rgba(0,0,0,0)");
+  fade.addColorStop(1, "rgba(0,0,0,1)");
+  x.fillStyle = fade;
+  x.fillRect(0, 0, S, S);
+  x.globalCompositeOperation = "source-over";
+
   const map = new THREE.CanvasTexture(c);
-  map.wrapS = map.wrapT = THREE.RepeatWrapping;
-  map.repeat.set(4, 4);
+  // clamp + single repeat: the texture covers the disc exactly once, so there
+  // are no seams or repeating tiles.
+  map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+  map.repeat.set(1, 1);
   map.anisotropy = 8;
   return map;
 }
@@ -227,10 +256,12 @@ export default function World({
   activeVenue = null,
   venueHostWorldId = "grounds",
   circuitTrack = circuitSector(0, "void"),
+  circuitPhase = null,
   onCircuitPass,
   onCircuitFail,
   circuitCpNextRef,
   onVenueExit,
+  worldLife,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -264,10 +295,12 @@ export default function World({
   /** Which world you entered the venue from — selects the circuit variant. */
   venueHostWorldId?: string;
   circuitTrack?: CircuitTrackDef;
+  circuitPhase?: CircuitPhase | null;
   onCircuitPass?: (index: number) => void;
-  onCircuitFail?: () => void;
+  onCircuitFail?: (reason?: CircuitFailReason) => void;
   circuitCpNextRef?: React.MutableRefObject<number>;
   onVenueExit?: () => void;
+  worldLife?: WorldLife;
 }) {
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
@@ -341,7 +374,7 @@ export default function World({
       isHub
         ? concordClanSpots().map((b) => ({
             type: b.type,
-            name: FORCES[b.type].inWorld,
+            name: FORCES[b.type].name,
             motto: FORCE_MOTTO[b.type],
             pos: new THREE.Vector3(b.x, terrainHeight(b.x, b.z, shape), b.z),
           }))
@@ -457,7 +490,9 @@ export default function World({
         ? circuitTrack.checkpoints.map((cp) => ({
             index: cp.index,
             pos: new THREE.Vector3(cp.pos[0], cp.pos[1], cp.pos[2]),
+            posTuple: cp.pos,
             radius: cp.radius,
+            finish: !!cp.finish,
           }))
         : [],
     [inCircuit, circuitTrack.checkpoints],
@@ -526,10 +561,11 @@ export default function World({
         }
       >
         <Physics gravity={[0, -22, 0]}>
-          {!inVenue && <Terrain biome={biome} />}
+          {!inVenue && <Terrain biome={biome} nature />}
           {!inVenue && <PlazaFloor biome={biome} />}
-          {!inVenue && <Obelisks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />}
-          {!inVenue && <Scatter biome={biome} />}
+          {!inVenue && <NatureGround biome={biome} shape={shape} />}
+          {!inVenue && <NatureLandmarks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />}
+          {!inVenue && <NatureScatter biome={biome} shape={shape} />}
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
           {isHub && !inVenue && !match && (
@@ -567,9 +603,10 @@ export default function World({
           {inRegion && (
             <>
               <PlazaSurround biome={biome} />
-              <SpawnPath shape={shape} color={biome.lights.arenaPoint} knoll={knoll} />
+              <NatureSpawnPath biome={biome} shape={shape} knoll={knoll} />
               <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
-              <RiftFeature biome={biome} shape={shape} />
+              <NatureRift biome={biome} shape={shape} />
+              <NaturePeaks biome={biome} shape={shape} />
               {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
@@ -601,27 +638,17 @@ export default function World({
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
-            inRegion &&
-            champions.map((c) => {
-              const owned = c.key === ownedKey;
-              const home = owned ? trainPad : roamHome(c.key, champions, sc.roam);
-              return (
-                <ChampionMesh
-                  key={c.key}
-                  type={c.type}
-                  champion={c.champion}
-                  identityKey={c.key}
-                  label={c.name + (owned ? "  ◆ YOURS" : "  · HOUSE")}
-                  position={[home[0], 0, home[2]]}
-                  rotation={owned ? Math.atan2(ARENA[0] - home[0], ARENA[2] - home[2]) : 0}
-                  selected={owned}
-                  wander={!owned}
-                  worldRadius={sc.roam.spread}
-                  wanderInner={sc.roam.inner}
-                  wanderSpeed={sc.roam.speed}
-                />
-              );
-            })
+            inRegion && (
+              <RegionChampions
+                champions={champions}
+                ownedKey={ownedKey}
+                trainPad={trainPad}
+                arena={ARENA}
+                roam={sc.roam}
+                worldLife={worldLife}
+                pledged={pledged}
+              />
+            )
           )}
 
           {!showcase && (
@@ -680,7 +707,7 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} />
       )}
     </Canvas>
     {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
@@ -722,6 +749,98 @@ function roamHome(key: string, champions: GroundChampion[], roam: BiomeConfig["s
   }
   const a = (idx / n) * Math.PI * 2;
   return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
+}
+
+// Region minds with ambient life — your companion drills at the train pad, others
+// occasionally spar / gesture so the plaza doesn't read as eight identical props.
+function RegionChampions({
+  champions,
+  ownedKey,
+  trainPad,
+  arena,
+  roam,
+  worldLife,
+  pledged = null,
+}: {
+  champions: GroundChampion[];
+  ownedKey: string | null;
+  trainPad: [number, number, number];
+  arena: [number, number, number];
+  roam: BiomeConfig["scene"]["roam"];
+  worldLife?: WorldLife;
+  pledged?: CreatureType | null;
+}) {
+  const [npcActs, setNpcActs] = useState<Record<string, number>>({});
+  const [npcGestures, setNpcGestures] = useState<Record<string, "wave" | "punch">>({});
+  const [ownedAct, setOwnedAct] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const npcs = champions.filter((c) => c.key !== ownedKey);
+      if (!npcs.length) return;
+      const a = npcs[Math.floor(Math.random() * npcs.length)]!;
+      let b = a;
+      if (npcs.length > 1) {
+        do {
+          b = npcs[Math.floor(Math.random() * npcs.length)]!;
+        } while (b.key === a.key);
+      }
+      const gesture = (): "wave" | "punch" => (Math.random() < 0.55 ? "punch" : "wave");
+      setNpcActs((prev) => ({
+        ...prev,
+        [a.key]: (prev[a.key] ?? 0) + 1,
+        ...(b.key !== a.key ? { [b.key]: (prev[b.key] ?? 0) + 1 } : {}),
+      }));
+      setNpcGestures((prev) => ({
+        ...prev,
+        [a.key]: gesture(),
+        ...(b.key !== a.key ? { [b.key]: gesture() } : {}),
+      }));
+    }, 5200);
+    return () => clearInterval(id);
+  }, [champions, ownedKey]);
+
+  useEffect(() => {
+    if (!worldLife?.training) return;
+    const id = setInterval(() => setOwnedAct((n) => n + 1), 2000);
+    return () => clearInterval(id);
+  }, [worldLife?.training]);
+
+  useEffect(() => {
+    if (worldLife?.companionLine) setOwnedAct((n) => n + 1);
+  }, [worldLife?.companionLine, worldLife?.companionAct]);
+
+  return (
+    <>
+      {champions.map((c) => {
+        const owned = c.key === ownedKey;
+        const home = owned ? trainPad : roamHome(c.key, champions, roam);
+        const actSig = owned ? (worldLife?.companionAct ?? 0) + ownedAct : (npcActs[c.key] ?? 0);
+        const actName = owned ? (worldLife?.training ? "punch" : "wave") : (npcGestures[c.key] ?? "wave");
+        return (
+          <ChampionMesh
+            key={c.key}
+            type={c.type}
+            champion={c.champion}
+            identityKey={c.key}
+            label={c.name + (owned ? "  ◆ YOURS" : "")}
+            showForce={!owned}
+            clan={owned ? pledged : null}
+            position={[home[0], 0, home[2]]}
+            rotation={owned ? Math.atan2(arena[0] - home[0], arena[2] - home[2]) : 0}
+            selected={owned}
+            wander={!owned}
+            worldRadius={roam.spread}
+            wanderInner={roam.inner}
+            wanderSpeed={roam.speed}
+            actSignal={actSig}
+            actName={actName}
+            speechLine={owned ? worldLife?.companionLine : null}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 // ── Beacon ───────────────────────────────────────────────────────────────────
@@ -796,37 +915,6 @@ function DiscoveryCache({ node }: { node: DiscoveryNode }) {
 // RIVER OF LIGHT, the Colosseum with a violet VAULT-CRACK. Cheap: a ribbon of
 // additive planes following the floor + a few molten lights. Renders only where a
 // region actually has a rift (shape.canyonDepth > 0).
-function RiftFeature({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
-  const data = useMemo(() => {
-    if (shape.canyonDepth <= 0) return null;
-    const col = biome.id === "ember" ? "#ff4d14" : biome.id === "void" ? "#34ffd0" : "#8a5cff";
-    const dirx = Math.cos(shape.canyonAngle), dirz = Math.sin(shape.canyonAngle);
-    const start = PLAZA_R + 6, end = TERRAIN_HALF - 16, N = 16;
-    const segs: { r: number; y: number; w: number }[] = [];
-    for (let i = 0; i < N; i++) {
-      const r = start + (i / (N - 1)) * (end - start);
-      const x = dirx * r, z = dirz * r;
-      segs.push({ r, y: terrainHeight(x, z, shape) + 0.08, w: shape.canyonHalfWidth * (0.7 + 0.25 * Math.sin(i)) });
-    }
-    return { col, segs, len: ((end - start) / N) + 1.8, lit: [2, 7, 12] };
-  }, [biome, shape]);
-  if (!data) return null;
-  const hazard = biome.id === "ember";
-  return (
-    <group rotation={[0, -shape.canyonAngle, 0]}>
-      {data.segs.map((s, i) => (
-        <mesh key={i} position={[s.r, s.y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[data.len, s.w]} />
-          <meshBasicMaterial color={data.col} transparent opacity={hazard ? 0.82 : 0.5} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} fog={false} />
-        </mesh>
-      ))}
-      {data.lit.map((li) =>
-        data.segs[li] ? <pointLight key={li} position={[data.segs[li].r, data.segs[li].y + 2.4, 0]} intensity={hazard ? 48 : 30} color={data.col} distance={28} /> : null,
-      )}
-    </group>
-  );
-}
-
 // ── Floating islands (Void Garden) ───────────────────────────────────────────
 // The Void's signature: a constellation of solid sky-islands you platform across
 // by flight, so its peak/secret play happens UP in the air, not on the ground.
@@ -844,6 +932,7 @@ function FloatingIslands({ biome, shape }: { biome: BiomeConfig; shape: TerrainS
     }
     return out;
   }, [shape]);
+  const islandTops = useMemo(() => items.map((it) => [it.pos[0], it.pos[1] + 0.75, it.pos[2]] as [number, number, number]), [items]);
   return (
     <>
       {items.map((it, i) => (
@@ -860,6 +949,7 @@ function FloatingIslands({ biome, shape }: { biome: BiomeConfig; shape: TerrainS
           </mesh>
         </group>
       ))}
+      <NatureIslandDressing biome={biome} positions={islandTops} />
     </>
   );
 }
@@ -1025,11 +1115,15 @@ function Starfield() {
 // thin textured visual overlay for the flat plaza (the terrain provides the collider)
 function PlazaFloor({ biome }: { biome: BiomeConfig }) {
   const day = !!biome.daylight;
-  const map = useMemo(() => makeGroundTextures(day), [day]);
+  // Themed natural clearing (sand/ash/moss/earth) so the centre matches the
+  // surrounding wilds. The texture carries the colour, so the material albedo is
+  // left near-white and matte — no grid, no glow.
+  const pal = useMemo(() => natureGroundPalette(biome.id), [biome.id]);
+  const map = useMemo(() => makeGroundFloorTexture(pal), [pal]);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
-      <circleGeometry args={[PLAZA_R + 1, 80]} />
-      <meshStandardMaterial map={map} color={biome.plaza.color} emissive={biome.plaza.emissive} emissiveIntensity={biome.plaza.emissiveIntensity} metalness={day ? 0 : 0.35} roughness={day ? 1 : 0.6} envMapIntensity={day ? 0.04 : 0.8} />
+      <circleGeometry args={[PLAZA_R + 1, 128]} />
+      <meshStandardMaterial map={map} color="#ffffff" transparent depthWrite={false} metalness={0.02} roughness={0.97} envMapIntensity={day ? 0.04 : 0.15} />
     </mesh>
   );
 }
@@ -1270,62 +1364,6 @@ function KeeperFigure({
 
 // The approach trail: from the outer rift lip inward to claim the Depth, then
 // through the colosseum entrance to the arena.
-function SpawnPath({ shape, color, knoll }: { shape: TerrainShape; color: string; knoll: SpawnKnoll }) {
-  const studs = useMemo(() => {
-    const out: { pos: [number, number, number]; s: number }[] = [];
-    const ARENA_RIM = 9.2;
-    const STEP = 2.2;
-    const W = 1.4;
-
-    const pushStud = (x: number, z: number) => {
-      out.push({ pos: [x, terrainHeight(x, z, shape, knoll) + 0.06, z], s: 0.34 });
-    };
-
-    if (hasRift(shape)) {
-      const { dirx, dirz } = riftDir(shape);
-      const perpx = -dirz;
-      const perpz = dirx;
-      const spawnAlong = riftAlong(knoll.x, knoll.z, shape);
-      const [dx, , dz] = riftDepthEnd(shape, knoll);
-      const depthAlong = riftAlong(dx, dz, shape);
-
-      // inward from outer spawn → deepest point (claim the Depth)
-      for (let along = spawnAlong - STEP; along >= depthAlong; along -= STEP) {
-        for (const side of [-1, 1] as const) {
-          pushStud(dirx * along + perpx * side * W, dirz * along + perpz * side * W);
-        }
-      }
-      // inward from depth floor → arena rim (enter the colosseum)
-      for (let along = depthAlong - STEP; along >= ARENA_RIM; along -= STEP) {
-        const widen = along < PLAZA_R ? 1 + (PLAZA_R - along) * 0.06 : 1;
-        for (const side of [-1, 1] as const) {
-          pushStud(dirx * along + perpx * side * W * widen, dirz * along + perpz * side * W * widen);
-        }
-      }
-      return out;
-    }
-
-    // no rift — walk inward from the far +z edge to the arena
-    for (let z = knoll.z - STEP; z >= ARENA_RIM; z -= STEP) {
-      const widen = z > PLAZA_R ? 1 : 1 + (PLAZA_R - z) * 0.06;
-      for (const side of [-1, 1] as const) {
-        pushStud(side * W * widen, z);
-      }
-    }
-    return out;
-  }, [shape, knoll]);
-  return (
-    <group>
-      {studs.map((m, i) => (
-        <mesh key={i} position={m.pos} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[m.s, 20]} />
-          <meshBasicMaterial color={color} transparent opacity={0.85} side={THREE.DoubleSide} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 function TrainPad({ pos }: { pos: [number, number, number] }) {
   return (
     <group position={pos}>
@@ -1577,7 +1615,11 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
             <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
             <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
               {agent.name}
-              {agent.handle ? <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span> : null}
+              {agent.handle && agent.handle.toUpperCase() !== "HOUSE" ? (
+                <span style={{ color: "#9a96b8", fontWeight: 500 }}> @{agent.handle}</span>
+              ) : (
+                <span style={{ color: "#7a7690", fontWeight: 600, fontSize: 12 }}> · League</span>
+              )}
             </div>
             <div style={{ fontSize: 10, letterSpacing: 1, color: vis.color, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
               <vis.badge size={11} strokeWidth={2.2} /> {vis.label} · SL {skillLevel(champ)}
@@ -1586,38 +1628,6 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
         </Html>
       )}
     </group>
-  );
-}
-
-function Obelisks({ biome, shape, count, pillar }: { biome: BiomeConfig; shape: TerrainShape; count: number; pillar: "obelisk" | "basalt" }) {
-  const items = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => {
-        const a = (i / count) * Math.PI * 2;
-        const r = PLAZA_R + 14 + (i % 3) * 6;
-        const x = Math.cos(a) * r, z = Math.sin(a) * r;
-        return { x, z, base: terrainHeight(x, z, shape), h: 9 + Math.random() * 8, rot: Math.random() * 6.28, lean: (Math.random() - 0.5) * 0.25 };
-      }),
-    [shape, count],
-  );
-  return (
-    <>
-      {items.map((o, i) =>
-        pillar === "basalt" ? (
-          // chunky, leaning hexagonal basalt columns — volcanic, not crystalline
-          <mesh key={i} position={[o.x, o.base + o.h / 2, o.z]} rotation={[o.lean, o.rot, o.lean]} castShadow>
-            <cylinderGeometry args={[1.4, 1.7, o.h, 6]} />
-            <meshStandardMaterial color={biome.obelisk.color} emissive={biome.obelisk.emissive} emissiveIntensity={biome.obelisk.emissiveIntensity * 0.5} metalness={0.2} roughness={0.95} flatShading envMapIntensity={0.6} />
-          </mesh>
-        ) : (
-          // tall sharp obelisks — crystalline spires
-          <mesh key={i} position={[o.x, o.base + o.h / 2, o.z]} rotation={[0, o.rot, 0]} castShadow>
-            <coneGeometry args={[1.3, o.h, 5]} />
-            <meshStandardMaterial color={biome.obelisk.color} emissive={biome.obelisk.emissive} emissiveIntensity={biome.obelisk.emissiveIntensity} metalness={0.5} roughness={0.45} envMapIntensity={1} />
-          </mesh>
-        ),
-      )}
-    </>
   );
 }
 
@@ -2025,10 +2035,10 @@ function Handler({
   inVenue?: boolean;
   inAmphitheatre?: boolean;
   circuitMode?: boolean;
-  circuitCheckpoints?: { index: number; pos: THREE.Vector3; radius: number }[];
+  circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
   onCircuitPass?: (index: number) => void;
-  onCircuitFail?: () => void;
+  onCircuitFail?: (reason?: CircuitFailReason) => void;
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
   returnTarget?: THREE.Vector3 | null;
   circuitTunnelTarget?: { label: string; pos: THREE.Vector3 } | null;
@@ -2378,8 +2388,8 @@ function Handler({
       if (steerStart) heading.current = Math.atan2(mx, mz);
       const hf = Math.sin(heading.current);
       const hb = Math.cos(heading.current);
-      moveX = hf * az + hb * ax;
-      moveZ = hb * az - hf * ax;
+      moveX = hf * az - hb * ax;
+      moveZ = hb * az + hf * ax;
       moveLen = Math.hypot(moveX, moveZ);
     }
     wasHeadingSteer.current = headingSteer;
@@ -2597,12 +2607,25 @@ function Handler({
     if (!matchActive && circuitMode && onCircuitPass && circuitCpNextRef) {
       const nextIdx = circuitCpNextRef.current;
       const cp = circuitCheckpoints[nextIdx];
+      const pos = { x: t.x, y: t.y, z: t.z };
       if (cp) {
-        const dy = Math.abs(t.y - cp.pos.y);
-        const dh = Math.hypot(t.x - cp.pos.x, t.z - cp.pos.z);
-        if (dy <= cp.radius && dh <= cp.radius) {
+        if (crossedCircuitGate(pos, { index: cp.index, label: "", pos: cp.posTuple, radius: cp.radius, finish: cp.finish }, { start: cp.index === 0 })) {
           onCircuitPass(cp.index);
           circuitCpNextRef.current = nextIdx + 1;
+        }
+      }
+      if (
+        onCircuitFail &&
+        atCircuitFinishEarly(
+          pos,
+          circuitCheckpoints.map((c) => ({ pos: c.posTuple, radius: c.radius, finish: c.finish, index: c.index })),
+          nextIdx,
+        )
+      ) {
+        const now = performance.now();
+        if (now - failCooldown.current > 800) {
+          failCooldown.current = now;
+          onCircuitFail("gates");
         }
       }
       // fell off the track — one fall ends the entire run (no checkpoint respawn)
@@ -2610,7 +2633,7 @@ function Handler({
         const now = performance.now();
         if (onCircuitFail && now - failCooldown.current > 800) {
           failCooldown.current = now;
-          onCircuitFail();
+          onCircuitFail("fall");
         }
       }
     } else if (!matchActive && isHub) {
@@ -2865,7 +2888,27 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
   return null;
 }
 
-function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFocus }: { match: MatchView | null; handlerPos: React.RefObject<THREE.Vector3>; camCue: React.RefObject<CamCue>; camDrag: React.RefObject<CamDrag>; shape: TerrainShape; galleryFocus?: React.RefObject<GalleryFocus | null> }) {
+const CIRCUIT_INTRO_HOLD_S = 1.5;
+
+function CameraController({
+  match,
+  handlerPos,
+  camCue,
+  camDrag,
+  shape,
+  galleryFocus,
+  inCircuit = false,
+  circuitPhase = null,
+}: {
+  match: MatchView | null;
+  handlerPos: React.RefObject<THREE.Vector3>;
+  camCue: React.RefObject<CamCue>;
+  camDrag: React.RefObject<CamDrag>;
+  shape: TerrainShape;
+  galleryFocus?: React.RefObject<GalleryFocus | null>;
+  inCircuit?: boolean;
+  circuitPhase?: CircuitPhase | null;
+}) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
@@ -2886,9 +2929,21 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
   const prevSuperrun = useRef(false);
   const recenter = useRef(0);
   const recenterPitch = useRef(0.34);
+  // Circuit race intro: hold a front-facing hero shot, then sweep behind the runner.
+  const circuitIntroHold = useRef(0);
+  const prevCircuitPhase = useRef<CircuitPhase | null>(null);
   // eased 0..1 weight of "frame the Scrying Gallery ring" — ramps up as the player
   // nears the live bout and decays back to free third-person on leave
   const galleryW = useRef(0);
+
+  useEffect(() => {
+    if (!inCircuit) {
+      circuitIntroHold.current = 0;
+      prevCircuitPhase.current = null;
+      return;
+    }
+    if (camCue.current) yaw.current = camCue.current.heading;
+  }, [inCircuit, camCue]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -3003,6 +3058,24 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
     const moving = cue ? cue.moving : false;
     const speed01 = Math.min(1, speed / (cue?.superrun ? SUPERRUN : RUN));
 
+    if (inCircuit && circuitPhase === "running" && prevCircuitPhase.current !== "running") {
+      circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
+      if (cue) yaw.current = cue.heading;
+    }
+    if (inCircuit) prevCircuitPhase.current = circuitPhase;
+    else prevCircuitPhase.current = null;
+
+    const circuitIntroActive = inCircuit && circuitIntroHold.current > 0;
+    if (circuitIntroActive) {
+      const holdBefore = circuitIntroHold.current;
+      circuitIntroHold.current = Math.max(0, circuitIntroHold.current - dt);
+      if (holdBefore > 0 && circuitIntroHold.current === 0) {
+        recenter.current = 0.9;
+        recenterPitch.current = 0.34;
+      }
+    }
+    const circuitFrontLock = inCircuit && (circuitPhase === "ready" || circuitIntroActive);
+
     const recentering = recenter.current > 0 && !dragging.current;
     if (recenter.current > 0) recenter.current = Math.max(0, recenter.current - dt);
 
@@ -3036,7 +3109,7 @@ function CameraController({ match, handlerPos, camCue, camDrag, shape, galleryFo
         pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
       }
       pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
-    } else if (cue && moving && !cue.reverse && !cue.headingSteer && performance.now() - lastInput.current > 900) {
+    } else if (cue && moving && !cue.reverse && !cue.headingSteer && !circuitFrontLock && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));

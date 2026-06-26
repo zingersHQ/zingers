@@ -5,6 +5,7 @@ import type { CircuitPersonalBest } from "./circuit-tracks";
 import { CIRCUIT_SECTOR_COUNT } from "./circuit-tracks";
 
 export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed";
+export type CircuitFailReason = "fall" | "gates";
 
 export interface CircuitBoardEntry {
   handle: string;
@@ -27,6 +28,7 @@ export function CircuitHud({
   onRestart,
   accent,
   compact,
+  failReason,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -41,6 +43,7 @@ export function CircuitHud({
   onRestart: () => void;
   accent: string;
   compact?: boolean;
+  failReason?: CircuitFailReason;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
@@ -68,11 +71,9 @@ export function CircuitHud({
             ? "RUN OVER"
             : phase === "done"
               ? "FULL CLEAR"
-              : phase === "sector"
-                ? "SECTOR CLEARED"
-                : running
-                  ? `SECTOR ${sectorN} / ${CIRCUIT_SECTOR_COUNT}`
-                  : "THE CIRCUIT"}
+              : running || phase === "sector"
+                ? `SECTOR ${sectorN} / ${CIRCUIT_SECTOR_COUNT}`
+                : "THE CIRCUIT"}
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <Timer size={18} color={accent} strokeWidth={2.2} />
@@ -149,7 +150,7 @@ export function CircuitHud({
         )}
         {phase === "ready" && (
           <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5 }}>
-            clear all {CIRCUIT_SECTOR_COUNT} sectors · fall = restart from sector 1
+            clear all {CIRCUIT_SECTOR_COUNT} sectors · pass every gate · fall or skip = restart
           </div>
         )}
       </div>
@@ -160,7 +161,7 @@ export function CircuitHud({
       )}
 
       {phase === "sector" && (
-        <CircuitModal accent={accent} icon={<ChevronRight size={28} color={accent} />} kicker="SECTOR CLEARED" title={`${sectorN} down`} sub={`${CIRCUIT_SECTOR_COUNT - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
+        <CircuitModal accent={accent} icon={<ChevronRight size={28} color={accent} />} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${CIRCUIT_SECTOR_COUNT - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onContinue}>
             Sector {sectorN + 1} <ChevronRight size={16} strokeWidth={2.5} />
           </button>
@@ -176,7 +177,7 @@ export function CircuitHud({
       )}
 
       {phase === "failed" && (
-        <CircuitModal accent="#ff5a5a" icon={<Skull size={28} color="#ff5a5a" />} kicker="RUN OVER" title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`} sub="Back to sector 1. One fall ends the run.">
+        <CircuitModal accent="#ff5a5a" icon={<Skull size={28} color="#ff5a5a" />} kicker="RUN OVER" title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`} sub={failReason === "gates" ? "Missed a gate — every ring must be crossed. Back to sector 1." : "Back to sector 1. One fall ends the run."}>
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> try again
           </button>

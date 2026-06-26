@@ -29,7 +29,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
     return (
       <div
         className="panel"
-        aria-label={`Reader level ${tl.level}, ${tl.title}, ${fm.house}`}
+        aria-label={`Trainer level ${tl.level}, ${tl.title}, ${fm.name}`}
         style={{ ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", width: "fit-content", pointerEvents: "auto" }}
       >
         <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 6, background: `${fc}22`, color: fc, fontSize: 13, fontWeight: 800 }}>
@@ -37,7 +37,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
         </span>
         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
-          <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5, marginTop: 1 }}>{fm.house.toUpperCase()}</span>
+          <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5, marginTop: 1 }}>{fm.name.toUpperCase()}</span>
         </span>
       </div>
     );
@@ -73,7 +73,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
         <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 12, width: 256, maxWidth: "calc(100vw - 32px)", zIndex: 3 }}>
           {/* rank progress */}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>Reader rank {tl.level}</span>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>Trainer rank {tl.level}</span>
             <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>{tl.into}/{tl.span} xp</span>
           </div>
           <div className="mono" style={{ fontSize: 10, color: fc, marginTop: 1 }}>{tl.title}</div>
@@ -88,7 +88,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
                 <span>SEASON WAR</span>
                 {war.leader ? (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: TYPE_COLOR[war.leader] }}>
-                    <Crown size={10} strokeWidth={2.4} /> {forceMeta(war.leader).house}
+                    <Crown size={10} strokeWidth={2.4} /> {forceMeta(war.leader).name}
                   </span>
                 ) : (
                   <span style={{ fontStyle: "italic" }}>all even</span>

@@ -77,7 +77,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 55%, rgba(8,6,16,.9) 100%)" }} />
               <div className="mono" style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, alignItems: "center", color: col, border: `1px solid ${col}`, borderRadius: 8, padding: "4px 8px", background: "rgba(8,6,16,.65)", fontSize: 10, letterSpacing: 1 }}>
                 <span>{force.sigil}</span>
-                {force.inWorld.replace(/^The /, "").toUpperCase()}
+                {force.name.toUpperCase()}
               </div>
               <div className="mono" style={{ position: "absolute", top: 12, right: 12, background: "var(--gold)", color: "#0a0812", borderRadius: 8, padding: "4px 8px", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>
                 {rarity.toUpperCase()}
@@ -85,7 +85,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
             </div>
             <div>
               <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>{c.name}</div>
-              <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.inWorld}</div>
+              <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.name}</div>
               <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>SL {sl} · {tier} · brain: {brain}</div>
               <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "18px 0 0" }}>
                 A snapshot of a raised Zingers mind: its rank, rarity, doctrine, and portrait are all derived from the champion's career.

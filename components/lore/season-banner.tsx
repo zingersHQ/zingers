@@ -99,7 +99,7 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
         <p style={{ color: "var(--muted)", fontSize: compact ? 12 : 14, lineHeight: 1.55, margin: "10px 0 0" }}>{season.arc.blurb}</p>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
-          <Chip color={force.hex}>{force.sigil} {force.inWorld}</Chip>
+          <Chip color={force.hex}>{force.sigil} {force.name}</Chip>
           <Chip color="var(--gold)">Featured: {season.featured.name}</Chip>
           <Chip color="var(--muted2)">Soft reset: {sampleOld} → {sampleNew}</Chip>
         </div>

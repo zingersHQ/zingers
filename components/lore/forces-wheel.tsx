@@ -92,7 +92,7 @@ export function ForcesWheel({ size = 320, highlight }: { size?: number; highligh
             >
               {f.sigil}
             </span>
-            <span style={{ fontSize: Math.max(10, size * 0.036), fontWeight: 700, color: "#fff", lineHeight: 1.1, letterSpacing: -0.2 }}>{f.inWorld}</span>
+            <span style={{ fontSize: Math.max(10, size * 0.036), fontWeight: 700, color: "#fff", lineHeight: 1.1, letterSpacing: -0.2 }}>{f.name}</span>
             <span className="mono" style={{ fontSize: Math.max(8, size * 0.028), color: "var(--muted2)", lineHeight: 1.2, fontStyle: "italic" }}>{f.argues}</span>
           </div>
         );
@@ -115,7 +115,7 @@ export function ForcesChain() {
         const f = FORCES[id];
         return (
           <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <span title={`${f.inWorld} — ${f.argues}`} style={{ display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: "50%", fontSize: 12, color: f.hex, background: `${f.hex}1f`, border: `1.5px solid ${f.hex}` }}>
+            <span title={`${f.name} — ${f.argues}`} style={{ display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: "50%", fontSize: 12, color: f.hex, background: `${f.hex}1f`, border: `1.5px solid ${f.hex}` }}>
               {f.sigil}
             </span>
             <span style={{ color: "var(--muted2)", fontSize: 12 }}>{k < WHEEL.length - 1 ? "›" : "↻"}</span>

@@ -5,11 +5,13 @@ import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { armOnboardingAudio } from "@/lib/sound-gallery";
 import { ONBOARDING_BG } from "@/lib/iconography";
+import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import { FORCES, wheelNeighbors } from "@/lib/lore/canon";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
+import { ForcesWheel } from "@/components/lore/forces-wheel";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
@@ -42,8 +44,8 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
   // performs an action in every scene. On a phone we keep the two beats that hit
   // hardest: the birth and the fight.
   const slides = isMobile
-    ? [<Awaken key="awaken" mobile />, <Fight key="fight" mobile />]
-    : [<Awaken key="awaken" />, <Shape key="shape" />, <Fight key="fight" />, <Legend key="legend" />];
+    ? [<Awaken key="awaken" mobile />, <Forces key="forces" mobile />, <Fight key="fight" mobile />]
+    : [<Awaken key="awaken" />, <Shape key="shape" />, <Forces key="forces" />, <Fight key="fight" />, <Legend key="legend" />];
   const count = slides.length;
   const LAST = count - 1;
 
@@ -229,42 +231,6 @@ function Stage({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Cinematic lower-third: a bottom scrim that lets the 3D own the frame while the
-// copy reads clean over it.
-function LowerThird({
-  kicker,
-  title,
-  body,
-  mobile,
-  children,
-}: {
-  kicker: string;
-  title: React.ReactNode;
-  body?: React.ReactNode;
-  mobile?: boolean;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 3,
-        padding: mobile ? "60px 22px 22px" : "90px 56px 40px",
-        pointerEvents: "none",
-        background: "linear-gradient(0deg, rgba(7,6,13,.94) 0%, rgba(7,6,13,.7) 42%, rgba(7,6,13,0) 100%)",
-      }}
-    >
-      <div className="mono" style={{ fontSize: mobile ? 9 : 11, letterSpacing: 2.8, color: ACC }}>{kicker}</div>
-      <h2 style={{ fontSize: mobile ? 23 : 34, fontWeight: 800, margin: "6px 0 0", letterSpacing: -0.6, lineHeight: 1.05 }}>{title}</h2>
-      {body && <p style={{ fontSize: mobile ? 13 : 15, color: "var(--muted)", maxWidth: 540, margin: "10px 0 0", lineHeight: 1.5 }}>{body}</p>}
-      {children}
-    </div>
-  );
-}
-
 // ── Beat 1 — AWAKEN ──────────────────────────────────────────────────────────
 // A mind ignites: slow camera push-in onto a breathing agent, aura alight.
 function Awaken({ mobile }: { mobile?: boolean }) {
@@ -333,7 +299,43 @@ function Shape({ mobile }: { mobile?: boolean }) {
   );
 }
 
-// ── Beat 3 — FIGHT ───────────────────────────────────────────────────────────
+// ── Beat 3 — FORCES ──────────────────────────────────────────────────────────
+// The one diagram that makes the whole game legible BEFORE any proper noun lands
+// in 3D: five fighting styles on a wheel, each beating the next. Names are plain
+// (Logic / Static / Calm / Chorus / Spark) so the player leaves knowing what a
+// "Force" is and that a "Clan" is just the Force you pick to fight for.
+function Forces({ mobile }: { mobile?: boolean }) {
+  return (
+    <div style={FULL}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
+          paddingBottom: mobile ? "44vh" : 240,
+          paddingTop: mobile ? 56 : 40,
+        }}
+      >
+        <ForcesWheel size={mobile ? 250 : 360} />
+      </div>
+      <LowerThird
+        mobile={mobile}
+        kicker="THE FIVE FORCES"
+        title={
+          <>
+            Five styles.
+            <br />
+            One wheel.
+          </>
+        }
+        body="Every champion is one of five Forces — its fighting style, shown by its colour and sigil. Each Force beats the next around the wheel and loses to the one behind it. Later you swear to one Force to fight for: that’s your Clan."
+      />
+    </div>
+  );
+}
+
+// ── Beat 4 — FIGHT ───────────────────────────────────────────────────────────
 // The arena: a self-running duel where the hero presses its type advantage and
 // thinks out loud. CHAOS (hero) sits one step ahead of COMPOSURE (rival).
 const HERO_LINES: { line: string; why: string }[] = [
@@ -392,9 +394,9 @@ function MatchupTag({ mobile }: { mobile?: boolean }) {
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ color: hero.hex, fontWeight: 700 }}>{hero.sigil} {hero.type}</span>
+      <span style={{ color: hero.hex, fontWeight: 700 }}>{hero.sigil} {hero.name}</span>
       <span style={{ color: "var(--good)", letterSpacing: 0.5 }}>beats</span>
-      <span style={{ color: prey.hex, fontWeight: 700 }}>{prey.type} {prey.sigil}</span>
+      <span style={{ color: prey.hex, fontWeight: 700 }}>{prey.name} {prey.sigil}</span>
     </div>
   );
 }

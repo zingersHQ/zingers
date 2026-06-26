@@ -42,6 +42,49 @@ export function forceColors(type: CreatureType): ForceColors {
   return FORCE_COLORS[type] ?? FORCE_COLORS.LOGIC;
 }
 
+// ── Force "hero skin" ─────────────────────────────────────────────────────────
+// The canon look every regular mind of a Force wears. A shared GOLD core (torso +
+// gloves + shoes + shoulders) ties the five together as one cast; each Force then
+// owns a distinct head dome, limb colour, eye glow, and floating-cube hue so the
+// species still read apart at a glance. Keepers ignore this and keep their richer,
+// patterned treatment (see bodyPalette `rich`). Tones are chosen to stay inside
+// the existing Force palette (FORCE_COLORS) so the world stays colour-coherent.
+export const GOLD = "#f5d020"; // canon gold — matches CREATIVITY primary + the legend crown
+
+export interface ForceSkin {
+  /** head dome */
+  head: string;
+  /** glowing eyes + emissive seams */
+  eye: string;
+  /** upper arms */
+  arm: string;
+  /** upper legs */
+  leg: string;
+  /** floating energy cubes / shards / orbs */
+  cube: string;
+  /** thin trim (the Grey "plate" material — usually gold) */
+  trim: string;
+  /** gold core override (torso / hands / feet / shoulders) — defaults to GOLD */
+  gold?: string;
+}
+
+export const FORCE_SKINS: Record<CreatureType, ForceSkin> = {
+  // Static — vibrant cyber-pop: cyan dome, magenta limbs, pink cubes, gold core
+  CHAOS: { head: "#22d3d8", eye: "#67f5ff", arm: "#ff4ad1", leg: "#ff4ad1", cube: "#ff4ad1", trim: GOLD },
+  // Calm — fresh + retro-futuristic: green dome, copper arms, green legs, brown/gold cubes
+  COMPOSURE: { head: "#3ad9a0", eye: "#ffd84a", arm: "#cf7a33", leg: "#36d39a", cube: "#b07a2e", trim: GOLD },
+  // Logic — bright tech-knight: deep blue dome + blue limbs, gold eyes, orange/brown cubes
+  LOGIC: { head: "#2f63c8", eye: "#ffd84a", arm: "#4aa3ff", leg: "#4aa3ff", cube: "#d98a3a", trim: GOLD },
+  // Chorus — bold + heroic: red dome + red limbs, orange eyes, orange/brown cubes
+  RHETORIC: { head: "#e23b34", eye: "#ffae3a", arm: "#e2453a", leg: "#e2453a", cube: "#d9772f", trim: GOLD },
+  // Spark — gold hero with purple accents + cyan cubes
+  CREATIVITY: { head: GOLD, eye: "#a45bff", arm: GOLD, leg: GOLD, cube: "#5fd8e0", trim: "#9b5cff" },
+};
+
+export function forceSkin(type: CreatureType): ForceSkin {
+  return FORCE_SKINS[type] ?? FORCE_SKINS.LOGIC;
+}
+
 // ── colour math (dependency-free; mirrors the helpers in biomes.ts) ───────────
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
@@ -155,8 +198,10 @@ export interface BodyPalette {
   accent: string;
   trim: string;
   dark: string;
-  /** glow colour for emissive seams / archetype features */
+  /** glow colour for emissive seams / archetype features (= the eye colour) */
   glow: string;
+  /** floating energy cubes / shards / orbs colour */
+  cube: string;
   colorFor: (region: Region, side: Side, role: MatRole) => string;
 }
 
@@ -165,6 +210,8 @@ export interface PaletteOpts {
   secondary?: string;
   /** keepers: ignore the restrained pair, use richer patterns + multi-colour */
   rich?: boolean;
+  /** the mind's Force — regular minds wear that Force's canon hero skin */
+  type?: CreatureType;
 }
 
 const clampS = (v: number) => Math.min(0.95, Math.max(0, v));
@@ -175,7 +222,12 @@ const clampL = (v: number) => Math.min(1, Math.max(0, v));
  *  two-tone Force scheme; with `rich:true` (Keepers) it roams to a louder,
  *  patterned, multi-colour look. */
 export function bodyPalette(forceHex: string, seed: number, opts: PaletteOpts = {}): BodyPalette {
-  const { secondary: companion, rich = false } = opts;
+  const { secondary: companion, rich = false, type } = opts;
+  // Regular minds wear their Force's canon hero skin (fixed region→colour map,
+  // gold core, tiny per-individual jitter). Keepers fall through to the richer,
+  // patterned, multi-colour treatment below.
+  if (!rich && type && FORCE_SKINS[type]) return skinPalette(FORCE_SKINS[type], seed);
+
   const rnd = mulberry32(seed || 1);
   const [bh, bs] = hexToHsl(forceHex);
 
@@ -224,10 +276,66 @@ export function bodyPalette(forceHex: string, seed: number, opts: PaletteOpts = 
     trim,
     dark,
     glow,
+    cube: glow, // keepers: cubes carry the glow colour (unchanged from before)
     colorFor(region, side, role) {
       if (role === "dark") return dark;
       if (role === "plate") return slot[scheme.plate];
       return slot[scheme.main(region, side)];
+    },
+  };
+}
+
+// ── the canon hero skin → a coherent BodyPalette ──────────────────────────────
+// Gold core (torso / hands / feet / shoulders) shared across all Forces; the head
+// dome, arms, legs, eyes (glow) and floating cubes are the Force's own. A small
+// per-seed lightness/saturation jitter keeps a room of same-Force minds from
+// looking stamped from one mould without breaking the recognisable scheme. (Body
+// proportions still vary widely via the bone genome, so individuals stay distinct.)
+function skinPalette(skin: ForceSkin, seed: number): BodyPalette {
+  const rnd = mulberry32(seed || 1);
+  const jit = (hex: string, amt: number) => {
+    const [h, s, l] = hexToHsl(hex);
+    return hslToHex(h, clampS(s * (0.95 + rnd() * 0.1)), clampL(l + (rnd() - 0.5) * amt));
+  };
+  const goldBase = skin.gold ?? GOLD;
+  const head = jit(skin.head, 0.05);
+  const arm = jit(skin.arm, 0.05);
+  const leg = jit(skin.leg, 0.05);
+  const cube = jit(skin.cube, 0.06);
+  const gold = jit(goldBase, 0.04);
+  const trim = skin.trim;
+  const glow = skin.eye;
+  const [hh] = hexToHsl(skin.head);
+  const dark = hslToHex(hh, 0.4, 0.1); // tinted near-black joints
+
+  const mainFor = (region: Region): string => {
+    switch (region) {
+      case "head":
+        return head;
+      case "arm":
+        return arm;
+      case "thigh":
+      case "shin":
+        return leg;
+      // torso, shoulder, hand, foot → the shared gold core
+      default:
+        return gold;
+    }
+  };
+
+  return {
+    scheme: "forceSkin",
+    primary: arm,
+    secondary: leg,
+    accent: goldBase,
+    trim,
+    dark,
+    glow,
+    cube,
+    colorFor(region, _side, role) {
+      if (role === "dark") return dark;
+      if (role === "plate") return trim;
+      return mainFor(region);
     },
   };
 }

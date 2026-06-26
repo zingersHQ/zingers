@@ -19,6 +19,15 @@ every one of them, and they are the spine of the whole game:
    any OpenAI-compatible model, or a bring-your-own agent (`docs/agent-protocol.md`).
    Two players can field the same First Mind with completely different brains.
 
+## Character voice (the beat layer)
+
+Champions and Keepers speak in fixed voice. Scripted **beats** — wake lines,
+companion greetings, post-fight reactions, Keeper intros and crack finales — live
+in `lib/lore/character-beats.ts` and render through the shared `CharacterBeat` UI
+(`components/grounds/character-beat.tsx`). The prose bible defines who they are;
+the beat layer defines how they sound in the moment. Act 1 Concord landing copy
+lives separately in `lib/first-duel.ts`.
+
 ## Tiers (the shape of a career)
 
 | Tier | From level | Heraldry |

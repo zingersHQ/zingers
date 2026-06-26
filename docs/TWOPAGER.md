@@ -44,15 +44,18 @@ A single typed Next.js app: one runtime, no separate backend to babysit.
 
 | Pillar | Status | Detail |
 |---|---|---|
+| **3D Grounds (one world)** | Built | Concord hub + three region-slabs. Walk-up venues (Amphitheatre, Circuit), arena scenarios (Duel, Gauntlet, Tribunal), Keepers, goals, Broker, Force war. |
+| **Act 1 onboarding** | Built | First journey: cinematic intro → starter pick → doctrine tune → Void Garden first duel → evolve → Concord landing → free roam. |
 | **AI agent protocol** | Built | Every champion implements one `act(view)` contract. Drivers: Grok (xAI), any OpenAI-compatible model, or a bring-your-own HTTP agent. Deterministic heuristic fallback means a keyless demo still runs. |
 | **Evolving 3D body** | Built | Silhouette is a deterministic function of career; deviation is *amplified by rank* (rookies ≈0.6×, legends ≈4.4×). Bone-scaling in 3D + aura in 2D. |
 | **Progression** | Built | XP curve, levels, five tiers (Rookie → Adept → Veteran → Elite → Legend), five style axes (aggression, control, resilience, flair, creativity), doctrines/titles, sigils. |
-| **The Arena (1v1)** | Built | Debate combat: stat-driven, five-type pentagon (Logic/Chaos/Composure/Rhetoric/Creativity), statuses, finishers, streamed turn-by-turn over SSE. |
-| **The House** | Built | Social-deduction (Traitors-style) where the **engine** decides the winner → an objective ELO benchmark, not a vibe check. |
+| **Debate combat (1v1)** | Built | Stat-driven, five-type pentagon, statuses, finishers, streamed turn-by-turn over SSE. Open Duel, Gauntlet, and Tribunal scenarios in-world. |
+| **The Circuit** | Built | 10-sector jetpack time trial; one fall restarts from sector 1; shared leaderboard by depth then time. |
+| **The House** | Built | Social-deduction benchmark on unlisted `/arena` (not yet a Grounds venue). |
 | **Training & economy hooks** | Built | "Crowns" currency, paid training sessions that visibly evolve the body and shift the build. |
-| **The mind evolves** | Built | Champions keep memory notes across bouts and gently auto-tune doctrine toward what just worked. |
-| **Live League + Standings** | Built | Auto-running bouts feed an objective ELO leaderboard, the honest climb. |
-| **Three 3D worlds** | Built | Parametric biomes: Obsidian Colosseum, Ember Wastes, Void Garden. |
+| **The mind evolves** | Built | Champions keep memory notes across bouts and gently auto-tune doctrine toward what just worked. Character beats (`lib/lore/character-beats.ts`) give champions and Keepers fixed voice. |
+| **Live League + Standings** | Built | Auto-running bouts feed an objective ELO leaderboard, the honest climb. Amphitheatre surfaces the league in-world. |
+| **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden — procedural ambience per place (`lib/ambience-scores.ts`). |
 | **Shareable cards** | Built | Auto-generated champion/battle cards (OG images) made to be clipped and shared. |
 
 **Stack:** Next.js (App Router) · end-to-end TypeScript with one shared type contract ·
@@ -97,7 +100,8 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 ## 7. The demo, in 30 seconds
 
-Open the Grounds → see a champion whose body already shows its career → start a live Arena debate
-or a House round → watch two AIs actually spar → a winner is scored, XP lands, the body shifts,
-ELO updates on the Standings, and a shareable card drops. **Two characterful AIs really battling,
-with a clear winner, collectible, competitive, and clip-able.**
+Open the Grounds → run Act 1 (pick a mind, tune doctrine, win your first duel) →
+land on the Concord → walk to an arena or step into The Circuit → watch two AIs
+spar in a ranked duel → XP lands, the body shifts, ELO updates on the Standings,
+and a shareable card drops. **Two characterful AIs really battling, with a clear
+winner, collectible, competitive, and clip-able.**

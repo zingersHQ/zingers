@@ -247,9 +247,13 @@ function Chorus({ h, col, acc, k, seed }: { h: number; col: THREE.Color; acc: TH
 function Spark({ h, col, acc, k, seed }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; seed: number }) {
   const orbs = useRef<(THREE.Mesh | null)[]>([]);
   const burst = useRef<THREE.Group>(null);
-  // mostly the Spark's gold with two restrained accents — a hint of invention,
-  // not a rainbow (see docs/bible/art-direction.md).
-  const palette = useMemo(() => ["#f5d020", "#f5d020", "#ffd86a", "#7fd0ff", "#ff8ad8"], []);
+  // the Spark's cube colour leads (cyan in the hero skin), with the gold accent
+  // and a warm sparkle for a hint of invention — not a rainbow (art-direction.md).
+  const palette = useMemo(() => {
+    const c = col.getStyle();
+    const a = acc.getStyle();
+    return [c, c, a, c, "#ffe9a8"];
+  }, [col, acc]);
   const seeds = useMemo(() => {
     const rnd = rngFrom(seed ^ 0x59);
     return Array.from({ length: 5 }, (_, i) => ({ a: rnd() * 6.28, r: h * (0.4 + rnd() * 0.45), y: h * (0.5 + rnd() * 0.6), spd: 0.5 + rnd() * 0.8, ph: rnd() * 6.28, c: palette[i % palette.length], s: h * (0.05 + rnd() * 0.05) }));

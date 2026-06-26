@@ -28,7 +28,7 @@ export function playOnboardingSound(id: OnboardingSound) {
       evolveStinger();
       break;
     case "concord":
-      setMood("grounds");
+      setMood("concord");
       break;
   }
 }

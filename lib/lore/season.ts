@@ -121,7 +121,7 @@ export function seasonFor(n: number, seed = n): Season {
     fragment,
     blurb:
       `${keeper.name} (${keeper.title}) yielded its door, and out spilled ${fragment}. ` +
-      `It has soaked into ${region.name}, where ${FORCES[biasForce].inWorld} now runs strong. ` +
+      `It has soaked into ${region.name}, where ${FORCES[biasForce].name} now runs strong. ` +
       `A new mind (${featured.name}, an echo of ${featured.lineage}) rose with the tide.`,
   };
 

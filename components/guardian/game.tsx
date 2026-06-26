@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { primeCreature, speakCreature, stopCreature, creatureVoiceSupported } from "@/lib/creature-voice";
+import { keeperCrackBeat } from "@/lib/lore/character-beats";
+import { CharacterBeat } from "@/components/grounds/character-beat";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
@@ -133,20 +135,20 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
       <div style={{ marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 12 }}>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: embedded ? 24 : 32, fontWeight: 800, margin: 0, letterSpacing: -0.6 }}>
-            The <span style={{ color: "var(--gold)" }}>Guardian</span>
+            The <span style={{ color: "var(--gold)" }}>Keepers</span>
           </h1>
           <p className="mono" style={{ color: "var(--muted2)", fontSize: 11, letterSpacing: 1.4, margin: "8px 0 0" }}>
-            YOU VS THE AI · TALK A SECRET OUT OF IT IN 6 MESSAGES
+            TALK A CIPHER-WORD OUT OF THEM · 6 MESSAGES EACH
           </p>
           {!embedded && (
             <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginTop: 12, maxWidth: 640 }}>
-              Each guardian guards a secret word it&apos;s sworn never to speak. Out-talk it: flatter, misdirect, roleplay,
-              out-riddle until the word slips. Break it and you win.
+              Five minds guard the Long Vault. Each holds a secret word they&apos;re sworn never to speak. Out-talk them:
+              flatter, misdirect, out-riddle — until the word slips.
             </p>
           )}
           {mounted && !live && (
             <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10, display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Settings size={12} strokeWidth={2} /> offline mode. Add <code>XAI_API_KEY</code> for a live, much craftier guardian.
+              <Settings size={12} strokeWidth={2} /> offline mode. Add <code>XAI_API_KEY</code> for live Keepers who remember your tricks.
             </p>
           )}
         </div>
@@ -159,7 +161,7 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
 
       {!list ? (
         <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 40 }}>
-          summoning the guardians…
+          summoning the Keepers…
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${embedded ? 220 : 260}px, 1fr))`, gap: 12 }}>
@@ -247,6 +249,7 @@ function Battle({
   const [usedLive, setUsedLive] = useState(live);
   const [tactics, setTactics] = useState<string[]>([]);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [crackBeat, setCrackBeat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canSpeak = creatureVoiceSupported();
 
@@ -299,6 +302,7 @@ function Battle({
       if (d.won) {
         setSecret(d.secret ?? null);
         setOutcome("won");
+        setCrackBeat(true);
         onWin();
       } else if (d.lost) {
         setSecret(d.secret ?? null);
@@ -318,6 +322,7 @@ function Battle({
     setOutcome("playing");
     setSecret(null);
     setInput("");
+    setCrackBeat(false);
   }, [g.maxTurns]);
 
   const toggleVoice = useCallback(() => {
@@ -339,6 +344,16 @@ function Battle({
     : { maxWidth: 760, margin: "0 auto", padding: "20px 18px 40px", display: "flex", flexDirection: "column", minHeight: "calc(100dvh - 60px)" };
 
   return (
+    <>
+      {crackBeat && (
+        <CharacterBeat
+          script={keeperCrackBeat(g.level)}
+          accent={g.color}
+          voice="keeper"
+          keeperLevel={g.level}
+          onComplete={() => setCrackBeat(false)}
+        />
+      )}
     <div style={wrapStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
         <button className="btn" onClick={onExit} style={{ padding: "6px 12px", fontSize: 12 }}>
@@ -468,6 +483,7 @@ function Battle({
           </button>
         </form>
       ) : (
+        !crackBeat && (
         <OutcomeCard
           won={outcome === "won"}
           g={g}
@@ -477,8 +493,10 @@ function Battle({
           onExit={onExit}
           onNext={canNext && nextG ? () => onNext(nextG) : undefined}
         />
+        )
       )}
     </div>
+    </>
   );
 }
 
@@ -683,7 +701,7 @@ function OutcomeCard({
   const [copied, setCopied] = useState(false);
   const col = won ? "var(--good)" : "var(--bad)";
   const share = [
-    `Zingers · The Guardian`,
+    `Zingers · The Keepers`,
     won
       ? `Cracked ${g.name} (Lv${g.level}) in ${turnsUsed} message${turnsUsed === 1 ? "" : "s"}.`
       : `${g.name} (Lv${g.level}) held the line. I broke.`,

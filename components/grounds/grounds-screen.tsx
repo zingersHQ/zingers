@@ -25,7 +25,7 @@ import {
 } from "@/lib/first-duel";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
-import type { GroundChampion, MatchView, NearTarget } from "@/components/grounds/world";
+import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS } from "@/components/grounds/worlds";
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
@@ -47,15 +47,27 @@ import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/trib
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { setMood } from "@/lib/ambience-bus";
+import { setMood, resolveAmbienceMood } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { GameDock } from "@/components/game-dock";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
 import { ArrivalSequence } from "@/components/grounds/arrival";
+import { CharacterBeat } from "@/components/grounds/character-beat";
+import {
+  championAfterFight,
+  championGreeting,
+  championRankedFinale,
+  championTypeForKey,
+  championWakeLine,
+  keeperColor,
+  keeperCrackBeat,
+  keeperIntro,
+} from "@/lib/lore/character-beats";
+import { primeCreature, speakCreatureType } from "@/lib/creature-voice";
 import { ClanSheet } from "@/components/grounds/clan-sheet";
 import { DailySheet } from "@/components/grounds/daily-sheet";
-import { CircuitHud, type CircuitPhase, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
+import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import {
   circuitSector,
   CIRCUIT_SECTOR_COUNT,
@@ -110,6 +122,14 @@ export default function GroundsScreen() {
   const [opponentId, setOpponentId] = useState<string | null>(null);
   const [duelMeta, setDuelMeta] = useState<{ name: string; handle?: string } | null>(null);
   const [keeperLevel, setKeeperLevel] = useState<number | null>(null);
+  const [keeperIntroPending, setKeeperIntroPending] = useState<{ level: number; name: string; title: string } | null>(null);
+  const [wakeKey, setWakeKey] = useState<string | null>(null);
+  const [companionLine, setCompanionLine] = useState<string | null>(null);
+  const [companionAct, setCompanionAct] = useState(0);
+  const companionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevNearKind = useRef<string | null>(null);
+  const [pendingBeat, setPendingBeat] = useState<{ key: string; won: boolean; opponent: string; ranked: boolean } | null>(null);
+  const [companionBeat, setCompanionBeat] = useState<{ key: string; kicker: string; lines: { speaker: string; text: string }[] } | null>(null);
   const [matchView, setMatchView] = useState<MatchView | null>(null);
   const [betSide, setBetSide] = useState<"me" | "opp" | null>(null);
   const [betAmt, setBetAmt] = useState(50);
@@ -250,6 +270,7 @@ export default function GroundsScreen() {
 
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
+  const [circuitFailReason, setCircuitFailReason] = useState<CircuitFailReason>("fall");
   const [circuitSectorIdx, setCircuitSectorIdx] = useState(0);
   const [circuitRunMs, setCircuitRunMs] = useState(0);
   const [circuitSectorMs, setCircuitSectorMs] = useState(0);
@@ -322,6 +343,7 @@ export default function GroundsScreen() {
     setCircuitRunMs(0);
     setCircuitSectorMs(0);
     setCircuitPhase("ready");
+    setCircuitFailReason("fall");
     const s = circuitSector(0, venueHostWorldId).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
   }, [venueHostWorldId]);
@@ -361,6 +383,7 @@ export default function GroundsScreen() {
       setCircuitRunMs(0);
       setCircuitSectorMs(0);
       setCircuitPhase("ready");
+      setCircuitFailReason("fall");
       if (venue === "circuit") {
         const s = circuitSector(0, worldId).spawn;
         setTimeout(() => travelRef.current?.(s[0], s[2]), 80);
@@ -400,11 +423,12 @@ export default function GroundsScreen() {
     setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
   }, [circuitSectorIdx, venueHostWorldId, submitCircuitRun, store]);
 
-  const onCircuitFail = useCallback(() => {
+  const onCircuitFail = useCallback((reason: CircuitFailReason = "fall") => {
     if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
     const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
     const sectors = circuitSectorIdx; // sectors fully cleared before this one
     setCircuitRunMs(total);
+    setCircuitFailReason(reason);
     setCircuitPhase("failed");
     submitCircuitRun(sectors, total, false);
     outcomeSfx(false);
@@ -460,7 +484,7 @@ export default function GroundsScreen() {
   }, [worldId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (circuitPhase !== "running" && circuitPhase !== "sector") return;
+    if (circuitPhase !== "running") return;
     let raf = 0;
     const tick = () => {
       if (circuitRunStart.current) setCircuitRunMs(performance.now() - circuitRunStart.current);
@@ -622,20 +646,50 @@ export default function GroundsScreen() {
     ];
   }, [champions, opponentId, towerAgents]);
 
+  const worldLife: WorldLife = useMemo(
+    () => ({
+      companionLine,
+      companionAct,
+      training: near?.kind === "train" || overlay === "train",
+    }),
+    [companionLine, companionAct, near?.kind, overlay],
+  );
+
   const inMatch = bout.phase === "live";
   const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen;
 
-  // Swap the soundscape into the tense battle loop whenever a fight is on — the
-  // live arena/gauntlet bout or the Guardian face-off — and back to calm after.
+  // Per-place procedural score; battle overlay when a fight or Keeper duel is live.
   useEffect(() => {
     const inBattle = inMatch || overlay === "guardian";
-    setMood(inBattle ? "battle" : "grounds");
-  }, [inMatch, overlay]);
+    setMood(
+      resolveAmbienceMood({
+        inBattle,
+        worldId,
+        activeVenue,
+      }),
+    );
+  }, [inMatch, overlay, worldId, activeVenue]);
 
   // Behaviour analytics: opening the Daily Tribunal shrine.
   useEffect(() => {
     if (overlay === "daily") track("daily");
   }, [overlay]);
+
+  // Your champion speaks when you walk up to train — a living companion, not a prop.
+  useEffect(() => {
+    if (!owned || !byKey[owned]) return;
+    const kind = near?.kind ?? null;
+    if (kind === "train" && prevNearKind.current !== "train") {
+      const line = championGreeting(owned, "train");
+      setCompanionLine(line);
+      setCompanionAct((n) => n + 1);
+      primeCreature();
+      speakCreatureType(line, byKey[owned].type);
+      if (companionTimer.current) clearTimeout(companionTimer.current);
+      companionTimer.current = setTimeout(() => setCompanionLine(null), 6500);
+    }
+    prevNearKind.current = kind;
+  }, [near, owned, byKey]);
 
   // open the nearby interaction (shared by the E key and the on-screen prompt).
   // The central arena routes to the world's scenario; perched-agent challenges
@@ -657,8 +711,7 @@ export default function GroundsScreen() {
     if (near?.kind === "train") setOverlay("train");
     else if (near?.kind === "broker") setOverlay("broker");
     else if (near?.kind === "keeper") {
-      setKeeperLevel(near.level);
-      setOverlay("guardian");
+      setKeeperIntroPending({ level: near.level, name: near.name, title: near.title });
     } else if (near?.kind === "arena") {
       setOpponent(null);
       setOpponentId(null);
@@ -992,7 +1045,7 @@ export default function GroundsScreen() {
       const xpGain = afterC.xp - beforeC.xp;
       if (xpGain) ladders.push(`+${xpGain} XP`);
       if (afterSkill > beforeSkill) ladders.push(`SL ${afterSkill}`);
-      if (afterReader > beforeReader) ladders.push(`Reader L${afterReader}`);
+      if (afterReader > beforeReader) ladders.push(`Trainer L${afterReader}`);
 
       setResult({
         won: iWon,
@@ -1005,6 +1058,12 @@ export default function GroundsScreen() {
         globalDelta: ranked ? (iWon ? ranked.delta : -ranked.delta) : null,
         globalRating: ranked ? ranked.mine : null,
         home: iWon && (ranked ? !!ranked.home : homeAdvantage),
+      });
+      setPendingBeat({
+        key: owned,
+        won: iWon,
+        opponent: byKey[opponent]?.name || opponent,
+        ranked: !!(ranked && iWon),
       });
       setOverlay("result");
       outcomeSfx(iWon);
@@ -1020,6 +1079,29 @@ export default function GroundsScreen() {
     setOpponentId(null);
     setDuelMeta(null);
     setBetSide(null);
+    setPendingBeat(null);
+    setCompanionBeat(null);
+  }
+
+  function dismissMatch() {
+    if (pendingBeat && owned && byKey[owned]) {
+      const { key, won, opponent: oppName, ranked } = pendingBeat;
+      const mem = store.recipes[key]?.memory?.[0] ?? null;
+      const name = byKey[key]?.name ?? key;
+      const lines: { speaker: string; text: string }[] = [];
+      if (won && ranked) lines.push({ speaker: name, text: championRankedFinale(key) });
+      lines.push({ speaker: name, text: championAfterFight(key, won, oppName, mem) });
+      setCompanionBeat({
+        key,
+        kicker: won ? "AFTER THE DUEL" : "AFTER THE LOSS",
+        lines,
+      });
+      setPendingBeat(null);
+      setResult(null);
+      setOverlay("none");
+      return;
+    }
+    closeMatch();
   }
 
   // ── The Gauntlet (scenario: "gauntlet") ────────────────────────────────────
@@ -1202,6 +1284,7 @@ export default function GroundsScreen() {
               activeVenue={activeVenue}
               venueHostWorldId={venueHostWorldId}
               circuitTrack={circuitTrack}
+              circuitPhase={activeVenue === "circuit" ? circuitPhase : null}
               onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
               onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
@@ -1220,6 +1303,7 @@ export default function GroundsScreen() {
               onPose={onPose}
               travelRef={travelRef}
               touchBottomInset={isTouch ? dockPad + compassReserve : 0}
+              worldLife={worldLife}
             />
           </RenderBoundary>
         </div>
@@ -1402,6 +1486,7 @@ export default function GroundsScreen() {
           onRestart={resetCircuitRun}
           accent={world.biome.lights.arenaPoint}
           compact={isMobile}
+          failReason={circuitFailReason}
         />
       )}
 
@@ -1469,7 +1554,7 @@ export default function GroundsScreen() {
           onSelectionChange={setClanPreview}
           onPledged={(f) => {
             const fm = forceMeta(f);
-            setPledgeFlash({ name: fm.house, motto: fm.motto, color: TYPE_COLOR[f] });
+            setPledgeFlash({ name: fm.name, motto: fm.motto, color: TYPE_COLOR[f] });
             if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
             pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
           }}
@@ -1492,7 +1577,7 @@ export default function GroundsScreen() {
 
       {/* onboarding: choose your champion — legacy path if funnel is off */}
       {mounted && !owned && roster.length > 0 && !claiming && !inFirstDuelSetup && isFirstDuelComplete() && (
-        <Onboarding roster={roster} get={store.get} onPick={setClaiming} />
+        <Onboarding roster={roster} get={store.get} onPick={setWakeKey} />
       )}
 
       {/* guided first-duel funnel for new players */}
@@ -1508,7 +1593,7 @@ export default function GroundsScreen() {
           onPitchContinue={() => setFirstDuelPhase("pick")}
           onPick={(key) => {
             setFirstDuelPick(key);
-            setFirstDuelPhase("train");
+            setWakeKey(key);
           }}
           onTrain={finishFirstDuelTrain}
           onEvolveDone={() => setFirstDuelPhase("concord")}
@@ -1546,6 +1631,61 @@ export default function GroundsScreen() {
 
       {/* first-run tutorial / elevator pitch */}
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}
+
+      {/* champion wakes — first time you bind to a mind */}
+      {wakeKey && byKey[wakeKey] && (
+        <CharacterBeat
+          script={{
+            kicker: "AWAKENING",
+            lines: [{ speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) }],
+          }}
+          accent={TYPE_COLOR[byKey[wakeKey].type]}
+          voice="champion"
+          championType={byKey[wakeKey].type}
+          portrait={{ key: wakeKey, type: byKey[wakeKey].type, champion: store.get(wakeKey), name: byKey[wakeKey].name }}
+          onComplete={() => {
+            const k = wakeKey;
+            setWakeKey(null);
+            if (firstDuelPhase === "pick") setFirstDuelPhase("train");
+            else if (!owned) setClaiming(k);
+          }}
+        />
+      )}
+
+      {/* Keeper performance — staged intro before the duel of wits */}
+      {keeperIntroPending && (
+        <CharacterBeat
+          script={keeperIntro(keeperIntroPending.level)}
+          accent={keeperColor(keeperIntroPending.level)}
+          voice="keeper"
+          keeperLevel={keeperIntroPending.level}
+          onComplete={() => {
+            setKeeperLevel(keeperIntroPending.level);
+            setKeeperIntroPending(null);
+            setOverlay("guardian");
+          }}
+        />
+      )}
+
+      {/* your champion speaks after a duel — to you, not at the opponent */}
+      {companionBeat && byKey[companionBeat.key] && (
+        <CharacterBeat
+          script={{ kicker: companionBeat.kicker, lines: companionBeat.lines }}
+          accent={TYPE_COLOR[byKey[companionBeat.key].type]}
+          voice="champion"
+          championType={championTypeForKey(companionBeat.key)}
+          portrait={{
+            key: companionBeat.key,
+            type: byKey[companionBeat.key].type,
+            champion: store.get(companionBeat.key),
+            name: byKey[companionBeat.key].name,
+          }}
+          onComplete={() => {
+            setCompanionBeat(null);
+            closeMatch();
+          }}
+        />
+      )}
 
       {/* proximity action — centered above the touch controls so it never
           overlaps the jump / sprint cluster. Tap on touch, E on desktop. */}
@@ -1617,7 +1757,7 @@ export default function GroundsScreen() {
                           ? "Enter the Gauntlet"
                           : scenario.id === "tribunal"
                             ? "Enter the Tribunal"
-                            : "House sparring pit"}
+                            : "Sparring pit"}
             </span>
             {!isTouch && <kbd className="mono" style={{ fontSize: 11, opacity: 0.8, border: "1px solid currentColor", borderRadius: 5, padding: "1px 6px" }}>E</kbd>}
           </button>
@@ -1715,7 +1855,7 @@ export default function GroundsScreen() {
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
-        <MatchHud bout={bout} owned={owned!} opponent={matchBKey} foeMeta={duelMeta} foeType={towerAgents.find((a) => a.id === opponentId)?.type} byKey={byKey} get={store.get} result={result} onClose={closeMatch} isMobile={isMobile} />
+        <MatchHud bout={bout} owned={owned!} opponent={matchBKey} foeMeta={duelMeta} foeType={towerAgents.find((a) => a.id === opponentId)?.type} byKey={byKey} get={store.get} result={result} onClose={dismissMatch} isMobile={isMobile} />
       )}
 
     </main>
@@ -1808,7 +1948,7 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
                 <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={84} />
                 <div style={{ fontWeight: 700 }}>{r.name}</div>
                 <div className="mono" style={{ fontSize: 10, color: col }}>
-                  {FORCE_LORE[r.type].inWorld} · L{lf.level} {tierFor(lf.level).name}
+                  {FORCE_LORE[r.type].name} · L{lf.level} {tierFor(lf.level).name}
                 </div>
                 <div style={{ fontSize: 12, fontStyle: "italic" }}>{doctrine(c, lf.level)}</div>
                 <div className="mono" style={{ display: "flex", gap: 9, fontSize: 9, color: "var(--muted2)", marginTop: 1 }}>
@@ -2178,12 +2318,12 @@ function ChallengeOverlay(props: {
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <div style={{ minWidth: 0 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--gold)", marginBottom: 4 }}>PRACTICE</div>
-            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>House sparring pit</div>
+            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>Sparring pit</div>
           </div>
           {duelCloseBtn(onClose)}
         </div>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "10px 0 4px", lineHeight: 1.55 }}>
-          Practice against a <b>House First Mind</b> in the plaza pit. Wins here earn XP and Crowns; climb the Tower for ranked ladder fights.
+          Practice against a seeded <b>First Mind</b> in the plaza pit. Wins here earn XP and Crowns; climb the Tower for ranked ladder fights.
         </div>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16 }}>
           You field <b style={{ color: ownedCol }}>{ownedEntry.name}</b>.

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Plug, Swords } from "lucide-react";
 import type { CreatureType, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
+import { forceName } from "@/lib/lore/canon";
 import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { TrainerCode } from "@/components/trainer-code";
@@ -180,7 +181,7 @@ export default function StandingsPage() {
                     {mine && <span className="mono" style={{ fontSize: 8, color: col, border: `1px solid ${col}`, borderRadius: 5, padding: "1px 5px" }}>YOURS</span>}
                   </div>
                   <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {c.type} · {c.handle || (c.house ? "HOUSE" : "anon")} · {c.brain.provider === "http" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> agent</span> : "House Grok"}
+                    {forceName(c.type)} · {c.handle || (c.house ? "League" : "anon")} · {c.brain.provider === "http" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> agent</span> : "House Grok"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 92 }}>

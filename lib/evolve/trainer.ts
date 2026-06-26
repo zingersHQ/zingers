@@ -18,7 +18,7 @@ export interface TrainerLevel {
 }
 
 const TITLES: { min: number; title: string }[] = [
-  { min: 1, title: "Novice Reader" },
+  { min: 1, title: "Novice Trainer" },
   { min: 5, title: "Apprentice" },
   { min: 10, title: "Adept" },
   { min: 15, title: "Tactician" },
@@ -64,13 +64,13 @@ export const TRAINER_XP = {
 // in-world name (The Lattice, The Static, …), never a new invention.
 export interface ForceMeta {
   id: CreatureType;
-  house: string; // the Force's in-world name (canon)
+  name: string; // the Force's plain, player-facing name (Logic/Static/Calm/Chorus/Spark)
   motto: string; // its argument, said as a vow (canon)
 }
 
 export const FORCES: ForceMeta[] = WHEEL.map((id) => ({
   id,
-  house: FORCE_LORE[id].inWorld,
+  name: FORCE_LORE[id].name,
   motto: FORCE_MOTTO[id],
 }));
 

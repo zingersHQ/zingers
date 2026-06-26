@@ -14,6 +14,7 @@ import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-rega
 import { PhenotypeParts } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
+import { FORCES } from "@/lib/lore/canon";
 
 for (const m of ALL_MODELS) useGLTF.preload(m);
 
@@ -231,6 +232,9 @@ export function ChampionMesh({
   auraDim,
   identityKey,
   keeper,
+  speechLine,
+  showForce = false,
+  clan = null,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -240,6 +244,11 @@ export function ChampionMesh({
   onSelect?: () => void;
   label?: string;
   showLabel?: boolean;
+  /** show the fighter's Force as a clean sigil + plain-name chip under the name */
+  showForce?: boolean;
+  /** when set, plant this Trainer's Clan standard beside the fighter (allegiance
+   *  marker layered ON TOP of the Force base colour — never replaces it) */
+  clan?: CreatureType | null;
   punchSignal?: number;
   hitSignal?: number;
   /** increment to trigger a one-shot gesture (wave/jump/punch) then fade back to idle */
@@ -261,6 +270,8 @@ export function ChampionMesh({
   /** when set, marks this figure as a campaign Keeper and bolts on its signature
    *  regalia (lantern / tomes / shield / orb / scythe) so bosses are unmistakable */
   keeper?: KeeperKind;
+  /** in-world speech bubble — companion lines, greetings */
+  speechLine?: string | null;
 }) {
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
@@ -284,7 +295,7 @@ export function ChampionMesh({
   // Keepers ignore the pair and get the richer, patterned, multi-colour treatment.
   const isKeeper = !!keeper;
   const palette = useMemo(
-    () => bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper }),
+    () => bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper, type }),
     [colHex, seed, type, isKeeper],
   );
 
@@ -499,7 +510,7 @@ export function ChampionMesh({
 
       {/* per-Force signature attachments — the species markings that make each
           Force read as a different being; tinted to this individual */}
-      <ArchetypeFeatures type={type} h={app.h} color={palette.glow} accent={palette.accent} dim={auraDim} seed={seed} />
+      <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />
 
       {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
           back, gated by tier so the body visibly grows as the mind evolves */}
@@ -567,14 +578,99 @@ export function ChampionMesh({
         </Html>
       )}
 
+      {speechLine && (
+        <Html position={[0, app.h + 1.55, 0]} center distanceFactor={10} zIndexRange={[32, 0]} style={{ pointerEvents: "none" }}>
+          <div
+            style={{
+              maxWidth: 220,
+              padding: "8px 12px",
+              borderRadius: 12,
+              background: "rgba(8,6,14,.92)",
+              border: `1px solid ${colHex}`,
+              boxShadow: `0 4px 20px rgba(0,0,0,.5), 0 0 24px -8px ${colHex}`,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#f2eefb",
+              fontStyle: "italic",
+              textAlign: "center",
+            }}
+          >
+            &ldquo;{speechLine}&rdquo;
+          </div>
+        </Html>
+      )}
+
       {showLabel && label && (
         <Html position={[0, app.h + 1.0, 0]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontWeight: 700, color: "#fff", fontSize: 20, textShadow: "0 2px 8px #000", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.82 }}>
             {label}
-            <div style={{ fontSize: 10, color: colHex, letterSpacing: 1 }}>{tier.name}</div>
+            {showForce && (
+              <div style={{ fontSize: 11, color: colHex, letterSpacing: 0.6, fontWeight: 700 }}>
+                {FORCES[type].sigil} {FORCES[type].name}
+              </div>
+            )}
+            <div style={{ fontSize: 10, color: colHex, letterSpacing: 1, opacity: 0.72 }}>{tier.name}</div>
           </div>
         </Html>
       )}
+
+      {clan && <ClanBanner clan={clan} h={app.h} />}
+    </group>
+  );
+}
+
+// ── Clan standard ────────────────────────────────────────────────────────────
+// A small heraldic banner planted at the fighter's side, in the Clan's colour and
+// sigil. This is the *team* marker (allegiance), kept deliberately separate from
+// the body's Force colour so a fighter can be e.g. a Calm-type carrying a Static
+// clan standard. Cheap: a pole + an emissive pennant + a cached sigil decal.
+const sigilTexCache = new Map<string, THREE.CanvasTexture>();
+function sigilTexture(sigil: string): THREE.CanvasTexture {
+  const cached = sigilTexCache.get(sigil);
+  if (cached) return cached;
+  const S = 128;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const x = c.getContext("2d")!;
+  x.clearRect(0, 0, S, S);
+  x.fillStyle = "#ffffff";
+  x.font = "bold 92px sans-serif";
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.fillText(sigil, S / 2, S / 2 + 4);
+  const tex = new THREE.CanvasTexture(c);
+  sigilTexCache.set(sigil, tex);
+  return tex;
+}
+
+function ClanBanner({ clan, h }: { clan: CreatureType; h: number }) {
+  const col = TYPE_COLOR[clan] || "#8888ff";
+  const sigil = FORCES[clan].sigil;
+  const tex = useMemo(() => sigilTexture(sigil), [sigil]);
+  const poleH = Math.max(2.9, h * 1.35);
+  const flagY = poleH - 0.62;
+  return (
+    <group position={[Math.max(1.2, h * 0.62), 0, 0.15]}>
+      <mesh position={[0, poleH / 2, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.06, poleH, 8]} />
+        <meshStandardMaterial color="#2a2438" metalness={0.6} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, poleH + 0.05, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.52, flagY, 0]}>
+        <planeGeometry args={[0.92, 0.64]} />
+        <meshStandardMaterial color={col} emissive={col} emissiveIntensity={0.9} roughness={0.55} metalness={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0.52, flagY, 0.014]}>
+        <planeGeometry args={[0.74, 0.52]} />
+        <meshBasicMaterial map={tex} transparent depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0.52, flagY, -0.014]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.74, 0.52]} />
+        <meshBasicMaterial map={tex} transparent depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
     </group>
   );
 }

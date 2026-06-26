@@ -208,7 +208,7 @@ function ClanFlag({
         <Html position={[0.85, 0.55, 0]} center distanceFactor={13} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", color: "#fff", textShadow: "0 1px 6px #000", lineHeight: 1.05 }}>
             <div style={{ fontSize: 18, fontWeight: 800 }}>{lore.sigil}</div>
-            <div style={{ fontSize: 7.5, letterSpacing: 1, opacity: 0.9 }}>{lore.inWorld.toUpperCase()}</div>
+            <div style={{ fontSize: 7.5, letterSpacing: 1, opacity: 0.9 }}>{lore.name.toUpperCase()}</div>
           </div>
         </Html>
       </group>
@@ -228,7 +228,7 @@ function ClanFlag({
           <Html position={[0.95, 0, 0.02]} center distanceFactor={11} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
             <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", color: "#fff", textShadow: "0 1px 6px #000", lineHeight: 1.05 }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{lore.sigil}</div>
-              <div style={{ fontSize: 8, letterSpacing: 1, opacity: 0.9 }}>{lore.inWorld.toUpperCase()}</div>
+              <div style={{ fontSize: 8, letterSpacing: 1, opacity: 0.9 }}>{lore.name.toUpperCase()}</div>
             </div>
           </Html>
         </group>
@@ -251,7 +251,7 @@ function ClanFlag({
           !pickMode && (
             <Html position={[0, 1.0, 0]} center distanceFactor={15} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
               <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-                <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700, opacity: 0.85 }}>{lore.inWorld.toUpperCase()}</div>
+                <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700, opacity: 0.85 }}>{lore.name.toUpperCase()}</div>
                 <div style={{ fontSize: 7.5, letterSpacing: 1, color: "#cfcdee", opacity: 0.7 }}>walk up · join this clan</div>
               </div>
             </Html>

@@ -12,7 +12,9 @@ import { FIRST_MIND_KEYS, ROSTER } from "@/lib/engine/roster";
 // ── The Five Forces (the type pentagon, as in-world physics) ─────────────────
 export interface ForceLore {
   type: CreatureType;
-  /** in-world proper noun, e.g. "The Lattice" */
+  /** PLAYER-FACING name — plain, legible, used everywhere in gameplay UI. */
+  name: string;
+  /** deep-lore proper noun (bible etymology only; never shown in gameplay UI). */
   inWorld: string;
   /** the element it is made of */
   element: string;
@@ -23,12 +25,17 @@ export interface ForceLore {
 }
 
 export const FORCES: Record<CreatureType, ForceLore> = {
-  LOGIC: { type: "LOGIC", inWorld: "The Lattice", element: "order, proof, structure", argues: "closing the proof", hex: "#4aa3ff", sigil: "◆" },
-  CHAOS: { type: "CHAOS", inWorld: "The Static", element: "noise, entropy, surprise", argues: "breaking the frame", hex: "#ff4ad1", sigil: "✦" },
-  COMPOSURE: { type: "COMPOSURE", inWorld: "The Stillness", element: "patience, endurance, calm", argues: "outlasting the storm", hex: "#36d39a", sigil: "▲" },
-  RHETORIC: { type: "RHETORIC", inWorld: "The Chorus", element: "crowd, feeling, persuasion", argues: "moving the room", hex: "#f0a93a", sigil: "◉" },
-  CREATIVITY: { type: "CREATIVITY", inWorld: "The Spark", element: "invention, metaphor, reframe", argues: "changing the question", hex: "#f5d020", sigil: "✺" },
+  LOGIC: { type: "LOGIC", name: "Logic", inWorld: "The Lattice", element: "order, proof, structure", argues: "closing the proof", hex: "#4aa3ff", sigil: "◆" },
+  CHAOS: { type: "CHAOS", name: "Static", inWorld: "The Static", element: "noise, entropy, surprise", argues: "breaking the frame", hex: "#ff4ad1", sigil: "✦" },
+  COMPOSURE: { type: "COMPOSURE", name: "Calm", inWorld: "The Stillness", element: "patience, endurance, calm", argues: "outlasting the storm", hex: "#36d39a", sigil: "▲" },
+  RHETORIC: { type: "RHETORIC", name: "Chorus", inWorld: "The Chorus", element: "crowd, feeling, persuasion", argues: "moving the room", hex: "#f0a93a", sigil: "◉" },
+  CREATIVITY: { type: "CREATIVITY", name: "Spark", inWorld: "The Spark", element: "invention, metaphor, reframe", argues: "changing the question", hex: "#f5d020", sigil: "✺" },
 };
+
+/** The plain, player-facing name of a Force (Logic/Static/Calm/Chorus/Spark). */
+export function forceName(type: CreatureType): string {
+  return FORCES[type].name;
+}
 
 // A Force's argument, said as a vow. These are the mottos a Reader pledges under
 // (see READER / Allegiance below); each is the `argues` line in the imperative.

@@ -66,7 +66,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
             <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "12px 0 0" }}>{card.saga}</p>
             <p style={{ color: "var(--muted2)", fontSize: 13, lineHeight: 1.55, margin: "12px 0 0" }}>
               {entry.persona}. This card echoes <strong style={{ color: "var(--ink)" }}>{card.lineage}</strong>, carries the physics of{" "}
-              <strong style={{ color: col }}>{card.force.inWorld}</strong>, and can be re-rendered from its career state at any time.
+              <strong style={{ color: col }}>{card.force.name}</strong>, and can be re-rendered from its career state at any time.
             </p>
           </div>
 

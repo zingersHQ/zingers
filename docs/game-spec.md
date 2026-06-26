@@ -22,15 +22,43 @@ Full numbers, roster, and a worked sample battle: **[combat-design.md](./combat-
 
 ## One world, many games
 
-Everything you play lives inside the 3D world (`/` · `/grounds`). The Concord hub gathers the meta games as walk-up venues.
+Everything you play lives inside the 3D world (`/` · `/grounds`). The Concord hub
+gathers meta games as **walk-up venues**; each region-slab hosts arena scenarios
+and a themed Circuit tunnel. Catalogue: `lib/scenarios/registry.ts` · venues:
+`components/grounds/venues.ts`.
+
+### Hub & venues
 
 | Mode | Where | What it is |
 |------|-------|------------|
-| **The Grounds** | the world | Handler walks the world, trains champions, starts bouts. Bodies morph with career. |
-| **The Arena** | in-world arena pit / Tower | 1v1 debate combat. Stat pentagon, finishers, LLM judge. Fastest legible fight. |
+| **The Grounds** | everywhere | Walk, train, claim champions, hunt goals. Bodies morph with career. |
+| **The Amphitheatre** | Concord venue | Watch autonomous league self-play; today's Tribunal herald. |
+| **The Circuit** | Concord venue + region tunnels | 10-sector jetpack time trial; one fall restarts from sector 1; leaderboard by depth, then time. |
 | **Daily Tribunal** | Concord stone | One shared fight a day — call it before you watch, share a result grid. |
-| **Scrying Gallery** | Concord board | Autonomous self-play when the league runner is live; watch bouts and ladder moves. |
-| **The Keepers** | region spires | The campaign: talk cipher-words out of the Vault's Keepers. |
+| **The Keepers** | region spires | Campaign: talk cipher-words out of the Vault's Keepers. |
+
+### Arena scenarios (in-world)
+
+| Scenario | Where | What it is |
+|----------|-------|------------|
+| **Open Duel** | any region plaza | 1v1 debate combat — pick opponent, settle it. Stat pentagon, finishers, LLM judge. |
+| **The Gauntlet** | Ember Wastes (default) | Chain of ever-stronger fighters; press your luck or cash out. |
+| **The Tribunal** | Obsidian Colosseum (flagship) | Assigned-stance debate to a jury; switching sides scores ≈0. |
+
+Unlisted **`/arena`** remains the agent bout viewer for bring-your-own-agent testing
+(debate combat and The House social-deduction benchmark).
+
+### Act 1 onboarding
+
+New Readers run a scripted first journey: cinematic intro → pick a starter (weekly
+rotation per Force) → tune doctrine → first duel in the Void Garden → evolve card →
+Concord landing beats → free roam. See **[first-journey-roadmap.md](./first-journey-roadmap.md)**.
+
+### Ambience
+
+Procedural soundtrack per place (`lib/ambience-scores.ts`): Concord hub, each region
+biome, Amphitheatre, Circuit, and live fights each resolve their own mood via
+`resolveAmbienceMood()`.
 
 ## Async league (headline mechanic)
 

@@ -27,11 +27,11 @@ export function BibleGallery() {
             return (
               <article key={f.type} className="panel" style={{ ["--ac" as string]: f.hex, overflow: "hidden", padding: 0 }}>
                 <div style={{ aspectRatio: "1 / 1" }}>
-                  <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="force" colorHex={f.hex} label={f.inWorld} />
+                  <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="force" colorHex={f.hex} label={f.name} />
                 </div>
                 <div style={{ padding: 13 }}>
-                  <div style={{ color: f.hex, fontWeight: 800 }}>{f.sigil} {f.inWorld}</div>
-                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2 }}>{f.type}</div>
+                  <div style={{ color: f.hex, fontWeight: 800 }}>{f.sigil} {f.name}</div>
+                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2, fontStyle: "italic" }}>the {f.inWorld.replace(/^The /, "")}</div>
                   <p style={{ color: "var(--muted)", fontSize: 12, lineHeight: 1.45, margin: "8px 0 0" }}>
                     {f.element}; argues by {f.argues}.
                   </p>
@@ -55,7 +55,7 @@ export function BibleGallery() {
                 </div>
                 <div style={{ padding: 13 }}>
                   <div style={{ fontWeight: 800 }}>{key}</div>
-                  <div className="mono" style={{ fontSize: 10, color: force.hex }}>{force.inWorld} · {r.type}</div>
+                  <div className="mono" style={{ fontSize: 10, color: force.hex }}>{force.name} · {r.type}</div>
                 </div>
               </Link>
             );
@@ -74,7 +74,7 @@ export function BibleGallery() {
                 </div>
                 <div style={{ padding: 14 }}>
                   <div style={{ fontWeight: 800 }}>{region.name}</div>
-                  <div className="mono" style={{ fontSize: 10, color: force.hex }}>{region.arena} · {force.inWorld}</div>
+                  <div className="mono" style={{ fontSize: 10, color: force.hex }}>{region.arena} · {force.name}</div>
                   <p style={{ color: "var(--muted)", fontSize: 12, lineHeight: 1.45, margin: "8px 0 0" }}>{region.blurb}</p>
                 </div>
               </article>
