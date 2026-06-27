@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+import GroundsScreen from "@/components/grounds/grounds-screen";
 
-// The Grounds now live at the root path. Keep this route as a permanent
-// redirect so existing /grounds links (shared cards, docs, nav) still work.
-export default function GroundsRedirect() {
-  redirect("/");
+// The Grounds (the live 3D game) live here. The root path `/` is the marketing
+// landing page; "Start your journey" links into this route, which also keeps
+// every existing /grounds link (shared cards, docs, nav) working directly.
+export default function Grounds() {
+  return <GroundsScreen />;
 }

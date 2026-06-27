@@ -31,7 +31,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "play",
     label: "Play",
     items: [
-      { id: "play", label: "Play", short: "Play", href: "/", blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
+      { id: "play", label: "Play", short: "Play", href: "/grounds", blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
     ],
   },
   {
@@ -67,11 +67,12 @@ export const DOCK_H = 0;
 
 // The immersive 3D world. These keep the in-game hamburger (GameMenu) as their
 // primary chrome and hide the top site header, since a web nav bar fights the
-// full-screen scene. Every other surface gets the shared header.
-export const WORLD_ROUTES = ["/", "/grounds"];
+// full-screen scene. Every other surface (including the `/` landing page) gets
+// the shared header.
+export const WORLD_ROUTES = ["/grounds"];
 
 export function isWorldRoute(path: string): boolean {
-  return WORLD_ROUTES.some((p) => (p === "/" ? path === "/" : path === p || path.startsWith(p + "/")));
+  return WORLD_ROUTES.some((p) => path === p || path.startsWith(p + "/"));
 }
 
 /** Whether the shared top site header (components/nav.tsx) is hidden for a path.
@@ -81,12 +82,14 @@ export function siteNavHidden(path: string, onOrg: boolean): boolean {
   // The Observatory is a full-screen, console-style 3D dashboard with its own
   // chrome (incl. a "Game" back button), so the web header would only fight it.
   if (path === "/stats" || path.startsWith("/stats/")) return true;
+  // The game-domain landing (/) opens on the immersive intro deck, which carries
+  // its own chrome (brand · progress dots · skip); a stacked web header fights it.
+  if (!onOrg && path === "/") return true;
   if (!onOrg && isWorldRoute(path)) return true;
   return false;
 }
 
 export function navIsActive(path: string, href: string): boolean {
-  if (href === "/") return path === "/" || path === "/grounds";
   return path === href || path.startsWith(href + "/");
 }
 

@@ -1,5 +1,5 @@
-import GroundsScreen from "@/components/grounds/grounds-screen";
+import { Landing } from "@/components/home/landing";
 
 export default function Home() {
-  return <GroundsScreen />;
+  return <Landing />;
 }

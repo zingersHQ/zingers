@@ -8,6 +8,7 @@ import { FORCES as FORCE_LORE, FORCE_MOTTO, wheelNeighbors } from "@/lib/lore/ca
 import { ForcesWheel } from "@/components/lore/forces-wheel";
 import { primeCreature, speakCreatureType, stopCreature } from "@/lib/creature-voice";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -38,6 +39,12 @@ export type FirstDuelPhase = "pitch" | "pick" | "train" | "evolve" | "concord";
 
 const ACC = ICON.accent;
 const PITCH_HERO = showcaseChampion(FIRST_DUEL_HERO_KEY);
+
+// Width of the right-hand dossier on desktop. The figure canvas spans the FULL
+// stage so the champion is centred in the viewport; the dossier floats over the
+// right, and the cycle arrows inset by this much so they flank the champion
+// (between it and the dossier) rather than the canvas edges.
+const DOSSIER_W = 360;
 
 const shell: React.CSSProperties = {
   position: "fixed",
@@ -340,6 +347,7 @@ function PickPhase({
           style={{
             flex: 1,
             minHeight: 0,
+            position: "relative",
             display: "flex",
             flexDirection: isMobile ? "column" : "row",
             alignItems: "stretch",
@@ -368,16 +376,19 @@ function PickPhase({
             <div className="mono" style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", pointerEvents: "none", fontSize: 9, letterSpacing: 1.4, color: "var(--muted2)", opacity: 0.7 }}>
               drag to rotate · scroll to zoom
             </div>
-
-            <CycleArrow side="left" onClick={() => go(-1)} />
-            <CycleArrow side="right" onClick={() => go(1)} />
           </div>
 
-          {/* dossier */}
+          {/* dossier — floats over the right on desktop so the figure canvas can
+              span the full stage and the champion sits centred in the viewport */}
           <div
             style={{
-              width: isMobile ? "auto" : 360,
+              width: isMobile ? "auto" : DOSSIER_W,
               flexShrink: 0,
+              position: isMobile ? "relative" : "absolute",
+              right: isMobile ? undefined : 24,
+              top: isMobile ? undefined : 0,
+              bottom: isMobile ? undefined : 0,
+              zIndex: 4,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -412,17 +423,20 @@ function PickPhase({
           </div>
         </div>
 
-        {/* roster strip */}
+        {/* roster strip — prev/next flank the reel so the centred figure above
+            stays unobstructed */}
         <div
           style={{
             flexShrink: 0,
             padding: isMobile ? "10px 12px 16px" : "12px 24px 22px",
             display: "flex",
             gap: 8,
+            alignItems: "center",
             justifyContent: "center",
             overflowX: "auto",
           }}
         >
+          <CycleArrow side="left" onClick={() => go(-1)} />
           {starters.map((r, i) => {
             const on = i === safeIdx;
             const rc = TYPE_COLOR[r.type];
@@ -454,6 +468,7 @@ function PickPhase({
               </button>
             );
           })}
+          <CycleArrow side="right" onClick={() => go(1)} />
         </div>
       </div>
     </div>
@@ -466,11 +481,7 @@ function CycleArrow({ side, onClick }: { side: "left" | "right"; onClick: () => 
       onClick={onClick}
       aria-label={side === "left" ? "previous champion" : "next champion"}
       style={{
-        position: "absolute",
-        zIndex: 5,
-        top: "50%",
-        transform: "translateY(-50%)",
-        [side]: 6,
+        flexShrink: 0,
         width: 40,
         height: 40,
         borderRadius: 99,
@@ -502,6 +513,29 @@ function cardShareUrl(key: string, champion: Champion) {
   return `${window.location.origin}/c/${key}?${p.toString()}`;
 }
 
+// A single duel can't reshape a body — the silhouette is a deterministic function
+// of a whole career, so a one-win delta is sub-pixel. Instead of two identical
+// bodies, the "after" panel previews where THIS mind is heading: its own dominant
+// proportions taken to Legend tier, so the player sees the body their record is
+// sculpting toward (it warps, gains regalia, earns a crown) — real evolution made
+// visible, not a fake one-win nudge.
+const LEGEND_PROJECT_XP = 30000; // comfortably past the LEGEND threshold (lvl 15+) → crown + full regalia tier
+function projectEvolved(c: Champion): Champion {
+  const peak = Math.max(1, c.aggression, c.control, c.resilience, c.flair, c.creativity);
+  const amp = (v: number) => Math.round(7 + (v / peak) * 21);
+  return {
+    ...c,
+    xp: Math.max(c.xp, LEGEND_PROJECT_XP),
+    wins: c.wins + 60,
+    battles: c.battles + 72,
+    aggression: amp(c.aggression),
+    control: amp(c.control),
+    resilience: amp(c.resilience),
+    flair: amp(c.flair),
+    creativity: amp(c.creativity),
+  };
+}
+
 function EvolveStep({
   evolve,
   isMobile,
@@ -516,11 +550,14 @@ function EvolveStep({
   const col = TYPE_COLOR[type];
   const beforeLf = levelFor(before.xp);
   const afterLf = levelFor(after.xp);
+  const projected = projectEvolved(after);
+  const projLf = levelFor(projected.xp);
+  const projTier = tierFor(projLf.level).name;
   const xpGain = after.xp - before.xp;
   const beforeDoc = doctrine(before, beforeLf.level);
   const afterDoc = doctrine(after, afterLf.level);
   const leveled = afterLf.level > beforeLf.level;
-  const avSize = isMobile ? 80 : 100;
+  const avSize = isMobile ? 124 : 248;
   const [copied, setCopied] = useState(false);
 
   const share = useCallback(() => {
@@ -537,76 +574,190 @@ function EvolveStep({
 
   return (
     <div style={shell}>
-      <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 28, width: "min(640px, 96vw)", textAlign: "center", borderColor: col }}>
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col }}>FIRST WIN</div>
-        <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, margin: "8px 0 6px" }}>
-          {name} {leveled ? "leveled up" : "grew from the win"}.
-        </h2>
-        <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-          Your doctrine shaped the fight. The {FIGHT.duel} added {xpGain > 0 ? `${xpGain} XP` : "XP"} and a {after.wins}W record. The silhouette is your champion&apos;s career made visible.
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr auto 1fr",
-            gridTemplateRows: "auto auto auto",
-            columnGap: isMobile ? 8 : 16,
-            rowGap: 8,
-            marginBottom: 12,
-            alignItems: "center",
-            justifyItems: "center",
-          }}
-        >
-          <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>BEFORE</div>
-          <div />
-          <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: col }}>AFTER</div>
-          <div style={{ width: avSize, height: avSize, display: "grid", placeItems: "center" }}>
-            <ChampionAvatar ckey={key} type={type} champion={before} size={avSize} />
+      <div className="evo2 panel pop" style={{ ["--ac" as string]: col }}>
+        <div className="evo2-glow" aria-hidden />
+        <header className="evo2-head">
+          <div className="evo2-eyebrow mono">
+            <span className="evo2-rule" /> FIRST WIN <span className="evo2-rule" />
           </div>
-          <div className="mono" style={{ fontSize: 20, color: col, fontWeight: 800 }}>→</div>
-          <div style={{ width: avSize, height: avSize, display: "grid", placeItems: "center" }}>
-            <ChampionAvatar ckey={key} type={type} champion={after} size={avSize} />
+          <h2 className="evo2-title">
+            {name} {leveled ? "leveled up" : "grew from the win"}.
+          </h2>
+          <p className="evo2-sub">
+            Your doctrine shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record. The body is a pure function of that record: keep winning and {name}&apos;s silhouette warps toward the {projTier} form.
+          </p>
+        </header>
+
+        <div className="evo2-stage">
+          <EvoPod
+            ckey={key}
+            type={type}
+            champion={after}
+            size={avSize}
+            label="NOW"
+            caption={`L${afterLf.level} · SL ${skillLevel(after)}`}
+            accent="var(--muted2)"
+          />
+          <div className="evo2-arrow" style={{ ["--ac" as string]: col }}>
+            <span className="evo2-chev">→</span>
+            <span className="evo2-evolves mono">EVOLVES</span>
           </div>
-          <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>L{beforeLf.level} · SL {skillLevel(before)}</div>
-          <div />
-          <div className="mono" style={{ fontSize: 10, color: col }}>L{afterLf.level} · SL {skillLevel(after)}</div>
+          <EvoPod
+            ckey={key}
+            type={type}
+            champion={projected}
+            size={avSize}
+            label={`AT ${projTier}`}
+            caption={`L${projLf.level} · ${projTier}`}
+            accent={col}
+            hero
+          />
         </div>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+
+        <div className="evo2-chips">
           {leveled && (
-            <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)", fontSize: 11 }}>
+            <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>
               LEVEL {beforeLf.level} → {afterLf.level}
             </span>
           )}
           {afterDoc !== beforeDoc && (
-            <span className="chip" style={{ borderColor: col, color: col, fontSize: 11 }}>
+            <span className="chip" style={{ borderColor: col, color: col }}>
               {afterDoc}
             </span>
           )}
-          <span className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)", fontSize: 11 }}>
+          <span className="chip" style={{ borderColor: "var(--line2)", color: "var(--muted)" }}>
             {after.wins}W · {after.losses}L
           </span>
         </div>
 
-        <div style={{ borderTop: "1px solid var(--line)", marginTop: 4, paddingTop: 18 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>CLIP THIS MOMENT</div>
-          <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.45, margin: "0 0 14px" }}>
-            A frozen read of {name} right now. Not a live profile.
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 14 }}>
-            <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={share}>
-              {copied ? <Check size={15} strokeWidth={2.4} /> : <ArrowUpRight size={15} strokeWidth={2.2} />}
-              {copied ? "link copied" : "copy clip link"}
-            </button>
-            <button className="btn" style={{ ["--ac" as string]: "var(--line2)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={tweet}>
-              share on X
-            </button>
+        <div className="evo2-foot">
+          <div className="evo2-foot-row">
+            <div className="evo2-foot-copy">
+              <div className="evo2-foot-eyebrow mono">CLIP THIS MOMENT</div>
+              <p className="evo2-foot-sub">A frozen read of {name} right now — not a live profile.</p>
+            </div>
+            <div className="evo2-foot-actions">
+              <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)" }} onClick={share}>
+                {copied ? <Check size={14} strokeWidth={2.4} /> : <ArrowUpRight size={14} strokeWidth={2.2} />}
+                {copied ? "copied" : "copy clip"}
+              </button>
+              <button className="btn" style={{ ["--ac" as string]: "var(--line2)" }} onClick={tweet}>
+                share on X
+              </button>
+            </div>
           </div>
-          <button className="btn btn-primary" style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px" }} onClick={onDone}>
+          <button className="btn btn-primary evo2-cta" style={{ ["--ac" as string]: col }} onClick={onDone}>
             Continue to the Concord
           </button>
         </div>
+
+        <EvolveStyles />
       </div>
     </div>
+  );
+}
+
+function EvoPod({
+  ckey,
+  type,
+  champion,
+  size,
+  label,
+  caption,
+  accent,
+  hero,
+}: {
+  ckey: string;
+  type: RosterEntry["type"];
+  champion: Champion;
+  size: number;
+  label: string;
+  caption: string;
+  accent: string;
+  hero?: boolean;
+}) {
+  return (
+    <div className={hero ? "evo2-pod evo2-hero" : "evo2-pod"} style={{ ["--ac" as string]: accent, width: size }}>
+      <div className="evo2-frame" style={{ height: size }}>
+        <span className="evo2-tag mono">{label}</span>
+        <RenderBoundary fallback={<div className="evo2-fallback" />}>
+          <ChampionPortraitScene type={type} champion={champion} preset="portrait" identityKey={ckey} />
+        </RenderBoundary>
+        <div className="evo2-floor" aria-hidden />
+      </div>
+      <div className="evo2-cap mono">{caption}</div>
+    </div>
+  );
+}
+
+function EvolveStyles() {
+  return (
+    <style>{`
+    .evo2{position:relative;overflow:hidden;width:min(680px,96vw);max-height:94vh;overflow-y:auto;
+      padding:30px 30px 24px;text-align:center;
+      border-color:color-mix(in srgb,var(--ac) 30%,var(--line2));
+      box-shadow:0 30px 90px -30px #000, 0 0 0 1px color-mix(in srgb,var(--ac) 10%,transparent)}
+    .evo2-glow{position:absolute;left:50%;top:-46%;width:130%;height:90%;transform:translateX(-50%);pointer-events:none;
+      background:radial-gradient(58% 100% at 50% 0%, color-mix(in srgb,var(--ac) 22%,transparent), transparent 70%)}
+    .evo2-head{position:relative;z-index:1;margin-bottom:22px}
+    .evo2-eyebrow{display:flex;align-items:center;justify-content:center;gap:11px;font-size:10px;letter-spacing:3px;color:var(--ac);margin-bottom:13px}
+    .evo2-rule{width:28px;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ac) 75%,transparent))}
+    .evo2-rule:last-child{transform:scaleX(-1)}
+    .evo2-title{font-size:28px;font-weight:800;letter-spacing:-.3px;line-height:1.12;margin:0 0 9px;color:var(--ink)}
+    .evo2-sub{max-width:486px;margin:0 auto;color:var(--muted);font-size:13.5px;line-height:1.55}
+
+    .evo2-stage{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:20px}
+    .evo2-pod{display:flex;flex-direction:column;align-items:center;min-width:0}
+    .evo2-frame{position:relative;width:100%;border-radius:18px;overflow:hidden;
+      background:linear-gradient(180deg,#0d0b16,#08070f);
+      border:1px solid color-mix(in srgb,var(--ac) 24%,var(--line));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05), inset 0 0 46px -26px var(--ac)}
+    .evo2-frame canvas{width:100%!important;height:100%!important;display:block;border-radius:18px}
+    .evo2-fallback{position:absolute;inset:0;background:linear-gradient(180deg,#0d0b16,#08070f)}
+    .evo2-hero .evo2-frame{border-color:color-mix(in srgb,var(--ac) 62%,var(--line2));
+      box-shadow:0 0 0 1px color-mix(in srgb,var(--ac) 34%,transparent),
+                 0 22px 60px -24px color-mix(in srgb,var(--ac) 75%,transparent),
+                 inset 0 0 60px -26px var(--ac)}
+    .evo2-tag{position:absolute;top:10px;left:10px;z-index:3;font-size:8.5px;letter-spacing:1.8px;
+      padding:4px 9px;border-radius:999px;color:var(--ac);
+      background:color-mix(in srgb,#08070f 72%,transparent);
+      border:1px solid color-mix(in srgb,var(--ac) 38%,var(--line));backdrop-filter:blur(5px)}
+    .evo2-hero .evo2-tag{color:color-mix(in srgb,var(--ac) 90%,#fff);
+      box-shadow:0 0 16px -4px color-mix(in srgb,var(--ac) 80%,transparent)}
+    .evo2-floor{position:absolute;left:50%;bottom:7%;width:60%;height:13%;transform:translateX(-50%);pointer-events:none;
+      border-radius:50%;filter:blur(7px);opacity:.45;
+      background:radial-gradient(ellipse at center, color-mix(in srgb,var(--ac) 55%,transparent), transparent 70%)}
+    .evo2-cap{margin-top:11px;font-size:11px;letter-spacing:.8px;
+      color:color-mix(in srgb,var(--ac) 85%,var(--ink))}
+    .evo2-hero .evo2-cap{color:var(--ac);text-shadow:0 0 14px color-mix(in srgb,var(--ac) 55%,transparent)}
+
+    .evo2-arrow{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+    .evo2-chev{font-size:26px;font-weight:800;line-height:1;color:var(--ac);
+      filter:drop-shadow(0 0 9px color-mix(in srgb,var(--ac) 60%,transparent))}
+    .evo2-evolves{font-size:8px;letter-spacing:2px;color:var(--muted2)}
+
+    .evo2-chips{position:relative;z-index:1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+    .evo2-chips .chip{font-size:11px;padding:5px 11px}
+
+    .evo2-foot{position:relative;z-index:1;border-top:1px solid var(--line);padding-top:18px;text-align:left}
+    .evo2-foot-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+    .evo2-foot-copy{min-width:0}
+    .evo2-foot-eyebrow{font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
+    .evo2-foot-sub{margin:0;color:var(--muted);font-size:12.5px;line-height:1.4}
+    .evo2-foot-actions{display:flex;gap:8px;flex-shrink:0}
+    .evo2-foot-actions .btn{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:9px 13px}
+    .evo2-cta{width:100%;font-size:14px;padding:14px 16px;display:flex;align-items:center;justify-content:center}
+
+    @media (max-width:560px){
+      .evo2{padding:22px 18px 18px}
+      .evo2-title{font-size:21px}
+      .evo2-sub{font-size:12.5px}
+      .evo2-stage{gap:9px;margin-bottom:16px}
+      .evo2-chev{font-size:20px}
+      .evo2-foot-row{flex-direction:column;align-items:stretch;gap:12px}
+      .evo2-foot-actions .btn{flex:1;justify-content:center}
+    }
+    `}</style>
   );
 }
 

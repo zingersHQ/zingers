@@ -11,7 +11,7 @@ import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
 import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
 import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
 import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
-import { PhenotypeParts } from "@/components/grounds/phenotype-parts";
+import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 import { FORCES } from "@/lib/lore/canon";
@@ -19,18 +19,6 @@ import { FORCES } from "@/lib/lore/canon";
 for (const m of ALL_MODELS) useGLTF.preload(m);
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-
-// module-level deterministic RNG (kept out of render so the React Compiler doesn't
-// flag the internal state reassignment) — identity-stable shard layouts.
-function seededRng(seed: number) {
-  let a = (seed || 1) >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 // ── animation level-of-detail ────────────────────────────────────────────────
 // Every non-owned champion runs its own AnimationMixer + bone-morph + decorative
@@ -385,19 +373,6 @@ export function ChampionMesh({
     idle.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1));
   }, [built, idlePhase, idleSpeed, type]);
 
-  // evolution shards + rings, precomputed. Kept sparse on purpose — a few drifting
-  // motes read as "evolved" without burying the body in floating clutter.
-  const shardN = Math.min(4, Math.max(0, Math.ceil((lf.level - 1) / 2)));
-  const shards = useMemo(
-    () => {
-      const rnd = seededRng(seed ^ 0x5a3d); // identity-stable orbit so a mind keeps its shards
-      return Array.from({ length: shardN }, (_, i) => ({ a: (i / Math.max(1, shardN)) * 6.28, r: 1.0 + rnd() * 0.4, y: app.h * 0.45 + (rnd() - 0.3) * 0.9, spd: 0.3 + rnd() * 0.6 }));
-    },
-    [shardN, seed], // eslint-disable-line react-hooks/exhaustive-deps
-  );
-  const shardRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const ringN = Math.min(2, tier.rings);
-  const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
   // scratch vector + accumulator for the distance LOD (no per-frame allocation)
   const lodPos = useRef(new THREE.Vector3());
   const lodAccum = useRef(0);
@@ -481,18 +456,6 @@ export function ChampionMesh({
     // evo animations — cosmetic only, so freeze them past the near band
     if (decorate) {
       if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.6 + phase) * 0.06);
-      for (let i = 0; i < shardRefs.current.length; i++) {
-        const m = shardRefs.current[i];
-        const s = shards[i];
-        if (!m || !s) continue;
-        const ang = s.a + t * s.spd; // derive from time — never mutate the seed
-        m.position.set(Math.cos(ang) * s.r, s.y + Math.sin(t * 0.8 + s.r) * 0.12, Math.sin(ang) * s.r);
-        m.rotation.y += 0.04;
-      }
-      for (let i = 0; i < ringRefs.current.length; i++) {
-        const m = ringRefs.current[i];
-        if (m) m.rotation.z += (0.2 + i * 0.15) * 0.012;
-      }
       if (crownRef.current) {
         crownRef.current.rotation.y += 0.01;
         crownRef.current.position.y = app.h + 0.3 + Math.sin(t * 1.4) * 0.05;
@@ -502,6 +465,10 @@ export function ChampionMesh({
 
   const auraOpacity = (0.05 + ti * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
   const auraR = app.h * (auraDim ? 0.46 : 0.62);
+  // the body's core bone — drives the energy decor so it rides the live motion
+  // (idle sway, the punch lunge, the hit recoil) instead of hanging at the static
+  // figure origin and getting clipped by the fighter as it lunges.
+  const coreBone = built.bones["abdomen"] ?? built.bones["torso"] ?? built.bones["spine"];
 
   return (
     <group
@@ -516,66 +483,62 @@ export function ChampionMesh({
         <primitive object={built.root} />
       </group>
 
-      {/* per-Force signature attachments — the species markings that make each
-          Force read as a different being; tinted to this individual */}
-      {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />}
-
       {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
-          back, gated by tier so the body visibly grows as the mind evolves */}
+          back, gated by tier so the body visibly grows as the mind evolves. Each
+          piece fuses to its own bone internally (head / shoulders / torso). */}
       <PhenotypeParts
         pheno={pheno}
         h={app.h}
         headScale={app.morph.headScale}
         shoulder={app.morph.shoulder}
         pal={palette}
+        bones={built.bones}
         dim={auraDim}
       />
 
-      {/* Keeper regalia — the signature weapon/item that makes a campaign boss
-          read as itself, not a recoloured ladder agent */}
-      {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
+      {/* per-creature energy decor — archetype constructs, keeper regalia, and the
+          aura — all ride the core bone so they track the body's live motion (sway,
+          lunge, recoil) as one piece instead of hanging at the static origin and
+          getting clipped by the fighter mid-duel. */}
+      <BoneFollower bone={coreBone}>
+        {/* per-Force signature attachments — the species markings that make each
+            Force read as a different being; tinted to this individual */}
+        {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />}
 
-      {/* aura sphere */}
-      <mesh ref={auraRef} position={[0, app.h * 0.55, 0]}>
-        <sphereGeometry args={[auraR, 16, 12]} />
-        <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
-      </mesh>
+        {/* Keeper regalia — the signature weapon/item that makes a campaign boss
+            read as itself, not a recoloured ladder agent */}
+        {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
 
-      {/* ground aura ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+        {/* aura sphere — faint, wide atmospheric glow; flagged so portrait
+            auto-framing may let it bleed off-edge rather than shrinking the body */}
+        <mesh ref={auraRef} position={[0, app.h * 0.55, 0]} userData={{ fitIgnore: true }}>
+          <sphereGeometry args={[auraR, 16, 12]} />
+          <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
+        </mesh>
+      </BoneFollower>
+
+      {/* ground aura ring — floor glow; also excluded from the fit envelope */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
         <ringGeometry args={[0.78, 0.92, 48]} />
         <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* orbiting shards */}
-      {!hideFloaters && shards.map((s, i) => (
-        <mesh key={i} ref={(el) => { shardRefs.current[i] = el; }} position={[Math.cos(s.a) * s.r, s.y, Math.sin(s.a) * s.r]}>
-          <octahedronGeometry args={[0.12, 0]} />
-          <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.4} roughness={0.3} transparent opacity={0.32} />
-        </mesh>
-      ))}
-
-      {/* tier rings */}
-      {!hideFloaters && Array.from({ length: ringN }).map((_, i) => (
-        <mesh key={i} ref={(el) => { ringRefs.current[i] = el; }} rotation={[Math.PI / 2 + i * 0.45, 0, 0]} position={[0, app.h * 0.5, 0]}>
-          <torusGeometry args={[1.0 + i * 0.25, 0.02, 6, 32]} />
-          <meshBasicMaterial color={col} transparent opacity={0.15} />
-        </mesh>
-      ))}
-
-      {/* legend crown */}
+      {/* legend crown — fused to the head bone so it rides the gaze instead of
+          hovering at a fixed point; the inner group keeps its slow spin + bob */}
       {tier.crown && (
-        <group ref={crownRef} position={[0, app.h + 0.3, 0]}>
-          {Array.from({ length: 8 }).map((_, i) => {
-            const a = (i / 8) * Math.PI * 2;
-            return (
-              <mesh key={i} position={[Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42]}>
-                <coneGeometry args={[0.06, 0.3, 6]} />
-                <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.8} roughness={0.2} />
-              </mesh>
-            );
-          })}
-        </group>
+        <BoneFollower bone={built.bones["head"]}>
+          <group ref={crownRef} position={[0, app.h + 0.3, 0]}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              return (
+                <mesh key={i} position={[Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42]}>
+                  <coneGeometry args={[0.06, 0.3, 6]} />
+                  <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.8} roughness={0.2} />
+                </mesh>
+              );
+            })}
+          </group>
+        </BoneFollower>
       )}
 
       {hpFrac != null && (

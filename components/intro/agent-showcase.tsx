@@ -9,6 +9,8 @@ import * as THREE from "three";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { ChampionMesh } from "@/components/grounds/champion-mesh";
+import { BiomeBackdrop } from "@/components/grounds/biome-backdrop";
+import { biomeById } from "@/components/grounds/biomes";
 
 type Gesture = "idle" | "wave" | "punch" | "jump";
 
@@ -28,6 +30,7 @@ export default function AgentShowcase({
   interactive = false,
   bare = false,
   framingKey,
+  biomeId,
 }: {
   champion: Champion;
   type: CreatureType;
@@ -55,8 +58,12 @@ export default function AgentShowcase({
   bare?: boolean;
   /** changes → re-frame the camera on the new champion (then the player is free). */
   framingKey?: string | number;
+  /** when set, renders a static slice of that game world behind the figure
+   *  (sky + terrain + nature kit) so the beat reads as a real place. */
+  biomeId?: string;
 }) {
   const rim = colorHex ?? TYPE_COLOR[type];
+  const biome = biomeId ? biomeById(biomeId) : null;
   const rim2 = rival ? TYPE_COLOR[rival.type] : null;
   const duel = !!rival;
   // These champions carry oversized heads/auras, so frame loose enough to keep
@@ -77,16 +84,31 @@ export default function AgentShowcase({
 
   return (
     <Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [0, camY, camZ], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
-      <color attach="background" args={["#0a0813"]} />
-      <fog attach="fog" args={["#0a0813", 11, 24]} />
+      <color attach="background" args={[biome ? biome.bg : "#0a0813"]} />
+      {/* the world's own fog is tuned for a far overhead camera; for this close,
+          eye-level framing we pull it in so distant hills + scattered props melt
+          into atmospheric haze (depth, and no detached-looking specks on the rim),
+          while always clearing the figure(s) in front. */}
+      <fog attach="fog" args={biome ? [biome.fog.color, camZ + 2, camZ + 50] : ["#0a0813", 11, 24]} />
       {!orbit && <CamRig lookY={lookY} camY={camY} camZ={camZ} dolly={dolly} autoFrame={doFit} fitRef={fitRef} />}
-      <ambientLight intensity={0.55} />
-      <hemisphereLight args={["#b9a7ff", "#160f2c", 0.7]} />
-      <directionalLight position={[5, 8, 4]} intensity={1.7} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} />
+      {biome ? (
+        <>
+          <hemisphereLight args={[biome.lights.hemiSky, biome.lights.hemiGround, biome.lights.hemiInt * 1.5]} />
+          <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt * 1.9} />
+          <directionalLight position={[18, 30, 12]} intensity={biome.lights.sunInt} color={biome.lights.sun} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} />
+        </>
+      ) : (
+        <>
+          <ambientLight intensity={0.55} />
+          <hemisphereLight args={["#b9a7ff", "#160f2c", 0.7]} />
+          <directionalLight position={[5, 8, 4]} intensity={1.7} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} />
+        </>
+      )}
       <pointLight position={[-5, 3, -3]} intensity={55} color={rim} distance={22} />
       <pointLight position={[4, 1.5, 5]} intensity={22} color="#ffffff" distance={20} />
       {rim2 && <pointLight position={[5, 3, -3]} intensity={48} color={rim2} distance={22} />}
       <Suspense fallback={null}>
+        {biome && <BiomeBackdrop biomeId={biomeId!} />}
         {duel ? (
           <Duel hero={{ champion, type }} rival={rival!} scale={scale} />
         ) : (

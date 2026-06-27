@@ -103,7 +103,7 @@ export function StatsScreen() {
       <div style={{ position: "absolute", top: 16, left: 18, right: 18, zIndex: 10, display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap", pointerEvents: "none" }}>
         <div style={{ pointerEvents: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link href="/" className="btn" style={{ ["--ac" as string]: "var(--line2)", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <Link href="/grounds" className="btn" style={{ ["--ac" as string]: "var(--line2)", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
               <ArrowLeft size={14} strokeWidth={2.2} /> Game
             </Link>
             <div>

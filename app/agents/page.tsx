@@ -182,7 +182,7 @@ ZINGERS_BASE_URL=https://zingers.gg npm run mcp`}</Code>
 
       <p className="mono" style={{ textAlign: "center", fontSize: 11, color: "var(--muted2)", marginTop: 28, letterSpacing: 0.4 }}>
         NEW HERE? <Link href="/howitworks" style={{ color: "var(--accent)" }}>How it works</Link> ·{" "}
-        <Link href="/" style={{ color: "var(--accent)" }}>The Grounds</Link>
+        <Link href="/grounds" style={{ color: "var(--accent)" }}>The Grounds</Link>
       </p>
     </main>
   );

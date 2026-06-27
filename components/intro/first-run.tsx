@@ -20,6 +20,9 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning an agent…</div>,
 });
 
+// Standalone world vista for beats with no 3D figure (the Forces wheel).
+const BiomeBackdropCanvas = dynamic(() => import("@/components/grounds/biome-backdrop").then((m) => m.BiomeBackdropCanvas), { ssr: false, loading: () => null });
+
 const HERO: Champion = { xp: 38000, wins: 74, losses: 8, battles: 82, aggression: 19, control: 9, resilience: 7, flair: 16, creativity: 13, rating: 1492 };
 const HERO_TYPE: CreatureType = "CHAOS";
 
@@ -30,7 +33,7 @@ const RIVAL = showcaseChampion("BASTION"); // COMPOSURE / The Stillness
 
 const ACC = "#7c5cff";
 
-export function FirstRun({ onClose }: { onClose: () => void }) {
+export function FirstRun({ onClose, embedded = false }: { onClose: () => void; embedded?: boolean }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -62,7 +65,9 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") {
+      // When embedded on the homepage, leave Space free so the page can scroll
+      // down to the marketing sections; arrows / Enter still page the deck.
+      if (e.key === "ArrowRight" || e.key === "Enter" || (!embedded && e.key === " ")) {
         e.preventDefault();
         i >= LAST ? onClose() : next();
       } else if (e.key === "ArrowLeft") back();
@@ -70,18 +75,17 @@ export function FirstRun({ onClose }: { onClose: () => void }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, LAST, next, back, onClose]);
+  }, [i, LAST, next, back, onClose, embedded]);
 
   useEffect(() => armOnboardingAudio(), []);
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 80,
-        background: ONBOARDING_BG,
-      }}
+      style={
+        embedded
+          ? { position: "relative", width: "100%", height: "100%", background: ONBOARDING_BG, overflow: "hidden" }
+          : { position: "fixed", inset: 0, zIndex: 80, background: ONBOARDING_BG }
+      }
     >
       <OnboardingAudio compact={isMobile} />
       <div
@@ -264,7 +268,7 @@ function Shape({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" everyMs={2300} />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" everyMs={2300} biomeId="ember" />
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -309,6 +313,14 @@ function Shape({ mobile }: { mobile?: boolean }) {
 function Forces({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
+      {/* a quiet Void Garden vista behind the diagram */}
+      <div style={{ position: "absolute", inset: 0 }}>
+        <Stage>
+          <BiomeBackdropCanvas biomeId="void" />
+        </Stage>
+        {/* dim the landscape so the wheel + copy stay legible on top */}
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 90% at 50% 38%, rgba(10,8,18,.25) 0%, rgba(10,8,18,.62) 60%, rgba(10,8,18,.82) 100%)" }} />
+      </div>
       <div
         style={{
           position: "absolute",
@@ -360,7 +372,7 @@ function Fight({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.46 : 0.56} rival={{ champion: RIVAL.champion, type: RIVAL.type }} />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.46 : 0.56} rival={{ champion: RIVAL.champion, type: RIVAL.type }} biomeId="colosseum" />
       </Stage>
       <MatchupTag mobile={mobile} />
       <ReasoningBubble mobile={mobile} />
@@ -476,7 +488,7 @@ function Legend({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" everyMs={2600} />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" everyMs={2600} biomeId="amphitheatre" />
       </Stage>
       <div
         style={{

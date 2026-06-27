@@ -64,7 +64,7 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     visor: [["band", 3], ["single", 2], ["twin", 1]],
     shoulders: [["vent", 3], ["pauldron", 1], ["none", 2]],
     back: [["slab", 2], ["none", 3]],
-    chest: [["diamond", 3], ["ring", 1], ["none", 1]],
+    chest: [["diamond", 3], ["none", 1]],
   },
   CHAOS: {
     headgear: [["horns", 3], ["fin", 3], ["antenna", 1], ["none", 1]],
@@ -80,24 +80,24 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     // the Stillness reads as immovable from its mass + ground rings — no slab
     // bolted behind the figure (those static blocks were cut by design).
     back: [["none", 1]],
-    chest: [["ring", 3], ["bars", 1], ["none", 1]],
+    chest: [["bars", 3], ["none", 2]],
   },
   RHETORIC: {
-    headgear: [["crownRing", 3], ["crest", 3], ["antenna", 1]],
+    headgear: [["crest", 3], ["antenna", 1]],
     visor: [["twin", 3], ["band", 2], ["single", 1]],
     // a speaker, not a linebacker: no big pauldron pads or "ears" on the frame —
     // either bare shoulders or slim vents only.
     shoulders: [["none", 4], ["vent", 1]],
     // keep the back clean — no wing panels or banners flaring off the silhouette.
     back: [["none", 1]],
-    chest: [["ring", 3], ["diamond", 1]],
+    chest: [["diamond", 3], ["none", 1]],
   },
   CREATIVITY: {
-    headgear: [["antenna", 3], ["fin", 3], ["crownRing", 1], ["none", 1]],
+    headgear: [["antenna", 3], ["fin", 3], ["none", 1]],
     visor: [["single", 3], ["twin", 2], ["triple", 1]],
     shoulders: [["vent", 2], ["none", 3]],
     back: [["wings", 3], ["thrusters", 1], ["none", 2]],
-    chest: [["diamond", 3], ["ring", 1], ["none", 1]],
+    chest: [["diamond", 3], ["none", 1]],
   },
 };
 
@@ -107,7 +107,7 @@ const AXIS_HEADGEAR: Record<StyleAxis, Headgear> = {
   aggression: "horns",
   control: "antenna",
   resilience: "dome",
-  flair: "crownRing",
+  flair: "crest",
   creativity: "fin",
 };
 
