@@ -96,6 +96,23 @@ export interface Store {
   // of volume); uniqueCount unions the given days (DAU/WAU/MAU all fall out).
   trackUnique(day: number, token: string): Promise<void>;
   uniqueCount(days: number[]): Promise<number>;
+  // Pre-launch waitlist. A set of emails (dedupe + count) plus a capped log of
+  // {email, ref, t} so we can see where signups came from. isNew distinguishes a
+  // first signup from a duplicate so the UI can say "you're already on the list".
+  addWaitlist(email: string, ref: string): Promise<WaitlistResult>;
+  waitlistCount(): Promise<number>;
+}
+
+export interface WaitlistResult {
+  ok: boolean;
+  isNew: boolean;
+  count: number;
+}
+
+export interface WaitlistEntry {
+  email: string;
+  ref: string;
+  t: number;
 }
 
 export interface UsageDay {
@@ -129,7 +146,12 @@ const K = {
   bet: (token: string) => `z:bet:${token}`,
   events: (day: number) => `z:ev:${day}`,
   dau: (day: number) => `z:dau:${day}`,
+  waitlist: "z:waitlist", // set of emails (dedupe + count)
+  waitlistLog: "z:waitlist:log", // capped list of WaitlistEntry
 };
+
+// Keep a generous tail of recent signups for attribution without growing forever.
+const WAITLIST_LOG_CAP = 5000;
 
 // A pending bet self-expires so an abandoned wager can never settle on a later bout.
 const BET_TTL_SECONDS = 15 * 60;
@@ -329,6 +351,20 @@ class UpstashStore implements Store {
     const keys = days.map(K.dau);
     return Number(await this.r.pfcount(keys[0], ...keys.slice(1))) || 0;
   }
+  async addWaitlist(email: string, ref: string) {
+    // sadd returns the number of NEW members added (0 = already present).
+    const added = await this.r.sadd(K.waitlist, email);
+    const isNew = Number(added) > 0;
+    if (isNew) {
+      await this.r.lpush(K.waitlistLog, { email, ref, t: Date.now() } satisfies WaitlistEntry);
+      await this.r.ltrim(K.waitlistLog, 0, WAITLIST_LOG_CAP - 1);
+    }
+    const count = (await this.r.scard(K.waitlist)) || 0;
+    return { ok: true, isNew, count };
+  }
+  async waitlistCount() {
+    return (await this.r.scard(K.waitlist)) || 0;
+  }
 }
 
 // ── In-memory fallback (per-instance; not shared across serverless workers) ────
@@ -344,6 +380,7 @@ class MemoryStore implements Store {
   private bets = new Map<string, PendingBet>();
   private events = new Map<number, Map<string, number>>();
   private dau = new Map<number, Set<string>>();
+  private waitlist = new Set<string>();
 
   async getChampion(id: string) {
     return this.champs.get(id) ?? null;
@@ -440,6 +477,14 @@ class MemoryStore implements Store {
       if (s) for (const t of s) u.add(t);
     }
     return u.size;
+  }
+  async addWaitlist(email: string) {
+    const isNew = !this.waitlist.has(email);
+    this.waitlist.add(email);
+    return { ok: true, isNew, count: this.waitlist.size };
+  }
+  async waitlistCount() {
+    return this.waitlist.size;
   }
 }
 

@@ -87,8 +87,98 @@ const WORLDS_SHOWCASE = FOUNDING_REGIONS.map((r) => ({
 
 const WHY = ["AXIOM", "MUSE", "EMBER"].map(showcaseChampion);
 
+/** Pre-launch waitlist capture + community links. The single growth hook on the
+ *  public site: get an email before the visitor bounces, and route the curious
+ *  to Discord/X where the saga is told daily. */
+function JoinTheVault() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "loading" | "done" | "dupe" | "error">("idle");
+
+  const submit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const value = email.trim();
+      if (!value || state === "loading") return;
+      setState("loading");
+      try {
+        const r = await fetch("/api/waitlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: value, ref: "landing" }),
+        });
+        const j = (await r.json().catch(() => null)) as { ok?: boolean; isNew?: boolean } | null;
+        if (r.ok && j?.ok) setState(j.isNew ? "done" : "dupe");
+        else setState("error");
+      } catch {
+        setState("error");
+      }
+    },
+    [email, state],
+  );
+
+  const settled = state === "done" || state === "dupe";
+
+  return (
+    <div className="lp-join">
+      <span className="lp-kicker mono">Get in early</span>
+      <h2 className="lp-h2 lp-join__h">Claim your spot in the first season.</h2>
+      <p className="lp-body lp-join__body">
+        The Vault is opening. Join the waitlist for early access, a founder badge, and Crowns at launch —
+        then come argue with us in the Discord while the league self-plays.
+      </p>
+
+      {settled ? (
+        <p className="lp-join__ok mono" role="status">
+          {state === "done" ? "You're on the list. Watch your inbox." : "You're already on the list."}
+        </p>
+      ) : (
+        <form className="lp-join__form" onSubmit={submit}>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(ev) => setEmail(ev.target.value)}
+            placeholder="you@example.com"
+            aria-label="Email address"
+            className="lp-join__input"
+            disabled={state === "loading"}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary lp-cta"
+            style={{ ["--ac" as string]: "var(--gold)" }}
+            disabled={state === "loading"}
+          >
+            {state === "loading" ? "Joining…" : "Join the waitlist"} <ArrowRight size={16} strokeWidth={2.4} />
+          </button>
+        </form>
+      )}
+      {state === "error" && (
+        <p className="lp-join__err mono" role="alert">
+          Something went wrong — try again in a moment.
+        </p>
+      )}
+
+      <div className="lp-join__social">
+        <a href={BRAND.discordUrl} target="_blank" rel="noopener noreferrer" className="lp-social-btn">
+          Join the Discord
+        </a>
+        <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer" className="lp-social-btn">
+          Follow @{BRAND.twitter}
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function Landing() {
   const router = useRouter();
+
+  // Once the embedded intro deck advances past its first slide we hand the whole
+  // screen over to it: the marketing homepage below is hidden so nothing
+  // competes for attention while the player pages through the story.
+  const [deckIndex, setDeckIndex] = useState(0);
+  const deckFocused = deckIndex > 0;
 
   // Finishing or skipping the inline intro deck marks the cinematic as seen and
   // carries you into the playable tutorial (pick → tune → first duel) at the
@@ -104,18 +194,31 @@ export function Landing() {
     document.getElementById("homepage")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  // The final CTA drops you straight onto the champion-select screen: the visitor
+  // has already scrolled the whole pitch here, so skip the intro deck AND the
+  // in-game elevator-pitch slide and open the picker directly.
+  const startJourney = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.intro, "1");
+      sessionStorage.setItem(STORAGE.startPick, "1");
+    } catch {}
+    router.push("/grounds");
+  }, [router]);
+
   return (
     <main className="lp">
       {/* ── SLIDE 1: the real intro deck, inline ─────────────────────── */}
       <section className="lp-deck" aria-label="Introduction">
-        <FirstRun embedded onClose={enterTutorial} />
-        <button type="button" className="lp-deckhint mono" onClick={toHomepage}>
-          scroll to explore <ChevronDown size={13} strokeWidth={2.4} />
-        </button>
+        <FirstRun embedded onClose={enterTutorial} onIndexChange={setDeckIndex} />
+        {!deckFocused && (
+          <button type="button" className="lp-deckhint mono" onClick={toHomepage}>
+            scroll to explore <ChevronDown size={13} strokeWidth={2.4} />
+          </button>
+        )}
       </section>
 
-      {/* ── HOMEPAGE (scroll target) ─────────────────────────────────── */}
-      <div id="homepage" className="lp-home">
+      {/* ── HOMEPAGE (scroll target) — hidden once the deck takes focus ── */}
+      <div id="homepage" className="lp-home" hidden={deckFocused}>
         {/* WHY DIFFERENT */}
         <section className="lp-section lp-why">
           <Reveal>
@@ -219,14 +322,21 @@ export function Landing() {
           </div>
         </section>
 
+        {/* JOIN — waitlist + community capture */}
+        <section className="lp-section lp-join-section">
+          <Reveal>
+            <JoinTheVault />
+          </Reveal>
+        </section>
+
         {/* FINAL CTA */}
         <section className="lp-section lp-final">
           <Reveal>
             <h2 className="lp-h2 lp-final__h">Your champion is waiting.</h2>
             <div className="lp-cta-row lp-cta-row--center">
-              <Link href="/grounds" className="btn btn-primary lp-cta lp-cta--big" style={{ ["--ac" as string]: "var(--gold)" }}>
-                Start your journey <ArrowRight size={18} strokeWidth={2.4} />
-              </Link>
+              <button type="button" onClick={startJourney} className="btn btn-primary lp-cta lp-cta--big" style={{ ["--ac" as string]: "var(--gold)" }}>
+                Choose your champion <ArrowRight size={18} strokeWidth={2.4} />
+              </button>
             </div>
             <nav className="lp-final__links mono">
               <Link href="/bible">Lore &amp; gallery</Link>
@@ -234,6 +344,8 @@ export function Landing() {
               <Link href="/agents">For developers</Link>
               <span aria-hidden>·</span>
               <Link href="/slides">The pitch</Link>
+              <span aria-hidden>·</span>
+              <a href={BRAND.discordUrl} target="_blank" rel="noopener noreferrer">Discord</a>
               <span aria-hidden>·</span>
               <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer">@{BRAND.twitter}</a>
             </nav>
@@ -317,6 +429,30 @@ function Styles() {
       .lp-world__name { font-size: clamp(17px, 1.8vw, 21px); font-weight: 800; margin: 0; }
       .lp-world__blurb { margin: 9px 0 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
       .lp-world__force { display: inline-block; margin-top: 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); }
+
+      /* join — waitlist + community */
+      .lp-join-section { background:
+        radial-gradient(900px 500px at 50% -10%, color-mix(in srgb, var(--gold) 9%, transparent) 0%, transparent 60%); }
+      .lp-join { text-align: center; max-width: 640px; margin: 0 auto; }
+      .lp-join__h { margin-top: 6px; }
+      .lp-join__body { margin-left: auto; margin-right: auto; }
+      .lp-join__form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 30px; }
+      .lp-join__input {
+        flex: 1 1 280px; max-width: 360px; padding: 14px 16px; font-size: 15px;
+        color: var(--ink); background: var(--panel); border: 1px solid var(--line2);
+        border-radius: 12px; outline: none; transition: border-color .15s ease;
+      }
+      .lp-join__input:focus { border-color: var(--gold); }
+      .lp-join__input::placeholder { color: var(--muted2); }
+      .lp-join__ok { margin-top: 28px; font-size: 14px; letter-spacing: 1px; color: var(--gold); }
+      .lp-join__err { margin-top: 12px; font-size: 12px; color: #ff6b6b; }
+      .lp-join__social { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+      .lp-social-btn {
+        display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 11px 20px;
+        border-radius: 99px; border: 1px solid var(--line2); color: var(--muted);
+        transition: color .15s ease, border-color .15s ease;
+      }
+      .lp-social-btn:hover { color: var(--ink); border-color: var(--gold); }
 
       /* final */
       .lp-final { text-align: center; }

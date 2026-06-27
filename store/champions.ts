@@ -13,12 +13,13 @@ import {
   TRAIN_COST,
   FRAGMENT_BUY,
   FRAGMENT_SELL,
+  RECRUIT_COST,
 } from "@/lib/economy";
 import { commitBet as commitBetRequest, fetchBalance, walletEvent } from "@/lib/wallet-client";
 
 // Re-export the canonical economy numbers so existing imports from the store
 // keep working; the single source of truth now lives in lib/economy.ts.
-export { TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL };
+export { TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL, RECRUIT_COST };
 
 // Wild, maximally-distinct starting archetypes (key, xp, axis, val, axis2, val2, w, l)
 const SEED: [string, number, keyof Champion, number, keyof Champion, number, number, number][] = [
@@ -93,7 +94,12 @@ interface ChampionStore {
   forceSeason: number | null; // the season the current Clan was joined in (locks switching for that season)
   forcePoints: ForcePoints; // this season's contribution to that faction
   goals: GoalLedger; // world goals cleared this season
-  owned: string | null;
+  owned: string | null; // the single ACTIVE/adopted champion (unchanged behaviour)
+  // The collection acquisition loop: every mind you've RECRUITED into your roster
+  // (a deterministic Crown sink, see recruit()). Your adopted `owned` champion is
+  // always implicitly recruited. Client-only mirror for now (like `fragments`) —
+  // the spend itself is server-authoritative via the wallet.
+  roster: string[];
   predict: PredictState;
   daily: DailyState;
   lastServerSync: number; // updatedAt of the last save we reconciled with the server
@@ -106,6 +112,11 @@ interface ChampionStore {
   setAgent: (key: string, agent: Recipe["agent"]) => void;
   learnFromBout: (args: { key: string; opponentName: string; won: boolean; axisLabel: string }) => void;
   setOwned: (key: string) => void;
+  // Whether a mind is in the player's roster (recruited, or the adopted champion).
+  isRecruited: (key: string) => boolean;
+  // Recruit a new mind for RECRUIT_COST Crowns (server-authoritative spend). A
+  // no-op returning false if already recruited or the wallet can't cover it.
+  recruit: (key: string) => Promise<boolean>;
   // Mirror the authoritative balance returned by the server (bout reward, sync).
   setBalance: (n: number) => void;
   // Pull the authoritative balance from the server into the mirror (server wins).
@@ -156,6 +167,7 @@ export const useChampions = create<ChampionStore>()(
       forcePoints: { season: currentSeasonNumber(), points: 0 },
       goals: { season: currentSeasonNumber(), done: [] },
       owned: null,
+      roster: [],
       predict: { streak: 0, best: 0 },
       daily: { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
       lastServerSync: 0,
@@ -246,7 +258,29 @@ export const useChampions = create<ChampionStore>()(
           return { recipes: { ...s.recipes, [key]: { ...cur, strat, memory } } };
         }),
 
-      setOwned: (key) => set({ owned: key }),
+      // Adopting a champion also implicitly recruits it into the roster, so your
+      // starter never shows as "locked" in the collection.
+      setOwned: (key) =>
+        set((s) => ({ owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key] })),
+
+      isRecruited: (key) => {
+        const s = get();
+        return s.owned === key || s.roster.includes(key);
+      },
+      recruit: async (key) => {
+        const s = get();
+        if (s.owned === key || s.roster.includes(key)) return false; // already yours
+        const res = await walletEvent("recruit");
+        if (res) {
+          if (!res.ok) return false; // server: can't afford
+          set((st) => ({ crowns: res.balance, roster: [...st.roster, key] }));
+          return true;
+        }
+        // offline fallback: optimistic local spend (reconciled by syncWallet)
+        if (s.crowns < RECRUIT_COST) return false;
+        set((st) => ({ crowns: st.crowns - RECRUIT_COST, roster: [...st.roster, key] }));
+        return true;
+      },
 
       setBalance: (n) => set({ crowns: Math.max(0, Math.round(n)) }),
       syncWallet: async () => {

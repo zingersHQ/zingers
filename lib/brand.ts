@@ -7,6 +7,10 @@ export const BRAND = {
   siteTech: "https://zingers.org",
   twitter: "zingersHQ",
   twitterUrl: "https://x.com/zingersHQ",
+  // Community. NOTE: replace `discordUrl` with the real invite once the server is
+  // created (this is a placeholder so the funnel can ship today). Keep these as
+  // the single source of truth for every "join us" link in the product.
+  discordUrl: "https://discord.gg/zingers",
 } as const;
 
 export const STORAGE = {
@@ -23,6 +27,9 @@ export const STORAGE = {
   concordCoach: "zingers_concord_coach_v1",
   firstGuide: "zingers_first_guide_v1",
   seasonSeen: "zingers_season_seen_v1",
+  // transient navigation hint (sessionStorage): jump the new-player funnel
+  // straight to champion select, skipping the intro deck + elevator pitch.
+  startPick: "zingers_start_pick_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

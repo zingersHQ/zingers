@@ -33,7 +33,7 @@ const RIVAL = showcaseChampion("BASTION"); // COMPOSURE / The Stillness
 
 const ACC = "#7c5cff";
 
-export function FirstRun({ onClose, embedded = false }: { onClose: () => void; embedded?: boolean }) {
+export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose: () => void; embedded?: boolean; onIndexChange?: (i: number) => void }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -63,11 +63,17 @@ export function FirstRun({ onClose, embedded = false }: { onClose: () => void; e
     setI((v) => Math.min(v, LAST));
   }, [LAST]);
 
+  // Let the host (the landing page) react to the deck advancing — e.g. hide the
+  // rest of the homepage once you leave slide 1 so the deck takes full focus.
+  useEffect(() => {
+    onIndexChange?.(i);
+  }, [i, onIndexChange]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // When embedded on the homepage, leave Space free so the page can scroll
-      // down to the marketing sections; arrows / Enter still page the deck.
-      if (e.key === "ArrowRight" || e.key === "Enter" || (!embedded && e.key === " ")) {
+      // Space / right / enter page the deck forward — even when embedded, where
+      // the deck deliberately takes over focus from the homepage below it.
+      if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         i >= LAST ? onClose() : next();
       } else if (e.key === "ArrowLeft") back();
@@ -75,7 +81,7 @@ export function FirstRun({ onClose, embedded = false }: { onClose: () => void; e
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, LAST, next, back, onClose, embedded]);
+  }, [i, LAST, next, back, onClose]);
 
   useEffect(() => armOnboardingAudio(), []);
 

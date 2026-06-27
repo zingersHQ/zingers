@@ -21,6 +21,10 @@ export const HOME_WAR_WEIGHT = 2;
 export const TRAIN_COST = 60;
 export const FRAGMENT_BUY = 140; // Crowns → 1 fragment
 export const FRAGMENT_SELL = 90; // 1 fragment → Crowns (Broker spread)
+// Recruit a new mind into your roster. The collection acquisition loop: a
+// DETERMINISTIC Crown sink (on-brand — "earned, never rolled"), not a gacha pull.
+// Priced so a fresh wallet (500) can recruit one mind early and must earn more.
+export const RECRUIT_COST = 250;
 
 // Betting: only these stakes are legal; payout is 2× on a correct call.
 export const BET_AMOUNTS = [25, 50, 100] as const;
@@ -44,6 +48,7 @@ export type WalletEventType =
   | "train"
   | "fragment_buy"
   | "fragment_sell"
+  | "recruit"
   | "cache"
   | "goal"
   | "gauntlet";
@@ -63,6 +68,8 @@ export function walletDelta(type: WalletEventType, amount?: number): number | nu
       return -FRAGMENT_BUY;
     case "fragment_sell":
       return FRAGMENT_SELL;
+    case "recruit":
+      return -RECRUIT_COST;
     case "cache":
       return clampPos(amount, CACHE_MAX);
     case "goal":

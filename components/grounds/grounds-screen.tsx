@@ -194,6 +194,9 @@ export default function GroundsScreen() {
   const evolveBeforeRef = useRef<Champion | null>(null);
   const inFirstDuelFight = useRef(false);
   const firstFightWorldRef = useRef<string | null>(null);
+  // Set when arriving from the landing page's "Start your journey" CTA — opens
+  // the new-player funnel directly on champion select (skips the elevator pitch).
+  const startAtPick = useRef(false);
   // mid-claim: a champion was picked but the arrival cinematic is still running,
   // so we hold off mounting the world UI until the veil lifts.
   const [claiming, setClaiming] = useState<string | null>(null);
@@ -556,6 +559,12 @@ export default function GroundsScreen() {
       if (!seen) setShowIntro(true);
     } catch {}
     try {
+      if (sessionStorage.getItem(STORAGE.startPick) === "1") {
+        startAtPick.current = true;
+        sessionStorage.removeItem(STORAGE.startPick);
+      }
+    } catch {}
+    try {
       setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
     } catch {
       setShowChronicle(true);
@@ -677,7 +686,13 @@ export default function GroundsScreen() {
   // New players: open the guided funnel once roster is ready (after FirstRun if shown).
   useEffect(() => {
     if (!mounted || isFirstDuelComplete() || owned || roster.length === 0 || showIntro) return;
-    if (firstDuelPhase === null) setFirstDuelPhase("pitch");
+    if (firstDuelPhase === null) {
+      // Coming straight from the landing CTA jumps to champion select; everyone
+      // else starts on the elevator pitch.
+      const phase = startAtPick.current ? "pick" : "pitch";
+      startAtPick.current = false;
+      setFirstDuelPhase(phase);
+    }
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
   const closeIntro = useCallback(() => {
