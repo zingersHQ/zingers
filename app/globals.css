@@ -1079,3 +1079,10 @@ textarea::placeholder {
     padding: 22px 18px 72px;
   }
 }
+
+/* companion reaction glyph — the wordless "HEY!"/impression bubble pop */
+@keyframes championEmotePop {
+  0% { opacity: 0; transform: translateY(4px) scale(.5); }
+  60% { opacity: 1; transform: translateY(0) scale(1.12); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}

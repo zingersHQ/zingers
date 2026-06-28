@@ -72,17 +72,21 @@ export function PhenotypeParts({
   bones?: Record<string, THREE.Object3D>;
   dim?: boolean;
 }) {
-  // anchor heights as fractions of figure height (tuned to the RobotExpressive
-  // proportions — big head sitting high on a compact body)
+  // Anchor heights as fractions of figure height, measured from the actual
+  // RobotExpressive skeleton (feet=0, head_end=1): Abdomen≈0.39, Torso≈0.53,
+  // Shoulder≈0.58, Neck≈0.65, Head≈0.73. The chest/back/shoulder decor must sit
+  // ON the gold torso (≈0.39–0.65, centre ≈0.50) — NOT up at the neck/head base
+  // (≈0.65), where it read as a detached "collar/tie" floating in the gap under
+  // the oversized, bobbing head.
   const headY = h * 0.86;
   const headTop = h * 0.97;
   const headR = h * 0.13 * headScale;
-  const shY = h * 0.66;
+  const shY = h * 0.57;
   const shX = h * (0.22 + (shoulder - 1) * 0.12);
-  const chestY = h * 0.6;
-  const chestZ = h * 0.16;
-  const backY = h * 0.62;
-  const backZ = -h * 0.22;
+  const chestY = h * 0.5;
+  const chestZ = h * 0.15;
+  const backY = h * 0.5;
+  const backZ = -h * 0.2;
   const k = dim ? 0.7 : 1;
 
   const head = bones?.["head"];

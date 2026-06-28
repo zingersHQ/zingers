@@ -46,11 +46,24 @@ export interface BuiltCharacter {
   actions: Record<string, THREE.AnimationAction | undefined>;
   bones: Record<string, THREE.Bone>;
   boneBase: Record<string, THREE.Vector3>;
+  /** bind-pose rotation/position of the neck + head bones, so we can blend the
+   *  clip's exaggerated head swing part-way back toward rest each frame */
+  restQuat: Record<string, THREE.Quaternion>;
+  restPos: Record<string, THREE.Vector3>;
   morph: BoneMorph;
   h: number;
   emissive: number;
   palette: BodyPalette;
 }
+
+// The shared RobotExpressive rig is NOT skinned: each body part is a rigid mesh
+// bolted onto a bone. The gold torso hangs off the high-level `Body` bone (which
+// barely moves at idle) while the clips swing the `Head` bone hard — and our minds
+// carry oversized heads, so the head visibly nods off the near-static neck/collar,
+// reading as a detached "tie". We keep a fraction of that head/neck motion so the
+// figure still feels alive, but damp the rest so the head stays married to its
+// neckline. 1 = full clip motion, 0 = locked to bind pose.
+const NECK_MOTION = 0.45;
 
 export function buildCharacter(
   scene: THREE.Object3D,
@@ -121,6 +134,18 @@ export function buildCharacter(
   const morph = app.morph;
   applyBoneMorph(bones, boneBase, morph);
 
+  // snapshot the rest (bind) rotation/position of the neck chain so the per-frame
+  // damping below can blend the clip's head swing back toward this pose
+  const restQuat: Record<string, THREE.Quaternion> = {};
+  const restPos: Record<string, THREE.Vector3> = {};
+  for (const nm of ["neck", "head"]) {
+    const b = bones[nm];
+    if (b) {
+      restQuat[nm] = b.quaternion.clone();
+      restPos[nm] = b.position.clone();
+    }
+  }
+
   root.position.y = 0;
   root.updateMatrixWorld(true);
   root.position.y -= new THREE.Box3().setFromObject(root).min.y;
@@ -142,12 +167,27 @@ export function buildCharacter(
   if (actions.jump) actions.jump.clampWhenFinished = true;
   actions.idle?.reset().play();
 
-  return { root, mixer, actions, bones, boneBase, morph, h: app.h, emissive: app.emissive, palette: pal };
+  return { root, mixer, actions, bones, boneBase, restQuat, restPos, morph, h: app.h, emissive: app.emissive, palette: pal };
 }
 
 function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], ...names: string[]) {
   const c = pickClip(clips, ...names);
   return c ? mixer.clipAction(c) : undefined;
+}
+
+// Blend the just-evaluated neck + head pose back toward the bind pose so the
+// oversized head stops swinging off the static neck/collar. Runs AFTER the mixer
+// (and bone-morph) each frame; the head-attached decor rides these bones via
+// BoneFollower, so it stays glued to the calmer head.
+function dampNeck(built: BuiltCharacter) {
+  for (const nm of ["neck", "head"] as const) {
+    const b = built.bones[nm];
+    const rq = built.restQuat[nm];
+    const rp = built.restPos[nm];
+    if (!b) continue;
+    if (rq) b.quaternion.slerp(rq, 1 - NECK_MOTION);
+    if (rp) b.position.lerp(rp, 1 - NECK_MOTION);
+  }
 }
 
 // Drive the whole skeleton from the genome. Bone scales compound down the chain
@@ -224,6 +264,7 @@ export function ChampionMesh({
   identityKey,
   keeper,
   speechLine,
+  speechEmote,
   showForce = false,
   clan = null,
   hideFloaters = false,
@@ -264,6 +305,8 @@ export function ChampionMesh({
   keeper?: KeeperKind;
   /** in-world speech bubble — companion lines, greetings */
   speechLine?: string | null;
+  /** wordless reaction glyph — the companion's "HEY!"/impression bubble */
+  speechEmote?: string | null;
   /** strip the detached floating decor (archetype constructs, orbiting evo shards,
    *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
    *  close-up character-select showcase. */
@@ -393,11 +436,13 @@ export function ChampionMesh({
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
+      dampNeck(built);
     } else if (lod === 1) {
       lodAccum.current += dt;
       if (lodAccum.current >= LOD_MID_STEP) {
         built.mixer.update(lodAccum.current);
         applyBoneMorph(built.bones, built.boneBase, built.morph);
+        dampNeck(built);
         lodAccum.current = 0;
       }
     }
@@ -567,6 +612,29 @@ export function ChampionMesh({
             }}
           >
             &ldquo;{speechLine}&rdquo;
+          </div>
+        </Html>
+      )}
+
+      {speechEmote && !speechLine && (
+        <Html position={[0, app.h + 1.62, 0]} center distanceFactor={9} zIndexRange={[33, 0]} style={{ pointerEvents: "none" }}>
+          <div
+            style={{
+              minWidth: 30,
+              padding: "5px 11px",
+              borderRadius: 999,
+              background: "rgba(8,6,14,.92)",
+              border: `1.5px solid ${colHex}`,
+              boxShadow: `0 4px 18px rgba(0,0,0,.5), 0 0 26px -6px ${colHex}`,
+              fontSize: 20,
+              fontWeight: 800,
+              lineHeight: 1,
+              color: colHex,
+              textAlign: "center",
+              animation: "championEmotePop .26s cubic-bezier(.2,1.4,.4,1)",
+            }}
+          >
+            {speechEmote}
           </div>
         </Html>
       )}

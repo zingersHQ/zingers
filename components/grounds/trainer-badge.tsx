@@ -29,7 +29,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
     return (
       <div
         className="panel"
-        aria-label={`Trainer level ${tl.level}, ${tl.title}, ${fm.name}`}
+        aria-label={`Reader rank ${tl.level}, ${tl.title}, ${fm.name}`}
         style={{ ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", width: "fit-content", pointerEvents: "auto" }}
       >
         <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 6, background: `${fc}22`, color: fc, fontSize: 13, fontWeight: 800 }}>
@@ -55,7 +55,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="panel"
-        aria-label="Trainer profile & allegiance"
+        aria-label="Reader profile & allegiance"
         aria-expanded={open}
         style={{ ["--ac" as string]: fc, display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }}
       >
@@ -73,7 +73,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
         <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 12, width: 256, maxWidth: "calc(100vw - 32px)", zIndex: 3 }}>
           {/* rank progress */}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>Trainer rank {tl.level}</span>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>Reader rank {tl.level}</span>
             <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>{tl.into}/{tl.span} xp</span>
           </div>
           <div className="mono" style={{ fontSize: 10, color: fc, marginTop: 1 }}>{tl.title}</div>

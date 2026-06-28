@@ -18,7 +18,7 @@ export interface TrainerLevel {
 }
 
 const TITLES: { min: number; title: string }[] = [
-  { min: 1, title: "Novice Trainer" },
+  { min: 1, title: "Novice Reader" },
   { min: 5, title: "Apprentice" },
   { min: 10, title: "Adept" },
   { min: 15, title: "Tactician" },

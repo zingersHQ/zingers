@@ -55,6 +55,8 @@ export function usePlayerSync() {
           s.recipes !== prev.recipes ||
           // crowns are NOT synced via the save blob — the wallet is authoritative
           s.owned !== prev.owned ||
+          s.roster !== prev.roster ||
+          s.trainerXp !== prev.trainerXp ||
           s.predict !== prev.predict ||
           s.daily !== prev.daily ||
           s.force !== prev.force ||

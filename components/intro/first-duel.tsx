@@ -11,10 +11,8 @@ import { ChampionAvatar } from "@/components/champion-avatar";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { RenderBoundary } from "@/components/grounds/render-guard";
-import { showcaseChampion } from "@/lib/render/showcase";
 import {
   CONCORD_LANDING,
-  FIRST_DUEL_HERO_KEY,
   FIRST_DUEL_HOOKS,
   QUICK_START_STRAT,
 } from "@/lib/first-duel";
@@ -22,7 +20,6 @@ import { FIGHT } from "@/lib/player-copy";
 import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
-import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { armOnboardingAudio, playOnboardingSound } from "@/lib/sound-gallery";
 
@@ -35,10 +32,11 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ),
 });
 
-export type FirstDuelPhase = "pitch" | "pick" | "train" | "evolve" | "concord";
+// The cinematic intro deck (FirstRun) already delivers the elevator pitch, so the
+// funnel opens straight on champion select — no redundant in-game "pitch" slide.
+export type FirstDuelPhase = "pick" | "train" | "evolve" | "concord";
 
 const ACC = ICON.accent;
-const PITCH_HERO = showcaseChampion(FIRST_DUEL_HERO_KEY);
 
 // Width of the right-hand dossier on desktop. The figure canvas spans the FULL
 // stage so the champion is centred in the viewport; the dossier floats over the
@@ -56,10 +54,6 @@ const shell: React.CSSProperties = {
   padding: 16,
 };
 
-function armPitchAudio() {
-  playOnboardingSound("pitch");
-}
-
 export function FirstDuelOverlay({
   phase,
   starters,
@@ -68,7 +62,6 @@ export function FirstDuelOverlay({
   crowns,
   evolve,
   isMobile,
-  onPitchContinue,
   onPick,
   onTrain,
   onEvolveDone,
@@ -81,7 +74,6 @@ export function FirstDuelOverlay({
   crowns: number;
   evolve: { before: Champion; after: Champion; key: string; type: RosterEntry["type"] } | null;
   isMobile: boolean;
-  onPitchContinue: () => void;
   onPick: (key: string) => void;
   onTrain: (key: string, strat: Strat) => void;
   onEvolveDone: () => void;
@@ -99,7 +91,7 @@ export function FirstDuelOverlay({
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "pitch") return;
+    if (phase !== "pick") return;
     return armOnboardingAudio();
   }, [phase]);
 
@@ -107,11 +99,6 @@ export function FirstDuelOverlay({
     if (phase === "evolve") playOnboardingSound("evolve");
     if (phase === "concord") playOnboardingSound("concord");
   }, [phase]);
-
-  const handlePitchContinue = useCallback(() => {
-    armPitchAudio();
-    onPitchContinue();
-  }, [onPitchContinue]);
 
   const handlePick = useCallback(
     (key: string) => {
@@ -128,51 +115,6 @@ export function FirstDuelOverlay({
     },
     [onTrain],
   );
-
-  if (phase === "pitch") {
-    return (
-      <div style={{ ...shell, padding: 0, display: "block", background: ONBOARDING_BG, overflow: "hidden" }}>
-        <OnboardingAudio compact={isMobile} />
-        <div style={{ position: "absolute", inset: 0, background: ICON.void, overflow: "hidden" }}>
-          <RenderBoundary
-            fallback={
-              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
-                <ChampionAvatar ckey={PITCH_HERO.key} type={PITCH_HERO.type} champion={PITCH_HERO.champion} size={isMobile ? 120 : 160} />
-              </div>
-            }
-          >
-            <AgentShowcase
-              champion={PITCH_HERO.champion}
-              type={PITCH_HERO.type}
-              scale={isMobile ? 0.62 : 0.82}
-              dolly
-              gesture="idle"
-              colorHex={ICON.gold}
-            />
-          </RenderBoundary>
-        </div>
-        <LowerThird
-          mobile={isMobile}
-          accent={ACC}
-          kicker="WELCOME TO ZINGERS"
-          title="Your champion fights for you."
-          body={
-            <>
-              Pick a fighter, set how it {FIGHT.fights}, and watch your {FIGHT.firstDuel} in the arena.
-            </>
-          }
-        >
-          <button
-            className="btn btn-primary"
-            style={{ ["--ac" as string]: ACC, fontSize: 13, padding: "12px 22px", display: "inline-flex", alignItems: "center", gap: 8 }}
-            onClick={handlePitchContinue}
-          >
-            Choose your champion
-          </button>
-        </LowerThird>
-      </div>
-    );
-  }
 
   if (phase === "pick") {
     return <PickPhase starters={starters} selected={selected} get={get} isMobile={isMobile} onCommit={handlePick} />;

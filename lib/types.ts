@@ -455,6 +455,14 @@ export interface PlayerSave {
   // (see /api/wallet) so a forged save can never touch it. The save blob carries
   // only progress/identity; the wallet is reconciled separately.
   owned: string | null;
+  // Minds RECRUITED into the player's roster (the collection acquisition loop).
+  // Server-persisted alongside progress so a roster paid for on one device shows
+  // up on another — Crown spend was already server-authoritative, but the roster
+  // it bought used to live only in the local cache.
+  roster: string[];
+  // Trainer career XP (drives the Trainer level / title). Earned from bouts,
+  // training, caches and dailies; persisted so the career survives a cache wipe.
+  trainerXp: number;
   predict: PredictState;
   daily: DailyState;
   force: CreatureType | null; // pledged Clan / Force (null = no clan)
@@ -463,4 +471,4 @@ export interface PlayerSave {
   updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
 }
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;

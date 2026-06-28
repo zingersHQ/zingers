@@ -5,7 +5,7 @@ import { useGLTF, Environment, Lightformer, Html, PerformanceMonitor, AdaptiveDp
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { ChevronsUp, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
+import { ChevronsUp, ChevronsDown, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
 import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
 import { blank, skillLevel } from "@/lib/evolve/progression";
@@ -35,6 +35,8 @@ import { natureGroundPalette } from "@/lib/render/nature-kit";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
 import { RenderBoundary } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
+import { getPad } from "@/lib/gamepad";
+import { useSettings } from "@/store/settings";
 import { CircuitScene } from "./circuit-scene";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
@@ -53,6 +55,8 @@ import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal 
 export interface WorldLife {
   /** what your champion is saying in-world */
   companionLine: string | null;
+  /** wordless reaction glyph your champion shows ("HEY!"/impressions) */
+  companionEmote: string | null;
   /** bump to retrigger a wave when a new line lands */
   companionAct: number;
   /** owned champion drills at the train pad */
@@ -317,7 +321,7 @@ export default function World({
   const galleryFocus = useRef<GalleryFocus | null>(null);
   // touch input channels, mutated by the on-screen controls and read each frame
   const touchMove = useRef<TouchMove>({ x: 0, y: 0 });
-  const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false });
+  const touchBtn = useRef<TouchBtn>({ sprint: false, jump: 0, jumpHeld: false, land: 0 });
   const camDrag = useRef<CamDrag>({ dx: 0, dy: 0, pinch: 0 });
   const [isTouch, setIsTouch] = useState(false);
   // True while the WebGL context is lost (e.g. the GPU dropped the context after
@@ -716,7 +720,7 @@ export default function World({
         <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} />
       )}
     </Canvas>
-    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} bottomInset={touchBottomInset} hudLeftInset={120} />}
+    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
     </>
   );
 }
@@ -813,8 +817,8 @@ function RegionChampions({
   }, [worldLife?.training]);
 
   useEffect(() => {
-    if (worldLife?.companionLine) setOwnedAct((n) => n + 1);
-  }, [worldLife?.companionLine, worldLife?.companionAct]);
+    if (worldLife?.companionLine || worldLife?.companionEmote) setOwnedAct((n) => n + 1);
+  }, [worldLife?.companionLine, worldLife?.companionEmote, worldLife?.companionAct]);
 
   return (
     <>
@@ -842,6 +846,7 @@ function RegionChampions({
             actSignal={actSig}
             actName={actName}
             speechLine={owned ? worldLife?.companionLine : null}
+            speechEmote={owned ? worldLife?.companionEmote : null}
           />
         );
       })}
@@ -1729,7 +1734,7 @@ interface CamCue {
 
 // on-screen touch control channels (mobile)
 interface TouchMove { x: number; y: number }   // analog stick, x = strafe, y = forward (+up)
-interface TouchBtn { sprint: boolean; jump: number; jumpHeld: boolean } // jump = tap counter (edge); jumpHeld = button currently down (hold-to-fly)
+interface TouchBtn { sprint: boolean; jump: number; jumpHeld: boolean; land: number } // jump = tap counter (edge); jumpHeld = button down (hold-to-fly); land = descend/cancel-fly tap counter (touch equivalent of the X key)
 interface CamDrag { dx: number; dy: number; pinch: number } // orbit + pinch deltas, drained each frame
 
 // Jetpack worn during sustained flight (from the 2nd jump on). The pack springs
@@ -2122,6 +2127,9 @@ function Handler({
   // X taps the pack off (drop into a normal gravity fall); idleFly counts seconds
   // aloft with NO control input — past 3s the pack cuts out on its own.
   const prevX = useRef(false);
+  const prevTouchLand = useRef(0);
+  const prevPadJump = useRef(0);
+  const prevPadLand = useRef(0);
   const idleFly = useRef(0);
   // smoothed 0..1 thrust command — eases toward 1 while the jump key is held and
   // back to 0 when released, so tapping doesn't snap the climb target each frame
@@ -2267,6 +2275,7 @@ function Handler({
     // gather input as analog axes (ax = strafe, az = forward) from keys + touch stick
     let ax = 0, az = 0;
     let touchSprint = false;
+    let padSprint = false;
     if (controlsEnabled) {
       if (keys["KeyW"] || keys["ArrowUp"]) az += 1;
       if (keys["KeyS"] || keys["ArrowDown"]) az -= 1;
@@ -2275,6 +2284,13 @@ function Handler({
       const tm = touchMove.current;
       if (tm) { ax += tm.x; az += tm.y; }
       touchSprint = !!touchBtn.current?.sprint;
+      // gamepad left stick (up = forward = negative axis) and RB/LT sprint
+      const pad = getPad();
+      if (pad.connected) {
+        ax += pad.lx;
+        az += -pad.ly;
+        padSprint = pad.sprintHeld;
+      }
     }
     // clamp the combined stick to the unit circle so diagonals aren't faster
     let mag = Math.hypot(ax, az);
@@ -2283,7 +2299,7 @@ function Handler({
     const mx = fwd.x * az + right.x * ax;
     const mz = fwd.z * az + right.z * ax;
     const len = Math.hypot(mx, mz);
-    const sprint = keys["ShiftLeft"] || keys["ShiftRight"] || touchSprint;
+    const sprint = keys["ShiftLeft"] || keys["ShiftRight"] || touchSprint || padSprint;
     // Robust ground test. The intersection-sensor counter (`ground.current`)
     // can desync during the jetpack's violent up/down motion (a hard climb then
     // a sink) — a matching exit/enter event gets dropped, leaving the counter
@@ -2316,20 +2332,29 @@ function Handler({
       }
     }
     // ── jetpack cut-out ──
-    // Two ways to drop out of flight back into a plain gravity fall (identical
+    // Three ways to drop out of flight back into a plain gravity fall (identical
     // speed/accel to a normal jump, since killing the pack just restores gravity
-    // scale): pressing X, or 3 seconds aloft without touching any control. We
-    // reset `jumps` to 0 so `flyingMode` below reads false and gravity resumes.
+    // scale): pressing X (desktop), tapping the on-screen LAND button (touch), or
+    // 3 seconds aloft without touching any control. We reset `jumps` to 0 so
+    // `flyingMode` below reads false and gravity resumes.
     {
       const flyingNow = jumps.current > FLY_TRIGGER;
       const xNow = controlsEnabled && !!keys["KeyX"];
       const xEdge = xNow && !prevX.current;
       prevX.current = xNow;
-      const jumpActive = controlsEnabled && (!!keys["Space"] || !!touchBtn.current?.jumpHeld);
+      // touch LAND button — rising-edge on its tap counter, mirroring the X key
+      const tl = touchBtn.current ? touchBtn.current.land : 0;
+      const landEdge = controlsEnabled && tl > prevTouchLand.current;
+      prevTouchLand.current = tl;
+      // gamepad B (land) — same rising-edge land as touch / X
+      const pad = getPad();
+      const padLandEdge = controlsEnabled && pad.land > prevPadLand.current;
+      prevPadLand.current = pad.land;
+      const jumpActive = controlsEnabled && (!!keys["Space"] || !!touchBtn.current?.jumpHeld || pad.jumpHeld);
       const anyInput = len > 0 || sprint || jumpActive || xNow;
       if (flyingNow) {
         idleFly.current = anyInput ? 0 : idleFly.current + dt;
-        if (xEdge || idleFly.current >= 3) {
+        if (xEdge || landEdge || padLandEdge || idleFly.current >= 3) {
           jumps.current = 0;
           flying.current = false;
           thrust.current = 0;
@@ -2381,11 +2406,17 @@ function Handler({
     const superrunStart = superActive && !wasSuperrun.current;
     wasSuperrun.current = superActive;
 
-    // Lock movement to body heading when going straight on the ground (W only) or
-    // superrunning — camera sway / auto-follow can't pull camera-relative steer
-    // into a side-to-side weave.
-    const forwardOnly = grounded && !flyingMode && len > 0 && Math.abs(ax) < 0.15;
-    const headingSteer = superActive || forwardOnly;
+    // Lock movement to body heading when going straight FORWARD on the ground
+    // (W only) or superrunning — camera sway / auto-follow can't pull
+    // camera-relative steer into a side-to-side weave. Backward (S) is EXCLUDED:
+    // the heading-lock steers the body toward its locked heading, but back-pedalling
+    // travels opposite the facing, so `want` sat a constant 180° from `heading`
+    // every frame and the champion spun on the spot forever instead of moving. With
+    // the lock off, S falls through to plain camera-relative steering, so the body
+    // turns to face the camera and walks toward it.
+    const forwardInput = az > 0.15;
+    const forwardOnly = grounded && !flyingMode && len > 0 && forwardInput && Math.abs(ax) < 0.15;
+    const headingSteer = (superActive && forwardInput) || forwardOnly;
     let moveX = mx;
     let moveZ = mz;
     let moveLen = len;
@@ -2431,8 +2462,12 @@ function Handler({
     const tj = touchBtn.current ? touchBtn.current.jump : 0;
     const touchEdge = controlsEnabled && tj > prevTouchJump.current;
     prevTouchJump.current = tj;
-    const jumpEdge = spaceEdge || touchEdge;
-    const jumpHeld = space || (controlsEnabled && !!touchBtn.current?.jumpHeld);
+    // gamepad A — rising-edge hop + held for hold-to-fly, mirroring Space
+    const padJ = getPad();
+    const padJumpEdge = controlsEnabled && padJ.jump > prevPadJump.current;
+    prevPadJump.current = padJ.jump;
+    const jumpEdge = spaceEdge || touchEdge || padJumpEdge;
+    const jumpHeld = space || (controlsEnabled && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
 
     if (jumps.current > FLY_TRIGGER) {
       // ── jetpack flight ── a fully controlled hover so vertical motion stays
@@ -2957,8 +2992,11 @@ function CameraController({
     const onUp = () => { dragging.current = false; };
     const onMove = (e: PointerEvent) => {
       if (!dragging.current) return;
-      yaw.current -= (e.clientX - last.current.x) * 0.005;
-      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - (e.clientY - last.current.y) * 0.004));
+      const st = useSettings.getState();
+      const sens = st.camSensitivity;
+      yaw.current -= (e.clientX - last.current.x) * 0.005 * sens;
+      const dy = (e.clientY - last.current.y) * 0.004 * sens * (st.invertY ? -1 : 1);
+      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - dy));
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
@@ -3008,13 +3046,26 @@ function CameraController({
       camera.lookAt(tx, ty, tz);
       return;
     }
+    const st = useSettings.getState();
     // drain touch orbit / pinch deltas accumulated by the on-screen look pad
     const drag = camDrag.current;
     if (drag && (drag.dx || drag.dy || drag.pinch)) {
-      yaw.current -= drag.dx * 0.005;
-      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - drag.dy * 0.004));
+      const sens = st.camSensitivity;
+      yaw.current -= drag.dx * 0.005 * sens;
+      const pdy = drag.dy * 0.004 * sens * (st.invertY ? -1 : 1);
+      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - pdy));
       if (drag.pinch) dist.current = Math.min(120, Math.max(6, dist.current - drag.pinch * 0.02));
       drag.dx = 0; drag.dy = 0; drag.pinch = 0;
+      lastInput.current = performance.now();
+    }
+
+    // gamepad right stick — free look (rate-based, scaled by sensitivity)
+    const pad = getPad();
+    if (pad.connected && (pad.rx || pad.ry)) {
+      const sens = st.camSensitivity;
+      yaw.current -= pad.rx * 2.6 * sens * dt;
+      const pdy = pad.ry * 1.8 * sens * dt * (st.invertY ? -1 : 1);
+      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current + pdy));
       lastInput.current = performance.now();
     }
 
@@ -3093,7 +3144,7 @@ function CameraController({
       const r = Math.min(1, dt * 5);
       yaw.current += d * r;
       pitch.current += (recenterPitch.current - pitch.current) * r;
-    } else if (flying && cue && performance.now() - lastInput.current > 600) {
+    } else if (flying && cue && st.camAssist && performance.now() - lastInput.current > 600) {
       // ── in-flight companion follow ──
       // While the pack is lit, keep the lens planted behind the character even
       // when hovering straight up/down (no WASD), and tilt the pitch with the
@@ -3115,7 +3166,7 @@ function CameraController({
         pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
       }
       pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
-    } else if (cue && moving && !cue.reverse && !cue.headingSteer && !circuitFrontLock && performance.now() - lastInput.current > 900) {
+    } else if (cue && moving && st.camAssist && !cue.reverse && !cue.headingSteer && !circuitFrontLock && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
@@ -3168,7 +3219,8 @@ function CameraController({
     camera.lookAt(tx, ty, tz);
 
     const cam = camera as THREE.PerspectiveCamera;
-    const targetFov = 52 + (flying ? 0 : speed01 * 10 + flyZoom * 6);
+    // reduced motion: hold a steady FOV (no speed swell / action-cam punch)
+    const targetFov = st.reduceMotion ? 52 : 52 + (flying ? 0 : speed01 * 10 + flyZoom * 6);
     if (Math.abs(cam.fov - targetFov) > 0.01) {
       cam.fov += (targetFov - cam.fov) * Math.min(1, dt * 3);
       cam.updateProjectionMatrix();
@@ -3180,6 +3232,17 @@ function CameraController({
 // ── on-screen touch controls (mobile) ─────────────────────────────────
 // left half = floating analog stick (move), right half = drag-to-look +
 // two-finger pinch-to-zoom, plus jump / sprint buttons bottom-right.
+const touchCapStack: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, alignItems: "center", pointerEvents: "none" };
+const touchCapLabel: CSSProperties = {
+  fontFamily: "var(--font-mono), monospace",
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: 0.6,
+  color: "rgba(242,238,251,.82)",
+  textShadow: "0 1px 3px rgba(0,0,0,.7)",
+  whiteSpace: "nowrap",
+};
+
 function touchBtnStyle(size: number): CSSProperties {
   return {
     width: size,
@@ -3199,11 +3262,14 @@ function touchBtnStyle(size: number): CSSProperties {
   };
 }
 
-function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset = 0 }: {
+function TouchControls({ active, move, btn, cam, cue, bottomInset = 0, hudLeftInset = 0 }: {
   active: boolean;
   move: React.RefObject<TouchMove>;
   btn: React.RefObject<TouchBtn>;
   cam: React.RefObject<CamDrag>;
+  /** live camera cue — read flight state so the jump button can re-label to
+   *  CLIMB and reveal a LAND button while the jetpack is lit */
+  cue?: React.RefObject<CamCue>;
   bottomInset?: number;
   /** keep the top-left HUD (world picker) tappable */
   hudLeftInset?: number;
@@ -3214,8 +3280,21 @@ function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset =
   const [base, setBase] = useState<{ x: number; y: number } | null>(null);
   const [knob, setKnob] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [sprint, setSprint] = useState(false);
+  // mirror the jetpack's live flight flag into render state (only when it flips)
+  const [flying, setFlying] = useState(false);
   const look = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchPrev = useRef(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const f = !!cue?.current?.flying;
+      setFlying((prev) => (prev === f ? prev : f));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [cue]);
 
   // fully release input when controls get disabled (overlay / match)
   useEffect(() => {
@@ -3311,6 +3390,12 @@ function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset =
     setSprint(false);
     if (btn.current) btn.current.sprint = false;
   };
+  // LAND — touch equivalent of the X key: drop out of jetpack flight
+  const tapLand = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (btn.current) btn.current.land++;
+  };
 
   const joyBottom = Math.max(100, bottomInset);
   const lookBottom = bottomInset;
@@ -3340,13 +3425,29 @@ function TouchControls({ active, move, btn, cam, bottomInset = 0, hudLeftInset =
         </div>
       )}
 
-      <div style={{ position: "absolute", right: 22, bottom: jumpBottom, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", pointerEvents: "none" }}>
-        <button onPointerDown={startSprint} onPointerUp={stopSprint} onPointerCancel={stopSprint} onPointerLeave={stopSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
-          <Zap size={22} strokeWidth={2.2} fill={sprint ? "#0a0810" : "none"} />
-        </button>
-        <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label="Jump" style={{ ...touchBtnStyle(78), pointerEvents: "auto", background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>
-          <ChevronsUp size={30} strokeWidth={2.2} />
-        </button>
+      <div style={{ position: "absolute", right: 22, bottom: jumpBottom, display: "flex", flexDirection: "column", gap: 12, alignItems: "center", pointerEvents: "none" }}>
+        <div style={touchCapStack}>
+          <button onPointerDown={startSprint} onPointerUp={stopSprint} onPointerCancel={stopSprint} onPointerLeave={stopSprint} aria-label="Sprint" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: sprint ? "rgba(240,169,58,.85)" : "rgba(20,18,31,.55)", borderColor: sprint ? "#f0a93a" : "rgba(255,255,255,.28)", color: sprint ? "#0a0810" : "#f2eefb" }}>
+            <Zap size={22} strokeWidth={2.2} fill={sprint ? "#0a0810" : "none"} />
+          </button>
+          <span style={touchCapLabel}>SPRINT</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "row", gap: 12, alignItems: "flex-end" }}>
+          {flying && (
+            <div style={touchCapStack}>
+              <button onPointerDown={tapLand} aria-label="Land" style={{ ...touchBtnStyle(58), pointerEvents: "auto", background: "rgba(20,18,31,.55)", borderColor: "rgba(255,170,120,.7)", color: "#ffc7a8" }}>
+                <ChevronsDown size={24} strokeWidth={2.2} />
+              </button>
+              <span style={touchCapLabel}>LAND</span>
+            </div>
+          )}
+          <div style={touchCapStack}>
+            <button onPointerDown={tapJump} onPointerUp={releaseJump} onPointerCancel={releaseJump} onPointerLeave={releaseJump} aria-label={flying ? "Climb" : "Jump"} style={{ ...touchBtnStyle(78), pointerEvents: "auto", background: "rgba(57,224,255,.16)", borderColor: "rgba(57,224,255,.7)", color: "#aeefff" }}>
+              <ChevronsUp size={30} strokeWidth={2.2} />
+            </button>
+            <span style={touchCapLabel}>{flying ? "CLIMB" : "JUMP · 2× = FLY"}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

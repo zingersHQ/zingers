@@ -5,8 +5,9 @@ Production pass for Act 1 — from first visit through the Concord landing.
 ## Act 1 flow (shipped)
 
 ```
-FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) → Tune (doctrine dials)
-  → Void Garden arena (cinematic camera) → Evolve card → Concord landing (3 beats)
+FirstRun (cinematic) → First Duel: Pick (5 Forces, weekly rotation) → Tune (doctrine dials)
+  → adopt as a rookie (level 1) → Void Garden arena (cinematic camera) → Evolve card
+  → Concord landing (3 beats, introduces the Reader identity)
   → Guided first arena (Grounds gate spotlit, others dimmed) → Free roam + coach
 ```
 
@@ -25,9 +26,9 @@ FirstRun (cinematic) → First Duel pitch → Pick (5 Forces, weekly rotation) �
 | Item | Status | Notes |
 |------|--------|-------|
 | FirstRun not skipped for new players | ✅ | Removed auto-mark intro seen |
-| Pitch audio sting | ✅ | `lib/sound-gallery.ts` — gesture + CTA |
+| Intro audio sting | ✅ | `lib/sound-gallery.ts` — gesture + CTA |
 | Concord landing (3 beats) | ✅ | Seal → Vaultgates → Your session |
-| Copy honesty on body evolution | ✅ | Pitch defers visible growth to evolve step |
+| Copy honesty on body evolution | ✅ | Onboarding defers visible growth to evolve step |
 
 ## P2 — Polish ✅
 

@@ -30,7 +30,7 @@ export const STARTERS_BY_FORCE: Record<CreatureType, readonly string[]> = {
   CREATIVITY: ["MUSE"],
 };
 
-/** Pitch-screen hero — visually loud, legend-tier silhouette. */
+/** Onboarding hero — visually loud, legend-tier silhouette. */
 export const FIRST_DUEL_HERO_KEY = "GLITCH";
 
 export const QUICK_START_STRAT: Strat = { risk: 55, focus: 50, aggression: 52 };
@@ -48,9 +48,9 @@ export const CONCORD_LANDING = [
     body: "The arches ring the plaza. Each gate reaches a founding region — colosseum tribunals, ember gauntlets, void gardens. Your champion fights where you take it.",
   },
   {
-    kicker: "YOUR SESSION",
+    kicker: "YOU, THE READER",
     title: "Roam, duel, raise.",
-    body: `Train doctrine anytime. Step through a gate for a ${FIGHT.rankedDuel}. Climb the Tower in a region when you're ready for the long game.`,
+    body: `You're a Reader now — the will that raises minds and holds rank in the arenas. Train doctrine anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
   },
 ] as const;
 

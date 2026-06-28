@@ -46,6 +46,13 @@ export function setCreatureVoiceEnabled(on: boolean) {
   if (!on) stopCreature();
 }
 
+// 0..1 user volume scalar applied on top of the baked-in 0.9 voice headroom.
+let volumeScalar = 1;
+export function setCreatureVoiceVolume(v: number) {
+  volumeScalar = Math.max(0, Math.min(1, v));
+  if (master) master.gain.value = 0.9 * volumeScalar;
+}
+
 export function creatureVoiceSupported(): boolean {
   return getAudioCtor() != null;
 }
@@ -56,7 +63,7 @@ function ensure(): AudioContext | null {
   if (!Ctor) return null;
   ctx = new Ctor();
   master = ctx.createGain();
-  master.gain.value = 0.9;
+  master.gain.value = 0.9 * volumeScalar;
   master.connect(ctx.destination);
   return ctx;
 }

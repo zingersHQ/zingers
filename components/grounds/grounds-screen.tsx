@@ -1,13 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, HelpCircle, Settings as SettingsIcon } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
 import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
-import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL } from "@/store/champions";
+import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL, type EvolutionFlash } from "@/store/champions";
 import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -60,7 +60,13 @@ import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/trib
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { setMood, resolveAmbienceMood } from "@/lib/ambience-bus";
+import { ControlsGuide } from "@/components/grounds/controls-guide";
+import { SettingsOverlay } from "@/components/grounds/settings-overlay";
+import { useSettings } from "@/store/settings";
+import { startGamepad, getPad } from "@/lib/gamepad";
+import { setSfxVolume } from "@/lib/sfx";
+import { setCreatureVoiceVolume } from "@/lib/creature-voice";
+import { setMood, resolveAmbienceMood, setAmbienceVolume } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { GameDock } from "@/components/game-dock";
@@ -79,6 +85,7 @@ import {
   keeperIntro,
 } from "@/lib/lore/character-beats";
 import { primeCreature, speakCreatureType } from "@/lib/creature-voice";
+import { companionReaction, type CompanionEvent } from "@/lib/lore/companion";
 import { ClanSheet } from "@/components/grounds/clan-sheet";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
@@ -139,8 +146,13 @@ export default function GroundsScreen() {
   const [keeperIntroPending, setKeeperIntroPending] = useState<{ level: number; name: string; title: string } | null>(null);
   const [wakeKey, setWakeKey] = useState<string | null>(null);
   const [companionLine, setCompanionLine] = useState<string | null>(null);
+  const [companionEmote, setCompanionEmote] = useState<string | null>(null);
   const [companionAct, setCompanionAct] = useState(0);
   const companionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const companionEmoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reactCooldown = useRef(0);
+  const peakBand = useRef(0);
+  const prevWorldId = useRef<string | null>(null);
   const prevNearKind = useRef<string | null>(null);
   const [pendingBeat, setPendingBeat] = useState<{ key: string; won: boolean; opponent: string; ranked: boolean } | null>(null);
   const [companionBeat, setCompanionBeat] = useState<{ key: string; kicker: string; lines: { speaker: string; text: string }[] } | null>(null);
@@ -194,9 +206,6 @@ export default function GroundsScreen() {
   const evolveBeforeRef = useRef<Champion | null>(null);
   const inFirstDuelFight = useRef(false);
   const firstFightWorldRef = useRef<string | null>(null);
-  // Set when arriving from the landing page's "Start your journey" CTA — opens
-  // the new-player funnel directly on champion select (skips the elevator pitch).
-  const startAtPick = useRef(false);
   // mid-claim: a champion was picked but the arrival cinematic is still running,
   // so we hold off mounting the world UI until the veil lifts.
   const [claiming, setClaiming] = useState<string | null>(null);
@@ -530,6 +539,8 @@ export default function GroundsScreen() {
   const nodeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [goalFlash, setGoalFlash] = useState<{ label: string; goalKind: GoalKind; crowns: number; fragments: number; trainerXp: number; seasonPoints: number } | null>(null);
   const goalFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [evoFlash, setEvoFlash] = useState<EvolutionFlash | null>(null);
+  const evoFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pledgeFlash, setPledgeFlash] = useState<{ name: string; motto: string; color: string } | null>(null);
   const pledgeFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The Clan decision surface — opened by the Trainer chip or by walking under
@@ -544,6 +555,9 @@ export default function GroundsScreen() {
   useEffect(() => {
     setMounted(true);
     setGpu(gpuStatus());
+    // Warm the world's JS chunk while onboarding plays (cheap parse, no render),
+    // so when it finally mounts behind the picker it skips the chunk fetch/parse.
+    void import("@/components/grounds/world");
     track("explore"); // entered the 3D Grounds (behaviour analytics)
     if (typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0)) {
       setIsTouch(true);
@@ -557,12 +571,6 @@ export default function GroundsScreen() {
     try {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
       if (!seen) setShowIntro(true);
-    } catch {}
-    try {
-      if (sessionStorage.getItem(STORAGE.startPick) === "1") {
-        startAtPick.current = true;
-        sessionStorage.removeItem(STORAGE.startPick);
-      }
     } catch {}
     try {
       setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
@@ -683,16 +691,12 @@ export default function GroundsScreen() {
     };
   }, [reloadKey, loadWar]);
 
-  // New players: open the guided funnel once roster is ready (after FirstRun if shown).
+  // New players: open the guided funnel once roster is ready (after FirstRun if
+  // shown). The cinematic intro already pitches the game, so the funnel opens
+  // straight on champion select.
   useEffect(() => {
     if (!mounted || isFirstDuelComplete() || owned || roster.length === 0 || showIntro) return;
-    if (firstDuelPhase === null) {
-      // Coming straight from the landing CTA jumps to champion select; everyone
-      // else starts on the elevator pitch.
-      const phase = startAtPick.current ? "pick" : "pitch";
-      startAtPick.current = false;
-      setFirstDuelPhase(phase);
-    }
+    if (firstDuelPhase === null) setFirstDuelPhase("pick");
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
   const closeIntro = useCallback(() => {
@@ -701,7 +705,7 @@ export default function GroundsScreen() {
     } catch {}
     setShowIntro(false);
     if (!isFirstDuelComplete() && !owned && roster.length > 0) {
-      setFirstDuelPhase("pitch");
+      setFirstDuelPhase("pick");
     }
   }, [owned, roster.length]);
 
@@ -711,10 +715,31 @@ export default function GroundsScreen() {
   }, []);
 
   const byKey = useMemo(() => Object.fromEntries(roster.map((r) => [r.key, r])), [roster]);
+
+  // Your champion's wordless reactions — a "HEY!"/impression in its own voice.
+  // A single glyph pops above it and a creature cry plays; throttled so the
+  // companion stays alive without becoming chatter. The bubble shows on the
+  // champion at its train pad; the cry is heard wherever you are.
+  const reactCompanion = useCallback(
+    (event: CompanionEvent) => {
+      if (!owned || !byKey[owned]) return;
+      const now = Date.now();
+      if (now - reactCooldown.current < 3500) return;
+      reactCooldown.current = now;
+      const r = companionReaction(byKey[owned].type, event);
+      setCompanionEmote(r.emote);
+      setCompanionAct((n) => n + 1);
+      primeCreature();
+      speakCreatureType(r.cry, byKey[owned].type);
+      if (companionEmoteTimer.current) clearTimeout(companionEmoteTimer.current);
+      companionEmoteTimer.current = setTimeout(() => setCompanionEmote(null), r.holdMs);
+    },
+    [owned, byKey],
+  );
+
   const modesLocked = mounted && !isFirstDuelComplete();
   const duelStarters = useMemo(() => firstDuelStarters(roster), [roster]);
   const inFirstDuelSetup =
-    firstDuelPhase === "pitch" ||
     firstDuelPhase === "pick" ||
     firstDuelPhase === "train" ||
     firstDuelPhase === "evolve" ||
@@ -738,10 +763,11 @@ export default function GroundsScreen() {
   const worldLife: WorldLife = useMemo(
     () => ({
       companionLine,
+      companionEmote,
       companionAct,
       training: near?.kind === "train" || overlay === "train",
     }),
-    [companionLine, companionAct, near?.kind, overlay],
+    [companionLine, companionEmote, companionAct, near?.kind, overlay],
   );
 
   const inMatch = bout.phase === "live";
@@ -779,6 +805,30 @@ export default function GroundsScreen() {
     }
     prevNearKind.current = kind;
   }, [near, owned, byKey]);
+
+  // Awe — your champion marvels when you crest a new height milestone (every 10m
+  // of personal-best altitude). Ground hops are ignored.
+  useEffect(() => {
+    if (peakAltitude < 8) return;
+    const band = Math.floor(peakAltitude / 10);
+    if (band > peakBand.current) {
+      peakBand.current = band;
+      reactCompanion("awe");
+    }
+  }, [peakAltitude, reactCompanion]);
+
+  // Arrival — a small impression when you step into a new region (not the hub).
+  useEffect(() => {
+    if (!worldId) return;
+    if (prevWorldId.current === null) {
+      prevWorldId.current = worldId;
+      return;
+    }
+    if (prevWorldId.current !== worldId) {
+      prevWorldId.current = worldId;
+      if (!isHub) reactCompanion("arrive");
+    }
+  }, [worldId, isHub, reactCompanion]);
 
   // ── Scene-change transitions ────────────────────────────────────────────────
   // Wrap world/venue swaps in a force-tinted veil so travel reads as a directed
@@ -842,6 +892,7 @@ export default function GroundsScreen() {
         setNodeFlash({ crowns: near.crowns, fragments: near.fragments });
         if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
         nodeFlashTimer.current = setTimeout(() => setNodeFlash(null), 2600);
+        reactCompanion("cheer");
       }
     } else if (near?.kind === "goal") {
       const reward = { crowns: near.crowns, fragments: near.fragments, trainerXp: near.trainerXp, seasonPoints: near.seasonPoints };
@@ -850,6 +901,7 @@ export default function GroundsScreen() {
         setNear(null);
         if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
         goalFlashTimer.current = setTimeout(() => setGoalFlash(null), 3200);
+        reactCompanion("triumph");
       }
     } else if (near?.kind === "force") {
       // Don't silently bind — open the Clan sheet preselected to this house so
@@ -887,7 +939,7 @@ export default function GroundsScreen() {
       setNear(null);
       playTravel(worldTravelCard(venueHostWorldId), () => exitVenue());
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach]);
+  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach, reactCompanion]);
 
   const fastTravel = useCallback((pos: [number, number, number]) => {
     travelRef.current?.(pos[0], pos[2]);
@@ -897,6 +949,8 @@ export default function GroundsScreen() {
     if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
     if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
     if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
+    if (evoFlashTimer.current) clearTimeout(evoFlashTimer.current);
+    if (companionEmoteTimer.current) clearTimeout(companionEmoteTimer.current);
   }, []);
 
   useEffect(() => {
@@ -969,9 +1023,11 @@ export default function GroundsScreen() {
   const finishFirstDuelTrain = useCallback(
     async (key: string, strat: { risk: number; focus: number; aggression: number }) => {
       store.setStrat(key, strat);
+      // Reset to a true rookie BEFORE snapshotting "before" so the evolve card
+      // shows a green champion taking its first step — not a veteran nudged.
+      store.adoptStarterRookie(key);
       evolveBeforeRef.current = { ...store.get(key) };
       if (!(await store.trainChampion(key))) return;
-      store.setOwned(key);
       setFirstDuelPick(key);
       setFirstDuelPhase(null);
       const opp = firstDuelOpponent(key, roster);
@@ -1206,7 +1262,7 @@ export default function GroundsScreen() {
       const xpGain = afterC.xp - beforeC.xp;
       if (xpGain) ladders.push(`+${xpGain} XP`);
       if (afterSkill > beforeSkill) ladders.push(`SL ${afterSkill}`);
-      if (afterReader > beforeReader) ladders.push(`Trainer L${afterReader}`);
+      if (afterReader > beforeReader) ladders.push(`Reader L${afterReader}`);
 
       setResult({
         won: iWon,
@@ -1351,7 +1407,22 @@ export default function GroundsScreen() {
 
   const showMatch = inMatch || overlay === "result";
   const pickingChampion = mounted && !owned && roster.length > 0 && !inFirstDuelSetup;
-  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup;
+  // A new player hasn't owned a champion or won their first duel yet. This also
+  // covers the brief limbo after the intro closes but before the roster has
+  // loaded and the picker mounts — without it, the empty hub world + season
+  // banner flash through for a moment.
+  const awaitingFirstDuel = mounted && !owned && !isFirstDuelComplete();
+  // The heavy 3D Grounds (terrain, flora, rigged champions, physics) must NOT
+  // mount while an onboarding overlay fully covers it — it can't be seen yet, and
+  // rendering it there starves the cinematic / picker of the GPU (the ~15s "empty
+  // world" stall before champion select). Keep it unmounted through the cinematic,
+  // the pre-picker gap, and champion select (so the picker's own 3D gets the GPU).
+  // It mounts during `train` — the last step before the bell — BEHIND the opaque
+  // tuning modal, so it's warm (camera ref + assets ready) for the first fight,
+  // where `owned` is set and the world is finally shown.
+  const worldOccluded = showIntro || firstDuelPhase === "pick" || (awaitingFirstDuel && firstDuelPhase === null);
+  const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
+  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
   const dockPad = showDock ? DOCK_H + 8 : 0;
   // the bottom-docked compass bar reserves vertical space so the touch controls,
   // proximity prompt and coachmark always stack cleanly above it (regions only).
@@ -1359,11 +1430,51 @@ export default function GroundsScreen() {
   // Keep the world HUD (season banner, music, crowns, altitude) tucked away
   // until the first-run tutorial and champion claim are done — otherwise its
   // zIndex pokes through on top of those higher-priority overlays.
-  const showHud = mounted && !showIntro && !pickingChampion && !inFirstDuelSetup;
+  const showHud = mounted && !showIntro && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
   const [hudDim, setHudDim] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hasPad, setHasPad] = useState(false);
+  const audioVolume = useSettings((s) => s.volume);
+  const voiceOn = useSettings((s) => s.voice);
+  const alwaysShowHud = useSettings((s) => s.alwaysShowHud);
+
+  // Auto-open the controls sheet ONCE, the first time a player reaches free roam
+  // with a champion (modes unlocked = Act 1 done). This is the moment they
+  // actually need the full move/fly/camera set; afterwards it's on the HUD "?".
+  useEffect(() => {
+    if (!showHud || showMatch || overlay !== "none" || gRun) return;
+    if (!owned || modesLocked || !isFirstDuelComplete()) return;
+    if (concordCoach) return; // don't stack on the gate coach
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(STORAGE.controlsSeen)) return;
+    const t = setTimeout(() => {
+      if (localStorage.getItem(STORAGE.controlsSeen)) return;
+      localStorage.setItem(STORAGE.controlsSeen, "1");
+      setControlsOpen(true);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [showHud, showMatch, overlay, gRun, owned, modesLocked, concordCoach]);
+
+  // Celebrate a TIER-UP the moment the player is back in the world (level-ups are
+  // already chipped on the duel result card; the tier crossing — which bolts a new
+  // body part onto the champion — was previously never surfaced at all).
+  const lastEvolution = store.lastEvolution;
+  useEffect(() => {
+    if (!lastEvolution || !lastEvolution.tieredUp) return;
+    if (showMatch || overlay !== "none" || gRun) return; // wait until the result card clears
+    setEvoFlash(lastEvolution);
+    store.clearEvolution();
+    if (evoFlashTimer.current) clearTimeout(evoFlashTimer.current);
+    evoFlashTimer.current = setTimeout(() => setEvoFlash(null), 3800);
+  }, [lastEvolution, showMatch, overlay, gRun, store]);
 
   useEffect(() => {
-    if (!showHud || showMatch || overlay !== "none" || gRun) {
+    // Never auto-dim on touch / TV: the dimmed HUD wakes on :hover (CSS) which
+    // never fires without a pointer, so a tap player would be left peering at an
+    // 18%-opacity HUD with no obvious way to restore it. Dimming is a
+    // mouse-affordance only — it declutters for desktop players who've gone idle.
+    if (!showHud || showMatch || overlay !== "none" || gRun || isTouch || alwaysShowHud) {
       setHudDim(false);
       return;
     }
@@ -1376,17 +1487,62 @@ export default function GroundsScreen() {
     idle = setTimeout(() => setHudDim(true), 7000);
     window.addEventListener("mousemove", wake, { passive: true });
     window.addEventListener("keydown", wake);
-    window.addEventListener("touchstart", wake, { passive: true });
     return () => {
       clearTimeout(idle);
       window.removeEventListener("mousemove", wake);
       window.removeEventListener("keydown", wake);
-      window.removeEventListener("touchstart", wake);
     };
-  }, [showHud, showMatch, overlay, gRun]);
+  }, [showHud, showMatch, overlay, gRun, isTouch, alwaysShowHud]);
+
+  // Audio bridge — push the one master volume into the three sound engines, and
+  // treat "voices off" as voice-volume 0 so it composes with the hard master
+  // mute (STORAGE.sound) owned by <AmbientToggle/> rather than fighting it.
+  useEffect(() => {
+    setSfxVolume(audioVolume);
+    setAmbienceVolume(audioVolume);
+    setCreatureVoiceVolume(voiceOn ? audioVolume : 0);
+  }, [audioVolume, voiceOn]);
+
+  // Gamepad — start the shared poll, track connection for glyph hints, and drain
+  // the discrete X (interact) / Start (pause) edges here at the screen level
+  // (movement, camera, jump, land, sprint are read inside the world rig).
+  useEffect(() => {
+    startGamepad(setHasPad);
+    const pad = getPad();
+    let prevInteract = pad.interact;
+    let prevPause = pad.pause;
+    let raf = 0;
+    const loop = () => {
+      if (pad.interact !== prevInteract) {
+        prevInteract = pad.interact;
+        if (!settingsOpen) interact();
+      }
+      if (pad.pause !== prevPause) {
+        prevPause = pad.pause;
+        setSettingsOpen((o) => !o);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [interact, settingsOpen]);
+
+  // Esc opens / closes Settings when nothing else owns the key. Other overlays
+  // (controls sheet, match overlays) handle their own Esc and take precedence.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (controlsOpen) return;
+      if (overlay !== "none" || showMatch || gRun) return;
+      e.preventDefault();
+      setSettingsOpen((o) => !o);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [controlsOpen, overlay, showMatch, gRun]);
 
   return (
-    <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden" }}>
+    <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden", background: "var(--bg)" }}>
       {mounted && gpu && !gpu.ok && (
         <RenderNotice
           title="3D isn't available in this browser"
@@ -1410,7 +1566,7 @@ export default function GroundsScreen() {
         />
       )}
 
-      {mounted && gpu?.ok && !rosterError && roster.length > 0 && (
+      {showWorld && (
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           <RenderBoundary
             onError={() => track("error")}
@@ -1590,6 +1746,28 @@ export default function GroundsScreen() {
       )}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
+        {overlay === "none" && !showMatch && !gRun && (
+          <button
+            onClick={() => setControlsOpen(true)}
+            aria-label="Controls"
+            title="Controls"
+            className="panel"
+            style={{ padding: isMobile ? 7 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
+          >
+            <HelpCircle size={isMobile ? 16 : 18} strokeWidth={2} />
+          </button>
+        )}
+        {overlay === "none" && !showMatch && !gRun && (
+          <button
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+            title="Settings (Esc)"
+            className="panel"
+            style={{ padding: isMobile ? 7 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
+          >
+            <SettingsIcon size={isMobile ? 16 : 18} strokeWidth={2} />
+          </button>
+        )}
         {overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
         {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
@@ -1747,6 +1925,20 @@ export default function GroundsScreen() {
         </Celebration>
       )}
 
+      {/* tier-up celebration — your champion's body just evolved a new part */}
+      {evoFlash && (
+        <Celebration
+          tone="epic"
+          accent={byKey[evoFlash.key] ? TYPE_COLOR[byKey[evoFlash.key].type] : "var(--gold)"}
+          kicker="EVOLUTION · TIER UP"
+          title={`${byKey[evoFlash.key]?.name ?? "Your champion"} → ${evoFlash.tier}`}
+          subtitle={evoFlash.unlocked ? `${evoFlash.unlocked} grew in` : undefined}
+        >
+          <span style={{ color: "var(--gold)" }}>L{evoFlash.newLevel}</span>
+          {evoFlash.unlocked && <span style={{ color: "#c77dff" }}>✦ {evoFlash.unlocked} unlocked</span>}
+        </Celebration>
+      )}
+
       {/* the Clan decision surface — one place to choose / review / lock */}
       {clanOpen && !modesLocked && (
         <ClanSheet
@@ -1793,7 +1985,6 @@ export default function GroundsScreen() {
           crowns={crowns}
           evolve={firstDuelEvolve}
           isMobile={isMobile}
-          onPitchContinue={() => setFirstDuelPhase("pick")}
           onPick={(key) => {
             setFirstDuelPick(key);
             setWakeKey(key);
@@ -1877,8 +2068,64 @@ export default function GroundsScreen() {
         />
       )}
 
+      {/* anytime controls reference (auto-opens once at free roam) */}
+      <ControlsGuide open={controlsOpen} onClose={() => setControlsOpen(false)} isTouch={isTouch} hasPad={hasPad} />
+      <SettingsOverlay
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenControls={() => setControlsOpen(true)}
+        hasPad={hasPad}
+      />
+
       {/* first-run tutorial / elevator pitch */}
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}
+
+      {/* ── pre-picker load beat ──
+          Closing the intro deck unmounts the heavy 3D world and fetches the
+          roster + the picker's own 3D showcase chunk. That window used to be a
+          silent black gap (~15s on a cold load) and was the single biggest
+          drop-off point. Hold a calm "summoning" beat here so the player always
+          sees intent, never a dead screen, until champion select mounts. */}
+      {mounted && !showIntro && !rosterError && awaitingFirstDuel && firstDuelPhase === null && (
+        <div
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 80,
+            display: "grid",
+            placeItems: "center",
+            background: "radial-gradient(120% 90% at 50% 38%, #15101f 0%, #0a0712 60%, #050309 100%)",
+            color: "#f2eefb",
+          }}
+        >
+          <style>{`@keyframes summonOrb { 0%,80%,100% { opacity:.25; transform: scale(.82);} 40% { opacity:1; transform: scale(1);} } @keyframes summonRise { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }`}</style>
+          <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
+            <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE CONCORD</div>
+            <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
+              Summoning your champions…
+            </div>
+            <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
+              Reading five minds into being
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: "linear-gradient(180deg,#39e0ff,#7a5cff)",
+                    boxShadow: "0 0 14px rgba(57,224,255,.55)",
+                    animation: `summonOrb 1.4s ${i * 0.16}s ease-in-out infinite`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* champion wakes — first time you bind to a mind */}
       {wakeKey && byKey[wakeKey] && (
@@ -2783,68 +3030,95 @@ function MatchHud(props: {
         const hl = bout.end?.highlights?.[0];
         const hlLabel = hl ? (hl.kind === "ko" ? "THE FINISH" : hl.kind === "crit" ? "HARDEST BAR" : "TURNING POINT") : "";
         const rankDelta = result.globalDelta ?? result.ratingDelta;
+        const hasReward = result.crowns !== 0 || result.betWon !== null;
+        const hasProgress = !!result.leveledTo || result.ladders.length > 0 || rankDelta != null;
         return (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", zIndex: 55, padding: 16 }}>
           {result.won && <Confetti accent="#f0a93a" count={70} originTop="34%" />}
-          <div className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`} style={{ ["--ac" as string]: ac, position: "relative", padding: 22, width: "min(380px, 92vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center", boxShadow: `0 0 80px -30px ${ac}` }}>
+          <div
+            className={`panel ${result.won ? "cel-reveal" : "cel-shake"}`}
+            style={{
+              ["--ac" as string]: ac,
+              position: "relative",
+              padding: 24,
+              width: "min(380px, 92vw)",
+              maxHeight: "90vh",
+              overflow: "auto",
+              textAlign: "center",
+              boxShadow: `0 0 80px -30px ${ac}`,
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+            }}
+          >
             {/* header */}
-            <div className="glow" style={{ fontSize: 28, fontWeight: 800, color: ac, letterSpacing: 1 }}>
-              {result.won ? "VICTORY" : "DEFEAT"}
-            </div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-              {bout.end?.winner_name} wins · {bout.end?.rounds} rounds
+            <div>
+              <div className="glow" style={{ fontSize: 28, fontWeight: 800, color: ac, letterSpacing: 1 }}>
+                {result.won ? "VICTORY" : "DEFEAT"}
+              </div>
+              <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+                {bout.end?.winner_name} wins · {bout.end?.rounds} rounds
+              </div>
             </div>
 
             {/* the signature moment */}
             {hl && (
-              <div style={{ margin: "14px 0", padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid var(--line2)", textAlign: "left" }}>
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid var(--line2)", textAlign: "left" }}>
                 <div className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--gold)" }}>{hlLabel} · R{hl.round}</div>
                 <div style={{ fontStyle: "italic", fontSize: 13.5, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{hl.line}&rdquo;</div>
                 <div className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", marginTop: 3 }}>— {hl.actor_name}</div>
               </div>
             )}
 
-            {/* reward — crowns + wager, one line */}
-            {(result.crowns !== 0 || result.betWon !== null) && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, margin: "12px 0" }}>
-                {result.crowns !== 0 && (
-                  <span style={{ fontSize: 24, fontWeight: 800, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    {result.crowns >= 0 ? "+" : ""}{result.crowns} <Crown size={20} strokeWidth={2.2} />
-                  </span>
+            {/* rewards + progression read as one block */}
+            {(hasReward || hasProgress || result.learned) && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                {/* reward — crowns + wager, one line */}
+                {hasReward && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                    {result.crowns !== 0 && (
+                      <span style={{ fontSize: 26, fontWeight: 800, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        {result.crowns >= 0 ? "+" : ""}{result.crowns} <Crown size={20} strokeWidth={2.2} />
+                      </span>
+                    )}
+                    {result.betWon !== null && (
+                      <span className="chip" style={{ borderColor: result.betWon ? "var(--good)" : "var(--bad)", color: result.betWon ? "var(--good)" : "var(--bad)" }}>
+                        back {result.betWon ? "won" : "lost"}
+                      </span>
+                    )}
+                    {result.home && (
+                      <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>
+                        home · +{HOME_WIN_BONUS}
+                      </span>
+                    )}
+                  </div>
                 )}
-                {result.betWon !== null && (
-                  <span className="chip" style={{ borderColor: result.betWon ? "var(--good)" : "var(--bad)", color: result.betWon ? "var(--good)" : "var(--bad)" }}>
-                    back {result.betWon ? "won" : "lost"}
-                  </span>
+
+                {/* one tidy progress strip — XP, skills, rank, reader, level-up */}
+                {hasProgress && (
+                  <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+                    {result.leveledTo && (
+                      <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>LEVEL UP · L{result.leveledTo}</span>
+                    )}
+                    {result.ladders.map((l) => (
+                      <span key={l} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{l}</span>
+                    ))}
+                    {rankDelta != null && (
+                      <span className="chip" style={{ borderColor: "var(--line)", color: rankDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
+                        Ladder {rankDelta >= 0 ? "+" : ""}{rankDelta}
+                      </span>
+                    )}
+                  </div>
                 )}
-                {result.home && (
-                  <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>
-                    home advantage · +{HOME_WIN_BONUS}
-                  </span>
+
+                {result.learned && (
+                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", fontStyle: "italic" }}>{result.learned}</div>
                 )}
               </div>
             )}
 
-            {/* one tidy progress strip — XP, skills, rank, reader, level-up */}
-            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 4 }}>
-              {result.leveledTo && (
-                <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)", fontSize: 11 }}>LEVEL UP · L{result.leveledTo}</span>
-              )}
-              {result.ladders.map((l) => (
-                <span key={l} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)", fontSize: 11 }}>{l}</span>
-              ))}
-              {rankDelta !== null && rankDelta !== undefined && (
-                <span className="chip" style={{ borderColor: "var(--line)", color: rankDelta >= 0 ? "var(--good)" : "var(--bad)", fontSize: 11 }}>
-                  Ladder {rankDelta >= 0 ? "+" : ""}{rankDelta}
-                </span>
-              )}
-            </div>
-            {result.learned && (
-              <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", fontStyle: "italic", marginTop: 9 }}>{result.learned}</div>
-            )}
-
             {/* actions */}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 18, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="btn" style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={share}>
                 {copied ? <Check size={15} strokeWidth={2.4} /> : <ArrowUpRight size={15} strokeWidth={2.2} />}
                 {copied ? "link copied" : "share card"}

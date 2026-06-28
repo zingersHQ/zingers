@@ -35,13 +35,20 @@ export function setSfxEnabled(on: boolean) {
   enabledCache = on;
 }
 
+// 0..1 user volume scalar applied on top of the baked-in 0.5 SFX headroom.
+let volumeScalar = 1;
+export function setSfxVolume(v: number) {
+  volumeScalar = Math.max(0, Math.min(1, v));
+  if (master) master.gain.value = 0.5 * volumeScalar;
+}
+
 function ensure(): AudioContext | null {
   if (ctx) return ctx;
   const Ctor = getAudioCtor();
   if (!Ctor) return null;
   ctx = new Ctor();
   master = ctx.createGain();
-  master.gain.value = 0.5;
+  master.gain.value = 0.5 * volumeScalar;
   master.connect(ctx.destination);
   return ctx;
 }

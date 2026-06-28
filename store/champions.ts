@@ -78,6 +78,28 @@ interface GoalLedger {
   done: string[]; // goal ids completed this season
 }
 
+// A transient "your champion just evolved" signal, set by recordBattle when the
+// OWNED champion crosses a level/tier in a bout. The HUD reads it to celebrate
+// the moment (level-up, tier-up, and the body part the new tier bolts on) then
+// calls clearEvolution(). Not meant to persist — it's a one-shot flash.
+export interface EvolutionFlash {
+  key: string;
+  won: boolean;
+  leveledUp: boolean;
+  newLevel: number;
+  tieredUp: boolean;
+  tier: string;
+  unlocked: string | null; // the phenotype slot a tier-up reveals, if any
+}
+
+// Which solid body part each tier bolts on (mirrors lib/render/phenotype.ts gating).
+const TIER_UNLOCK: Record<string, string> = {
+  ADEPT: "Headgear",
+  VETERAN: "Shoulder guards",
+  ELITE: "Chest core",
+  LEGEND: "Back unit & crown",
+};
+
 interface ChampionStore {
   progress: Progress;
   recipes: Record<string, Recipe>;
@@ -102,6 +124,9 @@ interface ChampionStore {
   roster: string[];
   predict: PredictState;
   daily: DailyState;
+  // transient one-shot "owned champion evolved this bout" flash (see EvolutionFlash)
+  lastEvolution: EvolutionFlash | null;
+  clearEvolution: () => void;
   lastServerSync: number; // updatedAt of the last save we reconciled with the server
   applyServerSave: (save: PlayerSave) => void;
   snapshotSave: () => PlayerSave;
@@ -112,6 +137,7 @@ interface ChampionStore {
   setAgent: (key: string, agent: Recipe["agent"]) => void;
   learnFromBout: (args: { key: string; opponentName: string; won: boolean; axisLabel: string }) => void;
   setOwned: (key: string) => void;
+  adoptStarterRookie: (key: string) => void;
   // Whether a mind is in the player's roster (recruited, or the adopted champion).
   isRecruited: (key: string) => boolean;
   // Recruit a new mind for RECRUIT_COST Crowns (server-authoritative spend). A
@@ -166,6 +192,8 @@ export const useChampions = create<ChampionStore>()(
       forceSeason: null,
       forcePoints: { season: currentSeasonNumber(), points: 0 },
       goals: { season: currentSeasonNumber(), done: [] },
+      lastEvolution: null,
+      clearEvolution: () => set({ lastEvolution: null }),
       owned: null,
       roster: [],
       predict: { streak: 0, best: 0 },
@@ -188,6 +216,8 @@ export const useChampions = create<ChampionStore>()(
             // crowns intentionally not taken from the save — the wallet is the
             // authority and is reconciled by syncWallet().
             owned: save.owned ?? null,
+            roster: Array.isArray(save.roster) ? save.roster.filter((k) => typeof k === "string") : [],
+            trainerXp: typeof save.trainerXp === "number" && Number.isFinite(save.trainerXp) ? Math.max(0, save.trainerXp) : 0,
             predict: save.predict || { streak: 0, best: 0 },
             daily: save.daily || { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
             force: save.force ?? null,
@@ -211,6 +241,8 @@ export const useChampions = create<ChampionStore>()(
           progress: s.progress,
           recipes,
           owned: s.owned,
+          roster: s.roster,
+          trainerXp: s.trainerXp,
           predict: s.predict,
           daily: s.daily,
           force: s.force,
@@ -262,6 +294,28 @@ export const useChampions = create<ChampionStore>()(
       // starter never shows as "locked" in the collection.
       setOwned: (key) =>
         set((s) => ({ owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key] })),
+
+      // The ORIGIN moment: the very first champion a player adopts starts life as
+      // a true rookie (level 1, ROOKIE tier) so they actually live the rookie →
+      // legend arc instead of inheriting one of the house's seeded veteran
+      // careers. We keep only a faint trace of the mind's signature axis so it
+      // still reads as itself. Guarded on `owned`: once you have a champion, later
+      // adoptions just recruit the established mind at its canon career — only
+      // your first, your origin, is reset to green. Mock-battle outcomes don't use
+      // career XP (movesets come from the creature key), so the scripted first
+      // duel plays out identically.
+      adoptStarterRookie: (key) =>
+        set((s) => {
+          if (s.owned) return { owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key] };
+          const rookie = blank();
+          const dir = SEED.find(([k]) => k === key);
+          if (dir) (rookie[dir[2]] as number) = 5;
+          return {
+            owned: key,
+            roster: s.roster.includes(key) ? s.roster : [...s.roster, key],
+            progress: { ...s.progress, [key]: rookie },
+          };
+        }),
 
       isRecruited: (key) => {
         const s = get();
@@ -421,11 +475,26 @@ export const useChampions = create<ChampionStore>()(
           const progress = { ...s.progress };
           const w = { ...(progress[winnerKey] || blank()) };
           const l = { ...(progress[loserKey] || blank()) };
-          applyResult(w, { won: true, style: styles[winnerKey] || blankStyle() });
-          applyResult(l, { won: false, style: styles[loserKey] || blankStyle() });
+          const dw = applyResult(w, { won: true, style: styles[winnerKey] || blankStyle() });
+          const dl = applyResult(l, { won: false, style: styles[loserKey] || blankStyle() });
           progress[winnerKey] = w;
           progress[loserKey] = l;
           recordArena(progress, winnerKey, loserKey); // arena ELO: the honest climb
+
+          // capture the OWNED champion's growth so the HUD can celebrate it
+          let lastEvolution = s.lastEvolution;
+          const ownedDelta = s.owned === winnerKey ? dw : s.owned === loserKey ? dl : null;
+          if (ownedDelta && (ownedDelta.leveledUp || ownedDelta.tieredUp)) {
+            lastEvolution = {
+              key: s.owned!,
+              won: s.owned === winnerKey,
+              leveledUp: ownedDelta.leveledUp,
+              newLevel: ownedDelta.newLevel,
+              tieredUp: ownedDelta.tieredUp,
+              tier: ownedDelta.tier,
+              unlocked: ownedDelta.tieredUp ? TIER_UNLOCK[ownedDelta.tier] ?? null : null,
+            };
+          }
 
           // trainer rank accrual + Force meta-war contribution (only when the
           // player's own champion is in the bout)
@@ -439,7 +508,7 @@ export const useChampions = create<ChampionStore>()(
             const base = forcePoints.season === season ? forcePoints.points : 0;
             forcePoints = { season, points: base + 1 };
           }
-          return { progress, trainerXp, forcePoints };
+          return { progress, trainerXp, forcePoints, lastEvolution };
         }),
 
       recordHouseGame: (end, votesLog) => {
@@ -491,7 +560,8 @@ export const useChampions = create<ChampionStore>()(
       merge: (persisted, current) => {
         const p = (persisted as Partial<ChampionStore>) || {};
         const progress = { ...seeded(), ...(p.progress || {}) };
-        return { ...current, ...p, progress } as ChampionStore;
+        // never restore a stale evolution flash across reloads
+        return { ...current, ...p, progress, lastEvolution: null } as ChampionStore;
       },
     },
   ),

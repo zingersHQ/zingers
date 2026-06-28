@@ -115,15 +115,28 @@ export function seasonFor(n: number, seed = n): Season {
     lineage: lineage.key,
   };
 
-  const arc: SeasonArc = {
-    title: `Season ${n}: The ${region.name.replace(/^The /, "")} Remembers`,
-    door: `${keeper.name}, ${keeper.title}`,
-    fragment,
-    blurb:
-      `${keeper.name} (${keeper.title}) yielded its door, and out spilled ${fragment}. ` +
-      `It has soaked into ${region.name}, where ${FORCES[biasForce].name} now runs strong. ` +
-      `A new mind (${featured.name}, an echo of ${featured.lineage}) rose with the tide.`,
-  };
+  const arc: SeasonArc =
+    n <= 0
+      ? {
+          // Season 0 — the proving week before the first Vault door opens. A
+          // no-stakes shakedown of the grounds; the Chronicle hasn't truly
+          // begun, and no token/crypto layer is in play.
+          title: "Season 0: The Proving Week",
+          door: `${keeper.name}, ${keeper.title}`,
+          fragment,
+          blurb:
+            `The Vault is still sealed. In ${region.name}, where ${FORCES[biasForce].name} already stirs, ` +
+            `the first minds gather to prove their edge. When the week turns, the first door swings wide — and Season 1 begins.`,
+        }
+      : {
+          title: `Season ${n}: The ${region.name.replace(/^The /, "")} Remembers`,
+          door: `${keeper.name}, ${keeper.title}`,
+          fragment,
+          blurb:
+            `${keeper.name} (${keeper.title}) yielded its door, and out spilled ${fragment}. ` +
+            `It has soaked into ${region.name}, where ${FORCES[biasForce].name} now runs strong. ` +
+            `A new mind (${featured.name}, an echo of ${featured.lineage}) rose with the tide.`,
+        };
 
   // topics: a themed slice of the pool, biased to include the region's flavour
   const topics = sample(r, TOPIC_POOL, 6);
@@ -133,12 +146,28 @@ export function seasonFor(n: number, seed = n): Season {
 
 // The current season number from a fixed cadence (epoch + days-per-season).
 // Pure: pass the clock in so callers stay testable.
-export const SEASON_EPOCH = Date.UTC(2026, 0, 1); // Jan 1 2026 UTC
+//
+// Launch opens on SEASON_EPOCH with **Season 0** — a short, no-stakes "proving
+// week" to shake down the grounds (no token/crypto, nothing seasonal at risk).
+// After PRESEASON_DAYS the Chronicle truly opens and Season 1 begins; from then
+// on each season runs SEASON_LENGTH_DAYS. Update SEASON_EPOCH to the real public
+// launch date when it's set.
+export const SEASON_EPOCH = Date.UTC(2026, 5, 28); // Jun 28 2026 UTC — launch / Season 0 start
+export const PRESEASON_DAYS = 7; // Season 0 — the testing week before Season 1
 export const SEASON_LENGTH_DAYS = 28;
 
 export function currentSeasonNumber(now = Date.now()): number {
   const days = Math.floor((now - SEASON_EPOCH) / 86_400_000);
-  return Math.max(1, Math.floor(days / SEASON_LENGTH_DAYS) + 1);
+  // Before launch or inside the proving week → Season 0 (preseason).
+  if (days < PRESEASON_DAYS) return 0;
+  // After the proving week, Season 1 begins and the regular cadence takes over.
+  return Math.floor((days - PRESEASON_DAYS) / SEASON_LENGTH_DAYS) + 1;
+}
+
+// Whether the live cadence is in the Season 0 proving week (no seasonal stakes,
+// no token/crypto layer). A single source of truth for any preseason gating.
+export function isPreseason(now = Date.now()): boolean {
+  return currentSeasonNumber(now) <= 0;
 }
 
 export function currentSeason(now = Date.now()): Season {
