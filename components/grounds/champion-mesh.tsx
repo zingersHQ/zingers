@@ -541,15 +541,16 @@ export function ChampionMesh({
         dim={auraDim}
       />
 
-      {/* per-creature energy decor — archetype constructs, keeper regalia, and the
-          aura — all ride the core bone so they track the body's live motion (sway,
-          lunge, recoil) as one piece instead of hanging at the static origin and
-          getting clipped by the fighter mid-duel. */}
-      <BoneFollower bone={coreBone}>
-        {/* per-Force signature attachments — the species markings that make each
-            Force read as a different being; tinted to this individual */}
-        {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} />}
+      {/* per-Force signature attachments — the species markings that make each
+          Force read as a different being; tinted to this individual. Each piece
+          fuses to its own bone (head / torso) INTERNALLY, so it rides the live
+          anatomy instead of orbiting the figure or hanging in empty space. */}
+      {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} bones={built.bones} />}
 
+      {/* keeper regalia + aura ride the core bone so they track the body's live
+          motion (sway, lunge, recoil) as one piece instead of hanging at the
+          static origin and getting clipped by the fighter mid-duel. */}
+      <BoneFollower bone={coreBone}>
         {/* Keeper regalia — the signature weapon/item that makes a campaign boss
             read as itself, not a recoloured ladder agent */}
         {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
