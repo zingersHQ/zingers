@@ -10,6 +10,7 @@
     "test:agents": "node scripts/test-agents.mjs",
     "test:judge": "node scripts/judge-check.mjs",
     "cost": "node scripts/cost-scenarios.mjs",
+    "check:db": "node scripts/check-db.mjs",
     "mcp": "node mcp/zingers-mcp.mjs"
   },
   "dependencies": {

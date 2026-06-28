@@ -55,6 +55,9 @@ export interface FeedEntry {
 }
 
 export interface Store {
+  // Liveness probe for the dashboard/health checks. Resolves true when the
+  // backing store actually answers (a real Redis round-trip), false on error.
+  ping(): Promise<boolean>;
   getChampion(id: string): Promise<LadderChampion | null>;
   putChampion(c: LadderChampion): Promise<void>;
   topChampions(limit: number): Promise<LadderChampion[]>;
@@ -210,6 +213,14 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
 class UpstashStore implements Store {
   constructor(private r: Redis) {}
 
+  async ping() {
+    try {
+      const pong = await this.r.ping();
+      return typeof pong === "string" && pong.toUpperCase() === "PONG";
+    } catch {
+      return false;
+    }
+  }
   async getChampion(id: string) {
     return (await this.r.get<LadderChampion>(K.champ(id))) ?? null;
   }
@@ -349,6 +360,9 @@ class MemoryStore implements Store {
   private events = new Map<number, Map<string, number>>();
   private dau = new Map<number, Set<string>>();
 
+  async ping() {
+    return true; // the in-memory store is always reachable (but never shared)
+  }
   async getChampion(id: string) {
     return this.champs.get(id) ?? null;
   }

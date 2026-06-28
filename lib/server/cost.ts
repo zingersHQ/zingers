@@ -50,6 +50,28 @@ export async function getDailyCost(day = utcDay()): Promise<CostSnapshot> {
   return { day, calls: u.calls, inTok: u.inTok, outTok: u.outTok, usd: usdFor(u.inTok, u.outTok), pricing: { inPerM: PRICE_IN_PER_M, outPerM: PRICE_OUT_PER_M } };
 }
 
+// Measured spend for each given UTC day (oldest → newest as passed). One read per
+// day; powers the dashboard's daily-burn chart and trailing-average anomaly check.
+export async function costSeries(days: number[]): Promise<CostSnapshot[]> {
+  const store = getStore();
+  const usages = await Promise.all(days.map((d) => store.getUsage(d)));
+  return days.map((d, i) => ({
+    day: d,
+    calls: usages[i].calls,
+    inTok: usages[i].inTok,
+    outTok: usages[i].outTok,
+    usd: usdFor(usages[i].inTok, usages[i].outTok),
+    pricing: { inPerM: PRICE_IN_PER_M, outPerM: PRICE_OUT_PER_M },
+  }));
+}
+
+// The configured daily spend cap (0/unset = uncapped). Surfaced so the dashboard
+// can show headroom and warn when no guardrail is set (launch gate 4).
+export function dailyBudgetCapUsd(): number {
+  const cap = Number(process.env.LLM_DAILY_BUDGET_USD ?? 0);
+  return Number.isFinite(cap) && cap > 0 ? cap : 0;
+}
+
 export interface ProjectionInput {
   dau: number; // daily active players
   boutsPerPlayerPerDay: number; // live bouts a player watches/runs
