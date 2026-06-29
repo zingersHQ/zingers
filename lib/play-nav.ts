@@ -48,6 +48,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
       { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon: forces, minds, regions." },
+      { id: "catalogue", label: "Catalogue", short: "Cat", href: "/catalogue", blurb: "20 agents emulated from the real systems: every type, tier, and clan." },
       { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs." },
       { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
     ],

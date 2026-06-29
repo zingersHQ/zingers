@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Crown, Swords } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Crown, Share2, Swords } from "lucide-react";
 import type { Champion, RosterEntry, Strat } from "@/lib/types";
 import { TYPE_COLOR, doctrine, levelFor, skillCount, skillLevel, tierFor } from "@/lib/evolve/progression";
 import { FORCES as FORCE_LORE, FORCE_MOTTO, wheelNeighbors } from "@/lib/lore/canon";
@@ -309,6 +309,16 @@ function PickPhase({
               <AgentShowcase champion={champ} type={entry.type} scale={isMobile ? 0.58 : 0.62} gesture="punch" everyMs={2600} autoFrame interactive bare framingKey={entry.key} />
             </RenderBoundary>
 
+            {/* re-cladding sweep — each time you cycle to a new fighter the stage
+                pulses in that Force's colour, selling the "changes into the next
+                Force's regalia" beat and masking the figure's remount pop */}
+            <div
+              key={entry.key}
+              aria-hidden
+              className="pick-reclad"
+              style={{ ["--fc" as string]: col }}
+            />
+
             {!isMobile && (
               <div style={{ position: "absolute", top: 8, left: 8, pointerEvents: "none", opacity: 0.96 }}>
                 <ForcesWheel size={184} highlight={entry.type} />
@@ -413,6 +423,25 @@ function PickPhase({
           <CycleArrow side="right" onClick={() => go(1)} />
         </div>
       </div>
+      <style>{`
+        .pick-reclad {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 3;
+          mix-blend-mode: screen;
+          background: radial-gradient(60% 70% at 50% 56%, color-mix(in srgb, var(--fc) 55%, transparent), transparent 72%);
+          animation: pickReclad 620ms cubic-bezier(.2,.8,.2,1) both;
+        }
+        @keyframes pickReclad {
+          0%   { opacity: 0; transform: scale(1.06); }
+          26%  { opacity: .85; }
+          100% { opacity: 0; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pick-reclad { animation: none; opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -501,6 +530,8 @@ function EvolveStep({
   const leveled = afterLf.level > beforeLf.level;
   const avSize = isMobile ? 124 : 248;
   const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareWrapRef = useRef<HTMLDivElement | null>(null);
 
   const share = useCallback(() => {
     navigator.clipboard?.writeText(cardShareUrl(key, after));
@@ -513,6 +544,23 @@ function EvolveStep({
     const text = `I raised ${name} on Zingers — train · fight · evolve.`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
   }, [key, name, after]);
+
+  // Dismiss the share tray on outside click or Escape.
+  useEffect(() => {
+    if (!shareOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!shareWrapRef.current?.contains(e.target as Node)) setShareOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShareOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [shareOpen]);
 
   return (
     <div style={shell}>
@@ -573,24 +621,33 @@ function EvolveStep({
         </div>
 
         <div className="evo2-foot">
-          <div className="evo2-foot-row">
-            <div className="evo2-foot-copy">
-              <div className="evo2-foot-eyebrow mono">CLIP THIS MOMENT</div>
-              <p className="evo2-foot-sub">A frozen read of {name} right now — not a live profile.</p>
-            </div>
-            <div className="evo2-foot-actions">
-              <button className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)" }} onClick={share}>
-                {copied ? <Check size={14} strokeWidth={2.4} /> : <ArrowUpRight size={14} strokeWidth={2.2} />}
-                {copied ? "copied" : "copy clip"}
-              </button>
-              <button className="btn" style={{ ["--ac" as string]: "var(--line2)" }} onClick={tweet}>
-                share on X
-              </button>
-            </div>
-          </div>
           <button className="btn btn-primary evo2-cta" style={{ ["--ac" as string]: col }} onClick={onDone}>
             Continue to the Concord
           </button>
+          <div className="evo2-share-wrap" ref={shareWrapRef}>
+            <button
+              className="btn evo2-share-btn"
+              style={{ ["--ac" as string]: "var(--gold)" }}
+              aria-label="Share this moment"
+              aria-expanded={shareOpen}
+              onClick={() => setShareOpen((o) => !o)}
+            >
+              <Share2 size={16} strokeWidth={2.2} />
+            </button>
+            {shareOpen && (
+              <div className="evo2-share-tray panel pop" style={{ ["--ac" as string]: "var(--gold)" }}>
+                <div className="evo2-share-head mono">CLIP THIS MOMENT</div>
+                <p className="evo2-share-sub">A frozen read of {name} right now — not a live profile.</p>
+                <button className="btn btn-primary evo2-share-opt" style={{ ["--ac" as string]: "var(--gold)" }} onClick={share}>
+                  {copied ? <Check size={14} strokeWidth={2.4} /> : <ArrowUpRight size={14} strokeWidth={2.2} />}
+                  {copied ? "copied" : "copy clip"}
+                </button>
+                <button className="btn evo2-share-opt" style={{ ["--ac" as string]: "var(--line2)" }} onClick={tweet}>
+                  share on X
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <EvolveStyles />
@@ -681,14 +738,22 @@ function EvolveStyles() {
     .evo2-chips{position:relative;z-index:1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
     .evo2-chips .chip{font-size:11px;padding:5px 11px}
 
-    .evo2-foot{position:relative;z-index:1;border-top:1px solid var(--line);padding-top:18px;text-align:left}
-    .evo2-foot-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
-    .evo2-foot-copy{min-width:0}
-    .evo2-foot-eyebrow{font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
-    .evo2-foot-sub{margin:0;color:var(--muted);font-size:12.5px;line-height:1.4}
-    .evo2-foot-actions{display:flex;gap:8px;flex-shrink:0}
-    .evo2-foot-actions .btn{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:9px 13px}
-    .evo2-cta{width:100%;font-size:14px;padding:14px 16px;display:flex;align-items:center;justify-content:center}
+    .evo2-foot{position:relative;z-index:1;border-top:1px solid var(--line);padding-top:18px;
+      display:flex;align-items:stretch;gap:10px}
+    .evo2-cta{flex:1;font-size:14px;padding:14px 16px;display:flex;align-items:center;justify-content:center}
+    .evo2-share-wrap{position:relative;flex-shrink:0;display:flex}
+    .evo2-share-btn{display:inline-flex;align-items:center;justify-content:center;width:50px;padding:0;
+      color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,var(--line2))}
+    .evo2-share-btn[aria-expanded="true"]{background:color-mix(in srgb,var(--gold) 16%,transparent);
+      box-shadow:0 0 22px -8px var(--gold)}
+    .evo2-share-tray{position:absolute;right:0;bottom:calc(100% + 10px);z-index:5;width:240px;
+      padding:14px;text-align:left;border-color:color-mix(in srgb,var(--gold) 34%,var(--line2));
+      box-shadow:0 18px 50px -18px #000}
+    .evo2-share-head{font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:5px}
+    .evo2-share-sub{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.4}
+    .evo2-share-opt{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      font-size:12px;padding:10px 13px}
+    .evo2-share-opt + .evo2-share-opt{margin-top:8px}
 
     @media (max-width:560px){
       .evo2{padding:22px 18px 18px}
@@ -696,8 +761,6 @@ function EvolveStyles() {
       .evo2-sub{font-size:12.5px}
       .evo2-stage{gap:9px;margin-bottom:16px}
       .evo2-chev{font-size:20px}
-      .evo2-foot-row{flex-direction:column;align-items:stretch;gap:12px}
-      .evo2-foot-actions .btn{flex:1;justify-content:center}
     }
     `}</style>
   );

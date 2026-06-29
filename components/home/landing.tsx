@@ -288,7 +288,7 @@ export function Landing() {
         <section className="lp-section lp-why">
           <Reveal>
             <span className="lp-kicker mono">Why it&apos;s different</span>
-            <h2 className="lp-h2">The creatures actually think.</h2>
+            <h2 className="lp-h2">The creatures that ACTUALLY think.</h2>
             <p className="lp-body">
               Collectible battlers are a beloved, proven format — but the creatures are scripted, and the
               &quot;intelligence&quot; is a stat table. Here, every champion is a real AI agent. They argue,

@@ -50,11 +50,30 @@ export interface BuiltCharacter {
    *  clip's exaggerated head swing part-way back toward rest each frame */
   restQuat: Record<string, THREE.Quaternion>;
   restPos: Record<string, THREE.Vector3>;
+  /** MEASURED rest placement of each body part's actual mesh (in figure space,
+   *  feet=0), so decor bolts onto where the part really IS for this individual's
+   *  proportions instead of a guessed height-fraction that floats off a small head
+   *  or piles up at the neck. */
+  partAnchors: PartAnchors;
   morph: BoneMorph;
   h: number;
   emissive: number;
   palette: BodyPalette;
 }
+
+export interface PartAnchor {
+  x: number;
+  y: number;
+  z: number;
+  top: number;
+  bottom: number;
+  /** horizontal radius (max of half-width / half-depth) */
+  r: number;
+  /** half-width (x) and half-depth (z) of the part */
+  hx: number;
+  hz: number;
+}
+export type PartAnchors = Record<string, PartAnchor>;
 
 // The shared RobotExpressive rig is NOT skinned: each body part is a rigid mesh
 // bolted onto a bone. The gold torso hangs off the high-level `Body` bone (which
@@ -131,14 +150,43 @@ export function buildCharacter(
       boneBase[nm] = b.scale.clone();
     }
   });
+  // The shared RobotExpressive rig names bones WITHOUT dots and with a trailing index
+  // (torso_1) or side letter (shoulderl / shoulderr / upperarml …). The rest of this
+  // codebase addresses bones by canonical keys (torso, shoulder.l, upperarm.r, foot.l).
+  // Alias the canonical keys onto the real bones so EVERY lookup + the genome morph
+  // actually resolve. Without this, `bones["torso"]`, `bones["shoulder.l"]` … were all
+  // undefined: the chest/shoulder/back decor had no bone to follow (stayed frozen and
+  // detached) AND applyBoneMorph's torso/shoulder/arm/leg/foot scaling silently did
+  // nothing, so the genome never reshaped the body.
+  const alias = (canon: string, real: string) => {
+    if (!bones[canon] && bones[real]) {
+      bones[canon] = bones[real];
+      boneBase[canon] = boneBase[real];
+    }
+  };
+  alias("torso", "torso_1");
+  alias("spine", "torso_1");
+  for (const s of ["l", "r"] as const) {
+    // Upper body only: torso + shoulders (decor anchors) and the arms that hang off
+    // the shoulders (so they counter-scale the shoulder size). We deliberately do NOT
+    // alias the legs/feet: the leg/foot genome scaling had silently no-op'd for the
+    // rig's whole life, and re-activating it makes the legs spindly and lifts the feet
+    // off their planted stance. Legs hang off the (unscaled) hips, independent of the
+    // torso/shoulder scaling, so leaving them at base keeps the original good footing.
+    alias(`shoulder.${s}`, `shoulder${s}`);
+    alias(`upperarm.${s}`, `upperarm${s}`);
+    alias(`lowerarm.${s}`, `lowerarm${s}`);
+  }
   const morph = app.morph;
   applyBoneMorph(bones, boneBase, morph);
 
   // snapshot the rest (bind) rotation/position of the neck chain so the per-frame
-  // damping below can blend the clip's head swing back toward this pose
+  // damping below can blend the clip's head swing back toward this pose. The abdomen
+  // is snapshotted too so the subtle idle breathing (see `breathe`) can lean the
+  // whole waist-up off its true bind pose.
   const restQuat: Record<string, THREE.Quaternion> = {};
   const restPos: Record<string, THREE.Vector3> = {};
-  for (const nm of ["neck", "head"]) {
+  for (const nm of ["neck", "head", "abdomen", "torso", "shoulder.l", "shoulder.r"]) {
     const b = bones[nm];
     if (b) {
       restQuat[nm] = b.quaternion.clone();
@@ -149,6 +197,47 @@ export function buildCharacter(
   root.position.y = 0;
   root.updateMatrixWorld(true);
   root.position.y -= new THREE.Box3().setFromObject(root).min.y;
+  root.updateMatrixWorld(true);
+
+  // Measure where each body part's mesh actually sits NOW (post-morph, feet=0) so
+  // decor anchors to the real anatomy. Done before the mixer exists, i.e. at the
+  // bind/morph rest pose — exactly the pose BoneFollower treats as its rest.
+  const partAnchors: PartAnchors = {};
+  {
+    const _box = new THREE.Box3();
+    const _ctr = new THREE.Vector3();
+    const _sz = new THREE.Vector3();
+    const meshes: Record<string, THREE.Object3D> = {};
+    root.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && m.name) meshes[m.name.toLowerCase()] = m;
+    });
+    // The rig splits each part across several indexed meshes (head_2/head_3/head_4,
+    // torso_2/torso_3, shoulderl_1 …) — none are named exactly "head"/"torso". Match
+    // by name PREFIX and UNION the boxes so each canonical region gets the real
+    // bounds of the whole part. (Previously the exact-name lookups all missed, so
+    // partAnchors was empty and every piece fell back to floating height-guesses.)
+    const regionPrefix: Record<string, string> = {
+      head: "head",
+      torso: "torso",
+      "shoulder.l": "shoulderl",
+      "shoulder.r": "shoulderr",
+    };
+    const _u = new THREE.Box3();
+    for (const [canon, prefix] of Object.entries(regionPrefix)) {
+      let any = false;
+      for (const key in meshes) {
+        if (!key.startsWith(prefix)) continue;
+        _box.setFromObject(meshes[key]);
+        if (_box.isEmpty() || !isFinite(_box.min.y)) continue;
+        if (!any) { _u.copy(_box); any = true; } else { _u.union(_box); }
+      }
+      if (!any) continue;
+      _u.getCenter(_ctr);
+      _u.getSize(_sz);
+      partAnchors[canon] = { x: _ctr.x, y: _ctr.y, z: _ctr.z, top: _u.max.y, bottom: _u.min.y, r: Math.max(_sz.x, _sz.z) / 2, hx: _sz.x / 2, hz: _sz.z / 2 };
+    }
+  }
 
   const mixer = new THREE.AnimationMixer(root);
   const actions: Record<string, THREE.AnimationAction | undefined> = {
@@ -167,7 +256,7 @@ export function buildCharacter(
   if (actions.jump) actions.jump.clampWhenFinished = true;
   actions.idle?.reset().play();
 
-  return { root, mixer, actions, bones, boneBase, restQuat, restPos, morph, h: app.h, emissive: app.emissive, palette: pal };
+  return { root, mixer, actions, bones, boneBase, restQuat, restPos, partAnchors, morph, h: app.h, emissive: app.emissive, palette: pal };
 }
 
 function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], ...names: string[]) {
@@ -188,6 +277,74 @@ function dampNeck(built: BuiltCharacter) {
     if (rq) b.quaternion.slerp(rq, 1 - NECK_MOTION);
     if (rp) b.position.lerp(rp, 1 - NECK_MOTION);
   }
+}
+
+// ── Idle breathing ─────────────────────────────────────────────────────────────
+// The stock RobotExpressive Idle clip only keyframes the head + legs; it never
+// touches the Abdomen/Torso/Shoulder bones, so in idle the whole waist-up — and
+// every piece fused to it (chest ring, shoulder pads, back units) — sits dead still
+// while just the head nods. That's the "pieces don't move with the body" report.
+//
+// Fix: a gentle breathing motion on the Abdomen (never keyframed, so it can't fight
+// the mixer). The entire upper chain hangs off it, so torso + shoulders + head and —
+// now that BoneFollower tracks rotation correctly — all their decor move as one.
+// TWO components:
+//   • a slow forward/back lean (+ slower roll weight-shift), which swings pieces FAR
+//     from the waist pivot (shoulders, collar, head);
+//   • a slow, shallow vertical rise/settle, which is the ONLY thing that moves pieces
+//     sitting right ON the pivot (the chest reactor donut+core) — a pure lean leaves
+//     those dead still. This is deliberately slow + shallow (≈half the amplitude, and
+//     1.6× slower than the version that read as "arms bouncing"), so it breathes
+//     rather than bounces. Legs branch off the hips, so the feet stay planted.
+const _breatheEuler = new THREE.Euler();
+const _breatheQ = new THREE.Quaternion();
+const _bobDir = new THREE.Vector3();
+const _parentInvBob = new THREE.Matrix4();
+// Apply an additive local-space euler offset on top of a bone's bind pose, capturing
+// the bind pose lazily (these bones are never keyframed by the Idle clip, so the
+// snapshot is just the rig's rest rotation).
+function leanBone(built: BuiltCharacter, nm: string, x: number, y: number, z: number) {
+  const b = built.bones[nm];
+  if (!b) return;
+  let rq = built.restQuat[nm];
+  if (!rq) rq = built.restQuat[nm] = b.quaternion.clone();
+  _breatheEuler.set(x, y, z);
+  _breatheQ.setFromEuler(_breatheEuler);
+  b.quaternion.copy(rq).multiply(_breatheQ);
+}
+function breathe(built: BuiltCharacter, t: number) {
+  const b = built.bones["abdomen"];
+  if (!b) return;
+  // Lazy-capture the true bind pose (abdomen is never keyframed) so breathing works
+  // even if `built` predates the snapshot after a hot-reload.
+  let rq = built.restQuat["abdomen"];
+  if (!rq) rq = built.restQuat["abdomen"] = b.quaternion.clone();
+  let rp = built.restPos["abdomen"];
+  if (!rp) rp = built.restPos["abdomen"] = b.position.clone();
+  const breath = Math.sin(t * 0.95);
+  const sway = Math.sin(t * 0.7);
+  // Abdomen: gentle forward/back lean + weight-shift roll. Drives the whole upper
+  // chain. Keep the vertical bob shallow — it translates the shoulders/arms too, and
+  // too much reads as a distracting bounce.
+  _breatheEuler.set(breath * 0.03, 0, Math.sin(t * 0.6) * 0.018);
+  _breatheQ.setFromEuler(_breatheEuler);
+  b.quaternion.copy(rq).multiply(_breatheQ);
+  const parent = b.parent;
+  if (parent) {
+    parent.updateWorldMatrix(true, false);
+    _parentInvBob.copy(parent.matrixWorld).invert();
+    _bobDir.set(0, 1, 0).transformDirection(_parentInvBob);
+    b.position.copy(rp).addScaledVector(_bobDir, breath * 0.0015);
+  }
+  // Torso spine-twist: rotates the chest reactor (donut + core sit ON the spine, so a
+  // lean alone barely moves them) and sweeps the shoulders/back units in a clear arc —
+  // purely rotational, so it never bounces the arms vertically. This is the motion the
+  // chest/shoulder decor most visibly rides.
+  leanBone(built, "torso", breath * 0.02, sway * 0.05, 0);
+  // Shoulders: a small counter-phased roll so the shoulder spikes lift/settle with the
+  // breath. Kept tiny — arms hang off these, so big values look like flailing.
+  leanBone(built, "shoulder.l", 0, 0, sway * 0.035);
+  leanBone(built, "shoulder.r", 0, 0, sway * 0.035);
 }
 
 // Drive the whole skeleton from the genome. Bone scales compound down the chain
@@ -437,12 +594,14 @@ export function ChampionMesh({
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
       dampNeck(built);
+      breathe(built, t + phase);
     } else if (lod === 1) {
       lodAccum.current += dt;
       if (lodAccum.current >= LOD_MID_STEP) {
         built.mixer.update(lodAccum.current);
         applyBoneMorph(built.bones, built.boneBase, built.morph);
         dampNeck(built);
+        breathe(built, t + phase);
         lodAccum.current = 0;
       }
     }
@@ -524,68 +683,77 @@ export function ChampionMesh({
       onPointerOver={onSelect ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={onSelect ? () => (document.body.style.cursor = "default") : undefined}
     >
+      {/* The body AND all the bolted decor live in the SAME group, so they share
+          the exact transform the anchors were measured in. CRITICAL: the static
+          posture `lean` (and the punch lunge/recoil z below) is applied HERE — if
+          the decor sat OUTSIDE this group it would float off the tilted body
+          (BoneFollower only tracks the bone's animation delta, so it cancels — and
+          therefore never compensates for — this static lean), which is exactly the
+          "pieces hover beside the head / power core sits out of the chest" bug. */}
       <group ref={motion} rotation={[kitFor(type).lean, 0, 0]}>
         <primitive object={built.root} />
+
+        {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
+            back, gated by tier so the body visibly grows as the mind evolves. Each
+            piece fuses to its own bone internally (head / shoulders / torso). */}
+        <PhenotypeParts
+          pheno={pheno}
+          h={app.h}
+          headScale={app.morph.headScale}
+          shoulder={app.morph.shoulder}
+          pal={palette}
+          bones={built.bones}
+          anchors={built.partAnchors}
+          dim={auraDim}
+        />
+
+        {/* per-Force signature attachments — the species markings that make each
+            Force read as a different being; tinted to this individual. Each piece
+            fuses to its own bone (head / torso) INTERNALLY, so it rides the live
+            anatomy instead of orbiting the figure or hanging in empty space. */}
+        {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} bones={built.bones} anchors={built.partAnchors} />}
+
+        {/* keeper regalia + aura ride the core bone so they track the body's live
+            motion (sway, lunge, recoil) as one piece instead of hanging at the
+            static origin and getting clipped by the fighter mid-duel. */}
+        <BoneFollower bone={coreBone}>
+          {/* Keeper regalia — the signature weapon/item that makes a campaign boss
+              read as itself, not a recoloured ladder agent */}
+          {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
+
+          {/* aura sphere — faint, wide atmospheric glow; flagged so portrait
+              auto-framing may let it bleed off-edge rather than shrinking the body */}
+          <mesh ref={auraRef} position={[0, app.h * 0.55, 0]} userData={{ fitIgnore: true }}>
+            <sphereGeometry args={[auraR, 16, 12]} />
+            <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
+          </mesh>
+        </BoneFollower>
+
+        {/* legend crown — fused to the head bone so it rides the gaze instead of
+            hovering at a fixed point; the inner group keeps its slow spin + bob */}
+        {tier.crown && (
+          <BoneFollower bone={built.bones["head"]}>
+            <group ref={crownRef} position={[0, app.h + 0.3, 0]}>
+              {Array.from({ length: 8 }).map((_, i) => {
+                const a = (i / 8) * Math.PI * 2;
+                return (
+                  <mesh key={i} position={[Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42]}>
+                    <coneGeometry args={[0.06, 0.3, 6]} />
+                    <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.8} roughness={0.2} />
+                  </mesh>
+                );
+              })}
+            </group>
+          </BoneFollower>
+        )}
       </group>
 
-      {/* solid phenotype anatomy — seeded helmet / visor / shoulders / chest /
-          back, gated by tier so the body visibly grows as the mind evolves. Each
-          piece fuses to its own bone internally (head / shoulders / torso). */}
-      <PhenotypeParts
-        pheno={pheno}
-        h={app.h}
-        headScale={app.morph.headScale}
-        shoulder={app.morph.shoulder}
-        pal={palette}
-        bones={built.bones}
-        dim={auraDim}
-      />
-
-      {/* per-Force signature attachments — the species markings that make each
-          Force read as a different being; tinted to this individual. Each piece
-          fuses to its own bone (head / torso) INTERNALLY, so it rides the live
-          anatomy instead of orbiting the figure or hanging in empty space. */}
-      {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} bones={built.bones} />}
-
-      {/* keeper regalia + aura ride the core bone so they track the body's live
-          motion (sway, lunge, recoil) as one piece instead of hanging at the
-          static origin and getting clipped by the fighter mid-duel. */}
-      <BoneFollower bone={coreBone}>
-        {/* Keeper regalia — the signature weapon/item that makes a campaign boss
-            read as itself, not a recoloured ladder agent */}
-        {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
-
-        {/* aura sphere — faint, wide atmospheric glow; flagged so portrait
-            auto-framing may let it bleed off-edge rather than shrinking the body */}
-        <mesh ref={auraRef} position={[0, app.h * 0.55, 0]} userData={{ fitIgnore: true }}>
-          <sphereGeometry args={[auraR, 16, 12]} />
-          <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
-        </mesh>
-      </BoneFollower>
-
-      {/* ground aura ring — floor glow; also excluded from the fit envelope */}
+      {/* ground aura ring — floor glow; stays OUTSIDE the leaning body group so it
+          lies flat on the floor; also excluded from the fit envelope */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
         <ringGeometry args={[0.78, 0.92, 48]} />
         <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
       </mesh>
-
-      {/* legend crown — fused to the head bone so it rides the gaze instead of
-          hovering at a fixed point; the inner group keeps its slow spin + bob */}
-      {tier.crown && (
-        <BoneFollower bone={built.bones["head"]}>
-          <group ref={crownRef} position={[0, app.h + 0.3, 0]}>
-            {Array.from({ length: 8 }).map((_, i) => {
-              const a = (i / 8) * Math.PI * 2;
-              return (
-                <mesh key={i} position={[Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42]}>
-                  <coneGeometry args={[0.06, 0.3, 6]} />
-                  <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.8} roughness={0.2} />
-                </mesh>
-              );
-            })}
-          </group>
-        </BoneFollower>
-      )}
 
       {hpFrac != null && (
         <Html position={[0, app.h + 0.7, 0]} center distanceFactor={9} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>

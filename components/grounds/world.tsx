@@ -293,7 +293,7 @@ export default function World({
   guideUrgent?: boolean;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
-  travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
+  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number) => void) | null>;
   touchBottomInset?: number;
   /** Passive postcard mode: no player avatar, no input — an auto-orbit camera
       drifts over the region. Used for the docs/org region figures. */
@@ -315,7 +315,7 @@ export default function World({
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
   const inAmphitheatre = activeVenue === "amphitheatre";
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -1730,6 +1730,7 @@ interface CamCue {
   climb: number;       // vertical velocity while flying (+up / −down) → camera tilt
   superrun: boolean;   // sustained sprint past SUPERRUN_DELAY — double speed + smoke trail
   headingSteer: boolean; // movement locked to body heading — suppress camera follow/sway
+  recenter: boolean;   // one-shot request to swing the lens squarely behind the player
 }
 
 // on-screen touch control channels (mobile)
@@ -2070,7 +2071,7 @@ function Handler({
   spawnKnoll: SpawnKnoll;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
-  travelRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
+  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number) => void) | null>;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
   // bind foot quats + scratch pose math (feet aren't reset by the idle mixer)
@@ -2158,13 +2159,24 @@ function Handler({
   // compass). Reads the live body each call, so it survives remounts.
   useEffect(() => {
     if (!travelRef) return;
-    travelRef.current = (x, z) => {
+    travelRef.current = (x, z, faceHeading) => {
       const rb = body.current;
       if (!rb) return;
       const y = spawnPos ? spawnPos[1] : terrainHeight(x, z, shape, spawnKnoll) + 2.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
+      // optional drop-in facing: turn the body toward a target (e.g. on the first
+      // Concord landing, face the spotlit Grounds gate) and ask the camera to
+      // swing squarely behind so it reads as "control handed back, looking at it".
+      if (typeof faceHeading === "number") {
+        heading.current = faceHeading;
+        if (inner.current) inner.current.rotation.set(0, faceHeading, 0);
+        if (camCue.current) {
+          camCue.current.heading = faceHeading;
+          camCue.current.recenter = true;
+        }
+      }
     };
     return () => {
       if (travelRef) travelRef.current = null;
@@ -3074,6 +3086,16 @@ function CameraController({
     const flying = cue?.flying ?? false;
     const zoom = cue ? cue.zoom : 0;
     if (cue) cue.zoom *= flying ? 0.9 : 0.86;
+
+    // one-shot programmatic recenter (e.g. the first Concord landing parks the
+    // lens behind the champion, framing the Grounds gate it's been turned toward)
+    if (cue?.recenter) {
+      cue.recenter = false;
+      recenter.current = 0.9;
+      recenterPitch.current = 0.34;
+      dist.current = 12;
+      cue.zoom = Math.min(1.2, cue.zoom + 0.4);
+    }
 
     // ── companion re-framing on takeoff / touchdown ──
     // The camera should behave like a companion that re-frames the action, not a

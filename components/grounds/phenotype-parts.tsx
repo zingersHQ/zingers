@@ -21,21 +21,49 @@ export interface PartPalette {
 }
 
 // ── BoneFollower ───────────────────────────────────────────────────────────────
-// Reusable: glue arbitrary decor to a skeleton bone. On the first frame it records
-// the bone's rest transform (in this group's parent space); every frame after it
-// applies `current · rest⁻¹` — the rigid delta the bone has travelled from rest —
-// as its own local matrix. Because the delta is identity at rest, children keep
-// their authored figure-local anchors exactly, then swing about the bone's pivot
-// (neck, shoulder socket, spine) precisely as the live skeleton does.
-const _bone = new THREE.Matrix4();
+// Reusable: glue arbitrary decor to a skeleton bone so it stays bolted to the
+// anatomy through the live animation. Children keep their authored figure-local
+// anchors at rest, then ride the bone's motion exactly.
+//
+// IMPORTANT — we follow ONLY the bone's RIGID world motion (position + rotation),
+// never its scale. The rig's bones carry compounding NON-UNIFORM scale from
+// applyBoneMorph (abdomen/torso/head are squashed/stretched per genome). A
+// non-uniform scale on a PARENT, sandwiched by the child's own rotation, makes the
+// child's world matrix SHEARED — and `Matrix4.decompose()` returns a garbage
+// quaternion for a sheared matrix. That was the whole bug: torso/shoulder bones are
+// sheared, so decompose gave a bogus rotation → the rest→now delta stayed ~identity
+// in idle (decor frozen) and swung wildly in a punch (decor clipping). The head was
+// fine only because its morph cancels its scale (no shear), which is why head decor
+// tracked but chest/shoulder decor didn't.
+//
+// Fix: never decompose the sheared world matrix. The bone's WORLD POSITION is just
+// the matrix's translation column (always correct, scale-free). The bone's true
+// WORLD ROTATION is the product of the local quaternions up the chain — quaternions
+// carry no scale, so this is immune to shear. Compose those into a clean rigid frame.
+const _bonePos = new THREE.Vector3();
+const _boneQuat = new THREE.Quaternion();
+const _ONE = new THREE.Vector3(1, 1, 1);
+const _nowWorld = new THREE.Matrix4(); // bone rigid frame in WORLD space, this frame
 const _parentInv = new THREE.Matrix4();
-const _cur = new THREE.Matrix4();
-const _restInv = new THREE.Matrix4();
-const _delta = new THREE.Matrix4();
+const _nowLocal = new THREE.Matrix4(); // bone rigid frame in the follower PARENT's space
+
+// Accumulate world rotation from local quaternions (root→bone). Unlike reading the
+// world matrix, this ignores every scale/shear in the chain, so the result is a
+// clean rigid orientation even when ancestors carry non-uniform morph scale.
+function worldQuatNoScale(obj: THREE.Object3D, out: THREE.Quaternion): THREE.Quaternion {
+  out.copy(obj.quaternion);
+  let p = obj.parent;
+  while (p) {
+    out.premultiply(p.quaternion);
+    p = p.parent;
+  }
+  return out;
+}
 
 export function BoneFollower({ bone, children }: { bone?: THREE.Object3D; children: ReactNode }) {
   const ref = useRef<THREE.Group>(null);
-  const rest = useRef<THREE.Matrix4 | null>(null);
+  const restInv = useRef<THREE.Matrix4 | null>(null); // inverse of the bone's rest frame, IN PARENT SPACE
+  const restBone = useRef<THREE.Object3D | null>(null); // recapture rest if the bone swaps
   useFrame(() => {
     const g = ref.current;
     const parent = g?.parent;
@@ -43,15 +71,44 @@ export function BoneFollower({ bone, children }: { bone?: THREE.Object3D; childr
     // refresh both branches off the shared champion root so they agree this frame
     bone.updateWorldMatrix(true, false);
     parent.updateWorldMatrix(true, false);
+    // the bone's RIGID world frame: translation straight from the matrix (scale-free),
+    // rotation accumulated from local quaternions (shear-immune — see note above).
+    _bonePos.setFromMatrixPosition(bone.matrixWorld);
+    worldQuatNoScale(bone, _boneQuat);
+    _nowWorld.compose(_bonePos, _boneQuat, _ONE);
+    // CRITICAL: express the bone's frame in the follower PARENT's space, NOT world
+    // space. The champion's body turn/facing is applied on a group that is a COMMON
+    // ancestor of both the bone AND this follower's parent. A world-space delta would
+    // count that turn twice (the parent already turns the decor; the world delta adds
+    // it again), so the decor over-rotated and swung off the body whenever it turned.
+    // In parent space the shared ancestor motion cancels: P⁻¹·boneWorld is independent
+    // of any transform above P, leaving ONLY the bone's own animation.
     _parentInv.copy(parent.matrixWorld).invert();
-    _bone.copy(bone.matrixWorld);
-    _cur.multiplyMatrices(_parentInv, _bone); // bone expressed in parent space
-    if (!rest.current) rest.current = _cur.clone();
-    _restInv.copy(rest.current).invert();
-    _delta.multiplyMatrices(_cur, _restInv);
-    _delta.decompose(g.position, g.quaternion, g.scale);
+    _nowLocal.multiplyMatrices(_parentInv, _nowWorld);
+    if (!restInv.current || restBone.current !== bone) {
+      restInv.current = _nowLocal.clone().invert();
+      restBone.current = bone;
+    }
+    // g.matrix = nowLocal · restLocal⁻¹  → the bone's pure animation since the bind
+    // pose, in parent space. At rest this is identity (decor sits at its authored
+    // anchor); as the bone animates the decor rides it, and the body turn rides
+    // through the parent as normal.
+    g.matrixAutoUpdate = false;
+    g.matrix.multiplyMatrices(_nowLocal, restInv.current);
+    g.matrixWorldNeedsUpdate = true;
   });
   return <group ref={ref}>{children}</group>;
+}
+
+export interface PartAnchor {
+  x: number;
+  y: number;
+  z: number;
+  top: number;
+  bottom: number;
+  r: number;
+  hx: number;
+  hz: number;
 }
 
 export function PhenotypeParts({
@@ -61,6 +118,7 @@ export function PhenotypeParts({
   shoulder,
   pal,
   bones,
+  anchors,
   dim = false,
 }: {
   pheno: Phenotype;
@@ -70,23 +128,24 @@ export function PhenotypeParts({
   pal: PartPalette;
   /** skeleton bones (lowercased names) so each piece can fuse to its anchor */
   bones?: Record<string, THREE.Object3D>;
+  /** MEASURED rest placement of each part's mesh (figure space) — preferred over
+   *  the height-fraction fallbacks so decor lands exactly on the real anatomy */
+  anchors?: Record<string, PartAnchor>;
   dim?: boolean;
 }) {
-  // Anchor heights as fractions of figure height, measured from the actual
-  // RobotExpressive skeleton (feet=0, head_end=1): Abdomen≈0.39, Torso≈0.53,
-  // Shoulder≈0.58, Neck≈0.65, Head≈0.73. The chest/back/shoulder decor must sit
-  // ON the gold torso (≈0.39–0.65, centre ≈0.50) — NOT up at the neck/head base
-  // (≈0.65), where it read as a detached "collar/tie" floating in the gap under
-  // the oversized, bobbing head.
-  const headY = h * 0.86;
-  const headTop = h * 0.97;
-  const headR = h * 0.13 * headScale;
-  const shY = h * 0.57;
-  const shX = h * (0.22 + (shoulder - 1) * 0.12);
-  const chestY = h * 0.5;
-  const chestZ = h * 0.15;
-  const backY = h * 0.5;
-  const backZ = -h * 0.2;
+  // Prefer the measured mesh placement; fall back to skeleton-derived fractions
+  // (feet=0, head_end=1) only if a measurement is missing. The chest/back/shoulder
+  // decor must sit ON the actual torso/shoulders, and headgear must cap the actual
+  // head — guesses floated off small heads and piled at the neck.
+  const ha = anchors?.["head"];
+  const headY = ha ? ha.y : h * 0.86;
+  const headTop = ha ? ha.top : h * 0.97;
+  const headR = ha ? ha.r : h * 0.13 * headScale;
+  const ta = anchors?.["torso"];
+  const chestY = ta ? ta.y : h * 0.5;
+  const chestZ = ta ? ta.z + ta.hz : h * 0.15;
+  const backY = ta ? ta.y : h * 0.5;
+  const backZ = ta ? ta.z - ta.hz : -h * 0.2;
   const k = dim ? 0.7 : 1;
 
   const head = bones?.["head"];
@@ -104,11 +163,16 @@ export function PhenotypeParts({
           face prim is lit as glowing eyes (see buildCharacter `isEye`), so the
           champions keep a face without the clipping hardware. */}
       {pheno.shoulders !== "none" &&
-        [-1, 1].map((s) => (
-          <BoneFollower key={s} bone={bones?.[s < 0 ? "shoulder.l" : "shoulder.r"]}>
-            <Shoulder kind={pheno.shoulders} sgn={s} h={h} x={shX} y={shY} pal={pal} k={k} />
-          </BoneFollower>
-        ))}
+        [-1, 1].map((s) => {
+          const a = anchors?.[s < 0 ? "shoulder.l" : "shoulder.r"];
+          const sx = a ? Math.abs(a.x) : h * (0.22 + (shoulder - 1) * 0.12);
+          const sy = a ? a.y : h * 0.57;
+          return (
+            <BoneFollower key={s} bone={bones?.[s < 0 ? "shoulder.l" : "shoulder.r"]}>
+              <Shoulder kind={pheno.shoulders} sgn={s} h={h} x={sx} y={sy} pal={pal} k={k} />
+            </BoneFollower>
+          );
+        })}
       {pheno.chest !== "none" && (
         <BoneFollower bone={torso}>
           <Chest kind={pheno.chest} y={chestY} z={chestZ} h={h} pal={pal} k={k} />
@@ -129,6 +193,15 @@ function struct(color: string, metalness = 0.62, roughness = 0.34) {
 function smooth(color: string, metalness = 0.7, roughness = 0.28) {
   return <meshStandardMaterial color={color} metalness={metalness} roughness={roughness} />;
 }
+// A darker shade of a body colour for recessed housings/bases — reads as a deep
+// armour tone IN the champion's palette, never the old near-black `shade(pal.secondary)` that
+// looked like foreign black blocks bolted to the neck/shoulders.
+function shade(hex: string): string {
+  const c = new THREE.Color(hex);
+  const hsl = { h: 0, s: 0, l: 0 };
+  c.getHSL(hsl);
+  return new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s * 0.9), Math.max(0.16, hsl.l * 0.5)).getStyle();
+}
 function glowMat(color: string, intensity: number) {
   return <meshStandardMaterial color={color} emissive={color} emissiveIntensity={intensity} metalness={0.4} roughness={0.25} />;
 }
@@ -146,7 +219,7 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
         {/* mounting bar that visually ties the blades to the skull */}
         <mesh position={[0, -r * 0.08, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[r * 0.62, r * 0.07, 10, 24, Math.PI]} />
-          {smooth(pal.dark, 0.55, 0.45)}
+          {smooth(shade(pal.secondary), 0.55, 0.45)}
         </mesh>
         {Array.from({ length: blades }).map((_, i) => {
           const t = blades === 1 ? 0 : i / (blades - 1) - 0.5;
@@ -202,7 +275,7 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
             {/* root collar */}
             <mesh position={[0, -r * 0.05, 0]}>
               <cylinderGeometry args={[r * 0.26, r * 0.3, r * 0.16, 10]} />
-              {smooth(pal.dark, 0.5, 0.5)}
+              {smooth(shade(pal.secondary), 0.5, 0.5)}
             </mesh>
             {/* lower curve */}
             <mesh position={[0, r * 0.45, 0]}>
@@ -238,12 +311,12 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
               {/* socket */}
               <mesh position={[0, r * 0.02, 0]}>
                 <cylinderGeometry args={[r * 0.1, r * 0.12, r * 0.12, 10]} />
-                {smooth(pal.dark, 0.6, 0.4)}
+                {smooth(shade(pal.secondary), 0.6, 0.4)}
               </mesh>
               {/* segmented rod */}
               <mesh position={[0, r * 0.55, 0]}>
                 <cylinderGeometry args={[r * 0.035, r * 0.06, r * 1.1, 8]} />
-                {smooth(pal.dark, 0.7, 0.36)}
+                {smooth(shade(pal.secondary), 0.7, 0.36)}
               </mesh>
               <mesh position={[0, r * 1.16, 0]}>
                 <cylinderGeometry args={[r * 0.028, r * 0.04, r * 0.26, 8]} />
@@ -266,16 +339,18 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "dome") {
-    // paneled sensor dome: a smooth canopy, a rim band, and a single eye-lens
+    // paneled sensor dome: a smooth canopy, a rim band, and a single eye-lens.
+    // Seated AT the head centre so the canopy caps the crown (the old +0.4r lift
+    // left it hovering above shorter heads with a visible gap).
     return (
-      <group position={[0, center + r * 0.4, 0]}>
+      <group position={[0, center, 0]}>
         <mesh>
           <sphereGeometry args={[r * 1.05, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
           {smooth(pal.secondary, 0.5, 0.5)}
         </mesh>
         <mesh position={[0, r * 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[r * 1.04, r * 0.07, 12, 32]} />
-          {smooth(pal.dark, 0.55, 0.45)}
+          {smooth(shade(pal.secondary), 0.55, 0.45)}
         </mesh>
         <mesh position={[0, r * 0.42, r * 0.92]} rotation={[Math.PI * 0.28, 0, 0]}>
           <sphereGeometry args={[r * 0.18, 16, 14]} />
@@ -292,17 +367,27 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
 // ── Shoulders ─────────────────────────────────────────────────────────────────
 function Shoulder({ kind, sgn, h, x, y, pal, k }: { kind: Phenotype["shoulders"]; sgn: number; h: number; x: number; y: number; pal: PartPalette; k: number }) {
   const u = h * 0.12;
+  // Self-idle: the pauldron rolls/heaves a touch on its own (counter-phased L vs R)
+  // so the shoulder armour visibly breathes even when the shoulder bone is still.
+  const g = useRef<THREE.Group>(null);
+  const baseRot = kind === "spike" ? 0.5 : kind === "vent" ? 0.2 : 0.3;
+  useFrame((s) => {
+    if (!g.current) return;
+    const e = s.clock.elapsedTime + sgn * 1.6;
+    g.current.position.set(sgn * x, y + Math.sin(e * 1.7) * u * 0.18, 0);
+    g.current.rotation.set(Math.sin(e * 1.1) * 0.08, 0, -sgn * baseRot + Math.sin(e * 1.4) * 0.14);
+  });
   if (kind === "pauldron") {
     // layered pauldron: a smooth cap, a banded rim, and a small crest spike
     return (
-      <group position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.3]}>
+      <group ref={g} position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.3]}>
         <mesh>
           <sphereGeometry args={[u * 0.9, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
           {smooth(pal.secondary, 0.55, 0.42)}
         </mesh>
         <mesh position={[0, -u * 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[u * 0.88, u * 0.1, 10, 28, Math.PI]} />
-          {smooth(pal.dark, 0.5, 0.5)}
+          {smooth(shade(pal.secondary), 0.5, 0.5)}
         </mesh>
         <mesh position={[0, u * 0.5, 0]} rotation={[0, 0, -sgn * 0.2]}>
           <coneGeometry args={[u * 0.16, u * 0.6, 6]} />
@@ -314,16 +399,16 @@ function Shoulder({ kind, sgn, h, x, y, pal, k }: { kind: Phenotype["shoulders"]
   if (kind === "spike") {
     // a cluster of three spikes on a small base plate
     return (
-      <group position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.5]}>
+      <group ref={g} position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.5]}>
         <mesh position={[0, -u * 0.08, 0]}>
           <cylinderGeometry args={[u * 0.5, u * 0.6, u * 0.22, 10]} />
-          {smooth(pal.dark, 0.55, 0.45)}
+          {smooth(shade(pal.secondary), 0.55, 0.45)}
         </mesh>
         {[-1, 0, 1].map((j) => (
           <group key={j} position={[j * u * 0.28, u * 0.45, 0]} rotation={[0, 0, -j * 0.28]}>
             <mesh>
               <coneGeometry args={[u * 0.18, u * (1.4 - Math.abs(j) * 0.35), 7]} />
-              {smooth(pal.dark, 0.6, 0.4)}
+              {smooth(shade(pal.secondary), 0.6, 0.4)}
             </mesh>
             <mesh position={[0, u * 0.05, 0]} scale={[0.4, 1, 0.4]}>
               <coneGeometry args={[u * 0.18, u * (1.35 - Math.abs(j) * 0.35), 7]} />
@@ -336,10 +421,10 @@ function Shoulder({ kind, sgn, h, x, y, pal, k }: { kind: Phenotype["shoulders"]
   }
   // vent — louvered exhaust slats on a recessed housing
   return (
-    <group position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.2]}>
+    <group ref={g} position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.2]}>
       <mesh>
         <boxGeometry args={[u * 1.0, u * 0.78, u * 0.78]} />
-        {smooth(pal.dark, 0.5, 0.55)}
+        {smooth(shade(pal.secondary), 0.5, 0.55)}
       </mesh>
       {[0, 1, 2].map((i) => (
         <mesh key={i} position={[0, i * u * 0.22 - u * 0.22, u * 0.42]} rotation={[0.5, 0, 0]}>
@@ -353,6 +438,17 @@ function Shoulder({ kind, sgn, h, x, y, pal, k }: { kind: Phenotype["shoulders"]
 
 // ── Chest core ────────────────────────────────────────────────────────────────
 function Chest({ kind, y, z, h, pal, k }: { kind: Phenotype["chest"]; y: number; z: number; h: number; pal: PartPalette; k: number }) {
+  // The reactor core spins + pulses under its own power, so the chest piece reads as
+  // a LIVE energy source — visibly animated regardless of how much the torso bone
+  // moves (the idle clip barely moves the torso).
+  const core = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (!core.current) return;
+    const e = s.clock.elapsedTime;
+    core.current.rotation.y = e * 0.9;
+    core.current.rotation.x = Math.sin(e * 0.7) * 0.5;
+    core.current.scale.setScalar(1 + Math.sin(e * 2.4) * 0.14);
+  });
   if (kind === "none") return null;
   const u = h * 0.12;
   return (
@@ -362,9 +458,9 @@ function Chest({ kind, y, z, h, pal, k }: { kind: Phenotype["chest"]; y: number;
           {/* recessed bezel housing the reactor */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <torusGeometry args={[u * 0.82, u * 0.14, 12, 24]} />
-            {smooth(pal.dark, 0.55, 0.45)}
+            {smooth(shade(pal.secondary), 0.55, 0.45)}
           </mesh>
-          <mesh>
+          <mesh ref={core}>
             <octahedronGeometry args={[u * 0.66, 0]} />
             {glowMat(pal.glow, 1.9 * k)}
           </mesh>
@@ -376,7 +472,7 @@ function Chest({ kind, y, z, h, pal, k }: { kind: Phenotype["chest"]; y: number;
             <torusGeometry args={[u * 0.7, u * 0.16, 14, 28]} />
             {smooth(pal.secondary, 0.6, 0.4)}
           </mesh>
-          <mesh>
+          <mesh ref={core}>
             <sphereGeometry args={[u * 0.34, 16, 14]} />
             {glowMat(pal.glow, 1.8 * k)}
           </mesh>
@@ -386,7 +482,7 @@ function Chest({ kind, y, z, h, pal, k }: { kind: Phenotype["chest"]; y: number;
         [-1, 0, 1].map((i) => (
           <mesh key={i} position={[0, i * u * 0.32, 0]}>
             <boxGeometry args={[u * (1.2 - Math.abs(i) * 0.2), u * 0.18, u * 0.2]} />
-            {i === 0 ? glowMat(pal.glow, 1.5 * k) : smooth(pal.dark, 0.5, 0.5)}
+            {i === 0 ? glowMat(pal.glow, 1.5 * k) : smooth(shade(pal.secondary), 0.5, 0.5)}
           </mesh>
         ))}
     </group>
@@ -412,7 +508,7 @@ function Back({ kind, y, z, h, count, pal, k }: { kind: Phenotype["back"]; y: nu
               {/* housing with a ribbed throat */}
               <mesh>
                 <cylinderGeometry args={[u * 0.3, u * 0.36, u * 1.3, 12]} />
-                {smooth(pal.dark, 0.6, 0.4)}
+                {smooth(shade(pal.secondary), 0.6, 0.4)}
               </mesh>
               <mesh position={[0, u * 0.45, 0]} rotation={[Math.PI / 2, 0, 0]}>
                 <torusGeometry args={[u * 0.34, u * 0.05, 8, 18]} />
@@ -434,7 +530,7 @@ function Back({ kind, y, z, h, count, pal, k }: { kind: Phenotype["back"]; y: nu
       <group position={[0, y, z]}>
         <mesh>
           <boxGeometry args={[h * 0.5, h * 0.9, h * 0.06]} />
-          {struct(pal.dark, 0.3, 0.7)}
+          {struct(shade(pal.secondary), 0.3, 0.7)}
         </mesh>
         <mesh position={[0, 0, -h * 0.031]}>
           <planeGeometry args={[h * 0.06, h * 0.7]} />

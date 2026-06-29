@@ -29,6 +29,26 @@ function rngFrom(seed: number) {
  *  spin, flicker, or pulse IN PLACE (so the mind still reads as alive), but it
  *  never flies off the body or hangs in empty space. `color` is the Force colour;
  *  `accent` is the identity glint. */
+interface Anchor {
+  x: number;
+  y: number;
+  z: number;
+  top: number;
+  bottom: number;
+  r: number;
+  hx: number;
+  hz: number;
+}
+
+// Resolved placement on the real anatomy (figure space), with safe fallbacks.
+interface Place {
+  torsoY: number;
+  backZ: number;
+  frontZ: number;
+  headTopY: number;
+  neckY: number;
+}
+
 export function ArchetypeFeatures({
   type,
   h,
@@ -37,6 +57,7 @@ export function ArchetypeFeatures({
   dim = false,
   seed = 0,
   bones,
+  anchors,
 }: {
   type: CreatureType;
   h: number;
@@ -48,6 +69,8 @@ export function ArchetypeFeatures({
   seed?: number;
   /** skeleton bones (lowercased names) so each piece fuses to its anchor */
   bones?: Record<string, THREE.Object3D>;
+  /** MEASURED rest placement of each part's mesh (figure space) */
+  anchors?: Record<string, Anchor>;
 }) {
   const set = kitFor(type).featureSet;
   const col = useMemo(() => new THREE.Color(color), [color]);
@@ -55,17 +78,26 @@ export function ArchetypeFeatures({
   const k = dim ? 0.62 : 1;
   const head = bones?.["head"];
   const torso = bones?.["torso"];
+  const ta = anchors?.["torso"];
+  const ha = anchors?.["head"];
+  const pl: Place = {
+    torsoY: ta ? ta.y : h * 0.5,
+    backZ: ta ? ta.z - ta.hz : -h * 0.18,
+    frontZ: ta ? ta.z + ta.hz : h * 0.16,
+    headTopY: ha ? ha.top : h * 0.97,
+    neckY: ha ? ha.bottom : h * 0.66,
+  };
   switch (set) {
     case "lattice":
-      return <Lattice h={h} col={col} acc={acc} k={k} head={head} torso={torso} />;
+      return <Lattice h={h} col={col} acc={acc} k={k} head={head} torso={torso} pl={pl} />;
     case "static":
-      return <Static h={h} col={col} k={k} seed={seed} torso={torso} />;
+      return <Static h={h} col={col} k={k} seed={seed} torso={torso} pl={pl} />;
     case "monolith":
-      return <Monolith h={h} col={col} acc={acc} k={k} torso={torso} />;
+      return <Monolith h={h} col={col} acc={acc} k={k} torso={torso} pl={pl} />;
     case "chorus":
-      return <Chorus h={h} col={col} acc={acc} k={k} seed={seed} head={head} torso={torso} />;
+      return <Chorus h={h} col={col} acc={acc} k={k} seed={seed} head={head} torso={torso} pl={pl} />;
     case "spark":
-      return <Spark h={h} col={col} acc={acc} k={k} seed={seed} head={head} torso={torso} />;
+      return <Spark h={h} col={col} acc={acc} k={k} seed={seed} head={head} torso={torso} pl={pl} />;
     default:
       return null;
   }
@@ -76,7 +108,7 @@ export function ArchetypeFeatures({
 // spins in place (a moving part that's clearly fixed to the frame), capped by a
 // gold proof-sigil; a tight ring of cubes sits fused around the collar instead of
 // orbiting out through empty space.
-function Lattice({ h, col, acc, k, head, torso }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; head?: THREE.Object3D; torso?: THREE.Object3D }) {
+function Lattice({ h, col, acc, k, head, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; head?: THREE.Object3D; torso?: THREE.Object3D; pl: Place }) {
   const arm = useRef<THREE.Group>(null);
   const sigil = useRef<THREE.Mesh>(null);
   const cubes = useRef<THREE.Group>(null);
@@ -95,7 +127,7 @@ function Lattice({ h, col, acc, k, head, torso }: { h: number; col: THREE.Color;
     <>
       {/* back-mounted armillary gyro — bolted to the upper back, spins in place */}
       <BoneFollower bone={torso}>
-        <group position={[0, h * 0.6, -h * 0.16]}>
+        <group position={[0, pl.torsoY + h * 0.08, pl.backZ - h * 0.04]}>
           <group ref={arm}>
             {[0, 1].map((i) => (
               <mesh key={i} rotation={[i === 0 ? Math.PI / 2 : Math.PI / 3.2, 0, i === 1 ? 0.5 : 0]}>
@@ -112,7 +144,7 @@ function Lattice({ h, col, acc, k, head, torso }: { h: number; col: THREE.Color;
       </BoneFollower>
       {/* a tight crown of cubes fused around the base of the neck */}
       <BoneFollower bone={torso}>
-        <group ref={cubes} position={[0, h * 0.66, 0]}>
+        <group ref={cubes} position={[0, pl.neckY, 0]}>
           {[0, 1, 2, 3].map((i) => {
             const a = (i / 4) * Math.PI * 2;
             return (
@@ -132,7 +164,7 @@ function Lattice({ h, col, acc, k, head, torso }: { h: number; col: THREE.Color;
 // The storm is now FUSED: jagged shards grow out of the shoulder blades in a fixed
 // fan, flickering and twitching in place like unstable crystal — never orbiting
 // the figure or punching through the chest.
-function Static({ h, col, k, seed, torso }: { h: number; col: THREE.Color; k: number; seed: number; torso?: THREE.Object3D }) {
+function Static({ h, col, k, seed, torso, pl }: { h: number; col: THREE.Color; k: number; seed: number; torso?: THREE.Object3D; pl: Place }) {
   const refs = useRef<(THREE.Mesh | null)[]>([]);
   const shards = useMemo(() => {
     const rnd = rngFrom(seed ^ 0x51);
@@ -141,15 +173,15 @@ function Static({ h, col, k, seed, torso }: { h: number; col: THREE.Color; k: nu
       const t = i / 6 - 0.5; // -0.5 → 0.5 across the back
       return {
         x: t * h * 0.5,
-        y: h * (0.52 + Math.abs(t) * 0.18 + rnd() * 0.12),
-        z: -h * (0.14 + rnd() * 0.08),
+        y: pl.torsoY + h * (0.04 + Math.abs(t) * 0.18 + rnd() * 0.12),
+        z: pl.backZ - h * (rnd() * 0.06),
         s: h * (0.06 + rnd() * 0.06),
         tilt: t * 0.6,
         jit: rnd() * 6.28,
         oct: rnd() > 0.5,
       };
     });
-  }, [h, seed]);
+  }, [h, seed, pl.torsoY, pl.backZ]);
   useFrame((s) => {
     const t = s.clock.elapsedTime;
     for (let i = 0; i < refs.current.length; i++) {
@@ -181,7 +213,7 @@ function Static({ h, col, k, seed, torso }: { h: number; col: THREE.Color; k: nu
 // Mass that reads as "immovable": weighty ground rings stay planted on the FLOOR
 // (never bobbing with the body), while squared shoulder caps are bolted to the
 // torso so they sit on the frame.
-function Monolith({ h, col, acc, k, torso }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; torso?: THREE.Object3D }) {
+function Monolith({ h, col, acc, k, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; torso?: THREE.Object3D; pl: Place }) {
   return (
     <>
       {/* heavy double ground ring — left at the feet, NOT bone-followed */}
@@ -197,9 +229,9 @@ function Monolith({ h, col, acc, k, torso }: { h: number; col: THREE.Color; acc:
       <BoneFollower bone={torso}>
         <group>
           {[-1, 1].map((sgn) => (
-            <mesh key={sgn} position={[sgn * h * 0.26, h * 0.62, 0]} rotation={[0, 0, sgn * 0.12]} castShadow>
+            <mesh key={sgn} position={[sgn * h * 0.26, pl.torsoY + h * 0.12, 0]} rotation={[0, 0, sgn * 0.12]} castShadow>
               <boxGeometry args={[h * 0.14, h * 0.1, h * 0.2]} />
-              <meshStandardMaterial color="#22302b" emissive={col} emissiveIntensity={0.22 * k} metalness={0.25} roughness={0.8} flatShading />
+              <meshStandardMaterial color={col} emissive={col} emissiveIntensity={0.3 * k} metalness={0.35} roughness={0.6} flatShading />
             </mesh>
           ))}
         </group>
@@ -212,7 +244,7 @@ function Monolith({ h, col, acc, k, torso }: { h: number; col: THREE.Color; acc:
 // The "carrying voice" now reads as a fixed emitter ring on the chest that pulses
 // in place plus a tight halo bolted just over the head — no rings ballooning past
 // the body, no motes drifting up into empty space.
-function Chorus({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; seed: number; head?: THREE.Object3D; torso?: THREE.Object3D }) {
+function Chorus({ h, col, acc, k, seed, head, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; seed: number; head?: THREE.Object3D; torso?: THREE.Object3D; pl: Place }) {
   const rings = useRef<(THREE.Mesh | null)[]>([]);
   const RING_N = 2;
   // seed kept for layout stability parity with siblings (no random placement now)
@@ -235,7 +267,7 @@ function Chorus({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.C
     <>
       {/* chest emitter — concentric rings fused to the torso, pulsing in place */}
       <BoneFollower bone={torso}>
-        <group position={[0, h * 0.5, h * 0.16]}>
+        <group position={[0, pl.torsoY, pl.frontZ]}>
           {Array.from({ length: RING_N }).map((_, i) => (
             <mesh key={i} ref={(el) => { rings.current[i] = el; }} rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[h * (0.12 + i * 0.05), 0.014 * h, 6, 40]} />
@@ -246,7 +278,7 @@ function Chorus({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.C
       </BoneFollower>
       {/* tight halo bolted just above the head */}
       <BoneFollower bone={head}>
-        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, h * 0.98, 0]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, pl.headTopY + h * 0.02, 0]}>
           <torusGeometry args={[h * 0.16, 0.018 * h, 8, 40]} />
           <meshBasicMaterial color={acc} transparent opacity={0.6 * k} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
@@ -259,7 +291,7 @@ function Chorus({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.C
 // The orbs no longer orbit the whole figure; they sit in a fixed constellation
 // mounted on the shoulders/back and bob a hair in place, while the spark starburst
 // is bolted to the head and spins where it sits.
-function Spark({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; seed: number; head?: THREE.Object3D; torso?: THREE.Object3D }) {
+function Spark({ h, col, acc, k, seed, head, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; seed: number; head?: THREE.Object3D; torso?: THREE.Object3D; pl: Place }) {
   const orbs = useRef<(THREE.Mesh | null)[]>([]);
   const burst = useRef<THREE.Group>(null);
   const palette = useMemo(() => {
@@ -274,14 +306,14 @@ function Spark({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.Co
       const t = i / 4 - 0.5;
       return {
         x: t * h * 0.46,
-        y: h * (0.58 + rnd() * 0.16),
-        z: -h * (0.08 + rnd() * 0.08),
+        y: pl.torsoY + h * (0.08 + rnd() * 0.16),
+        z: pl.backZ + h * (0.02 - rnd() * 0.06),
         ph: rnd() * 6.28,
         c: palette[i % palette.length],
         s: h * (0.045 + rnd() * 0.04),
       };
     });
-  }, [h, palette, seed]);
+  }, [h, palette, seed, pl.torsoY, pl.backZ]);
   useFrame((s) => {
     const t = s.clock.elapsedTime;
     for (let i = 0; i < orbs.current.length; i++) {
@@ -312,7 +344,7 @@ function Spark({ h, col, acc, k, seed, head, torso }: { h: number; col: THREE.Co
       </BoneFollower>
       {/* the spark itself — a starburst bolted just above the head, spins in place */}
       <BoneFollower bone={head}>
-        <group ref={burst} position={[0, h * 1.0, 0]}>
+        <group ref={burst} position={[0, pl.headTopY + h * 0.04, 0]}>
           {Array.from({ length: 8 }).map((_, i) => {
             const a = (i / 8) * Math.PI * 2;
             return (

@@ -15,7 +15,7 @@ import type { WarState } from "@/lib/types";
 //    your Clan beneath). No popover, no re-explanation: choosing/reviewing lives
 //    in the ClanSheet (reached from the world flag or the first-win invite),
 //    which fires the join celebration. The chip just tells you who you are.
-export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean; war?: WarState | null; onOpenClan: () => void }) {
+export function TrainerBadge({ isMobile, war, onOpenClan, compact = false }: { isMobile: boolean; war?: WarState | null; onOpenClan: () => void; compact?: boolean }) {
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const [open, setOpen] = useState(false);
@@ -26,6 +26,21 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
 
   // ── Clan chosen: static identity readout, no interaction ──────────────────
   if (force && fm) {
+    if (compact) {
+      return (
+        <div
+          className="panel"
+          aria-label={`Reader rank ${tl.level}, ${tl.title}, ${fm.name}`}
+          title={`Lv ${tl.level} · ${tl.title} · ${fm.name}`}
+          style={{ ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 6, padding: isMobile ? "7px 10px" : "8px 11px", width: "fit-content", pointerEvents: "auto" }}
+        >
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: 5, background: `${fc}22`, color: fc, fontSize: 11, fontWeight: 800 }}>
+            {EMBLEM[force]}
+          </span>
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: fc }}>Lv {tl.level}</span>
+        </div>
+      );
+    }
     return (
       <div
         className="panel"
@@ -57,20 +72,27 @@ export function TrainerBadge({ isMobile, war, onOpenClan }: { isMobile: boolean;
         className="panel"
         aria-label="Reader profile & allegiance"
         aria-expanded={open}
-        style={{ ["--ac" as string]: fc, display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }}
+        title={compact ? `Lv ${tl.level} · ${tl.title} · no clan yet` : undefined}
+        style={compact
+          ? { ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 6, padding: isMobile ? "7px 10px" : "8px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }
+          : { ["--ac" as string]: fc, display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 6, background: `${fc}22`, color: fc, fontSize: 13, fontWeight: 800 }}>
-          <Shield size={13} strokeWidth={2.2} />
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: compact ? 18 : 22, height: compact ? 18 : 22, borderRadius: 5, background: `${fc}22`, color: fc, fontSize: 13, fontWeight: 800 }}>
+          <Shield size={compact ? 11 : 13} strokeWidth={2.2} />
         </span>
-        <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
-          <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
-          {!isMobile && <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>NO CLAN</span>}
-        </span>
-        <ChevronDown size={13} strokeWidth={2} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", opacity: 0.6 }} />
+        {compact ? (
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>Lv {tl.level}</span>
+        ) : (
+          <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
+            <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
+            {!isMobile && <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>NO CLAN</span>}
+          </span>
+        )}
+        <ChevronDown size={compact ? 12 : 13} strokeWidth={2} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", opacity: 0.6 }} />
       </button>
 
       {open && (
-        <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 12, width: 256, maxWidth: "calc(100vw - 32px)", zIndex: 3 }}>
+        <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", ...(compact ? { right: 0 } : { left: 0 }), padding: 12, width: 256, maxWidth: "calc(100vw - 32px)", zIndex: 3 }}>
           {/* rank progress */}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
             <span style={{ fontSize: 14, fontWeight: 700 }}>Reader rank {tl.level}</span>

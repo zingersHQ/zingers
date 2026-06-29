@@ -108,6 +108,15 @@ const World = dynamic(() => import("@/components/grounds/world"), {
   ),
 });
 
+// Where a player drops into the Concord on their first landing — the outer
+// threshold of the gate-ring (z out past the gates), so they arrive looking in
+// across the plaza toward the Vaultgates. [x, z].
+const CONCORD_SPAWN: [number, number] = [0, 52];
+
+// Minimum time the pre-picker "Summoning your champions…" beat stays on screen,
+// so it's always readable even when the roster is already cached.
+const MIN_SUMMON_MS = 2400;
+
 // Ladder agents reuse a roster creature key for moves/body — when you own that
 // same creature, match visuals need the agent's unique ladder id so both sides
 // don't collapse into one champion.
@@ -188,6 +197,10 @@ export default function GroundsScreen() {
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [firstDuelPhase, setFirstDuelPhase] = useState<FirstDuelPhase | null>(null);
+  // Hold the "Summoning your champions…" beat on screen long enough to read.
+  // On a warm load the roster resolves almost instantly, so without a floor the
+  // banner only flashed for a frame before champion select took over.
+  const summonStartedAt = useRef<number | null>(null);
   const [firstDuelPick, setFirstDuelPick] = useState<string | null>(null);
   const [firstDuelEvolve, setFirstDuelEvolve] = useState<{
     before: Champion;
@@ -212,6 +225,10 @@ export default function GroundsScreen() {
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
   const [concordCoach, setConcordCoach] = useState(false);
+  // The gate nudge popup is tracked apart from the spotlight: "Skip" should only
+  // clear this popup, while the Grounds gate stays lit until the player actually
+  // takes a gate.
+  const [guideNudge, setGuideNudge] = useState(true);
   // The first-ranked-win Clan invite — deferred so the choice arrives when
   // "join a team" actually means something. Shown once.
   const [clanInvite, setClanInvite] = useState(false);
@@ -299,7 +316,7 @@ export default function GroundsScreen() {
     [isHub, inVenue, allNodes, claimedToday],
   );
   const poseRef = useRef<Pose>({ x: 0, z: 34, heading: Math.PI });
-  const travelRef = useRef<((x: number, z: number) => void) | null>(null);
+  const travelRef = useRef<((x: number, z: number, faceHeading?: number) => void) | null>(null);
 
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
@@ -584,6 +601,7 @@ export default function GroundsScreen() {
       if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
         setConcordCoach(true);
       }
+      setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
     } catch {}
     try {
       clanInviteSeen.current = localStorage.getItem(STORAGE.clanInvite) === "1";
@@ -645,6 +663,17 @@ export default function GroundsScreen() {
       localStorage.setItem(STORAGE.firstGuide, "1");
     } catch {}
     setConcordCoach(false);
+    setGuideNudge(false);
+  }, []);
+
+  // "Skip" on the gate nudge clears only the popup — the Grounds gate stays
+  // spotlit so a player who dismissed the hint can still find their first arena.
+  // The full coach (spotlight + dim) ends when they actually take a gate.
+  const dismissGuideNudge = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.firstGuide, "1");
+    } catch {}
+    setGuideNudge(false);
   }, []);
 
   // ── First-run guide ─────────────────────────────────────────────────────────
@@ -695,8 +724,18 @@ export default function GroundsScreen() {
   // shown). The cinematic intro already pitches the game, so the funnel opens
   // straight on champion select.
   useEffect(() => {
-    if (!mounted || isFirstDuelComplete() || owned || roster.length === 0 || showIntro) return;
-    if (firstDuelPhase === null) setFirstDuelPhase("pick");
+    // Outside the new-player funnel: reset the summon clock so it restarts fresh.
+    if (!mounted || isFirstDuelComplete() || owned || showIntro) {
+      summonStartedAt.current = null;
+      return;
+    }
+    // We're now showing the pre-picker "summoning" beat. Mark when it began so
+    // we can keep it up for at least MIN_SUMMON_MS even if the roster is cached.
+    if (summonStartedAt.current === null) summonStartedAt.current = Date.now();
+    if (roster.length === 0 || firstDuelPhase !== null) return;
+    const wait = Math.max(0, MIN_SUMMON_MS - (Date.now() - summonStartedAt.current));
+    const t = setTimeout(() => setFirstDuelPhase("pick"), wait);
+    return () => clearTimeout(t);
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
   const closeIntro = useCallback(() => {
@@ -704,10 +743,9 @@ export default function GroundsScreen() {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
     setShowIntro(false);
-    if (!isFirstDuelComplete() && !owned && roster.length > 0) {
-      setFirstDuelPhase("pick");
-    }
-  }, [owned, roster.length]);
+    // Don't jump straight to the picker: clearing showIntro lets the pre-picker
+    // "summoning" effect run the minimum-hold before champion select mounts.
+  }, []);
 
   const onAltitude = useCallback((y: number) => {
     setAltitude(y);
@@ -1002,9 +1040,15 @@ export default function GroundsScreen() {
     setConcordCoach(true);
     if (worldId !== "concord") {
       travelToWorld("concord", false);
-      setTimeout(() => travelRef.current?.(0, 52), 120);
+      // Land facing the spotlit Grounds gate: drop in at the Concord threshold,
+      // turn the champion toward its first arena, and let the camera settle behind
+      // them — so control is handed back already looking at the door to take.
+      setTimeout(() => {
+        const faceGate = Math.atan2(groundsGatePos[0] - CONCORD_SPAWN[0], groundsGatePos[2] - CONCORD_SPAWN[1]);
+        travelRef.current?.(CONCORD_SPAWN[0], CONCORD_SPAWN[1], faceGate);
+      }, 120);
     }
-  }, [bout, travelToWorld, worldId]);
+  }, [bout, travelToWorld, worldId, groundsGatePos]);
 
   const stageFirstFightArena = useCallback(() => {
     if (worldId !== FIRST_FIGHT_WORLD) {
@@ -1684,23 +1728,6 @@ export default function GroundsScreen() {
           </div>
         )}
 
-        {!showMatch && overlay === "none" && owned && !gRun && (
-          <div style={{ marginBottom: isMobile ? 6 : 10 }}>
-            <TrainerBadge
-              isMobile={isMobile}
-              war={war}
-              onOpenClan={() => {
-                if (modesLocked) {
-                  setModeLockToast("Finish your first duel to unlock Clans.");
-                  return;
-                }
-                setClanPreselect(null);
-                setClanOpen(true);
-              }}
-            />
-          </div>
-        )}
-
         {!showMatch && overlay === "none" && owned && !gRun && !modesLocked && (
           <div style={{ marginBottom: isMobile ? 6 : 10 }}>
             <ReaderThread isMobile={isMobile} />
@@ -1770,6 +1797,21 @@ export default function GroundsScreen() {
         )}
         {overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
         {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
+        {overlay === "none" && !showMatch && owned && !gRun && (
+          <TrainerBadge
+            isMobile={isMobile}
+            war={war}
+            compact
+            onOpenClan={() => {
+              if (modesLocked) {
+                setModeLockToast("Finish your first duel to unlock Clans.");
+                return;
+              }
+              setClanPreselect(null);
+              setClanOpen(true);
+            }}
+          />
+        )}
         <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
           <span style={{ fontWeight: 700, fontSize: isMobile ? 15 : 18, color: "var(--gold)" }}>{crowns}</span>
@@ -1861,7 +1903,7 @@ export default function GroundsScreen() {
       {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
           Hidden once they're standing on a gate (the big Enter prompt takes over),
           and escalates to gold once they idle near spawn. */}
-      {concordCoach && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
+      {concordCoach && guideNudge && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div
             className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
@@ -1890,7 +1932,7 @@ export default function GroundsScreen() {
             >
               Take me there
             </button>
-            <button onClick={dismissConcordCoach} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Skip</button>
+            <button onClick={dismissGuideNudge} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Skip</button>
           </div>
         </div>
       )}

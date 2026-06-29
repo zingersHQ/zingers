@@ -99,12 +99,6 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
         <h2 style={{ fontSize: compact ? 20 : 28, lineHeight: 1.05, margin: 0 }}>{season.arc.title}</h2>
         <p style={{ color: "var(--muted)", fontSize: compact ? 12 : 14, lineHeight: 1.55, margin: "10px 0 0" }}>{season.arc.blurb}</p>
 
-        {preseason && (
-          <p style={{ color: force.hex, fontSize: compact ? 11.5 : 13, lineHeight: 1.5, margin: "8px 0 0", fontWeight: 600 }}>
-            This is a free, no-stakes proving week — fight, train and find your footing. Ratings don&apos;t reset and nothing is on the line until Season 1 opens the first Vault door.
-          </p>
-        )}
-
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
           <Chip color={force.hex}>{force.sigil} {force.name}</Chip>
           <Chip color="var(--gold)">Featured: {season.featured.name}</Chip>
