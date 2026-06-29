@@ -15,6 +15,7 @@ import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-par
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 import { FORCES } from "@/lib/lore/canon";
+import { ANIM, type GestureClip, type RestPose } from "@/lib/render/animations";
 
 for (const m of ALL_MODELS) useGLTF.preload(m);
 
@@ -82,7 +83,45 @@ export type PartAnchors = Record<string, PartAnchor>;
 // reading as a detached "tie". We keep a fraction of that head/neck motion so the
 // figure still feels alive, but damp the rest so the head stays married to its
 // neckline. 1 = full clip motion, 0 = locked to bind pose.
-const NECK_MOTION = 0.45;
+const NECK_MOTION = 0.58;
+const NECK_MOTION_PEACEFUL = ANIM.peacefulNeckDamp;
+
+function restAction(built: BuiltCharacter, pose: RestPose) {
+  return built.actions[pose] ?? built.actions.standing ?? built.actions.idle;
+}
+
+/** Crossfade back to a rest loop without `reset()` — resetting jumps to frame 0 and
+ *  reads as a snap, especially on the Standing clip's expand/contract cycle. */
+function crossFadeToRest(from: THREE.AnimationAction | null | undefined, rest: THREE.AnimationAction, fade: number) {
+  rest.enabled = true;
+  if (from && from !== rest && from.getEffectiveWeight() > 0.01) {
+    from.crossFadeTo(rest, fade, false);
+  } else if (!rest.isRunning() || rest.getEffectiveWeight() < 0.01) {
+    rest.reset().setEffectiveWeight(1).fadeIn(fade).play();
+  } else {
+    rest.setEffectiveWeight(1);
+    rest.play();
+  }
+}
+
+function fadeToRest(built: BuiltCharacter, pose: RestPose, fade = 0.28) {
+  const rest = restAction(built, pose);
+  if (!rest) return;
+  let active: THREE.AnimationAction | undefined;
+  for (const a of Object.values(built.actions)) {
+    if (a && a !== rest && a.getEffectiveWeight() > 0.05) {
+      active = a;
+      break;
+    }
+  }
+  if (active) crossFadeToRest(active, rest, fade);
+  else if (!rest.isRunning() || rest.getEffectiveWeight() < 0.01) {
+    rest.reset().setEffectiveWeight(1).fadeIn(fade).play();
+  } else {
+    // already resting — update weight only, never reset (avoids loop snap on re-run)
+    rest.setEffectiveWeight(1);
+  }
+}
 
 export function buildCharacter(
   scene: THREE.Object3D,
@@ -242,19 +281,38 @@ export function buildCharacter(
   const mixer = new THREE.AnimationMixer(root);
   const actions: Record<string, THREE.AnimationAction | undefined> = {
     idle: clipAction(mixer, animations, "idle"),
+    standing: clipAction(mixer, animations, "standing"),
+    sitting: clipAction(mixer, animations, "sitting"),
     walk: clipAction(mixer, animations, "walking", "walk"),
     run: clipAction(mixer, animations, "running", "run"),
     jump: clipAction(mixer, animations, "jump"),
     punch: clipAction(mixer, animations, "punch", "attack"),
     wave: clipAction(mixer, animations, "wave"),
+    dance: clipAction(mixer, animations, "dance"),
+    thumbsUp: clipAction(mixer, animations, "thumbsup", "thumbs_up"),
+    yes: clipAction(mixer, animations, "yes"),
+    no: clipAction(mixer, animations, "no"),
+    death: clipAction(mixer, animations, "death"),
   };
-  actions.punch?.setLoop(THREE.LoopOnce, 1);
-  if (actions.punch) actions.punch.clampWhenFinished = true;
-  // play the leap once and hold the airborne pose instead of looping the whole
-  // hop (crouch→land) over and over while still in the air — that looked robotic
-  actions.jump?.setLoop(THREE.LoopOnce, 1);
-  if (actions.jump) actions.jump.clampWhenFinished = true;
-  actions.idle?.reset().play();
+  for (const nm of ["punch", "jump", "wave", "dance", "thumbsUp", "yes", "no", "death"] as const) {
+    const a = actions[nm];
+    if (!a) continue;
+    a.setLoop(THREE.LoopOnce, 1);
+    a.clampWhenFinished = true;
+  }
+  // loop dance for celebration showcases
+  actions.dance?.setLoop(THREE.LoopRepeat, Infinity);
+  if (actions.dance) actions.dance.clampWhenFinished = false;
+  // Standing/Sitting expand then contract — ping-pong so the return is animated,
+  // not a hard loop snap back to frame 0.
+  for (const nm of ["standing", "sitting"] as const) {
+    const a = actions[nm];
+    if (!a) continue;
+    a.setLoop(THREE.LoopPingPong, Infinity);
+    a.clampWhenFinished = false;
+  }
+  // initial skeletal pose is chosen by the restPose effect — don't start idle here
+  // or the first crossfade fights a clip that's already mid-cycle.
 
   return { root, mixer, actions, bones, boneBase, restQuat, restPos, partAnchors, morph, h: app.h, emissive: app.emissive, palette: pal };
 }
@@ -268,14 +326,15 @@ function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], .
 // oversized head stops swinging off the static neck/collar. Runs AFTER the mixer
 // (and bone-morph) each frame; the head-attached decor rides these bones via
 // BoneFollower, so it stays glued to the calmer head.
-function dampNeck(built: BuiltCharacter) {
+function dampNeck(built: BuiltCharacter, peaceful = false) {
+  const keep = peaceful ? NECK_MOTION_PEACEFUL : NECK_MOTION;
   for (const nm of ["neck", "head"] as const) {
     const b = built.bones[nm];
     const rq = built.restQuat[nm];
     const rp = built.restPos[nm];
     if (!b) continue;
-    if (rq) b.quaternion.slerp(rq, 1 - NECK_MOTION);
-    if (rp) b.position.lerp(rp, 1 - NECK_MOTION);
+    if (rq) b.quaternion.slerp(rq, 1 - keep);
+    if (rp) b.position.lerp(rp, 1 - keep);
   }
 }
 
@@ -312,21 +371,24 @@ function leanBone(built: BuiltCharacter, nm: string, x: number, y: number, z: nu
   _breatheQ.setFromEuler(_breatheEuler);
   b.quaternion.copy(rq).multiply(_breatheQ);
 }
-function breathe(built: BuiltCharacter, t: number) {
+function breathe(built: BuiltCharacter, t: number, intensity = 1) {
   const b = built.bones["abdomen"];
-  if (!b) return;
+  if (!b || intensity <= 0) return;
+  const { hz, hz2, swayHz, leanAmp, rollAmp, bobAmp, torsoTwist, shoulderRoll } = ANIM.breathe;
   // Lazy-capture the true bind pose (abdomen is never keyframed) so breathing works
   // even if `built` predates the snapshot after a hot-reload.
   let rq = built.restQuat["abdomen"];
   if (!rq) rq = built.restQuat["abdomen"] = b.quaternion.clone();
   let rp = built.restPos["abdomen"];
   if (!rp) rp = built.restPos["abdomen"] = b.position.clone();
-  const breath = Math.sin(t * 0.95);
-  const sway = Math.sin(t * 0.7);
+  // two slow, incommensurate sines → organic asymmetry (never mechanical lockstep)
+  const breath = Math.sin(t * hz) * 0.72 + Math.sin(t * hz2 + 1.1) * 0.28;
+  const sway = Math.sin(t * swayHz) * 0.8 + Math.sin(t * swayHz * 0.67 + 0.6) * 0.2;
+  const k = intensity;
   // Abdomen: gentle forward/back lean + weight-shift roll. Drives the whole upper
   // chain. Keep the vertical bob shallow — it translates the shoulders/arms too, and
   // too much reads as a distracting bounce.
-  _breatheEuler.set(breath * 0.03, 0, Math.sin(t * 0.6) * 0.018);
+  _breatheEuler.set(breath * leanAmp * k, 0, Math.sin(t * swayHz * 0.85) * rollAmp * k);
   _breatheQ.setFromEuler(_breatheEuler);
   b.quaternion.copy(rq).multiply(_breatheQ);
   const parent = b.parent;
@@ -334,17 +396,17 @@ function breathe(built: BuiltCharacter, t: number) {
     parent.updateWorldMatrix(true, false);
     _parentInvBob.copy(parent.matrixWorld).invert();
     _bobDir.set(0, 1, 0).transformDirection(_parentInvBob);
-    b.position.copy(rp).addScaledVector(_bobDir, breath * 0.0015);
+    b.position.copy(rp).addScaledVector(_bobDir, breath * bobAmp * k);
   }
   // Torso spine-twist: rotates the chest reactor (donut + core sit ON the spine, so a
   // lean alone barely moves them) and sweeps the shoulders/back units in a clear arc —
   // purely rotational, so it never bounces the arms vertically. This is the motion the
   // chest/shoulder decor most visibly rides.
-  leanBone(built, "torso", breath * 0.02, sway * 0.05, 0);
+  leanBone(built, "torso", breath * torsoTwist * k, sway * torsoTwist * 2.2 * k, 0);
   // Shoulders: a small counter-phased roll so the shoulder spikes lift/settle with the
   // breath. Kept tiny — arms hang off these, so big values look like flailing.
-  leanBone(built, "shoulder.l", 0, 0, sway * 0.035);
-  leanBone(built, "shoulder.r", 0, 0, sway * 0.035);
+  leanBone(built, "shoulder.l", 0, 0, sway * shoulderRoll * k);
+  leanBone(built, "shoulder.r", 0, 0, sway * shoulderRoll * k);
 }
 
 // Drive the whole skeleton from the genome. Bone scales compound down the chain
@@ -409,6 +471,7 @@ export function ChampionMesh({
   hitSignal = 0,
   actSignal = 0,
   actName = "wave",
+  restPose = "idle",
   hpFrac,
   baseColorOverride,
   wander = false,
@@ -417,6 +480,8 @@ export function ChampionMesh({
   wanderSpeed = 3.0,
   idlePhase,
   idleSpeed,
+  breatheIntensity = 1,
+  bodyBob = 0,
   auraDim,
   identityKey,
   keeper,
@@ -443,7 +508,9 @@ export function ChampionMesh({
   hitSignal?: number;
   /** increment to trigger a one-shot gesture (wave/jump/punch) then fade back to idle */
   actSignal?: number;
-  actName?: "wave" | "jump" | "punch";
+  actName?: GestureClip;
+  /** base skeletal loop between gestures — Standing is calmer than Idle */
+  restPose?: RestPose;
   hpFrac?: number;
   baseColorOverride?: string;
   wander?: boolean;
@@ -453,6 +520,10 @@ export function ChampionMesh({
   /** desync the idle clip across a gallery of portraits */
   idlePhase?: number;
   idleSpeed?: number;
+  /** 0..1 procedural chest breathing (standing ≈ 0.25, breathing ≈ 1) */
+  breatheIntensity?: number;
+  /** vertical bob amplitude on the body group (bounce mode) */
+  bodyBob?: number;
   /** shrink the energy aura so the body reads clearly in gallery portraits */
   auraDim?: boolean;
   /** stable individual id → unique colour scheme / clothing pattern */
@@ -523,17 +594,17 @@ export function ChampionMesh({
   const movingPrev = useRef(false);
   const phase = useMemo(() => Math.random() * 6.28, []);
 
-  // punch → play the clip + lunge forward; on finish, ease back to idle
+  // punch → play the clip + lunge forward; on finish, ease back to rest
   useEffect(() => {
     if (!punchSignal) return;
     const p = built.actions.punch;
-    const idle = built.actions.idle;
+    const rest = restAction(built, restPose);
     if (p) {
-      idle?.fadeOut(0.12);
-      p.reset().setEffectiveTimeScale(1.4).setEffectiveWeight(1).fadeIn(0.12).play();
+      rest?.fadeOut(0.12);
+      p.reset().setEffectiveTimeScale(1.12).setEffectiveWeight(1).fadeIn(0.18).play();
       const onFin = () => {
-        p.fadeOut(0.25);
-        idle?.reset().fadeIn(0.25).play();
+        if (rest) crossFadeToRest(p, rest, 0.45);
+        else p.fadeOut(0.25);
         built.mixer.removeEventListener("finished", onFin);
       };
       built.mixer.addEventListener("finished", onFin);
@@ -545,33 +616,39 @@ export function ChampionMesh({
     if (hitSignal) recoil.current = 1;
   }, [hitSignal]);
 
-  // generic one-shot gesture (wave / jump / punch) for showcases & the intro
+  // generic one-shot gesture for showcases & the intro
   useEffect(() => {
     if (!actSignal) return;
     const a = built.actions[actName];
-    const idle = built.actions.idle;
+    const rest = restAction(built, restPose);
     if (a) {
-      a.setLoop(THREE.LoopOnce, 1);
-      a.clampWhenFinished = true;
-      idle?.fadeOut(0.14);
-      a.reset().setEffectiveTimeScale(actName === "wave" ? 1 : 1.35).setEffectiveWeight(1).fadeIn(0.14).play();
-      const onFin = () => {
-        a.fadeOut(0.3);
-        idle?.reset().fadeIn(0.3).play();
-        built.mixer.removeEventListener("finished", onFin);
-      };
-      built.mixer.addEventListener("finished", onFin);
+      const looped = actName === "dance";
+      a.setLoop(looped ? THREE.LoopRepeat : THREE.LoopOnce, looped ? Infinity : 1);
+      a.clampWhenFinished = !looped;
+      rest?.fadeOut(0.18);
+      const ts = actName === "wave" ? 0.82 : actName === "dance" ? 0.9 : 1.02;
+      a.reset().setEffectiveTimeScale(ts).setEffectiveWeight(1).fadeIn(0.22).play();
+      if (!looped) {
+        const onFin = () => {
+          if (rest) crossFadeToRest(a, rest, 0.5);
+          else a.fadeOut(0.32);
+          built.mixer.removeEventListener("finished", onFin);
+        };
+        built.mixer.addEventListener("finished", onFin);
+      }
     }
     if (actName === "punch") lunge.current = 1;
   }, [actSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // gallery portraits: offset + tempo the idle clip so a wall never beats in lockstep
+  // rest loop tempo + clip selection (Standing/Sitting for peaceful contexts)
   useEffect(() => {
-    const idle = built.actions.idle;
-    if (!idle) return;
-    if (idlePhase != null) idle.time = idlePhase;
-    idle.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1));
-  }, [built, idlePhase, idleSpeed, type]);
+    const rest = restAction(built, restPose);
+    if (!rest) return;
+    if (idlePhase != null) rest.time = idlePhase;
+    const scale = restPose === "idle" ? ANIM.idleClipScale : ANIM.restClipScale;
+    rest.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1) * scale);
+    fadeToRest(built, restPose, 0.4);
+  }, [built, restPose, idlePhase, idleSpeed, type]);
 
   // scratch vector + accumulator for the distance LOD (no per-frame allocation)
   const lodPos = useRef(new THREE.Vector3());
@@ -590,27 +667,30 @@ export function ChampionMesh({
     }
     // skeletal update: full-rate near, throttled at mid, frozen far. Re-apply the
     // bone morph after each tick so the clip never washes out the proportions.
+    const peaceful = restPose === "standing" || restPose === "sitting";
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
-      dampNeck(built);
-      breathe(built, t + phase);
+      dampNeck(built, peaceful);
+      breathe(built, t + phase, breatheIntensity);
     } else if (lod === 1) {
       lodAccum.current += dt;
       if (lodAccum.current >= LOD_MID_STEP) {
         built.mixer.update(lodAccum.current);
         applyBoneMorph(built.bones, built.boneBase, built.morph);
-        dampNeck(built);
-        breathe(built, t + phase);
+        dampNeck(built, peaceful);
+        breathe(built, t + phase, breatheIntensity);
         lodAccum.current = 0;
       }
     }
     const decorate = lod === 0;
 
     // lunge / recoil melee impulses on the body group
-    lunge.current = Math.max(0, lunge.current - dt * 3.2);
-    recoil.current = Math.max(0, recoil.current - dt * 3.0);
+    lunge.current = Math.max(0, lunge.current - dt * 2.4);
+    recoil.current = Math.max(0, recoil.current - dt * 2.2);
+    const bobY = bodyBob > 0 ? Math.sin(t * ANIM.portrait.bobHz + phase) * bodyBob : 0;
     if (motion.current) motion.current.position.z = lunge.current * 0.5 - recoil.current * 0.4;
+    if (motion.current) motion.current.position.y = bobY;
 
     // wander
     let moving = false;
@@ -645,14 +725,12 @@ export function ChampionMesh({
       // crossfade walk / idle clips on locomotion state change
       if (moving !== movingPrev.current) {
         movingPrev.current = moving;
-        const idle = built.actions.idle;
+        const rest = restAction(built, restPose);
         const walk = built.actions.walk;
         if (moving) {
-          idle?.fadeOut(0.2);
-          walk?.reset().fadeIn(0.2).play();
-        } else {
-          walk?.fadeOut(0.2);
-          idle?.reset().fadeIn(0.2).play();
+          if (walk) crossFadeToRest(rest ?? null, walk, 0.2);
+        } else if (rest) {
+          crossFadeToRest(walk ?? null, rest, 0.2);
         }
       }
     }

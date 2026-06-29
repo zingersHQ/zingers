@@ -77,7 +77,7 @@ export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
     featureSet: "static",
     body: { h: 0.9, headScale: 0.9, neckLen: 1.08, torsoGirth: 0.8, shoulder: 0.82, armGirth: 0.8, armLen: 1.04, legGirth: 0.82, legLen: 1.14, asym: 0.45 },
     material: { metalness: -0.05, roughness: 0.22, emissive: 1.25 },
-    idleSpeed: 1.2,
+    idleSpeed: 0.98,
     lean: 0.03,
   },
   // The Stillness — a TOWERING long-LEGGED guard (e.g. BASTION): roughly double the

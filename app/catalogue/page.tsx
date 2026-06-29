@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { catalogue, type CatalogueAgent } from "@/lib/cards/catalogue";
 import { ChampionCardFrame } from "@/components/collection/card-frame";
+import { AnimationLab } from "@/components/catalogue/animation-lab";
 import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import { TIERS } from "@/lib/evolve/progression";
 import type { CreatureType } from "@/lib/types";
@@ -15,6 +16,7 @@ type TierFilter = string | "ALL";
 
 export default function CataloguePage() {
   const agents = useMemo(() => catalogue(), []);
+  const labSample = agents.find((a) => a.id === "axiom") ?? agents[0];
   const [force, setForce] = useState<ForceFilter>("ALL");
   const [tier, setTier] = useState<TierFilter>("ALL");
   const [clan, setClan] = useState<ForceFilter>("ALL");
@@ -44,6 +46,8 @@ export default function CataloguePage() {
       </p>
 
       <DimensionLegend agents={agents} />
+
+      <AnimationLab sample={labSample} />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "20px 0 22px" }}>
         <FilterRow label="TYPE">

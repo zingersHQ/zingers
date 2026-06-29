@@ -11,8 +11,19 @@ import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { ChampionMesh } from "@/components/grounds/champion-mesh";
 import { BiomeBackdrop } from "@/components/grounds/biome-backdrop";
 import { biomeById } from "@/components/grounds/biomes";
+import {
+  ANIM,
+  type CreatureAnimMode,
+  type GestureClip,
+  bodyBobForMode,
+  breatheIntensityForMode,
+  gestureIntervalMs,
+  idleSpeedForMode,
+  restPoseForMode,
+  showcaseGesture,
+} from "@/lib/render/animations";
 
-type Gesture = "idle" | "wave" | "punch" | "jump";
+type Gesture = "idle" | GestureClip;
 
 // Cinematic intro stage. Renders the real game character(s) and choreographs an
 // action so every narrative beat shows an agent *doing* something — not posing.
@@ -31,6 +42,7 @@ export default function AgentShowcase({
   bare = false,
   framingKey,
   biomeId,
+  animMode,
 }: {
   champion: Champion;
   type: CreatureType;
@@ -61,11 +73,16 @@ export default function AgentShowcase({
   /** when set, renders a static slice of that game world behind the figure
    *  (sky + terrain + nature kit) so the beat reads as a real place. */
   biomeId?: string;
+  /** explicit animation vocabulary — overrides gesture/everyMs when set */
+  animMode?: CreatureAnimMode;
 }) {
   const rim = colorHex ?? TYPE_COLOR[type];
   const biome = biomeId ? biomeById(biomeId) : null;
   const rim2 = rival ? TYPE_COLOR[rival.type] : null;
-  const duel = !!rival;
+  const duel = animMode === "battle" || !!rival;
+  const soloGesture: Gesture = animMode ? showcaseGesture(animMode) : gesture;
+  const soloEveryMs = animMode ? gestureIntervalMs(animMode) : everyMs;
+  const soloMode: CreatureAnimMode = animMode ?? (gesture === "idle" ? "breathing" : (gesture as CreatureAnimMode));
   // These champions carry oversized heads/auras, so frame loose enough to keep
   // the whole silhouette (feet to crown) in view.
   const camY = duel ? 1.9 : 1.7;
@@ -114,7 +131,7 @@ export default function AgentShowcase({
         ) : (
           <Spin enabled={spin}>
             <FitMeasure enabled={doFit} fitRef={fitRef} baseZ={camZ} maxFrac={0.8} orbit={orbit} reframe={reframe} controlsRef={controlsRef}>
-              <Solo champion={champion} type={type} scale={scale} gesture={gesture} everyMs={everyMs} colorHex={colorHex} bare={bare} />
+              <Solo champion={champion} type={type} scale={scale} gesture={soloGesture} everyMs={soloEveryMs} colorHex={colorHex} bare={bare} animMode={soloMode} />
             </FitMeasure>
           </Spin>
         )}
@@ -251,63 +268,115 @@ function Spin({ children, enabled, speed = 0.32 }: { children: React.ReactNode; 
   return <group ref={r}>{children}</group>;
 }
 
-function Solo({ champion, type, scale, gesture, everyMs, colorHex, bare = false }: { champion: Champion; type: CreatureType; scale: number; gesture: Gesture; everyMs?: number; colorHex?: string; bare?: boolean }) {
+function Solo({
+  champion,
+  type,
+  scale,
+  gesture,
+  everyMs,
+  colorHex,
+  bare = false,
+  animMode = "breathing",
+}: {
+  champion: Champion;
+  type: CreatureType;
+  scale: number;
+  gesture: Gesture;
+  everyMs?: number;
+  colorHex?: string;
+  bare?: boolean;
+  animMode?: CreatureAnimMode;
+}) {
   const [sig, setSig] = useState(0);
+  const interval = everyMs ?? gestureIntervalMs(gesture === "idle" ? "breathing" : gesture);
   useEffect(() => {
     if (gesture === "idle") return;
-    const first = setTimeout(() => setSig((s) => s + 1), 800);
-    if (!everyMs) return () => clearTimeout(first);
-    const id = setInterval(() => setSig((s) => s + 1), everyMs);
+    const first = setTimeout(() => setSig((s) => s + 1), ANIM.showcase.gestureFirstMs);
+    if (!interval) return () => clearTimeout(first);
+    const id = setInterval(() => setSig((s) => s + 1), interval);
     return () => {
       clearTimeout(first);
       clearInterval(id);
     };
-  }, [gesture, everyMs]);
+  }, [gesture, interval]);
+  const idleSpeed = idleSpeedForMode(animMode);
+  const breatheIntensity = breatheIntensityForMode(animMode);
+  const bodyBob = bodyBobForMode(animMode);
+  const restPose = restPoseForMode(animMode);
   return (
     <group scale={scale}>
-      <ChampionMesh type={type} champion={champion} position={[0, 0, 0]} showLabel={false} actSignal={sig} actName={gesture === "idle" ? "wave" : gesture} baseColorOverride={colorHex} hideFloaters={bare} />
+      <ChampionMesh
+        type={type}
+        champion={champion}
+        position={[0, 0, 0]}
+        showLabel={false}
+        actSignal={gesture === "idle" ? 0 : sig}
+        actName={gesture === "idle" ? "wave" : gesture}
+        baseColorOverride={colorHex}
+        hideFloaters={bare}
+        idleSpeed={idleSpeed}
+        breatheIntensity={breatheIntensity}
+        bodyBob={bodyBob}
+        restPose={restPose}
+      />
     </group>
   );
 }
 
-// A short, looping choreography where the hero presses the advantage and wins —
-// the player's first taste of a fight without any input.
+// A looping duel with standing beats between exchanges — strike, recoil, breathe.
 function Duel({ hero, rival, scale }: { hero: { champion: Champion; type: CreatureType }; rival: { champion: Champion; type: CreatureType }; scale: number }) {
   const [s, setS] = useState({ pa: 0, pb: 0, ha: 0, hb: 0, hpA: 1, hpB: 1 });
+  const { startMs, standMs, strikeMs, recoilMs } = ANIM.showcase.duel;
+
   useEffect(() => {
-    // hero swing → rival reels → rival counters → hero shrugs it → hero finishes.
-    const steps: ((p: typeof s) => typeof s)[] = [
-      (p) => ({ ...p, hpA: 1, hpB: 1 }),
-      (p) => ({ ...p, pa: p.pa + 1 }),
-      (p) => ({ ...p, hb: p.hb + 1, hpB: 0.68 }),
-      (p) => ({ ...p, pb: p.pb + 1 }),
-      (p) => ({ ...p, ha: p.ha + 1, hpA: 0.82 }),
-      (p) => ({ ...p, pa: p.pa + 1 }),
-      (p) => ({ ...p, hb: p.hb + 1, hpB: 0.34 }),
-      (p) => ({ ...p, pa: p.pa + 1 }),
-      (p) => ({ ...p, hb: p.hb + 1, hpB: 0.1 }),
+    type Step = (p: typeof s) => typeof s;
+    const stand: Step = (p) => p;
+    const script: { delay: number; fn: Step }[] = [
+      { delay: startMs, fn: (p) => ({ ...p, hpA: 1, hpB: 1 }) },
+      { delay: standMs, fn: stand },
+      { delay: standMs, fn: stand },
+      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
+      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.72 }) },
+      { delay: standMs, fn: stand },
+      { delay: standMs, fn: stand },
+      { delay: strikeMs, fn: (p) => ({ ...p, pb: p.pb + 1 }) },
+      { delay: recoilMs, fn: (p) => ({ ...p, ha: p.ha + 1, hpA: 0.86 }) },
+      { delay: standMs, fn: stand },
+      { delay: standMs, fn: stand },
+      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
+      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.38 }) },
+      { delay: standMs, fn: stand },
+      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
+      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.12 }) },
+      { delay: standMs, fn: stand },
+      { delay: standMs, fn: stand },
     ];
     let i = 0;
-    const tick = () => {
-      setS((p) => steps[i % steps.length](p));
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      const step = script[i % script.length];
+      setS((p) => step.fn(p));
       i++;
+      timer = setTimeout(run, step.delay);
     };
-    const first = setTimeout(tick, 600);
-    const id = setInterval(tick, 1050);
+    timer = setTimeout(run, startMs);
     return () => {
-      clearTimeout(first);
-      clearInterval(id);
+      cancelled = true;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [startMs, standMs, strikeMs, recoilMs]);
 
   const off = 1.55;
+  const battleIdle = idleSpeedForMode("battle");
   return (
     <>
       <group position={[-off, 0, 0]} scale={scale}>
-        <ChampionMesh type={hero.type} champion={hero.champion} position={[0, 0, 0]} rotation={Math.PI / 2} showLabel={false} punchSignal={s.pa} hitSignal={s.ha} hpFrac={s.hpA} />
+        <ChampionMesh type={hero.type} champion={hero.champion} position={[0, 0, 0]} rotation={Math.PI / 2} showLabel={false} punchSignal={s.pa} hitSignal={s.ha} hpFrac={s.hpA} idleSpeed={battleIdle} breatheIntensity={1} restPose="standing" />
       </group>
       <group position={[off, 0, 0]} scale={scale}>
-        <ChampionMesh type={rival.type} champion={rival.champion} position={[0, 0, 0]} rotation={-Math.PI / 2} showLabel={false} punchSignal={s.pb} hitSignal={s.hb} hpFrac={s.hpB} />
+        <ChampionMesh type={rival.type} champion={rival.champion} position={[0, 0, 0]} rotation={-Math.PI / 2} showLabel={false} punchSignal={s.pb} hitSignal={s.hb} hpFrac={s.hpB} idleSpeed={battleIdle} breatheIntensity={1} restPose="standing" />
       </group>
     </>
   );

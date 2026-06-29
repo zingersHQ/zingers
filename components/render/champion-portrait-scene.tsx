@@ -10,6 +10,7 @@ import type { KeeperKind } from "@/components/grounds/keeper-regalia";
 import { modelScaleFor } from "@/lib/render/fit";
 import { seedFrom } from "@/lib/render/palette";
 import { RENDER_PRESETS, RENDER_YAW, type RenderPresetId } from "@/lib/render/presets";
+import { ANIM, bodyBobForMode, breatheIntensityForMode, idleSpeedForMode, restPoseForMode, type CreatureAnimMode } from "@/lib/render/animations";
 
 function Rig({ lookY }: { lookY: number }) {
   const { camera } = useThree();
@@ -105,21 +106,25 @@ function IdlePose({
   baseYaw,
   seed,
   paused,
+  animMode = "breathing",
 }: {
   children: React.ReactNode;
   baseYaw: number;
   seed: number;
   paused: boolean;
+  animMode?: CreatureAnimMode;
 }) {
   const r = useRef<THREE.Group>(null);
+  const standing = animMode === "standing" || animMode === "breathing" || animMode === "bounce" || animMode === "sitting";
+  const bounce = animMode === "bounce";
   const ph = useMemo(
     () => ({
       gaze: seed * 6.2831,
       glance: seed * 12.9898,
       pitch: seed * 78.233,
       bob: seed * 37.719,
-      gazeSpeed: 0.1 + (seed % 0.06),
-      glanceSpeed: 0.045 + ((seed * 3.3) % 0.05),
+      gazeSpeed: ANIM.portrait.gazeSpeed + (seed % 0.04),
+      glanceSpeed: ANIM.portrait.glanceSpeed + ((seed * 3.3) % 0.03),
     }),
     [seed],
   );
@@ -134,10 +139,12 @@ function IdlePose({
     const t = state.clock.elapsedTime;
     // two slow sines beat against each other: long stretches near the front,
     // occasional drifts to glance off to one side, then a slow return.
+    const gazeAmp = standing ? ANIM.portrait.standingGazeAmp : 1;
     const gaze = Math.sin(t * ph.gazeSpeed + ph.gaze) * 0.6 + Math.sin(t * ph.glanceSpeed + ph.glance) * 0.4;
-    g.rotation.y = baseYaw + gaze * 0.3 + Math.sin(t * 0.8 + ph.gaze) * 0.012;
-    g.rotation.x = Math.sin(t * 0.16 + ph.pitch) * 0.035;
-    g.position.y = Math.sin(t * 1.05 + ph.bob) * 0.013;
+    g.rotation.y = baseYaw + gaze * 0.3 * gazeAmp + Math.sin(t * 0.5 + ph.gaze) * 0.01;
+    g.rotation.x = Math.sin(t * 0.12 + ph.pitch) * ANIM.portrait.pitchAmp;
+    const bobAmp = bounce ? ANIM.portrait.bobAmp * 2.2 : standing ? ANIM.portrait.standingBobAmp : ANIM.portrait.bobAmp;
+    g.position.y = Math.sin(t * ANIM.portrait.bobHz + ph.bob) * bobAmp;
   });
 
   return <group ref={r}>{children}</group>;
@@ -163,6 +170,7 @@ export function ChampionPortraitScene({
   identityKey,
   keeper,
   autoFrame = true,
+  animMode = "standing",
 }: {
   type: CreatureType;
   champion: Champion;
@@ -181,6 +189,7 @@ export function ChampionPortraitScene({
    *  clipping). On by default so every live thumbnail reads big; pass false to
    *  keep the fixed preset framing. */
   autoFrame?: boolean;
+  animMode?: CreatureAnimMode;
 }) {
   const p = RENDER_PRESETS[preset];
   const rim = colorHex ?? TYPE_COLOR[type];
@@ -202,7 +211,10 @@ export function ChampionPortraitScene({
   }, [identityKey, type, champion]);
   const baseYaw = RENDER_YAW + (seed - 0.5) * 0.3;
   const idlePhase = seed * 4.2;
-  const idleSpeed = 0.82 + seed * 0.34;
+  const idleSpeed = idleSpeedForMode(animMode, seed);
+  const breatheIntensity = breatheIntensityForMode(animMode);
+  const bodyBob = bodyBobForMode(animMode);
+  const restPose = restPoseForMode(animMode);
   // Auto-frame fill fraction (how much of the binding axis the solid silhouette
   // occupies) plus a deterministic first guess the camera eases in from before
   // the live bounding box is measured. `scale` nudges the fill so callers can
@@ -234,7 +246,7 @@ export function ChampionPortraitScene({
       <pointLight position={[4, 1.5, 5]} intensity={22} color="#ffffff" distance={20} />
       <Suspense fallback={null}>
         <FitFrame enabled={autoFrame} fillFrac={fitCam.fillFrac} fallback={fitCam.fallback}>
-          <IdlePose baseYaw={baseYaw} seed={seed} paused={paused}>
+          <IdlePose baseYaw={baseYaw} seed={seed} paused={paused} animMode={animMode}>
             <group scale={meshScale}>
               <ChampionMesh
                 type={type}
@@ -244,6 +256,9 @@ export function ChampionPortraitScene({
                 baseColorOverride={colorHex}
                 idlePhase={idlePhase}
                 idleSpeed={idleSpeed}
+                breatheIntensity={breatheIntensity}
+                bodyBob={bodyBob}
+                restPose={restPose}
                 auraDim
                 identityKey={identityKey}
                 keeper={keeper}

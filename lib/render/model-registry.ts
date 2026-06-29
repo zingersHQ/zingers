@@ -7,8 +7,9 @@
 // PHASE 1b: when a distinct, idle/walk/punch-rigged GLB exists for a Force, drop
 // it in public/models/ and point the entry here. ChampionMesh reads exclusively
 // through modelFor(), so swapping a mesh is a one-line change with zero callsite
-// churn. Keep the new rigs' clip names aligned (idle / walk / run / jump / punch /
-// wave) so the existing animation wiring keeps working.
+// churn. Keep the new rigs' clip names aligned (idle / standing / sitting / walk /
+// run / jump / punch / wave / dance / thumbsUp / yes / no / death) so the existing
+// animation wiring keeps working.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CreatureType } from "@/lib/types";
 

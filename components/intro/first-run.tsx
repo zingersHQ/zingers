@@ -249,7 +249,7 @@ function Awaken({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} dolly gesture="idle" />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} dolly gesture="idle" animMode="standing" />
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -274,7 +274,7 @@ function Shape({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" everyMs={2300} biomeId="ember" />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" animMode="punch" biomeId="ember" />
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -494,7 +494,7 @@ function Legend({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" everyMs={2600} biomeId="amphitheatre" />
+        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" animMode="jump" biomeId="amphitheatre" />
       </Stage>
       <div
         style={{
