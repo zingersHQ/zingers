@@ -40,6 +40,9 @@ yarn-error.log*
 # local editor / agent config
 .cursor
 
+# Living Agency ledger (local ops state — never commit)
+.agency/state.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
