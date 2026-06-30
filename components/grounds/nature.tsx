@@ -216,7 +216,7 @@ function groupMatrices(placements: PropPlacement[]): Record<string, THREE.Matrix
 }
 
 // ── turf carpet — patchy meadows, not a grid ──────────────────────────────────
-export function NatureGround({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+export function NatureGround({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
   const preset = naturePreset(biome.id);
   const instanced = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 66001);
@@ -224,7 +224,8 @@ export function NatureGround({ biome, shape }: { biome: BiomeConfig; shape: Terr
     const inst: PropPlacement[] = [];
     const edge = TERRAIN_HALF - 14;
     const seed = biome.terrain.seed;
-    const target = biome.id === "ember" ? 420 : biome.id === "concord" ? 520 : 780;
+    const base = biome.id === "ember" ? 420 : biome.id === "concord" ? 520 : 780;
+    const target = Math.round(base * Math.min(richness, 1.6));
     const grid = new SpawnGrid(3.2, biome.id === "ember" ? 2.4 : 1.85);
     const meadowCut = biome.id === "ember" ? 0.52 : 0.38;
 
@@ -274,7 +275,7 @@ export function NatureGround({ biome, shape }: { biome: BiomeConfig; shape: Terr
     }
 
     return groupMatrices(inst);
-  }, [biome, shape, preset]);
+  }, [biome, shape, preset, richness]);
 
   return (
     <>
@@ -285,7 +286,7 @@ export function NatureGround({ biome, shape }: { biome: BiomeConfig; shape: Terr
   );
 }
 
-export function NatureScatter({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+export function NatureScatter({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
   const preset = naturePreset(biome.id);
   const { instanced, props } = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 90210);
@@ -298,9 +299,10 @@ export function NatureScatter({ biome, shape }: { biome: BiomeConfig; shape: Ter
     const plantGrid = new SpawnGrid(7, 6.5);
     const accentGrid = new SpawnGrid(8, 7);
 
-    const rockTarget = Math.floor(biome.scatter.count * 0.62);
-    const plantTarget = Math.floor(biome.scatter.count * 0.22);
-    const accentTarget = Math.floor(biome.scatter.count * biome.scatter.crystalRatio * 0.55);
+    const mul = Math.min(richness, 1.6);
+    const rockTarget = Math.floor(biome.scatter.count * 0.62 * (0.92 + mul * 0.08));
+    const plantTarget = Math.floor(biome.scatter.count * 0.22 * mul);
+    const accentTarget = Math.floor(biome.scatter.count * biome.scatter.crystalRatio * 0.55 * mul);
 
     const placeRock = (x: number, z: number, y: number) => {
       if (!rockGrid.canPlace(x, z)) return false;
@@ -392,7 +394,7 @@ export function NatureScatter({ biome, shape }: { biome: BiomeConfig; shape: Ter
     }
 
     return { instanced: groupMatrices(inst), props: pr };
-  }, [biome, shape, preset]);
+  }, [biome, shape, preset, richness]);
 
   return (
     <>
@@ -674,13 +676,96 @@ export function NatureIslandDressing({
   );
 }
 
-export function NaturePeaks({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+/** Foreground vegetation ring for close intro cameras — side trees, back understory,
+ *  edge grass. Keeps the clearing open so the champion stays the focus. */
+export function NatureFraming({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+  const preset = naturePreset(biome.id);
+  const props = useMemo(() => {
+    const knoll = spawnKnollFor(biome);
+    const rng = mulberry(biome.terrain.seed + 88001);
+    const isEmber = biome.id === "ember";
+    const treePool = isEmber
+      ? preset.trees.filter((t) => t.startsWith("Dead") || t.startsWith("Twisted"))
+      : preset.trees.filter((t) => !t.startsWith("Dead"));
+    const slots: { x: number; z: number; kind: "tree" | "plant" | "grass" | "accent" }[] = [
+      { x: -11.5, z: -1.5, kind: "tree" },
+      { x: 11, z: -2.5, kind: "tree" },
+      { x: -7.5, z: -8.5, kind: "plant" },
+      { x: 7.8, z: -9, kind: "plant" },
+      { x: -12, z: 5, kind: "grass" },
+      { x: 12.5, z: 4.5, kind: "grass" },
+      { x: -9, z: 7, kind: "grass" },
+      { x: 9.5, z: 6.5, kind: "accent" },
+    ];
+    const out: PropPlacement[] = [];
+    for (const slot of slots) {
+      const y = terrainHeight(slot.x, slot.z, shape, knoll);
+      if (y < 0.2) continue;
+      let modelId: string;
+      let scale: number;
+      if (slot.kind === "tree") {
+        modelId = treePool[Math.floor(rng() * treePool.length)] ?? preset.trees[0];
+        scale = 0.95 + rng() * 0.25;
+        out.push({
+          modelId,
+          pos: [slot.x, y, slot.z],
+          rot: [0, rng() * Math.PI * 2, (rng() - 0.5) * 0.08],
+          scale,
+          scale3: randomScale3(rng, scale, 0.35),
+        });
+      } else if (slot.kind === "plant") {
+        modelId = preset.plants[Math.floor(rng() * preset.plants.length)];
+        scale = 0.75 + rng() * 0.35;
+        out.push({
+          modelId,
+          pos: [slot.x, y, slot.z],
+          rot: randomTilt(rng, 0.15),
+          scale,
+          scale3: randomScale3(rng, scale, 0.4),
+        });
+      } else if (slot.kind === "accent") {
+        modelId = preset.accents[Math.floor(rng() * preset.accents.length)] ?? preset.plants[0];
+        scale = 0.65 + rng() * 0.2;
+        out.push({
+          modelId,
+          pos: [slot.x, y, slot.z],
+          rot: randomTilt(rng, 0.12),
+          scale,
+          scale3: randomScale3(rng, scale, 0.35),
+          emissive: biome.scatter.crystalEmissive,
+          emissiveIntensity: biome.scatter.crystalEmissiveIntensity * 0.35,
+        });
+      } else {
+        modelId = preset.grass[Math.floor(rng() * preset.grass.length)];
+        scale = 0.8 + rng() * 0.3;
+        out.push({
+          modelId,
+          pos: [slot.x, y, slot.z],
+          rot: randomTilt(rng, 0.22),
+          scale,
+          scale3: randomScale3(rng, scale, 0.45),
+        });
+      }
+    }
+    return out;
+  }, [biome, shape, preset]);
+
+  return (
+    <>
+      {props.map((p, i) => (
+        <NatureProp key={`frame-${i}`} {...p} />
+      ))}
+    </>
+  );
+}
+
+export function NaturePeaks({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
   const preset = naturePreset(biome.id);
   const props = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 12004);
     const knoll = spawnKnollFor(biome);
     const out: PropPlacement[] = [];
-    const N = 8;
+    const N = Math.round(8 * Math.min(richness, 1.5));
     for (let i = 0; i < N; i++) {
       const a = (i / N) * Math.PI * 2 + rng() * 0.4;
       const r = PLAZA_R + 28 + (i % 4) * 14;
@@ -706,7 +791,7 @@ export function NaturePeaks({ biome, shape }: { biome: BiomeConfig; shape: Terra
       }
     }
     return out;
-  }, [biome, shape, preset]);
+  }, [biome, shape, preset, richness]);
 
   return (
     <>

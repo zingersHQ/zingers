@@ -5,11 +5,21 @@ Production pass for Act 1 — from first visit through the Concord landing.
 ## Act 1 flow (shipped)
 
 ```
-FirstRun (cinematic) → First Duel: Pick (5 Forces, weekly rotation) → Tune (doctrine dials)
-  → adopt as a rookie (level 1) → Void Garden arena (cinematic camera) → Evolve card
-  → Concord landing (3 beats, introduces the Reader identity)
-  → Guided first arena (Grounds gate spotlit, others dimmed) → Free roam + coach
+FirstRun (cinematic) → First Duel: Adopt (5 Forces, weekly rotation, rookie preview)
+  → Adoption beat (Reader + champion) → Tune doctrine → adopt as rookie → Void fight
+  → Evolve card → Concord landing (Reader beat first) → Reader split coach at spawn
+  → Guided first arena (Grounds gate spotlit) → Free roam + coach
 ```
+
+## 60-second teaching contract
+
+Before leaving pick or first spawn, the player must know:
+
+- [ ] *You did not become this champion. You claimed it.* (`READER_COPY.claimLine`)
+- [ ] *You walk the Grounds. Your champion fights.* (`READER_COPY.walkFightLine`)
+- [ ] Rookie body at adoption is day one of the arc, not a downgrade from pick preview
+
+Canonical copy: `lib/player-copy.ts` · Vision: `docs/design-vision.md`
 
 ## P0 — Broken promises ✅
 

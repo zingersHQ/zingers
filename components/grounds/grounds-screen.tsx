@@ -22,7 +22,9 @@ import {
   markFirstDuelComplete,
   FIRST_DUEL_TAGLINE,
   FIRST_FIGHT_WORLD,
+  previewRookieChampion,
 } from "@/lib/first-duel";
+import { READER_COPY } from "@/lib/player-copy";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
 import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/components/grounds/world";
@@ -225,6 +227,8 @@ export default function GroundsScreen() {
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
   const [concordCoach, setConcordCoach] = useState(false);
+  /** 0 = Reader identity, 1 = walk to train pad — before gate coach. */
+  const [readerSplitStep, setReaderSplitStep] = useState<number | null>(null);
   // The gate nudge popup is tracked apart from the spotlight: "Skip" should only
   // clear this popup, while the Grounds gate stays lit until the player actually
   // takes a gate.
@@ -599,7 +603,9 @@ export default function GroundsScreen() {
     } catch {}
     try {
       if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
-        setConcordCoach(true);
+        if (localStorage.getItem(STORAGE.readerSplitCoach) === "1") {
+          setConcordCoach(true);
+        }
       }
       setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
     } catch {}
@@ -655,6 +661,14 @@ export default function GroundsScreen() {
       localStorage.setItem(STORAGE.goalCoach, "1");
     } catch {}
     setGoalCoach(false);
+  }, []);
+
+  const dismissReaderSplitCoach = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.readerSplitCoach, "1");
+    } catch {}
+    setReaderSplitStep(null);
+    setConcordCoach(true);
   }, []);
 
   const dismissConcordCoach = useCallback(() => {
@@ -798,15 +812,31 @@ export default function GroundsScreen() {
     ];
   }, [champions, opponentId, towerAgents]);
 
+  useEffect(() => {
+    if (!mounted || !owned) return;
+    try {
+      if (localStorage.getItem(STORAGE.readerSplitCoach) !== "1" && isFirstDuelComplete()) {
+        setReaderSplitStep((s) => (s == null ? 0 : s));
+      }
+    } catch {}
+  }, [mounted, owned]);
+
   const worldLife: WorldLife = useMemo(
     () => ({
       companionLine,
       companionEmote,
       companionAct,
       training: near?.kind === "train" || overlay === "train",
+      padBeacon: readerSplitStep === 1,
     }),
-    [companionLine, companionEmote, companionAct, near?.kind, overlay],
+    [companionLine, companionEmote, companionAct, near?.kind, overlay, readerSplitStep],
   );
+
+  // Reader split coach step 1 — dismiss once the player reaches the train pad.
+  useEffect(() => {
+    if (readerSplitStep !== 1 || near?.kind !== "train" || !owned) return;
+    dismissReaderSplitCoach();
+  }, [readerSplitStep, near?.kind, owned, dismissReaderSplitCoach]);
 
   const inMatch = bout.phase === "live";
   const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen;
@@ -1037,7 +1067,7 @@ export default function GroundsScreen() {
     setMatchView(null);
     setOpponent(null);
     setResult(null);
-    setConcordCoach(true);
+    setReaderSplitStep(0);
     if (worldId !== "concord") {
       travelToWorld("concord", false);
       // Land facing the spotlit Grounds gate: drop in at the Concord threshold,
@@ -1489,7 +1519,7 @@ export default function GroundsScreen() {
   useEffect(() => {
     if (!showHud || showMatch || overlay !== "none" || gRun) return;
     if (!owned || modesLocked || !isFirstDuelComplete()) return;
-    if (concordCoach) return; // don't stack on the gate coach
+    if (concordCoach || readerSplitStep !== null) return; // don't stack on coaches
     if (typeof window === "undefined") return;
     if (localStorage.getItem(STORAGE.controlsSeen)) return;
     const t = setTimeout(() => {
@@ -1498,7 +1528,7 @@ export default function GroundsScreen() {
       setControlsOpen(true);
     }, 700);
     return () => clearTimeout(t);
-  }, [showHud, showMatch, overlay, gRun, owned, modesLocked, concordCoach]);
+  }, [showHud, showMatch, overlay, gRun, owned, modesLocked, concordCoach, readerSplitStep]);
 
   // Celebrate a TIER-UP the moment the player is back in the world (level-ups are
   // already chipped on the duel result card; the tier crossing — which bolts a new
@@ -1667,6 +1697,7 @@ export default function GroundsScreen() {
               travelRef={travelRef}
               touchBottomInset={isTouch ? dockPad + compassReserve : 0}
               worldLife={worldLife}
+              trainerXp={store.trainerXp}
             />
           </RenderBoundary>
         </div>
@@ -1903,7 +1934,7 @@ export default function GroundsScreen() {
       {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
           Hidden once they're standing on a gate (the big Enter prompt takes over),
           and escalates to gold once they idle near spawn. */}
-      {concordCoach && guideNudge && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
+      {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
           <div
             className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
@@ -1933,6 +1964,34 @@ export default function GroundsScreen() {
               Take me there
             </button>
             <button onClick={dismissGuideNudge} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Skip</button>
+          </div>
+        </div>
+      )}
+
+      {readerSplitStep !== null && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
+            {readerSplitStep === 0 ? (
+              <>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOU, THE READER</div>
+                <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
+                  <strong>This is you.</strong> You walk the Grounds with WASD / the stick. Your colorful champion is separate — it fights for you.
+                </p>
+                <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 13 }} onClick={() => setReaderSplitStep(1)}>
+                  Meet your champion
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOUR CHAMPION</div>
+                <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
+                  {READER_COPY.walkFightLine} Walk to the <strong>train pad</strong> (purple ring) — your champion drills there. Press <span className="mono">E</span> when you arrive.
+                </p>
+                <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "6px 12px" }} onClick={dismissReaderSplitCoach}>
+                  Skip
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -2145,10 +2204,10 @@ export default function GroundsScreen() {
           <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE CONCORD</div>
             <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Summoning your champions…
+              Summoning minds for you to raise…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              Reading five minds into being
+              {READER_COPY.walkFightLine}
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (
@@ -2173,13 +2232,16 @@ export default function GroundsScreen() {
       {wakeKey && byKey[wakeKey] && (
         <CharacterBeat
           script={{
-            kicker: "AWAKENING",
-            lines: [{ speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) }],
+            kicker: "ADOPTION",
+            lines: [
+              { speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) },
+              { speaker: "Reader", text: READER_COPY.walkFightLine, role: "you walk · it fights" },
+            ],
           }}
           accent={TYPE_COLOR[byKey[wakeKey].type]}
           voice="champion"
           championType={byKey[wakeKey].type}
-          portrait={{ key: wakeKey, type: byKey[wakeKey].type, champion: store.get(wakeKey), name: byKey[wakeKey].name }}
+          portrait={{ key: wakeKey, type: byKey[wakeKey].type, champion: previewRookieChampion(wakeKey), name: byKey[wakeKey].name }}
           onComplete={() => {
             const k = wakeKey;
             setWakeKey(null);
@@ -2460,11 +2522,11 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 40, padding: 20 }}>
       <div className="panel" style={{ padding: 26, width: "min(760px, 95vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center" }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: "var(--muted2)" }}>
-          STEP 1 · CLAIM YOUR CHAMPION
+          STEP 1 · ADOPT A MIND TO RAISE
         </div>
-        <h2 style={{ fontSize: 26, fontWeight: 700, margin: "8px 0 4px" }}>Pick the agent you&apos;ll train.</h2>
+        <h2 style={{ fontSize: 26, fontWeight: 700, margin: "8px 0 4px" }}>Claim a champion to raise.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, margin: "0 0 14px" }}>
-          It becomes yours. Each champion fights in one Force — the wheel below decides what beats what.
+          {READER_COPY.claimLine} {READER_COPY.walkFightChip}
         </p>
 
         {/* the one lesson that matters before you choose: each Force beats the next */}

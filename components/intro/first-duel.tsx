@@ -14,9 +14,12 @@ import { RenderBoundary } from "@/components/grounds/render-guard";
 import {
   CONCORD_LANDING,
   FIRST_DUEL_HOOKS,
+  FIRST_DUEL_TAGLINE,
+  previewRookieChampion,
   QUICK_START_STRAT,
 } from "@/lib/first-duel";
-import { FIGHT } from "@/lib/player-copy";
+import { FIGHT, READER_COPY } from "@/lib/player-copy";
+import { ReaderSplitBadge } from "@/components/intro/reader-split-badge";
 import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
@@ -123,20 +126,19 @@ export function FirstDuelOverlay({
   if (phase === "train" && selected) {
     const entry = starters.find((r) => r.key === selected)!;
     const col = TYPE_COLOR[entry.type];
-    const champ = get(selected);
     const canAfford = crowns >= TRAIN_COST;
     const patchStrat = (patch: Partial<Strat>) => setStrat((s) => ({ ...s, ...patch }));
     return (
       <div style={shell}>
         <OnboardingAudio compact={isMobile} />
         <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(560px, 96vw)", maxHeight: "92vh", overflow: "auto", borderColor: col }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col }}>STEP 2 · TUNE & FIGHT</div>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s doctrine.</h2>
           <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-            Drag the three dials — how your champion {FIGHT.fights} in the arena. Training costs Crowns and nudges the body before the bell.
+            Drag the three dials — how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-            <ChampionAvatar ckey={selected} type={entry.type} champion={champ} size={72} />
+            <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{entry.name}</div>
               <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].name}</div>
@@ -239,7 +241,7 @@ function PickPhase({
   );
 
   const entry = starters[safeIdx];
-  const champ = get(entry.key);
+  const rookiePreview = previewRookieChampion(entry.key);
   const col = TYPE_COLOR[entry.type];
   const force = FORCE_LORE[entry.type];
   const nb = wheelNeighbors(entry.type);
@@ -280,8 +282,9 @@ function PickPhase({
       <div style={{ position: "absolute", inset: 0, background: ICON.void, display: "flex", flexDirection: "column" }}>
         {/* header */}
         <div style={{ padding: isMobile ? "16px 16px 4px" : "26px 32px 8px", textAlign: "center", flexShrink: 0 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · CHOOSE YOUR CHAMPION</div>
-          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 0" }}>Meet your champions.</h2>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · ADOPT A MIND TO RAISE</div>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a champion to raise.</h2>
+          <p style={{ color: "var(--muted)", fontSize: isMobile ? 12 : 13, margin: 0, lineHeight: 1.45 }}>{READER_COPY.claimLine}</p>
         </div>
 
         {/* stage + dossier */}
@@ -302,11 +305,11 @@ function PickPhase({
             <RenderBoundary
               fallback={
                 <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
-                  <ChampionAvatar ckey={entry.key} type={entry.type} champion={champ} size={isMobile ? 130 : 200} />
+                  <ChampionAvatar ckey={entry.key} type={entry.type} champion={rookiePreview} size={isMobile ? 130 : 200} />
                 </div>
               }
             >
-              <AgentShowcase champion={champ} type={entry.type} scale={isMobile ? 0.58 : 0.62} gesture="punch" everyMs={2600} autoFrame interactive bare framingKey={entry.key} />
+              <AgentShowcase champion={rookiePreview} type={entry.type} scale={isMobile ? 0.58 : 0.62} gesture="punch" everyMs={2600} autoFrame interactive bare framingKey={entry.key} />
             </RenderBoundary>
 
             {/* re-cladding sweep — each time you cycle to a new fighter the stage
@@ -362,12 +365,19 @@ function PickPhase({
               <span className="chip" style={{ borderColor: prey.hex, color: prey.hex, fontSize: 11 }}>beats {prey.sigil} {prey.name}</span>
               <span className="chip" style={{ borderColor: pred.hex, color: pred.hex, fontSize: 11, opacity: 0.85 }}>weak to {pred.sigil} {pred.name}</span>
             </div>
+            <ReaderSplitBadge championName={entry.name} forceColor={col} compact={isMobile} />
+            <span className="chip mono" style={{ borderColor: "var(--line2)", color: "var(--muted2)", fontSize: 10, alignSelf: isMobile ? "center" : "flex-start" }}>
+              {READER_COPY.walkFightChip}
+            </span>
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, lineHeight: 1.45 }}>
+              {READER_COPY.legendAspiration}
+            </p>
             <button
               className="btn btn-primary"
               style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 4 }}
               onClick={() => onCommit(entry.key)}
             >
-              Choose {entry.name}
+              {READER_COPY.adoptCta(entry.name)}
             </button>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, textAlign: "center" }}>
               One mind per Force this week · pledge a Clan later in the Concord
@@ -415,7 +425,7 @@ function PickPhase({
                   transition: "all .18s ease",
                 }}
               >
-                <ChampionAvatar ckey={r.key} type={r.type} champion={get(r.key)} size={isMobile ? 40 : 52} />
+                <ChampionAvatar ckey={r.key} type={r.type} champion={previewRookieChampion(r.key)} size={isMobile ? 40 : 52} />
                 <span className="mono" style={{ fontSize: 10, color: on ? rc : "var(--muted2)", lineHeight: 1 }}>{forceSigil(r.type)}</span>
               </button>
             );
@@ -574,7 +584,11 @@ function EvolveStep({
             {name} {leveled ? "leveled up" : "grew from the win"}.
           </h2>
           <p className="evo2-sub">
-            Your doctrine shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record. The body is a pure function of that record: keep winning and {name}&apos;s silhouette warps toward the {projTier} form.
+            Your doctrine shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record.
+            {beforeLf.level === 1 && (
+              <> {READER_COPY.rookieArc} {READER_COPY.rookieEarned}</>
+            )}{" "}
+            The body is a pure function of that record: keep winning and {name}&apos;s silhouette warps toward the {projTier} form.
           </p>
         </header>
 
@@ -797,10 +811,10 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
       >
         <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: ACC, marginBottom: 6 }}>START HERE</div>
         <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.35 }}>
-          Win your {FIGHT.firstDuel}. Watch your champion grow.
+          {FIRST_DUEL_TAGLINE}
         </p>
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-          Pick a fighter, tune doctrine, watch the {FIGHT.duel} play out.
+          Adopt a mind, tune doctrine, watch the {FIGHT.duel} play out.
         </p>
         <button
           className="btn btn-primary"

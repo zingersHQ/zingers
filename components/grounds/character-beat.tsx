@@ -37,7 +37,8 @@ export function CharacterBeat({
   const done = typed.length >= line.text.length;
 
   const speak = useCallback(
-    (text: string) => {
+    (text: string, speaker: string) => {
+      if (speaker === "Reader" || speaker === "The Reader") return;
       if (voice === "keeper" && keeperLevel) speakCreature(text, keeperLevel);
       else if (championType) speakCreatureType(text, championType);
     },
@@ -46,8 +47,8 @@ export function CharacterBeat({
 
   useEffect(() => {
     primeCreature();
-    speak(line.text);
-  }, [idx, line.text, speak]);
+    speak(line.text, line.speaker);
+  }, [idx, line.text, line.speaker, speak]);
 
   // typewriter reveal — each line types itself in, in sync with the voice
   useEffect(() => {
@@ -165,13 +166,13 @@ export function CharacterBeat({
 
         <p
           style={{
-            fontSize: 22,
-            fontWeight: 600,
+            fontSize: line.speaker === "Reader" || line.speaker === "The Reader" ? 16 : 22,
+            fontWeight: line.speaker === "Reader" || line.speaker === "The Reader" ? 500 : 600,
             lineHeight: 1.45,
             margin: "18px auto 0",
-            maxWidth: "30ch",
-            color: "var(--ink)",
-            fontStyle: "italic",
+            maxWidth: line.speaker === "Reader" || line.speaker === "The Reader" ? "36ch" : "30ch",
+            color: line.speaker === "Reader" || line.speaker === "The Reader" ? "var(--muted)" : "var(--ink)",
+            fontStyle: line.speaker === "Reader" || line.speaker === "The Reader" ? "normal" : "italic",
             minHeight: "2.9em",
           }}
         >

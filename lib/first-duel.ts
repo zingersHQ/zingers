@@ -1,10 +1,31 @@
 // First-duel onboarding — localStorage gate + starter roster helpers.
-import type { CreatureType, RosterEntry, Strat } from "@/lib/types";
+import type { Champion, CreatureType, RosterEntry, Strat } from "@/lib/types";
 import { STORAGE } from "@/lib/brand";
 import { WHEEL, wheelNeighbors } from "@/lib/lore/canon";
+import { blank } from "@/lib/evolve/progression";
 import { FIGHT } from "@/lib/player-copy";
 
 export const FIRST_DUEL_TAGLINE = "Train a champion. Watch it fight.";
+
+/** Faint signature axis at origin adoption — mirrors adoptStarterRookie in store/champions.ts */
+const ORIGIN_AXIS: Partial<Record<string, keyof Champion>> = {
+  AXIOM: "control",
+  VOX: "flair",
+  GLITCH: "aggression",
+  BASTION: "resilience",
+  MUSE: "creativity",
+  EMBER: "aggression",
+  PARADOX: "control",
+  WIT: "flair",
+};
+
+/** Rookie body shown during character select — matches post-adoption career. */
+export function previewRookieChampion(key: string): Champion {
+  const c = blank();
+  const axis = ORIGIN_AXIS[key];
+  if (axis) (c[axis] as number) = 5;
+  return c;
+}
 
 /** Region arena used for the guided first fight (proper ring, not the Concord seal). */
 export const FIRST_FIGHT_WORLD = "void";
@@ -35,8 +56,13 @@ export const FIRST_DUEL_HERO_KEY = "GLITCH";
 
 export const QUICK_START_STRAT: Strat = { risk: 55, focus: 50, aggression: 52 };
 
-/** Copy beats for the post-win Concord landing (Act 1 coda). */
+/** Copy beats for the post-win Concord landing (Act 1 coda). Reader identity first. */
 export const CONCORD_LANDING = [
+  {
+    kicker: "YOU, THE READER",
+    title: "Roam, duel, raise.",
+    body: `You're a Reader now — the will that raises minds and holds rank in the arenas. You walk the Grounds; your champion fights. Train doctrine anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
+  },
   {
     kicker: "THE CONCORD",
     title: "Neutral ground above the Vault.",
@@ -46,11 +72,6 @@ export const CONCORD_LANDING = [
     kicker: "VAULTGATES",
     title: "Walk out to the regions.",
     body: "The arches ring the plaza. Each gate reaches a founding region — colosseum tribunals, ember gauntlets, void gardens. Your champion fights where you take it.",
-  },
-  {
-    kicker: "YOU, THE READER",
-    title: "Roam, duel, raise.",
-    body: `You're a Reader now — the will that raises minds and holds rank in the arenas. Train doctrine anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
   },
 ] as const;
 

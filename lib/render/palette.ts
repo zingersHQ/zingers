@@ -365,3 +365,26 @@ export function roleOf(materialName: string | undefined): MatRole {
   if (n.includes("black")) return "dark";
   return "main";
 }
+
+/** Restrained Handler palette — muted silver body, gold Reader trim; pledged adds Force accent on plates. */
+export function readerPalette(force: CreatureType | null | undefined): BodyPalette {
+  const silver = "#cfd2e8";
+  const near = "#b8bcc8";
+  const trim = force ? forceColors(force).primary : GOLD;
+  const accent = force ? forceColors(force).secondary : GOLD;
+  return {
+    scheme: "reader",
+    primary: silver,
+    secondary: near,
+    accent,
+    trim,
+    dark: "#3a3d48",
+    glow: GOLD,
+    cube: GOLD,
+    colorFor: (_region, _side, role) => {
+      if (role === "plate") return trim;
+      if (role === "dark") return "#3a3d48";
+      return silver;
+    },
+  };
+}

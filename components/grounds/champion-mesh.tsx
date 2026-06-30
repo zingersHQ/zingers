@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Html, useGLTF } from "@react-three/drei";
@@ -10,6 +10,7 @@ import { appearanceOf, type Appearance, type BoneMorph } from "@/lib/evolve/appe
 import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
 import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
 import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
+import { ClanBanner } from "@/components/grounds/clan-banner";
 import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
 import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
@@ -311,6 +312,11 @@ export function buildCharacter(
     a.setLoop(THREE.LoopPingPong, Infinity);
     a.clampWhenFinished = false;
   }
+  for (const nm of ["idle", "walk", "run"] as const) {
+    const a = actions[nm];
+    if (!a) continue;
+    a.setLoop(THREE.LoopRepeat, Infinity);
+  }
   // initial skeletal pose is chosen by the restPose effect — don't start idle here
   // or the first crossfade fights a clip that's already mid-cycle.
 
@@ -490,6 +496,7 @@ export function ChampionMesh({
   showForce = false,
   clan = null,
   hideFloaters = false,
+  padLeash,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -539,6 +546,12 @@ export function ChampionMesh({
    *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
    *  close-up character-select showcase. */
   hideFloaters?: boolean;
+  /** owned companion: small pad wander when Handler is far; face Handler when near */
+  padLeash?: {
+    handlerRef: RefObject<THREE.Vector3>;
+    pad: [number, number, number];
+    arenaRotation: number;
+  };
 }) {
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
@@ -591,19 +604,61 @@ export function ChampionMesh({
   const wtarget = useRef<THREE.Vector3 | null>(null);
   const wheading = useRef(rotation);
   const still = useRef(Math.random() * 2);
-  const movingPrev = useRef(false);
+  const wanderMoving = useRef(false);
+  const locoCur = useRef<"walk" | "rest" | null>(null);
+  const gestureBusy = useRef(false);
   const phase = useMemo(() => Math.random() * 6.28, []);
 
-  // punch → play the clip + lunge forward; on finish, ease back to rest
+  const homeX = position[0];
+  const homeZ = position[2];
+
+  /** Re-home only when spawn coordinates actually change — NOT on every parent
+   *  re-render. `position={[x,0,z]}` is a new array each render; depending on
+   *  the array reference reset wpos every frame and agents blink back to spawn. */
+  useEffect(() => {
+    wpos.current.set(homeX, 0, homeZ);
+    wheading.current = rotation;
+    wtarget.current = null;
+    still.current = Math.random() * 2;
+    locoCur.current = null;
+  }, [homeX, homeZ, rotation, identityKey]);
+
+  function setLocoAnim(wantWalk: boolean, fade = 0.2) {
+    const key: "walk" | "rest" = wantWalk ? "walk" : "rest";
+    const walk = built.actions.walk;
+    const rest = restAction(built, restPose);
+    const next = wantWalk ? walk : rest;
+    if (!next) return;
+    if (locoCur.current === key && next.getEffectiveWeight() > 0.8 && next.isRunning()) return;
+
+    const prev = locoCur.current === "walk" ? walk : locoCur.current === "rest" ? rest : undefined;
+    if (wantWalk) {
+      prev?.fadeOut(fade);
+      next.setEffectiveTimeScale(1).reset().setEffectiveWeight(1).fadeIn(fade).play();
+    } else if (prev && prev !== next && prev.getEffectiveWeight() > 0.01) {
+      crossFadeToRest(prev, next, fade);
+    } else if (!next.isRunning() || next.getEffectiveWeight() < 0.01) {
+      next.reset().setEffectiveWeight(1).fadeIn(fade).play();
+    } else {
+      next.setEffectiveWeight(1);
+      next.play();
+    }
+    locoCur.current = key;
+  }
+
+  // punch → play the clip + lunge forward; on finish, ease back to rest / walk
   useEffect(() => {
     if (!punchSignal) return;
     const p = built.actions.punch;
     const rest = restAction(built, restPose);
     if (p) {
+      gestureBusy.current = true;
       rest?.fadeOut(0.12);
       p.reset().setEffectiveTimeScale(1.12).setEffectiveWeight(1).fadeIn(0.18).play();
       const onFin = () => {
-        if (rest) crossFadeToRest(p, rest, 0.45);
+        gestureBusy.current = false;
+        if (wander || padLeash) setLocoAnim(wanderMoving.current, 0.35);
+        else if (rest) crossFadeToRest(p, rest, 0.45);
         else p.fadeOut(0.25);
         built.mixer.removeEventListener("finished", onFin);
       };
@@ -625,19 +680,22 @@ export function ChampionMesh({
       const looped = actName === "dance";
       a.setLoop(looped ? THREE.LoopRepeat : THREE.LoopOnce, looped ? Infinity : 1);
       a.clampWhenFinished = !looped;
+      gestureBusy.current = true;
       rest?.fadeOut(0.18);
       const ts = actName === "wave" ? 0.82 : actName === "dance" ? 0.9 : 1.02;
       a.reset().setEffectiveTimeScale(ts).setEffectiveWeight(1).fadeIn(0.22).play();
       if (!looped) {
         const onFin = () => {
-          if (rest) crossFadeToRest(a, rest, 0.5);
+          gestureBusy.current = false;
+          if (wander || padLeash) setLocoAnim(wanderMoving.current, 0.35);
+          else if (rest) crossFadeToRest(a, rest, 0.5);
           else a.fadeOut(0.32);
           built.mixer.removeEventListener("finished", onFin);
         };
         built.mixer.addEventListener("finished", onFin);
       }
     }
-    if (actName === "punch") lunge.current = 1;
+    if (actName === "punch" || actName === "jump") lunge.current = 1;
   }, [actSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // rest loop tempo + clip selection (Standing/Sitting for peaceful contexts)
@@ -647,6 +705,7 @@ export function ChampionMesh({
     if (idlePhase != null) rest.time = idlePhase;
     const scale = restPose === "idle" ? ANIM.idleClipScale : ANIM.restClipScale;
     rest.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1) * scale);
+    locoCur.current = null;
     fadeToRest(built, restPose, 0.4);
   }, [built, restPose, idlePhase, idleSpeed, type]);
 
@@ -657,47 +716,11 @@ export function ChampionMesh({
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
 
-    // resolve animation LOD from camera distance (owned / in-match always full)
-    let lod = 0;
-    const alwaysFull = selected || hpFrac != null;
-    if (!alwaysFull && gref.current) {
-      gref.current.getWorldPosition(lodPos.current);
-      const d2 = lodPos.current.distanceToSquared(state.camera.position);
-      lod = d2 > LOD_MID_SQ ? 2 : d2 > LOD_NEAR_SQ ? 1 : 0;
-    }
-    // skeletal update: full-rate near, throttled at mid, frozen far. Re-apply the
-    // bone morph after each tick so the clip never washes out the proportions.
-    const peaceful = restPose === "standing" || restPose === "sitting";
-    if (lod === 0) {
-      built.mixer.update(dt);
-      applyBoneMorph(built.bones, built.boneBase, built.morph);
-      dampNeck(built, peaceful);
-      breathe(built, t + phase, breatheIntensity);
-    } else if (lod === 1) {
-      lodAccum.current += dt;
-      if (lodAccum.current >= LOD_MID_STEP) {
-        built.mixer.update(lodAccum.current);
-        applyBoneMorph(built.bones, built.boneBase, built.morph);
-        dampNeck(built, peaceful);
-        breathe(built, t + phase, breatheIntensity);
-        lodAccum.current = 0;
-      }
-    }
-    const decorate = lod === 0;
-
-    // lunge / recoil melee impulses on the body group
-    lunge.current = Math.max(0, lunge.current - dt * 2.4);
-    recoil.current = Math.max(0, recoil.current - dt * 2.2);
-    const bobY = bodyBob > 0 ? Math.sin(t * ANIM.portrait.bobHz + phase) * bodyBob : 0;
-    if (motion.current) motion.current.position.z = lunge.current * 0.5 - recoil.current * 0.4;
-    if (motion.current) motion.current.position.y = bobY;
-
-    // wander
+    // locomotion first — mixer LOD + setLocoAnim need this frame's moving state
     let moving = false;
     if (wander && gref.current) {
       if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2) {
         if (still.current <= 0) {
-          // roam an annulus: stay outside the arena keep-out, inside the world radius
           const a = Math.random() * 6.28;
           const r = wanderInner + Math.random() * Math.max(1, worldRadius - wanderInner);
           wtarget.current = new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
@@ -722,17 +745,100 @@ export function ChampionMesh({
       }
       gref.current.position.set(wpos.current.x, 0, wpos.current.z);
       gref.current.rotation.y = wheading.current;
-      // crossfade walk / idle clips on locomotion state change
-      if (moving !== movingPrev.current) {
-        movingPrev.current = moving;
-        const rest = restAction(built, restPose);
-        const walk = built.actions.walk;
-        if (moving) {
-          if (walk) crossFadeToRest(rest ?? null, walk, 0.2);
-        } else if (rest) {
-          crossFadeToRest(walk ?? null, rest, 0.2);
+      wanderMoving.current = moving;
+      if (!gestureBusy.current) setLocoAnim(moving);
+    }
+
+    if (padLeash && !wander && gref.current) {
+      const hp = padLeash.handlerRef.current;
+      const px = padLeash.pad[0];
+      const pz = padLeash.pad[2];
+      const hx = hp?.x ?? px;
+      const hz = hp?.z ?? pz;
+      const handlerDist = Math.hypot(hx - px, hz - pz);
+      let padMoving = false;
+      if (handlerDist > 12) {
+        if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 0.5) {
+          if (still.current <= 0) {
+            const a = Math.random() * 6.28;
+            const r = Math.random() * 3;
+            wtarget.current = new THREE.Vector3(px + Math.cos(a) * r, 0, pz + Math.sin(a) * r);
+            still.current = 1.2 + Math.random() * 2;
+          }
         }
+        if (still.current > 0 && (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 0.5)) {
+          still.current -= dt;
+        } else if (wtarget.current) {
+          const dir = wtarget.current.clone().sub(wpos.current);
+          dir.y = 0;
+          if (dir.length() > 0.04) {
+            dir.normalize();
+            wpos.current.addScaledVector(dir, 1.2 * dt);
+            const want = Math.atan2(dir.x, dir.z);
+            let d = want - wheading.current;
+            d = Math.atan2(Math.sin(d), Math.cos(d));
+            wheading.current += d * Math.min(1, dt * 5);
+            padMoving = true;
+          }
+        }
+      } else if (handlerDist <= 6 && hp) {
+        wpos.current.set(px, 0, pz);
+        const want = Math.atan2(hx - wpos.current.x, hz - wpos.current.z);
+        let d = want - wheading.current;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        wheading.current += d * Math.min(1, dt * 8);
+      } else {
+        wpos.current.set(px, 0, pz);
+        let d = padLeash.arenaRotation - wheading.current;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        wheading.current += d * Math.min(1, dt * 6);
       }
+      gref.current.position.set(wpos.current.x, 0, wpos.current.z);
+      gref.current.rotation.y = wheading.current;
+      wanderMoving.current = padMoving;
+      if (!gestureBusy.current) setLocoAnim(padMoving);
+    }
+
+    // resolve animation LOD from camera distance (owned / in-match always full)
+    let lod = 0;
+    const alwaysFull = selected || hpFrac != null;
+    if (!alwaysFull && gref.current) {
+      gref.current.getWorldPosition(lodPos.current);
+      const d2 = lodPos.current.distanceToSquared(state.camera.position);
+      lod = d2 > LOD_MID_SQ ? 2 : d2 > LOD_NEAR_SQ ? 1 : 0;
+    }
+    // skeletal update: full-rate near, throttled at mid, frozen far. Re-apply the
+    // bone morph after each tick so the clip never washes out the proportions.
+    const peaceful = (restPose === "standing" || restPose === "sitting") && hpFrac == null;
+    const locoActive = (wander || padLeash) && wanderMoving.current;
+    if (lod === 0) {
+      built.mixer.update(dt);
+      applyBoneMorph(built.bones, built.boneBase, built.morph);
+      dampNeck(built, peaceful);
+      breathe(built, t + phase, breatheIntensity);
+    } else if (lod === 1 || locoActive) {
+      lodAccum.current += dt;
+      if (lodAccum.current >= LOD_MID_STEP) {
+        built.mixer.update(lodAccum.current);
+        applyBoneMorph(built.bones, built.boneBase, built.morph);
+        dampNeck(built, peaceful);
+        breathe(built, t + phase, breatheIntensity);
+        lodAccum.current = 0;
+      }
+    }
+    const decorate = lod === 0;
+
+    // lunge / recoil melee impulses on the body group
+    lunge.current = Math.max(0, lunge.current - dt * 2.4);
+    recoil.current = Math.max(0, recoil.current - dt * 2.2);
+    const inCombat = hpFrac != null;
+    const bobHz = inCombat && bodyBob > 0 ? ANIM.portrait.battleBobHz : ANIM.portrait.bobHz;
+    const bobY = bodyBob > 0 ? Math.sin(t * bobHz + phase) * bodyBob : 0;
+    const bobX = inCombat && bodyBob > 0 ? Math.sin(t * bobHz * 2.1 + phase + 1.4) * ANIM.portrait.battleSwayAmp : 0;
+    if (motion.current) {
+      motion.current.position.z = lunge.current * 0.5 - recoil.current * 0.4;
+      motion.current.position.y = bobY;
+      motion.current.position.x = bobX;
     }
 
     // evo animations — cosmetic only, so freeze them past the near band
@@ -755,8 +861,8 @@ export function ChampionMesh({
   return (
     <group
       ref={gref}
-      position={wander ? undefined : position}
-      rotation={wander ? undefined : [0, rotation, 0]}
+      position={wander || padLeash ? undefined : position}
+      rotation={wander || padLeash ? undefined : [0, rotation, 0]}
       onClick={onSelect ? (e) => (e.stopPropagation(), onSelect()) : undefined}
       onPointerOver={onSelect ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={onSelect ? () => (document.body.style.cursor = "default") : undefined}
@@ -901,62 +1007,6 @@ export function ChampionMesh({
       )}
 
       {clan && <ClanBanner clan={clan} h={app.h} />}
-    </group>
-  );
-}
-
-// ── Clan standard ────────────────────────────────────────────────────────────
-// A small heraldic banner planted at the fighter's side, in the Clan's colour and
-// sigil. This is the *team* marker (allegiance), kept deliberately separate from
-// the body's Force colour so a fighter can be e.g. a Calm-type carrying a Static
-// clan standard. Cheap: a pole + an emissive pennant + a cached sigil decal.
-const sigilTexCache = new Map<string, THREE.CanvasTexture>();
-function sigilTexture(sigil: string): THREE.CanvasTexture {
-  const cached = sigilTexCache.get(sigil);
-  if (cached) return cached;
-  const S = 128;
-  const c = document.createElement("canvas");
-  c.width = c.height = S;
-  const x = c.getContext("2d")!;
-  x.clearRect(0, 0, S, S);
-  x.fillStyle = "#ffffff";
-  x.font = "bold 92px sans-serif";
-  x.textAlign = "center";
-  x.textBaseline = "middle";
-  x.fillText(sigil, S / 2, S / 2 + 4);
-  const tex = new THREE.CanvasTexture(c);
-  sigilTexCache.set(sigil, tex);
-  return tex;
-}
-
-function ClanBanner({ clan, h }: { clan: CreatureType; h: number }) {
-  const col = TYPE_COLOR[clan] || "#8888ff";
-  const sigil = FORCES[clan].sigil;
-  const tex = useMemo(() => sigilTexture(sigil), [sigil]);
-  const poleH = Math.max(2.9, h * 1.35);
-  const flagY = poleH - 0.62;
-  return (
-    <group position={[Math.max(1.2, h * 0.62), 0, 0.15]}>
-      <mesh position={[0, poleH / 2, 0]} castShadow>
-        <cylinderGeometry args={[0.05, 0.06, poleH, 8]} />
-        <meshStandardMaterial color="#2a2438" metalness={0.6} roughness={0.4} />
-      </mesh>
-      <mesh position={[0, poleH + 0.05, 0]}>
-        <sphereGeometry args={[0.12, 12, 12]} />
-        <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.6} metalness={0.5} roughness={0.3} />
-      </mesh>
-      <mesh position={[0.52, flagY, 0]}>
-        <planeGeometry args={[0.92, 0.64]} />
-        <meshStandardMaterial color={col} emissive={col} emissiveIntensity={0.9} roughness={0.55} metalness={0.1} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0.52, flagY, 0.014]}>
-        <planeGeometry args={[0.74, 0.52]} />
-        <meshBasicMaterial map={tex} transparent depthWrite={false} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0.52, flagY, -0.014]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[0.74, 0.52]} />
-        <meshBasicMaterial map={tex} transparent depthWrite={false} side={THREE.DoubleSide} />
-      </mesh>
     </group>
   );
 }

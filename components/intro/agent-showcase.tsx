@@ -42,6 +42,8 @@ export default function AgentShowcase({
   bare = false,
   framingKey,
   biomeId,
+  backdropRichness = 1,
+  backdropFraming = false,
   animMode,
 }: {
   champion: Champion;
@@ -73,6 +75,10 @@ export default function AgentShowcase({
   /** when set, renders a static slice of that game world behind the figure
    *  (sky + terrain + nature kit) so the beat reads as a real place. */
   biomeId?: string;
+  /** scales meadow + scatter density on the backdrop (intro ~1.38) */
+  backdropRichness?: number;
+  /** side trees + understory ring for close champion cameras */
+  backdropFraming?: boolean;
   /** explicit animation vocabulary — overrides gesture/everyMs when set */
   animMode?: CreatureAnimMode;
 }) {
@@ -125,9 +131,15 @@ export default function AgentShowcase({
       <pointLight position={[4, 1.5, 5]} intensity={22} color="#ffffff" distance={20} />
       {rim2 && <pointLight position={[5, 3, -3]} intensity={48} color={rim2} distance={22} />}
       <Suspense fallback={null}>
-        {biome && <BiomeBackdrop biomeId={biomeId!} />}
+        {biome && <BiomeBackdrop biomeId={biomeId!} richness={backdropRichness} framing={backdropFraming} />}
         {duel ? (
           <Duel hero={{ champion, type }} rival={rival!} scale={scale} />
+        ) : animMode === "train" ? (
+          <Spin enabled={spin}>
+            <FitMeasure enabled={doFit} fitRef={fitRef} baseZ={camZ} maxFrac={0.8} orbit={orbit} reframe={reframe} controlsRef={controlsRef}>
+              <TrainChoreo champion={champion} type={type} scale={scale} colorHex={colorHex} bare={bare} />
+            </FitMeasure>
+          </Spin>
         ) : (
           <Spin enabled={spin}>
             <FitMeasure enabled={doFit} fitRef={fitRef} baseZ={camZ} maxFrac={0.8} orbit={orbit} reframe={reframe} controlsRef={controlsRef}>
@@ -268,6 +280,60 @@ function Spin({ children, enabled, speed = 0.32 }: { children: React.ReactNode; 
   return <group ref={r}>{children}</group>;
 }
 
+function TrainChoreo({
+  champion,
+  type,
+  scale,
+  colorHex,
+  bare = false,
+}: {
+  champion: Champion;
+  type: CreatureType;
+  scale: number;
+  colorHex?: string;
+  bare?: boolean;
+}) {
+  const script = ANIM.showcase.train;
+  const [act, setAct] = useState({ sig: 0, name: "jump" as GestureClip });
+
+  useEffect(() => {
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    const advance = () => {
+      if (cancelled) return;
+      const step = script[i % script.length];
+      i++;
+      const delay = "gesture" in step ? step.hold : step.stand;
+      if ("gesture" in step) setAct((a) => ({ sig: a.sig + 1, name: step.gesture as GestureClip }));
+      timer = setTimeout(advance, delay);
+    };
+    timer = setTimeout(advance, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  return (
+    <group scale={scale}>
+      <ChampionMesh
+        type={type}
+        champion={champion}
+        position={[0, 0, 0]}
+        showLabel={false}
+        actSignal={act.sig}
+        actName={act.name}
+        baseColorOverride={colorHex}
+        hideFloaters={bare}
+        idleSpeed={idleSpeedForMode("train")}
+        breatheIntensity={breatheIntensityForMode("train")}
+        restPose="standing"
+      />
+    </group>
+  );
+}
+
 function Solo({
   champion,
   type,
@@ -323,61 +389,98 @@ function Solo({
   );
 }
 
-// A looping duel with standing beats between exchanges — strike, recoil, breathe.
+// A looping duel — rap-battle / boxing energy: both fighters bounce constantly while
+// the script chains feints, vibes, and quick punch exchanges.
 function Duel({ hero, rival, scale }: { hero: { champion: Champion; type: CreatureType }; rival: { champion: Champion; type: CreatureType }; scale: number }) {
-  const [s, setS] = useState({ pa: 0, pb: 0, ha: 0, hb: 0, hpA: 1, hpB: 1 });
-  const { startMs, standMs, strikeMs, recoilMs } = ANIM.showcase.duel;
+  const script = ANIM.showcase.battle;
+  const empty = (): FighterAnim => ({ punch: 0, hit: 0, actSig: 0, actName: "jump" });
+  const [s, setS] = useState({ hero: empty(), rival: empty(), hpA: 1, hpB: 1 });
 
   useEffect(() => {
-    type Step = (p: typeof s) => typeof s;
-    const stand: Step = (p) => p;
-    const script: { delay: number; fn: Step }[] = [
-      { delay: startMs, fn: (p) => ({ ...p, hpA: 1, hpB: 1 }) },
-      { delay: standMs, fn: stand },
-      { delay: standMs, fn: stand },
-      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
-      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.72 }) },
-      { delay: standMs, fn: stand },
-      { delay: standMs, fn: stand },
-      { delay: strikeMs, fn: (p) => ({ ...p, pb: p.pb + 1 }) },
-      { delay: recoilMs, fn: (p) => ({ ...p, ha: p.ha + 1, hpA: 0.86 }) },
-      { delay: standMs, fn: stand },
-      { delay: standMs, fn: stand },
-      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
-      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.38 }) },
-      { delay: standMs, fn: stand },
-      { delay: strikeMs, fn: (p) => ({ ...p, pa: p.pa + 1 }) },
-      { delay: recoilMs, fn: (p) => ({ ...p, hb: p.hb + 1, hpB: 0.12 }) },
-      { delay: standMs, fn: stand },
-      { delay: standMs, fn: stand },
-    ];
     let i = 0;
     let timer: ReturnType<typeof setTimeout>;
     let cancelled = false;
-    const run = () => {
+    const advance = () => {
       if (cancelled) return;
       const step = script[i % script.length];
-      setS((p) => step.fn(p));
       i++;
-      timer = setTimeout(run, step.delay);
+      const delay = "stand" in step ? step.stand : step.hold;
+      if ("stand" in step) {
+        // bounce-only beat — bodyBob keeps them alive in the pocket
+      } else {
+        const { fighter: who, action } = step;
+        if (action.kind === "punch") {
+          setS((p) =>
+            who === "hero"
+              ? {
+                  ...p,
+                  hpB: Math.max(0.12, p.hpB - 0.12),
+                  hero: { ...p.hero, punch: p.hero.punch + 1 },
+                  rival: { ...p.rival, hit: p.rival.hit + 1 },
+                }
+              : {
+                  ...p,
+                  hpA: Math.max(0.12, p.hpA - 0.12),
+                  rival: { ...p.rival, punch: p.rival.punch + 1 },
+                  hero: { ...p.hero, hit: p.hero.hit + 1 },
+                },
+          );
+        } else {
+          const clip = action.clip;
+          setS((p) =>
+            who === "hero"
+              ? { ...p, hero: { ...p.hero, actSig: p.hero.actSig + 1, actName: clip } }
+              : { ...p, rival: { ...p.rival, actSig: p.rival.actSig + 1, actName: clip } },
+          );
+        }
+      }
+      if (i % script.length === 0) setS((p) => ({ ...p, hpA: 1, hpB: 1 }));
+      timer = setTimeout(advance, delay);
     };
-    timer = setTimeout(run, startMs);
+    timer = setTimeout(advance, 0);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [startMs, standMs, strikeMs, recoilMs]);
+  }, [script]);
 
   const off = 1.55;
+  const battleBob = bodyBobForMode("battle");
+  const battleBreathe = breatheIntensityForMode("battle");
   const battleIdle = idleSpeedForMode("battle");
+  const mesh = (side: FighterAnim, type: CreatureType, champion: Champion, rot: number, hp: number) => (
+    <ChampionMesh
+      type={type}
+      champion={champion}
+      position={[0, 0, 0]}
+      rotation={rot}
+      showLabel={false}
+      punchSignal={side.punch}
+      hitSignal={side.hit}
+      actSignal={side.actSig}
+      actName={side.actName}
+      hpFrac={hp}
+      idleSpeed={battleIdle}
+      breatheIntensity={battleBreathe}
+      bodyBob={battleBob}
+      restPose="standing"
+    />
+  );
   return (
     <>
       <group position={[-off, 0, 0]} scale={scale}>
-        <ChampionMesh type={hero.type} champion={hero.champion} position={[0, 0, 0]} rotation={Math.PI / 2} showLabel={false} punchSignal={s.pa} hitSignal={s.ha} hpFrac={s.hpA} idleSpeed={battleIdle} breatheIntensity={1} restPose="standing" />
+        {mesh(s.hero, hero.type, hero.champion, Math.PI / 2, s.hpA)}
       </group>
       <group position={[off, 0, 0]} scale={scale}>
-        <ChampionMesh type={rival.type} champion={rival.champion} position={[0, 0, 0]} rotation={-Math.PI / 2} showLabel={false} punchSignal={s.pb} hitSignal={s.hb} hpFrac={s.hpB} idleSpeed={battleIdle} breatheIntensity={1} restPose="standing" />
+        {mesh(s.rival, rival.type, rival.champion, -Math.PI / 2, s.hpB)}
       </group>
     </>
   );
+}
+
+interface FighterAnim {
+  punch: number;
+  hit: number;
+  actSig: number;
+  actName: GestureClip;
 }

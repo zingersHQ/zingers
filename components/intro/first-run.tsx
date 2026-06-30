@@ -23,6 +23,9 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
 // Standalone world vista for beats with no 3D figure (the Forces wheel).
 const BiomeBackdropCanvas = dynamic(() => import("@/components/grounds/biome-backdrop").then((m) => m.BiomeBackdropCanvas), { ssr: false, loading: () => null });
 
+/** Richer meadow + scatter on intro backdrops; foreground ring keeps the close camera framed in vegetation. */
+const INTRO_BACKDROP = { richness: 1.38, framing: true } as const;
+
 const HERO: Champion = { xp: 38000, wins: 74, losses: 8, battles: 82, aggression: 19, control: 9, resilience: 7, flair: 16, creativity: 13, rating: 1492 };
 const HERO_TYPE: CreatureType = "CHAOS";
 
@@ -249,7 +252,17 @@ function Awaken({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} dolly gesture="idle" animMode="standing" />
+        <AgentShowcase
+          champion={HERO}
+          type={HERO_TYPE}
+          scale={mobile ? 0.6 : 0.78}
+          dolly
+          gesture="idle"
+          animMode="standing"
+          biomeId="concord"
+          backdropRichness={INTRO_BACKDROP.richness}
+          backdropFraming={INTRO_BACKDROP.framing}
+        />
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -261,7 +274,7 @@ function Awaken({ mobile }: { mobile?: boolean }) {
             into a body.
           </>
         }
-        body="You don't fight. You raise it — choose its brain, drill how it thinks, and watch what you teach become flesh."
+        body="You're the Reader — you don't fight. You raise it: choose its brain, drill how it thinks, and watch what you teach become flesh."
       />
     </div>
   );
@@ -274,7 +287,15 @@ function Shape({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.78} gesture="punch" animMode="punch" biomeId="ember" />
+        <AgentShowcase
+          champion={HERO}
+          type={HERO_TYPE}
+          scale={mobile ? 0.6 : 0.78}
+          animMode="train"
+          biomeId="ember"
+          backdropRichness={INTRO_BACKDROP.richness}
+          backdropFraming={INTRO_BACKDROP.framing}
+        />
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -322,7 +343,7 @@ function Forces({ mobile }: { mobile?: boolean }) {
       {/* a quiet Void Garden vista behind the diagram */}
       <div style={{ position: "absolute", inset: 0 }}>
         <Stage>
-          <BiomeBackdropCanvas biomeId="void" />
+          <BiomeBackdropCanvas biomeId="void" richness={INTRO_BACKDROP.richness} framing={INTRO_BACKDROP.framing} />
         </Stage>
         {/* dim the landscape so the wheel + copy stay legible on top */}
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 90% at 50% 38%, rgba(10,8,18,.25) 0%, rgba(10,8,18,.62) 60%, rgba(10,8,18,.82) 100%)" }} />
@@ -378,7 +399,15 @@ function Fight({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.46 : 0.56} rival={{ champion: RIVAL.champion, type: RIVAL.type }} biomeId="colosseum" />
+        <AgentShowcase
+          champion={HERO}
+          type={HERO_TYPE}
+          scale={mobile ? 0.46 : 0.56}
+          rival={{ champion: RIVAL.champion, type: RIVAL.type }}
+          biomeId="colosseum"
+          backdropRichness={INTRO_BACKDROP.richness}
+          backdropFraming={INTRO_BACKDROP.framing}
+        />
       </Stage>
       <MatchupTag mobile={mobile} />
       <ReasoningBubble mobile={mobile} />
@@ -494,7 +523,16 @@ function Legend({ mobile }: { mobile?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
-        <AgentShowcase champion={HERO} type={HERO_TYPE} scale={mobile ? 0.6 : 0.74} gesture="jump" animMode="jump" biomeId="amphitheatre" />
+        <AgentShowcase
+          champion={HERO}
+          type={HERO_TYPE}
+          scale={mobile ? 0.6 : 0.74}
+          gesture="jump"
+          animMode="jump"
+          biomeId="amphitheatre"
+          backdropRichness={INTRO_BACKDROP.richness}
+          backdropFraming={INTRO_BACKDROP.framing}
+        />
       </Stage>
       <div
         style={{

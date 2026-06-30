@@ -25,6 +25,7 @@ export const STORAGE = {
   seasonSeen: "zingers_season_seen_v1",
   controlsSeen: "zingers_controls_seen_v1",
   settings: "zingers_settings_v1",
+  readerSplitCoach: "zingers_reader_split_coach_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

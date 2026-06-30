@@ -3,7 +3,7 @@ import { Suspense, useEffect, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { shapeOf, spawnKnollFor, terrainHeight, TERRAIN_HALF, PLAZA_R } from "./terrain";
-import { NatureGround, NatureScatter, NaturePeaks } from "./nature";
+import { NatureGround, NatureScatter, NaturePeaks, NatureFraming } from "./nature";
 import { biomeById, type BiomeConfig } from "./biomes";
 import { natureTerrainPalette, natureGroundPalette } from "@/lib/render/nature-kit";
 
@@ -75,7 +75,17 @@ function BackdropTerrain({ biome }: { biome: BiomeConfig }) {
 // kit so it matches the worlds exactly — but with no roaming agents, structures,
 // or controls. Meant to be rendered INSIDE an existing <Canvas>; the parent owns
 // the camera, <fog>, <color> background and the figure-facing key lights.
-export function BiomeBackdrop({ biomeId }: { biomeId: string }) {
+export function BiomeBackdrop({
+  biomeId,
+  richness = 1,
+  framing = false,
+}: {
+  biomeId: string;
+  /** multiplies grass/plants/rocks — intro slides use ~1.35 for a richer but not cluttered vista */
+  richness?: number;
+  /** foreground ring of side trees + understory for close champion cameras */
+  framing?: boolean;
+}) {
   const biome = useMemo(() => biomeById(biomeId), [biomeId]);
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const pal = useMemo(() => natureGroundPalette(biome.id), [biome.id]);
@@ -90,9 +100,10 @@ export function BiomeBackdrop({ biomeId }: { biomeId: string }) {
           <circleGeometry args={[PLAZA_R + 1, 96]} />
           <meshStandardMaterial color={pal.base} roughness={0.97} metalness={0.02} />
         </mesh>
-        <NatureGround biome={biome} shape={shape} />
-        <NatureScatter biome={biome} shape={shape} />
-        <NaturePeaks biome={biome} shape={shape} />
+        <NatureGround biome={biome} shape={shape} richness={richness} />
+        <NatureScatter biome={biome} shape={shape} richness={richness} />
+        <NaturePeaks biome={biome} shape={shape} richness={richness} />
+        {framing && <NatureFraming biome={biome} shape={shape} />}
       </group>
     </Suspense>
   );
@@ -109,7 +120,15 @@ function FixedCam({ pos, look }: { pos: [number, number, number]; look: [number,
 
 // Standalone backdrop canvas for beats that don't host a 3D figure (e.g. the
 // Forces wheel) — a quiet landscape vista of the given world behind the overlay.
-export function BiomeBackdropCanvas({ biomeId }: { biomeId: string }) {
+export function BiomeBackdropCanvas({
+  biomeId,
+  richness = 1,
+  framing = false,
+}: {
+  biomeId: string;
+  richness?: number;
+  framing?: boolean;
+}) {
   const biome = useMemo(() => biomeById(biomeId), [biomeId]);
   return (
     <Canvas dpr={[1, 2]} camera={{ position: [0, 2.1, 11], fov: 36 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
@@ -119,7 +138,7 @@ export function BiomeBackdropCanvas({ biomeId }: { biomeId: string }) {
       <hemisphereLight args={[biome.lights.hemiSky, biome.lights.hemiGround, biome.lights.hemiInt * 1.7]} />
       <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt * 2.1} />
       <directionalLight position={[18, 30, 12]} intensity={biome.lights.sunInt * 1.15} color={biome.lights.sun} />
-      <BiomeBackdrop biomeId={biomeId} />
+      <BiomeBackdrop biomeId={biomeId} richness={richness} framing={framing} />
     </Canvas>
   );
 }

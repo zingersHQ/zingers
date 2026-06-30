@@ -42,7 +42,16 @@ export type CreatureAnimMode =
   | "yes"
   | "no"
   | "death"
-  | "battle"; // alternating strike / recoil with standing beats
+  | "battle" // alternating strike / recoil with standing beats
+  | "train"; // intro Shape beat — patient stand → jump → land → jump → drill → reward
+
+/** One step in a scripted showcase loop. */
+export type ChoreoStep = { stand: number } | { gesture: GestureClip; hold: number };
+
+/** Per-fighter beat in a duel / battle loop. */
+export type BattleFighter = "hero" | "rival";
+export type BattleAction = { kind: "punch" } | { kind: "gesture"; clip: GestureClip };
+export type BattleStep = { stand: number } | { fighter: BattleFighter; action: BattleAction; hold: number };
 
 export const ANIM_MODES: { mode: CreatureAnimMode; label: string; blurb: string }[] = [
   { mode: "standing", label: "Standing", blurb: "The rig's Standing clip — planted, peaceful, no head-nod." },
@@ -57,7 +66,8 @@ export const ANIM_MODES: { mode: CreatureAnimMode; label: string; blurb: string 
   { mode: "yes", label: "Yes", blurb: "Affirmative reaction — dialogue beat." },
   { mode: "no", label: "No", blurb: "Dismissive shake — rival taunt." },
   { mode: "death", label: "Death", blurb: "Knockout collapse — arena finisher." },
-  { mode: "battle", label: "Battle", blurb: "Duel rhythm: stand → strike → recoil → breathe." },
+  { mode: "battle", label: "Battle", blurb: "Rap-battle energy: constant bounce, feints, vibes, and quick exchanges." },
+  { mode: "train", label: "Train", blurb: "Intro drill loop: long stand → jump → land → jump → strike → reward." },
 ];
 
 /** Global multipliers applied on top of per-archetype idleSpeed. */
@@ -86,6 +96,10 @@ export const ANIM = {
     pitchAmp: 0.022,
     bobHz: 0.58,
     bobAmp: 0.009,
+    /** faster bounce cadence while fighters are in the pocket */
+    battleBobHz: 0.92,
+    battleBobAmp: 0.016,
+    battleSwayAmp: 0.042,
     standingBobAmp: 0.0008,
     standingGazeAmp: 0.04,
   },
@@ -94,13 +108,43 @@ export const ANIM = {
     gestureFirstMs: 1800,
     gestureEveryMs: { wave: 6400, punch: 5400, jump: 6200, dance: 7800, thumbsUp: 5600, yes: 4800, no: 4800 },
     idleSpeed: 0.58,
-    duel: {
-      startMs: 2200,
-      standMs: 1800,
-      strikeMs: 900,
-      recoilMs: 1100,
-      loopMs: 9200,
-    },
+    /** Intro Fight slide + catalogue battle preview — batalla / boxing energy. */
+    battle: [
+      { stand: 900 },
+      { fighter: "hero", action: { kind: "gesture", clip: "jump" }, hold: 650 },
+      { fighter: "rival", action: { kind: "gesture", clip: "jump" }, hold: 650 },
+      { fighter: "rival", action: { kind: "gesture", clip: "no" }, hold: 550 },
+      { fighter: "hero", action: { kind: "gesture", clip: "yes" }, hold: 550 },
+      { stand: 450 },
+      { fighter: "rival", action: { kind: "gesture", clip: "dance" }, hold: 1100 },
+      { fighter: "hero", action: { kind: "gesture", clip: "jump" }, hold: 600 },
+      { stand: 350 },
+      { fighter: "hero", action: { kind: "punch" }, hold: 650 },
+      { stand: 400 },
+      { fighter: "rival", action: { kind: "punch" }, hold: 650 },
+      { stand: 500 },
+      { fighter: "hero", action: { kind: "gesture", clip: "jump" }, hold: 550 },
+      { fighter: "rival", action: { kind: "gesture", clip: "jump" }, hold: 550 },
+      { fighter: "hero", action: { kind: "punch" }, hold: 600 },
+      { fighter: "rival", action: { kind: "punch" }, hold: 600 },
+      { fighter: "hero", action: { kind: "punch" }, hold: 650 },
+      { stand: 550 },
+      { fighter: "rival", action: { kind: "gesture", clip: "wave" }, hold: 600 },
+      { fighter: "hero", action: { kind: "gesture", clip: "no" }, hold: 550 },
+      { stand: 800 },
+    ] satisfies BattleStep[],
+    /** Shape slide — "Teach it how to think". Patient stands, playful jumps, one drill strike. */
+    train: [
+      { stand: 3600 },
+      { gesture: "jump", hold: 1300 },
+      { stand: 1000 },
+      { gesture: "jump", hold: 1300 },
+      { stand: 1100 },
+      { gesture: "punch", hold: 900 },
+      { stand: 2800 },
+      { gesture: "thumbsUp", hold: 800 },
+      { stand: 3200 },
+    ] satisfies ChoreoStep[],
   },
 } as const;
 
@@ -113,6 +157,8 @@ export function idleSpeedForMode(mode: CreatureAnimMode, seed = 0): number {
     case "breathing":
     case "bounce":
     case "battle":
+      return 0.46 + jitter;
+    case "train":
       return 0.34 + jitter;
     case "sitting":
       return 0.3 + jitter;
@@ -124,7 +170,7 @@ export function idleSpeedForMode(mode: CreatureAnimMode, seed = 0): number {
 /** Which skeletal rest loop to drive for a mode. */
 export function restPoseForMode(mode: CreatureAnimMode): RestPose {
   if (mode === "sitting") return "sitting";
-  if (mode === "standing" || mode === "breathing" || mode === "bounce" || mode === "battle") return "standing";
+  if (mode === "standing" || mode === "breathing" || mode === "bounce" || mode === "battle" || mode === "train") return "standing";
   return "idle";
 }
 
@@ -149,11 +195,14 @@ export function showcaseGesture(mode: CreatureAnimMode): "idle" | GestureClip {
 
 export function breatheIntensityForMode(mode: CreatureAnimMode): number {
   if (mode === "standing") return 0.35;
+  if (mode === "train") return 0.48;
+  if (mode === "battle") return 1.05;
   if (mode === "bounce") return 0.85;
   if (mode === "sitting") return 0.25;
   return 0.65;
 }
 
 export function bodyBobForMode(mode: CreatureAnimMode): number {
+  if (mode === "battle") return ANIM.portrait.battleBobAmp;
   return mode === "bounce" ? ANIM.portrait.bobAmp * 2.2 : 0;
 }

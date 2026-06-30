@@ -8,7 +8,10 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { ChevronsUp, ChevronsDown, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
 import * as THREE from "three";
 import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/types";
-import { blank, skillLevel } from "@/lib/evolve/progression";
+import { blank, skillLevel, TYPE_COLOR } from "@/lib/evolve/progression";
+import { trainerLevel } from "@/lib/evolve/trainer";
+import { readerPalette, GOLD } from "@/lib/render/palette";
+import { ReaderBackSigil, ReaderClanBanner, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
 import { keeperKindForName } from "./keeper-regalia";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
@@ -61,6 +64,8 @@ export interface WorldLife {
   companionAct: number;
   /** owned champion drills at the train pad */
   training: boolean;
+  /** pulse the train pad beacon (first-spawn coach) */
+  padBeacon?: boolean;
 }
 
 export interface GroundChampion {
@@ -268,6 +273,7 @@ export default function World({
   circuitCpNextRef,
   onVenueExit,
   worldLife,
+  trainerXp = 0,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -311,6 +317,7 @@ export default function World({
   circuitCpNextRef?: React.MutableRefObject<number>;
   onVenueExit?: () => void;
   worldLife?: WorldLife;
+  trainerXp?: number;
 }) {
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
@@ -657,6 +664,7 @@ export default function World({
                 roam={sc.roam}
                 worldLife={worldLife}
                 pledged={pledged}
+                handlerPos={handlerPos}
               />
             )
           )}
@@ -672,6 +680,8 @@ export default function World({
               touchMove={touchMove}
               touchBtn={touchBtn}
               isHub={isHub}
+              trainerXp={trainerXp}
+              force={pledged}
               inVenue={inVenue}
               inAmphitheatre={inAmphitheatre}
               circuitMode={inCircuit}
@@ -700,6 +710,7 @@ export default function World({
               onAltitude={onAltitude}
               onPose={onPose}
               travelRef={travelRef}
+              padBeacon={worldLife?.padBeacon}
             />
           )}
         </Physics>
@@ -771,6 +782,7 @@ function RegionChampions({
   roam,
   worldLife,
   pledged = null,
+  handlerPos,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -779,6 +791,7 @@ function RegionChampions({
   roam: BiomeConfig["scene"]["roam"];
   worldLife?: WorldLife;
   pledged?: CreatureType | null;
+  handlerPos: React.RefObject<THREE.Vector3>;
 }) {
   const [npcActs, setNpcActs] = useState<Record<string, number>>({});
   const [npcGestures, setNpcGestures] = useState<Record<string, "wave" | "punch">>({});
@@ -827,6 +840,9 @@ function RegionChampions({
         const home = owned ? trainPad : roamHome(c.key, champions, roam);
         const actSig = owned ? (worldLife?.companionAct ?? 0) + ownedAct : (npcActs[c.key] ?? 0);
         const actName = owned ? (worldLife?.training ? "punch" : "wave") : (npcGestures[c.key] ?? "wave");
+        const padLeash = owned
+          ? { handlerRef: handlerPos, pad: trainPad as [number, number, number], arenaRotation: Math.atan2(arena[0] - home[0], arena[2] - home[2]) }
+          : undefined;
         return (
           <ChampionMesh
             key={c.key}
@@ -840,6 +856,10 @@ function RegionChampions({
             rotation={owned ? Math.atan2(arena[0] - home[0], arena[2] - home[2]) : 0}
             selected={owned}
             wander={!owned}
+            padLeash={padLeash}
+            restPose={owned ? "standing" : "idle"}
+            breatheIntensity={owned ? 0.35 : 1}
+            idlePhase={owned ? c.key.length * 0.7 : undefined}
             worldRadius={roam.spread}
             wanderInner={roam.inner}
             wanderSpeed={roam.speed}
@@ -1375,16 +1395,16 @@ function KeeperFigure({
 
 // The approach trail: from the outer rift lip inward to claim the Depth, then
 // through the colosseum entrance to the arena.
-function TrainPad({ pos }: { pos: [number, number, number] }) {
+function TrainPad({ pos, beacon = false }: { pos: [number, number, number]; beacon?: boolean }) {
   return (
     <group position={pos}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <circleGeometry args={[2.6, 48]} />
-        <meshStandardMaterial color="#6a6bff" transparent opacity={0.14} emissive="#6a6bff" emissiveIntensity={0.5} />
+        <meshStandardMaterial color={beacon ? "#f5d020" : "#6a6bff"} transparent opacity={beacon ? 0.22 : 0.14} emissive={beacon ? "#f5d020" : "#6a6bff"} emissiveIntensity={beacon ? 0.9 : 0.5} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-        <ringGeometry args={[2.5, 2.62, 48]} />
-        <meshBasicMaterial color="#6a6bff" side={THREE.DoubleSide} />
+        <ringGeometry args={[2.5, beacon ? 2.72 : 2.62, 48]} />
+        <meshBasicMaterial color={beacon ? "#f5d020" : "#6a6bff"} side={THREE.DoubleSide} />
       </mesh>
     </group>
   );
@@ -2034,6 +2054,9 @@ function Handler({
   onAltitude,
   onPose,
   travelRef,
+  trainerXp = 0,
+  force = null,
+  padBeacon = false,
 }: {
   controlsEnabled: boolean;
   onNear: (n: NearTarget) => void;
@@ -2044,6 +2067,9 @@ function Handler({
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
   isHub: boolean;
+  trainerXp?: number;
+  force?: CreatureType | null;
+  padBeacon?: boolean;
   inVenue?: boolean;
   inAmphitheatre?: boolean;
   circuitMode?: boolean;
@@ -2080,8 +2106,10 @@ function Handler({
   const qThighHang = useRef(new THREE.Quaternion());
   const qKneeHang = useRef(new THREE.Quaternion());
   const eHang = useRef(new THREE.Euler());
+  const readerPal = useMemo(() => readerPalette(force), [force]);
+  const readerLv = trainerLevel(trainerXp).level;
   const built = useMemo(() => {
-    const b = buildCharacter(scene, animations, blank(), "#cfd2e8");
+    const b = buildCharacter(scene, animations, blank(), "#cfd2e8", undefined, 0, readerPal);
     // feet aren't keyed in the idle clip — capture bind quats once so we can SET
     // the hang pose each frame instead of subtracting euler (which accumulated and
     // spun the right foot through gimbal lock).
@@ -2090,7 +2118,7 @@ function Handler({
     if (fl) footBind.current.l.copy(fl.quaternion);
     if (fr) footBind.current.r.copy(fr.quaternion);
     return b;
-  }, [scene, animations]);
+  }, [scene, animations, readerPal]);
   const body = useRef<RapierRigidBody>(null);
   const inner = useRef<THREE.Group>(null);
   // zero-offset child of the RigidBody. Rapier writes the INTERPOLATED transform
@@ -2559,13 +2587,16 @@ function Handler({
 
     const fl = legBone(built.bones, "foot", "l");
     const fr = legBone(built.bones, "foot", "r");
+    const locomoting = cur.current === "walk" || cur.current === "run";
     if (fl && fr) {
       if (footTuck.current > 0.001) {
         eHang.current.set(-FLY_FOOT * footTuck.current, 0, 0);
         qFootHang.current.setFromEuler(eHang.current);
         fl.quaternion.copy(footBind.current.l).multiply(qFootHang.current);
         fr.quaternion.copy(footBind.current.r).multiply(qFootHang.current);
-      } else {
+      } else if (!locomoting) {
+        // idle / hover only — Walking & Running keyframe the feet; resetting here
+        // every grounded frame was wiping the gait and made the body slide.
         fl.quaternion.copy(footBind.current.l);
         fr.quaternion.copy(footBind.current.r);
       }
@@ -2865,7 +2896,7 @@ function Handler({
 
   return (
     <>
-      {!isHub && !inVenue && <TrainPad pos={trainPad} />}
+      {!isHub && !inVenue && <TrainPad pos={trainPad} beacon={padBeacon} />}
       <SuperrunTrail superrunRef={superrun} posRef={handlerPos} headingRef={heading} burstRef={runBurst} h={built.h} />
       <RigidBody
         ref={body}
@@ -2898,13 +2929,23 @@ function Handler({
         <group ref={camAnchor} />
         <group ref={inner} position={[0, -1.0, 0]}>
           <primitive object={built.root} />
+          <ReaderRankEmblem level={readerLv} />
+          {!force && <ReaderBackSigil height={built.h} />}
+          {force && <ReaderClanBanner clan={force} h={built.h} />}
+          <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
           <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
         </group>
-        {/* ground ring stays flat & upright — outside the leaning/squashing body group */}
+        {/* Reader ground ring — gold by default; pledged adds Force outer band */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.96, 0]}>
-          <ringGeometry args={[0.6, 0.72, 40]} />
-          <meshBasicMaterial color="#39e0ff" transparent opacity={0.7} side={THREE.DoubleSide} />
+          <ringGeometry args={[0.58, 0.74, 40]} />
+          <meshBasicMaterial color={force ? TYPE_COLOR[force] : GOLD} transparent opacity={0.78} side={THREE.DoubleSide} />
         </mesh>
+        {force && (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.955, 0]}>
+            <ringGeometry args={[0.48, 0.56, 40]} />
+            <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
+          </mesh>
+        )}
       </RigidBody>
     </>
   );

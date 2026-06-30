@@ -377,7 +377,7 @@ export function Landing() {
             <h2 className="lp-h2 lp-final__h">Your champion is waiting.</h2>
             <div className="lp-cta-row lp-cta-row--center">
               <button type="button" onClick={startJourney} className="btn btn-primary lp-cta lp-cta--big" style={{ ["--ac" as string]: "var(--gold)" }}>
-                Choose your champion <ArrowRight size={18} strokeWidth={2.4} />
+                Raise a champion <ArrowRight size={18} strokeWidth={2.4} />
               </button>
             </div>
             <nav className="lp-final__links mono">

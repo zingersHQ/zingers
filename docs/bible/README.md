@@ -46,7 +46,8 @@ is the point.
   the plain one (Logic / Static / Calm / Chorus / Spark; see
   [02-forces.md](./02-forces.md)). The older poetic names (the Lattice / Stillness
   / …) are retained only as *etymology* in the bible and never shown in gameplay
-  UI. The player is the **Trainer**; the team a Trainer swears to is a **Clan**.
+  UI. The player is the **Reader**; the Force a Reader swears to is their **Clan**
+  (Allegiance). The 3D avatar is the **Handler** — see [cosmology.md](./01-cosmology.md).
 - **The engine is the physics.** Damage, types, and statuses in
   `docs/combat-design.md` are *literally true* in-world. Argument shapes reality.
 - **Generated lore is additive and seeded.** A season's story is produced from a

@@ -19,3 +19,14 @@ export const FIGHT = {
   /** first-journey CTA */
   firstDuel: "first duel",
 } as const;
+
+/** Canonical Reader vs champion teaching lines — use everywhere onboarding touches. */
+export const READER_COPY = {
+  claimLine: "You did not become this champion. You claimed it.",
+  walkFightLine: "You walk the Grounds. Your champion fights.",
+  walkFightChip: "You walk · It fights",
+  adoptCta: (name: string) => `Adopt ${name}`,
+  rookieArc: "Every win reshapes the body. This is day one.",
+  legendAspiration: "Legend forms earn their shape — yours starts at Rookie.",
+  rookieEarned: "You claimed a rookie — the legend form is earned.",
+} as const;
