@@ -10,7 +10,7 @@
 // the #1 champion physically stands on the throne. No floating chart. You read
 // the ladder by looking at the room.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useMemo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -138,8 +138,19 @@ export function Amphitheatre({
   );
 }
 
+// write per-instance matrices once on mount (same idiom as terrain.tsx Scatter)
+function applyInstanceMatrices(im: THREE.InstancedMesh | null, mats: THREE.Matrix4[]) {
+  if (!im) return;
+  for (let i = 0; i < mats.length; i++) im.setMatrixAt(i, mats[i]);
+  im.count = mats.length;
+  im.instanceMatrix.needsUpdate = true;
+  im.computeBoundingSphere();
+}
+
 // ── the stone bowl of empty seating ──────────────────────────────────────────
-function SeatingBowl() {
+// memoised — the league loop re-renders <Amphitheatre> every revealed turn, and
+// the stone never changes.
+const SeatingBowl = memo(function SeatingBowl() {
   const tiers = [
     { r: 16.5, h: 1.8, y: 0.9 },
     { r: 21.5, h: 2.9, y: 2.2 },
@@ -179,38 +190,39 @@ function SeatingBowl() {
       ))}
     </group>
   );
-}
+});
 
 // ── a colonnade ringing the floor (gap left at the entrance) ─────────────────
-function Colonnade() {
-  const cols = useMemo(() => {
+// two instanced draws (shafts + capitals) instead of a mesh pair per column
+const Colonnade = memo(function Colonnade() {
+  const { shafts, capitals } = useMemo(() => {
     const N = 20;
-    return Array.from({ length: N }, (_, i) => {
+    const cols = Array.from({ length: N }, (_, i) => {
       const a = (i / N) * Math.PI * 2;
       return { a, x: Math.cos(a) * 15.4, z: Math.sin(a) * 15.4 };
     }).filter((c) => Math.abs(Math.atan2(Math.sin(c.a - ENTRANCE), Math.cos(c.a - ENTRANCE))) > 0.5);
+    return {
+      shafts: cols.map((c) => new THREE.Matrix4().makeTranslation(c.x, 3.2, c.z)),
+      capitals: cols.map((c) => new THREE.Matrix4().makeTranslation(c.x, 6.5, c.z)),
+    };
   }, []);
   return (
     <group>
-      {cols.map((c, i) => (
-        <group key={i} position={[c.x, 0, c.z]}>
-          <mesh position={[0, 3.2, 0]} castShadow>
-            <cylinderGeometry args={[0.38, 0.46, 6.4, 10]} />
-            <meshStandardMaterial color={STONE_HI} emissive={GOLD} emissiveIntensity={0.05} roughness={0.9} metalness={0.08} />
-          </mesh>
-          {/* capital */}
-          <mesh position={[0, 6.5, 0]} castShadow>
-            <boxGeometry args={[1.1, 0.45, 1.1]} />
-            <meshStandardMaterial color={STONE} emissive={GOLD} emissiveIntensity={0.06} roughness={0.9} />
-          </mesh>
-        </group>
-      ))}
+      <instancedMesh args={[undefined, undefined, Math.max(1, shafts.length)]} castShadow ref={(im) => applyInstanceMatrices(im, shafts)}>
+        <cylinderGeometry args={[0.38, 0.46, 6.4, 10]} />
+        <meshStandardMaterial color={STONE_HI} emissive={GOLD} emissiveIntensity={0.05} roughness={0.9} metalness={0.08} />
+      </instancedMesh>
+      {/* capitals */}
+      <instancedMesh args={[undefined, undefined, Math.max(1, capitals.length)]} castShadow ref={(im) => applyInstanceMatrices(im, capitals)}>
+        <boxGeometry args={[1.1, 0.45, 1.1]} />
+        <meshStandardMaterial color={STONE} emissive={GOLD} emissiveIntensity={0.06} roughness={0.9} />
+      </instancedMesh>
     </group>
   );
-}
+});
 
 // ── braziers for warm torchlight ─────────────────────────────────────────────
-function Braziers() {
+const Braziers = memo(function Braziers() {
   const spots = useMemo(() => {
     const N = 6;
     return Array.from({ length: N }, (_, i) => {
@@ -247,10 +259,10 @@ function Braziers() {
       ))}
     </group>
   );
-}
+});
 
 // ── the central combat dais the bout is fought on ────────────────────────────
-function CombatDais() {
+const CombatDais = memo(function CombatDais() {
   return (
     <group>
       <mesh position={[0, 0.12, 0]} receiveShadow>
@@ -264,12 +276,13 @@ function CombatDais() {
       <pointLight position={[0, 6, 0]} intensity={52} color={GOLD} distance={22} />
     </group>
   );
-}
+});
 
 // ── the wall of ranked banners (the ladder, read as the environment) ─────────
 // Five banners arc behind the throne; rank sets both ORDER (centre = #1) and
 // HEIGHT (the champion's banner flies highest), so the standings are a silhouette.
-function BannerWall({ ladder }: { ladder: { entry: GroundChampion; champ: Champion }[] }) {
+// memoised on the ladder identity — HP ticks don't touch it.
+const BannerWall = memo(function BannerWall({ ladder }: { ladder: { entry: GroundChampion; champ: Champion }[] }) {
   // seat order around the back arc: #1 centre, then 2/3 flanking, 4/5 outermost
   const order = [4, 2, 0, 1, 3]; // index into ladder by visual slot (left→right)
   const R = 14.5;
@@ -317,10 +330,10 @@ function BannerWall({ ladder }: { ladder: { entry: GroundChampion; champ: Champi
       })}
     </group>
   );
-}
+});
 
 // ── the Daily Tribunal's herald stone (merged into the venue) ────────────────
-function DailyHerald() {
+const DailyHerald = memo(function DailyHerald() {
   const glyph = useRef<THREE.Mesh>(null);
   useFrame((s) => {
     if (glyph.current) glyph.current.rotation.y = s.clock.elapsedTime * 0.4;
@@ -350,10 +363,10 @@ function DailyHerald() {
       </Html>
     </group>
   );
-}
+});
 
 // ── the victor's throne — the #1 champion stands here, crowned + spotlit ─────
-function VictorThrone({ entry, champ }: { entry: GroundChampion; champ: Champion }) {
+const VictorThrone = memo(function VictorThrone({ entry, champ }: { entry: GroundChampion; champ: Champion }) {
   const lf = levelFor(champ.xp);
   const col = TYPE_COLOR[entry.type];
   return (
@@ -382,4 +395,4 @@ function VictorThrone({ entry, champ }: { entry: GroundChampion; champ: Champion
       </Html>
     </group>
   );
-}
+});

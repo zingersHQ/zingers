@@ -11,7 +11,7 @@
 //   • Clan flags    — the five houses ring the seal; your pledged Clan stands lit
 //   • Vaultgates    — portal arches out to each region (walk in + E to travel)
 // ─────────────────────────────────────────────────────────────────────────────
-import { useMemo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -27,7 +27,7 @@ export interface ConcordGate {
   pos: [number, number, number]; // ground position in the hub
 }
 
-export function ConcordScene({
+export const ConcordScene = memo(function ConcordScene({
   gates,
   pledged,
   featuredWorld = null,
@@ -75,7 +75,7 @@ export function ConcordScene({
       <pointLight position={[0, 12, 0]} intensity={guiding ? 70 : 120} color="#cdb8ff" distance={60} />
     </group>
   );
-}
+});
 
 // The Concord's meta-games used to ring the seal as walk-up shrines. They've
 // moved out to their own destination (the Amphitheatre, reached via a Vaultgate),

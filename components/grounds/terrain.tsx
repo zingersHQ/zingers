@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
@@ -184,7 +184,7 @@ export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: Spaw
   return Math.max(h, kh);
 }
 
-export function Terrain({ biome, nature }: { biome: BiomeConfig; nature?: boolean }) {
+export const Terrain = memo(function Terrain({ biome, nature }: { biome: BiomeConfig; nature?: boolean }) {
   const geo = useMemo(() => {
     const SEG = 128;
     const shape = shapeOf(biome);
@@ -229,7 +229,7 @@ export function Terrain({ biome, nature }: { biome: BiomeConfig; nature?: boolea
       </mesh>
     </RigidBody>
   );
-}
+});
 
 /** Instanced decorative scatter (rocks + crystals) placed on the hills via height sampling. */
 export function Scatter({ biome }: { biome: BiomeConfig }) {

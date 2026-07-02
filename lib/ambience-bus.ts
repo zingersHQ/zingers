@@ -14,6 +14,8 @@ let current: Mood = "concord";
 // that target by this. Tracked here so a volume change made before the engine
 // spins up (or while muted) is applied the moment it registers/starts.
 let volumeScalar = 1;
+// 0..1 battle heat, tracked for the same late-registration reason as volume.
+let intensity = 0;
 const BASE_MUSIC_VOL = 0.28;
 
 // Called by <AmbientToggle/> when it creates / disposes its engine. Applies the
@@ -24,6 +26,7 @@ export function registerAmbience(e: Ambience | null) {
   if (e) {
     e.setMood(current);
     e.setVolume(BASE_MUSIC_VOL * volumeScalar);
+    e.setIntensity(intensity);
   }
 }
 
@@ -37,10 +40,29 @@ export function setAmbienceVolume(v: number) {
 export function setMood(mood: Mood) {
   current = mood;
   engine?.setMood(mood);
+  // leaving combat always releases battle heat — a region score should never
+  // arrive still wound up from the previous fight
+  if (mood !== "battle" && intensity > 0) setAmbienceIntensity(0);
 }
 
 export function currentMood(): Mood {
   return current;
+}
+
+/** Battle heat 0..1 — morphs the playing score (tempo, brightness, layers). */
+export function setAmbienceIntensity(v: number) {
+  intensity = Math.max(0, Math.min(1, v));
+  engine?.setIntensity(intensity);
+}
+
+/** Sidechain dip under a loud SFX / voice moment (fast dip, eased recovery). */
+export function duckAmbience(amount?: number, holdMs?: number) {
+  engine?.duck(amount, holdMs);
+}
+
+/** One-shot verdict phrase in the current score's harmony (bout end). */
+export function ambienceFlourish(kind: "victory" | "defeat" = "victory") {
+  engine?.flourish(kind);
 }
 
 /** Start the registered engine (call from a user gesture — e.g. onboarding CTA). */

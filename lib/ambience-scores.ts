@@ -10,6 +10,19 @@ export type Mood =
   | "circuit"
   | "battle";
 
+/** Arpeggiator texture — one soft chord tone per step (indices into the chord, -1 rest). */
+export interface ArpConfig {
+  pattern: number[];
+  gain: number;
+}
+
+/** Pad texture — a sustained low voicing that swells and breathes under each bar. */
+export interface PadConfig {
+  gain: number;
+  /** Lowpass cutoff (Hz) — lower = a duskier, rounder swell. */
+  cutoff: number;
+}
+
 export interface ScoreConfig {
   /** Chord voicings as MIDI note numbers. */
   chords: number[][];
@@ -23,6 +36,14 @@ export interface ScoreConfig {
   pulse: boolean;
   /** Master voice gain for this score (defaults applied in engine). */
   voiceGain?: number;
+  /** Optional arpeggiator layer — blooms further as battle intensity rises. */
+  arp?: ArpConfig;
+  /** Optional pad swell layer under each bar. */
+  pad?: PadConfig;
+  /** Sparse counter-melody (indices into `melody`, -1 rest) — answers on the offbeats an octave down. */
+  counter?: number[];
+  /** Looping filtered-noise air bed (wind / shimmer) gain, 0..~0.05. */
+  shimmer?: number;
 }
 
 // ── Concord — ceremonial hub: sparse gold bells over open fifths ─────────────
@@ -108,6 +129,9 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: false,
     voiceGain: 0.24,
+    // ceremonial breath — a slow low swell under the bells, and the faintest air
+    pad: { gain: 0.045, cutoff: 850 },
+    shimmer: 0.012,
   },
   colosseum: {
     chords: COLOSSEUM_CHORDS,
@@ -120,6 +144,8 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     tempo: 520,
     birds: true,
     pulse: false,
+    // a low answering phrase on the offbeats keeps the bright loop grounded
+    counter: [0, -1, -1, 2, -1, -1, 1, -1],
   },
   ember: {
     chords: EMBER_CHORDS,
@@ -133,6 +159,9 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: true,
     voiceGain: 0.26,
+    // hot wind over the wastes + a smouldering low reply
+    shimmer: 0.018,
+    counter: [-1, 2, -1, -1, 0, -1, -1, -1],
   },
   void: {
     chords: VOID_CHORDS,
@@ -146,6 +175,9 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: false,
     voiceGain: 0.22,
+    // weightless: a wide suspended pad and a constant starlit hiss
+    pad: { gain: 0.055, cutoff: 1200 },
+    shimmer: 0.026,
   },
   amphitheatre: {
     chords: AMP_CHORDS,
@@ -159,6 +191,9 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: true,
     voiceGain: 0.27,
+    // restless crowd energy — a churning arpeggio under the torchlight
+    arp: { pattern: [0, 2, 1, 3, 0, 2, 1, 2], gain: 0.014 },
+    counter: [3, -1, -1, 1, -1, 2, -1, -1],
   },
   circuit: {
     chords: CIRCUIT_CHORDS,
@@ -172,6 +207,8 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: true,
     voiceGain: 0.3,
+    // tunnel run — a driving straight-eight arpeggio carries the momentum
+    arp: { pattern: [0, 1, 2, 3, 2, 1, 0, 1], gain: 0.018 },
   },
   battle: {
     chords: BATTLE_CHORDS,
@@ -185,6 +222,9 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     birds: false,
     pulse: true,
     voiceGain: 0.28,
+    // stakes: a coiled arpeggio + a dark pad floor for intensity to open up
+    arp: { pattern: [0, 2, 1, 3, 0, 2, 3, 1], gain: 0.015 },
+    pad: { gain: 0.04, cutoff: 1400 },
   },
 };
 

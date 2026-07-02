@@ -64,13 +64,9 @@ export function CharacterBeat({
   }, [idx, line.text]);
 
   const advance = useCallback(() => {
-    if (!done) {
-      setTyped(line.text); // first tap completes the type, second advances
-      return;
-    }
     if (last) onComplete();
     else setIdx((i) => i + 1);
-  }, [done, last, line.text, onComplete]);
+  }, [last, onComplete]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -204,7 +200,7 @@ export function CharacterBeat({
           onClick={advance}
           style={{ ["--ac" as string]: accent, marginTop: 26, padding: "12px 28px", fontSize: 15 }}
         >
-          {!done ? "Skip line" : last ? "Continue" : "Next"}
+          {last ? "Continue" : "Next"}
         </button>
       </div>
     </div>

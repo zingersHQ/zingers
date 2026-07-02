@@ -3,7 +3,11 @@
 // holding a reference to it. Shares the same on/off preference as the music
 // toggle (STORAGE.sound). SFX are triggered by user input (key / touch), so
 // the AudioContext can be resumed lazily on the first one.
+//
+// The loudest one-shots also sidechain the music (duckAmbience) so they punch
+// through the score instead of fighting it.
 import { STORAGE } from "@/lib/brand";
+import { duckAmbience } from "@/lib/ambience-bus";
 
 type AudioCtor = typeof AudioContext;
 
@@ -88,6 +92,9 @@ export function hitSfx(power = 10, crit = false) {
   const c = ensure();
   if (!c || !master) return;
   if (c.state === "suspended") c.resume().catch(() => {});
+
+  // sidechain: bigger hits shove the music further out of the way
+  duckAmbience(0.3 + Math.min(power, 40) * 0.005, crit ? 220 : 140);
 
   const t = c.currentTime + 0.005;
   const amp = Math.min(0.5, 0.16 + Math.min(power, 40) * 0.007) * (crit ? 1.3 : 1);
@@ -176,6 +183,9 @@ export function rewardSfx(tier: "small" | "big" | "epic" = "small") {
   if (!c || !master) return;
   if (c.state === "suspended") c.resume().catch(() => {});
 
+  // the fanfare owns the moment — the score dips and eases back in behind it
+  duckAmbience(tier === "small" ? 0.35 : 0.5, tier === "small" ? 220 : 500);
+
   const t0 = c.currentTime + 0.01;
   const notes =
     tier === "epic"
@@ -200,6 +210,8 @@ export function pledgeSfx() {
   const c = ensure();
   if (!c || !master) return;
   if (c.state === "suspended") c.resume().catch(() => {});
+
+  duckAmbience(0.4, 900); // a solemn oath deserves a hush
 
   const t0 = c.currentTime + 0.01;
   for (const f of [146.83, 220.0]) {
@@ -231,6 +243,8 @@ export function badLuckSfx() {
   const c = ensure();
   if (!c || !master) return;
   if (c.state === "suspended") c.resume().catch(() => {});
+
+  duckAmbience(0.45, 700); // let the trombone mope in the clear
 
   const notes = [392.0, 349.23, 311.13, 261.63]; // G4 F4 Eb4 C4
   let t = c.currentTime + 0.01;

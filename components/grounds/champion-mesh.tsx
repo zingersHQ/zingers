@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Html, useGLTF } from "@react-three/drei";
@@ -10,17 +10,55 @@ import { appearanceOf, type Appearance, type BoneMorph } from "@/lib/evolve/appe
 import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
 import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
 import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
-import { ClanBanner } from "@/components/grounds/clan-banner";
 import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
 import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 import { FORCES } from "@/lib/lore/canon";
-import { ANIM, type GestureClip, type RestPose } from "@/lib/render/animations";
+import { ANIM, flightAttitudePlanar, type GestureClip, type RestPose } from "@/lib/render/animations";
+import { useSettings } from "@/store/settings";
+import { Jetpack } from "@/components/grounds/jetpack";
 
 for (const m of ALL_MODELS) useGLTF.preload(m);
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+/** Third-scale in the open world — mascots, not arena titans (2/3 of the old
+ *  half-scale after the playtest "characters are too big" pass). Battle /
+ *  portrait tiles stay at 1. The Reader mirrors this via READER_SCALE in world.tsx. */
+export const WORLD_AGENT_SCALE = 1 / 3;
+
+/** @deprecated Companion no longer mirrors Handler loco — kept for type compat during cleanup. */
+export interface HandlerMimicState {
+  grounded: boolean;
+  flying: boolean;
+  loco: "idle" | "walk" | "run";
+  jumpTick: number;
+  vy: number;
+}
+
+// ── owned-companion flight (padLeash) ────────────────────────────────────────
+// Autonomous wingman: always pursues a fixed slot at the Handler's ~4 o'clock
+// (back-right). Matches Handler velocity when docked; extra acceleration when
+// lagging so it never falls behind on a climb. Jetpack arcs in from spawn to slot.
+const COMPANION_LIFT_THRESHOLD = 3.0;
+const COMPANION_SLOT_R = 3.0;         // distance to the back-right wing slot
+const COMPANION_SLOT_BACK = 0.866;    // cos 30° — mostly behind (4 o'clock)
+const COMPANION_SLOT_SIDE = 0.5;      // sin 30° — slight right
+const COMPANION_WING_DROP = 1.1;      // fly slightly below the Handler
+const COMPANION_SLOT_ARRIVED = 1.4;   // planar gap considered "in slot"
+const COMPANION_CATCH_K = 4.0;         // extra speed per unit of lag (planar)
+const COMPANION_VERT_CATCH_K = 5.5;     // vertical catch-up when Handler climbs
+const COMPANION_CATCH_MAX = 36;        // max planar speed (can outrun Handler to catch up)
+const COMPANION_VERT_MAX = 14;         // max vertical catch-up speed
+const COMPANION_ACCEL = 34;            // ramp rate toward target velocity
+const COMPANION_JETPACK_DIST = 4.5;    // planar gap → jetpack arc to the slot
+const COMPANION_APPROACH_ARC = 3.0;    // hover height while jetting to slot
+const COMPANION_INTRO_SEC = 2.0;       // spawn fly-in: reach the wing slot in ~2s
+const COMPANION_INTRO_REPOSITION = 22; // if train pad is farther than this, start fly-in nearby
+const COMPANION_INTRO_START = 18;      // …from this many units behind the Handler toward the pad
+const COMPANION_MOVE_EPS = 0.8;
+const COMPANION_EXTRA_GRAV = 14;        // faster visual fall for the smaller body
 
 // ── animation level-of-detail ────────────────────────────────────────────────
 // Every non-owned champion runs its own AnimationMixer + bone-morph + decorative
@@ -33,6 +71,23 @@ const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 const LOD_NEAR_SQ = 32 * 32;
 const LOD_MID_SQ = 64 * 64;
 const LOD_MID_STEP = 1 / 15; // seconds between mid-range skeletal updates
+
+// scratch for the wander steering — useFrame callbacks run serially, so one
+// shared vector serves every roaming agent without a per-frame allocation each
+const _wanderDir = new THREE.Vector3();
+
+// ── gait matching ────────────────────────────────────────────────────────────
+// Locomotion clips are driven from REAL horizontal speed. The reference is the
+// planar speed (world u/s) at which each clip's stride visually tracks the
+// ground on a FULL-scale body; a smaller sceneScale shrinks the stride with the
+// body, so the reference shrinks with it — that keeps feet planted instead of
+// skating. Above RUN_SPEED_AT (× sceneScale) the loop switches from Walk to Run.
+const GAIT_WALK_REF = 2.2;
+const GAIT_RUN_REF = 5.2;
+const RUN_SPEED_AT = 3.6;
+/** Keep walk/run intent briefly after speed dips — stops rest/walk flicker at thresholds. */
+const LOCO_HOLD_SEC = 0.32;
+const LOCO_MIN_PLANAR = 0.14;
 
 function pickClip(clips: THREE.AnimationClip[], ...names: string[]): THREE.AnimationClip | undefined {
   for (const n of names) {
@@ -497,6 +552,9 @@ export function ChampionMesh({
   clan = null,
   hideFloaters = false,
   padLeash,
+  companionDrive,
+  /** World-scene scale (0.5 in the Grounds; 1 in battles / portraits). */
+  sceneScale = 1,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -546,12 +604,24 @@ export function ChampionMesh({
    *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
    *  close-up character-select showcase. */
   hideFloaters?: boolean;
-  /** owned companion: small pad wander when Handler is far; face Handler when near */
+  /** owned companion: autonomous chase of the Handler wing slot (4 o'clock) */
   padLeash?: {
     handlerRef: RefObject<THREE.Vector3>;
+    /** live body heading (radians) — slot stays at back-right even when idle */
+    handlerHeadingRef?: RefObject<number>;
     pad: [number, number, number];
     arenaRotation: number;
   };
+  /** owned companion: outer rig drives transform; mesh reads this for walk/run/fly pose */
+  companionDrive?: {
+    flyingRef: RefObject<boolean>;
+    movingRef: RefObject<boolean>;
+    speedRef: RefObject<number>;
+    runRef: RefObject<boolean>;
+    velRef: RefObject<THREE.Vector3>;
+    headingRef: RefObject<number>;
+  };
+  sceneScale?: number;
 }) {
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
   const col = useMemo(() => new THREE.Color(colHex), [colHex]);
@@ -574,10 +644,11 @@ export function ChampionMesh({
   // Colour identity: regular minds are restrained to their Force's two-tone pair;
   // Keepers ignore the pair and get the richer, patterned, multi-colour treatment.
   const isKeeper = !!keeper;
-  const palette = useMemo(
-    () => bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper, type }),
-    [colHex, seed, type, isKeeper],
-  );
+  const palette = useMemo(() => {
+    const p = bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper, type });
+    if (clan) return { ...p, glow: TYPE_COLOR[clan] };
+    return p;
+  }, [colHex, seed, type, isKeeper, clan]);
 
   // seeded, tier-gated, skill-flavoured solid anatomy (helmet / visor / shoulders
   // / chest / back) — the "this is a different model of robot" layer. Cheap + pure,
@@ -605,9 +676,27 @@ export function ChampionMesh({
   const wheading = useRef(rotation);
   const still = useRef(Math.random() * 2);
   const wanderMoving = useRef(false);
-  const locoCur = useRef<"walk" | "rest" | null>(null);
+  const locoCur = useRef<"walk" | "run" | "rest" | null>(null);
+  const locoHoldT = useRef(0);
   const gestureBusy = useRef(false);
   const phase = useMemo(() => Math.random() * 6.28, []);
+  // owned-companion flight state (padLeash): previous Handler pos for velocity, the
+  // smoothed Handler heading we place the wing off, and an eased 0..1 airborne amount
+  const hPrev = useRef<THREE.Vector3 | null>(null);
+  const hHeading = useRef(rotation);
+  const flyAmt = useRef(0);
+  const flyPitch = useRef(0);
+  const flyBank = useRef(0);
+  // autonomous chase: velocity-matched pursuit of the 4-o'clock slot
+  const approachForced = useRef(true);
+  const introBooted = useRef(false);
+  const introElapsed = useRef(0);
+  const chaseSpeed = useRef(0);
+  const companionVel = useRef(new THREE.Vector3());
+  const companionFlyingRef = useRef(false);
+  const companionJetBurst = useRef(0);
+  const companionJetEmit = useRef(0);
+  const wasCompanionFlying = useRef(false);
 
   const homeX = position[0];
   const homeZ = position[2];
@@ -621,29 +710,92 @@ export function ChampionMesh({
     wtarget.current = null;
     still.current = Math.random() * 2;
     locoCur.current = null;
+    locoHoldT.current = 0;
+    approachForced.current = true;
+    introBooted.current = false;
+    introElapsed.current = 0;
+    companionVel.current.set(0, 0, 0);
+    companionJetBurst.current++;
   }, [homeX, homeZ, rotation, identityKey]);
 
-  function setLocoAnim(wantWalk: boolean, fade = 0.2) {
-    const key: "walk" | "rest" = wantWalk ? "walk" : "rest";
-    const walk = built.actions.walk;
-    const rest = restAction(built, restPose);
-    const next = wantWalk ? walk : rest;
-    if (!next) return;
-    if (locoCur.current === key && next.getEffectiveWeight() > 0.8 && next.isRunning()) return;
+  /** Stride frequency that matches this body's ACTUAL ground speed, so feet
+   *  track the dirt instead of skating (clamped — extreme chases still cap). */
+  function gaitTimeScale(mode: "walk" | "run", speed: number) {
+    const ref = (mode === "run" ? GAIT_RUN_REF : GAIT_WALK_REF) * Math.max(0.2, sceneScale);
+    return THREE.MathUtils.clamp(speed / ref, mode === "run" ? 0.85 : 0.7, mode === "run" ? 2.6 : 2.3);
+  }
 
-    const prev = locoCur.current === "walk" ? walk : locoCur.current === "rest" ? rest : undefined;
-    if (wantWalk) {
-      prev?.fadeOut(fade);
-      next.setEffectiveTimeScale(1).reset().setEffectiveWeight(1).fadeIn(fade).play();
-    } else if (prev && prev !== next && prev.getEffectiveWeight() > 0.01) {
-      crossFadeToRest(prev, next, fade);
-    } else if (!next.isRunning() || next.getEffectiveWeight() < 0.01) {
-      next.reset().setEffectiveWeight(1).fadeIn(fade).play();
+  /** Cross-fade the locomotion loop (rest / walk / run) from real speed —
+   *  shared by the wanderers, the padLeash chase and the companion rig. */
+  function setLoco(mode: "rest" | "walk" | "run", speed = 0, fade = 0.2) {
+    if (gestureBusy.current) return;
+    const walk = built.actions.walk;
+    const run = built.actions.run;
+    const rest = restAction(built, restPose);
+    const next = mode === "run" ? run : mode === "walk" ? walk : rest;
+    if (!next) return;
+    const key = mode;
+
+    // Same mode already playing — update stride only. Never `reset()` here: that
+    // was re-triggering fadeIn every frame while weight was still ramping (<0.8)
+    // and read as a walk blink / stutter.
+    if (locoCur.current === key && next.isRunning()) {
+      if (mode === "walk" || mode === "run") next.setEffectiveTimeScale(gaitTimeScale(mode, speed));
+      if (next.getEffectiveWeight() < 0.98) next.setEffectiveWeight(Math.min(1, next.getEffectiveWeight() + 0.08));
+      return;
+    }
+
+    const prevKey = locoCur.current;
+    const prev =
+      prevKey === "walk" ? walk : prevKey === "run" ? run : prevKey === "rest" ? rest : undefined;
+
+    if (mode === "rest") {
+      if (prev && prev !== rest && prev.getEffectiveWeight() > 0.01 && rest) crossFadeToRest(prev, rest, fade);
+      else if (rest && (!rest.isRunning() || rest.getEffectiveWeight() < 0.01)) rest.reset().setEffectiveWeight(1).fadeIn(fade).play();
+      walk?.fadeOut(fade);
+      run?.fadeOut(fade);
     } else {
-      next.setEffectiveWeight(1);
-      next.play();
+      // Standing ping-pong must leave the mixer or it keeps weight and fights walk.
+      if (rest && rest !== next) rest.fadeOut(Math.min(fade, 0.14));
+      if (prev && prev !== next && prev.getEffectiveWeight() > 0.04) {
+        next.setEffectiveTimeScale(gaitTimeScale(mode, speed));
+        next.setEffectiveWeight(0);
+        next.play();
+        prev.crossFadeTo(next, fade, false);
+      } else {
+        next.reset().setEffectiveTimeScale(gaitTimeScale(mode, speed)).setEffectiveWeight(1).fadeIn(fade).play();
+      }
     }
     locoCur.current = key;
+  }
+
+  /** Hysteresis gate — short speed dips don't snap back to idle mid-stride. */
+  function locoGate(planarSpeed: number, dt: number) {
+    const min = LOCO_MIN_PLANAR * Math.max(0.2, sceneScale);
+    if (planarSpeed > min) locoHoldT.current = LOCO_HOLD_SEC;
+    else locoHoldT.current = Math.max(0, locoHoldT.current - dt);
+    return locoHoldT.current > 0;
+  }
+
+  /** After a one-shot gesture: resume whatever locomotion this mover is in. */
+  function resumeLoco(fade = 0.35) {
+    if (companionDrive && !wander && !padLeash) {
+      const flying = companionDrive.flyingRef.current ?? false;
+      const moving = companionDrive.movingRef.current ?? false;
+      const speed = companionDrive.speedRef.current ?? 0;
+      const run = companionDrive.runRef.current ?? false;
+      if (flying) setLoco("rest", speed, 0.22);
+      else if (moving) setLoco(run ? "run" : "walk", speed, fade);
+      else setLoco("rest", 0, fade);
+      return;
+    }
+    if (wander || padLeash) {
+      const spd = wander ? (wanderMoving.current ? wanderSpeed * sceneScale : 0) : chaseSpeed.current;
+      if (wanderMoving.current) setLoco(spd > RUN_SPEED_AT * sceneScale ? "run" : "walk", spd, fade);
+      else setLoco("rest", 0, fade);
+      return;
+    }
+    fadeToRest(built, restPose, fade);
   }
 
   // punch → play the clip + lunge forward; on finish, ease back to rest / walk
@@ -657,9 +809,7 @@ export function ChampionMesh({
       p.reset().setEffectiveTimeScale(1.12).setEffectiveWeight(1).fadeIn(0.18).play();
       const onFin = () => {
         gestureBusy.current = false;
-        if (wander || padLeash) setLocoAnim(wanderMoving.current, 0.35);
-        else if (rest) crossFadeToRest(p, rest, 0.45);
-        else p.fadeOut(0.25);
+        resumeLoco(0.45);
         built.mixer.removeEventListener("finished", onFin);
       };
       built.mixer.addEventListener("finished", onFin);
@@ -687,9 +837,7 @@ export function ChampionMesh({
       if (!looped) {
         const onFin = () => {
           gestureBusy.current = false;
-          if (wander || padLeash) setLocoAnim(wanderMoving.current, 0.35);
-          else if (rest) crossFadeToRest(a, rest, 0.5);
-          else a.fadeOut(0.32);
+          resumeLoco(0.5);
           built.mixer.removeEventListener("finished", onFin);
         };
         built.mixer.addEventListener("finished", onFin);
@@ -698,27 +846,42 @@ export function ChampionMesh({
     if (actName === "punch" || actName === "jump") lunge.current = 1;
   }, [actSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // rest loop tempo + clip selection (Standing/Sitting for peaceful contexts)
+  // rest loop tempo + clip selection (Standing/Sitting for peaceful contexts).
+  // Autonomous movers pick up walk/run in useFrame — don't yank them to rest here.
   useEffect(() => {
     const rest = restAction(built, restPose);
     if (!rest) return;
     if (idlePhase != null) rest.time = idlePhase;
     const scale = restPose === "idle" ? ANIM.idleClipScale : ANIM.restClipScale;
     rest.setEffectiveTimeScale(kitFor(type).idleSpeed * (idleSpeed ?? 1) * scale);
-    locoCur.current = null;
-    fadeToRest(built, restPose, 0.4);
-  }, [built, restPose, idlePhase, idleSpeed, type]);
+    const isMover = wander || padLeash || !!companionDrive;
+    if (!isMover) {
+      locoCur.current = null;
+      fadeToRest(built, restPose, 0.4);
+    }
+  }, [built, restPose, idlePhase, idleSpeed, type, wander, padLeash, companionDrive]);
 
   // scratch vector + accumulator for the distance LOD (no per-frame allocation)
   const lodPos = useRef(new THREE.Vector3());
   const lodAccum = useRef(0);
+  const companionFrame = !!(padLeash && !wander);
+  const companionRigDrive = !!(companionDrive && !padLeash && !wander);
+
+  useLayoutEffect(() => {
+    if (!companionFrame || !gref.current) return;
+    gref.current.position.set(wpos.current.x, wpos.current.y, wpos.current.z);
+    gref.current.rotation.y = wheading.current;
+  }, [companionFrame, homeX, homeZ, rotation, identityKey]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
 
-    // locomotion first — mixer LOD + setLocoAnim need this frame's moving state
+    // locomotion first — mixer LOD + setLoco need this frame's moving state
     let moving = false;
     if (wander && gref.current) {
+      // roam speed is authored in full-scale units; the shrunken world cast
+      // covers proportionally less ground so the stroll reads calm, not skittery
+      const wSpeed = wanderSpeed * sceneScale;
       if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2) {
         if (still.current <= 0) {
           const a = Math.random() * 6.28;
@@ -730,12 +893,12 @@ export function ChampionMesh({
       if (still.current > 0 && (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 1.2)) {
         still.current -= dt;
       } else if (wtarget.current) {
-        const dir = wtarget.current.clone().sub(wpos.current);
+        const dir = _wanderDir.copy(wtarget.current).sub(wpos.current);
         dir.y = 0;
         const dl = dir.length();
         if (dl > 0.08) {
           dir.normalize();
-          wpos.current.addScaledVector(dir, wanderSpeed * dt);
+          wpos.current.addScaledVector(dir, wSpeed * dt);
           const want = Math.atan2(dir.x, dir.z);
           let d = want - wheading.current;
           d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -745,8 +908,10 @@ export function ChampionMesh({
       }
       gref.current.position.set(wpos.current.x, 0, wpos.current.z);
       gref.current.rotation.y = wheading.current;
-      wanderMoving.current = moving;
-      if (!gestureBusy.current) setLocoAnim(moving);
+      const planar = moving ? wSpeed : 0;
+      const shouldLoco = locoGate(planar, dt);
+      wanderMoving.current = shouldLoco;
+      setLoco(shouldLoco ? (planar > RUN_SPEED_AT * sceneScale ? "run" : "walk") : "rest", planar);
     }
 
     if (padLeash && !wander && gref.current) {
@@ -754,49 +919,200 @@ export function ChampionMesh({
       const px = padLeash.pad[0];
       const pz = padLeash.pad[2];
       const hx = hp?.x ?? px;
+      const hy = hp?.y ?? 0;
       const hz = hp?.z ?? pz;
-      const handlerDist = Math.hypot(hx - px, hz - pz);
-      let padMoving = false;
-      if (handlerDist > 12) {
-        if (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 0.5) {
-          if (still.current <= 0) {
-            const a = Math.random() * 6.28;
-            const r = Math.random() * 3;
-            wtarget.current = new THREE.Vector3(px + Math.cos(a) * r, 0, pz + Math.sin(a) * r);
-            still.current = 1.2 + Math.random() * 2;
-          }
+      const ws = sceneScale;
+
+      if (!hPrev.current) hPrev.current = new THREE.Vector3(hx, hy, hz);
+      const prev = hPrev.current;
+      const hvx = dt > 0 ? (hx - prev.x) / dt : 0;
+      const hvz = dt > 0 ? (hz - prev.z) / dt : 0;
+      const hvy = dt > 0 ? (hy - prev.y) / dt : 0;
+      prev.set(hx, hy, hz);
+      const hSpeed = Math.hypot(hvx, hvz);
+
+      const hh = padLeash.handlerHeadingRef?.current ?? hHeading.current;
+      if (hSpeed > COMPANION_MOVE_EPS) hHeading.current = Math.atan2(hvx, hvz);
+
+      // 4-o'clock wing slot — back + slight right of the Handler's facing
+      const backX = -Math.sin(hh), backZ = -Math.cos(hh);
+      const sideX = Math.cos(hh), sideZ = -Math.sin(hh);
+      const r = COMPANION_SLOT_R * ws;
+      const tx = hx + (backX * COMPANION_SLOT_BACK + sideX * COMPANION_SLOT_SIDE) * r;
+      const tz = hz + (backZ * COMPANION_SLOT_BACK + sideZ * COMPANION_SLOT_SIDE) * r;
+
+      let ex = tx - wpos.current.x;
+      let ez = tz - wpos.current.z;
+      let slotDist = Math.hypot(ex, ez);
+
+      // Belt-and-suspenders: if we still spawned far from the slot, snap the intro
+      // origin beside the Handler on the first padLeash tick.
+      if (approachForced.current && !introBooted.current) {
+        introBooted.current = true;
+        if (slotDist > COMPANION_INTRO_REPOSITION * ws) {
+          const toPadX = px - hx;
+          const toPadZ = pz - hz;
+          const toPadLen = Math.hypot(toPadX, toPadZ) || 1;
+          const startDist = Math.min(COMPANION_INTRO_START * ws * 1.4, slotDist * 0.4);
+          wpos.current.set(hx + (toPadX / toPadLen) * startDist, 0, hz + (toPadZ / toPadLen) * startDist);
+          ex = tx - wpos.current.x;
+          ez = tz - wpos.current.z;
+          slotDist = Math.hypot(ex, ez);
         }
-        if (still.current > 0 && (!wtarget.current || wpos.current.distanceTo(wtarget.current) < 0.5)) {
-          still.current -= dt;
-        } else if (wtarget.current) {
-          const dir = wtarget.current.clone().sub(wpos.current);
-          dir.y = 0;
-          if (dir.length() > 0.04) {
-            dir.normalize();
-            wpos.current.addScaledVector(dir, 1.2 * dt);
-            const want = Math.atan2(dir.x, dir.z);
-            let d = want - wheading.current;
-            d = Math.atan2(Math.sin(d), Math.cos(d));
-            wheading.current += d * Math.min(1, dt * 5);
-            padMoving = true;
-          }
-        }
-      } else if (handlerDist <= 6 && hp) {
-        wpos.current.set(px, 0, pz);
-        const want = Math.atan2(hx - wpos.current.x, hz - wpos.current.z);
-        let d = want - wheading.current;
-        d = Math.atan2(Math.sin(d), Math.cos(d));
-        wheading.current += d * Math.min(1, dt * 8);
-      } else {
-        wpos.current.set(px, 0, pz);
-        let d = padLeash.arenaRotation - wheading.current;
-        d = Math.atan2(Math.sin(d), Math.cos(d));
-        wheading.current += d * Math.min(1, dt * 6);
       }
-      gref.current.position.set(wpos.current.x, 0, wpos.current.z);
+
+      const handlerFlying = hy > COMPANION_LIFT_THRESHOLD * ws;
+      const targetY = handlerFlying ? Math.max(0, hy - COMPANION_WING_DROP * ws) : 0;
+      const ey = targetY - wpos.current.y;
+      const introActive = approachForced.current;
+      const inIntro = introActive;
+
+      if (slotDist < COMPANION_SLOT_ARRIVED * ws && Math.abs(ey) < 0.8 * ws && introElapsed.current > 0.15) {
+        approachForced.current = false;
+      }
+      if (inIntro) introElapsed.current += dt;
+
+      const jetApproach = introActive || slotDist > COMPANION_JETPACK_DIST * ws;
+      const airborne = jetApproach || handlerFlying || wpos.current.y > 0.35 * ws;
+      flyAmt.current += ((airborne ? 1 : 0) - flyAmt.current) * (1 - Math.exp(-(inIntro ? 22 : 8) * dt));
+
+      let wantY = targetY;
+      if (jetApproach && slotDist > COMPANION_SLOT_ARRIVED * ws) {
+        const arc = Math.min(1, slotDist / (COMPANION_JETPACK_DIST * ws * 2));
+        wantY = Math.max(targetY, COMPANION_APPROACH_ARC * ws * arc);
+      }
+      if (inIntro) wantY = Math.max(wantY, COMPANION_APPROACH_ARC * ws);
+
+      const vel = companionVel.current;
+
+      if (inIntro && slotDist > 0.04) {
+        // Guaranteed 2s arrival: each frame close `dt/remaining` of the gap (works
+        // for moving targets too). No velocity smoothing — direct homing.
+        const remaining = Math.max(0.04, COMPANION_INTRO_SEC - introElapsed.current);
+        const f = Math.min(1, dt / remaining);
+        const eyIntro = wantY - wpos.current.y;
+        wpos.current.x += ex * f;
+        wpos.current.z += ez * f;
+        wpos.current.y += eyIntro * f;
+        wpos.current.y = Math.max(0, wpos.current.y);
+        if (dt > 0) {
+          vel.set(ex * f / dt, eyIntro * f / dt, ez * f / dt);
+        }
+      } else {
+        let wantVx = hvx + ex * COMPANION_CATCH_K;
+        let wantVz = hvz + ez * COMPANION_CATCH_K;
+        let wantVy = hvy + ey * COMPANION_VERT_CATCH_K;
+        const wantPlanar = Math.hypot(wantVx, wantVz);
+        const maxPlanar = COMPANION_CATCH_MAX * ws;
+        if (wantPlanar > maxPlanar && wantPlanar > 0) {
+          const k = maxPlanar / wantPlanar;
+          wantVx *= k;
+          wantVz *= k;
+        }
+        wantVy = Math.max(-COMPANION_VERT_MAX, Math.min(COMPANION_VERT_MAX, wantVy));
+        const kv = 1 - Math.exp(-COMPANION_ACCEL * dt);
+        vel.x += (wantVx - vel.x) * kv;
+        vel.z += (wantVz - vel.z) * kv;
+        vel.y += (wantVy - vel.y) * kv;
+        wpos.current.x += vel.x * dt;
+        wpos.current.z += vel.z * dt;
+        if (wpos.current.y > wantY + 0.02 && flyAmt.current < 0.45 && !jetApproach && !handlerFlying) {
+          wpos.current.y -= COMPANION_EXTRA_GRAV * dt;
+          wpos.current.y = Math.max(wantY, wpos.current.y);
+          vel.y = Math.min(vel.y, 0);
+        } else {
+          wpos.current.y += vel.y * dt;
+        }
+        wpos.current.y = Math.max(0, wpos.current.y);
+      }
+
+      chaseSpeed.current = Math.hypot(vel.x, vel.z);
+      const padMoving = chaseSpeed.current > 0.6;
+
+      const wantH = inIntro && slotDist > 0.04
+        ? Math.atan2(ex, ez)
+        : padMoving
+          ? Math.atan2(vel.x, vel.z)
+          : hh;
+      let dH = wantH - wheading.current;
+      dH = Math.atan2(Math.sin(dH), Math.cos(dH));
+      wheading.current += dH * Math.min(1, dt * 10);
+      if (flyAmt.current > 0.02) {
+        const att = flightAttitudePlanar(vel.x, vel.z, wheading.current, flyAmt.current);
+        const ls = Math.min(1, dt * 10);
+        flyPitch.current += (att.pitch - flyPitch.current) * ls;
+        flyBank.current += (att.roll - flyBank.current) * ls;
+      } else {
+        const ls = Math.min(1, dt * 12);
+        flyPitch.current += (0 - flyPitch.current) * ls;
+        flyBank.current += (0 - flyBank.current) * ls;
+      }
+
+      gref.current.position.set(wpos.current.x, wpos.current.y, wpos.current.z);
       gref.current.rotation.y = wheading.current;
-      wanderMoving.current = padMoving;
-      if (!gestureBusy.current) setLocoAnim(padMoving);
+      const padPlanar = flyAmt.current < 0.5 ? chaseSpeed.current : 0;
+      const shouldLoco = locoGate(padPlanar, dt);
+      wanderMoving.current = shouldLoco;
+
+      if (!gestureBusy.current) {
+        setLoco(shouldLoco ? (chaseSpeed.current > RUN_SPEED_AT * sceneScale ? "run" : "walk") : "rest", chaseSpeed.current);
+      }
+
+      companionFlyingRef.current = jetApproach || flyAmt.current > 0.55 || handlerFlying;
+      if (companionFlyingRef.current) {
+        companionJetEmit.current += dt;
+        if (companionJetEmit.current > 0.055) {
+          companionJetEmit.current = 0;
+          companionJetBurst.current++;
+        }
+      } else {
+        companionJetEmit.current = 0;
+      }
+      if (companionFlyingRef.current && !wasCompanionFlying.current) companionJetBurst.current++;
+      wasCompanionFlying.current = companionFlyingRef.current;
+    }
+
+    if (companionDrive && !wander && !padLeash) {
+      const flying = companionDrive.flyingRef.current ?? false;
+      const moving = companionDrive.movingRef.current ?? false;
+      const speed = companionDrive.speedRef.current ?? 0;
+      const run = companionDrive.runRef.current ?? false;
+
+      flyAmt.current += ((flying ? 1 : 0) - flyAmt.current) * (1 - Math.exp(-(flying ? 10 : 8) * dt));
+      wanderMoving.current = moving && !flying;
+
+      if (!gestureBusy.current) {
+        if (flying) setLoco("rest", speed, 0.22);
+        else if (moving && run) setLoco("run", speed);
+        else if (moving) setLoco("walk", speed);
+        else setLoco("rest", 0, 0.28);
+      }
+
+      companionFlyingRef.current = flying;
+      if (flying) {
+        companionJetEmit.current += dt;
+        if (companionJetEmit.current > 0.055) {
+          companionJetEmit.current = 0;
+          companionJetBurst.current++;
+        }
+      } else {
+        companionJetEmit.current = 0;
+      }
+      if (flying && !wasCompanionFlying.current) companionJetBurst.current++;
+      wasCompanionFlying.current = flying;
+
+      if (flying && flyAmt.current > 0.02) {
+        const vel = companionDrive.velRef.current;
+        const h = companionDrive.headingRef.current ?? 0;
+        const att = flightAttitudePlanar(vel.x, vel.z, h, flyAmt.current);
+        const ls = Math.min(1, dt * 10);
+        flyPitch.current += (att.pitch - flyPitch.current) * ls;
+        flyBank.current += (att.roll - flyBank.current) * ls;
+      } else if (!flying) {
+        const ls = Math.min(1, dt * 12);
+        flyPitch.current += (0 - flyPitch.current) * ls;
+        flyBank.current += (0 - flyBank.current) * ls;
+      }
     }
 
     // resolve animation LOD from camera distance (owned / in-match always full)
@@ -809,8 +1125,11 @@ export function ChampionMesh({
     }
     // skeletal update: full-rate near, throttled at mid, frozen far. Re-apply the
     // bone morph after each tick so the clip never washes out the proportions.
-    const peaceful = (restPose === "standing" || restPose === "sitting") && hpFrac == null;
-    const locoActive = (wander || padLeash) && wanderMoving.current;
+    const peaceful = (restPose === "standing" || restPose === "sitting") && hpFrac == null && locoCur.current === "rest";
+    const locoActive =
+      locoCur.current === "walk" ||
+      locoCur.current === "run" ||
+      ((wander || padLeash || companionDrive) && wanderMoving.current);
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
@@ -836,20 +1155,27 @@ export function ChampionMesh({
     const bobY = bodyBob > 0 ? Math.sin(t * bobHz + phase) * bodyBob : 0;
     const bobX = inCombat && bodyBob > 0 ? Math.sin(t * bobHz * 2.1 + phase + 1.4) * ANIM.portrait.battleSwayAmp : 0;
     if (motion.current) {
+      // flight attitude for the owned companion: nose-forward pitch + bank into turns
+      // + a soft air bob while aloft. flyAmt is 0 for everyone else, so NPCs keep
+      // their static lean. Damped under reduce-motion.
+      const calm = useSettings.getState().reduceMotion;
+      const airBob = flyAmt.current > 0.01 && !calm ? Math.sin(t * 1.5 + phase) * 0.06 * flyAmt.current : 0;
       motion.current.position.z = lunge.current * 0.5 - recoil.current * 0.4;
-      motion.current.position.y = bobY;
+      motion.current.position.y = bobY + airBob;
       motion.current.position.x = bobX;
+      motion.current.rotation.x = kitFor(type).lean + flyPitch.current;
+      motion.current.rotation.z = calm ? 0 : flyBank.current;
     }
 
     // evo animations — cosmetic only, so freeze them past the near band
     if (decorate) {
       if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.6 + phase) * 0.06);
       if (crownRef.current) {
-        crownRef.current.rotation.y += 0.01;
+        crownRef.current.rotation.y += 0.6 * dt; // dt-based spin (0.01/frame @60fps)
         crownRef.current.position.y = app.h + 0.3 + Math.sin(t * 1.4) * 0.05;
       }
     }
-  });
+  }, companionFrame ? -1 : companionRigDrive ? 2 : 0);
 
   const auraOpacity = (0.05 + ti * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
   const auraR = app.h * (auraDim ? 0.46 : 0.62);
@@ -867,6 +1193,13 @@ export function ChampionMesh({
       onPointerOver={onSelect ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={onSelect ? () => (document.body.style.cursor = "default") : undefined}
     >
+    {/* the BODY (and all its bone-riding decor / labels) scales to the scene —
+        mascots in the open world, full size in battles. The positional frame
+        above stays in TRUE world units, so wander paths and authored placements
+        land where the scene laid them out instead of compressing toward origin
+        (the old outer-scale wrap halved every roam radius — agents drifted into
+        the arena keep-out the biomes explicitly reserve). */}
+    <group scale={sceneScale}>
       {/* The body AND all the bolted decor live in the SAME group, so they share
           the exact transform the anchors were measured in. CRITICAL: the static
           posture `lean` (and the punch lunge/recoil z below) is applied HERE — if
@@ -896,6 +1229,9 @@ export function ChampionMesh({
             fuses to its own bone (head / torso) INTERNALLY, so it rides the live
             anatomy instead of orbiting the figure or hanging in empty space. */}
         {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} bones={built.bones} anchors={built.partAnchors} />}
+
+        {padLeash && <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />}
+        {companionDrive && !padLeash && <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />}
 
         {/* keeper regalia + aura ride the core bone so they track the body's live
             motion (sway, lunge, recoil) as one piece instead of hanging at the
@@ -1006,7 +1342,7 @@ export function ChampionMesh({
         </Html>
       )}
 
-      {clan && <ClanBanner clan={clan} h={app.h} />}
+    </group>
     </group>
   );
 }

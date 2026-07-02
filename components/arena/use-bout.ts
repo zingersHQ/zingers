@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { BattleEnd, BattleEvent, BattleRanked, BattleStart, BattleTurn } from "@/lib/types";
 import { speakCreatureType, stopCreature } from "@/lib/creature-voice";
 import { hitSfx } from "@/lib/sfx";
+import { ambienceFlourish, setAmbienceIntensity } from "@/lib/ambience-bus";
 
 export interface BoutState {
   phase: "idle" | "live" | "done";
@@ -43,6 +44,7 @@ export function useBout() {
     timer.current = null;
     queue.current = [];
     stopCreature();
+    setAmbienceIntensity(0); // an abandoned bout shouldn't leave the music wound up
   }, []);
 
   const pump = useCallback(() => {
@@ -62,9 +64,13 @@ export function useBout() {
       // voice the line in the actor's creature-type voice; punctuate a hit
       speakCreatureType(ev.line, ev.actor_type);
       if (ev.dmg > 0) hitSfx(ev.dmg, !!ev.info?.crit);
+      // music heat tracks the fight — rises as the losing side's resolve drains
+      setAmbienceIntensity(1 - Math.min(ev.a_hp, ev.b_hp) / 100);
       timer.current = setTimeout(pump, TURN_MS);
     } else if (ev.type === "end") {
       stopCreature();
+      ambienceFlourish("victory"); // the verdict phrase, then the heat releases
+      setAmbienceIntensity(0);
       setState((s) => ({ ...s, phase: "done", end: ev, hpA: ev.a_hp, hpB: ev.b_hp }));
       pendingEnd.current?.(ev, ranked.current);
     }

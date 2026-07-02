@@ -3,7 +3,6 @@ import { Html } from "@react-three/drei";
 import type { CreatureType } from "@/lib/types";
 import { trainerLevel, forceMeta } from "@/lib/evolve/trainer";
 import { GOLD } from "@/lib/render/palette";
-import { ClanBanner } from "@/components/grounds/clan-banner";
 
 /** Floating Reader rank label above the Handler. */
 export function ReaderSigilBillboard({
@@ -65,9 +64,4 @@ export function ReaderBackSigil({ height }: { height: number }) {
       </Html>
     </group>
   );
-}
-
-/** Clan banner at reduced scale when Reader has pledged Allegiance. */
-export function ReaderClanBanner({ clan, h }: { clan: CreatureType; h: number }) {
-  return <ClanBanner clan={clan} h={h} scale={0.72} />;
 }

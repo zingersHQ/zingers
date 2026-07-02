@@ -206,3 +206,26 @@ export function bodyBobForMode(mode: CreatureAnimMode): number {
   if (mode === "battle") return ANIM.portrait.battleBobAmp;
   return mode === "bounce" ? ANIM.portrait.bobAmp * 2.2 : 0;
 }
+
+/** Jetpack flight attitude: pitch + roll from planar velocity in body-local space. */
+export function flightAttitudePlanar(
+  vx: number,
+  vz: number,
+  headingY: number,
+  blend: number,
+  opts?: { pitchGain?: number; rollGain?: number; maxPitch?: number; maxRoll?: number },
+): { pitch: number; roll: number } {
+  const b = Math.max(0, Math.min(1, blend));
+  if (b < 0.001) return { pitch: 0, roll: 0 };
+  const sinH = Math.sin(headingY);
+  const cosH = Math.cos(headingY);
+  const vf = vx * sinH + vz * cosH;
+  const vr = vx * cosH - vz * sinH;
+  const pitchGain = opts?.pitchGain ?? 0.042;
+  const rollGain = opts?.rollGain ?? 0.24;
+  const maxPitch = opts?.maxPitch ?? 0.48;
+  const maxRoll = opts?.maxRoll ?? 0.36;
+  const pitch = Math.max(-maxPitch * 0.35, Math.min(maxPitch, vf * pitchGain)) * b;
+  const roll = Math.max(-maxRoll, Math.min(maxRoll, -vr * rollGain)) * b;
+  return { pitch, roll };
+}

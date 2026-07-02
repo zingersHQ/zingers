@@ -8,6 +8,7 @@
 // Shares the on/off preference with the music + sfx toggle (STORAGE.sound), so
 // muting the world mutes the Keepers too.
 import { STORAGE } from "@/lib/brand";
+import { duckAmbience } from "@/lib/ambience-bus";
 import type { CreatureType } from "@/lib/types";
 
 type AudioCtor = typeof AudioContext;
@@ -240,6 +241,9 @@ function speakWith(text: string, p: CProfile, opts?: { onEnd?: () => void }) {
     t += p.dur + p.gap;
     n++;
   }
+
+  // sidechain: keep the score gently under the spoken line for its duration
+  if (n > 0) duckAmbience(0.22, Math.max(0, (t - c.currentTime) * 1000));
 
   // fire onEnd shortly after the last blip would finish
   if (opts?.onEnd) {

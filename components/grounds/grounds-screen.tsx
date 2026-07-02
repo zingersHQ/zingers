@@ -812,12 +812,19 @@ export default function GroundsScreen() {
     ];
   }, [champions, opponentId, towerAgents]);
 
+  // Reader split coach is for regions with a train pad — never in the Concord hub.
   useEffect(() => {
-    if (!mounted || !owned) return;
+    if (!isHub || readerSplitStep === null) return;
+    dismissReaderSplitCoach();
+  }, [isHub, readerSplitStep, dismissReaderSplitCoach]);
+
+  useEffect(() => {
+    if (!mounted || !owned || !isFirstDuelComplete()) return;
     try {
-      if (localStorage.getItem(STORAGE.readerSplitCoach) !== "1" && isFirstDuelComplete()) {
-        setReaderSplitStep((s) => (s == null ? 0 : s));
-      }
+      if (localStorage.getItem(STORAGE.readerSplitCoach) === "1") return;
+      // Act 1 ends in the Concord — train-pad copy is for regions, not the hub.
+      localStorage.setItem(STORAGE.readerSplitCoach, "1");
+      if (localStorage.getItem(STORAGE.concordCoach) !== "1") setConcordCoach(true);
     } catch {}
   }, [mounted, owned]);
 
@@ -1067,7 +1074,12 @@ export default function GroundsScreen() {
     setMatchView(null);
     setOpponent(null);
     setResult(null);
-    setReaderSplitStep(0);
+    // Concord landing already taught Reader vs champion — skip the train-pad coach
+    // (no pad in the hub) and steer toward the spotlit Grounds gate.
+    try {
+      localStorage.setItem(STORAGE.readerSplitCoach, "1");
+    } catch {}
+    setConcordCoach(true);
     if (worldId !== "concord") {
       travelToWorld("concord", false);
       // Land facing the spotlit Grounds gate: drop in at the Concord threshold,
@@ -1944,11 +1956,11 @@ export default function GroundsScreen() {
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
               {guideIdle ? (
                 <>
-                  <strong>This way.</strong> Head through the glowing <strong>Grounds</strong> gate — your first arena. Step onto its ring and press <span className="mono">E</span>.
+                  <strong>This way.</strong> Fly to the glowing <strong>Grounds</strong> gate — your first region to explore. Step onto its ring and press <span className="mono">E</span>.
                 </>
               ) : (
                 <>
-                  <strong>Welcome to the Concord.</strong> The lit <strong>Grounds</strong> gate is your first arena — take it. The other gates can wait.
+                  <strong>Welcome to the Concord.</strong> Fly out through the lit <strong>Grounds</strong> gate — your first region. The other gates can wait.
                 </>
               )}
             </span>
@@ -1968,14 +1980,14 @@ export default function GroundsScreen() {
         </div>
       )}
 
-      {readerSplitStep !== null && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+      {readerSplitStep !== null && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
             {readerSplitStep === 0 ? (
               <>
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOU, THE READER</div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
-                  <strong>This is you.</strong> You walk the Grounds with WASD / the stick. Your colorful champion is separate — it fights for you.
+                  <strong>This is you.</strong> Move with WASD / the stick — and <strong>hold <span className="mono">Space</span> to fly</strong>. The Grounds are yours to soar.
                 </p>
                 <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 13 }} onClick={() => setReaderSplitStep(1)}>
                   Meet your champion
@@ -1985,7 +1997,7 @@ export default function GroundsScreen() {
               <>
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOUR CHAMPION</div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
-                  {READER_COPY.walkFightLine} Walk to the <strong>train pad</strong> (purple ring) — your champion drills there. Press <span className="mono">E</span> when you arrive.
+                  {READER_COPY.walkFightLine} Take off and it lifts off with you. Fly out and explore — chase the <strong>tower</strong> on the horizon.
                 </p>
                 <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "6px 12px" }} onClick={dismissReaderSplitCoach}>
                   Skip

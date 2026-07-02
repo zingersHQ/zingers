@@ -379,7 +379,7 @@ export function readerPalette(force: CreatureType | null | undefined): BodyPalet
     accent,
     trim,
     dark: "#3a3d48",
-    glow: GOLD,
+    glow: force ? forceColors(force).primary : GOLD,
     cube: GOLD,
     colorFor: (_region, _side, role) => {
       if (role === "plate") return trim;

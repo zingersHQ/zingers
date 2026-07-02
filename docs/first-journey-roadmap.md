@@ -1,5 +1,11 @@
 # First Journey Roadmap
 
+> **Direction note (July 2026):** Being recut to **Flight-First**
+> ([`design-vision.md`](./design-vision.md) v3.0). Target first-90s: wake → **fly**
+> → claim a mind → **it flies beside you** → race a tower/gate → *optional* arena.
+> The shipped flow below (fight-led) is the prior pass; see
+> [`launch-week.md`](./launch-week.md) P4 for the reframe.
+
 Production pass for Act 1 — from first visit through the Concord landing.
 
 ## Act 1 flow (shipped)

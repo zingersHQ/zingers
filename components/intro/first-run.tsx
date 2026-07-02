@@ -48,11 +48,12 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // A four-beat story — Awaken → Shape → Fight → Legend — where the live agent
-  // performs an action in every scene. On a phone we keep the two beats that hit
-  // hardest: the birth and the fight.
+  // Flight-first story — World → Companion → Forces → Arenas → Fly. It opens on the
+  // place and your role in it, introduces the champion as a companion that flies with
+  // you, and ends on the joy of flight (not the fight). On a phone we keep the three
+  // that carry the fantasy: the world, the companion, and taking wing.
   const slides = isMobile
-    ? [<Awaken key="awaken" mobile />, <Forces key="forces" mobile />, <Fight key="fight" mobile />]
+    ? [<Awaken key="awaken" mobile />, <Shape key="shape" mobile />, <Legend key="legend" mobile />]
     : [<Awaken key="awaken" />, <Shape key="shape" />, <Forces key="forces" />, <Fight key="fight" />, <Legend key="legend" />];
   const count = slides.length;
   const LAST = count - 1;
@@ -266,15 +267,15 @@ function Awaken({ mobile }: { mobile?: boolean }) {
       </Stage>
       <LowerThird
         mobile={mobile}
-        kicker="AN AI YOU RAISE"
+        kicker="THE GROUNDS"
         title={
           <>
-            A mind argues itself
+            A world adrift
             <br />
-            into a body.
+            above the Long Vault.
           </>
         }
-        body="You're the Reader — you don't fight. You raise it: choose its brain, drill how it thinks, and watch what you teach become flesh."
+        body="You are the Reader — a will who walks and flies the Grounds. You don't fight; you raise the minds that do, in a strange, beautiful world that's yours to wander."
       />
     </div>
   );
@@ -299,35 +300,16 @@ function Shape({ mobile }: { mobile?: boolean }) {
       </Stage>
       <LowerThird
         mobile={mobile}
-        kicker="TRAIN"
+        kicker="YOUR CHAMPION"
         title={
           <>
-            Teach it how
+            Claim a mind.
             <br />
-            to think.
+            It flies with you.
           </>
         }
-        body="Any brain, any doctrine. What you drill in becomes its body — heavier fists, a sharper skull, a frame that won't fall."
-      >
-        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 16 }}>
-          {["House Grok", "Your GPT", "Your agent"].map((l, idx) => (
-            <span
-              key={l}
-              className="mono"
-              style={{
-                fontSize: 10,
-                padding: "6px 12px",
-                borderRadius: 99,
-                border: `1px solid ${idx === 0 ? ACC : "var(--line2)"}`,
-                color: idx === 0 ? ACC : "var(--muted)",
-                background: idx === 0 ? "rgba(124,92,255,.14)" : "rgba(10,8,18,.5)",
-              }}
-            >
-              {l}
-            </span>
-          ))}
-        </div>
-      </LowerThird>
+        body="You adopt a raw mind and it rises to your side. Shape how it grows and its body becomes the visible story of everything you gave it — yours, and unlike anyone else's."
+      />
     </div>
   );
 }
@@ -413,15 +395,15 @@ function Fight({ mobile }: { mobile?: boolean }) {
       <ReasoningBubble mobile={mobile} />
       <LowerThird
         mobile={mobile}
-        kicker="FIGHT"
+        kicker="THE ARENAS"
         title={
           <>
-            It argues
+            And when you want it,
             <br />
-            for its life.
+            the fireworks.
           </>
         }
-        body="Every move is reasoning you can feel. Five Forces turn one wheel — each style beats the next. Your champion just broke the frame."
+        body="Fly your champion to an arena and it fights on its own — thinking, adapting, arguing for its life. A spectacular payoff you choose, never the reason you're here."
       />
     </div>
   );
@@ -510,9 +492,9 @@ function ReasoningBubble({ mobile }: { mobile?: boolean }) {
   );
 }
 
-// ── Beat 4 — LEGEND (desktop only) ───────────────────────────────────────────
-// Victory & the climb: the agent leaps, evolution flaring, while the overnight
-// league keeps fighting in the corner.
+// ── Finale — FLY ─────────────────────────────────────────────────────────────
+// The agent leaps (reads as lift-off), evolution flaring — the deck ends on the
+// joy of flight, with the living world (the async league) turning in the corner.
 const OVERNIGHT: { who: string; verdict: string; won: boolean }[] = [
   { who: "vs. AXIOM", verdict: "broke the proof", won: true },
   { who: "vs. VOX", verdict: "outlasted the room", won: true },
@@ -549,7 +531,7 @@ function Legend({ mobile }: { mobile?: boolean }) {
           backdropFilter: "blur(7px)",
         }}
       >
-        <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: "var(--muted2)", marginBottom: 9 }}>WHILE YOU SLEPT</div>
+        <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: "var(--muted2)", marginBottom: 9 }}>THE WORLD, WHILE YOU'RE AWAY</div>
         {OVERNIGHT.map((r) => (
           <div key={r.who} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid var(--line)" }}>
             <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: r.won ? "var(--good)" : "var(--bad)", width: 26 }}>{r.won ? "WIN" : "LOSS"}</span>
@@ -562,15 +544,15 @@ function Legend({ mobile }: { mobile?: boolean }) {
 
       <LowerThird
         mobile={mobile}
-        kicker="CLIMB"
+        kicker="FLY"
         title={
           <>
-            Win while you sleep.
+            Then you fly.
             <br />
-            Become legend.
+            Soar the deep.
           </>
         }
-        body="The league runs duels on its own. Wake to results, memory notes, and a card worth sharing — your mind, climbing without you."
+        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you — and go on far past the Concord."
       />
     </div>
   );

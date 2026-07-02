@@ -43,8 +43,10 @@ const DEAD = 0.2;
 function dz(v: number): number {
   if (Math.abs(v) < DEAD) return 0;
   // rescale so motion starts smoothly past the deadzone, preserving sign
-  const s = (Math.abs(v) - DEAD) / (1 - DEAD);
-  return Math.sign(v) * Math.min(1, s);
+  const s = Math.min(1, (Math.abs(v) - DEAD) / (1 - DEAD));
+  // gentle quadratic response curve: fine authority near centre (precision walks
+  // and slow camera pans), still full speed at the rim
+  return Math.sign(v) * s * s;
 }
 
 let started = false;

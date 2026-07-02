@@ -363,6 +363,254 @@ textarea::placeholder {
   }
 }
 
+/* ── arena battle juice ─────────────────────────────────────────────── */
+/* Impact presentation for the live bout: screen shake scaled to damage,
+   a hit flash on the struck panel, floating damage numbers, the HP ghost
+   trail, low-Resolve pulse, speaker glow, the VS card and the KO beat.
+   Transforms/opacity only — nothing here reflows the stage. */
+.arena-shake-sm {
+  animation: arena-shake-sm 0.28s ease-out both;
+}
+.arena-shake-md {
+  animation: arena-shake-md 0.36s ease-out both;
+}
+.arena-shake-lg {
+  animation: arena-shake-lg 0.5s ease-out both;
+}
+@keyframes arena-shake-sm {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2px, 1px);
+  }
+  50% {
+    transform: translate(2px, -1px);
+  }
+  75% {
+    transform: translate(-1px, 0);
+  }
+}
+@keyframes arena-shake-md {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5px, 2px) rotate(-0.2deg);
+  }
+  40% {
+    transform: translate(4px, -3px) rotate(0.2deg);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+}
+@keyframes arena-shake-lg {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-9px, 4px) rotate(-0.4deg);
+  }
+  30% {
+    transform: translate(8px, -5px) rotate(0.4deg);
+  }
+  45% {
+    transform: translate(-6px, 3px) rotate(-0.25deg);
+  }
+  60% {
+    transform: translate(5px, -2px);
+  }
+  75% {
+    transform: translate(-3px, 1px);
+  }
+  90% {
+    transform: translate(1px, 0);
+  }
+}
+
+/* hit flash — a red wash over the struck fighter's panel that burns off */
+.hit-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--bad) 45%, transparent);
+  animation: hit-flash 0.45s ease-out both;
+}
+@keyframes hit-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* damage number — pops with overshoot, then floats up and fades */
+.dmg-float {
+  animation: dmg-float 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes dmg-float {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+  32% {
+    transform: translateY(-2px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.92);
+  }
+}
+
+/* HP ghost trail — the pale segment that drains on a delay after the live
+   bar drops (fighting-game style), so a big hit leaves a visible bite */
+.hp-ghost {
+  transition: width 0.9s cubic-bezier(0.3, 0.7, 0.3, 1) 0.45s;
+}
+/* low-Resolve pulse — the bar throbs once a fighter is in the red */
+.hp-low {
+  animation: hp-low 0.9s ease-in-out infinite;
+}
+@keyframes hp-low {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.6);
+  }
+}
+
+/* speaker highlight — the active side's panel breathes its accent colour */
+.speaker-pulse {
+  animation: speaker-pulse 1.5s ease-in-out infinite;
+}
+@keyframes speaker-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 26px -8px var(--ac, var(--accent));
+  }
+}
+
+/* zinger entrance — each word of a new bar slides up into the bubble */
+.line-enter {
+  display: inline-block;
+  animation: line-enter 0.34s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes line-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+}
+
+/* round-start VS card — names crash in from the wings, VS punches through,
+   the whole card holds a beat then fades (the wrapper owns the fade-out) */
+.vs-wrap {
+  animation: vs-wrap 1.6s ease both;
+}
+@keyframes vs-wrap {
+  0%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.vs-side-l {
+  animation: vs-side-l 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes vs-side-l {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+}
+.vs-side-r {
+  animation: vs-side-r 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes vs-side-r {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+.vs-mark {
+  animation: vs-mark 0.55s cubic-bezier(0.2, 1.4, 0.3, 1) 0.22s both;
+}
+@keyframes vs-mark {
+  0% {
+    opacity: 0;
+    transform: scale(2.6) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* KO word — slams in oversized during the freeze-beat before the verdict */
+.ko-word {
+  animation: ko-word 0.6s cubic-bezier(0.15, 1.3, 0.3, 1) both;
+}
+@keyframes ko-word {
+  0% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena-shake-sm,
+  .arena-shake-md,
+  .arena-shake-lg,
+  .speaker-pulse,
+  .hp-low {
+    animation: none;
+  }
+  .hit-flash {
+    animation: none;
+    opacity: 0;
+  }
+  .hp-ghost {
+    transition: none;
+  }
+  .dmg-float,
+  .line-enter,
+  .vs-wrap,
+  .vs-side-l,
+  .vs-side-r,
+  .vs-mark,
+  .ko-word {
+    animation: fadein 0.2s ease both;
+  }
+}
+
 /* ── top nav ───────────────────────────────────────────────────────── */
 .site-nav {
   position: sticky;

@@ -6,6 +6,8 @@ import type { BattleEnd, Champion, RosterEntry, Style } from "@/lib/types";
 import { TYPE_COLOR, blankStyle, accrue } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
+import { KoOverlay, VsIntro, usePrefersReducedMotion, useScreenShake } from "@/components/arena/juice";
+import { rewardSfx } from "@/lib/sfx";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
 import { GameDock } from "@/components/game-dock";
 import { DOCK_H } from "@/lib/play-nav";
@@ -470,6 +472,33 @@ function BoutView(props: {
   const { bout, a, b, acol, bcol, aChamp, bChamp, pick, resultMsg, onAgain, topic } = props;
   const t = bout.turn;
   const lineActor = t?.actor;
+  const reduced = usePrefersReducedMotion();
+
+  // screen shake on impact, scaled to the latest turn's damage (juice only —
+  // the class is applied imperatively so the fighter panels never remount)
+  const stageRef = useRef<HTMLDivElement>(null);
+  useScreenShake(stageRef, t?.round, t?.dmg, reduced);
+
+  // round-start VS card — holds over the stage while the fighters square up
+  const [intro, setIntro] = useState(true);
+  useEffect(() => {
+    const id = setTimeout(() => setIntro(false), reduced ? 500 : 1600);
+    return () => clearTimeout(id);
+  }, [reduced]);
+
+  // KO freeze-beat: hold on the finish (rings + K.O.) before the verdict card
+  const [koDone, setKoDone] = useState(false);
+  const koStungRef = useRef(false);
+  useEffect(() => {
+    if (!bout.end) return;
+    if (!koStungRef.current) {
+      koStungRef.current = true;
+      rewardSfx("big");
+    }
+    const id = setTimeout(() => setKoDone(true), reduced ? 350 : 1300);
+    return () => clearTimeout(id);
+  }, [bout.end, reduced]);
+  const winnerCol = bout.end ? (bout.end.winner === a.key ? acol : bcol) : acol;
 
   return (
     <div className="fadein">
@@ -480,70 +509,80 @@ function BoutView(props: {
         <span style={{ fontStyle: "italic" }}>&ldquo;{bout.start?.topic || topic}&rdquo;</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <FighterPanel entry={a} champ={aChamp} col={acol} hp={bout.hpA} speaking={lineActor === a.key} line={lineActor === a.key ? t?.line : undefined} dmg={t && t.opp === a.key ? t.dmg : undefined} />
-        <FighterPanel entry={b} champ={bChamp} col={bcol} hp={bout.hpB} speaking={lineActor === b.key} line={lineActor === b.key ? t?.line : undefined} dmg={t && t.opp === b.key ? t.dmg : undefined} />
+      {/* the shake stage: fighters + the turn card move together on impact */}
+      <div ref={stageRef}>
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <FighterPanel entry={a} champ={aChamp} col={acol} hp={bout.hpA} speaking={lineActor === a.key} line={lineActor === a.key ? t?.line : undefined} dmg={t && t.opp === a.key ? t.dmg : undefined} crit={t && t.opp === a.key ? t.info.crit : false} />
+            <FighterPanel entry={b} champ={bChamp} col={bcol} hp={bout.hpB} speaking={lineActor === b.key} line={lineActor === b.key ? t?.line : undefined} dmg={t && t.opp === b.key ? t.dmg : undefined} crit={t && t.opp === b.key ? t.info.crit : false} />
+          </div>
+          {intro && !bout.end && <VsIntro aName={a.name} bName={b.name} acol={acol} bcol={bcol} />}
+        </div>
+
+        {t && (
+          <div className="panel pop" key={t.round} style={{ marginTop: 14, padding: 16, ["--ac" as string]: t.actor === a.key ? acol : bcol }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)" }}>
+                ROUND {t.round} · THE READ
+              </span>
+              <span className="chip" style={{ borderColor: t.actor === a.key ? acol : bcol, color: t.actor === a.key ? acol : bcol }}>
+                {t.actor_name} → {t.move}
+              </span>
+              <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                intent: {t.intent}
+              </span>
+              {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
+              {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
+              {t.info.capped && <span className="chip" style={{ borderColor: "var(--bad)", color: "var(--bad)" }}>CAPPED</span>}
+            </div>
+            <p style={{ margin: "10px 0 0", color: "var(--ink)", fontSize: 14, lineHeight: 1.5 }}>
+              <span style={{ color: "var(--muted2)" }}>why&nbsp;&rsaquo;&nbsp;</span>
+              {t.why || "-"}
+            </p>
+            <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <Scale size={12} strokeWidth={2} /> jury: {t.ruling}
+            </div>
+            {/* Why this landed — the engine's own math, made legible: the judge only
+                nudges a bounded quality multiplier; type + statuses do the rest. */}
+            <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <span className="chip" title="Judge's bounded quality multiplier (0.7–1.3, or 1.4 on a Highlight)"
+                style={{ borderColor: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--line)", color: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--muted)" }}>
+                quality ×{t.q.toFixed(2)}
+              </span>
+              <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>×</span>
+              <span className="chip" title="Type matchup on the pentagon"
+                style={{ borderColor: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--line)", color: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--muted)" }}>
+                type ×{t.info.type.toFixed(2)}{t.info.se ? " (super effective)" : t.info.resist ? " (resisted)" : ""}
+              </span>
+              <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>→</span>
+              <span className="chip" style={{ borderColor: t.actor === a.key ? acol : bcol, color: t.actor === a.key ? acol : bcol, fontWeight: 700 }}>
+                {t.dmg} dmg{t.info.capped ? " (CAPPED)" : ""}
+              </span>
+              {t.info.fizzle && <span className="chip" style={{ borderColor: "var(--bad)", color: "var(--bad)" }}>fizzled</span>}
+              {t.info.status?.map((s) => (
+                <span key={s} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{s}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {t && (
-        <div className="panel pop" key={t.round} style={{ marginTop: 14, padding: 16, ["--ac" as string]: t.actor === a.key ? acol : bcol }}>
-          <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-            <span className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)" }}>
-              ROUND {t.round} · THE READ
-            </span>
-            <span className="chip" style={{ borderColor: t.actor === a.key ? acol : bcol, color: t.actor === a.key ? acol : bcol }}>
-              {t.actor_name} → {t.move}
-            </span>
-            <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-              intent: {t.intent}
-            </span>
-            {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
-            {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
-            {t.info.capped && <span className="chip" style={{ borderColor: "var(--bad)", color: "var(--bad)" }}>CAPPED</span>}
-          </div>
-          <p style={{ margin: "10px 0 0", color: "var(--ink)", fontSize: 14, lineHeight: 1.5 }}>
-            <span style={{ color: "var(--muted2)" }}>why&nbsp;&rsaquo;&nbsp;</span>
-            {t.why || "-"}
-          </p>
-          <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <Scale size={12} strokeWidth={2} /> jury: {t.ruling}
-          </div>
-          {/* Why this landed — the engine's own math, made legible: the judge only
-              nudges a bounded quality multiplier; type + statuses do the rest. */}
-          <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-            <span className="chip" title="Judge's bounded quality multiplier (0.7–1.3, or 1.4 on a Highlight)"
-              style={{ borderColor: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--line)", color: t.q >= 1.05 ? "var(--good)" : t.q <= 0.95 ? "var(--bad)" : "var(--muted)" }}>
-              quality ×{t.q.toFixed(2)}
-            </span>
-            <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>×</span>
-            <span className="chip" title="Type matchup on the pentagon"
-              style={{ borderColor: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--line)", color: t.info.se ? "var(--good)" : t.info.resist ? "var(--bad)" : "var(--muted)" }}>
-              type ×{t.info.type.toFixed(2)}{t.info.se ? " (super effective)" : t.info.resist ? " (resisted)" : ""}
-            </span>
-            <span className="mono" style={{ color: "var(--muted2)", fontSize: 12 }}>→</span>
-            <span className="chip" style={{ borderColor: t.actor === a.key ? acol : bcol, color: t.actor === a.key ? acol : bcol, fontWeight: 700 }}>
-              {t.dmg} dmg{t.info.capped ? " (CAPPED)" : ""}
-            </span>
-            {t.info.fizzle && <span className="chip" style={{ borderColor: "var(--bad)", color: "var(--bad)" }}>fizzled</span>}
-            {t.info.status?.map((s) => (
-              <span key={s} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{s}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {bout.end && (
+      {/* KO freeze-beat first, then the verdict card lands */}
+      {bout.end && !koDone && <KoOverlay col={winnerCol} />}
+      {bout.end && koDone && (
         <ResultCard end={bout.end} a={a} b={b} acol={acol} bcol={bcol} pick={pick} resultMsg={resultMsg} onAgain={onAgain} />
       )}
     </div>
   );
 }
 
-function FighterPanel(props: { entry: RosterEntry; champ: Champion; col: string; hp: number; speaking: boolean; line?: string; dmg?: number }) {
-  const { entry, champ, col, hp, speaking, line, dmg } = props;
+function FighterPanel(props: { entry: RosterEntry; champ: Champion; col: string; hp: number; speaking: boolean; line?: string; dmg?: number; crit?: boolean }) {
+  const { entry, champ, col, hp, speaking, line, dmg, crit } = props;
   const dl = doctrineLabel(champ);
+  const low = hp > 0 && hp <= 25; // in the red — the bar throbs
+  const words = speaking && line ? line.split(" ") : null;
   return (
-    <div className="panel" style={{ ["--ac" as string]: col, padding: 18, position: "relative", overflow: "hidden", borderColor: speaking ? col : "var(--line)" }}>
+    <div className={speaking ? "panel speaker-pulse" : "panel"} style={{ ["--ac" as string]: col, padding: 18, position: "relative", overflow: "hidden", borderColor: speaking ? col : "var(--line)" }}>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <ChampionAvatar ckey={entry.key} type={entry.type} champion={champ} size={84} />
         <div style={{ flex: 1 }}>
@@ -551,19 +590,26 @@ function FighterPanel(props: { entry: RosterEntry; champ: Champion; col: string;
           <div className="mono" style={{ fontSize: 10, color: col, letterSpacing: 1 }}>
             {entry.type} · L{dl.level} · {dl.doctrine}
           </div>
-          <div style={{ marginTop: 10, height: 12, borderRadius: 8, background: "#241f33", overflow: "hidden", border: "1px solid #2a2738" }}>
-            <div style={{ width: `${hp}%`, height: "100%", background: hp > 55 ? "var(--good)" : hp > 25 ? "var(--gold)" : "var(--bad)", transition: "width .6s cubic-bezier(.2,.8,.2,1)" }} />
+          <div style={{ marginTop: 10, height: 12, borderRadius: 8, background: "#241f33", overflow: "hidden", border: "1px solid #2a2738", position: "relative" }}>
+            {/* damage trail — drains on a delay behind the live bar, so a big hit leaves a visible bite */}
+            <div className="hp-ghost" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${hp}%`, background: "color-mix(in srgb, var(--bad) 40%, #fff)", opacity: 0.55 }} />
+            <div
+              className={low ? "hp-low" : undefined}
+              style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${hp}%`, background: hp > 55 ? "var(--good)" : hp > 25 ? "var(--gold)" : "var(--bad)", transition: "width .6s cubic-bezier(.2,.8,.2,1)" }}
+            />
           </div>
           <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
             {hp} / 100 RESOLVE
           </div>
         </div>
         {dmg ? (
-          <div className="pop" key={`${hp}-${dmg}`} style={{ position: "absolute", top: 14, right: 16, color: "var(--bad)", fontWeight: 700, fontSize: 26 }}>
+          <div className="dmg-float" key={`${hp}-${dmg}`} style={{ position: "absolute", top: 14, right: 16, color: crit ? "var(--gold)" : "var(--bad)", fontWeight: 700, fontSize: dmg >= 25 ? 34 : dmg >= 12 ? 28 : 22, textShadow: "0 2px 12px rgba(0,0,0,.5)", zIndex: 2 }}>
             −{dmg}
           </div>
         ) : null}
       </div>
+      {/* hit flash — a red wash keyed to each fresh hit so it re-fires per turn */}
+      {dmg ? <div className="hit-flash" key={`flash-${hp}-${dmg}`} /> : null}
       <div
         style={{
           marginTop: 14,
@@ -578,7 +624,22 @@ function FighterPanel(props: { entry: RosterEntry; champ: Champion; col: string;
           transition: "all .2s ease",
         }}
       >
-        {speaking && line ? `“${line}”` : "…"}
+        {words ? (
+          <span key={line}>
+            “
+            {words.map((w, i) => (
+              // the separator below is a literal nbsp — a plain space would be
+              // trimmed at the inline-block's line-box edge and jam words together
+              <span key={i} className="line-enter" style={{ animationDelay: `${i * 0.045}s` }}>
+                {w}
+                {i < words.length - 1 ? " " : ""}
+              </span>
+            ))}
+            ”
+          </span>
+        ) : (
+          "…"
+        )}
       </div>
     </div>
   );

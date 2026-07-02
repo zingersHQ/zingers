@@ -23,10 +23,11 @@ export const FIGHT = {
 /** Canonical Reader vs champion teaching lines — use everywhere onboarding touches. */
 export const READER_COPY = {
   claimLine: "You did not become this champion. You claimed it.",
-  walkFightLine: "You walk the Grounds. Your champion fights.",
-  walkFightChip: "You walk · It fights",
+  walkFightLine: "You fly the Grounds. Your champion flies at your side.",
+  walkFightChip: "You fly · It flies with you",
+  flyLine: "Hold to rise. The Grounds are yours to soar.",
   adoptCta: (name: string) => `Adopt ${name}`,
-  rookieArc: "Every win reshapes the body. This is day one.",
+  rookieArc: "Everything you do together reshapes the body. This is day one.",
   legendAspiration: "Legend forms earn their shape — yours starts at Rookie.",
   rookieEarned: "You claimed a rookie — the legend form is earned.",
 } as const;

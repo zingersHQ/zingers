@@ -2,9 +2,10 @@
 // Quaternius Stylized Nature MegaKit — reinterprets the Grounds' procedural scatter,
 // obelisks, spawn camino, and rift river as instanced rocks, landmark trees, path
 // stones, and glowing understory. CC0 assets in public/models/nature/.
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { CylinderCollider, RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import {
   PLAZA_R,
@@ -109,18 +110,37 @@ function randomScale3(rng: () => number, base: number, spread = 0.45): [number, 
   return [s * (0.92 + rng() * 0.18), s * (0.78 + rng() * 0.55), s * (0.92 + rng() * 0.18)];
 }
 
-function firstMesh(root: THREE.Object3D): THREE.Mesh | null {
-  let found: THREE.Mesh | null = null;
-  root.traverse((o) => {
-    if (!found && (o as THREE.Mesh).isMesh) found = o as THREE.Mesh;
-  });
-  return found;
+// ── shared model info — computed once per glTF, cached across every mount ─────
+// `lift` is how far to raise a model so its bounding-box base sits on y=0;
+// `parts` are the model's meshes (geometry + material + local transform), shared
+// so instanced draws reuse the loader's GPU buffers instead of cloning them.
+interface NatureModelPart {
+  geo: THREE.BufferGeometry;
+  mat: THREE.Material;
+  local: THREE.Matrix4;
 }
+interface NatureModelInfo {
+  lift: number;
+  parts: NatureModelPart[];
+}
+const MODEL_INFO = new WeakMap<THREE.Object3D, NatureModelInfo>();
 
-/** How far to lift a model so its bounding-box base sits on y=0. */
-function groundLift(root: THREE.Object3D): number {
+function modelInfo(root: THREE.Object3D): NatureModelInfo {
+  const hit = MODEL_INFO.get(root);
+  if (hit) return hit;
+  root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
-  return -box.min.y;
+  const parts: NatureModelPart[] = [];
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    mesh.geometry.computeBoundingSphere();
+    parts.push({ geo: mesh.geometry, mat, local: mesh.matrixWorld.clone() });
+  });
+  const info: NatureModelInfo = { lift: -box.min.y, parts };
+  MODEL_INFO.set(root, info);
+  return info;
 }
 
 export interface PropPlacement {
@@ -133,63 +153,182 @@ export interface PropPlacement {
   emissiveIntensity?: number;
 }
 
-function NatureProp({ modelId, pos, rot, scale, scale3, emissive, emissiveIntensity }: PropPlacement) {
+// Every placement of one model drawn as instanced meshes — one draw call per
+// glTF part instead of a full scene clone per placement. Emissive-tinted groups
+// clone their materials ONCE so the glow never leaks onto the shared kit
+// materials the plain scatter draws with.
+function InstancedPlacements({
+  modelId,
+  placements,
+  emissive,
+  emissiveIntensity,
+}: {
+  modelId: string;
+  placements: PropPlacement[];
+  emissive?: string;
+  emissiveIntensity?: number;
+}) {
   const { scene } = useGLTF(natureUrl(modelId));
-  const lift = useMemo(() => groundLift(scene), [scene]);
-  const s = scale3 ?? ([scale, scale, scale] as [number, number, number]);
-  const obj = useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((child) => {
-      if (!(child as THREE.Mesh).isMesh) return;
-      const mesh = child as THREE.Mesh;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      if (!emissive) return;
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      for (const mat of mats) {
-        if (mat instanceof THREE.MeshStandardMaterial) {
-          mat.emissive = new THREE.Color(emissive);
-          mat.emissiveIntensity = emissiveIntensity ?? 0.55;
-        }
-      }
+  const { lift, parts } = useMemo(() => modelInfo(scene), [scene]);
+  const mats = useMemo(() => {
+    if (!emissive) return parts.map((p) => p.mat);
+    return parts.map((p) => {
+      if (!(p.mat instanceof THREE.MeshStandardMaterial)) return p.mat;
+      const m = p.mat.clone();
+      m.emissive = new THREE.Color(emissive);
+      m.emissiveIntensity = emissiveIntensity ?? 0.55;
+      return m;
     });
-    return c;
-  }, [scene, emissive, emissiveIntensity]);
+  }, [parts, emissive, emissiveIntensity]);
+  const group = useRef<THREE.Group>(null);
+  useLayoutEffect(() => {
+    const g = group.current;
+    if (!g) return;
+    const pm = new THREE.Matrix4();
+    const out = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const v = new THREE.Vector3();
+    const sv = new THREE.Vector3();
+    for (let pi = 0; pi < parts.length; pi++) {
+      const im = g.children[pi] as THREE.InstancedMesh | undefined;
+      if (!im) continue;
+      for (let i = 0; i < placements.length; i++) {
+        const p = placements[i];
+        const s = p.scale3 ?? [p.scale, p.scale, p.scale];
+        e.set(p.rot[0], p.rot[1], p.rot[2]);
+        q.setFromEuler(e);
+        // same lift NatureProp applied: base of the (scaled) model sits on pos.y
+        v.set(p.pos[0], p.pos[1] + lift * s[1], p.pos[2]);
+        sv.set(s[0], s[1], s[2]);
+        pm.compose(v, q, sv);
+        im.setMatrixAt(i, out.multiplyMatrices(pm, parts[pi].local));
+      }
+      im.count = placements.length;
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+    }
+  }, [parts, placements, lift]);
+  if (parts.length === 0 || placements.length === 0) return null;
   return (
-    <primitive
-      object={obj}
-      position={[pos[0], pos[1] + lift * s[1], pos[2]]}
-      rotation={rot}
-      scale={s}
-    />
+    <group ref={group}>
+      {parts.map((p, i) => (
+        <instancedMesh key={i} args={[p.geo, mats[i], placements.length]} castShadow receiveShadow />
+      ))}
+    </group>
+  );
+}
+
+// ── prop physics ──────────────────────────────────────────────────────────────
+// Colliders for the SUBSTANTIAL props only: tree trunks and large boulders block
+// the walker; grass / pebbles / flowers / path stones stay walk-through. Specs
+// are derived from the SAME placement data the instanced meshes draw from —
+// computed AFTER the seeded layout loops, so they never disturb the RNG call
+// order — and rendered as bare fixed bodies (colliders only, no meshes), leaving
+// the instanced rendering untouched. Opt-in per scene: the biome backdrop mounts
+// these components outside a <Physics> provider, where a RigidBody would throw.
+interface PropColliderSpec {
+  pos: [number, number, number];
+  halfHeight: number;
+  radius: number;
+}
+
+const TREE_PREFIXES = ["CommonTree", "DeadTree", "TwistedTree", "Pine"];
+function isTreeModel(id: string): boolean {
+  return TREE_PREFIXES.some((p) => id.startsWith(p));
+}
+function isRockModel(id: string): boolean {
+  return id.startsWith("Rock_");
+}
+
+function propColliders(
+  placements: PropPlacement[],
+  opts?: { minRockScale?: number; avoid?: { x: number; z: number; r: number }[] },
+): PropColliderSpec[] {
+  const out: PropColliderSpec[] = [];
+  const minRock = opts?.minRockScale ?? 1.1;
+  for (const p of placements) {
+    const sx = p.scale3 ? p.scale3[0] : p.scale;
+    const sy = p.scale3 ? p.scale3[1] : p.scale;
+    let halfHeight: number;
+    let radius: number;
+    if (isTreeModel(p.modelId)) {
+      // trunk only — the canopy stays fly-through, so jetpack routes are clear
+      radius = 0.3 * sx;
+      halfHeight = 1.6 * sy;
+    } else if (isRockModel(p.modelId)) {
+      if (sx < minRock) continue; // small rocks stay decorative scatter
+      radius = 0.85 * sx;
+      halfHeight = 0.55 * sy;
+    } else {
+      continue; // pebbles / plants / grass / accents never block
+    }
+    // keep the spawn knoll (and any other reserved spot) collider-free so a
+    // seeded boulder can never trap the Reader on the reveal
+    if (opts?.avoid?.some((a) => Math.hypot(p.pos[0] - a.x, p.pos[2] - a.z) < a.r)) continue;
+    out.push({ pos: [p.pos[0], p.pos[1] + halfHeight, p.pos[2]], halfHeight, radius });
+  }
+  return out;
+}
+
+function PropColliders({ items }: { items: PropColliderSpec[] }) {
+  if (items.length === 0) return null;
+  return (
+    <RigidBody type="fixed" colliders={false}>
+      {items.map((c, i) => (
+        <CylinderCollider key={i} args={[c.halfHeight, c.radius]} position={c.pos} />
+      ))}
+    </RigidBody>
+  );
+}
+
+// Group arbitrary placements by model (and emissive tint) so a whole prop list
+// renders as a handful of instanced draws.
+function NaturePlacements({ placements }: { placements: PropPlacement[] }) {
+  const groups = useMemo(() => {
+    const by = new Map<string, { p: PropPlacement; list: PropPlacement[] }>();
+    for (const p of placements) {
+      const k = `${p.modelId}|${p.emissive ?? ""}|${p.emissiveIntensity ?? ""}`;
+      const g = by.get(k);
+      if (g) g.list.push(p);
+      else by.set(k, { p, list: [p] });
+    }
+    return Array.from(by.entries());
+  }, [placements]);
+  return (
+    <>
+      {groups.map(([k, g]) => (
+        <InstancedPlacements
+          key={k}
+          modelId={g.p.modelId}
+          placements={g.list}
+          emissive={g.p.emissive}
+          emissiveIntensity={g.p.emissiveIntensity}
+        />
+      ))}
+    </>
   );
 }
 
 function InstancedNature({ modelId, matrices }: { modelId: string; matrices: THREE.Matrix4[] }) {
   const { scene } = useGLTF(natureUrl(modelId));
-  const lift = useMemo(() => groundLift(scene), [scene]);
-  const parts = useMemo(() => {
-    const mesh = firstMesh(scene);
-    if (!mesh) return null;
-    const geo = mesh.geometry.clone();
-    geo.computeBoundingSphere();
-    const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material).clone();
-    return { geo, mat };
-  }, [scene]);
+  const { lift, parts } = useMemo(() => modelInfo(scene), [scene]);
+  const first = parts[0];
   const ref = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
     const im = ref.current;
     if (!im) return;
     const up = new THREE.Matrix4().makeTranslation(0, lift, 0);
+    const tmp = new THREE.Matrix4();
     for (let i = 0; i < matrices.length; i++) {
-      im.setMatrixAt(i, up.clone().multiply(matrices[i]));
+      im.setMatrixAt(i, tmp.multiplyMatrices(up, matrices[i]));
     }
     im.count = matrices.length;
     im.instanceMatrix.needsUpdate = true;
     im.computeBoundingSphere();
   }, [matrices, lift]);
-  if (!parts || matrices.length === 0) return null;
-  return <instancedMesh ref={ref} args={[parts.geo, parts.mat, matrices.length]} castShadow receiveShadow />;
+  if (!first || matrices.length === 0) return null;
+  return <instancedMesh ref={ref} args={[first.geo, first.mat, matrices.length]} castShadow receiveShadow />;
 }
 
 function composeMatrix(
@@ -216,7 +355,7 @@ function groupMatrices(placements: PropPlacement[]): Record<string, THREE.Matrix
 }
 
 // ── turf carpet — patchy meadows, not a grid ──────────────────────────────────
-export function NatureGround({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
+export const NatureGround = memo(function NatureGround({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
   const preset = naturePreset(biome.id);
   const instanced = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 66001);
@@ -284,11 +423,11 @@ export function NatureGround({ biome, shape, richness = 1 }: { biome: BiomeConfi
       ))}
     </>
   );
-}
+});
 
-export function NatureScatter({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
+export const NatureScatter = memo(function NatureScatter({ biome, shape, richness = 1, colliders = false }: { biome: BiomeConfig; shape: TerrainShape; richness?: number; colliders?: boolean }) {
   const preset = naturePreset(biome.id);
-  const { instanced, props } = useMemo(() => {
+  const { instanced, props, cols } = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 90210);
     const knoll = spawnKnollFor(biome);
     const inst: PropPlacement[] = [];
@@ -393,7 +532,10 @@ export function NatureScatter({ biome, shape, richness = 1 }: { biome: BiomeConf
       accents++;
     }
 
-    return { instanced: groupMatrices(inst), props: pr };
+    // big boulders block (pebbles filter out on scale); computed post-layout so
+    // the seeded RNG order is untouched
+    const cols = propColliders(inst, { minRockScale: 1.1, avoid: [{ x: knoll.x, z: knoll.z, r: 6 }] });
+    return { instanced: groupMatrices(inst), props: pr, cols };
   }, [biome, shape, preset, richness]);
 
   return (
@@ -401,23 +543,24 @@ export function NatureScatter({ biome, shape, richness = 1 }: { biome: BiomeConf
       {Object.entries(instanced).map(([modelId, matrices]) => (
         <InstancedNature key={modelId} modelId={modelId} matrices={matrices} />
       ))}
-      {props.map((p, i) => (
-        <NatureProp key={`${p.modelId}-${i}`} {...p} />
-      ))}
+      <NaturePlacements placements={props} />
+      {colliders && <PropColliders items={cols} />}
     </>
   );
-}
+});
 
-export function NatureLandmarks({
+export const NatureLandmarks = memo(function NatureLandmarks({
   biome,
   shape,
   count,
   pillar,
+  colliders = false,
 }: {
   biome: BiomeConfig;
   shape: TerrainShape;
   count: number;
   pillar: "obelisk" | "basalt";
+  colliders?: boolean;
 }) {
   const preset = naturePreset(biome.id);
   const props = useMemo(() => {
@@ -460,17 +603,18 @@ export function NatureLandmarks({
     }
     return out;
   }, [biome, shape, count, pillar, preset]);
+  // every landmark is a full tree or a boulder — all substantial enough to block
+  const cols = useMemo(() => propColliders(props, { minRockScale: 0 }), [props]);
 
   return (
     <>
-      {props.map((p, i) => (
-        <NatureProp key={`lm-${i}`} {...p} />
-      ))}
+      <NaturePlacements placements={props} />
+      {colliders && <PropColliders items={cols} />}
     </>
   );
-}
+});
 
-export function NatureSpawnPath({
+export const NatureSpawnPath = memo(function NatureSpawnPath({
   biome,
   shape,
   knoll,
@@ -533,16 +677,10 @@ export function NatureSpawnPath({
     return out;
   }, [biome, shape, knoll, preset]);
 
-  return (
-    <>
-      {props.map((p, i) => (
-        <NatureProp key={`path-${i}`} {...p} />
-      ))}
-    </>
-  );
-}
+  return <NaturePlacements placements={props} />;
+});
 
-export function NatureRift({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+export const NatureRift = memo(function NatureRift({ biome, shape, colliders = false }: { biome: BiomeConfig; shape: TerrainShape; colliders?: boolean }) {
   const preset = naturePreset(biome.id);
   const { glow, pathProps, mounts } = useMemo(() => {
     if (shape.canyonDepth <= 0) return { glow: null, pathProps: [] as PropPlacement[], mounts: [] as PropPlacement[] };
@@ -590,6 +728,13 @@ export function NatureRift({ biome, shape }: { biome: BiomeConfig; shape: Terrai
 
     return { glow: { col, segs, len: (end - start) / N + 1.8, lit: [2, 7, 12] as number[] }, pathProps: paths, mounts: mnts };
   }, [biome, shape, preset]);
+  // wall boulders block; the walkable rift floor between them stays clear. The
+  // spawn knoll sits on the rift's outer lip, so keep its crest collider-free.
+  const mountCols = useMemo(() => {
+    if (mounts.length === 0) return [];
+    const knoll = spawnKnollFor(biome);
+    return propColliders(mounts, { minRockScale: 1.1, avoid: [{ x: knoll.x, z: knoll.z, r: 7 }] });
+  }, [mounts, biome]);
 
   if (!glow) return null;
   const hazard = biome.id === "ember";
@@ -623,17 +768,14 @@ export function NatureRift({ biome, shape }: { biome: BiomeConfig; shape: Terrai
           ) : null,
         )}
       </group>
-      {pathProps.map((p, i) => (
-        <NatureProp key={`rift-path-${i}`} {...p} />
-      ))}
-      {mounts.map((p, i) => (
-        <NatureProp key={`rift-mount-${i}`} {...p} />
-      ))}
+      <NaturePlacements placements={pathProps} />
+      <NaturePlacements placements={mounts} />
+      {colliders && <PropColliders items={mountCols} />}
     </>
   );
-}
+});
 
-export function NatureIslandDressing({
+export const NatureIslandDressing = memo(function NatureIslandDressing({
   biome,
   positions,
 }: {
@@ -667,18 +809,12 @@ export function NatureIslandDressing({
     return out;
   }, [biome, positions, preset]);
 
-  return (
-    <>
-      {props.map((p, i) => (
-        <NatureProp key={`isle-${i}`} {...p} />
-      ))}
-    </>
-  );
-}
+  return <NaturePlacements placements={props} />;
+});
 
 /** Foreground vegetation ring for close intro cameras — side trees, back understory,
  *  edge grass. Keeps the clearing open so the champion stays the focus. */
-export function NatureFraming({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
+export const NatureFraming = memo(function NatureFraming({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {
   const preset = naturePreset(biome.id);
   const props = useMemo(() => {
     const knoll = spawnKnollFor(biome);
@@ -750,16 +886,10 @@ export function NatureFraming({ biome, shape }: { biome: BiomeConfig; shape: Ter
     return out;
   }, [biome, shape, preset]);
 
-  return (
-    <>
-      {props.map((p, i) => (
-        <NatureProp key={`frame-${i}`} {...p} />
-      ))}
-    </>
-  );
-}
+  return <NaturePlacements placements={props} />;
+});
 
-export function NaturePeaks({ biome, shape, richness = 1 }: { biome: BiomeConfig; shape: TerrainShape; richness?: number }) {
+export const NaturePeaks = memo(function NaturePeaks({ biome, shape, richness = 1, colliders = false }: { biome: BiomeConfig; shape: TerrainShape; richness?: number; colliders?: boolean }) {
   const preset = naturePreset(biome.id);
   const props = useMemo(() => {
     const rng = mulberry(biome.terrain.seed + 12004);
@@ -792,12 +922,16 @@ export function NaturePeaks({ biome, shape, richness = 1 }: { biome: BiomeConfig
     }
     return out;
   }, [biome, shape, preset, richness]);
+  // peak boulders + their trees block; skirt the spawn knoll's crest
+  const cols = useMemo(() => {
+    const knoll = spawnKnollFor(biome);
+    return propColliders(props, { minRockScale: 1.1, avoid: [{ x: knoll.x, z: knoll.z, r: 8 }] });
+  }, [props, biome]);
 
   return (
     <>
-      {props.map((p, i) => (
-        <NatureProp key={`peak-${i}`} {...p} />
-      ))}
+      <NaturePlacements placements={props} />
+      {colliders && <PropColliders items={cols} />}
     </>
   );
-}
+});

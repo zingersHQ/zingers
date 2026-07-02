@@ -10,7 +10,7 @@
 // Architecture is themed per biome: the Colosseum builds stone houses, the Ember
 // Wastes basalt forges, the Void Garden crystalline spires.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Html } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
@@ -107,7 +107,7 @@ function layoutLots(biome: BiomeConfig, shape: TerrainShape, count: number): Lot
   return out;
 }
 
-export function RegionDistrict({
+export const RegionDistrict = memo(function RegionDistrict({
   biome,
   tier,
   featured = false,
@@ -157,9 +157,10 @@ export function RegionDistrict({
       )}
     </group>
   );
-}
+});
 
-function Building({ lot, style }: { lot: Lot; style: Style }) {
+// stable lot + style objects → a town never re-renders once laid out
+const Building = memo(function Building({ lot, style }: { lot: Lot; style: Style }) {
   const { x, y, z, w, d, h, rot } = lot;
   const { kind, wall, trim, glow } = style;
   return (
@@ -213,4 +214,4 @@ function Building({ lot, style }: { lot: Lot; style: Style }) {
       </group>
     </RigidBody>
   );
-}
+});

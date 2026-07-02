@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { useGLTF, Environment, Lightformer, Html, PerformanceMonitor, AdaptiveDpr } from "@react-three/drei";
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { ChevronsUp, ChevronsDown, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
 import * as THREE from "three";
@@ -11,8 +11,10 @@ import type { AgentStatus, Champion, CreatureType, TowerAgent } from "@/lib/type
 import { blank, skillLevel, TYPE_COLOR } from "@/lib/evolve/progression";
 import { trainerLevel } from "@/lib/evolve/trainer";
 import { readerPalette, GOLD } from "@/lib/render/palette";
-import { ReaderBackSigil, ReaderClanBanner, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
-import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
+import { flightAttitudePlanar } from "@/lib/render/animations";
+import { ReaderBackSigil, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
+import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE } from "./champion-mesh";
+import { Jetpack } from "./jetpack";
 import { keeperKindForName } from "./keeper-regalia";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
 import {
@@ -140,7 +142,13 @@ const keys: Record<string, boolean> = {};
 // ONCE across the disc (no tiling → no repeating rectangles), and its rim fades
 // out so the clearing melts into the surrounding turf rather than reading as a
 // hard-edged pad.
+const GROUND_FLOOR_CACHE = new Map<string, THREE.CanvasTexture>();
 function makeGroundFloorTexture(pal: { base: string; grain: string; patch: string; pebble: string }) {
+  // cached per palette — venue enter/exit remounts PlazaFloor, and repainting a
+  // 1024² canvas (90k speckles) each time is a visible hitch
+  const cacheKey = `${pal.base}|${pal.grain}|${pal.patch}|${pal.pebble}`;
+  const hit = GROUND_FLOOR_CACHE.get(cacheKey);
+  if (hit) return hit;
   const S = 1024;
   const c = document.createElement("canvas");
   c.width = c.height = S;
@@ -196,6 +204,7 @@ function makeGroundFloorTexture(pal: { base: string; grain: string; patch: strin
   map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
   map.repeat.set(1, 1);
   map.anisotropy = 8;
+  GROUND_FLOOR_CACHE.set(cacheKey, map);
   return map;
 }
 
@@ -365,6 +374,8 @@ export default function World({
   const handlerPos = useRef(
     new THREE.Vector3(circuitSpawn ? circuitSpawn[0] : knoll.x, circuitSpawn ? circuitSpawn[1] : 0, circuitSpawn ? circuitSpawn[2] : knoll.z),
   );
+  // Face inward toward the plaza from the spawn knoll (not +Z / away from the action).
+  const handlerHeading = useRef(Math.atan2(-knoll.x, -knoll.z));
   const sc = biome.scene;
   // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
   // of an arena + tower + spire. Driven by the presence of gates from the world.
@@ -539,6 +550,7 @@ export default function World({
       <AdaptiveDpr pixelated={false} />
       <color attach="background" args={[biome.bg]} />
       <fog attach="fog" args={[biome.fog.color, inCircuit ? 35 : biome.fog.near, inCircuit ? 200 : biome.fog.far]} />
+      <AltitudeAdaptive baseFogFar={inCircuit ? 200 : biome.fog.far} />
 
       <SkyDome biome={biome} />
       <Nebula biome={biome} />
@@ -581,8 +593,8 @@ export default function World({
           {!inVenue && <Terrain biome={biome} nature />}
           {!inVenue && <PlazaFloor biome={biome} />}
           {!inVenue && <NatureGround biome={biome} shape={shape} />}
-          {!inVenue && <NatureLandmarks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} />}
-          {!inVenue && <NatureScatter biome={biome} shape={shape} />}
+          {!inVenue && <NatureLandmarks biome={biome} shape={shape} count={sc.obeliskCount} pillar={sc.pillar} colliders />}
+          {!inVenue && <NatureScatter biome={biome} shape={shape} colliders />}
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
           {isHub && !inVenue && !match && (
@@ -622,8 +634,8 @@ export default function World({
               <PlazaSurround biome={biome} />
               <NatureSpawnPath biome={biome} shape={shape} knoll={knoll} />
               <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
-              <NatureRift biome={biome} shape={shape} />
-              <NaturePeaks biome={biome} shape={shape} />
+              <NatureRift biome={biome} shape={shape} colliders />
+              <NaturePeaks biome={biome} shape={shape} colliders />
               {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
@@ -655,18 +667,37 @@ export default function World({
           {match ? (
             <MatchStage champions={champions} match={match} />
           ) : (
-            inRegion && (
-              <RegionChampions
-                champions={champions}
-                ownedKey={ownedKey}
-                trainPad={trainPad}
-                arena={ARENA}
-                roam={sc.roam}
-                worldLife={worldLife}
-                pledged={pledged}
-                handlerPos={handlerPos}
-              />
-            )
+            <>
+              {inRegion && (
+                <RegionChampions
+                  champions={champions}
+                  ownedKey={ownedKey}
+                  trainPad={trainPad}
+                  arena={ARENA}
+                  roam={sc.roam}
+                  worldLife={worldLife}
+                  pledged={pledged}
+                  handlerPos={handlerPos}
+                />
+              )}
+              {/* your champion follows you everywhere it can — hub AND regions — so
+                  the companion is present from the first scene you spawn into */}
+              {!inVenue && !inCircuit && !inAmphitheatre && ownedKey && (
+                <OwnedCompanion
+                  champions={champions}
+                  ownedKey={ownedKey}
+                  trainPad={trainPad}
+                  arena={ARENA}
+                  worldLife={worldLife}
+                  pledged={pledged}
+                  handlerPos={handlerPos}
+                  handlerHeading={handlerHeading}
+                  camCue={camCue}
+                  shape={shape}
+                  spawnKnoll={knoll}
+                />
+              )}
+            </>
           )}
 
           {!showcase && (
@@ -676,6 +707,7 @@ export default function World({
               ownedKey={ownedKey}
               matchActive={!!match}
               handlerPos={handlerPos}
+              handlerHeading={handlerHeading}
               camCue={camCue}
               touchMove={touchMove}
               touchBtn={touchBtn}
@@ -728,7 +760,7 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} />
       )}
     </Canvas>
     {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
@@ -741,6 +773,34 @@ function ExposureSync({ exposure }: { exposure: number }) {
   useEffect(() => {
     gl.toneMappingExposure = exposure;
   }, [gl, exposure]);
+  return null;
+}
+
+// Flight-first horizon (Spec 13). As the Reader climbs, ease the fog + camera far
+// plane open so altitude REVEALS the world instead of hitting a fog wall / clip
+// seam. At ground level (alt≈0) both sit at their baselines, so roaming is visually
+// unchanged — only flying up opens the view. Cheap: mutates existing fog/camera.
+function AltitudeAdaptive({ baseFogFar }: { baseFogFar: number }) {
+  const camera = useThree((s) => s.camera);
+  const scene = useThree((s) => s.scene);
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    const cam = camera as THREE.PerspectiveCamera;
+    const fog = scene.fog as THREE.Fog | null;
+    if (!fog || !(fog as THREE.Fog).isFog) return;
+    const alt = Math.max(0, camera.position.y);
+    const open = Math.min(alt * 4, 1000); // how much the horizon expands with height
+    // ease the fog outward (and back) so it breathes rather than snaps —
+    // dt-based so the breathing pace matches at 30/60/120fps
+    fog.far += (baseFogFar + open - fog.far) * (1 - Math.exp(-2.4 * dt));
+    // keep the far clip just beyond the fog so nothing pops in past the haze; anchored
+    // at the original 600 baseline so ground rendering is untouched
+    const wantCamFar = 600 + open;
+    if (Math.abs(cam.far - wantCamFar) > 5) {
+      cam.far = wantCamFar;
+      cam.updateProjectionMatrix();
+    }
+  });
   return null;
 }
 
@@ -837,7 +897,11 @@ function RegionChampions({
     <>
       {champions.map((c) => {
         const owned = c.key === ownedKey;
-        const home = owned ? trainPad : roamHome(c.key, champions, roam);
+        // The owned champion is now the persistent following companion, rendered
+        // once at scene level (OwnedCompanion) so it's present in the hub too — skip
+        // it here to avoid a double render in region scenes.
+        if (owned) return null;
+        const home = roamHome(c.key, champions, roam);
         const actSig = owned ? (worldLife?.companionAct ?? 0) + ownedAct : (npcActs[c.key] ?? 0);
         const actName = owned ? (worldLife?.training ? "punch" : "wave") : (npcGestures[c.key] ?? "wave");
         const padLeash = owned
@@ -867,10 +931,335 @@ function RegionChampions({
             actName={actName}
             speechLine={owned ? worldLife?.companionLine : null}
             speechEmote={owned ? worldLife?.companionEmote : null}
+            sceneScale={WORLD_AGENT_SCALE}
           />
         );
       })}
     </>
+  );
+}
+
+// ── OwnedCompanion ───────────────────────────────────────────────────────────
+// Your champion, rendered as a persistent companion that follows the Reader in
+// EVERY explorable scene (the Concord hub as well as region slabs). Follow logic
+// lives on an outer rig group so R3F never fights ref-driven motion inside the mesh.
+// Wing slot in world units, sized for the third-scale companion body (all the
+// distance-flavoured values shrank 2/3 with the cast resize).
+const COMPANION_FOLLOW = {
+  slotR: 2.0,
+  slotBack: 0.92,   // mostly behind (idle dock, multiplied by slotR)
+  slotSide: 0.38,   // …with a little offset to the side
+  introSec: 2.0,
+  introStart: 11,
+  arrived: 0.8,
+  wingDrop: 0.75,
+  liftThreshold: 2.0,
+  approachArc: 2.4,
+  catchK: 1.4,       // closes lag gently — not twitchy on heading flips
+  catchMax: 20,
+  accel: 9,           // lower = heavier follow, stacks short taps into one arc
+  idleSettle: 4.5,
+  velSmooth: 5.5,     // smooth Handler path velocity (filters tap-spam)
+  headingSmooth: 3.2, // follow heading eases toward path / Handler facing
+  slotSmooth: 6,      // chase target position lags — main path not micro-jitter
+  rigHeadingSmooth: 5,
+  minPathSpeed: 0.55, // above this: trail behind path instead of instant wing slot
+  pathBack: 1.6,      // world units behind on the smoothed path
+  pathSide: 0.35,
+} as const;
+
+function companionFeetY(x: number, z: number, shape: TerrainShape, knoll: SpawnKnoll): number {
+  return terrainHeight(x, z, shape, knoll);
+}
+
+/** Wing slot slightly behind + beside the Handler (relative to body heading). */
+function companionDockSlot(
+  hx: number,
+  hz: number,
+  hh: number,
+  r: number = COMPANION_FOLLOW.slotR,
+): { tx: number; tz: number } {
+  const backX = -Math.sin(hh);
+  const backZ = -Math.cos(hh);
+  const sideX = Math.cos(hh);
+  const sideZ = -Math.sin(hh);
+  const { slotBack, slotSide } = COMPANION_FOLLOW;
+  return {
+    tx: hx + (backX * slotBack + sideX * slotSide) * r,
+    tz: hz + (backZ * slotBack + sideZ * slotSide) * r,
+  };
+}
+
+function OwnedCompanion({
+  champions,
+  ownedKey,
+  trainPad,
+  arena,
+  worldLife,
+  pledged = null,
+  handlerPos,
+  handlerHeading,
+  camCue,
+  shape,
+  spawnKnoll,
+}: {
+  champions: GroundChampion[];
+  ownedKey: string | null;
+  trainPad: [number, number, number];
+  arena: [number, number, number];
+  worldLife?: WorldLife;
+  pledged?: CreatureType | null;
+  handlerPos: React.RefObject<THREE.Vector3>;
+  handlerHeading: React.RefObject<number>;
+  camCue: React.RefObject<CamCue>;
+  shape: TerrainShape;
+  spawnKnoll: SpawnKnoll;
+}) {
+  const [ownedAct, setOwnedAct] = useState(0);
+  useEffect(() => {
+    if (worldLife?.companionLine || worldLife?.companionEmote) setOwnedAct((n) => n + 1);
+  }, [worldLife?.companionLine, worldLife?.companionEmote, worldLife?.companionAct]);
+
+  const c = champions.find((x) => x.key === ownedKey);
+  const rigRef = useRef<THREE.Group>(null);
+  const wpos = useRef(new THREE.Vector3());
+  const wvel = useRef(new THREE.Vector3());
+  const smoothHVel = useRef(new THREE.Vector3());
+  const followTarget = useRef(new THREE.Vector3());
+  const followHeading = useRef(0);
+  const rigHeading = useRef(0);
+  const hPrev = useRef<THREE.Vector3 | null>(null);
+  // previous frame's OWN position — the measured ground speed drives the gait
+  const prevWpos = useRef(new THREE.Vector3());
+  const prevWposInit = useRef(false);
+  const companionLocoHold = useRef(0);
+  const introElapsed = useRef(0);
+  const introActive = useRef(true);
+  const introBooted = useRef(false);
+  const companionFlying = useRef(false);
+  const companionMoving = useRef(false);
+  const companionSpeed = useRef(0);
+  const companionRun = useRef(false);
+  const companionDrive = useMemo(
+    () => ({
+      flyingRef: companionFlying,
+      movingRef: companionMoving,
+      speedRef: companionSpeed,
+      runRef: companionRun,
+      velRef: wvel,
+      headingRef: rigHeading,
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    const hp = handlerPos.current;
+    const hh = handlerHeading.current;
+    const y = companionFeetY(hp.x, hp.z, shape, spawnKnoll);
+    wpos.current.set(hp.x, y, hp.z);
+    wvel.current.set(0, 0, 0);
+    smoothHVel.current.set(0, 0, 0);
+    followTarget.current.set(hp.x, y, hp.z);
+    followHeading.current = hh;
+    rigHeading.current = hh;
+    hPrev.current = hp.clone();
+    introElapsed.current = 0;
+    introActive.current = true;
+    introBooted.current = false;
+    prevWposInit.current = false;
+    companionLocoHold.current = 0;
+  }, [ownedKey, shape, spawnKnoll, handlerPos, handlerHeading]);
+
+  useFrame((_, dtRaw) => {
+    if (!rigRef.current || !c) return;
+    const dt = Math.min(0.05, dtRaw);
+    const hp = handlerPos.current;
+    const cue = camCue.current;
+    const hh = handlerHeading.current;
+    const { slotR, introSec, introStart, arrived, wingDrop, liftThreshold, approachArc, catchK, catchMax, accel, idleSettle, velSmooth, headingSmooth, slotSmooth, rigHeadingSmooth, minPathSpeed, pathBack, pathSide } =
+      COMPANION_FOLLOW;
+
+    if (!hPrev.current) hPrev.current = hp.clone();
+    const prev = hPrev.current;
+    const hvx = dt > 0 ? (hp.x - prev.x) / dt : 0;
+    const hvz = dt > 0 ? (hp.z - prev.z) / dt : 0;
+    const hvy = dt > 0 ? (hp.y - prev.y) / dt : 0;
+    prev.copy(hp);
+
+    // Smooth Handler path velocity so tap-spam / quick strafe doesn't yank the slot.
+    const smv = smoothHVel.current;
+    const vK = 1 - Math.exp(-velSmooth * dt);
+    smv.x += (hvx - smv.x) * vK;
+    smv.z += (hvz - smv.z) * vK;
+    const smSpeed = Math.hypot(smv.x, smv.z);
+
+    let wantFollowH = hh;
+    if (smSpeed > minPathSpeed) wantFollowH = Math.atan2(smv.x, smv.z);
+    let dFollowH = wantFollowH - followHeading.current;
+    dFollowH = Math.atan2(Math.sin(dFollowH), Math.cos(dFollowH));
+    const hK = (1 - Math.exp(-headingSmooth * dt)) * (smSpeed > minPathSpeed ? 1 : 0.4);
+    followHeading.current += dFollowH * hK;
+
+    if (!introBooted.current) {
+      introBooted.current = true;
+      const far = companionDockSlot(hp.x, hp.z, hh, introStart);
+      wpos.current.set(far.tx, companionFeetY(far.tx, far.tz, shape, spawnKnoll), far.tz);
+      followTarget.current.set(far.tx, wpos.current.y, far.tz);
+    }
+
+    // Chase target: trail the main path when moving, idle wing slot when still.
+    let rawTx: number;
+    let rawTz: number;
+    if (smSpeed > minPathSpeed) {
+      const inv = 1 / smSpeed;
+      const fx = smv.x * inv;
+      const fz = smv.z * inv;
+      const rx = fz;
+      const rz = -fx;
+      rawTx = hp.x - fx * pathBack + rx * pathSide;
+      rawTz = hp.z - fz * pathBack + rz * pathSide;
+    } else {
+      const dock = companionDockSlot(hp.x, hp.z, followHeading.current, slotR);
+      rawTx = dock.tx;
+      rawTz = dock.tz;
+    }
+    const ft = followTarget.current;
+    const tK = 1 - Math.exp(-slotSmooth * dt);
+    ft.x += (rawTx - ft.x) * tK;
+    ft.z += (rawTz - ft.z) * tK;
+
+    const introDock = companionDockSlot(hp.x, hp.z, hh, slotR);
+    const tx = introActive.current ? introDock.tx : ft.x;
+    const tz = introActive.current ? introDock.tz : ft.z;
+    const slotGroundY = companionFeetY(tx, tz, shape, spawnKnoll);
+    const handlerFlying = cue?.flying ?? hp.y > liftThreshold;
+    const dockY = handlerFlying ? Math.max(slotGroundY, hp.y - wingDrop) : slotGroundY;
+
+    const ex = tx - wpos.current.x;
+    const ez = tz - wpos.current.z;
+    const slotDist = Math.hypot(ex, ez);
+    const hSpeed = Math.hypot(hvx, hvz);
+    const handlerMoving = smSpeed > 0.35 || hSpeed > 0.28 || !!cue?.moving;
+    const vel = wvel.current;
+
+    if (introActive.current) {
+      introElapsed.current += dt;
+      if (slotDist > 0.04) {
+        const remaining = Math.max(0.04, introSec - introElapsed.current);
+        const f = Math.min(1, dt / remaining);
+        wpos.current.x += ex * f;
+        wpos.current.z += ez * f;
+        if (dt > 0) vel.set(ex * f / dt, 0, ez * f / dt);
+      }
+      const tProg = Math.min(1, introElapsed.current / introSec);
+      const arcY = approachArc * Math.sin(tProg * Math.PI);
+      const wantY = dockY + arcY;
+      wpos.current.y += (wantY - wpos.current.y) * Math.min(1, dt * 14);
+      if (slotDist < arrived && Math.abs(wpos.current.y - dockY) < 0.45 && introElapsed.current > 0.12) {
+        introActive.current = false;
+        vel.set(hvx, 0, hvz);
+        followTarget.current.set(introDock.tx, wpos.current.y, introDock.tz);
+      }
+    } else if (handlerMoving) {
+      // Lag behind while you move — match smoothed path velocity, close gap slowly.
+      let wantVx = smv.x + ex * catchK;
+      let wantVz = smv.z + ez * catchK;
+      const wantPlanar = Math.hypot(wantVx, wantVz);
+      if (wantPlanar > catchMax && wantPlanar > 0) {
+        const k = catchMax / wantPlanar;
+        wantVx *= k;
+        wantVz *= k;
+      }
+      const kv = 1 - Math.exp(-accel * dt);
+      vel.x += (wantVx - vel.x) * kv;
+      vel.z += (wantVz - vel.z) * kv;
+      wpos.current.x += vel.x * dt;
+      wpos.current.z += vel.z * dt;
+
+      const climb = cue?.climb ?? 0;
+      const wantVy = hvy + (dockY - wpos.current.y) * 8;
+      vel.y += (wantVy - vel.y) * kv;
+      wpos.current.y += vel.y * dt;
+      if (!handlerFlying) wpos.current.y = Math.max(slotGroundY, wpos.current.y);
+    } else {
+      // Handler still — settle into the dock slot beside / slightly behind.
+      vel.x += (hvx - vel.x) * (1 - Math.exp(-accel * 2 * dt));
+      vel.z += (hvz - vel.z) * (1 - Math.exp(-accel * 2 * dt));
+      wpos.current.x += ex * Math.min(1, dt * idleSettle) + vel.x * dt;
+      wpos.current.z += ez * Math.min(1, dt * idleSettle) + vel.z * dt;
+      if (slotDist < 0.15) {
+        // in the pocket — bleed residual drift (dt-based, ≈0.5/frame @60fps)
+        const settle = Math.exp(-40 * dt);
+        vel.x *= settle;
+        vel.z *= settle;
+      }
+
+      const climb = cue?.climb ?? 0;
+      const yRate = handlerFlying ? 14 : idleSettle;
+      wpos.current.y += (dockY - wpos.current.y) * Math.min(1, dt * yRate) + climb * dt * (handlerFlying ? 0.9 : 0);
+      vel.y *= Math.exp(-21 * dt); // dt-based (≈0.7/frame @60fps)
+      if (!handlerFlying) wpos.current.y = Math.max(slotGroundY, wpos.current.y);
+    }
+
+    const chasePlanar = Math.hypot(vel.x, vel.z);
+    const airborne = introActive.current || handlerFlying || wpos.current.y > slotGroundY + 0.5;
+    companionFlying.current = airborne;
+    // BUG-FIX (floating companion): publish the MEASURED ground speed, not
+    // intent. The idle-settle branch above nudges position directly (no
+    // velocity), so intent-only flags let the body glide across the dirt in its
+    // rest pose. Real displacement now decides walk vs run vs idle — and the
+    // stride tempo downstream — so the feet move whenever the body does.
+    let realSpeed = 0;
+    if (prevWposInit.current && dt > 0) {
+      realSpeed = Math.hypot(wpos.current.x - prevWpos.current.x, wpos.current.z - prevWpos.current.z) / dt;
+    }
+    prevWpos.current.copy(wpos.current);
+    prevWposInit.current = true;
+    const wantsLoco = !airborne && realSpeed > 0.22;
+    if (wantsLoco) companionLocoHold.current = 0.34;
+    else companionLocoHold.current = Math.max(0, companionLocoHold.current - dt);
+    companionMoving.current = companionLocoHold.current > 0;
+    companionSpeed.current = realSpeed;
+    companionRun.current = !!(cue?.superrun || realSpeed > RUN * 0.85);
+
+    // Face travel direction when chasing; ease toward Handler facing when parked.
+    let wantRigH = hh;
+    if (chasePlanar > 0.28 || smSpeed > minPathSpeed) {
+      wantRigH = chasePlanar > 0.12 ? Math.atan2(vel.x, vel.z) : followHeading.current;
+    }
+    let dRigH = wantRigH - rigHeading.current;
+    dRigH = Math.atan2(Math.sin(dRigH), Math.cos(dRigH));
+    rigHeading.current += dRigH * (1 - Math.exp(-rigHeadingSmooth * dt));
+
+    rigRef.current.position.set(wpos.current.x, wpos.current.y, wpos.current.z);
+    rigRef.current.rotation.y = rigHeading.current;
+  }, 1);
+
+  if (!c) return null;
+  return (
+    <group ref={rigRef}>
+      <ChampionMesh
+        key={c.key}
+        type={c.type}
+        champion={c.champion}
+        identityKey={c.key}
+        label={c.name + "  ◆ YOURS"}
+        showForce={false}
+        clan={pledged}
+        position={[0, 0, 0]}
+        rotation={0}
+        selected
+        restPose="standing"
+        breatheIntensity={0.35}
+        idlePhase={c.key.length * 0.7}
+        actSignal={(worldLife?.companionAct ?? 0) + ownedAct}
+        actName={worldLife?.training ? "punch" : "wave"}
+        speechLine={worldLife?.companionLine}
+        speechEmote={worldLife?.companionEmote}
+        companionDrive={companionDrive}
+        sceneScale={WORLD_AGENT_SCALE}
+      />
+    </group>
   );
 }
 
@@ -1093,7 +1482,9 @@ function GoalBeacon({ goal }: { goal: WorldGoal }) {
 }
 
 // ---------- environment ----------
-function SkyDome({ biome }: { biome: BiomeConfig }) {
+// static dressing below is memoised: World re-renders on every near-target /
+// match-HP prop change, and none of these depend on that churn.
+const SkyDome = memo(function SkyDome({ biome }: { biome: BiomeConfig }) {
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -1110,9 +1501,9 @@ function SkyDome({ biome }: { biome: BiomeConfig }) {
       <sphereGeometry args={[320, 32, 16]} />
     </mesh>
   );
-}
+});
 
-function Nebula({ biome }: { biome: BiomeConfig }) {
+const Nebula = memo(function Nebula({ biome }: { biome: BiomeConfig }) {
   const tex = useMemo(() => nebulaTexture(biome.nebula.colors), [biome]);
   return (
     <mesh renderOrder={-1}>
@@ -1120,9 +1511,9 @@ function Nebula({ biome }: { biome: BiomeConfig }) {
       <meshBasicMaterial map={tex} transparent opacity={biome.nebula.opacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
     </mesh>
   );
-}
+});
 
-function Starfield() {
+const Starfield = memo(function Starfield() {
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry();
     const n = 800;
@@ -1141,10 +1532,10 @@ function Starfield() {
       <pointsMaterial color="#c8c2ff" size={1.1} sizeAttenuation transparent opacity={0.95} fog={false} />
     </points>
   );
-}
+});
 
 // thin textured visual overlay for the flat plaza (the terrain provides the collider)
-function PlazaFloor({ biome }: { biome: BiomeConfig }) {
+const PlazaFloor = memo(function PlazaFloor({ biome }: { biome: BiomeConfig }) {
   const day = !!biome.daylight;
   // Themed natural clearing (sand/ash/moss/earth) so the centre matches the
   // surrounding wilds. The texture carries the colour, so the material albedo is
@@ -1157,14 +1548,14 @@ function PlazaFloor({ biome }: { biome: BiomeConfig }) {
       <meshStandardMaterial map={map} color="#ffffff" transparent depthWrite={false} metalness={0.02} roughness={0.97} envMapIntensity={day ? 0.04 : 0.15} />
     </mesh>
   );
-}
+});
 
 // Radius of the central combat space (the ring platform / the pit basin). Bumped
 // up so the arena reads as a proper coliseum floor, not a small dais. Keep the
 // biomes' roam `inner` keep-out at or above this so champions never stand in it.
 const ARENA_R = 8.6;
 
-function ArenaPlatform() {
+const ArenaPlatform = memo(function ArenaPlatform() {
   const tex = useMemo(() => arenaTexture(), []);
   const R = ARENA_R;
   const posts = 18;
@@ -1189,7 +1580,7 @@ function ArenaPlatform() {
       })}
     </group>
   );
-}
+});
 
 // ── The Keepers' Climbs ──────────────────────────────────────────────────────
 // The five Keepers no longer share one spire — each stands ALONE atop its own
@@ -1326,11 +1717,11 @@ function KeeperFigure({
   const labelShown = useRef(true);
   const lodPos = useRef(new THREE.Vector3());
 
-  useFrame((state) => {
+  useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
-    if (bobRef.current) bobRef.current.position.y = 0.5 + Math.sin(t * 1.1 + phase) * 0.12;
+    if (bobRef.current) bobRef.current.position.y = 0.35 + Math.sin(t * 1.1 + phase) * 0.08;
     if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.7 + phase) * 0.07);
-    if (ringRef.current) ringRef.current.rotation.z += 0.01;
+    if (ringRef.current) ringRef.current.rotation.z += 0.6 * dt; // dt-based spin
     if (beaconRef.current) (beaconRef.current.material as THREE.MeshBasicMaterial).opacity = 0.06 + Math.sin(t * 1.4) * 0.02;
     if (bobRef.current) {
       bobRef.current.getWorldPosition(lodPos.current);
@@ -1343,9 +1734,10 @@ function KeeperFigure({
     }
   });
 
-  const auraR = top ? 1.7 : 1.35;
+  // halo / aura sized to the 2/3-resized boss rig so they still hug the body
+  const auraR = top ? 1.15 : 0.9;
   // "behind" the Keeper relative to its facing, for the vault-door halo
-  const back: [number, number, number] = [Math.sin(rot) * -0.55, 1.05, Math.cos(rot) * -0.55];
+  const back: [number, number, number] = [Math.sin(rot) * -0.38, 0.7, Math.cos(rot) * -0.38];
 
   return (
     <>
@@ -1362,25 +1754,25 @@ function KeeperFigure({
       <group ref={bobRef} position={[0, 0.5, 0]}>
         {/* boss scale: each Keeper towers a little more than the last */}
         <group position={[0, 0.1, 0]} scale={1.12 + g.level * 0.07}>
-          <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} keeper={keeperKindForName(g.name)} />
+          <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} keeper={keeperKindForName(g.name)} sceneScale={WORLD_AGENT_SCALE} />
         </group>
 
         {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
         <mesh rotation={[0, rot, 0]} position={back}>
-          <torusGeometry args={[0.72, 0.06, 8, 48]} />
+          <torusGeometry args={[0.5, 0.05, 8, 48]} />
           <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.85} roughness={0.2} />
         </mesh>
 
-        <mesh ref={auraRef} position={[0, 0.9, 0]}>
+        <mesh ref={auraRef} position={[0, 0.62, 0]}>
           <sphereGeometry args={[auraR, 16, 12]} />
           <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
         </mesh>
       </group>
 
-      <pointLight position={[0, 1.6, 0]} intensity={top ? 32 : 22} color={g.color} distance={13} />
+      <pointLight position={[0, 1.2, 0]} intensity={top ? 32 : 22} color={g.color} distance={13} />
 
       {labelOn && (
-        <Html position={[0, 3.0, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
+        <Html position={[0, 2.2, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>{top ? "★ KEEPER · BOSS" : "KEEPER"}</div>
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
@@ -1590,13 +1982,13 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
   const [labelOn, setLabelOn] = useState(true);
   const labelShown = useRef(true);
 
-  useFrame((state) => {
+  useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     if (ringRef.current) {
       const sc = 1 + Math.sin(t * (hibernating ? 0.8 : 2.2) + position[1]) * (disabled ? 0.02 : 0.08);
       ringRef.current.scale.set(sc, sc, sc);
     }
-    if (beamRef.current) beamRef.current.rotation.y += 0.01;
+    if (beamRef.current) beamRef.current.rotation.y += 0.6 * dt; // dt-based spin
     const dx = state.camera.position.x - position[0];
     const dy = state.camera.position.y - position[1];
     const dz = state.camera.position.z - position[2];
@@ -1616,7 +2008,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
         <meshBasicMaterial color={vis.color} transparent opacity={disabled ? 0.25 : 0.75} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
 
-      <group scale={0.92}>
+      <group scale={0.92 * WORLD_AGENT_SCALE}>
         <ChampionMesh
           type={agent.type}
           champion={champ}
@@ -1641,7 +2033,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
       )}
 
       {labelOn && (
-        <Html position={[0, 2.4, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
+        <Html position={[0, 1.7, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
             <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
             <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
@@ -1708,7 +2100,19 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   );
 }
 
-const WALK = 8.6, RUN = 15.2, SUPERRUN = RUN * 2, SUPERRUN_DELAY = 3, JUMP = 10.4, AIR_JUMP = 9.6;
+// WALK/RUN eased ~10% for the 2/3-scale Reader (READER_SCALE below) so the
+// smaller body doesn't read as skating across the plaza; jump/fly speeds keep
+// their world-tuned arcs — the Tower gaps depend on them.
+const WALK = 7.8, RUN = 13.6, SUPERRUN = RUN * 2, SUPERRUN_DELAY = 3, JUMP = 10.4, AIR_JUMP = 9.6;
+// ── Reader scale (the 2/3 resize) ────────────────────────────────────────────
+// The whole cast shrank to 2/3 (champions via WORLD_AGENT_SCALE); the Reader
+// follows through this knob. Everything that hangs off body height derives from
+// FOOT_OFF so the capsule, feet sensor, ground snap and spawn heights move in
+// lockstep. Battle scenes stay full scale.
+const READER_SCALE = 2 / 3;
+const CAP_HALF = 0.55 * READER_SCALE; // capsule cylindrical half-height
+const CAP_RAD = 0.45 * READER_SCALE;  // capsule radius
+const FOOT_OFF = CAP_HALF + CAP_RAD;  // capsule centre → soles (≈0.67)
 // acceleration rates (per second) for dt-based, frame-rate-independent smoothing —
 // higher = snappier response to the stick. Ground is punchy; air is lighter; the
 // jetpack gives strong horizontal authority so you can steer your flight path.
@@ -1717,14 +2121,26 @@ const ACCEL_GROUND = 22, ACCEL_AIR = 9, ACCEL_FLY = 16;
 const STOP_GROUND = 16, STOP_AIR = 1.4, STOP_FLY = 4.5;
 // how quickly the character pivots toward the move direction (per second)
 const TURN_GROUND = 22, TURN_AIR = 16;
-// jetpack flight (unlocked on the 2nd jump): hold to thrust smoothly
-const FLY_TRIGGER = 1;     // jumps past this deploy the pack (so 2 jumps → fly)
+// jetpack flight: deploys when jumps pass this threshold — reached either by HOLDING
+// the jump button after the first hop (hold-to-fly, see FLY_HOLD_DEPLOY) or by a
+// second tap (double-tap). Hold to thrust smoothly once aloft.
+const FLY_TRIGGER = 1;     // jumps past this deploy the pack
 const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
 const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead of full gravity)
 const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
                            // into a uniform hover instead of a per-press sawtooth
+// Hold-to-fly: after the first hop, HOLDING the jump button this many seconds while
+// airborne auto-deploys the jetpack — so a new player discovers flight by just
+// holding, without needing to learn the double-tap. A quick tap stays a plain hop;
+// the double-tap still deploys instantly for players who know it.
+const FLY_HOLD_DEPLOY = 0.16;
+// Jump buffering: a tap made while FALLING just above the floor is held this long
+// and fired as a crisp ground jump on the touchdown frame, instead of spending an
+// air-jump (or accidentally deploying the pack) a hand's breadth off the ground.
+const JUMP_BUFFER_S = 0.12;
+const JUMP_BUFFER_H = 2.2;   // "just above the floor" — buffer window height (u)
 const FLY_FOOT = 1.45;     // ankle tuck (rad) while airborne (jetpack thrust, jump or
                            // fall): toes hang straight down — body upright, just the feet
 // while suspended the whole lower body should dangle, not hold its planted stance:
@@ -1757,160 +2173,6 @@ interface CamCue {
 interface TouchMove { x: number; y: number }   // analog stick, x = strafe, y = forward (+up)
 interface TouchBtn { sprint: boolean; jump: number; jumpHeld: boolean; land: number } // jump = tap counter (edge); jumpHeld = button down (hold-to-fly); land = descend/cancel-fly tap counter (touch equivalent of the X key)
 interface CamDrag { dx: number; dy: number; pinch: number } // orbit + pinch deltas, drained each frame
-
-// Jetpack worn during sustained flight (from the 2nd jump on). The pack springs
-// out of the character's back; every jump stroke fires a downward smoke burst.
-// Driven entirely by refs (no re-renders): `flyingRef` toggles the pack in/out,
-// `burstRef` is a counter the Handler bumps on each flight stroke.
-function Jetpack({ h, flyingRef, burstRef }: { h: number; flyingRef: React.RefObject<boolean>; burstRef: React.RefObject<number> }) {
-  const grp = useRef<THREE.Group>(null);
-  const flameL = useRef<THREE.Mesh>(null);
-  const flameR = useRef<THREE.Mesh>(null);
-  const scale = useRef(0);
-  const lastBurst = useRef(0);
-
-  const PUFFS = 22;
-  const puffRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const puffState = useRef(
-    Array.from({ length: PUFFS }, () => ({
-      pos: new THREE.Vector3(),
-      vel: new THREE.Vector3(),
-      life: 0,
-      max: 1,
-      size: 1,
-    })),
-  );
-  const cursor = useRef(0);
-  // scratch reused while orienting each flame tongue along its velocity
-  const flameUp = useRef(new THREE.Vector3(0, 1, 0));
-  const flameDir = useRef(new THREE.Vector3());
-  const flameQuat = useRef(new THREE.Quaternion());
-
-  // deposit (fuel tank) + two rocket cylinders on its left/right sides (visual only).
-  // Exhaust/smoke stays at the original ports on the deposit — unchanged height.
-  const depositW = h * 0.22;
-  const depositH = h * 0.32;
-  const depositD = h * 0.13;
-  const depositY = h * 0.56;
-  const depositZ = -h * 0.18;
-  const depositTop = depositY + depositH * 0.5;
-  const rocketH = depositH * 0.25;
-  const rocketR = h * 0.038;
-  // sit OUTSIDE the deposit faces — not at ±depositW/2 (that buried them in the box)
-  const rocketX = depositW * 0.5 + rocketR * 0.92;
-  // upper side of the tank: rocket top flush with deposit top, hanging down the flank
-  const rocketY = depositTop - rocketH * 0.5;
-
-  // original exhaust ports on the deposit — smoke + flames emit here, not from the rockets
-  const exhaust = useMemo(
-    () => [new THREE.Vector3(-h * 0.09, h * 0.36, -h * 0.2), new THREE.Vector3(h * 0.09, h * 0.36, -h * 0.2)],
-    [h],
-  );
-
-  function emitBurst(n = 4) {
-    // a tight jet, alternating nozzles, fired straight down + slightly back —
-    // narrow spread so the tongues read as a flame plume, not a scatter of puffs
-    for (let i = 0; i < n; i++) {
-      const p = puffState.current[cursor.current % PUFFS];
-      cursor.current++;
-      const noz = exhaust[i % 2];
-      p.pos.set(noz.x + (Math.random() - 0.5) * h * 0.03, noz.y, noz.z);
-      p.vel.set((Math.random() - 0.5) * 0.22, -4.2 - Math.random() * 1.6, -0.25 - Math.random() * 0.35);
-      p.max = 0.22 + Math.random() * 0.12;
-      p.life = p.max;
-      p.size = h * (0.09 + Math.random() * 0.06);
-    }
-  }
-
-  useFrame((_, dtRaw) => {
-    const dt = Math.min(0.05, dtRaw);
-    const flying = !!flyingRef.current;
-    // fast spring so the pack snaps out / retracts quickly
-    scale.current += ((flying ? 1 : 0) - scale.current) * Math.min(1, dt * 16);
-    if (grp.current) {
-      grp.current.visible = scale.current > 0.02;
-      grp.current.scale.setScalar(scale.current);
-    }
-
-    // flame flicker while thrusting — sine, not random, so the mesh doesn't jitter
-    const flick = 0.72 + Math.sin(performance.now() * 0.022) * 0.28;
-    if (flameL.current) { flameL.current.scale.y = flick; (flameL.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
-    if (flameR.current) { flameR.current.scale.y = flick * 0.92; (flameR.current.material as THREE.MeshBasicMaterial).opacity = flying ? 0.85 * flick : 0; }
-
-    // counter bumped by the Handler (per stroke, or paced while thrusting) → smoke
-    const b = burstRef.current || 0;
-    if (b > lastBurst.current) { lastBurst.current = b; emitBurst(3); }
-
-    // advance live flame tongues
-    for (let i = 0; i < PUFFS; i++) {
-      const p = puffState.current[i];
-      const m = puffRefs.current[i];
-      if (!m) continue;
-      if (p.life <= 0) { if (m.visible) m.visible = false; continue; }
-      p.life -= dt;
-      p.vel.multiplyScalar(0.86); // exhaust slows fast as it leaves the nozzle
-      p.pos.addScaledVector(p.vel, dt);
-      const age = 1 - Math.max(0, p.life) / p.max; // 0 = ignition, 1 = gone
-      m.visible = true;
-      m.position.copy(p.pos);
-      // point the cone's long axis (+Y) along the exhaust velocity, so each
-      // tongue licks downward/back from the nozzle instead of puffing outward
-      const dir = flameDir.current.copy(p.vel);
-      if (dir.lengthSq() > 1e-6) {
-        dir.normalize();
-        m.quaternion.copy(flameQuat.current.setFromUnitVectors(flameUp.current, dir));
-      }
-      // a long, thin tongue at ignition that shortens + slims as it burns out
-      const len = p.size * (3.4 - age * 2.2);
-      const wid = p.size * (0.85 - age * 0.5);
-      m.scale.set(wid, len, wid);
-      const mat = m.material as THREE.MeshBasicMaterial;
-      // white-hot core → cyan → deep blue as it cools (additive, so it glows)
-      mat.color.setRGB(0.55 + (1 - age) * 0.45, 0.95 - age * 0.45, 1.0);
-      mat.opacity = (1 - age) * 0.92;
-    }
-  });
-
-  return (
-    <group>
-      {/* pack body — springs in/out of the back */}
-      <group ref={grp} visible={false}>
-        {/* deposit / fuel tank */}
-        <mesh position={[0, depositY, depositZ]} castShadow>
-          <boxGeometry args={[depositW, depositH, depositD]} />
-          <meshStandardMaterial color="#20242e" metalness={0.7} roughness={0.35} emissive="#39e0ff" emissiveIntensity={0.3} />
-        </mesh>
-        {/* rocket bodies — vertical cylinders on the deposit flanks (left + right) */}
-        <mesh position={[-rocketX, rocketY, depositZ]} castShadow>
-          <cylinderGeometry args={[rocketR, rocketR * 1.12, rocketH, 12]} />
-          <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} emissive="#39e0ff" emissiveIntensity={0.15} />
-        </mesh>
-        <mesh position={[rocketX, rocketY, depositZ]} castShadow>
-          <cylinderGeometry args={[rocketR, rocketR * 1.12, rocketH, 12]} />
-          <meshStandardMaterial color="#3a3f4a" metalness={0.85} roughness={0.3} emissive="#39e0ff" emissiveIntensity={0.15} />
-        </mesh>
-        {/* thruster flames — original deposit exhaust ports (below the rockets) */}
-        <mesh ref={flameL} position={[exhaust[0].x, exhaust[0].y - h * 0.1, exhaust[0].z]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
-          <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh ref={flameR} position={[exhaust[1].x, exhaust[1].y - h * 0.1, exhaust[1].z]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[h * 0.04, h * 0.17, 10]} />
-          <meshBasicMaterial color="#8ff3ff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-      </group>
-
-      {/* exhaust flame tongues — pooled cones (apex points down the velocity),
-          oriented + stretched per-frame so the jet reads as fire, not bubbles */}
-      {puffState.current.map((_, i) => (
-        <mesh key={i} ref={(el) => { puffRefs.current[i] = el; }} visible={false}>
-          <coneGeometry args={[1, 1, 9]} />
-          <meshBasicMaterial color="#aeefff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
 
 // Ground smoke left behind during superrun — puffs spawn in world space so they
 // linger as the character blasts past. `superrunRef` gates emission; `burstRef`
@@ -1948,8 +2210,8 @@ function SuperrunTrail({
     const hd = headingRef.current;
     const backX = -Math.sin(hd);
     const backZ = -Math.cos(hd);
-    // handlerPos is the capsule centre (~1 u above feet) — spawn at foot level
-    const footY = pos.y - 1.0;
+    // handlerPos is the capsule centre (FOOT_OFF above feet) — spawn at foot level
+    const footY = pos.y - FOOT_OFF;
     for (let i = 0; i < n; i++) {
       const p = puffState.current[cursor.current % PUFFS];
       cursor.current++;
@@ -1989,7 +2251,7 @@ function SuperrunTrail({
         continue;
       }
       p.life -= dt;
-      p.vel.multiplyScalar(0.94);
+      p.vel.multiplyScalar(Math.exp(-3.7 * dt)); // dt-based drag (0.94/frame @60fps)
       p.pos.addScaledVector(p.vel, dt);
       const age = 1 - Math.max(0, p.life) / p.max;
       m.visible = true;
@@ -2022,6 +2284,7 @@ function Handler({
   ownedKey,
   matchActive,
   handlerPos,
+  handlerHeading,
   camCue,
   touchMove,
   touchBtn,
@@ -2063,6 +2326,7 @@ function Handler({
   ownedKey: string | null;
   matchActive: boolean;
   handlerPos: React.RefObject<THREE.Vector3>;
+  handlerHeading: React.RefObject<number>;
   camCue: React.RefObject<CamCue>;
   touchMove: React.RefObject<TouchMove>;
   touchBtn: React.RefObject<TouchBtn>;
@@ -2141,7 +2405,12 @@ function Handler({
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
-  // jetpack flight: kicks in on the 2nd jump; bursts on every stroke
+  // remaining seconds of a buffered pre-landing jump press (see JUMP_BUFFER_S)
+  const jumpBuffer = useRef(0);
+  // hold-to-fly: seconds the jump button has been held while airborne (pre-flight)
+  const flyHold = useRef(0);
+  // jetpack flight: deploys on a held jump after the first hop (or the 2nd tap);
+  // bursts on every stroke
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
@@ -2172,6 +2441,8 @@ function Handler({
   // squash-&-stretch impulse that pops on launch and absorbs on landing
   const leanX = useRef(0);
   const leanZ = useRef(0);
+  // previous frame's heading — its delta gives the turn rate for the ground bank
+  const prevHeading = useRef(Math.PI);
   const stretch = useRef(0); // +1 = stretch up (launch), -1 = squash down (land)
   const wasGrounded = useRef(true);
   const wasFlying = useRef(false);
@@ -2190,7 +2461,7 @@ function Handler({
     travelRef.current = (x, z, faceHeading) => {
       const rb = body.current;
       if (!rb) return;
-      const y = spawnPos ? spawnPos[1] : terrainHeight(x, z, shape, spawnKnoll) + 2.4;
+      const y = spawnPos ? spawnPos[1] : terrainHeight(x, z, shape, spawnKnoll) + FOOT_OFF + 1.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
@@ -2211,12 +2482,19 @@ function Handler({
     };
   }, [travelRef, shape, spawnKnoll, spawnPos]);
 
-  // circuit spawn faces down the track (+z); default heading is −z (toward tunnel).
+  // circuit spawn faces down the track (+z); wild spawn faces the plaza / inward.
   useEffect(() => {
-    if (!spawnPos) return;
-    heading.current = 0;
-    if (camCue.current) camCue.current.heading = 0;
-  }, [spawnPos, camCue]);
+    if (spawnPos) {
+      heading.current = 0;
+      if (camCue.current) camCue.current.heading = 0;
+    } else {
+      const face = Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
+      heading.current = face;
+      handlerHeading.current = face;
+      if (camCue.current) camCue.current.heading = face;
+      if (inner.current) inner.current.rotation.set(0, face, 0);
+    }
+  }, [spawnPos, spawnKnoll, camCue, handlerHeading]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
   // points at and fades in the new clip, so the `cur` ref can never desync from
@@ -2294,19 +2572,21 @@ function Handler({
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
     const rb = body.current;
+
+    // Publish handler position before companion reads it (same frame).
+    if (rb) {
+      if (camAnchor.current) {
+        camAnchor.current.updateWorldMatrix(true, false);
+        camAnchor.current.getWorldPosition(handlerPos.current);
+      } else {
+        const t = rb.translation();
+        handlerPos.current.set(t.x, t.y, t.z);
+      }
+      handlerHeading.current = heading.current;
+    }
     if (!rb) return;
 
     const t = rb.translation();
-    // feed the camera the INTERPOLATED body position (matches the rendered mesh),
-    // not the raw stepped physics translation — that mismatch was the judder.
-    // Everything else below keeps using `t` (physics truth) on purpose.
-    if (camAnchor.current) {
-      camAnchor.current.updateWorldMatrix(true, false);
-      camAnchor.current.getWorldPosition(handlerPos.current);
-    } else {
-      handlerPos.current.set(t.x, t.y, t.z);
-    }
-
     const hp = handlerPos.current;
     const fwd = fwdV.current.set(hp.x - camera.position.x, 0, hp.z - camera.position.z);
     if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, 1);
@@ -2349,7 +2629,7 @@ function Handler({
     // jumping and you can't walk. So also treat "settled near the terrain
     // surface" as grounded, independent of the sensor.
     const floorY = terrainHeight(t.x, t.z, shape, spawnKnoll);
-    const restY = floorY + 1.0; // capsule half-height (0.55) + radius (0.45)
+    const restY = floorY + FOOT_OFF; // capsule half-height + radius (2/3-scale body)
     const sensorGround = ground.current > 0;
 
     // ── spawn settle guard ──
@@ -2509,6 +2789,26 @@ function Handler({
     const jumpEdge = spaceEdge || touchEdge || padJumpEdge;
     const jumpHeld = space || (controlsEnabled && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
 
+    // ── hold-to-fly ──
+    // Once airborne from the first hop (but not yet flying), keeping the jump button
+    // held spools a short timer that auto-deploys the pack. This makes flight
+    // discoverable by feel — press to hop, keep holding to rise — without teaching the
+    // double-tap. Reset the moment the button is released, we're grounded, or we've
+    // already deployed, so a quick tap stays a plain jump.
+    if (jumpHeld && !grounded && jumps.current > 0 && jumps.current <= FLY_TRIGGER) {
+      flyHold.current += dt;
+      if (flyHold.current >= FLY_HOLD_DEPLOY) {
+        jumps.current = FLY_TRIGGER + 1; // cross the threshold → pack deploys below
+        jetBurst.current++;
+        flyHold.current = 0;
+      }
+    } else if (!jumpHeld || grounded) {
+      flyHold.current = 0;
+    }
+
+    // tick the pre-landing jump buffer down; a touchdown inside the window fires it
+    if (jumpBuffer.current > 0) jumpBuffer.current = Math.max(0, jumpBuffer.current - dt);
+
     if (jumps.current > FLY_TRIGGER) {
       // ── jetpack flight ── a fully controlled hover so vertical motion stays
       // fluid. The key trick: we smooth the THRUST COMMAND (0..1), not just the
@@ -2530,20 +2830,30 @@ function Handler({
       jetEmit.current += dt;
       const emitGap = 0.045 + (1 - thrust.current) * 0.085; // tighter puffs at full thrust
       if (jetEmit.current > emitGap) { jetEmit.current = 0; jetBurst.current++; }
-    } else if (jumpEdge) {
-      // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
-      const air = jumps.current > 0;
-      jumps.current++;
-      // keep the steered horizontal velocity (don't snap back to pre-frame inertia)
-      const cv = rb.linvel();
-      rb.setLinvel({ x: cv.x, y: air ? AIR_JUMP : JUMP, z: cv.z }, true);
-      jumpBeep(jumps.current - 1);
-      // launch pop — the body stretches upward as it leaps (idle + leg hang sell the arc)
-      stretch.current = 1;
-      // action-cam: punch the camera in toward the character on every air jump
-      if (air && camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.85);
-      // the stroke that crosses the threshold kicks off the jetpack with a burst
-      if (jumps.current > FLY_TRIGGER) jetBurst.current++;
+    } else if (jumpEdge || (grounded && jumpBuffer.current > 0)) {
+      // ── jump buffering (~120ms) ── a tap made while FALLING just above the
+      // floor is held and fired the frame we land, so "jump the instant I touch
+      // down" always lands a fresh ground hop instead of spending the air-jump
+      // (or worse, deploying the pack) centimetres off the dirt. Rising taps
+      // still chain the multi-jump / double-tap deploy unchanged.
+      if (jumpEdge && !grounded && v.y < -0.5 && t.y <= restY + JUMP_BUFFER_H && jumps.current > 0) {
+        jumpBuffer.current = JUMP_BUFFER_S;
+      } else {
+        jumpBuffer.current = 0;
+        // ── discrete multi-jump ── edge-triggered so a held key/tap can't spam it
+        const air = jumps.current > 0;
+        jumps.current++;
+        // keep the steered horizontal velocity (don't snap back to pre-frame inertia)
+        const cv = rb.linvel();
+        rb.setLinvel({ x: cv.x, y: air ? AIR_JUMP : JUMP, z: cv.z }, true);
+        jumpBeep(jumps.current - 1);
+        // launch pop — the body stretches upward as it leaps (idle + leg hang sell the arc)
+        stretch.current = 1;
+        // action-cam: punch the camera in toward the character on every air jump
+        if (air && camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.85);
+        // the stroke that crosses the threshold kicks off the jetpack with a burst
+        if (jumps.current > FLY_TRIGGER) jetBurst.current++;
+      }
     }
     // touchdown absorb — squash on the frame we regain the ground with downward speed
     if (grounded && !wasGrounded.current && v.y < -2) stretch.current = -1;
@@ -2572,7 +2882,10 @@ function Handler({
     if (flying.current || !grounded || endVy > 1.5) {
       setAnim("idle");
     } else if (len > 0) {
-      setAnim(sprint ? "run" : "walk", { timeScale: superActive && sprint ? 2 : 1 });
+      // stride frequency compensates the 2/3 body (stride LENGTH shrank with it)
+      // so the feet keep tracking the ground instead of skating
+      const strideK = 1 / READER_SCALE;
+      setAnim(sprint ? "run" : "walk", { timeScale: superActive && sprint ? strideK * 1.8 : strideK });
     } else {
       setAnim("idle");
     }
@@ -2625,7 +2938,7 @@ function Handler({
     if (!circuitMode) {
       const p = rb.translation();
       const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
-      const FEET = 1.0;
+      const FEET = FOOT_OFF;
       if (p.y < floorYNet - 0.1) {
         rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
         const lv = rb.linvel();
@@ -2638,6 +2951,7 @@ function Handler({
     if (camCue.current) {
       const lv = rb.linvel();
       camCue.current.heading = heading.current;
+      handlerHeading.current = heading.current;
       camCue.current.speed = Math.hypot(lv.x, lv.z);
       camCue.current.moving = len > 0;
       camCue.current.flying = flyingMode;
@@ -2657,17 +2971,44 @@ function Handler({
     // still in the hover pose); decays to upright the instant we touch down
     const lv2 = rb.linvel();
     const hspeed = Math.hypot(lv2.x, lv2.z);
-    const tgtLeanX = flyingMode ? Math.min(0.5, hspeed * 0.03) : superActive ? Math.min(0.42, hspeed * 0.035) : 0;
-    const tgtLeanZ = flyingMode ? Math.max(-0.35, Math.min(0.35, -ax * 0.35)) : 0;
+    // turn rate (rad/s) from this frame's applied heading change — drives the bank
+    let dHead = heading.current - prevHeading.current;
+    dHead = Math.atan2(Math.sin(dHead), Math.cos(dHead));
+    prevHeading.current = heading.current;
+    const turnRate = dt > 0 ? dHead / dt : 0;
+    let tgtLeanX = 0;
+    let tgtLeanZ = 0;
+    if (flyingMode) {
+      const att = flightAttitudePlanar(lv2.x, lv2.z, heading.current, 1);
+      tgtLeanX = att.pitch;
+      tgtLeanZ = att.roll;
+    } else if (superActive) {
+      tgtLeanX = Math.min(0.42, hspeed * 0.035);
+    }
+    // bank into ground turns — a small speed-scaled roll toward the inside of the
+    // arc so direction changes read as carving, not a flat pivot. Heading turns
+    // right as it increases, and negative Z-roll banks right, hence the minus.
+    // Capped tiny (~9°) and speed-gated so idle shuffles stay upright.
+    if (!flyingMode && grounded && moveLen > 0 && !useSettings.getState().reduceMotion) {
+      tgtLeanZ += THREE.MathUtils.clamp(-turnRate * 0.06, -0.75, 0.75) * Math.min(1, hspeed / RUN) * 0.22;
+    }
     const ls = 1 - Math.exp(-10 * dt);
     leanX.current += (tgtLeanX - leanX.current) * ls;
     leanZ.current += (tgtLeanZ - leanZ.current) * ls;
     // squash-&-stretch impulse eases back to neutral
     stretch.current += (0 - stretch.current) * (1 - Math.exp(-9 * dt));
     if (inner.current) {
+      // BUG-FIX (flight pose): the default XYZ euler order applied the pitch
+      // around the WORLD x-axis, so flying along +x turned the forward lean into
+      // a sideways roll (and the bank into a pitch). YXZ = heading first, then
+      // body-LOCAL pitch (leanX) and bank (leanZ) — the pose now tracks the
+      // flight direction whatever the heading. Visual-only group, so the capsule
+      // collider never tilts.
+      inner.current.rotation.order = "YXZ";
       inner.current.rotation.set(leanX.current, heading.current, leanZ.current);
       const s = stretch.current;
-      inner.current.scale.set(1 - s * 0.12, 1 + s * 0.18, 1 - s * 0.12);
+      // squash-&-stretch rides ON TOP of the 2/3 body scale
+      inner.current.scale.set(READER_SCALE * (1 - s * 0.12), READER_SCALE * (1 + s * 0.18), READER_SCALE * (1 - s * 0.12));
     }
 
     let next: NearTarget = null;
@@ -2892,12 +3233,12 @@ function Handler({
         onAltitude(t.y);
       }
     }
-  });
+  }, 1);
 
   return (
     <>
       {!isHub && !inVenue && <TrainPad pos={trainPad} beacon={padBeacon} />}
-      <SuperrunTrail superrunRef={superrun} posRef={handlerPos} headingRef={heading} burstRef={runBurst} h={built.h} />
+      <SuperrunTrail superrunRef={superrun} posRef={handlerPos} headingRef={heading} burstRef={runBurst} h={built.h * READER_SCALE} />
       <RigidBody
         ref={body}
         type="dynamic"
@@ -2911,38 +3252,38 @@ function Handler({
         position={
           spawnPos
             ? spawnPos
-            : [spawnKnoll.x, terrainHeight(spawnKnoll.x, spawnKnoll.z, shape, spawnKnoll) + 1.1, spawnKnoll.z]
+            : [spawnKnoll.x, terrainHeight(spawnKnoll.x, spawnKnoll.z, shape, spawnKnoll) + FOOT_OFF + 0.1, spawnKnoll.z]
         }
         enabledRotations={[false, false, false]}
         canSleep={false}
         ccd
       >
-        <CapsuleCollider args={[0.55, 0.45]} />
+        <CapsuleCollider args={[CAP_HALF, CAP_RAD]} />
         <CuboidCollider
-          args={[0.3, 0.2, 0.3]}
-          position={[0, -0.95, 0]}
+          args={[0.3 * READER_SCALE, 0.2 * READER_SCALE, 0.3 * READER_SCALE]}
+          position={[0, -0.95 * FOOT_OFF, 0]}
           sensor
           onIntersectionEnter={() => { ground.current++; }}
           onIntersectionExit={() => { ground.current = Math.max(0, ground.current - 1); }}
         />
         {/* interpolated camera anchor — origin-aligned with the body, no offset */}
         <group ref={camAnchor} />
-        <group ref={inner} position={[0, -1.0, 0]}>
+        <group ref={inner} position={[0, -FOOT_OFF, 0]} scale={READER_SCALE}>
           <primitive object={built.root} />
           <ReaderRankEmblem level={readerLv} />
           {!force && <ReaderBackSigil height={built.h} />}
-          {force && <ReaderClanBanner clan={force} h={built.h} />}
           <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
           <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
         </group>
-        {/* Reader ground ring — gold by default; pledged adds Force outer band */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.96, 0]}>
-          <ringGeometry args={[0.58, 0.74, 40]} />
+        {/* Reader ground ring — gold by default; pledged adds Force outer band
+            (radii + hover height follow the 2/3 body) */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04 - FOOT_OFF, 0]}>
+          <ringGeometry args={[0.39, 0.5, 40]} />
           <meshBasicMaterial color={force ? TYPE_COLOR[force] : GOLD} transparent opacity={0.78} side={THREE.DoubleSide} />
         </mesh>
         {force && (
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.955, 0]}>
-            <ringGeometry args={[0.48, 0.56, 40]} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045 - FOOT_OFF, 0]}>
+            <ringGeometry args={[0.32, 0.38, 40]} />
             <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
           </mesh>
         )}
@@ -2961,6 +3302,9 @@ const PITCH_MAX = 1.25;  // ~ 72°: look steeply down
 const PITCH_FLY_UP = -0.12;   // climbing → camera low, looking up ("back & slightly down")
 const PITCH_FLY_HOVER = 0.14; // steady hover → near-level over-the-shoulder
 const PITCH_FLY_DOWN = 0.46;  // sinking → camera high, looking down ("back & slightly up")
+// default follow distance — pulled in a touch so the 2/3-scale Reader still
+// fills the frame the way the full-size body used to at 12
+const CAM_DIST_DEFAULT = 10.5;
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
 // Passive "postcard" camera for showcase/docs embeds — a slow, high orbit around
 // the plaza so the whole region (arena, tower, spire, rift) reads at a glance.
@@ -2976,7 +3320,7 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
     const cx = Math.sin(t.current) * radius;
     const cz = Math.cos(t.current) * radius;
     const cy = Math.max(15, terrainHeight(cx, cz, shape) + 13);
-    camera.position.lerp(tmp.current.set(cx, cy, cz), 0.06);
+    camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-3.7 * dt));
     camera.lookAt(ARENA[0], 2.2, ARENA[2]);
   });
   return null;
@@ -2993,6 +3337,7 @@ function CameraController({
   galleryFocus,
   inCircuit = false,
   circuitPhase = null,
+  matchWide = false,
 }: {
   match: MatchView | null;
   handlerPos: React.RefObject<THREE.Vector3>;
@@ -3002,11 +3347,19 @@ function CameraController({
   galleryFocus?: React.RefObject<GalleryFocus | null>;
   inCircuit?: boolean;
   circuitPhase?: CircuitPhase | null;
+  /** Pull the bout camera back on touch so both fighters stay in frame. */
+  matchWide?: boolean;
 }) {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(0.34);
-  const dist = useRef(12);
+  const dist = useRef(CAM_DIST_DEFAULT);
+  // wheel/pinch write the TARGET; `dist` eases toward it each frame so zoom is a
+  // smooth dolly rather than a per-notch snap (and recenter's reset glides too)
+  const distTarget = useRef(CAM_DIST_DEFAULT);
+  // eased look-ahead offset in the run direction (lookAt target only — see below)
+  const leadX = useRef(0);
+  const leadZ = useRef(0);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
   const dirYaw = useRef(0);
@@ -3053,7 +3406,7 @@ function CameraController({
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); dist.current = Math.min(120, Math.max(6, dist.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); distTarget.current = Math.min(120, Math.max(6, distTarget.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
     // Q — snap the camera back behind the character (classic third-person
     // recenter). Reuses the takeoff/landing sweep so it eases in cleanly: swings
     // the lens directly behind the player, resets to the over-the-shoulder pitch
@@ -3068,7 +3421,7 @@ function CameraController({
       if (e.code !== "KeyQ" || e.repeat || isTyping(e.target)) return;
       recenter.current = 0.7;
       recenterPitch.current = 0.34;
-      dist.current = 12;
+      distTarget.current = CAM_DIST_DEFAULT; // eased by the per-frame zoom damp — no distance snap
       if (camCue.current) camCue.current.zoom = Math.min(1.2, camCue.current.zoom + 0.4);
     };
     el.addEventListener("pointerdown", onDown);
@@ -3089,13 +3442,15 @@ function CameraController({
     const dt = Math.min(0.05, dtRaw);
     if (match) {
       const cin = !!match.cinematic;
-      dirYaw.current += cin ? 0.0018 : 0.003;
+      // dt-based orbit + exponential ease (was per-frame constants — the director
+      // cam orbited twice as fast at 120fps and crawled at 30)
+      dirYaw.current += (cin ? 0.108 : 0.18) * dt;
       const tx = ARENA[0], ty = cin ? 1.45 : 1.6, tz = ARENA[2];
-      const orbit = cin ? 10.5 : 14;
-      const cy = cin ? 4.85 : 6.2;
+      const orbit = matchWide ? (cin ? 14.5 : 20) : cin ? 10.5 : 14;
+      const cy = matchWide ? (cin ? 5.4 : 7.4) : cin ? 4.85 : 6.2;
       const cx = tx + Math.sin(dirYaw.current) * orbit;
       const cz = tz + Math.cos(dirYaw.current) * orbit;
-      camera.position.lerp(tmp.current.set(cx, cy, cz), cin ? 0.055 : 0.04);
+      camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-(cin ? 3.4 : 2.5) * dt));
       camera.lookAt(tx, ty, tz);
       return;
     }
@@ -3107,7 +3462,7 @@ function CameraController({
       yaw.current -= drag.dx * 0.005 * sens;
       const pdy = drag.dy * 0.004 * sens * (st.invertY ? -1 : 1);
       pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - pdy));
-      if (drag.pinch) dist.current = Math.min(120, Math.max(6, dist.current - drag.pinch * 0.02));
+      if (drag.pinch) distTarget.current = Math.min(120, Math.max(6, distTarget.current - drag.pinch * 0.02));
       drag.dx = 0; drag.dy = 0; drag.pinch = 0;
       lastInput.current = performance.now();
     }
@@ -3126,7 +3481,8 @@ function CameraController({
     const cue = camCue.current;
     const flying = cue?.flying ?? false;
     const zoom = cue ? cue.zoom : 0;
-    if (cue) cue.zoom *= flying ? 0.9 : 0.86;
+    // dt-based decay of the one-shot punch-in (0.9/0.86 per frame @60fps equiv)
+    if (cue) cue.zoom *= Math.exp(-(flying ? 6.3 : 9) * dt);
 
     // one-shot programmatic recenter (e.g. the first Concord landing parks the
     // lens behind the champion, framing the Grounds gate it's been turned toward)
@@ -3134,7 +3490,7 @@ function CameraController({
       cue.recenter = false;
       recenter.current = 0.9;
       recenterPitch.current = 0.34;
-      dist.current = 12;
+      distTarget.current = CAM_DIST_DEFAULT; // glides in via the zoom damp below, no snap
       cue.zoom = Math.min(1.2, cue.zoom + 0.4);
     }
 
@@ -3235,6 +3591,9 @@ function CameraController({
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
     }
 
+    // smooth zoom: ease the actual distance toward the wheel/pinch target so each
+    // notch is a short dolly move instead of a step (dt-based, fps-independent)
+    dist.current += (distTarget.current - dist.current) * (1 - Math.exp(-8 * dt));
     followDist.current += (speed01 * 6 - followDist.current) * Math.min(1, dt * 4);
     const flyZoom = flying ? 0 : zoom;
     const eff = Math.max(5, dist.current + followDist.current - flyZoom * 6);
@@ -3244,7 +3603,9 @@ function CameraController({
     const swayX = 0;
     const swayY = 0;
 
-    let tx = hp.x, ty = hp.y + 0.4 + flyZoom * 0.3, tz = hp.z;
+    // pivot rides at ~chest height: the capsule centre sits lower on the 2/3
+    // body, so the old +0.4 aimed over the head — +0.27 keeps the same fraction
+    let tx = hp.x, ty = hp.y + 0.27 + flyZoom * 0.3, tz = hp.z;
     let cx = tx + Math.sin(yaw.current) * Math.cos(pitch.current) * eff + swayX;
     let cz = tz + Math.cos(yaw.current) * Math.cos(pitch.current) * eff;
     let cy = ty + Math.sin(pitch.current) * eff + swayY;
@@ -3279,13 +3640,25 @@ function CameraController({
     // snappy on foot, snappiest during an action-cam punch.
     const posRate = flying ? 6 : flyZoom > 0.05 ? 18 : 11;
     camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-posRate * dt));
-    camera.lookAt(tx, ty, tz);
+
+    // ── camera lead ── ease the LOOK target a step ahead of the run so the
+    // character yields frame space toward where they're going. Look-target only:
+    // the orbit stays anchored on the player, so the camera-relative steer basis
+    // (camera→player) is untouched and W still walks a straight line.
+    const leadAmt = !st.reduceMotion && moving && !cue?.reverse ? speed01 * (cue?.superrun ? 2.2 : 1.2) : 0;
+    const lk = 1 - Math.exp(-3 * dt);
+    leadX.current += (Math.sin(cue?.heading ?? 0) * leadAmt - leadX.current) * lk;
+    leadZ.current += (Math.cos(cue?.heading ?? 0) * leadAmt - leadZ.current) * lk;
+    // gallery framing wins over the lead as it blends in
+    camera.lookAt(tx + leadX.current * (1 - gw), ty, tz + leadZ.current * (1 - gw));
 
     const cam = camera as THREE.PerspectiveCamera;
-    // reduced motion: hold a steady FOV (no speed swell / action-cam punch)
-    const targetFov = st.reduceMotion ? 52 : 52 + (flying ? 0 : speed01 * 10 + flyZoom * 6);
+    // reduced motion: hold a steady FOV (no speed swell / action-cam punch).
+    // superrun adds a small extra kick on top of the speed swell so breaking into
+    // the double-speed dash reads in the lens, not just the smoke.
+    const targetFov = st.reduceMotion ? 52 : 52 + (flying ? 0 : speed01 * 10 + (cue?.superrun ? 4 : 0) + flyZoom * 6);
     if (Math.abs(cam.fov - targetFov) > 0.01) {
-      cam.fov += (targetFov - cam.fov) * Math.min(1, dt * 3);
+      cam.fov += (targetFov - cam.fov) * (1 - Math.exp(-3 * dt));
       cam.updateProjectionMatrix();
     }
   });

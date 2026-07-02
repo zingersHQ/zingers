@@ -1,12 +1,12 @@
 "use client";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import type { CircuitCheckpoint, CircuitPlatform, CircuitTrackDef } from "./circuit";
 import { sectorBounds } from "./circuit-tracks";
 
-function CheckpointRing({
+const CheckpointRing = memo(function CheckpointRing({
   cp,
   color,
   finish,
@@ -36,9 +36,9 @@ function CheckpointRing({
       </mesh>
     </group>
   );
-}
+});
 
-function TrackPlatform({ plat, biome }: { plat: CircuitPlatform; biome: BiomeConfig }) {
+const TrackPlatform = memo(function TrackPlatform({ plat, biome }: { plat: CircuitPlatform; biome: BiomeConfig }) {
   const color =
     plat.accent === "top" ? biome.platform.top : plat.accent === "b" ? biome.platform.b : biome.platform.a;
   const topY = plat.pos[1] + plat.size[1] / 2;
@@ -60,7 +60,7 @@ function TrackPlatform({ plat, biome }: { plat: CircuitPlatform; biome: BiomeCon
       </mesh>
     </RigidBody>
   );
-}
+});
 
 /** Void safety net — catches a fall (triggers run failure in the Handler). */
 function SafetyFloor({ color, track }: { color: string; track: CircuitTrackDef }) {
@@ -75,7 +75,7 @@ function SafetyFloor({ color, track }: { color: string; track: CircuitTrackDef }
   );
 }
 
-export function CircuitScene({ track, biome }: { track: CircuitTrackDef; biome: BiomeConfig }) {
+export const CircuitScene = memo(function CircuitScene({ track, biome }: { track: CircuitTrackDef; biome: BiomeConfig }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
   return (
@@ -89,4 +89,4 @@ export function CircuitScene({ track, biome }: { track: CircuitTrackDef; biome: 
       ))}
     </>
   );
-}
+});
