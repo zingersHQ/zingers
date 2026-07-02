@@ -1717,7 +1717,7 @@ export default function GroundsScreen() {
 
       {/* HUD — sits above the WebGL canvas and touch layer */}
       {showHud && (
-      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 130px)" : 400 }}>
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 172px)" : 400 }}>
         {!showMatch && overlay === "none" && owned && !gRun && !inVenue && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
@@ -1838,7 +1838,10 @@ export default function GroundsScreen() {
             <SettingsIcon size={isMobile ? 16 : 18} strokeWidth={2} />
           </button>
         )}
-        {overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
+        {/* appearance toggle is desktop-only in-world — on mobile it's pure clutter
+            in the top bar (theme lives in Settings); keeps the row from overrunning
+            the world picker on the left */}
+        {!isMobile && overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
         {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
         {overlay === "none" && !showMatch && owned && !gRun && (
           <TrainerBadge
@@ -1932,7 +1935,7 @@ export default function GroundsScreen() {
       )}
 
       {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
             <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
@@ -1947,7 +1950,7 @@ export default function GroundsScreen() {
           Hidden once they're standing on a gate (the big Enter prompt takes over),
           and escalates to gold once they idle near spawn. */}
       {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div
             className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
             style={{ ["--ac" as string]: guideIdle ? "var(--gold)" : "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 540, borderColor: guideIdle ? "var(--gold)" : "#cdb8ff" }}
@@ -1981,7 +1984,7 @@ export default function GroundsScreen() {
       )}
 
       {readerSplitStep !== null && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
             {readerSplitStep === 0 ? (
               <>
@@ -2011,7 +2014,7 @@ export default function GroundsScreen() {
       {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
       {clanInvite && owned && !store.force && !modesLocked && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>

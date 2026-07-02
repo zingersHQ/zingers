@@ -331,7 +331,7 @@ export default function World({
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
   const inAmphitheatre = activeVenue === "amphitheatre";
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -1243,7 +1243,6 @@ function OwnedCompanion({
         type={c.type}
         champion={c.champion}
         identityKey={c.key}
-        label={c.name + "  ◆ YOURS"}
         showForce={false}
         clan={pledged}
         position={[0, 0, 0]}
@@ -2149,6 +2148,22 @@ const FLY_FOOT = 1.45;     // ankle tuck (rad) while airborne (jetpack thrust, j
 const FLY_LEG_HANG = 0.55; // upper-leg relax (rad) — thighs swing toward a straight dangle
 const FLY_KNEE_BEND = 0.75; // soft knee flex (rad) so the shins hang loose, not stiff
 
+// ── flight ground-rings ──────────────────────────────────────────────────────
+// The foot rings detach from the feet while airborne and sink toward the floor
+// below — a floating "here's the ground" depth ladder that reads altitude. The
+// smaller (inner) ring travels furthest so the pair fans out with depth. Holding
+// thrust drives them to the bottom of their travel where they gently oscillate;
+// releasing eases them home; descending kicks them upward. Reused for the
+// companion's ring (READER-derived tuning; see OwnedCompanion). Gated by
+// reduce-motion — the rings simply stay planted at the feet.
+const RING_SINK_BIG = 0.85;   // max downward travel of the outer (bigger) ring (world u)
+const RING_SINK_SMALL = 1.5;  // inner (smaller) ring sinks lowest
+const RING_OSC_AMP = 0.16;    // hover wobble at the bottom of travel (small ring; big rides 40%)
+const RING_OSC_HZ = 1.4;      // wobble frequency (Hz)
+const RING_FALL_UP = 0.55;    // how far the rings ride up during a fall
+const RING_FALL_REF = 8;      // fall speed (u/s) mapped to the full upward ride
+const RING_EASE = 8;          // damping lambda for the ring offset (frame-rate independent)
+
 // RobotExpressive bones are FootL/FootR (→ footl/footr); other rigs may use foot.l
 function legBone(bones: Record<string, THREE.Bone>, part: "foot" | "upperleg" | "lowerleg", side: "l" | "r") {
   return bones[`${part}.${side}`] ?? bones[`${part}${side}`];
@@ -2167,6 +2182,8 @@ interface CamCue {
   superrun: boolean;   // sustained sprint past SUPERRUN_DELAY — double speed + smoke trail
   headingSteer: boolean; // movement locked to body heading — suppress camera follow/sway
   recenter: boolean;   // one-shot request to swing the lens squarely behind the player
+  touchActive: boolean; // on-screen stick is being held — freeze camera yaw auto-follow so
+                        // the camera-relative steer basis stays fixed (no walk/fly-in-circles)
 }
 
 // on-screen touch control channels (mobile)
@@ -2414,6 +2431,13 @@ function Handler({
   const flying = useRef(false);
   const jetBurst = useRef(0);
   const jetEmit = useRef(0); // accumulator that paces continuous-thrust smoke
+  // flight ground-rings — the foot rings detach + sink toward the floor while
+  // aloft (see RING_* constants). Big = outer gold ring; small = inner Force ring.
+  const ringBig = useRef<THREE.Mesh>(null);
+  const ringSmall = useRef<THREE.Mesh>(null);
+  const ringYBig = useRef(0);   // eased y offset from the ring's rest position
+  const ringYSmall = useRef(0);
+  const ringOscT = useRef(0);   // oscillation phase accumulator (s)
   // superrun: sustained ground sprint past SUPERRUN_DELAY → double speed + smoke trail
   const sprintTime = useRef(0);
   const superrunArmed = useRef(false);
@@ -2960,6 +2984,13 @@ function Handler({
       camCue.current.climb = flyingMode ? lv.y : 0;
       camCue.current.superrun = superActive;
       camCue.current.headingSteer = headingSteer;
+      // on-screen stick held → freeze the camera's yaw auto-follow (below) so the
+      // camera-relative move basis can't rotate under the input. That feedback loop
+      // (steer → camera chases heading → basis rotates → steer more) was the
+      // walk/fly-in-circles. Touch stick is the only writer of touchMove, so this
+      // stays false for keyboard/gamepad, which keep their adventure-cam follow.
+      camCue.current.touchActive =
+        !!touchMove.current && Math.hypot(touchMove.current.x, touchMove.current.y) > 0.02;
       // `az` is exactly the move's forward component (fwd ⟂ right): negative means
       // we're heading back toward the camera. Flag it so the auto-follow stands
       // down — chasing "behind" a player who's facing the camera spins endlessly.
@@ -3009,6 +3040,31 @@ function Handler({
       const s = stretch.current;
       // squash-&-stretch rides ON TOP of the 2/3 body scale
       inner.current.scale.set(READER_SCALE * (1 - s * 0.12), READER_SCALE * (1 + s * 0.18), READER_SCALE * (1 - s * 0.12));
+    }
+
+    // ── flight ground-rings ──
+    // Detach the foot rings and sink them toward the floor while aloft: thrust
+    // (holding Space) drives them to the bottom of their travel where they
+    // oscillate; releasing eases them home; descending rides them up. The inner
+    // ring travels furthest so the pair fans out with depth.
+    if (ringBig.current || ringSmall.current) {
+      const reduce = useSettings.getState().reduceMotion;
+      const climbV = lv2.y; // + up / − down
+      const airborne = flying.current || !grounded;
+      // sink tied to the eased thrust command; only meaningful while flying
+      const sinkT = reduce ? 0 : (flying.current ? thrust.current : 0);
+      // upward ride while actually descending in the air
+      const fallT = reduce || !airborne || climbV >= 0 ? 0 : Math.min(1, -climbV / RING_FALL_REF);
+      ringOscT.current += dt;
+      // wobble sits at the BOTTOM of travel (0 → up to +amp), scaled by thrust
+      const osc = RING_OSC_AMP * (0.5 - 0.5 * Math.cos(ringOscT.current * RING_OSC_HZ * Math.PI * 2)) * sinkT;
+      const tgtBig = -RING_SINK_BIG * sinkT + RING_FALL_UP * fallT + osc * 0.4;
+      const tgtSmall = -RING_SINK_SMALL * sinkT + RING_FALL_UP * fallT + osc;
+      const rk = 1 - Math.exp(-RING_EASE * dt);
+      ringYBig.current += (tgtBig - ringYBig.current) * rk;
+      ringYSmall.current += (tgtSmall - ringYSmall.current) * rk;
+      if (ringBig.current) ringBig.current.position.y = (0.04 - FOOT_OFF) + ringYBig.current;
+      if (ringSmall.current) ringSmall.current.position.y = (0.045 - FOOT_OFF) + ringYSmall.current;
     }
 
     let next: NearTarget = null;
@@ -3275,14 +3331,16 @@ function Handler({
           <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
           <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
         </group>
-        {/* Reader ground ring — gold by default; pledged adds Force outer band
-            (radii + hover height follow the 2/3 body) */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04 - FOOT_OFF, 0]}>
+        {/* Reader ground rings — gold by default; pledged adds a Force outer band.
+            They detach + sink toward the floor while flying (see RING_* + the
+            flight ground-rings block above). Bigger outer ring rides higher; the
+            smaller inner ring sinks lowest. */}
+        <mesh ref={ringBig} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04 - FOOT_OFF, 0]}>
           <ringGeometry args={[0.39, 0.5, 40]} />
           <meshBasicMaterial color={force ? TYPE_COLOR[force] : GOLD} transparent opacity={0.78} side={THREE.DoubleSide} />
         </mesh>
         {force && (
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045 - FOOT_OFF, 0]}>
+          <mesh ref={ringSmall} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045 - FOOT_OFF, 0]}>
             <ringGeometry args={[0.32, 0.38, 40]} />
             <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
           </mesh>
@@ -3563,7 +3621,7 @@ function CameraController({
       const r = Math.min(1, dt * 5);
       yaw.current += d * r;
       pitch.current += (recenterPitch.current - pitch.current) * r;
-    } else if (flying && cue && st.camAssist && performance.now() - lastInput.current > 600) {
+    } else if (flying && cue && !cue.touchActive && st.camAssist && performance.now() - lastInput.current > 600) {
       // ── in-flight companion follow ──
       // While the pack is lit, keep the lens planted behind the character even
       // when hovering straight up/down (no WASD), and tilt the pitch with the
@@ -3585,7 +3643,7 @@ function CameraController({
         pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
       }
       pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
-    } else if (cue && moving && st.camAssist && !cue.reverse && !cue.headingSteer && !circuitFrontLock && performance.now() - lastInput.current > 900) {
+    } else if (cue && moving && !cue.touchActive && st.camAssist && !cue.reverse && !cue.headingSteer && !circuitFrontLock && performance.now() - lastInput.current > 900) {
       let d = cue.heading + Math.PI - yaw.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw.current += d * Math.min(1, dt * (1.4 + speed01 * 2.4));
@@ -3711,6 +3769,8 @@ function TouchControls({ active, move, btn, cam, cue, bottomInset = 0, hudLeftIn
   hudLeftInset?: number;
 }) {
   const R = 56; // stick radius in px
+  const DEAD = 0.18; // inner deadzone (fraction of R) — swallows thumb drift so a
+                     // resting/settling thumb reads as zero input, not a slow curve
   const joyId = useRef<number | null>(null);
   const joyOrigin = useRef<{ x: number; y: number } | null>(null);
   const [base, setBase] = useState<{ x: number; y: number } | null>(null);
@@ -3762,8 +3822,18 @@ function TouchControls({ active, move, btn, cam, cue, bottomInset = 0, hudLeftIn
     let dy = e.clientY - joyOrigin.current.y;
     const d = Math.hypot(dx, dy);
     if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
-    setKnob({ x: dx, y: dy });
-    if (move.current) { move.current.x = dx / R; move.current.y = -dy / R; }
+    setKnob({ x: dx, y: dy }); // knob visual always tracks the finger
+    if (!move.current) return;
+    // Map finger distance → throttle with an inner deadzone and a gentle expo.
+    // The deadzone kills drift; the expo gives a large fine-control zone near
+    // centre (small tilt = slow, deliberate steer) that ramps to full at the rim.
+    const nm = Math.min(1, d / R);
+    if (nm <= DEAD) { move.current.x = 0; move.current.y = 0; return; }
+    const t = (nm - DEAD) / (1 - DEAD); // 0..1 past the deadzone
+    const mag = t * (0.55 + 0.45 * t);  // eased response (≈ smooth ramp to 1)
+    const ux = dx / d, uy = dy / d;     // unit direction (d > 0 here)
+    move.current.x = ux * mag;
+    move.current.y = -uy * mag;
   };
   const joyEnd = (e: ReactPointerEvent) => {
     if (joyId.current !== e.pointerId) return;

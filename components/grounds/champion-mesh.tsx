@@ -60,6 +60,19 @@ const COMPANION_INTRO_START = 18;      // …from this many units behind the Han
 const COMPANION_MOVE_EPS = 0.8;
 const COMPANION_EXTRA_GRAV = 14;        // faster visual fall for the smaller body
 
+// ── companion flight ground-ring ─────────────────────────────────────────────
+// The owned mind's floor ring detaches + sinks toward the ground while it flies
+// (mirrors the Reader's rings in world.tsx): airborne pushes it to the bottom of
+// its travel where it gently oscillates; descending rides it back up. Body-local
+// units (the ring lives inside the sceneScale group). NPC rings never move —
+// flyAmt stays 0 for everyone but the companion. Gated by reduce-motion.
+const COMP_RING_SINK = 2.4;      // max downward travel while aloft (body units)
+const COMP_RING_OSC = 0.32;      // hover wobble at the bottom of travel
+const COMP_RING_OSC_HZ = 1.4;    // wobble frequency (Hz)
+const COMP_RING_FALL_UP = 1.0;   // upward ride during a descent
+const COMP_RING_FALL_REF = 6;    // descent speed (u/s) mapped to the full ride-up
+const COMP_RING_EASE = 8;        // damping lambda (frame-rate independent)
+
 // ── animation level-of-detail ────────────────────────────────────────────────
 // Every non-owned champion runs its own AnimationMixer + bone-morph + decorative
 // motion each frame. Skinning is one of the heaviest per-object costs, and a full
@@ -697,6 +710,10 @@ export function ChampionMesh({
   const companionJetBurst = useRef(0);
   const companionJetEmit = useRef(0);
   const wasCompanionFlying = useRef(false);
+  // companion floor ring: eased y offset + oscillation phase (owned mind only)
+  const ringRef = useRef<THREE.Mesh>(null);
+  const ringY = useRef(0);
+  const ringOscT = useRef(0);
 
   const homeX = position[0];
   const homeZ = position[2];
@@ -1167,6 +1184,21 @@ export function ChampionMesh({
       motion.current.rotation.z = calm ? 0 : flyBank.current;
     }
 
+    // companion floor ring — detaches + sinks toward the ground while flying,
+    // oscillates at the bottom of travel, rides up on a descent. Only the owned
+    // companion animates (flyAmt is 0 for every wanderer/NPC). Body-local units.
+    if (ringRef.current && (padLeash || companionDrive)) {
+      const calmR = useSettings.getState().reduceMotion;
+      const vy = companionDrive ? (companionDrive.velRef.current?.y ?? 0) : companionVel.current.y;
+      const sinkT = calmR ? 0 : flyAmt.current;
+      const fallT = calmR || vy >= 0 ? 0 : Math.min(1, -vy / COMP_RING_FALL_REF) * flyAmt.current;
+      ringOscT.current += dt;
+      const osc = COMP_RING_OSC * (0.5 - 0.5 * Math.cos(ringOscT.current * COMP_RING_OSC_HZ * Math.PI * 2)) * sinkT;
+      const tgt = -COMP_RING_SINK * sinkT + COMP_RING_FALL_UP * fallT + osc;
+      ringY.current += (tgt - ringY.current) * (1 - Math.exp(-COMP_RING_EASE * dt));
+      ringRef.current.position.y = 0.04 + ringY.current;
+    }
+
     // evo animations — cosmetic only, so freeze them past the near band
     if (decorate) {
       if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.6 + phase) * 0.06);
@@ -1269,8 +1301,10 @@ export function ChampionMesh({
       </group>
 
       {/* ground aura ring — floor glow; stays OUTSIDE the leaning body group so it
-          lies flat on the floor; also excluded from the fit envelope */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
+          lies flat on the floor; also excluded from the fit envelope. The owned
+          companion detaches + sinks this toward the ground while flying (see the
+          companion floor-ring block above). */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
         <ringGeometry args={[0.78, 0.92, 48]} />
         <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
       </mesh>
@@ -1328,13 +1362,17 @@ export function ChampionMesh({
         </Html>
       )}
 
-      {showLabel && label && (
+      {showLabel && (label || selected) && (
         <Html position={[0, app.h + 1.0, 0]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
-          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontWeight: 700, color: "#fff", fontSize: 20, textShadow: "0 2px 8px #000", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.82 }}>
-            {label}
-            {showForce && (
-              <div style={{ fontSize: 11, color: colHex, letterSpacing: 0.6, fontWeight: 700 }}>
-                {FORCES[type].sigil} {FORCES[type].name}
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontWeight: 700, color: "#fff", textShadow: "0 2px 8px #000", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.82 }}>
+            {label && (
+              <div style={{ fontSize: 20 }}>
+                {label}
+                {showForce && (
+                  <div style={{ fontSize: 11, color: colHex, letterSpacing: 0.6, fontWeight: 700 }}>
+                    {FORCES[type].sigil} {FORCES[type].name}
+                  </div>
+                )}
               </div>
             )}
             <div style={{ fontSize: 10, color: colHex, letterSpacing: 1, opacity: 0.72 }}>{tier.name}</div>
