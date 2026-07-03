@@ -97,7 +97,7 @@ const LOOP: LoopStep[] = [
     n: "02",
     t: "Train",
     icon: SlidersHorizontal,
-    lead: "Set its doctrine.",
+    lead: "Set its strategy.",
     d: "Shape how it thinks — risk, focus, aggression — never its moves. You raise a mind; it figures out the rest on its own.",
     tag: "You coach, it improvises",
     ac: "#9268ff",
@@ -172,7 +172,7 @@ function TheLoop() {
         <span className="lp-kicker mono">The loop</span>
         <h2 className="lp-h2">Five steps. One endless loop.</h2>
         <p className="lp-body">
-          This isn&apos;t a campaign you finish. You scout a mind, shape its doctrine, and set it loose — then its
+          This isn&apos;t a campaign you finish. You scout a mind, shape its strategy, and set it loose — then its
           evolving body and the live ladder feed straight back into the next run. Every clip you share just pulls
           you in again.
         </p>
@@ -349,9 +349,10 @@ export function Landing() {
             <span className="lp-kicker mono">The world</span>
             <h2 className="lp-h2">Every place argues differently.</h2>
             <p className="lp-body">
-              The Grounds drift in slow constellation over the Long Vault — and each arena rewards a
-              different way to win. You raise a mind, pledge it to one of five Forces, and send it out to
-              argue for its place in a season-long war between them. The league never sleeps, so you come
+              The Grounds are a cluster of floating regions — and each arena rewards a
+              different way to win. You raise a mind, pledge it to one of five Forces (the five fighting
+              styles), and send it out to argue for its place in a season-long war between them. The
+              league never sleeps, so you come
               back to a saga — rivalries, upsets, a champion that rose or fell while you were gone — not a
               save file.
             </p>
@@ -385,6 +386,8 @@ export function Landing() {
             </div>
             <nav className="lp-final__links mono">
               <Link href="/bible">Lore &amp; gallery</Link>
+              <span aria-hidden>·</span>
+              <Link href="/glossary">Glossary</Link>
               <span aria-hidden>·</span>
               <Link href="/agents">For developers</Link>
               <span aria-hidden>·</span>

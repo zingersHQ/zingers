@@ -4,6 +4,12 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Vocabulary & voice (added 2026-07)
+
+- **Naming is governed by `docs/vocabulary.md`** — read it before writing player-facing copy or lore. Canon: player = **Trainer** (not Reader), champion strategy = **strategy** (not doctrine, in visible text only), the Force you swear to = **Clan** (not Allegiance/House). Keep signature terms (the Grounds, Concord, Long Vault, Keepers, Sigil, Resolve…) but **gloss each on first use**.
+- **Glossary is the source of truth for definitions**: `lib/lore/glossary.ts` → rendered at `/glossary` and `docs/bible/09-glossary.md`. Reuse its one-line wording for inline glosses so they stay consistent.
+- **Copy, not code**: change visible strings/JSX/aria text only; never rename identifiers, props, keys, or URL params to match a copy change.
+
 # Game-feel conventions (added 2026-07)
 
 - **Frame-rate independence**: all per-frame smoothing in R3F code uses exponential damping (`1 - Math.exp(-lambda * dt)` or rad/s × dt), never raw per-frame lerp constants. Follow this for any new `useFrame` easing.

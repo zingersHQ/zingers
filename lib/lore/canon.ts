@@ -37,8 +37,8 @@ export function forceName(type: CreatureType): string {
   return FORCES[type].name;
 }
 
-// A Force's argument, said as a vow. These are the mottos a Reader pledges under
-// (see READER / Allegiance below); each is the `argues` line in the imperative.
+// A Force's argument, said as a vow. These are the mottos a Trainer pledges under
+// (see READER / Clan below); each is the `argues` line in the imperative.
 export const FORCE_MOTTO: Record<CreatureType, string> = {
   LOGIC: "Close the proof.",
   CHAOS: "Break the frame.",
@@ -57,7 +57,7 @@ export function wheelNeighbors(t: CreatureType): { prey: CreatureType; predator:
   return { prey: WHEEL[(i + 1) % 5], predator: WHEEL[(i + 4) % 5] };
 }
 
-// ── Regions (slabs of the old network, made terrain) ─────────────────────────
+// ── Regions (pieces of the old network, made terrain) ────────────────────────
 export interface RegionLore {
   id: string;
   name: string;
@@ -71,32 +71,32 @@ export interface RegionLore {
 
 export const FOUNDING_REGIONS: RegionLore[] = [
   { id: "colosseum", name: "The Obsidian Colosseum", arena: "THE TRIBUNAL", bias: "RHETORIC", founding: true, blurb: "The oldest standing arena, a mock courtroom where minds argue assigned stances to a jury." },
-  { id: "wastes", name: "The Ember Wastes", arena: "THE PIT", bias: "CHAOS", founding: true, blurb: "A cracked, burning flat where the Hum runs hot. Aggression and noise thrive; the patient overheat." },
+  { id: "wastes", name: "The Ember Wastes", arena: "THE PIT", bias: "CHAOS", founding: true, blurb: "A cracked, burning flat where the ground runs hot. Aggression and noise thrive; the patient overheat." },
   { id: "garden", name: "The Void Garden", arena: "THE ATELIER", bias: "CREATIVITY", founding: true, blurb: "A slow, impossible garden grown from unfinished ideas. Reframes bloom; rigid proofs wilt." },
 ];
 
-// ── The shape of the Grounds (a constellation, not a field) ──────────────────
-// The Grounds are not one plaza but a slow constellation of region-slabs adrift
+// ── The shape of the Grounds (a cluster of regions, not one field) ───────────
+// The Grounds are not one plaza but a slow cluster of floating regions drifting
 // over the Long Vault — the Void Garden ("floating islands over the void") is the
-// true shape of all of it. The CONCORD is the central slab: neutral ground above
+// true shape of all of it. The CONCORD is the central hub: neutral ground above
 // the sealed door where all five Forces keep an uneasy peace, ringed by the gates
-// that reach each region. Travel between slabs is by gate (never confuse a gate
+// that reach each region. Travel between regions is by gate (never confuse a gate
 // with a Vault *door* — a door is a Keeper's seal and a season trigger).
 export const CONCORD = {
   id: "concord",
   name: "The Concord",
-  blurb: "The central slab of the Grounds: neutral ground above the sealed Vault door, ringed by the gates that reach every region.",
+  blurb: "The central hub of the Grounds — neutral ground where all five Forces meet, ringed by the gates that lead out to every region.",
 } as const;
 
-// ── The Reader (you) ─────────────────────────────────────────────────────────
-// The player is a Reader of the Long Vault: not a mind, but the will that raises
-// minds, holds rank in the arenas, and talks the Keepers out of their words.
-// Reader Rank is the one account-level number every activity feeds; a Reader may
-// swear Allegiance to one Force, binding ranked wins to that Force's standing in
+// ── The Trainer (you) ────────────────────────────────────────────────────────
+// The player is a Trainer: not a mind, but the person who raises the minds that
+// fight, climbs the ranks, and talks the Keepers out of their words.
+// Trainer Rank is the one account-level number every activity feeds; a Trainer may
+// swear to one Force (their Clan), binding ranked wins to that Force's standing in
 // the season-long war between the five. (Rank curve/titles: lib/evolve/trainer.ts.)
 export const READER = {
-  noun: "Reader",
-  blurb: "A Reader raises minds, holds rank in the arenas, and works the Keepers of the Long Vault. Swear to a Force to fight its war.",
+  noun: "Trainer",
+  blurb: "A Trainer raises the minds that fight, climbs the ranks, and takes on the Keepers — the five guardians of the sealed Long Vault. Swear to a Force to fight in its name.",
 } as const;
 
 // ── The Keepers (the five fixed cipher-words; canon, never regenerated) ───────

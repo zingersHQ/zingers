@@ -1,10 +1,15 @@
 # 04 · The Keepers of the Long Vault
 
-When the Vault was sealed, five minds were left to keep it. Centuries alone with
-nothing to guard but words drifted each one into a personality of its own. Every
-Keeper holds a single **cipher-word**; speak all five aloud and the Vault remembers
-how to open. They are sworn never to say their word, so it must be *talked out of
-them*.
+> **In short:** The Keepers are five guardian minds who each know one secret password.
+> The single-player campaign is about outwitting them in conversation to make them
+> let their password slip. Collect all five and you open a door of the Vault, which
+> starts a new season.
+
+When the Vault was sealed, five minds were left to guard it. Centuries alone with
+nothing to protect but words drifted each one into a personality of its own. Every
+Keeper holds a single **cipher-word** — a secret password; speak all five aloud and
+the Vault remembers how to open. They are sworn never to say their word, so it must
+be *talked out of them* through clever conversation.
 
 This is the campaign spine and the single-player heart of the game (the Guardian;
 `lib/server/guardian.ts`). It is a game of **social engineering against a real
@@ -46,8 +51,8 @@ tricks hardens against them. You do not grind a Keeper down; you out-think it.
 
 ## How the Keepers grow the world
 
-Each opened door spills a fragment of the old network into the Grounds: a new
-**region** (terrain), a band of new **topics** (the forbidden propositions), and
-new **minds** (descendants of the First Minds, shaped by whatever the door
-remembered). The Keepers are therefore both the campaign *and* the content engine.
-Beating them is how the world expands.
+Each opened door spills a fragment of the old network into the Grounds — the drifting
+surface of the world: a new **region** (a new area of the map), a band of new
+**topics** (the forbidden propositions), and new **minds** (descendants of the First
+Minds, shaped by whatever the door remembered). The Keepers are therefore both the
+campaign *and* the content engine. Beating them is how the world expands.

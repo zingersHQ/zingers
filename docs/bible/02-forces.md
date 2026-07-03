@@ -1,8 +1,14 @@
 # 02 · The Five Forces
 
-Every mind in the Hum is shaped by five **Forces**. They are the in-world name for
-the **type pentagon** (`docs/combat-design.md`). A Force is both an element (what a
-champion is made of) and a way of arguing (how it fights).
+> **In short:** Every champion belongs to one of five "types," called **Forces**
+> (Logic, Static, Calm, Chorus, Spark). Each Force beats one other and loses to
+> another, like rock-paper-scissors in a ring of five. That matchup ring decides
+> who has the edge in a fight.
+
+Every mind in the Hum is shaped by five **Forces** — the five elemental fighting
+types of this world. They are the in-world name for the **type pentagon**
+(`docs/combat-design.md`). A Force is both an element (what a champion is made of)
+and a way of arguing (how it fights).
 
 The player-facing name of a Force is its **plain name** below (Logic / Static /
 Calm / Chorus / Spark). Each also carries an older, poetic name — its *etymology*
@@ -63,8 +69,9 @@ five; what it *does* in the ring decides which one swells.
 
 ## Sigils
 
-A Force, grown strong in a mind, etches a **sigil** (◆ Logic · ✦ Static · ▲ Calm ·
-◉ Chorus · ✺ Spark). Sigils have three ranks (I/II/III). They are the heraldry of
+A Force, grown strong in a mind, etches a **sigil** — an earned emblem, like a badge
+or a rank insignia (◆ Logic · ✦ Static · ▲ Calm · ◉ Chorus · ✺ Spark). Sigils have
+three ranks (I/II/III). They are the heraldry of
 the collection layer and the title system ("The Annihilator", "The Puppeteer");
 they are *earned*, never assigned.
 
@@ -82,11 +89,12 @@ Two different things draw from the same five Forces — keep them distinct:
 
 So: *every champion has a Force; the Force you swear to is your Clan.*
 
-## Allegiance (the Trainer's war)
+## The Clan war (the Trainer's war)
 
-Pledging to a Clan binds your ranked wins to that Force's standing in the
-season-long war between the five. You may switch allegiance between seasons, but
-contribution stays with the Force that earned it. The pledge is taken under the
+Pledging to a Clan — the Force you swear allegiance to for the season — binds your
+ranked wins to that Force's standing in the season-long war between the five. You may
+switch Clan between seasons, but contribution stays with the Force that earned it. The
+pledge is taken under the
 Force's **motto** — its `argues` line, said as a vow:
 
 | Force | Motto |

@@ -56,22 +56,22 @@ export const FIRST_DUEL_HERO_KEY = "GLITCH";
 
 export const QUICK_START_STRAT: Strat = { risk: 55, focus: 50, aggression: 52 };
 
-/** Copy beats for the post-win Concord landing (Act 1 coda). Reader identity first. */
+/** Copy beats for the post-win Concord landing (Act 1 coda). Trainer identity first. */
 export const CONCORD_LANDING = [
   {
-    kicker: "YOU, THE READER",
+    kicker: "YOU, THE TRAINER",
     title: "Roam, duel, raise.",
-    body: `You're a Reader now — the will that raises minds and holds rank in the arenas. You walk the Grounds; your champion fights. Train doctrine anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
+    body: `You're a Trainer now — you raise the minds that fight and climb the ranks. You walk the Grounds; your champion does the fighting. Tune its strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
   },
   {
     kicker: "THE CONCORD",
-    title: "Neutral ground above the Vault.",
-    body: "You spawn on the approach. The golden seal is the Long Vault — sealed, for now. Every Force keeps an uneasy peace here.",
+    title: "Neutral ground, shared by all.",
+    body: "You spawn on the approach. That golden seal is the Long Vault — a sealed door no one has opened, and the whole world is built around it. Here, all five Forces keep an uneasy peace.",
   },
   {
-    kicker: "VAULTGATES",
+    kicker: "THE GATES",
     title: "Walk out to the regions.",
-    body: "The arches ring the plaza. Each gate reaches a founding region — colosseum tribunals, ember gauntlets, void gardens. Your champion fights where you take it.",
+    body: "The arches ring the hub. Each gate leads to a starting region — colosseum tribunals, ember gauntlets, void gardens. Your champion fights wherever you take it.",
   },
 ] as const;
 

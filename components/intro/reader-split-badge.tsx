@@ -46,7 +46,7 @@ export function ReaderSplitBadge({ championName, forceColor, compact = false }: 
           />
         </div>
         <span className="mono" style={{ fontSize: 8, letterSpacing: 1, color: gold, textAlign: "center" }}>
-          READER
+          TRAINER
           <br />
           (you)
         </span>

@@ -1348,7 +1348,7 @@ export default function GroundsScreen() {
       const xpGain = afterC.xp - beforeC.xp;
       if (xpGain) ladders.push(`+${xpGain} XP`);
       if (afterSkill > beforeSkill) ladders.push(`SL ${afterSkill}`);
-      if (afterReader > beforeReader) ladders.push(`Reader L${afterReader}`);
+      if (afterReader > beforeReader) ladders.push(`Trainer L${afterReader}`);
 
       setResult({
         won: iWon,
@@ -1788,8 +1788,8 @@ export default function GroundsScreen() {
                   : `INSIDE ${VENUES[activeVenue!].name.toUpperCase()} · WALK TO THE EXIT TO RETURN`
                 : isHub
                   ? isMobile
-                    ? "Vaultgates → regions · game doors → Amphitheatre & Circuit"
-                    : "THE CONCORD · VAULTGATES → REGIONS · GAME DOORS FOR AMPHITHEATRE & CIRCUIT"
+                    ? "Gates → regions · game doors → Amphitheatre & Circuit"
+                    : "THE CONCORD · GATES → REGIONS · GAME DOORS FOR AMPHITHEATRE & CIRCUIT"
                   : isMobile
                     ? "Walk to glowing spots · return arch → Concord"
                     : scenario.id === "gauntlet"
@@ -2250,7 +2250,7 @@ export default function GroundsScreen() {
             kicker: "ADOPTION",
             lines: [
               { speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) },
-              { speaker: "Reader", text: READER_COPY.walkFightLine, role: "you walk · it fights" },
+              { speaker: "Trainer", text: READER_COPY.walkFightLine, role: "you walk · it fights" },
             ],
           }}
           accent={TYPE_COLOR[byKey[wakeKey].type]}
@@ -2348,7 +2348,7 @@ export default function GroundsScreen() {
                 : near.kind === "venue"
                 ? near.venue === "daily"
                   ? "Read today's Tribunal"
-                  : "Enter the Scrying Gallery"
+                  : "Enter the Live Gallery"
                 : near.kind === "force"
                 ? store.force === near.type
                   ? `Your Clan · ${near.name}`

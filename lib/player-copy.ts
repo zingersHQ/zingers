@@ -20,7 +20,7 @@ export const FIGHT = {
   firstDuel: "first duel",
 } as const;
 
-/** Canonical Reader vs champion teaching lines — use everywhere onboarding touches. */
+/** Canonical Trainer vs champion teaching lines — use everywhere onboarding touches. */
 export const READER_COPY = {
   claimLine: "You did not become this champion. You claimed it.",
   walkFightLine: "You fly the Grounds. Your champion flies at your side.",

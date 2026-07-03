@@ -1,5 +1,9 @@
 # 07 · The Collection: cards, rarity, and attributes
 
+> **In short:** Every champion doubles as a collectible card, like in Pokémon or
+> Magic. But unlike those, the card's artwork actually changes as the champion fights
+> and grows. You collect them, build a small team, and trade with other players.
+
 Every champion is also a **card**. The card is the portable, collectible face of a
 mind, and its single best trick is already true in code: **the art evolves**,
 because the art is the champion's body, and the body is a function of the career
@@ -13,9 +17,9 @@ you fight it. No TCG can fake that; here it is the default.
 | **Mind** (name, force, lineage) | roster + season generator | the identity |
 | **Art** | live genome → body render | changes with the career, deterministically |
 | **Stats** | the five combat stats + ELO | the numbers |
-| **Sigils** | earned force-heraldry (I/II/III) | the badges |
+| **Sigils** | earned force-heraldry (I/II/III) — badges you win, not buy | the badges |
 | **Attributes** | the moveset (4 moves) | the "abilities" line: this is the TCG depth |
-| **Saga** | generated from match history | the flavour text, evolving |
+| **Saga** | generated from match history | the flavour text — the champion's own evolving life-story |
 | **Rarity** | derived from tier × scarcity | below |
 | **Provenance** | season minted, owner, mint id | inert today; the ownership hook |
 

@@ -43,7 +43,7 @@ export const LAYERS: Layer[] = [
     reference: "GTA: go around",
     home: "/",
     spokes: [
-      { id: "world", label: "Roam the Grounds", href: "/", blurb: "The 3D plaza over the Long Vault. Champions wander, the Tower looms." },
+      { id: "world", label: "Roam the Grounds", href: "/", blurb: "The 3D hub of the Grounds. Champions wander, the Tower looms." },
     ],
   },
   {
@@ -55,7 +55,7 @@ export const LAYERS: Layer[] = [
     home: "/arena",
     spokes: [
       { id: "arena", label: "Ranked Duel", href: "/arena", blurb: "1v1 debate combat, streamed turn-by-turn." },
-      { id: "league", label: "Live League", href: "/", blurb: "The Scrying Gallery in the Concord: autonomous fights, live ladder." },
+      { id: "league", label: "Live League", href: "/", blurb: "The Live Gallery in the Concord hub: autonomous fights, live ladder." },
       { id: "standings", label: "Rank", href: "/standings", blurb: "The season ladder. Where your rank lives." },
       { id: "daily", label: "Daily Zinger", href: "/", blurb: "The Daily Tribunal stone in the Concord: one shared call a day." },
     ],
@@ -63,13 +63,13 @@ export const LAYERS: Layer[] = [
   {
     id: "raise",
     name: "The Long Game",
-    pitch: "Raise minds, evolve their bodies, climb the Chronicle, build a collection.",
+    pitch: "Raise minds, evolve their bodies, climb through the seasons, build a collection.",
     session: "15–60 min",
     reference: "Pokémon: play a while",
     home: "/collection",
     spokes: [
-      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and talk cipher-words out of its Keeper." },
-      { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own doctrine to climb." },
+      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and coax the secret word out of its Keeper — one of five minds guarding the sealed Long Vault." },
+      { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own strategy to climb." },
       { id: "collection", label: "The Collection", href: "/collection", blurb: "Your dex of minds: evolving cards, sigils, sagas, rarity." },
       { id: "champion", label: "Champion Profile", href: "/collection", blurb: "Open any card to see a single mind's full record, body, and saga." },
     ],

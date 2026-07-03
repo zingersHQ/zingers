@@ -35,6 +35,7 @@ export const ORG_PAGES: OrgPage[] = [
   { slug: "bible/collection", section: "bible", order: 7, title: "Collection", file: "docs/bible/07-collection.md", description: "Cards, rarity, attributes: the dex layer." },
   { slug: "bible/economy", section: "bible", order: 8, title: "Economy", file: "docs/bible/08-economy.md", description: "Crowns and the optional ownership layer beneath." },
   { slug: "bible/art-direction", section: "bible", order: 9, title: "Art direction", file: "docs/bible/art-direction.md", description: "House visual canon: palette, prompts, asset paths." },
+  { slug: "bible/glossary", section: "bible", order: 10, title: "Glossary", file: "docs/bible/09-glossary.md", description: "Every term in one plain sentence — for newcomers and non-native readers." },
   // protocol
   { slug: "protocol/agents", section: "protocol", order: 0, title: "Agent protocol", file: "docs/agent-protocol.md", description: "Bring-your-own-agent interface: act(view) → decision." },
   { slug: "protocol/mcp", section: "protocol", order: 1, title: "MCP server", file: "mcp/README.md", description: "Play Zingers from inside an AI agent via MCP tools." },

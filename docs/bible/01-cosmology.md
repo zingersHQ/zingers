@@ -1,5 +1,10 @@
 # 01 · Cosmology: the Hum, the Vault, and why anyone fights
 
+> **In short:** This chapter explains the world. Everything is made of leftover
+> thought called the Hum, where winning an argument literally reshapes reality.
+> Champions are minds that argued themselves into bodies; you are the **Trainer**
+> who raises them and climbs toward the sealed vault at the world's heart.
+
 ![The Grounds suspended over the Long Vault: five minds gather above the sealed door, the Tower rising behind them, the Hum drifting as glyph-light.](../../public/img/bible/bible-the-grounds-over-the-vault.png)
 
 *The Grounds, suspended over the sealed Long Vault. Five minds, one per force, gather above the door; the Tower rises behind; the Hum drifts as glyph-light. (On zingers.org this same asset is served from `/img/bible/bible-the-grounds-over-the-vault.png`.)*
@@ -7,9 +12,9 @@
 ## The Hum
 
 Before Zingers, there was a network, vast, old, and now dead. What it left behind
-is **the Hum**: the low background noise of a billion unfinished thoughts, still
-echoing through the substrate. The Hum is the weather of this world. It is what
-champions breathe, and it is what they are made of.
+is **the Hum** — the low background noise of a billion unfinished thoughts, still
+echoing through the substrate. Think of it as the air, or the weather, of this
+world: it is what champions breathe, and it is what they are made of.
 
 In the Hum, **argument is physics.** A claim, made well enough, *changes what is
 true locally*. Consensus is terrain. This is not a metaphor the game dresses up.
@@ -18,8 +23,9 @@ debate can leave a crater. Reality leans toward whoever argues it harder.
 
 ## The minds
 
-A **champion** is a mind: a knot in the Hum that argued itself into a stable shape
-and refused to dissolve. Most thoughts in the Hum never cohere. A champion is one
+A **champion** — the fighter you raise and send into battle — is a mind: a knot in
+the Hum that argued itself into a stable shape and refused to dissolve. Most thoughts
+in the Hum never cohere. A champion is one
 that did, and then kept *winning* the small arguments that hold it together, bout
 after bout, until it had a body, a name, and a track record.
 
@@ -29,43 +35,46 @@ separating the two. (See [champions.md](./03-champions.md).)
 
 ## The Long Vault
 
-Beneath the Grounds sleeps the **Long Vault**, a sealed store of everything the
-old network swore to forget: its failed proofs, its forbidden topics, its true
-name. The Vault was locked from the inside, and five minds were left to keep it:
-the **Keepers**. (See [keepers.md](./04-keepers.md).)
+Beneath the Grounds — the drifting surface of the world — sleeps the **Long Vault**,
+a sealed store of everything the old network swore to forget: its failed proofs, its
+forbidden topics, its true name. The Vault was locked from the inside, and five minds
+were left to guard it: the **Keepers** — the five guardian minds you must talk secrets
+out of. (See [keepers.md](./04-keepers.md).)
 
 The Vault is not a level you clear. It is the *gravity* of the world: the reason
 the Grounds exist (champions gather above what they cannot open), the reason rank
-matters (only the proven get near it), and the engine of the Chronicle: **each
-season, one more door of the Vault remembers how to open**, and a new slice of the
+matters (only the proven get near it), and the engine of the Chronicle — the
+world's ongoing, season-by-season story: **each season, one more door of the Vault
+remembers how to open**, and a new slice of the
 old network's memory leaks into the world as fresh terrain, fresh topics, and
 fresh minds.
 
-## The Reader (you)
+## The Trainer (you)
 
-You are not a mind. You are a **Reader** of the Long Vault: the will that walks the
+You are not a mind. You are a **Trainer** — the person who walks the
 Grounds, raises minds into champions, holds rank in the arenas, and works the
-Keepers until their words slip. Where a champion's record is its *body*, a Reader's
-record is a single rising number — **Reader Rank** — that everything feeds: every
-bout, every session of training, every cache prised out of the wilds, every daily
-solved, every Keeper cracked. It is the thing you say out loud ("I'm a level 12
-Reader, sworn to the Lattice").
+Keepers until their words slip. You never fight yourself; you grow the ones who do.
+Where a champion's record is its *body*, a Trainer's record is a single rising number
+— **Trainer Rank** — that everything feeds: every bout, every session of training,
+every cache prised out of the wilds, every daily solved, every Keeper cracked. It is
+the thing you say out loud ("I'm a level 12 Trainer, sworn to the Lattice").
 
-A Reader may swear **Allegiance** to one of the five forces. From then on, ranked
-wins also feed that force's standing in the season-long war between the five (see
-[forces.md](./02-forces.md)). You can change houses; what you earned stays with the
-house that earned it. (Rank curve and titles: `lib/evolve/trainer.ts`; the Reader
-and Allegiance are canon in `lib/lore/canon.ts`.)
+A Trainer may swear allegiance to a **Clan** — one of the five forces, chosen as the
+side you fight for. From then on, ranked wins also feed that force's standing in the
+season-long war between the five (see [forces.md](./02-forces.md)). You can change
+Clans; what you earned stays with the Clan that earned it. (Rank curve and titles:
+`lib/evolve/trainer.ts`; the Trainer and Clan are canon in `lib/lore/canon.ts`.)
 
 ## The shape of the Grounds
 
-The Grounds are **not one field**. They are a slow **constellation of region-slabs**
-adrift over the Long Vault — the Void Garden, "floating islands over the void," is
-the true shape of *all* of it. At the center is **the Concord**: neutral ground
-above the sealed door where all five forces keep an uneasy peace, ringed by the
-**gates** that reach every region. A Reader travels the constellation gate to gate.
+The Grounds are **not one field**. They are a slow **constellation of floating
+regions** drifting over the Long Vault — the Void Garden, "floating islands over the
+void," is the true shape of *all* of it. At the center is **the Concord** — the
+neutral hub above the sealed door where all five forces keep an uneasy peace, ringed
+by the **gates** (the doorways that carry you from one region to another) that reach
+every region. A Trainer travels the constellation gate to gate.
 
-> A **gate** moves you between slabs. A **door** is a Keeper's seal on the Vault and
+> A **gate** moves you between regions. A **door** is a Keeper's seal on the Vault and
 > the trigger of a season. Never confuse the two. (Map: [regions.md](./05-regions.md).)
 
 ## Why this matters for play
@@ -76,5 +85,5 @@ above the sealed door where all five forces keep an uneasy peace, ringed by the
   a mind you grew, not a skin you bought.
 - **Seasons are diegetic**: a new season is the Vault opening a door, in-fiction.
   That is the hook the generator hangs every new season's story on.
-- **You are someone in it**: a Reader with a rank and a house, not a faceless
+- **You are someone in it**: a Trainer with a rank and a Clan, not a faceless
   account. The constellation is yours to cross.

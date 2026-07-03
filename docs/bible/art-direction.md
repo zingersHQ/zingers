@@ -1,5 +1,9 @@
 # Art direction: the Zingers visual canon
 
+> **In short:** This is the style guide for all Zingers artwork. It sets the colors,
+> the mood, and the rules every generated image must follow so the whole world looks
+> like it belongs together.
+
 The look that makes every generated image read as **one universe**. Bake this into
 every prompt; feed a locked style-key image as a reference on follow-ups so a batch
 never drifts.
@@ -10,7 +14,7 @@ never drifts.
 |------|-----|-----|
 | Void (base) | `#0a0812` | backgrounds, near-black indigo |
 | Deep field | `#15102a` | mid-ground atmosphere |
-| Gold (accent) | `#f5d020` | seams, glints, the Vault, restraint |
+| Gold (accent) | `#f5d020` | seams, glints, the Vault (the sealed store at the world's heart), restraint |
 | **The Lattice** (LOGIC) | `#4aa3ff` | electric blue |
 | **The Static** (CHAOS) | `#ff4ad1` | magenta-pink |
 | **The Stillness** (COMPOSURE) | `#36d39a` | mint green |
@@ -23,7 +27,8 @@ never drifts.
 
 - **Painterly cinematic concept key art**, not photoreal, not flat vector.
 - **Volumetric neon rim-light** on a dark, foggy field; strong atmospheric depth.
-- High detail, dramatic, moody. The Hum reads as drifting motes + faint glyph-text.
+- High detail, dramatic, moody. The Hum (the world's ambient field of leftover
+  thought) reads as drifting motes + faint glyph-text.
 - One dominant force-color per image + gold accents. Avoid rainbow.
 
 ## Forbidden (keeps it premium)

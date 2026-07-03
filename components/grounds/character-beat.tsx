@@ -38,7 +38,7 @@ export function CharacterBeat({
 
   const speak = useCallback(
     (text: string, speaker: string) => {
-      if (speaker === "Reader" || speaker === "The Reader") return;
+      if (speaker === "Trainer" || speaker === "The Trainer") return;
       if (voice === "keeper" && keeperLevel) speakCreature(text, keeperLevel);
       else if (championType) speakCreatureType(text, championType);
     },
@@ -162,13 +162,13 @@ export function CharacterBeat({
 
         <p
           style={{
-            fontSize: line.speaker === "Reader" || line.speaker === "The Reader" ? 16 : 22,
-            fontWeight: line.speaker === "Reader" || line.speaker === "The Reader" ? 500 : 600,
+            fontSize: line.speaker === "Trainer" || line.speaker === "The Trainer" ? 16 : 22,
+            fontWeight: line.speaker === "Trainer" || line.speaker === "The Trainer" ? 500 : 600,
             lineHeight: 1.45,
             margin: "18px auto 0",
-            maxWidth: line.speaker === "Reader" || line.speaker === "The Reader" ? "36ch" : "30ch",
-            color: line.speaker === "Reader" || line.speaker === "The Reader" ? "var(--muted)" : "var(--ink)",
-            fontStyle: line.speaker === "Reader" || line.speaker === "The Reader" ? "normal" : "italic",
+            maxWidth: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "36ch" : "30ch",
+            color: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "var(--muted)" : "var(--ink)",
+            fontStyle: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "normal" : "italic",
             minHeight: "2.9em",
           }}
         >

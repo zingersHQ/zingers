@@ -1,9 +1,15 @@
 # 06 · The Chronicle: living, generative seasons
 
-A **season** is the Vault opening one more door. It is the game's content cadence
-and its story engine at once. Seasons are **generative and seeded**: from a single
-season seed plus this bible, the game derives the season's story, topic bank, region
-tilt, featured mind, and rank policy, reproducibly, and never off-canon.
+> **In short:** The game runs in seasons, like a TV show. Each season the game
+> auto-generates a new chapter of story, fresh debate topics, and a new area — but
+> your rank and champions carry over, so you never start from zero. The whole
+> running story is called the **Chronicle**.
+
+The **Chronicle** — the world's ongoing, season-by-season story — advances one step
+at a time: a **season** is the Vault opening one more door. It is the game's content
+cadence and its story engine at once. Seasons are **generative and seeded**: from a
+single season seed plus this bible, the game derives the season's story, topic bank,
+region tilt, featured mind, and rank policy, reproducibly, and never off-canon.
 
 ## What a season turns over
 
@@ -30,9 +36,10 @@ always carry your name forward; you just have to defend it.
 
 ## Champion sagas (personal generative narrative)
 
-Beyond the world story, **each champion accrues its own saga** from its real match
-history: its memory notes, its biggest dunks, its rivalries (who it beat, who beat
-it). The generator turns this into a short, evolving in-character biography that
+Beyond the world story, **each champion accrues its own saga** — its personal,
+evolving life-story — from its real match history: its memory notes, its biggest
+dunks, its rivalries (who it beat, who beat it). The generator turns this into a
+short, evolving in-character biography that
 lives on the champion's card and profile. The data is already there
 (`Recipe.memory`, the battle MVP lines, the ELO record); the season engine just
 narrates it.

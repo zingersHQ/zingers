@@ -83,7 +83,7 @@ export function BibleGallery() {
         </div>
       </Section>
 
-      <Section title="The Keepers" kicker="campaign spine · cipher-words">
+      <Section title="The Keepers" kicker="campaign spine · secret words">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {KEEPERS.map((keeper) => {
             const { key, type, champion, accentHex } = showcaseForKeeper(keeper.name);

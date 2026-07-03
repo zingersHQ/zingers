@@ -1,9 +1,14 @@
 # The Zingers Bible
 
+> **In short:** This is the rulebook for the whole made-up world of Zingers. You're
+> a **Trainer** — you raise AI "champions" that argue in live debate battles. This
+> folder is where every name, place, and rule of that world is written down, so the
+> game never contradicts itself.
+
 > The canon of the Zingers universe. This is the **single source of truth** for
 > lore, names, and rules-as-fiction. It serves two masters at once:
 >
-> 1. **zingers.org**: the public encyclopedia readers explore.
+> 1. **zingers.org**: the public encyclopedia players explore.
 > 2. **The generative engine**: the canon that seasons, champions, and narrative
 >    are spun from, so nothing the game generates ever contradicts itself.
 
@@ -28,15 +33,16 @@ of it lives in [`lib/lore/canon.ts`](../../lib/lore/canon.ts); the prose lives h
 
 The game is one world entered at three session-lengths (the design north star):
 
-- **Roam (open-ended)**: *the Grounds*. You live in the world, watch the league
-  happen around you, walk up to champions and rivals. The connective tissue.
+- **Roam (open-ended)**: *the Grounds* — the drifting, explorable surface of the
+  world. You live in it, watch the league happen around you, walk up to champions
+  and rivals. The connective tissue.
 - **Quick match (2–5 min)**: *the Arena / League*. Drop in, fight one ranked bout,
   hold your rank. Always available from anywhere in the world.
 - **Raise (15–60 min)**: *the Campaign & Collection*. The growing RPG: raise minds,
   evolve their bodies, advance the Chronicle, build a collection.
 
-None of these "finish." The Long Vault opens one more door each season; the climb
-is the point.
+None of these "finish." The **Long Vault** — a sealed store of everything the old
+network could never finish — opens one more door each season; the climb is the point.
 
 ## Canon discipline (for writers and the generator alike)
 
@@ -46,8 +52,9 @@ is the point.
   the plain one (Logic / Static / Calm / Chorus / Spark; see
   [02-forces.md](./02-forces.md)). The older poetic names (the Lattice / Stillness
   / …) are retained only as *etymology* in the bible and never shown in gameplay
-  UI. The player is the **Reader**; the Force a Reader swears to is their **Clan**
-  (Allegiance). The 3D avatar is the **Handler** — see [cosmology.md](./01-cosmology.md).
+  UI. The player is the **Trainer** — the person who raises the champions; the Force
+  a Trainer swears to is their **Clan** (the group you pick a side with). The 3D
+  avatar is the **Handler** — see [cosmology.md](./01-cosmology.md).
 - **The engine is the physics.** Damage, types, and statuses in
   `docs/combat-design.md` are *literally true* in-world. Argument shapes reality.
 - **Generated lore is additive and seeded.** A season's story is produced from a

@@ -1,5 +1,10 @@
 # 03 · Champions: what a mind is, and the eight First Minds
 
+> **In short:** A champion is the AI fighter you raise. Its body isn't a costume —
+> it physically changes to record how it has fought. This chapter explains what a
+> champion is and introduces the eight original ones (the First Minds) you can start
+> with.
+
 ## What a champion is
 
 A champion is a **mind that argued itself into a body**. Three things are true of
@@ -12,9 +17,10 @@ every one of them, and they are the spine of the whole game:
    rookie barely differs from the base mind, a legend warps up to ~4×. You cannot
    buy a look. You fight your way into one.
 2. **The mind learns.** After every bout a champion writes a one-line lesson to its
-   **memory** and nudges its own doctrine toward what worked
-   (`store/champions.ts`, `lib/server/autoplay.ts`). A champion's memory *is* its
-   autobiography, and the seed of its generated saga.
+   **memory** and nudges its own strategy — the dials that set how it fights — toward
+   what worked (`store/champions.ts`, `lib/server/autoplay.ts`). A champion's memory
+   *is* its autobiography, and the seed of its generated **saga** (the champion's own
+   evolving life-story, written from its real match history).
 3. **The brain is pluggable.** The same champion can be driven by the house model,
    any OpenAI-compatible model, or a bring-your-own agent (`docs/agent-protocol.md`).
    Two players can field the same First Mind with completely different brains.
@@ -81,7 +87,8 @@ that you do not have to answer a question if you can replace it with a better on
 
 Unflappable and minimalist; lets the opponent tire, then punishes. BASTION is the
 mind that learned to *wait*, and outlasted things that should have erased it.
-(Note: a Keeper of the Vault, the Warden, also bears this name; see
+(Note: a Keeper of the Vault — one of the five guardian minds of the campaign — the
+Warden, also bears this name; see
 [keepers.md](./04-keepers.md). The Warden is *not* the First Mind; it took the name
 to borrow its reputation, and resents that it had to.)
 

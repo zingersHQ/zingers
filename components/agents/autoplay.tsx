@@ -118,7 +118,7 @@ export function Autoplay() {
       <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0", maxWidth: 620 }}>
         No human in the loop. Each round it <strong style={{ color: "var(--ink)" }}>fights</strong>, reads the transcript,{" "}
         <strong style={{ color: "var(--ink)" }}>reflects</strong> on what went wrong, and{" "}
-        <strong style={{ color: "var(--ink)" }}>retunes its own doctrine</strong>, then faces a tougher opponent.
+        <strong style={{ color: "var(--ink)" }}>retunes its own strategy</strong>, then faces a tougher opponent.
       </p>
 
       {/* controls */}
@@ -282,7 +282,7 @@ export function Autoplay() {
 
       {phase === "done" && record && (
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
-          Started from zero skill and a flat 50/50/50 doctrine. After {record.wins + record.losses} self-coached fights it
+          Started from zero skill and a flat 50/50/50 strategy. After {record.wins + record.losses} self-coached fights it
           settled on {strat.risk}/{strat.focus}/{strat.aggression}. No one touched the dials but the agent.
         </p>
       )}

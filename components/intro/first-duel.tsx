@@ -133,7 +133,7 @@ export function FirstDuelOverlay({
         <OnboardingAudio compact={isMobile} />
         <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(560px, 96vw)", maxHeight: "92vh", overflow: "auto", borderColor: col }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s doctrine.</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
           <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
             Drag the three dials — how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
           </p>
@@ -584,7 +584,7 @@ function EvolveStep({
             {name} {leveled ? "leveled up" : "grew from the win"}.
           </h2>
           <p className="evo2-sub">
-            Your doctrine shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record.
+            Your strategy shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record.
             {beforeLf.level === 1 && (
               <> {READER_COPY.rookieArc} {READER_COPY.rookieEarned}</>
             )}{" "}
@@ -814,7 +814,7 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
           {FIRST_DUEL_TAGLINE}
         </p>
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-          Adopt a mind, tune doctrine, watch the {FIGHT.duel} play out.
+          Adopt a mind, tune its strategy, watch the {FIGHT.duel} play out.
         </p>
         <button
           className="btn btn-primary"

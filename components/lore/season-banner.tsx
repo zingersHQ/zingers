@@ -37,8 +37,8 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
         <button
           type="button"
           onClick={onClose}
-          aria-label="Dismiss the Chronicle"
-          title="Dismiss the Chronicle"
+          aria-label="Dismiss the season"
+          title="Dismiss the season"
           style={{
             position: "absolute",
             top: 8,
@@ -94,7 +94,7 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
       )}
       <div style={{ position: "relative", minWidth: 0 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: force.hex, marginBottom: 8 }}>
-          LIVE CHRONICLE · SEASON {season.n}
+          LIVE SEASON {season.n}
         </div>
         <h2 style={{ fontSize: compact ? 20 : 28, lineHeight: 1.05, margin: 0 }}>{season.arc.title}</h2>
         <p style={{ color: "var(--muted)", fontSize: compact ? 12 : 14, lineHeight: 1.55, margin: "10px 0 0" }}>{season.arc.blurb}</p>
@@ -120,7 +120,7 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
               ))}
             </div>
             <Link href="/collection" className="mono" style={{ display: "inline-block", marginTop: 15, fontSize: 11, color: force.hex, textDecoration: "none" }}>
-              View the minds shaped by the Chronicle →
+              View the minds shaped by this season&apos;s story →
             </Link>
           </>
         )}

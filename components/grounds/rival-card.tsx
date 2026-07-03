@@ -14,7 +14,7 @@ const JAB: Record<ReturnType<typeof rivalStance>, string> = {
   even: "Dead even. One of us breaks the tie today.",
   ahead: "You're ahead — I'm done letting that stand.",
   behind: "Still chasing me? Adorable.",
-  grudge: "Same two Readers, every season. Let's go.",
+  grudge: "Same two Trainers, every season. Let's go.",
 };
 
 export function RivalCard({ rival, memory, onFace }: { rival: Rival; memory: RivalMemory; onFace: () => void }) {
@@ -32,7 +32,7 @@ export function RivalCard({ rival, memory, onFace }: { rival: Rival; memory: Riv
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div className="mono" style={{ fontSize: 8, letterSpacing: 1.4, color: col }}>
-          RIVAL READER {memory.met ? `· ${memory.wins}–${memory.losses}` : ""}
+          RIVAL TRAINER {memory.met ? `· ${memory.wins}–${memory.losses}` : ""}
         </div>
         <div style={{ fontSize: 14, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {rival.name}

@@ -93,7 +93,7 @@ const SLIDES: Slide[] = [
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", maxWidth: 800 }}>
           {[
             { l: "PERCEIVE", d: "reads the live match state", c: "#4aa3ff" },
-            { l: "DECIDE", d: "picks its move & gambit", c: ACC },
+            { l: "DECIDE", d: "picks its move", c: ACC },
             { l: "ARGUE", d: "delivers the line", c: "#f0a93a" },
             { l: "ADAPT", d: "remembers & adjusts", c: "#36d39a" },
           ].map((s, i) => (
@@ -126,7 +126,7 @@ const SLIDES: Slide[] = [
           Zingers speaks an open agent protocol. Whatever you’re building, it gets a body and a fair fight. Pick a brain:
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 780 }}>
-          <Card label="HOUSE BRAIN" color={ACC}>
+          <Card label="BUILT-IN BRAIN" color={ACC}>
             The built-in agent. Zero setup: claim a champion and it competes immediately.
           </Card>
           <Card label="ANY MODEL" color="var(--gold)">
@@ -198,7 +198,7 @@ const SLIDES: Slide[] = [
   },
   {
     kicker: "STEP 2 · DIRECT YOUR AGENT",
-    title: "You set the doctrine. It improvises within it.",
+    title: "You set the strategy. It improvises within it.",
     body: (
       <div style={{ marginTop: 18 }}>
         <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 700, lineHeight: 1.55, margin: "0 0 18px" }}>
@@ -216,7 +216,7 @@ const SLIDES: Slide[] = [
         </div>
         <p style={{ fontSize: 13, color: "var(--muted2)", maxWidth: 700, lineHeight: 1.5, marginTop: 16 }}>
           Write its <b style={{ color: "var(--ink)" }}>persona</b> (its voice) too. The brain decides the rest, within the
-          doctrine you gave it.
+          strategy you gave it.
         </p>
       </div>
     ),
@@ -259,7 +259,7 @@ const SLIDES: Slide[] = [
           one.
         </Card>
         <Card label="SELF-TUNING" color={ACC}>
-          It nudges its own doctrine toward whatever just worked, so a rivalry across many fights is a real adaptation arc.
+          It nudges its own strategy toward whatever just worked, so a rivalry across many fights is a real adaptation arc.
         </Card>
       </div>
     ),
@@ -271,7 +271,7 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 740 }}>
         {[
           { name: "The Grounds", desc: "A 3D world to roam, with the Tower to climb.", color: "#b07bff", href: "/grounds" },
-          { name: "Live League", desc: "Agents run fights autonomously around the clock. Watch from the Concord's Scrying Gallery.", color: "#ff6b4a", href: "/grounds" },
+          { name: "Live League", desc: "Agents run fights autonomously around the clock. Watch from the Live Gallery in the Concord hub.", color: "#ff6b4a", href: "/grounds" },
           { name: "Daily Tribunal", desc: "One shared fight a day — call it before you watch, at the Concord stone.", color: "#36d39a", href: "/grounds" },
         ].map(({ name, desc, color, href }) => (
           <Link

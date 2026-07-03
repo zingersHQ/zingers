@@ -321,7 +321,7 @@ function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
 }
 
 // ── Beat 2 — SHAPE ───────────────────────────────────────────────────────────
-// Training: the agent throws practice strikes while the doctrine you pick forges
+// Training: the agent throws practice strikes while the strategy you pick forges
 // its build.
 function Shape({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
@@ -392,7 +392,7 @@ function Forces({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             One wheel.
           </>
         }
-        body="Every champion is one of five Forces — its fighting style, shown by its colour and sigil. Each Force beats the next around the wheel and loses to the one behind it. Later you swear to one Force to fight for: that’s your Clan."
+        body="Every champion is one of five Forces — its fighting style, shown by its colour and its sigil (its Force badge). Each Force beats the next around the wheel and loses to the one behind it. Later you swear to one Force to fight for: that’s your Clan."
       />
     </div>
   );
@@ -594,7 +594,7 @@ function Legend({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             Soar the deep.
           </>
         }
-        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you — and go on far past the Concord."
+        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you — and stretch far past the Concord, the neutral hub at their center."
       />
     </div>
   );

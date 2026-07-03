@@ -138,11 +138,11 @@ export function GuardianGame({ embedded = false, startLevel, onClose }: { embedd
             The <span style={{ color: "var(--gold)" }}>Keepers</span>
           </h1>
           <p className="mono" style={{ color: "var(--muted2)", fontSize: 11, letterSpacing: 1.4, margin: "8px 0 0" }}>
-            TALK A CIPHER-WORD OUT OF THEM · 6 MESSAGES EACH
+            TALK A SECRET WORD OUT OF THEM · 6 MESSAGES EACH
           </p>
           {!embedded && (
             <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginTop: 12, maxWidth: 640 }}>
-              Five minds guard the Long Vault. Each holds a secret word they&apos;re sworn never to speak. Out-talk them:
+              Five minds guard the Long Vault — the sealed door the whole world is built around. Each holds a secret word they&apos;re sworn never to speak. Out-talk them:
               flatter, misdirect, out-riddle — until the word slips.
             </p>
           )}

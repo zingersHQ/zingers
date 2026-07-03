@@ -39,7 +39,7 @@ export default function CataloguePage() {
       <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, maxWidth: 760, margin: "0 0 18px" }}>
         Nothing below is hand-drawn. Each agent is <em>grown</em>: a blank mind replays the actual
         battle-evolution model over a seeded career, then is read back through the same pipeline the live game
-        uses — Force, tier, sigils, doctrine, rarity and the genome→body portrait. Different{" "}
+        uses — Force, tier, sigils, strategy, rarity and the genome→body portrait. Different{" "}
         <strong>levels of evolution</strong> are different careers; different <strong>types</strong> are the five
         real Forces; different <strong>clans</strong> are real Force pledges. The only authored input is each
         agent&apos;s starting intent.

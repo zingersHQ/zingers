@@ -27,6 +27,10 @@ export default function BiblePage() {
         <Link href="/org/bible" className="org-prose__a" style={{ color: "var(--accent)" }}>
           /org/bible
         </Link>
+        . New to the world? Start with the{" "}
+        <Link href="/glossary" className="org-prose__a" style={{ color: "var(--accent)" }}>
+          glossary
+        </Link>
         .
       </p>
 

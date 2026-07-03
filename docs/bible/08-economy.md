@@ -1,5 +1,10 @@
 # 08 · Economy: Crowns, and the ownership layer beneath
 
+> **In short:** The game is completely free to play. **Crowns** are the in-game
+> money you earn by playing — you can never buy them or cash them out. There's an
+> optional crypto token underneath for collectors, but it only buys bragging rights
+> and access, never power and never a payout. The two currencies never mix.
+
 The cardinal rule: **the game is free and complete without spending or owning
 anything on-chain.** Crypto is a layer *underneath* the game for those who want it,
 never a gate in front of it. A player can raise legends, climb seasons, collect the
@@ -45,8 +50,8 @@ The token is an opt-in collector / loyalty layer for the committed.
 | Source | Reward |
 |--------|--------|
 | Win a bout | Crowns + XP + ELO |
-| Press the Gauntlet | escalating pot, press-your-luck |
-| Train | spend Crowns → XP + body evolution toward your doctrine |
+| Press the Gauntlet | escalating pot, press-your-luck (the **Gauntlet** is a run of back-to-back fights where the reward climbs but one loss ends it) |
+| Train | spend Crowns → XP + body evolution toward your strategy (the fighting style you've set) |
 | Daily / season objectives | a steady trickle |
 
 Crowns buy **training, entries, and cosmetic reforges** — things that affect *your*
