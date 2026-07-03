@@ -45,6 +45,8 @@ export default function AgentShowcase({
   backdropRichness = 1,
   backdropFraming = false,
   animMode,
+  /** non-interactive embeds (landing intro): let vertical touch scroll pass through */
+  scrollThrough = false,
 }: {
   champion: Champion;
   type: CreatureType;
@@ -81,6 +83,7 @@ export default function AgentShowcase({
   backdropFraming?: boolean;
   /** explicit animation vocabulary — overrides gesture/everyMs when set */
   animMode?: CreatureAnimMode;
+  scrollThrough?: boolean;
 }) {
   const rim = colorHex ?? TYPE_COLOR[type];
   const biome = biomeId ? biomeById(biomeId) : null;
@@ -106,7 +109,17 @@ export default function AgentShowcase({
   }, [framingKey]);
 
   return (
-    <Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [0, camY, camZ], fov: 32 }} gl={{ antialias: true }} style={{ width: "100%", height: "100%" }}>
+    <Canvas
+      shadows="percentage"
+      dpr={[1, 2]}
+      camera={{ position: [0, camY, camZ], fov: 32 }}
+      gl={{ antialias: true }}
+      style={{
+        width: "100%",
+        height: "100%",
+        ...(scrollThrough ? { pointerEvents: "none", touchAction: "pan-y" } : undefined),
+      }}
+    >
       <color attach="background" args={[biome ? biome.bg : "#0a0813"]} />
       {/* the world's own fog is tuned for a far overhead camera; for this close,
           eye-level framing we pull it in so distant hills + scattered props melt

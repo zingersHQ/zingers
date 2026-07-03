@@ -257,7 +257,10 @@ export function Landing() {
   }, [router]);
 
   const toHomepage = useCallback(() => {
-    document.getElementById("homepage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const home = document.getElementById("homepage");
+    if (!home) return;
+    const top = home.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top, behavior: "smooth" });
   }, []);
 
   // The final CTA drops you straight onto the champion-select screen: the visitor
@@ -416,6 +419,12 @@ function Styles() {
 
       /* slide 1 — the inline intro deck fills the first screen */
       .lp-deck { position: relative; height: 100dvh; width: 100%; overflow: hidden; }
+      /* On phones the 3D canvas used to eat every touch (touch-action: none) and
+         overflow:hidden trapped vertical scroll — let the page scroll past the deck. */
+      @media (max-width: 640px) {
+        .lp-deck { overflow: visible; touch-action: pan-y; }
+        .lp-deck canvas[data-engine] { touch-action: pan-y !important; pointer-events: none; }
+      }
       .lp-deckhint {
         position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
         z-index: 20; display: inline-flex; align-items: center; gap: 6px;
@@ -437,6 +446,7 @@ function Styles() {
         }
         .lp-deckhint__more { display: none; }
         @keyframes lp-bob-m { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+        .lp-deckhint { touch-action: manipulation; }
       }
 
       /* homepage below the deck */

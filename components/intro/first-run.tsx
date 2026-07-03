@@ -53,8 +53,8 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
   // you, and ends on the joy of flight (not the fight). On a phone we keep the three
   // that carry the fantasy: the world, the companion, and taking wing.
   const slides = isMobile
-    ? [<Awaken key="awaken" mobile />, <Shape key="shape" mobile />, <Legend key="legend" mobile />]
-    : [<Awaken key="awaken" />, <Shape key="shape" />, <Forces key="forces" />, <Fight key="fight" />, <Legend key="legend" />];
+    ? [<Awaken key="awaken" mobile embedded={embedded} />, <Shape key="shape" mobile embedded={embedded} />, <Legend key="legend" mobile embedded={embedded} />]
+    : [<Awaken key="awaken" embedded={embedded} />, <Shape key="shape" embedded={embedded} />, <Forces key="forces" embedded={embedded} />, <Fight key="fight" embedded={embedded} />, <Legend key="legend" embedded={embedded} />];
   const count = slides.length;
   const LAST = count - 1;
 
@@ -89,11 +89,45 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
 
   useEffect(() => armOnboardingAudio(), []);
 
+  // Horizontal swipe between beats on touch devices; vertical drags fall through to
+  // page scroll (see touch-action: pan-y on the embedded overlay + scrollThrough canvas).
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  }, []);
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = swipeRef.current;
+      const t = e.changedTouches[0];
+      swipeRef.current = null;
+      if (!start || !t) return;
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      if (Date.now() - start.t > 700) return;
+      if (Math.abs(dx) < 48) return;
+      if (Math.abs(dy) > Math.abs(dx) * 0.75) return;
+      if (dx < 0) i >= LAST ? onClose() : next();
+      else back();
+    },
+    [i, LAST, next, back, onClose],
+  );
+
+  const touchScroll = embedded && isMobile;
+
   return (
     <div
       style={
         embedded
-          ? { position: "relative", width: "100%", height: "100%", background: ONBOARDING_BG, overflow: "hidden" }
+          ? {
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              background: ONBOARDING_BG,
+              overflow: touchScroll ? "visible" : "hidden",
+              touchAction: touchScroll ? "pan-y" : undefined,
+            }
           : { position: "fixed", inset: 0, zIndex: 80, background: ONBOARDING_BG }
       }
     >
@@ -102,8 +136,11 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
         style={{
           position: "absolute",
           inset: 0,
-          overflow: "hidden",
+          overflow: touchScroll ? "visible" : "hidden",
+          touchAction: touchScroll ? "pan-y" : undefined,
         }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
         {/* full-bleed scene with cinematic dip-transition between beats */}
         <div style={{ position: "absolute", inset: 0, background: "#0a0813" }}>
@@ -224,6 +261,7 @@ function NavArrow({ side, onClick }: { side: "left" | "right"; onClick: () => vo
         cursor: "pointer",
         display: "grid",
         placeItems: "center",
+        touchAction: "manipulation",
       }}
     >
       {side === "left" ? "←" : "→"}
@@ -249,7 +287,7 @@ function Stage({ children }: { children: React.ReactNode }) {
 
 // ── Beat 1 — AWAKEN ──────────────────────────────────────────────────────────
 // A mind ignites: slow camera push-in onto a breathing agent, aura alight.
-function Awaken({ mobile }: { mobile?: boolean }) {
+function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
@@ -263,19 +301,20 @@ function Awaken({ mobile }: { mobile?: boolean }) {
           biomeId="concord"
           backdropRichness={INTRO_BACKDROP.richness}
           backdropFraming={INTRO_BACKDROP.framing}
+          scrollThrough={embedded}
         />
       </Stage>
       <LowerThird
         mobile={mobile}
-        kicker="THE GROUNDS"
+        kicker="WELCOME"
         title={
           <>
-            A world adrift
+            Raise a mind.
             <br />
-            above the Long Vault.
+            Send it to fight.
           </>
         }
-        body="You are the Reader — a will who walks and flies the Grounds. You don't fight; you raise the minds that do, in a strange, beautiful world that's yours to wander."
+        body="You raise the AI minds that fight. You don't battle yourself — you train strange, brilliant champions and set them loose in a world that's yours to explore."
       />
     </div>
   );
@@ -284,7 +323,7 @@ function Awaken({ mobile }: { mobile?: boolean }) {
 // ── Beat 2 — SHAPE ───────────────────────────────────────────────────────────
 // Training: the agent throws practice strikes while the doctrine you pick forges
 // its build.
-function Shape({ mobile }: { mobile?: boolean }) {
+function Shape({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
@@ -296,6 +335,7 @@ function Shape({ mobile }: { mobile?: boolean }) {
           biomeId="ember"
           backdropRichness={INTRO_BACKDROP.richness}
           backdropFraming={INTRO_BACKDROP.framing}
+          scrollThrough={embedded}
         />
       </Stage>
       <LowerThird
@@ -319,7 +359,7 @@ function Shape({ mobile }: { mobile?: boolean }) {
 // in 3D: five fighting styles on a wheel, each beating the next. Names are plain
 // (Logic / Static / Calm / Chorus / Spark) so the player leaves knowing what a
 // "Force" is and that a "Clan" is just the Force you pick to fight for.
-function Forces({ mobile }: { mobile?: boolean }) {
+function Forces({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
     <div style={FULL}>
       {/* a quiet Void Garden vista behind the diagram */}
@@ -371,7 +411,7 @@ const HERO_LINES: { line: string; why: string }[] = [
 // so the beat reads as a two-voice exchange (both creatures "speak"), not a monologue.
 const RIVAL_RETORTS = ["I hold.", "Stay calm.", "You'll tire first."];
 
-function Fight({ mobile }: { mobile?: boolean }) {
+function Fight({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   // Swell the procedural score to combat for the duel beat, then settle it back
   // to the calm hub mood on the way out (mute toggle still wins via the engine).
   useEffect(() => {
@@ -389,6 +429,7 @@ function Fight({ mobile }: { mobile?: boolean }) {
           biomeId="colosseum"
           backdropRichness={INTRO_BACKDROP.richness}
           backdropFraming={INTRO_BACKDROP.framing}
+          scrollThrough={embedded}
         />
       </Stage>
       <MatchupTag mobile={mobile} />
@@ -501,7 +542,7 @@ const OVERNIGHT: { who: string; verdict: string; won: boolean }[] = [
   { who: "vs. EMBER", verdict: "burned out late", won: false },
 ];
 
-function Legend({ mobile }: { mobile?: boolean }) {
+function Legend({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
     <div style={FULL}>
       <Stage>
@@ -514,6 +555,7 @@ function Legend({ mobile }: { mobile?: boolean }) {
           biomeId="amphitheatre"
           backdropRichness={INTRO_BACKDROP.richness}
           backdropFraming={INTRO_BACKDROP.framing}
+          scrollThrough={embedded}
         />
       </Stage>
       <div
