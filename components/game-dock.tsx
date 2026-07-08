@@ -5,13 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { NAV_GROUPS, navIsActive, siteNavHidden, type PlayLink } from "@/lib/play-nav";
 import { isOrgHost } from "@/lib/org/hosts";
-import { useIsMobile } from "@/lib/use-device";
 
-function MenuLink({ item, path, onPick, isMobile }: { item: PlayLink; path: string; onPick: () => void; isMobile: boolean }) {
+function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick: () => void }) {
   const active = navIsActive(path, item.href);
-  const href = item.id === "play" && isMobile ? "/m" : item.href;
   return (
-    <Link href={href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
+    <Link href={item.href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
       <span className="game-menu__item-label">{item.label}</span>
       <span className="game-menu__item-blurb">{item.blurb}</span>
     </Link>
@@ -25,7 +23,6 @@ function MenuLink({ item, path, onPick, isMobile }: { item: PlayLink; path: stri
 export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const isMobile = useIsMobile();
   // When the shared site header is also on this page, drop the trigger below it
   // so the two menus don't stack on top of each other in the corner.
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
@@ -100,7 +97,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
                 <div key={group.id} className="game-menu__section">
                   <span className="game-menu__section-label mono">{group.label}</span>
                   {group.items.map((item) => (
-                    <MenuLink key={item.id} item={item} path={path} onPick={close} isMobile={isMobile} />
+                    <MenuLink key={item.id} item={item} path={path} onPick={close} />
                   ))}
                 </div>
               ))}

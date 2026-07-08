@@ -13,7 +13,6 @@ import { FOUNDING_REGIONS, FORCES } from "@/lib/lore/canon";
 import { worldByRegion } from "@/components/grounds/worlds";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
-import { useIsMobile } from "@/lib/use-device";
 
 const ACC = "var(--accent)";
 
@@ -240,22 +239,23 @@ function TheLoop() {
 
 export function Landing() {
   const router = useRouter();
-  const isMobile = useIsMobile();
   const [entering, setEntering] = useState(false);
 
   // Warm the play route while the intro deck is on screen so "Then you fly" →
   // Play doesn't sit on a frozen slide for a cold chunk download.
   useEffect(() => {
-    router.prefetch(isMobile ? "/m" : "/grounds");
-  }, [router, isMobile]);
+    router.prefetch("/grounds");
+  }, [router]);
 
   const goPlay = useCallback(() => {
     setEntering(true);
     try {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
-    router.push(isMobile ? "/m" : "/grounds");
-  }, [router, isMobile]);
+    // Phones get the same 3D Grounds as desktop for now — the /m spectate shell
+    // is reachable from nav once you've played; it is NOT the front door yet.
+    router.push("/grounds");
+  }, [router]);
 
   // Once the embedded intro deck advances past its first slide we hand the whole
   // screen over to it: the marketing homepage below is hidden so nothing
@@ -401,12 +401,12 @@ export function Landing() {
       </div>
 
       <Styles />
-      {entering && <EnteringOverlay mobile={isMobile} />}
+      {entering && <EnteringOverlay />}
     </main>
   );
 }
 
-function EnteringOverlay({ mobile }: { mobile: boolean }) {
+function EnteringOverlay() {
   return (
     <div
       aria-live="polite"
@@ -438,10 +438,10 @@ function EnteringOverlay({ mobile }: { mobile: boolean }) {
           ))}
         </div>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 2.5, color: "var(--muted2)" }}>
-          {mobile ? "OPENING ZINGERS" : "ENTERING THE GROUNDS"}
+          ENTERING THE GROUNDS
         </div>
         <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--muted)" }}>
-          {mobile ? "Loading your Today tab…" : "Summoning the world…"}
+          Summoning the world…
         </p>
       </div>
     </div>

@@ -522,6 +522,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           dpr={[1, 1.5]}
           camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: 600 }}
           gl={{ antialias: true, powerPreference: "high-performance" }}
+          style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = BIOME.exposure;
@@ -606,19 +607,24 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
 
       {/* ── ready gate: wait for the first press so you never die before reacting ── */}
       {phase === "ready" && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", zIndex: 15 }}>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", zIndex: 15, paddingBottom: embedded ? 72 : 0 }}>
           <div className="mono" style={{ textAlign: "center", color: "#fff", textShadow: `0 0 20px ${ACCENT}` }}>
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
+            <div style={{ fontSize: embedded ? 17 : 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 1 }}>
               rise to thread each ring · release to drop · one fall = restart
             </div>
+            {embedded && (
+              <div style={{ fontSize: 10, color: "var(--muted2, #6b6785)", marginTop: 10, letterSpacing: 0.5 }}>
+                Climb tab · switch to Today for daily bouts
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* ── the HOLD affordance (the whole screen is also a hold surface) ── */}
       {live && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 34, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: embedded ? 88 : 34, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
           <div
             style={{
               display: "inline-flex",

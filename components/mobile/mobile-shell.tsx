@@ -41,7 +41,7 @@ const TABS: TabDef[] = [
 const ACCENT = "var(--accent, #7cf6c8)";
 
 export function MobileShell() {
-  const [tab, setTab] = useState<TabId>("climb");
+  const [tab, setTab] = useState<TabId>("today");
 
   return (
     <div
