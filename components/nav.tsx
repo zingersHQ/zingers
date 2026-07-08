@@ -5,11 +5,13 @@ import { Fragment, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
-import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden } from "@/lib/play-nav";
+import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden, playEntryHref } from "@/lib/play-nav";
+import { useIsMobile } from "@/lib/use-device";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Nav() {
   const path = usePathname();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
   const onOrg = host ? isOrgHost(host) : false;
@@ -63,21 +65,26 @@ export function Nav() {
         {NAV_GROUPS.map((group, gi) => (
           <Fragment key={group.id}>
             <span className={`site-nav__section mono${gi > 0 ? " site-nav__section--also" : ""}`}>{group.label}</span>
-            {group.items.map((l) => (
+            {group.items.map((l) => {
+              const href =
+                l.id === "play" && isMobile
+                  ? playEntryHref(true)
+                  : l.id === "org" && onOrg
+                    ? "/"
+                    : gameHref(l.href);
+              return (
               <Link
                 key={l.id}
-                // On phones, "Play" opens the native mobile shell (/m) instead of
-                // the desktop-shaped 3D Grounds (docs/mobile.md: desktop-gate Roam).
-                href={l.id === "org" && onOrg ? "/" : gameHref(l.href)}
+                href={href}
                 onClick={close}
                 className={`site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
-                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) ? " is-on" : ""
+                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && isMobile && path.startsWith("/m")) ? " is-on" : ""
                 }`}
                 title={l.blurb}
               >
                 {l.label}
               </Link>
-            ))}
+            );})}
           </Fragment>
         ))}
         <span className="site-nav__section mono site-nav__section--also">Display</span>

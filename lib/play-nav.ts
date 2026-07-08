@@ -26,12 +26,20 @@ export interface NavGroup {
 //   You   → your own stuff and standing.
 //   Learn → how the game + protocol work.
 //   Build → the for-developers agent surface (not a game mode).
+/** Desktop door into the 3D world; phones use {@link MOBILE_PLAY_HREF}. */
+export const PLAY_HREF = "/grounds";
+export const MOBILE_PLAY_HREF = "/m";
+
+export function playEntryHref(isMobile: boolean): string {
+  return isMobile ? MOBILE_PLAY_HREF : PLAY_HREF;
+}
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     id: "play",
     label: "Play",
     items: [
-      { id: "play", label: "Play", short: "Play", href: "/grounds", blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
+      { id: "play", label: "Play", short: "Play", href: PLAY_HREF, blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
     ],
   },
   {

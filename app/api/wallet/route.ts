@@ -66,13 +66,15 @@ export async function POST(req: Request) {
 
   const r = await store.adjustWallet(token, delta);
 
-  // Behaviour analytics (best-effort): economy flow + the action behind it.
+  // Behaviour analytics (best-effort, non-blocking): never delay the wallet reply.
   if (r.ok) {
-    if (delta < 0) await track("spend", token, -delta);
-    else if (delta > 0) await track("earn", token, delta);
-    if (type === "train") await track("train", token);
-    else if (type === "cache") await track("node", token);
-    else if (type === "goal") await track("goal", token);
+    void (async () => {
+      if (delta < 0) await track("spend", token, -delta);
+      else if (delta > 0) await track("earn", token, delta);
+      if (type === "train") await track("train", token);
+      else if (type === "cache") await track("node", token);
+      else if (type === "goal") await track("goal", token);
+    })();
   }
 
   return Response.json({ ok: r.ok, balance: r.balance });

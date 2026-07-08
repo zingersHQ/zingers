@@ -124,17 +124,17 @@ export function natureUrl(modelId: string): string {
   return `${NATURE_BASE}/${modelId}.gltf`;
 }
 
-/** Every glTF the nature layer may load — for preload. */
+/** glTF ids used by one biome — preload only what's needed for the active world. */
+export function natureModelsForBiome(biomeId: string): string[] {
+  const p = naturePreset(biomeId);
+  return Array.from(new Set([...p.rocks, ...p.pebbles, ...p.trees, ...p.plants, ...p.paths, ...p.accents, ...p.grass]));
+}
+
+/** Every glTF the nature layer may load — union of all biome kits. */
 export const ALL_NATURE_MODELS: string[] = Array.from(
-  new Set(
-    Object.values(NATURE_BY_BIOME).flatMap((p) => [
-      ...p.rocks,
-      ...p.pebbles,
-      ...p.trees,
-      ...p.plants,
-      ...p.paths,
-      ...p.accents,
-      ...p.grass,
-    ]),
-  ),
+  new Set(Object.values(NATURE_BY_BIOME).flatMap((p) => natureModelsForBiomeFromPreset(p))),
 );
+
+function natureModelsForBiomeFromPreset(p: NaturePreset): string[] {
+  return [...p.rocks, ...p.pebbles, ...p.trees, ...p.plants, ...p.paths, ...p.accents, ...p.grass];
+}

@@ -24,6 +24,7 @@ import {
   FIRST_FIGHT_WORLD,
   previewRookieChampion,
 } from "@/lib/first-duel";
+import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { READER_COPY } from "@/lib/player-copy";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import { track } from "@/lib/track";
@@ -140,7 +141,7 @@ function battleActorToMatchKey(actor: string, owned: string, creatureKey: string
   return actor === owned ? owned : matchOpponentKey(creatureKey, ladderId);
 }
 
-export default function GroundsScreen() {
+export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [towerAgents, setTowerAgents] = useState<TowerAgent[]>([]);
   const [altitude, setAltitude] = useState(0);
@@ -751,6 +752,20 @@ export default function GroundsScreen() {
     const t = setTimeout(() => setFirstDuelPhase("pick"), wait);
     return () => clearTimeout(t);
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
+
+  // Warm the first-fight world (void kit + world chunk) while the player is still
+  // on champion select / strategy — the canvas stays hidden but assets download.
+  useEffect(() => {
+    if (firstDuelPhase !== "pick" && firstDuelPhase !== "train") return;
+    warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
+  }, [firstDuelPhase]);
+
+  // Mount the 3D scene against the arena the guided duel actually uses, not the
+  // Concord hub — otherwise the player pays a second biome load after Train.
+  useEffect(() => {
+    if (firstDuelPhase !== "train") return;
+    if (worldId !== FIRST_FIGHT_WORLD) travelToWorld(FIRST_FIGHT_WORLD, false);
+  }, [firstDuelPhase, worldId, travelToWorld]);
 
   const closeIntro = useCallback(() => {
     try {
@@ -1710,6 +1725,7 @@ export default function GroundsScreen() {
               touchBottomInset={isTouch ? dockPad + compassReserve : 0}
               worldLife={worldLife}
               trainerXp={store.trainerXp}
+              gpuLite={gpuLite}
             />
           </RenderBoundary>
         </div>

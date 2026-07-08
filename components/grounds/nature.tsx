@@ -19,9 +19,7 @@ import {
   type TerrainShape,
   type SpawnKnoll,
 } from "./terrain";
-import { ALL_NATURE_MODELS, naturePreset, natureUrl } from "@/lib/render/nature-kit";
-
-for (const m of ALL_NATURE_MODELS) useGLTF.preload(natureUrl(m));
+import { naturePreset, natureUrl } from "@/lib/render/nature-kit";
 
 function mulberry(seed: number) {
   let s = seed >>> 0;

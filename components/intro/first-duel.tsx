@@ -78,16 +78,11 @@ export function FirstDuelOverlay({
   evolve: { before: Champion; after: Champion; key: string; type: RosterEntry["type"] } | null;
   isMobile: boolean;
   onPick: (key: string) => void;
-  onTrain: (key: string, strat: Strat) => void;
+  onTrain: (key: string, strat: Strat) => void | Promise<void>;
   onEvolveDone: () => void;
   onConcordDone: () => void;
 }) {
-  const [strat, setStrat] = useState<Strat>(QUICK_START_STRAT);
   const [concordStep, setConcordStep] = useState(0);
-
-  useEffect(() => {
-    if (phase === "train" && selected) setStrat(QUICK_START_STRAT);
-  }, [phase, selected]);
 
   useEffect(() => {
     if (phase === "concord") setConcordStep(0);
@@ -111,60 +106,19 @@ export function FirstDuelOverlay({
     [onPick],
   );
 
-  const handleTrain = useCallback(
-    (key: string, s: Strat) => {
-      playOnboardingSound("train");
-      onTrain(key, s);
-    },
-    [onTrain],
-  );
-
   if (phase === "pick") {
     return <PickPhase starters={starters} selected={selected} get={get} isMobile={isMobile} onCommit={handlePick} />;
   }
 
   if (phase === "train" && selected) {
-    const entry = starters.find((r) => r.key === selected)!;
-    const col = TYPE_COLOR[entry.type];
-    const canAfford = crowns >= TRAIN_COST;
-    const patchStrat = (patch: Partial<Strat>) => setStrat((s) => ({ ...s, ...patch }));
     return (
-      <div style={shell}>
-        <OnboardingAudio compact={isMobile} />
-        <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(560px, 96vw)", maxHeight: "92vh", overflow: "auto", borderColor: col }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
-          <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-            Drag the three dials — how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-            <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: 700 }}>{entry.name}</div>
-              <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].name}</div>
-            </div>
-          </div>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>
-            DOCTRINE · free to adjust
-          </div>
-          <DoctrineDial label="Aggression" value={strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => patchStrat({ aggression: v })} />
-          <DoctrineDial label="Focus" value={strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => patchStrat({ focus: v })} />
-          <DoctrineDial label="Risk" value={strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => patchStrat({ risk: v })} />
-          <button
-            className="btn btn-primary"
-            style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 8, opacity: canAfford ? 1 : 0.55 }}
-            disabled={!canAfford}
-            onClick={() => handleTrain(selected, strat)}
-          >
-            Train & enter the arena · {TRAIN_COST} <Crown size={14} strokeWidth={2.2} style={{ display: "inline", verticalAlign: "middle" }} />
-          </button>
-          {!canAfford && (
-            <p className="mono" style={{ fontSize: 10, color: "var(--bad)", marginTop: 10, textAlign: "center" }}>
-              Need {TRAIN_COST} Crowns to train. Reload if this looks wrong.
-            </p>
-          )}
-        </div>
-      </div>
+      <TrainPhase
+        selected={selected}
+        starters={starters}
+        crowns={crowns}
+        isMobile={isMobile}
+        onTrain={onTrain}
+      />
     );
   }
 
@@ -211,6 +165,85 @@ export function FirstDuelOverlay({
   }
 
   return null;
+}
+
+function TrainPhase({
+  selected,
+  starters,
+  crowns,
+  isMobile,
+  onTrain,
+}: {
+  selected: string;
+  starters: RosterEntry[];
+  crowns: number;
+  isMobile: boolean;
+  onTrain: (key: string, strat: Strat) => void | Promise<void>;
+}) {
+  const [strat, setStrat] = useState<Strat>(QUICK_START_STRAT);
+  const [busy, setBusy] = useState(false);
+  const entry = starters.find((r) => r.key === selected)!;
+  const col = TYPE_COLOR[entry.type];
+  const canAfford = crowns >= TRAIN_COST;
+  const patchStrat = (patch: Partial<Strat>) => setStrat((s) => ({ ...s, ...patch }));
+
+  useEffect(() => {
+    setStrat(QUICK_START_STRAT);
+  }, [selected]);
+
+  const commit = useCallback(async () => {
+    if (busy || !canAfford) return;
+    setBusy(true);
+    playOnboardingSound("train");
+    try {
+      await onTrain(selected, strat);
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, canAfford, onTrain, selected, strat]);
+
+  return (
+    <div style={shell}>
+      <OnboardingAudio compact={isMobile} />
+      <div className="panel pop" style={{ ["--ac" as string]: col, padding: isMobile ? 20 : 26, width: "min(560px, 96vw)", maxHeight: "92vh", overflow: "auto", borderColor: col }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
+        <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
+          Drag the three dials — how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+          <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontWeight: 700 }}>{entry.name}</div>
+            <div className="mono" style={{ fontSize: 11, color: col }}>{FORCE_LORE[entry.type].name}</div>
+          </div>
+        </div>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>
+          DOCTRINE · free to adjust
+        </div>
+        <DoctrineDial label="Aggression" value={strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => patchStrat({ aggression: v })} />
+        <DoctrineDial label="Focus" value={strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => patchStrat({ focus: v })} />
+        <DoctrineDial label="Risk" value={strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => patchStrat({ risk: v })} />
+        <button
+          className="btn btn-primary"
+          style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 8, opacity: canAfford && !busy ? 1 : 0.55 }}
+          disabled={!canAfford || busy}
+          onClick={() => void commit()}
+        >
+          {busy ? "Training & entering the arena…" : (
+            <>
+              Train & enter the arena · {TRAIN_COST} <Crown size={14} strokeWidth={2.2} style={{ display: "inline", verticalAlign: "middle" }} />
+            </>
+          )}
+        </button>
+        {!canAfford && (
+          <p className="mono" style={{ fontSize: 10, color: "var(--bad)", marginTop: 10, textAlign: "center" }}>
+            Need {TRAIN_COST} Crowns to train. Reload if this looks wrong.
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ── Character-select stage ────────────────────────────────────────────────────

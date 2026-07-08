@@ -11,6 +11,8 @@ import { ChampionPortrait } from "@/components/render/champion-portrait";
 import { FirstRun } from "@/components/intro/first-run";
 import { FOUNDING_REGIONS, FORCES } from "@/lib/lore/canon";
 import { worldByRegion } from "@/components/grounds/worlds";
+import { useIsMobile } from "@/lib/use-device";
+import { playEntryHref } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
 
@@ -239,23 +241,24 @@ function TheLoop() {
 
 export function Landing() {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [entering, setEntering] = useState(false);
+
+  const playHref = playEntryHref(isMobile);
 
   // Warm the play route while the intro deck is on screen so "Then you fly" →
   // Play doesn't sit on a frozen slide for a cold chunk download.
   useEffect(() => {
-    router.prefetch("/grounds");
-  }, [router]);
+    router.prefetch(playHref);
+  }, [router, playHref]);
 
   const goPlay = useCallback(() => {
     setEntering(true);
     try {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
-    // Phones get the same 3D Grounds as desktop for now — the /m spectate shell
-    // is reachable from nav once you've played; it is NOT the front door yet.
-    router.push("/grounds");
-  }, [router]);
+    router.push(playHref);
+  }, [router, playHref]);
 
   // Once the embedded intro deck advances past its first slide we hand the whole
   // screen over to it: the marketing homepage below is hidden so nothing

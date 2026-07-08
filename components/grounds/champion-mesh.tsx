@@ -19,8 +19,6 @@ import { ANIM, flightAttitudePlanar, type GestureClip, type RestPose } from "@/l
 import { useSettings } from "@/store/settings";
 import { Jetpack } from "@/components/grounds/jetpack";
 
-for (const m of ALL_MODELS) useGLTF.preload(m);
-
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
 /** Small mascots in the open world — 2/3 of the previous third-scale after a

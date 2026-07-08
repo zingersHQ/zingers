@@ -56,6 +56,7 @@ import {
   type VenueId,
 } from "./venues";
 import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal } from "./venue-portals";
+import { preloadNatureBiome } from "@/lib/render/preload-grounds";
 
 export interface WorldLife {
   /** what your champion is saying in-world */
@@ -283,6 +284,7 @@ export default function World({
   onVenueExit,
   worldLife,
   trainerXp = 0,
+  gpuLite = false,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -327,6 +329,8 @@ export default function World({
   onVenueExit?: () => void;
   worldLife?: WorldLife;
   trainerXp?: number;
+  /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
+  gpuLite?: boolean;
 }) {
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
@@ -359,6 +363,9 @@ export default function World({
   // changes the geometry you walk through, not just its colour.
   const shape = useMemo(() => shapeOf(biome), [biome]);
   const knoll = useMemo(() => spawnKnollFor(biome), [biome]);
+  useEffect(() => {
+    preloadNatureBiome(biome.id);
+  }, [biome.id]);
   const circuitSpawn = inCircuit ? circuitTrack.spawn : null;
   const spawnCam = useMemo(() => {
     if (circuitSpawn) {
@@ -529,10 +536,10 @@ export default function World({
   return (
     <>
     <Canvas
-      shadows={{ type: THREE.PCFSoftShadowMap }}
-      camera={{ position: spawnCam, fov: 52, near: 0.1, far: 600 }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      shadows={gpuLite ? false : { type: THREE.PCFSoftShadowMap }}
+      camera={{ position: spawnCam, fov: 52, near: 0.1, far: gpuLite ? 320 : 600 }}
+      dpr={gpuLite ? [0.75, 1] : [1, 1.5]}
+      gl={{ antialias: !gpuLite, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = biome.exposure;
@@ -553,15 +560,17 @@ export default function World({
       <AltitudeAdaptive baseFogFar={inCircuit ? 200 : biome.fog.far} />
 
       <SkyDome biome={biome} />
-      <Nebula biome={biome} />
-      <Starfield />
+      {!gpuLite && <Nebula biome={biome} />}
+      {!gpuLite && <Starfield />}
 
-      <Environment resolution={256} frames={1} key={`${biome.id}:${biome.bg}`}>
-        <Lightformer intensity={1.4} color={biome.ibl.key} position={[0, 8, 0]} scale={[20, 20, 1]} target={[0, 0, 0]} />
-        <Lightformer intensity={1.0} color={biome.ibl.warm} position={[14, 4, 0]} scale={[10, 10, 1]} target={[0, 0, 0]} />
-        <Lightformer intensity={0.8} color={biome.ibl.cool} position={[-14, 4, 6]} scale={[10, 10, 1]} target={[0, 0, 0]} />
-        <Lightformer intensity={0.6} color={biome.ibl.fill} position={[0, 2, -16]} scale={[24, 8, 1]} target={[0, 0, 0]} />
-      </Environment>
+      {!gpuLite && (
+        <Environment resolution={256} frames={1} key={`${biome.id}:${biome.bg}`}>
+          <Lightformer intensity={1.4} color={biome.ibl.key} position={[0, 8, 0]} scale={[20, 20, 1]} target={[0, 0, 0]} />
+          <Lightformer intensity={1.0} color={biome.ibl.warm} position={[14, 4, 0]} scale={[10, 10, 1]} target={[0, 0, 0]} />
+          <Lightformer intensity={0.8} color={biome.ibl.cool} position={[-14, 4, 6]} scale={[10, 10, 1]} target={[0, 0, 0]} />
+          <Lightformer intensity={0.6} color={biome.ibl.fill} position={[0, 2, -16]} scale={[24, 8, 1]} target={[0, 0, 0]} />
+        </Environment>
+      )}
 
       <hemisphereLight args={[biome.lights.hemiSky, biome.lights.hemiGround, biome.lights.hemiInt]} />
       <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt} />
@@ -569,8 +578,8 @@ export default function World({
         position={[34, 44, 22]}
         intensity={biome.lights.sunInt}
         color={biome.lights.sun}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        castShadow={!gpuLite}
+        shadow-mapSize={gpuLite ? undefined : [512, 512]}
         shadow-camera-near={1}
         shadow-camera-far={160}
         shadow-camera-left={-44}
@@ -747,7 +756,7 @@ export default function World({
           )}
         </Physics>
 
-        {!glLost && (
+        {!glLost && !gpuLite && (
           <RenderBoundary fallback={null}>
             <EffectComposer enableNormalPass={false}>
               <Bloom intensity={biome.bloom} luminanceThreshold={0.62} luminanceSmoothing={0.28} mipmapBlur radius={0.7} />

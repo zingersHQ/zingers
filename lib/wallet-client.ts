@@ -11,11 +11,24 @@ export interface WalletResp {
   balance: number;
 }
 
+/** Don't block gameplay on a hung wallet round-trip — fall back to local mirror. */
+const WALLET_TIMEOUT_MS = 5_000;
+
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), WALLET_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function post(body: Record<string, unknown>): Promise<WalletResp | null> {
   const token = getOwnerToken();
   if (!token) return null;
   try {
-    const r = await fetch("/api/wallet", {
+    const r = await fetchWithTimeout("/api/wallet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ownerToken: token, ...body }),
@@ -34,7 +47,7 @@ export async function fetchBalance(): Promise<number | null> {
   const token = getOwnerToken();
   if (!token) return null;
   try {
-    const r = await fetch(`/api/wallet?token=${encodeURIComponent(token)}`);
+    const r = await fetchWithTimeout(`/api/wallet?token=${encodeURIComponent(token)}`);
     if (!r.ok) return null;
     const { balance } = (await r.json()) as { balance?: number };
     return typeof balance === "number" ? balance : null;

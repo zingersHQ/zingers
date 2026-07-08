@@ -3,13 +3,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
-import { NAV_GROUPS, navIsActive, siteNavHidden, type PlayLink } from "@/lib/play-nav";
+import { NAV_GROUPS, navIsActive, siteNavHidden, playEntryHref, type PlayLink } from "@/lib/play-nav";
+import { useIsMobile } from "@/lib/use-device";
 import { isOrgHost } from "@/lib/org/hosts";
 
-function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick: () => void }) {
-  const active = navIsActive(path, item.href);
+function MenuLink({ item, path, href, onPick }: { item: PlayLink; path: string; href: string; onPick: () => void }) {
+  const active = navIsActive(path, item.href) || (item.id === "play" && path.startsWith("/m"));
   return (
-    <Link href={item.href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
+    <Link href={href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
       <span className="game-menu__item-label">{item.label}</span>
       <span className="game-menu__item-blurb">{item.blurb}</span>
     </Link>
@@ -22,6 +23,7 @@ function MenuLink({ item, path, onPick }: { item: PlayLink; path: string; onPick
  */
 export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
   const path = usePathname();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   // When the shared site header is also on this page, drop the trigger below it
   // so the two menus don't stack on top of each other in the corner.
@@ -97,7 +99,13 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
                 <div key={group.id} className="game-menu__section">
                   <span className="game-menu__section-label mono">{group.label}</span>
                   {group.items.map((item) => (
-                    <MenuLink key={item.id} item={item} path={path} onPick={close} />
+                    <MenuLink
+                      key={item.id}
+                      item={item}
+                      path={path}
+                      href={item.id === "play" ? playEntryHref(isMobile) : item.href}
+                      onPick={close}
+                    />
                   ))}
                 </div>
               ))}

@@ -8,7 +8,7 @@
 // honest. A "your champion" strip threads back to the raise lane.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarDays, Lock, Flame, Trophy, Mic, Share2, RotateCcw, ChevronRight, Shield } from "lucide-react";
+import { CalendarDays, Lock, Flame, Trophy, Mic, Share2, RotateCcw, ChevronRight, Shield, Globe } from "lucide-react";
 import type { BattleEnd, BattleTurn, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
@@ -114,6 +114,32 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
 
         {/* your champion strip → raise lane */}
         <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />
+
+        <a
+          href="/grounds?world=1"
+          className="mono"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "100%",
+            marginBottom: 14,
+            padding: "10px 12px",
+            borderRadius: 12,
+            border: "1px solid var(--line2)",
+            background: "var(--panel2)",
+            color: "var(--muted2)",
+            fontSize: 11,
+            letterSpacing: 0.5,
+            textDecoration: "none",
+          }}
+        >
+          <Globe size={14} strokeWidth={2.2} style={{ color: "var(--accent)", flexShrink: 0 }} />
+          <span style={{ flex: 1, lineHeight: 1.35 }}>
+            3D Grounds <span style={{ opacity: 0.75 }}>(experimental on phone — desktop recommended)</span>
+          </span>
+          <ChevronRight size={14} strokeWidth={2.2} />
+        </a>
 
         {!plan || !mounted ? (
           <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 50 }}>loading today&apos;s fight…</div>
