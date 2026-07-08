@@ -7,7 +7,7 @@
 
 Version 1.0 — June 2026
 
-Product/design source of truth. Lore canon lives in [`docs/bible/`](./bible/); mechanics in [`game-spec.md`](./game-spec.md).
+Product/design source of truth. Lore canon lives in [`docs/bible/`](./bible/); mechanics in [`game-spec.md`](./game-spec.md); how the same soul survives crossing devices (mobile vs desktop) in [`essence.md`](./essence.md); the concrete mobile adaptation (core loop, IA, per-verb bodies) in [`mobile.md`](./mobile.md).
 
 ## 1. Vision Statement
 

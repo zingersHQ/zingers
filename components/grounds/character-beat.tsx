@@ -6,6 +6,7 @@ import { primeCreature, speakCreature, speakCreatureType } from "@/lib/creature-
 import type { BeatScript } from "@/lib/lore/character-beats";
 import { ONBOARDING_BG } from "@/lib/iconography";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
+import { useIsMobile } from "@/lib/use-device";
 
 // A directed narrative beat — not a static slide. The live 3D portrait rises and
 // floats, the frame is letterboxed for cinema, each new line pulses a glow and
@@ -30,11 +31,14 @@ export function CharacterBeat({
   portrait?: { key: string; type: CreatureType; champion: Champion; name: string };
   onComplete: () => void;
 }) {
+  const isMobile = useIsMobile();
   const [idx, setIdx] = useState(0);
   const [typed, setTyped] = useState("");
   const line = script.lines[idx];
   const last = idx >= script.lines.length - 1;
   const done = typed.length >= line.text.length;
+
+  const skipLine = useCallback(() => setTyped(line.text), [line.text]);
 
   const speak = useCallback(
     (text: string, speaker: string) => {
@@ -50,18 +54,19 @@ export function CharacterBeat({
     speak(line.text, line.speaker);
   }, [idx, line.text, line.speaker, speak]);
 
-  // typewriter reveal — each line types itself in, in sync with the voice
+  // typewriter reveal — faster on phones; tap the line to show it all at once
   useEffect(() => {
     setTyped("");
     const full = line.text;
     let i = 0;
+    const ms = isMobile ? 7 : 17;
     const id = setInterval(() => {
       i++;
       setTyped(full.slice(0, i));
       if (i >= full.length) clearInterval(id);
-    }, 17);
+    }, ms);
     return () => clearInterval(id);
-  }, [idx, line.text]);
+  }, [idx, line.text, isMobile]);
 
   const advance = useCallback(() => {
     if (last) onComplete();
@@ -161,8 +166,11 @@ export function CharacterBeat({
         )}
 
         <p
+          onClick={() => {
+            if (!done) skipLine();
+          }}
           style={{
-            fontSize: line.speaker === "Trainer" || line.speaker === "The Trainer" ? 16 : 22,
+            fontSize: line.speaker === "Trainer" || line.speaker === "The Trainer" ? (isMobile ? 15 : 16) : isMobile ? 19 : 22,
             fontWeight: line.speaker === "Trainer" || line.speaker === "The Trainer" ? 500 : 600,
             lineHeight: 1.45,
             margin: "18px auto 0",
@@ -170,6 +178,7 @@ export function CharacterBeat({
             color: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "var(--muted)" : "var(--ink)",
             fontStyle: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "normal" : "italic",
             minHeight: "2.9em",
+            cursor: done ? "default" : "pointer",
           }}
         >
           &ldquo;{typed}
@@ -198,9 +207,9 @@ export function CharacterBeat({
           type="button"
           className="btn btn-primary pop"
           onClick={advance}
-          style={{ ["--ac" as string]: accent, marginTop: 26, padding: "12px 28px", fontSize: 15 }}
+          style={{ ["--ac" as string]: accent, marginTop: 26, padding: isMobile ? "11px 22px" : "12px 28px", fontSize: isMobile ? 14 : 15 }}
         >
-          {last ? "Continue" : "Next"}
+          {last ? "Continue" : done ? "Next" : "Skip line"}
         </button>
       </div>
     </div>

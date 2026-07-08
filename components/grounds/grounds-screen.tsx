@@ -1717,7 +1717,7 @@ export default function GroundsScreen() {
 
       {/* HUD — sits above the WebGL canvas and touch layer */}
       {showHud && (
-      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 172px)" : 400 }}>
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 148px)" : 400 }}>
         {!showMatch && overlay === "none" && owned && !gRun && !inVenue && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
@@ -1764,21 +1764,23 @@ export default function GroundsScreen() {
               }}
             >
               <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
-              <span style={{ fontSize: isMobile ? 13 : 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {world.name}
-              </span>
+              {!isMobile && (
+                <span style={{ fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {world.name}
+                </span>
+              )}
             </button>
           </div>
         )}
 
-        {!showMatch && overlay === "none" && owned && !gRun && !modesLocked && (
-          <div style={{ marginBottom: isMobile ? 6 : 10 }}>
+        {!isMobile && !showMatch && overlay === "none" && owned && !gRun && !modesLocked && (
+          <div style={{ marginBottom: 10 }}>
             <ReaderThread isMobile={isMobile} />
           </div>
         )}
 
-        {(owned || !isMobile) && overlay === "none" && !showMatch && !gRun && (
-          <p className="grounds-hud__hint mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: isMobile ? 0.5 : 1, lineHeight: 1.45, pointerEvents: "none" }}>
+        {!isMobile && overlay === "none" && !showMatch && !gRun && (
+          <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {modesLocked && owned
               ? FIRST_DUEL_TAGLINE
               : owned
@@ -1815,16 +1817,16 @@ export default function GroundsScreen() {
       </div>
       )}
       {showHud && (
-      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 100, pointerEvents: "auto" }}>
-        {overlay === "none" && !showMatch && !gRun && (
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
+        {!isMobile && overlay === "none" && !showMatch && !gRun && (
           <button
             onClick={() => setControlsOpen(true)}
             aria-label="Controls"
             title="Controls"
             className="panel"
-            style={{ padding: isMobile ? 7 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
+            style={{ padding: 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
           >
-            <HelpCircle size={isMobile ? 16 : 18} strokeWidth={2} />
+            <HelpCircle size={18} strokeWidth={2} />
           </button>
         )}
         {overlay === "none" && !showMatch && !gRun && (
@@ -1833,9 +1835,9 @@ export default function GroundsScreen() {
             aria-label="Settings"
             title="Settings (Esc)"
             className="panel"
-            style={{ padding: isMobile ? 7 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
+            style={{ padding: isMobile ? 6 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
           >
-            <SettingsIcon size={isMobile ? 16 : 18} strokeWidth={2} />
+            <SettingsIcon size={isMobile ? 15 : 18} strokeWidth={2} />
           </button>
         )}
         {/* appearance toggle is desktop-only in-world — on mobile it's pure clutter
@@ -1858,9 +1860,9 @@ export default function GroundsScreen() {
             }}
           />
         )}
-        <div className="panel" style={{ padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
-          <Crown size={isMobile ? 15 : 17} color="var(--gold)" strokeWidth={2} />
-          <span style={{ fontWeight: 700, fontSize: isMobile ? 15 : 18, color: "var(--gold)" }}>{crowns}</span>
+        <div className="panel" style={{ padding: isMobile ? "6px 9px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
+          <Crown size={isMobile ? 14 : 17} color="var(--gold)" strokeWidth={2} />
+          <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 18, color: "var(--gold)" }}>{crowns}</span>
           {!isMobile && <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>}
         </div>
       </div>

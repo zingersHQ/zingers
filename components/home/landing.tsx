@@ -13,6 +13,7 @@ import { FOUNDING_REGIONS, FORCES } from "@/lib/lore/canon";
 import { worldByRegion } from "@/components/grounds/worlds";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
+import { useIsMobile } from "@/lib/use-device";
 
 const ACC = "var(--accent)";
 
@@ -239,6 +240,22 @@ function TheLoop() {
 
 export function Landing() {
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const [entering, setEntering] = useState(false);
+
+  // Warm the play route while the intro deck is on screen so "Then you fly" →
+  // Play doesn't sit on a frozen slide for a cold chunk download.
+  useEffect(() => {
+    router.prefetch(isMobile ? "/m" : "/grounds");
+  }, [router, isMobile]);
+
+  const goPlay = useCallback(() => {
+    setEntering(true);
+    try {
+      localStorage.setItem(STORAGE.intro, "1");
+    } catch {}
+    router.push(isMobile ? "/m" : "/grounds");
+  }, [router, isMobile]);
 
   // Once the embedded intro deck advances past its first slide we hand the whole
   // screen over to it: the marketing homepage below is hidden so nothing
@@ -246,15 +263,7 @@ export function Landing() {
   const [deckIndex, setDeckIndex] = useState(0);
   const deckFocused = deckIndex > 0;
 
-  // Finishing or skipping the inline intro deck marks the cinematic as seen and
-  // carries you into the playable tutorial (pick → tune → first duel) at the
-  // Grounds, so the game never replays the cinematic you just watched here.
-  const enterTutorial = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE.intro, "1");
-    } catch {}
-    router.push("/grounds");
-  }, [router]);
+  const enterTutorial = goPlay;
 
   const toHomepage = useCallback(() => {
     const home = document.getElementById("homepage");
@@ -263,15 +272,7 @@ export function Landing() {
     window.scrollTo({ top, behavior: "smooth" });
   }, []);
 
-  // The final CTA drops you straight onto the champion-select screen: the visitor
-  // has already scrolled the whole pitch here, so skip the intro deck and open the
-  // picker directly (the funnel always opens on champion select now).
-  const startJourney = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE.intro, "1");
-    } catch {}
-    router.push("/grounds");
-  }, [router]);
+  const startJourney = goPlay;
 
   return (
     <main className="lp">
@@ -400,7 +401,50 @@ export function Landing() {
       </div>
 
       <Styles />
+      {entering && <EnteringOverlay mobile={isMobile} />}
     </main>
+  );
+}
+
+function EnteringOverlay({ mobile }: { mobile: boolean }) {
+  return (
+    <div
+      aria-live="polite"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        display: "grid",
+        placeItems: "center",
+        background: "radial-gradient(120% 90% at 50% 38%, #15101f 0%, #0a0712 60%, #050309 100%)",
+        color: "#f2eefb",
+      }}
+    >
+      <style>{`@keyframes lpOrb { 0%,80%,100% { opacity:.25; transform: scale(.82);} 40% { opacity:1; transform: scale(1);} } @keyframes lpRise { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }`}</style>
+      <div style={{ textAlign: "center", animation: "lpRise .5s ease both", padding: 24 }}>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18 }}>
+          {[0, 1, 2].map((n) => (
+            <span
+              key={n}
+              aria-hidden
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 99,
+                background: "var(--accent)",
+                animation: `lpOrb 1.1s ease-in-out ${n * 0.18}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+        <div className="mono" style={{ fontSize: 11, letterSpacing: 2.5, color: "var(--muted2)" }}>
+          {mobile ? "OPENING ZINGERS" : "ENTERING THE GROUNDS"}
+        </div>
+        <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--muted)" }}>
+          {mobile ? "Loading your Today tab…" : "Summoning the world…"}
+        </p>
+      </div>
+    </div>
   );
 }
 

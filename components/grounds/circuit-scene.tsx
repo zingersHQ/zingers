@@ -1,6 +1,7 @@
 "use client";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { useFrame } from "@react-three/fiber";
 import { RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import type { CircuitCheckpoint, CircuitPlatform, CircuitTrackDef } from "./circuit";
@@ -10,17 +11,26 @@ const CheckpointRing = memo(function CheckpointRing({
   cp,
   color,
   finish,
+  highlight = false,
 }: {
   cp: CircuitCheckpoint;
   color: string;
   finish?: boolean;
+  /** the next gate the flyer is aiming for — pulses so the target reads at a glance */
+  highlight?: boolean;
 }) {
   const r = cp.radius;
+  const grp = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!grp.current) return;
+    const s = highlight ? 1 + Math.sin(clock.elapsedTime * 5) * 0.06 : 1;
+    grp.current.scale.setScalar(s);
+  });
   return (
-    <group position={cp.pos}>
+    <group ref={grp} position={cp.pos}>
       <mesh>
-        <torusGeometry args={[r, finish ? 0.14 : 0.1, 12, 48]} />
-        <meshBasicMaterial color={color} transparent opacity={finish ? 0.95 : 0.72} depthWrite={false} />
+        <torusGeometry args={[r, highlight ? 0.18 : finish ? 0.14 : 0.1, 12, 48]} />
+        <meshBasicMaterial color={color} transparent opacity={highlight ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]}>
         <ringGeometry args={[r - 0.2, r + 0.35, 48]} />
@@ -75,7 +85,16 @@ function SafetyFloor({ color, track }: { color: string; track: CircuitTrackDef }
   );
 }
 
-export const CircuitScene = memo(function CircuitScene({ track, biome }: { track: CircuitTrackDef; biome: BiomeConfig }) {
+export const CircuitScene = memo(function CircuitScene({
+  track,
+  biome,
+  highlightIndex,
+}: {
+  track: CircuitTrackDef;
+  biome: BiomeConfig;
+  /** optional: pulse this checkpoint as the next target (used by the one-thumb mode) */
+  highlightIndex?: number;
+}) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
   return (
@@ -85,7 +104,13 @@ export const CircuitScene = memo(function CircuitScene({ track, biome }: { track
         <TrackPlatform key={i} plat={p} biome={biome} />
       ))}
       {track.checkpoints.map((cp) => (
-        <CheckpointRing key={cp.index} cp={cp} color={cp.finish ? biome.platform.top : accent} finish={cp.finish} />
+        <CheckpointRing
+          key={cp.index}
+          cp={cp}
+          color={cp.finish ? biome.platform.top : accent}
+          finish={cp.finish}
+          highlight={cp.index === highlightIndex}
+        />
       ))}
     </>
   );

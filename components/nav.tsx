@@ -7,10 +7,12 @@ import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
 import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useIsMobile } from "@/lib/use-device";
 
 export function Nav() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
   const onOrg = host ? isOrgHost(host) : false;
   // The immersive 3D world (/, /grounds) and pure render/slide surfaces keep
@@ -66,7 +68,15 @@ export function Nav() {
             {group.items.map((l) => (
               <Link
                 key={l.id}
-                href={l.id === "org" && onOrg ? "/" : gameHref(l.href)}
+                // On phones, "Play" opens the native mobile shell (/m) instead of
+                // the desktop-shaped 3D Grounds (docs/mobile.md: desktop-gate Roam).
+                href={
+                  l.id === "org" && onOrg
+                    ? "/"
+                    : l.id === "play" && isMobile
+                      ? gameHref("/m")
+                      : gameHref(l.href)
+                }
                 onClick={close}
                 className={`site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
                   l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) ? " is-on" : ""
