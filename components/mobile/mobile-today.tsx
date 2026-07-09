@@ -115,7 +115,24 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
         {/* your champion strip → raise lane (mounted-gated: reads the persisted
             store, which is empty on the server — rendering it during SSR causes
             a hydration mismatch that can leave the tab half-interactive) */}
-        {mounted && <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />}
+        {mounted && owned && ROSTER[owned] && <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />}
+        {mounted && (!owned || !ROSTER[owned]) && (
+          <button
+            type="button"
+            onClick={() => onNavigate?.("champion")}
+            className="panel"
+            style={{ ["--ac" as string]: "var(--accent)", width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "12px 13px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: 10, display: "grid", placeItems: "center", background: "var(--panel2, #15131f)", flexShrink: 0 }}>
+              <Shield size={20} strokeWidth={2.2} style={{ color: "var(--accent)" }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 800 }}>Choose your champion</div>
+              <div className="mono" style={{ fontSize: 10.5, color: "var(--muted2)" }}>Raise the mind you send to fight</div>
+            </div>
+            <ChevronRight size={18} strokeWidth={2.2} style={{ color: "var(--muted2)" }} />
+          </button>
+        )}
 
         <a
           href="/grounds?world=1"

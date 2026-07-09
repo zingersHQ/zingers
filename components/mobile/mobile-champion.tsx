@@ -8,7 +8,7 @@
 // and marks the champion everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useMemo, useState } from "react";
-import { Crown, Sparkles, Dumbbell, Gem, Eye } from "lucide-react";
+import { Crown, Sparkles, Dumbbell, Gem } from "lucide-react";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
 import { TYPE_COLOR, blank } from "@/lib/evolve/progression";
@@ -18,6 +18,7 @@ import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
 import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
+import { MobileAdopt } from "@/components/mobile/mobile-adopt";
 
 const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
   { key: "aggression", label: "Aggression", hints: ["Patient", "Relentless"] },
@@ -25,7 +26,7 @@ const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
   { key: "risk", label: "Risk", hints: ["Safe", "Reckless"] },
 ];
 
-export function MobileChampion({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
   const owned = useChampions((s) => s.owned);
   const progress = useChampions((s) => s.progress);
   const recipes = useChampions((s) => s.recipes);
@@ -68,25 +69,11 @@ export function MobileChampion({ onNavigate }: { onNavigate?: (tab: string) => v
     flash(ok ? "Fragment spent — a free session banked." : "No fragments to spend.");
   }, [owned, trainWithFragment, flash]);
 
+  // No champion yet → the adoption door (desktop does this in the 3D first-duel;
+  // on a phone this IS the raise lane's entry). Once adopted, `owned` flips and
+  // the full Champion body below renders.
   if (!owned || !ROSTER[owned] || !champ) {
-    return (
-      <div style={{ height: "100%", display: "grid", placeItems: "center", padding: 28, textAlign: "center" }}>
-        <div style={{ maxWidth: 320 }}>
-          <Sparkles size={30} strokeWidth={2} style={{ color: "var(--accent)" }} />
-          <div style={{ fontSize: 19, fontWeight: 800, margin: "12px 0 6px" }}>No champion yet</div>
-          <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "var(--muted, #9a96b8)", margin: "0 0 18px" }}>
-            You raise the mind that fights. Watch a bout, back a winner, and claim the champion you believe in.
-          </p>
-          <button
-            type="button"
-            onClick={() => onNavigate?.("watch")}
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 12, border: "none", background: "var(--accent, #7cf6c8)", color: "#0a0a12", fontWeight: 800, fontSize: 14, cursor: "pointer" }}
-          >
-            <Eye size={16} strokeWidth={2.4} /> Go watch a bout
-          </button>
-        </div>
-      </div>
-    );
+    return <MobileAdopt />;
   }
 
   const type = ROSTER[owned].type;
