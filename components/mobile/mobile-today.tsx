@@ -112,8 +112,10 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
           </div>
         </div>
 
-        {/* your champion strip → raise lane */}
-        <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />
+        {/* your champion strip → raise lane (mounted-gated: reads the persisted
+            store, which is empty on the server — rendering it during SSR causes
+            a hydration mismatch that can leave the tab half-interactive) */}
+        {mounted && <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />}
 
         <a
           href="/grounds?world=1"

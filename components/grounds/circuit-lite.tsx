@@ -289,12 +289,12 @@ function Flyer({
   );
 }
 
-function Lights() {
+function Lights({ lite = false }: { lite?: boolean }) {
   return (
     <>
       <hemisphereLight args={[BIOME.lights.hemiSky, BIOME.lights.hemiGround, BIOME.lights.hemiInt]} />
       <ambientLight color={BIOME.lights.ambient} intensity={BIOME.lights.ambientInt} />
-      <directionalLight position={[18, 30, 14]} intensity={BIOME.lights.sunInt} color={BIOME.lights.sun} castShadow />
+      <directionalLight position={[18, 30, 14]} intensity={BIOME.lights.sunInt} color={BIOME.lights.sun} castShadow={!lite} />
     </>
   );
 }
@@ -518,10 +518,10 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       {mounted && (
         <Canvas
           key={runId}
-          shadows
-          dpr={[1, 1.5]}
-          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: 600 }}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
+          shadows={!embedded}
+          dpr={embedded ? [0.6, 1] : [1, 1.5]}
+          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
+          gl={{ antialias: !embedded, powerPreference: "high-performance" }}
           style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -530,7 +530,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
         >
           <color attach="background" args={[BIOME.bg]} />
           <fog attach="fog" args={[BIOME.fog.color, 30, 190]} />
-          <Lights />
+          <Lights lite={embedded} />
           <Physics paused>
             <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} />
           </Physics>
