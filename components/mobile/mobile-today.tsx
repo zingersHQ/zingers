@@ -1,14 +1,16 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
-// M1 — the Today tab (docs/mobile.md). The phone's 30-second door: the shared
-// Daily Zinger (one bout the whole world calls before watching), your streak,
-// and a Wordle-style share. Reuses lib/server/daily via /api/daily, the shared
-// useBout/SSE runner, and recordDaily from the store — same deterministic bout
-// (seed + mock) everyone else gets today, so the "did you call it?" share is
-// honest. A "your champion" strip threads back to the raise lane.
+// The Today tab — the phone home / hub (docs/mobile.md, redesigned Jul 2026).
+//
+// The home is now a HUB, not the daily quiz: your living champion is the center
+// of gravity, and the day's Tribunal is one legible card that pushes into the
+// call → watch → share sub-flow. Climb + Watch are one-tap tiles so the game's
+// most-legible surfaces aren't buried. Reuses /api/daily, useBout/SSE, and
+// recordDaily from the store; the predict/bout/done views are unchanged, just
+// moved behind the hub instead of being the landing screen.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarDays, Lock, Flame, Trophy, Mic, Share2, RotateCcw, ChevronRight, Shield, Globe } from "lucide-react";
+import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Globe, Settings, Swords, Eye, Rocket, Sparkles } from "lucide-react";
 import type { BattleEnd, BattleTurn, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
@@ -16,9 +18,10 @@ import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
+import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { MobileBoutStage } from "@/components/mobile/mobile-bout";
 
-type View = "predict" | "bout" | "done";
+type View = "hub" | "predict" | "bout" | "done";
 
 function shareText(r: DailyResult, streak: number, best: number): string {
   const w = r.winnerCorrect ? "✓" : "✗";
@@ -36,7 +39,7 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
   const [mounted, setMounted] = useState(false);
   const [winnerPick, setWinnerPick] = useState<"a" | "b" | null>(null);
   const [dunkPick, setDunkPick] = useState<"a" | "b" | null>(null);
-  const [view, setView] = useState<View>("predict");
+  const [view, setView] = useState<View>("hub");
 
   const bout = useBout();
   const get = useChampions((s) => s.get);
@@ -55,9 +58,6 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
   }, []);
 
   const solvedToday = mounted && plan != null && daily.result != null && daily.result.day === plan.day;
-  useEffect(() => {
-    if (solvedToday) setView("done");
-  }, [solvedToday]);
 
   const boutUrl = plan ? `/api/battle?a=${plan.a.key}&b=${plan.b.key}&topic=${encodeURIComponent(plan.topic)}&seed=${plan.seed}&mock=1` : "";
 
@@ -99,111 +99,339 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
   const acol = plan ? TYPE_COLOR[plan.a.type] : "#888";
   const bcol = plan ? TYPE_COLOR[plan.b.type] : "#888";
 
-  return (
-    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 14px 24px" }}>
-      <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        {/* header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <CalendarDays size={20} strokeWidth={2.2} style={{ color: "var(--accent)" }} />
-          <span style={{ fontSize: 20, fontWeight: 800 }}>Daily{plan ? <span style={{ color: "var(--accent)" }}> #{plan.day}</span> : null}</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <Pill icon={<Flame size={12} strokeWidth={2.4} />} label="STREAK" value={mounted ? daily.streak : 0} ac="var(--gold)" />
-            <Pill icon={<Trophy size={12} strokeWidth={2.4} />} label="BEST" value={mounted ? daily.best : 0} ac="var(--good)" />
-          </div>
-        </div>
-
-        {/* your champion strip → raise lane (mounted-gated: reads the persisted
-            store, which is empty on the server — rendering it during SSR causes
-            a hydration mismatch that can leave the tab half-interactive) */}
-        {mounted && owned && ROSTER[owned] && <OwnedStrip owned={owned} get={get} onNavigate={onNavigate} />}
-        {mounted && (!owned || !ROSTER[owned]) && (
+  // The daily call → watch → share sub-flow, pushed on top of the hub.
+  if (view !== "hub") {
+    return (
+      <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 14px 24px" }}>
+        <div style={{ maxWidth: 520, margin: "0 auto" }}>
           <button
             type="button"
-            onClick={() => onNavigate?.("champion")}
-            className="panel"
-            style={{ ["--ac" as string]: "var(--accent)", width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "12px 13px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}
+            onClick={() => setView("hub")}
+            className="mono"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "var(--muted2)", fontSize: 12, cursor: "pointer", marginBottom: 8, padding: "4px 0" }}
           >
-            <div style={{ width: 40, height: 40, borderRadius: 10, display: "grid", placeItems: "center", background: "var(--panel2, #15131f)", flexShrink: 0 }}>
-              <Shield size={20} strokeWidth={2.2} style={{ color: "var(--accent)" }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14.5, fontWeight: 800 }}>Choose your champion</div>
-              <div className="mono" style={{ fontSize: 10.5, color: "var(--muted2)" }}>Raise the mind you send to fight</div>
-            </div>
-            <ChevronRight size={18} strokeWidth={2.2} style={{ color: "var(--muted2)" }} />
+            <ChevronLeft size={15} strokeWidth={2.4} /> Home
           </button>
-        )}
 
-        <a
-          href="/grounds?world=1"
-          className="mono"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            width: "100%",
-            marginBottom: 14,
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid var(--line2)",
-            background: "var(--panel2)",
-            color: "var(--muted2)",
-            fontSize: 11,
-            letterSpacing: 0.5,
-            textDecoration: "none",
-          }}
-        >
-          <Globe size={14} strokeWidth={2.2} style={{ color: "var(--accent)", flexShrink: 0 }} />
-          <span style={{ flex: 1, lineHeight: 1.35 }}>
-            3D Grounds <span style={{ opacity: 0.75 }}>(experimental on phone — desktop recommended)</span>
+          {!plan || !mounted ? (
+            <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 50 }}>loading today&apos;s fight…</div>
+          ) : view === "predict" ? (
+            <Predict plan={plan} get={get} acol={acol} bcol={bcol} winnerPick={winnerPick} setWinnerPick={setWinnerPick} dunkPick={dunkPick} setDunkPick={setDunkPick} onStart={startBout} onNavigate={onNavigate} />
+          ) : view === "bout" ? (
+            <MobileBoutStage bout={bout} a={plan.a} b={plan.b} topic={plan.topic} />
+          ) : (
+            <Done plan={plan} get={get} result={daily.result} streak={daily.streak} best={daily.best} onReplay={replay} onNavigate={onNavigate} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Hub
+      mounted={mounted}
+      owned={owned}
+      get={get}
+      streak={daily.streak}
+      plan={plan}
+      solvedToday={!!solvedToday}
+      result={daily.result}
+      onOpenDaily={() => setView(solvedToday ? "done" : "predict")}
+      onNavigate={onNavigate}
+    />
+  );
+}
+
+// ─── the hub (home) ──────────────────────────────────────────────────────────
+
+function Hub({
+  mounted,
+  owned,
+  get,
+  streak,
+  plan,
+  solvedToday,
+  result,
+  onOpenDaily,
+  onNavigate,
+}: {
+  mounted: boolean;
+  owned: string | null;
+  get: (k: string) => Champion;
+  streak: number;
+  plan: DailyResponse | null;
+  solvedToday: boolean;
+  result: DailyResult | null;
+  onOpenDaily: () => void;
+  onNavigate?: (tab: string) => void;
+}) {
+  const [showSettings, setShowSettings] = useState(false);
+  return (
+    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 22 }}>
+      <div style={{ maxWidth: 560, margin: "0 auto" }}>
+        {/* top bar */}
+        <div style={{ display: "flex", alignItems: "center", position: "relative", padding: "14px 14px 10px" }}>
+          <span className="glow" style={{ fontSize: 22, fontWeight: 900, letterSpacing: 0.5, color: "var(--accent)" }}>
+            {BRAND.name ?? "Zingers"}
           </span>
-          <ChevronRight size={14} strokeWidth={2.2} />
-        </a>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
+              <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
+              <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
+              <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>STREAK</span>
+            </span>
+            <button
+              type="button"
+              aria-label="Settings"
+              onClick={() => setShowSettings((s) => !s)}
+              style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 10, border: "1px solid var(--line2)", background: "transparent", color: showSettings ? "var(--accent)" : "var(--muted2)", cursor: "pointer" }}
+            >
+              <Settings size={17} strokeWidth={2.2} />
+            </button>
+          </div>
 
-        {!plan || !mounted ? (
-          <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 50 }}>loading today&apos;s fight…</div>
-        ) : view === "predict" ? (
-          <Predict plan={plan} get={get} acol={acol} bcol={bcol} winnerPick={winnerPick} setWinnerPick={setWinnerPick} dunkPick={dunkPick} setDunkPick={setDunkPick} onStart={startBout} onNavigate={onNavigate} />
-        ) : view === "bout" ? (
-          <MobileBoutStage bout={bout} a={plan.a} b={plan.b} topic={plan.topic} />
+          {showSettings && (
+            <div className="panel" style={{ position: "absolute", top: 52, right: 14, zIndex: 10, width: 240, padding: 8, boxShadow: "0 18px 50px -20px #000" }}>
+              <a
+                href="/grounds?world=1"
+                className="mono"
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", borderRadius: 9, color: "var(--muted)", fontSize: 11.5, textDecoration: "none" }}
+              >
+                <Globe size={14} strokeWidth={2.2} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                <span style={{ flex: 1, lineHeight: 1.3 }}>
+                  3D Grounds <span style={{ opacity: 0.7 }}>· experimental on phone</span>
+                </span>
+                <ChevronRight size={13} strokeWidth={2.2} />
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* hero: your living champion, full-bleed scene (or the adopt cold-start) */}
+        {mounted && owned && ROSTER[owned] ? (
+          <ChampionHero owned={owned} get={get} onNavigate={onNavigate} />
+        ) : mounted ? (
+          <AdoptHero onNavigate={onNavigate} />
         ) : (
-          <Done plan={plan} get={get} result={daily.result} streak={daily.streak} best={daily.best} onReplay={replay} onNavigate={onNavigate} />
+          <div style={{ height: "clamp(280px, 44vh, 360px)" }} />
         )}
+
+        <div style={{ padding: "12px 14px 0" }}>
+          {/* today's tribunal — one legible card into the call/watch flow */}
+          <TribunalCard plan={plan} get={get} mounted={mounted} solvedToday={solvedToday} result={result} onOpen={onOpenDaily} />
+
+          {/* the two most-legible surfaces, one tap each */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+            <Tile
+              title="Climb"
+              sub="Hold to fly"
+              icon={<Rocket size={20} strokeWidth={2.2} />}
+              col="var(--accent)"
+              onClick={() => onNavigate?.("climb")}
+            />
+            <Tile
+              title="Watch"
+              sub="Live fights"
+              icon={<Eye size={20} strokeWidth={2.2} />}
+              col="var(--gold)"
+              onClick={() => onNavigate?.("watch")}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Pill({ icon, label, value, ac }: { icon: React.ReactNode; label: string; value: number; ac: string }) {
-  return (
-    <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, border: "1px solid var(--line2)", fontSize: 11 }}>
-      <span style={{ color: ac, display: "inline-flex" }}>{icon}</span>
-      <span style={{ fontWeight: 800, color: ac }}>{value}</span>
-      <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>{label}</span>
-    </span>
-  );
-}
-
-function OwnedStrip({ owned, get, onNavigate }: { owned: string | null; get: (k: string) => Champion; onNavigate?: (tab: string) => void }) {
-  if (!owned || !ROSTER[owned]) return null;
+function ChampionHero({ owned, get, onNavigate }: { owned: string; get: (k: string) => Champion; onNavigate?: (tab: string) => void }) {
   const type = ROSTER[owned].type;
   const champ = get(owned);
   const dl = doctrineLabel(champ);
   const col = TYPE_COLOR[type];
+  const pct = Math.round((dl.into / Math.max(1, dl.span)) * 100);
+  const nearEvolve = pct >= 85;
   return (
     <button
       type="button"
       onClick={() => onNavigate?.("champion")}
-      className="panel"
-      style={{ ["--ac" as string]: col, width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}
+      aria-label={`${ROSTER[owned].name} — open your champion`}
+      style={{
+        ["--ac" as string]: col,
+        position: "relative",
+        display: "block",
+        width: "100%",
+        height: "clamp(300px, 46vh, 380px)",
+        padding: 0,
+        border: "none",
+        borderBottom: `1px solid color-mix(in srgb, ${col} 40%, var(--line))`,
+        background: "#06050e",
+        overflow: "hidden",
+        cursor: "pointer",
+      }}
     >
-      <ChampionAvatar ckey={owned} type={type} champion={champ} size={44} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--muted2)" }}>YOUR CHAMPION</div>
-        <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ROSTER[owned].name}</div>
-        <div className="mono" style={{ fontSize: 10, color: col }}>{type} · L{dl.level} {dl.tier}</div>
+      {/* full-bleed live scene (the vignette stage set) */}
+      <ChampionPortraitScene type={type} champion={champ} preset="region" identityKey={owned} animMode="breathing" stage scale={0.74} />
+
+      {/* legibility scrim + gamified identity strip */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: "56px 16px 14px",
+          textAlign: "left",
+          background: "linear-gradient(to top, #06050e 16%, rgba(6,5,14,.72) 46%, transparent)",
+          pointerEvents: "none",
+        }}
+      >
+        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.8, color: "var(--muted2)" }}>YOUR CHAMPION</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+          <span style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{ROSTER[owned].name}</span>
+          {nearEvolve && (
+            <span className="glow" style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1, color: "#0a0a12", background: col, padding: "3px 8px", borderRadius: 999 }}>
+              READY TO EVOLVE
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+          <span className="mono" style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 700, color: col, padding: "3px 9px", borderRadius: 999, border: `1px solid ${col}` }}>
+            {type} · L{dl.level} {dl.tier.toUpperCase()}
+          </span>
+          <span style={{ flex: 1, height: 6, borderRadius: 999, background: "rgba(255,255,255,.12)", overflow: "hidden" }}>
+            <span style={{ display: "block", height: "100%", width: `${pct}%`, background: col, borderRadius: 999 }} />
+          </span>
+          <span className="mono" style={{ flexShrink: 0, fontSize: 9.5, color: "var(--muted2)" }}>{pct}%</span>
+        </div>
       </div>
-      <ChevronRight size={18} strokeWidth={2.2} style={{ color: "var(--muted2)" }} />
+    </button>
+  );
+}
+
+function AdoptHero({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onNavigate?.("champion")}
+      style={{
+        ["--ac" as string]: "var(--accent)",
+        position: "relative",
+        display: "grid",
+        placeItems: "center",
+        gap: 8,
+        width: "100%",
+        height: "clamp(280px, 42vh, 360px)",
+        padding: "24px 20px",
+        border: "none",
+        borderBottom: "1px solid color-mix(in srgb, var(--accent) 40%, var(--line))",
+        background: "radial-gradient(120% 80% at 50% 24%, color-mix(in srgb, var(--accent) 18%, transparent), #06050e 76%)",
+        cursor: "pointer",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 64, height: 64, borderRadius: 18, display: "grid", placeItems: "center", background: "var(--panel2, #15131f)", boxShadow: "0 0 50px -18px var(--accent)" }}>
+          <Sparkles size={30} strokeWidth={2} style={{ color: "var(--accent)" }} />
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>Meet your champion</div>
+        <div style={{ fontSize: 13.5, color: "var(--muted)", maxWidth: 280, lineHeight: 1.5 }}>
+          Raise one mind — it fights, learns, and evolves. This is your game.
+        </div>
+        <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, color: "var(--accent)", fontSize: 14, fontWeight: 800 }}>
+          Choose yours <ChevronRight size={16} strokeWidth={2.6} />
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function TribunalCard({
+  plan,
+  get,
+  mounted,
+  solvedToday,
+  result,
+  onOpen,
+}: {
+  plan: DailyResponse | null;
+  get: (k: string) => Champion;
+  mounted: boolean;
+  solvedToday: boolean;
+  result: DailyResult | null;
+  onOpen: () => void;
+}) {
+  const ready = plan != null && mounted;
+  const acol = plan ? TYPE_COLOR[plan.a.type] : "#888";
+  const bcol = plan ? TYPE_COLOR[plan.b.type] : "#888";
+  return (
+    <button
+      type="button"
+      onClick={ready ? onOpen : undefined}
+      className="panel"
+      disabled={!ready}
+      style={{
+        ["--ac" as string]: "var(--gold)",
+        width: "100%",
+        padding: "14px 14px 15px",
+        cursor: ready ? "pointer" : "default",
+        textAlign: "center",
+        border: "1px solid color-mix(in srgb, var(--gold) 45%, var(--line))",
+        background: "radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--gold) 10%, transparent), var(--panel2, #12101c) 74%)",
+      }}
+    >
+      <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 1.5, color: "var(--gold)", fontWeight: 800 }}>
+        <Swords size={13} strokeWidth={2.4} /> TODAY&apos;S TRIBUNAL
+      </div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>Two minds argue — call the winner</div>
+
+      {ready && plan ? (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, margin: "12px 0 6px" }}>
+            <Contender entry={plan.a} champ={get(plan.a.key)} col={acol} />
+            <span className="glow" style={{ fontSize: 20, fontWeight: 900, color: "var(--muted2)" }}>VS</span>
+            <Contender entry={plan.b} champ={get(plan.b.key)} col={bcol} />
+          </div>
+          {solvedToday && result ? (
+            <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 4, fontSize: 12, fontWeight: 700 }}>
+              <span style={{ color: result.winnerCorrect ? "var(--good)" : "var(--bad)" }}>{result.winnerCorrect ? "✓ You called it" : "✗ Missed it"}</span>
+              <span style={{ color: "var(--muted2)" }}>· See result</span>
+              <ChevronRight size={13} strokeWidth={2.2} style={{ color: "var(--muted2)" }} />
+            </div>
+          ) : (
+            <div
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 8, padding: "11px 22px", borderRadius: 11, background: "var(--gold, #f5d020)", color: "#0a0a12", fontSize: 14.5, fontWeight: 800 }}
+            >
+              <Lock size={15} strokeWidth={2.4} /> Call it &amp; Watch
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="mono" style={{ color: "var(--muted2)", fontSize: 12, padding: "18px 0" }}>loading today&apos;s fight…</div>
+      )}
+    </button>
+  );
+}
+
+function Contender({ entry, champ, col }: { entry: DailyResponse["a"]; champ: Champion; col: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 0 }}>
+      <ChampionAvatar ckey={entry.key} type={entry.type} champion={champ} size={56} />
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: col, maxWidth: 92, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</div>
+    </div>
+  );
+}
+
+function Tile({ title, sub, icon, col, onClick }: { title: string; sub: string; icon: React.ReactNode; col: string; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="panel"
+      style={{ ["--ac" as string]: col, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, padding: "14px 14px", cursor: "pointer", textAlign: "left", minHeight: 92 }}
+    >
+      <span style={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: 10, background: `color-mix(in srgb, ${col} 16%, transparent)`, color: col, marginBottom: 2 }}>{icon}</span>
+      <span style={{ fontSize: 16, fontWeight: 800 }}>{title}</span>
+      <span className="mono" style={{ fontSize: 10.5, color: "var(--muted2)" }}>{sub}</span>
     </button>
   );
 }

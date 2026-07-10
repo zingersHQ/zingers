@@ -2,6 +2,7 @@
 import { Crown } from "lucide-react";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, sigils, ROMAN, doctrine } from "@/lib/evolve/progression";
+import type { CreatureAnimMode } from "@/lib/render/animations";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 
 export function ChampionAvatar({
@@ -9,11 +10,14 @@ export function ChampionAvatar({
   type,
   champion,
   size = 150,
+  animMode,
 }: {
   ckey: string;
   type: CreatureType;
   champion: Champion;
   size?: number;
+  /** Optional live-portrait clip (jump, train, dance…). Defaults to the calm portrait rest pose. */
+  animMode?: CreatureAnimMode;
 }) {
   const lf = levelFor(champion.xp);
   const tier = tierFor(lf.level);
@@ -29,7 +33,7 @@ export function ChampionAvatar({
         <div key={i} className="evo-ring" style={{ animationDelay: i * 0.7 + "s", ["--rk" as string]: i }} />
       ))}
       <div className="evo-port" aria-label={`${ckey} live portrait`}>
-        <ChampionPortraitScene type={type} champion={champion} preset="portrait" identityKey={ckey} />
+        <ChampionPortraitScene type={type} champion={champion} preset="portrait" identityKey={ckey} animMode={animMode} />
         <div className="evo-wear" style={{ opacity: wear }} />
       </div>
       {tier.crest && (

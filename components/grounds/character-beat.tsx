@@ -2,7 +2,11 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Champion, CreatureType } from "@/lib/types";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
+import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { primeCreature, speakCreature, speakCreatureType } from "@/lib/creature-voice";
+import { jumpBeep, trainStinger, rewardSfx, travelWhoosh, evolveStinger } from "@/lib/sfx";
+import { startAmbience, setMood, duckAmbience, ambienceFlourish, setAmbienceIntensity } from "@/lib/ambience-bus";
 import type { BeatScript } from "@/lib/lore/character-beats";
 import { ONBOARDING_BG } from "@/lib/iconography";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
@@ -21,6 +25,8 @@ export function CharacterBeat({
   championType,
   portrait,
   onComplete,
+  layout = "portrait",
+  sound = false,
 }: {
   script: BeatScript;
   accent: string;
@@ -30,6 +36,12 @@ export function CharacterBeat({
   championType?: CreatureType;
   portrait?: { key: string; type: CreatureType; champion: Champion; name: string };
   onComplete: () => void;
+  /** "portrait" = talking-head thumbnail; "stage" = champion fills the frame and
+   *  performs (for vignettes where you need to actually see the body act). */
+  layout?: "portrait" | "stage";
+  /** Score + per-beat SFX + verdict flourish. Mounts an ambience engine and a
+   *  mute control. For vignettes; off for quiet dialogue overlays. */
+  sound?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [idx, setIdx] = useState(0);
@@ -54,6 +66,36 @@ export function CharacterBeat({
     speak(line.text, line.speaker);
   }, [idx, line.text, line.speaker, speak]);
 
+  // Start the procedural score once, from the tap that opened this overlay.
+  useEffect(() => {
+    if (!sound) return;
+    setMood("concord");
+    setAmbienceIntensity(0.28);
+    startAmbience();
+    return () => setAmbienceIntensity(0);
+  }, [sound]);
+
+  // Per-beat SFX keyed off the line's clip, plus a light sidechain dip so the
+  // voice/one-shot punches through the music.
+  useEffect(() => {
+    if (!sound) return;
+    duckAmbience(0.45, 420);
+    switch (line.anim) {
+      case "jump":
+        jumpBeep(last ? 2 : 1);
+        if (last) travelWhoosh();
+        break;
+      case "train":
+        trainStinger();
+        break;
+      case "dance":
+        rewardSfx("big");
+        break;
+      default:
+        break;
+    }
+  }, [idx, sound, line.anim, last]);
+
   // typewriter reveal — faster on phones; tap the line to show it all at once
   useEffect(() => {
     setTyped("");
@@ -69,9 +111,14 @@ export function CharacterBeat({
   }, [idx, line.text, isMobile]);
 
   const advance = useCallback(() => {
-    if (last) onComplete();
-    else setIdx((i) => i + 1);
-  }, [last, onComplete]);
+    if (last) {
+      if (sound) {
+        ambienceFlourish("victory");
+        evolveStinger();
+      }
+      onComplete();
+    } else setIdx((i) => i + 1);
+  }, [last, onComplete, sound]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -89,24 +136,72 @@ export function CharacterBeat({
   }, [advance, onComplete]);
 
   const col = portrait ? TYPE_COLOR[portrait.type] : accent;
+  const trainerLine = line.speaker === "Trainer" || line.speaker === "The Trainer";
 
-  return (
-    <div
-      className="beat-root"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 92,
-        background: ONBOARDING_BG,
-        display: "grid",
-        placeItems: "center",
-        padding: 20,
-        overflow: "hidden",
-      }}
-    >
+  // speaker + typewriter line + progress dots + advance button — identical in
+  // both layouts, so the voice/typewriter logic has one home.
+  const caption = (
+    <>
+      <div className="beat-speaker" style={{ fontSize: 13, fontWeight: 700, color: accent, letterSpacing: 0.5 }}>{line.speaker}</div>
+      {line.role && (
+        <div className="beat-speaker mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--muted2)", marginTop: 2 }}>
+          {line.role.toUpperCase()}
+        </div>
+      )}
+
+      <p
+        onClick={() => {
+          if (!done) skipLine();
+        }}
+        style={{
+          fontSize: trainerLine ? (isMobile ? 15 : 16) : isMobile ? 19 : 22,
+          fontWeight: trainerLine ? 500 : 600,
+          lineHeight: 1.45,
+          margin: "12px auto 0",
+          maxWidth: trainerLine ? "36ch" : "30ch",
+          color: trainerLine ? "var(--muted)" : "var(--ink)",
+          fontStyle: trainerLine ? "normal" : "italic",
+          minHeight: "2.9em",
+          cursor: done ? "default" : "pointer",
+        }}
+      >
+        &ldquo;{typed}
+        <span className="beat-caret" style={{ opacity: done ? 0 : 1, color: accent }}>
+          |
+        </span>
+        &rdquo;
+      </p>
+
+      <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 14, display: "flex", gap: 6, justifyContent: "center" }}>
+        {script.lines.map((_, i) => (
+          <span
+            key={i}
+            style={{
+              width: i === idx ? 16 : 6,
+              height: 6,
+              borderRadius: 4,
+              background: i === idx ? accent : i < idx ? "var(--muted2)" : "rgba(255,255,255,.18)",
+              transition: "all .3s",
+            }}
+          />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="btn btn-primary pop"
+        onClick={advance}
+        style={{ ["--ac" as string]: accent, marginTop: 18, padding: isMobile ? "11px 22px" : "12px 28px", fontSize: isMobile ? 14 : 15 }}
+      >
+        {last ? "Continue" : done ? "Next" : "Skip line"}
+      </button>
+    </>
+  );
+
+  // Shared overlay chrome: parallax field, letterbox bars, and the skip affordance.
+  const chrome = (
+    <>
       <BeatStyles />
-
-      {/* drifting parallax field */}
       <div className="beat-stars" style={{ ["--ac" as string]: accent } as React.CSSProperties} aria-hidden />
       <div
         style={{
@@ -116,30 +211,70 @@ export function CharacterBeat({
           pointerEvents: "none",
         }}
       />
-
-      {/* cinematic letterbox */}
       <div className="beat-bar beat-bar--top" aria-hidden />
       <div className="beat-bar beat-bar--bottom" aria-hidden />
-
       <button
         type="button"
         onClick={onComplete}
         className="mono"
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 18,
-          zIndex: 4,
-          background: "none",
-          border: "none",
-          color: "var(--muted2)",
-          fontSize: 11,
-          letterSpacing: 1,
-          cursor: "pointer",
-        }}
+        style={{ position: "absolute", top: 16, right: 18, zIndex: 5, background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}
       >
         SKIP
       </button>
+    </>
+  );
+
+  // Stage: the champion is the frame. Fills the screen and performs the per-line
+  // clip; dialogue rides a lower third. For vignettes you need to actually watch.
+  if (layout === "stage") {
+    return (
+      <div
+        className="beat-root"
+        style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, overflow: "hidden", display: "flex", flexDirection: "column" }}
+      >
+        {chrome}
+        {sound && <OnboardingAudio compact />}
+
+        {script.kicker && (
+          <div
+            className="beat-kicker mono"
+            style={{ position: "absolute", top: "calc(5.5vh + 16px)", left: 0, right: 0, textAlign: "center", fontSize: 10, letterSpacing: 2.5, color: accent, zIndex: 3 }}
+          >
+            {script.kicker}
+          </div>
+        )}
+
+        <div className="beat-stage" style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 2 }}>
+          {portrait && (
+            <ChampionPortraitScene
+              key={portrait.key}
+              type={portrait.type}
+              champion={portrait.champion}
+              preset="region"
+              identityKey={portrait.key}
+              animMode={line.anim}
+              stage
+              scale={0.6}
+            />
+          )}
+          {/* legibility scrim rising under the caption */}
+          <div aria-hidden style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "46%", background: "linear-gradient(to top, #050409 8%, transparent)", pointerEvents: "none" }} />
+        </div>
+
+        <div style={{ position: "relative", zIndex: 3, textAlign: "center", padding: isMobile ? "0 18px calc(5.5vh + 14px)" : "0 20px calc(5.5vh + 22px)" }}>
+          <div style={{ maxWidth: 560, margin: "0 auto" }}>{caption}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Portrait: the original talking-head thumbnail — right for pure dialogue beats.
+  return (
+    <div
+      className="beat-root"
+      style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, display: "grid", placeItems: "center", padding: 20, overflow: "hidden" }}
+    >
+      {chrome}
 
       <div style={{ position: "relative", width: "min(540px, 94vw)", textAlign: "center", zIndex: 3 }}>
         {script.kicker && (
@@ -153,64 +288,12 @@ export function CharacterBeat({
             <div className="beat-portrait" style={{ position: "relative", padding: 8, borderRadius: 20, border: `2px solid ${col}`, boxShadow: `0 0 48px -12px ${col}`, background: `color-mix(in srgb, ${col} 12%, #0c0b12)` }}>
               {/* per-line glow pulse (cheap remount, leaves the 3D canvas untouched) */}
               <span key={idx} className="beat-glow" style={{ ["--ac" as string]: col } as React.CSSProperties} aria-hidden />
-              <ChampionAvatar ckey={portrait.key} type={portrait.type} champion={portrait.champion} size={120} />
+              <ChampionAvatar ckey={portrait.key} type={portrait.type} champion={portrait.champion} size={120} animMode={line.anim} />
             </div>
           </div>
         )}
 
-        <div className="beat-speaker" style={{ fontSize: 13, fontWeight: 700, color: accent, letterSpacing: 0.5 }}>{line.speaker}</div>
-        {line.role && (
-          <div className="beat-speaker mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--muted2)", marginTop: 2 }}>
-            {line.role.toUpperCase()}
-          </div>
-        )}
-
-        <p
-          onClick={() => {
-            if (!done) skipLine();
-          }}
-          style={{
-            fontSize: line.speaker === "Trainer" || line.speaker === "The Trainer" ? (isMobile ? 15 : 16) : isMobile ? 19 : 22,
-            fontWeight: line.speaker === "Trainer" || line.speaker === "The Trainer" ? 500 : 600,
-            lineHeight: 1.45,
-            margin: "18px auto 0",
-            maxWidth: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "36ch" : "30ch",
-            color: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "var(--muted)" : "var(--ink)",
-            fontStyle: line.speaker === "Trainer" || line.speaker === "The Trainer" ? "normal" : "italic",
-            minHeight: "2.9em",
-            cursor: done ? "default" : "pointer",
-          }}
-        >
-          &ldquo;{typed}
-          <span className="beat-caret" style={{ opacity: done ? 0 : 1, color: accent }}>
-            |
-          </span>
-          &rdquo;
-        </p>
-
-        <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 16, display: "flex", gap: 6, justifyContent: "center" }}>
-          {script.lines.map((_, i) => (
-            <span
-              key={i}
-              style={{
-                width: i === idx ? 16 : 6,
-                height: 6,
-                borderRadius: 4,
-                background: i === idx ? accent : i < idx ? "var(--muted2)" : "rgba(255,255,255,.18)",
-                transition: "all .3s",
-              }}
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className="btn btn-primary pop"
-          onClick={advance}
-          style={{ ["--ac" as string]: accent, marginTop: 26, padding: isMobile ? "11px 22px" : "12px 28px", fontSize: isMobile ? 14 : 15 }}
-        >
-          {last ? "Continue" : done ? "Next" : "Skip line"}
-        </button>
+        {caption}
       </div>
     </div>
   );

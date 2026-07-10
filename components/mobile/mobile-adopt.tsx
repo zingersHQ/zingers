@@ -15,6 +15,8 @@ import { forceName } from "@/lib/lore/canon";
 import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { CharacterBeat } from "@/components/grounds/character-beat";
+import { firstFlightScript } from "@/lib/lore/character-beats";
 import {
   firstDuelStarterKeys,
   previewRookieChampion,
@@ -25,6 +27,8 @@ import {
 export function MobileAdopt() {
   const adoptStarterRookie = useChampions((s) => s.adoptStarterRookie);
   const [picked, setPicked] = useState<string | null>(null);
+  // key currently playing its "first flight" vignette (before ownership commits)
+  const [flying, setFlying] = useState<string | null>(null);
 
   // one champion per Force for the current week — the same pool desktop offers
   const starters = useMemo(
@@ -34,9 +38,31 @@ export function MobileAdopt() {
 
   const confirm = () => {
     if (!picked) return;
-    adoptStarterRookie(picked);
-    markFirstDuelComplete();
+    setFlying(picked); // play the vignette first; adoption commits when it ends
   };
+
+  const commit = () => {
+    if (flying) {
+      adoptStarterRookie(flying);
+      markFirstDuelComplete();
+    }
+  };
+
+  if (flying) {
+    const type = ROSTER[flying].type;
+    return (
+      <CharacterBeat
+        script={firstFlightScript(flying)}
+        accent={TYPE_COLOR[type]}
+        voice="champion"
+        championType={type}
+        portrait={{ key: flying, type, champion: previewRookieChampion(flying), name: ROSTER[flying].name }}
+        onComplete={commit}
+        layout="stage"
+        sound
+      />
+    );
+  }
 
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "20px 14px 24px" }}>

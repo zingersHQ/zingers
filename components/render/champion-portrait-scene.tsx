@@ -20,6 +20,75 @@ function Rig({ lookY }: { lookY: number }) {
   return null;
 }
 
+/** A minimal cinematic set for vignettes: a dark reflective floor, glowing stage
+ *  rings under the figure, a deep sky with an accent horizon glow, and a slow
+ *  drift of atmosphere motes — enough to read as "a place" without the cost of
+ *  the full Grounds world. */
+function VignetteSet({ colorHex }: { colorHex: string }) {
+  const motes = useRef<THREE.Points>(null);
+  const skyMat = useMemo(() => {
+    const mat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      uniforms: { uTop: { value: new THREE.Color("#05040c") }, uHorizon: { value: new THREE.Color(colorHex) } },
+      vertexShader: "varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader:
+        "varying vec3 vP; uniform vec3 uTop; uniform vec3 uHorizon; void main(){ float h = normalize(vP).y; float glow = exp(-abs(h) * 5.0); vec3 c = uTop + uTop * smoothstep(0.0, 0.75, h) * 0.5 + uHorizon * glow * 0.4; gl_FragColor = vec4(c, 1.0); }",
+    });
+    return mat;
+  }, [colorHex]);
+  useEffect(() => () => skyMat.dispose(), [skyMat]);
+
+  const motePos = useMemo(() => {
+    const n = 90;
+    const arr = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const r = 3 + Math.random() * 22;
+      const a = Math.random() * Math.PI * 2;
+      arr[i * 3] = Math.cos(a) * r;
+      arr[i * 3 + 1] = 0.4 + Math.random() * 9;
+      arr[i * 3 + 2] = Math.sin(a) * r;
+    }
+    return arr;
+  }, []);
+
+  useFrame((_, dt) => {
+    if (motes.current) motes.current.rotation.y += dt * 0.02;
+  });
+
+  return (
+    <group>
+      <mesh material={skyMat}>
+        <sphereGeometry args={[72, 32, 24]} />
+      </mesh>
+
+      {/* floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <circleGeometry args={[46, 56]} />
+        <meshStandardMaterial color="#0b0916" roughness={0.5} metalness={0.4} />
+      </mesh>
+
+      {/* stage focus rings */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[2.0, 2.22, 72]} />
+        <meshBasicMaterial color={colorHex} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[3.5, 3.62, 72]} />
+        <meshBasicMaterial color={colorHex} transparent opacity={0.28} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+
+      {/* drifting atmosphere motes */}
+      <points ref={motes}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[motePos, 3]} />
+        </bufferGeometry>
+        <pointsMaterial color={colorHex} size={0.09} transparent opacity={0.6} sizeAttenuation blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </points>
+    </group>
+  );
+}
+
 const _box = new THREE.Box3();
 const _b = new THREE.Box3();
 const _size = new THREE.Vector3();
@@ -171,6 +240,7 @@ export function ChampionPortraitScene({
   keeper,
   autoFrame = true,
   animMode = "standing",
+  stage = false,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -190,6 +260,9 @@ export function ChampionPortraitScene({
    *  keep the fixed preset framing. */
   autoFrame?: boolean;
   animMode?: CreatureAnimMode;
+  /** Cinematic mode: place the figure in a real set (ground, horizon sky, stage
+   *  rings, atmosphere) instead of the empty portrait void. For vignettes. */
+  stage?: boolean;
 }) {
   const p = RENDER_PRESETS[preset];
   const rim = colorHex ?? TYPE_COLOR[type];
@@ -236,14 +309,15 @@ export function ChampionPortraitScene({
       gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       style={{ width: "100%", height: "100%", display: "block" }}
     >
-      <color attach="background" args={[p.bg]} />
-      {p.fog ? <fog attach="fog" args={p.fog} /> : null}
+      <color attach="background" args={[stage ? "#06050e" : p.bg]} />
+      {stage ? <fog attach="fog" args={["#08060f", 30, 96]} /> : p.fog ? <fog attach="fog" args={p.fog} /> : null}
       {!autoFrame && <Rig lookY={p.camera.lookY} />}
       <ambientLight intensity={0.55} />
       <hemisphereLight args={["#b9a7ff", "#160f2c", 0.7]} />
       <directionalLight position={[5, 8, 4]} intensity={1.7} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} />
       <pointLight position={[-5, 3, -3]} intensity={rimIntensity} color={rim} distance={22} />
       <pointLight position={[4, 1.5, 5]} intensity={22} color="#ffffff" distance={20} />
+      {stage && <VignetteSet colorHex={rim} />}
       <Suspense fallback={null}>
         <FitFrame enabled={autoFrame} fillFrac={fitCam.fillFrac} fallback={fitCam.fallback}>
           <IdlePose baseYaw={baseYaw} seed={seed} paused={paused} animMode={animMode}>

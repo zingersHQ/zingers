@@ -1,6 +1,7 @@
 // Scripted character moments — the directorial layer. Pure data + helpers so
 // cinematics, companion bubbles, and Keeper performances share one voice bible.
 import type { CreatureType } from "@/lib/types";
+import type { CreatureAnimMode } from "@/lib/render/animations";
 import { ROSTER } from "@/lib/engine/roster";
 
 export interface BeatLine {
@@ -8,6 +9,8 @@ export interface BeatLine {
   text: string;
   /** e.g. "The Greeter" */
   role?: string;
+  /** Optional live-portrait clip played while this line is on screen (jump, train, dance…). */
+  anim?: CreatureAnimMode;
 }
 
 export interface BeatScript {
@@ -30,6 +33,38 @@ const WAKE: Record<string, string> = {
 
 export function championWakeLine(key: string): string {
   return WAKE[key] ?? "…finally. Someone on my side.";
+}
+
+// ── First flight (a short vignette the moment you adopt a champion) ───────────
+// The first "scripted mundane moment": your new rookie leaves the ground for the
+// first time. Lean by design — reuses the CharacterBeat cinematic frame and the
+// portrait's existing clips (stand → jump → the training drill → a triumphant
+// leap), so it reads as "learning to fly" without any bespoke animation. Kept to
+// a handful of short lines; always skippable.
+const FLIGHT_REACT: Record<string, [string, string]> = {
+  AXIOM: ["Flight is a proof I haven't closed yet. Watch.", "…quod erat demonstrandum. I'm up."],
+  PARADOX: ["If I can't fall, am I truly flying? Let's test it.", "Ha — the ground had no counterargument."],
+  GLITCH: ["Wait, we're doing this NOW? Okay okay okay—", "I'M A BIRD. I'm a whole BIRD."],
+  EMBER: ["Enough standing. Light me up.", "Yeah. YEAH. Try catching me now."],
+  BASTION: ["…slow. I don't rush the ground.", "…mm. Higher than I expected. Good."],
+  VOX: ["Every legend needs a takeoff. Give me the room.", "…and the crowd looks UP. Perfect."],
+  WIT: ["Betting I fumble the landing? Watch the timing.", "Nailed it. Obviously."],
+  MUSE: ["What if the floor was only ever a suggestion?", "…oh. It let go. So did I."],
+};
+
+export function firstFlightScript(key: string): BeatScript {
+  const name = ROSTER[key]?.name ?? key;
+  const [react, triumph] = FLIGHT_REACT[key] ?? ["Wait — now? Okay. Okay!", "…oh. I'm flying."];
+  return {
+    kicker: "FIRST FLIGHT",
+    lines: [
+      { speaker: "The Trainer", text: "Stand. Feel the ground go quiet.", anim: "standing" },
+      { speaker: name, text: react, anim: "jump" },
+      { speaker: "The Trainer", text: "Again — don't think. Just leave the floor.", anim: "train" },
+      { speaker: name, text: triumph, anim: "dance" },
+      { speaker: "The Trainer", text: "That's flight. Now go find a fight.", anim: "jump" },
+    ],
+  };
 }
 
 // ── Companion greetings (in-world, near train pad / return from fight) ────────
