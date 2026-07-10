@@ -61,12 +61,12 @@ export const CONCORD_LANDING = [
   {
     kicker: "YOU, THE TRAINER",
     title: "Roam, duel, raise.",
-    body: `You're a Trainer now — you raise the minds that fight and climb the ranks. You walk the Grounds; your champion does the fighting. Tune its strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
+    body: `You're a Trainer now. You raise the minds that fight and climb the ranks. You walk the Grounds; your champion does the fighting. Tune its strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
   },
   {
     kicker: "THE CONCORD & ITS GATES",
     title: "Neutral ground. Gates to the regions.",
-    body: "You spawn on the approach to the Long Vault — a sealed golden seal the whole world is built around, where all five Forces keep an uneasy peace. The arches ringing the hub are gates: each opens onto a starting region — colosseum tribunals, ember gauntlets, void gardens — where your champion fights wherever you take it.",
+    body: "You spawn on the approach to the Long Vault, a sealed golden seal the whole world is built around, where all five Forces keep an uneasy peace. The arches ringing the hub are gates: each opens onto a starting region (colosseum tribunals, ember gauntlets, void gardens) where your champion fights wherever you take it.",
   },
 ] as const;
 

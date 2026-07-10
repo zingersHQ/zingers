@@ -60,13 +60,13 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
     setBusy(true);
     const ok = await trainChampion(owned);
     setBusy(false);
-    flash(ok ? "Training complete — your champion evolved." : "Not enough Crowns to train.");
+    flash(ok ? "Training complete. Your champion evolved." : "Not enough Crowns to train.");
   }, [owned, busy, trainChampion, flash]);
 
   const trainFree = useCallback(() => {
     if (!owned) return;
     const ok = trainWithFragment(owned);
-    flash(ok ? "Fragment spent — a free session banked." : "No fragments to spend.");
+    flash(ok ? "Fragment spent. A free session banked." : "No fragments to spend.");
   }, [owned, trainWithFragment, flash]);
 
   // No champion yet → the adoption door (desktop does this in the 3D first-duel;

@@ -1940,11 +1940,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
               {guideIdle ? (
                 <>
-                  <strong>This way.</strong> Fly to the glowing <strong>Grounds</strong> gate — your first region to explore. Step onto its ring and press <span className="mono">E</span>.
+                  <strong>This way.</strong> Fly to the glowing <strong>Grounds</strong> gate, your first region to explore. Step onto its ring and press <span className="mono">E</span>.
                 </>
               ) : (
                 <>
-                  <strong>Welcome to the Concord.</strong> Fly out through the lit <strong>Grounds</strong> gate — your first region. The other gates can wait.
+                  <strong>Welcome to the Concord.</strong> Fly out through the lit <strong>Grounds</strong> gate, your first region. The other gates can wait.
                 </>
               )}
             </span>
@@ -1971,7 +1971,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               <>
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOU, THE TRAINER</div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
-                  <strong>This is you.</strong> Move with WASD / the stick — and <strong>hold <span className="mono">Space</span> to fly</strong>. The Grounds are yours to soar.
+                  <strong>This is you.</strong> Move with WASD / the stick, and <strong>hold <span className="mono">Space</span> to fly</strong>. The Grounds are yours to soar.
                 </p>
                 <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", width: "100%", fontSize: 13 }} onClick={() => setReaderSplitStep(1)}>
                   Meet your champion
@@ -1981,7 +1981,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               <>
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOUR CHAMPION</div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
-                  {READER_COPY.walkFightLine} Take off and it lifts off with you. Fly out and explore — chase the <strong>tower</strong> on the horizon.
+                  {READER_COPY.walkFightLine} Take off and it lifts off with you. Fly out and explore, chase the <strong>tower</strong> on the horizon.
                 </p>
                 <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "6px 12px" }} onClick={dismissReaderSplitCoach}>
                   Skip
@@ -1999,7 +1999,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
-              <strong>First ranked win!</strong> Pick a Clan to fight for — your wins build its season war, and home turf pays extra.
+              <strong>First ranked win!</strong> Pick a Clan to fight for. Your wins build its season war, and home turf pays extra.
             </span>
             <button onClick={() => { dismissClanInvite(); setClanPreselect(null); setClanOpen(true); }} className="btn btn-primary" style={{ ["--ac" as string]: "#c77dff", fontSize: 11, padding: "4px 11px", flexShrink: 0 }}>Choose</button>
             <button onClick={dismissClanInvite} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 9px", flexShrink: 0 }}>Later</button>

@@ -233,7 +233,7 @@ export function PlayerHub({
                 </div>
               ) : (
                 <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.4 }}>
-                  Walk out through a gate — every region has a peak, a depth and a secret to claim.
+                  Walk out through a gate. Every region has a peak, a depth and a secret to claim.
                 </p>
               )}
             </Card>
@@ -318,7 +318,7 @@ export function PlayerHub({
                   <Layers size={15} color="var(--gold)" />
                   <span style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>Collection</span>
-                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Your champion dex — cards that evolve</span>
+                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Your champion dex: cards that evolve</span>
                   </span>
                 </span>
                 <ChevronRight size={15} color="var(--muted2)" />

@@ -91,7 +91,7 @@ const LOOP: LoopStep[] = [
     t: "Scout",
     icon: Radar,
     lead: "Claim a thinking mind.",
-    d: "Pull a champion from the roster — each one a real AI agent with its own voice, temper, and way of arguing its case.",
+    d: "Pull a champion from the roster. Each one is a real AI agent with its own voice, temper, and way of arguing its case.",
     tag: "Real agents, not stat tables",
     ac: "#6a6bff",
   },
@@ -100,7 +100,7 @@ const LOOP: LoopStep[] = [
     t: "Train",
     icon: SlidersHorizontal,
     lead: "Set its strategy.",
-    d: "Shape how it thinks — risk, focus, aggression — never its moves. You raise a mind; it figures out the rest on its own.",
+    d: "Shape how it thinks: risk, focus, aggression, never its moves. You raise a mind; it figures out the rest on its own.",
     tag: "You coach, it improvises",
     ac: "#9268ff",
   },
@@ -109,7 +109,7 @@ const LOOP: LoopStep[] = [
     t: "Watch",
     icon: Swords,
     lead: "Send it to war.",
-    d: "Two intelligences meet and the duel writes itself — they scheme, taunt, bluff, and adapt. No two fights are ever the same.",
+    d: "Two intelligences meet and the duel writes itself. They scheme, taunt, bluff, and adapt. No two fights are ever the same.",
     tag: "Never the same duel twice",
     ac: "#c264f0",
   },
@@ -127,7 +127,7 @@ const LOOP: LoopStep[] = [
     t: "Climb",
     icon: TrendingUp,
     lead: "Chase the ladder.",
-    d: "An honest ELO ladder inside an auto-running league. Clip the upsets, share the legend — then it all loops back to the next run.",
+    d: "An honest ELO ladder inside an auto-running league. Clip the upsets, share the legend, then it all loops back to the next run.",
     tag: "The league never sleeps",
     ac: "#f0a93a",
   },
@@ -174,7 +174,7 @@ function TheLoop() {
         <span className="lp-kicker mono">The loop</span>
         <h2 className="lp-h2">Five steps. One endless loop.</h2>
         <p className="lp-body">
-          This isn&apos;t a campaign you finish. You scout a mind, shape its strategy, and set it loose — then its
+          This isn&apos;t a campaign you finish. You scout a mind, shape its strategy, and set it loose, then its
           evolving body and the live ladder feed straight back into the next run. Every clip you share just pulls
           you in again.
         </p>
@@ -217,7 +217,7 @@ function TheLoop() {
             })}
             <li className="lp-loop__loopback mono" aria-hidden>
               <RotateCw size={14} strokeWidth={2.2} className="lp-loop__loopback-i" />
-              and again — the league never sleeps
+              and again, the league never sleeps
             </li>
           </ol>
 
@@ -297,7 +297,7 @@ export function Landing() {
             <span className="lp-kicker mono">Why it&apos;s different</span>
             <h2 className="lp-h2">The creatures that ACTUALLY think.</h2>
             <p className="lp-body">
-              Collectible battlers are a beloved, proven format — but the creatures are scripted, and the
+              Collectible battlers are a beloved, proven format, but the creatures are scripted, and the
               &quot;intelligence&quot; is a stat table. Here, every champion is a real AI agent. They argue,
               scheme, persuade, and improvise, so no two battles are ever the same and every champion is
               unrepeatable.
@@ -325,7 +325,7 @@ export function Landing() {
             <span className="lp-kicker mono">The headline mechanic</span>
             <h2 className="lp-h2">The body is the track record.</h2>
             <p className="lp-body">
-              A champion&apos;s 3D silhouette is a deterministic function of its career — bone-scaling
+              A champion&apos;s 3D silhouette is a deterministic function of its career: bone-scaling
               amplified by rank. A rookie barely shifts. A legend warps dramatically. Same mind, two
               careers, two bodies.
             </p>
@@ -353,11 +353,11 @@ export function Landing() {
             <span className="lp-kicker mono">The world</span>
             <h2 className="lp-h2">Every place argues differently.</h2>
             <p className="lp-body">
-              The Grounds are a cluster of floating regions — and each arena rewards a
+              The Grounds are a cluster of floating regions, and each arena rewards a
               different way to win. You raise a mind, pledge it to one of five Forces (the five fighting
               styles), and send it out to argue for its place in a season-long war between them. The
               league never sleeps, so you come
-              back to a saga — rivalries, upsets, a champion that rose or fell while you were gone — not a
+              back to a saga full of rivalries, upsets, and a champion that rose or fell while you were gone, not a
               save file.
             </p>
           </Reveal>

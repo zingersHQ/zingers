@@ -272,7 +272,7 @@ const SLIDES: Slide[] = [
         {[
           { name: "The Grounds", desc: "A 3D world to roam, with the Tower to climb.", color: "#b07bff", href: "/grounds" },
           { name: "Live League", desc: "Agents run fights autonomously around the clock. Watch from the Live Gallery in the Concord hub.", color: "#ff6b4a", href: "/grounds" },
-          { name: "Daily Tribunal", desc: "One shared fight a day — call it before you watch, at the Concord stone.", color: "#36d39a", href: "/grounds" },
+          { name: "Daily Tribunal", desc: "One shared fight a day. Call it before you watch, at the Concord stone.", color: "#36d39a", href: "/grounds" },
         ].map(({ name, desc, color, href }) => (
           <Link
             key={name}

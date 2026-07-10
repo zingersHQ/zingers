@@ -209,7 +209,7 @@ function TrainPhase({
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-          Drag the three dials — how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
+          Drag the three dials that set how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
@@ -581,7 +581,7 @@ function EvolveStep({
 
   const tweet = useCallback(() => {
     const url = cardShareUrl(key, after);
-    const text = `I raised ${name} on Zingers — train · fight · evolve.`;
+    const text = `I raised ${name} on Zingers: train · fight · evolve.`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
   }, [key, name, after]);
 
@@ -614,7 +614,7 @@ function EvolveStep({
             {name} {leveled ? "leveled up" : "grew from the win"}.
           </h2>
           <p className="evo2-sub">
-            Your strategy shaped the fight — {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record.
+            Your strategy shaped the fight: {xpGain > 0 ? `+${xpGain} XP` : "XP"} and a {after.wins}W record.
             {beforeLf.level === 1 && (
               <> {READER_COPY.rookieArc} {READER_COPY.rookieEarned}</>
             )}{" "}
@@ -679,7 +679,7 @@ function EvolveStep({
             {shareOpen && (
               <div className="evo2-share-tray panel pop" style={{ ["--ac" as string]: "var(--gold)" }}>
                 <div className="evo2-share-head mono">CLIP THIS MOMENT</div>
-                <p className="evo2-share-sub">A frozen read of {name} right now — not a live profile.</p>
+                <p className="evo2-share-sub">A frozen read of {name} right now, not a live profile.</p>
                 <button className="btn btn-primary evo2-share-opt" style={{ ["--ac" as string]: "var(--gold)" }} onClick={share}>
                   {copied ? <Check size={14} strokeWidth={2.4} /> : <ArrowUpRight size={14} strokeWidth={2.2} />}
                   {copied ? "copied" : "copy clip"}

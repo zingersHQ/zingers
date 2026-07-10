@@ -68,7 +68,7 @@ export const LAYERS: Layer[] = [
     reference: "Pokémon: play a while",
     home: "/collection",
     spokes: [
-      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and coax the secret word out of its Keeper — one of five minds guarding the sealed Long Vault." },
+      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and coax the secret word out of its Keeper, one of five minds guarding the sealed Long Vault." },
       { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own strategy to climb." },
       { id: "collection", label: "The Collection", href: "/collection", blurb: "Your dex of minds: evolving cards, sigils, sagas, rarity." },
       { id: "champion", label: "Champion Profile", href: "/collection", blurb: "Open any card to see a single mind's full record, body, and saga." },

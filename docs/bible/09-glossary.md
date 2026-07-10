@@ -6,7 +6,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 ## You and the world
 
-- **Trainer** — You. You raise the champions that fight; you never battle yourself. *(was: Reader)*
+- **Trainer** — You. You raise the champions that fight and tune how they think. *(was: Reader)*
 - **The Grounds** — The 3D world you explore: a cluster of floating regions you fly between.
 - **The Concord** — The central hub of the Grounds, where all five Forces meet in peace.
 - **Region** — One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style.

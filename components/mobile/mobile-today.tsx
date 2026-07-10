@@ -228,7 +228,7 @@ function ChampionHero({ owned, get, onNavigate }: { owned: string; get: (k: stri
     <button
       type="button"
       onClick={() => onNavigate?.("champion")}
-      aria-label={`${ROSTER[owned].name} — open your champion`}
+      aria-label={`${ROSTER[owned].name}, open your champion`}
       style={{
         ["--ac" as string]: col,
         position: "relative",
@@ -309,7 +309,7 @@ function AdoptHero({ onNavigate }: { onNavigate?: (tab: string) => void }) {
         </div>
         <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>Meet your champion</div>
         <div style={{ fontSize: 13.5, color: "var(--muted)", maxWidth: 280, lineHeight: 1.5 }}>
-          Raise one mind — it fights, learns, and evolves. This is your game.
+          Raise one mind. It fights, learns, and evolves. This is your game.
         </div>
         <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, color: "var(--accent)", fontSize: 14, fontWeight: 800 }}>
           Choose yours <ChevronRight size={16} strokeWidth={2.6} />
@@ -356,7 +356,7 @@ function TribunalCard({
       <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 1.5, color: "var(--gold)", fontWeight: 800 }}>
         <Swords size={13} strokeWidth={2.4} /> TODAY&apos;S TRIBUNAL
       </div>
-      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>Two minds argue — call the winner</div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>Two minds argue, call the winner</div>
 
       {ready && plan ? (
         <>
@@ -565,7 +565,7 @@ function Done({
         </div>
       </div>
       <button type="button" onClick={() => onNavigate?.("watch")} className="mono" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 14, padding: "12px", borderRadius: 12, border: "1px solid var(--line2)", background: "transparent", color: "var(--accent)", fontSize: 13, cursor: "pointer" }}>
-        <Shield size={14} strokeWidth={2.2} /> Keep watching — pick your own fights <ChevronRight size={14} strokeWidth={2.2} />
+        <Shield size={14} strokeWidth={2.2} /> Keep watching, pick your own fights <ChevronRight size={14} strokeWidth={2.2} />
       </button>
     </div>
   );

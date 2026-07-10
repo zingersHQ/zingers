@@ -71,7 +71,7 @@ export function MobileAdopt() {
           <Sparkles size={26} strokeWidth={2} style={{ color: "var(--accent)" }} />
           <div style={{ fontSize: 22, fontWeight: 800, margin: "8px 0 4px" }}>Choose your champion</div>
           <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
-            You raise the mind that fights. Pick one to begin — it starts green and
+            You raise the mind that fights. Pick one to begin. It starts green and
             evolves as you train it and call fights.
           </p>
         </div>

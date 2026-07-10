@@ -314,7 +314,7 @@ function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             Send it to fight.
           </>
         }
-        body="You raise the AI minds that fight. You don't battle yourself — you train strange, brilliant champions and set them loose in a world that's yours to explore."
+        body="You raise the AI minds that do the fighting. Train strange, brilliant champions, tune how they think, and set them loose in a world that's yours to explore."
       />
     </div>
   );
@@ -348,7 +348,7 @@ function Shape({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
             It flies with you.
           </>
         }
-        body="You adopt a raw mind and it rises to your side. Shape how it grows and its body becomes the visible story of everything you gave it — yours, and unlike anyone else's."
+        body="You adopt a raw mind and it rises to your side. Shape how it grows and its body becomes the visible story of everything you gave it, yours and unlike anyone else's."
       />
     </div>
   );
@@ -392,7 +392,7 @@ function Forces({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             One wheel.
           </>
         }
-        body="Every champion is one of five Forces — its fighting style, shown by its colour and its sigil (its Force badge). Each Force beats the next around the wheel and loses to the one behind it. Later you swear to one Force to fight for: that’s your Clan."
+        body="Every champion is one of five Forces, its fighting style, shown by its colour and its sigil (its Force badge). Each Force beats the next around the wheel and loses to the one behind it. Later you swear to one Force to fight for: that’s your Clan."
       />
     </div>
   );
@@ -444,7 +444,7 @@ function Fight({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
             the fireworks.
           </>
         }
-        body="Fly your champion to an arena and it fights on its own — thinking, adapting, arguing for its life. A spectacular payoff you choose, never the reason you're here."
+        body="Fly your champion to an arena and it fights on its own, thinking, adapting, arguing for its life. A spectacular payoff you choose, never the reason you're here."
       />
     </div>
   );
@@ -594,7 +594,7 @@ function Legend({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             Soar the deep.
           </>
         }
-        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you — and stretch far past the Concord, the neutral hub at their center."
+        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you, and stretch far past the Concord, the neutral hub at their center."
       />
     </div>
   );

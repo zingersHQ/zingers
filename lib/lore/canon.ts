@@ -85,7 +85,7 @@ export const FOUNDING_REGIONS: RegionLore[] = [
 export const CONCORD = {
   id: "concord",
   name: "The Concord",
-  blurb: "The central hub of the Grounds — neutral ground where all five Forces meet, ringed by the gates that lead out to every region.",
+  blurb: "The central hub of the Grounds, neutral ground where all five Forces meet, ringed by the gates that lead out to every region.",
 } as const;
 
 // ── The Trainer (you) ────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export const CONCORD = {
 // the season-long war between the five. (Rank curve/titles: lib/evolve/trainer.ts.)
 export const READER = {
   noun: "Trainer",
-  blurb: "A Trainer raises the minds that fight, climbs the ranks, and takes on the Keepers — the five guardians of the sealed Long Vault. Swear to a Force to fight in its name.",
+  blurb: "A Trainer raises the minds that fight, climbs the ranks, and takes on the Keepers, the five guardians of the sealed Long Vault. Swear to a Force to fight in its name.",
 } as const;
 
 // ── The Keepers (the five fixed cipher-words; canon, never regenerated) ───────

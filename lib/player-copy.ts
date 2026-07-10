@@ -28,6 +28,6 @@ export const READER_COPY = {
   flyLine: "Hold to rise. The Grounds are yours to soar.",
   adoptCta: (name: string) => `Adopt ${name}`,
   rookieArc: "Everything you do together reshapes the body. This is day one.",
-  legendAspiration: "Legend forms earn their shape — yours starts at Rookie.",
-  rookieEarned: "You claimed a rookie — the legend form is earned.",
+  legendAspiration: "Legend forms earn their shape. Yours starts at Rookie.",
+  rookieEarned: "You claimed a rookie. The legend form is earned.",
 } as const;
