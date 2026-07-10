@@ -31,6 +31,21 @@ npm run build && npm start
 | `npm run lint` | ESLint |
 | `node scripts/test-agents.mjs` | End-to-end HTTP + OpenAI-compat agent test |
 
+## Deploy
+
+**Deploys are manual.** Pushing to GitHub does **not** trigger a deploy — the
+GitHub repo and the Vercel project are owned by different accounts, so Vercel's
+Git integration is intentionally not connected. Ship from a locally-linked
+`.vercel/` project instead (that folder is gitignored and never committed):
+
+```bash
+git push                 # publishes source only — no deploy happens
+npx vercel --prod --yes  # builds + promotes to production (zingers.gg)
+```
+
+`npx vercel link` once if `.vercel/` is missing. `npx vercel pull` refreshes
+production env vars locally. Preview build without releasing: `npx vercel`.
+
 ## Routes
 
 | Path | Description |
