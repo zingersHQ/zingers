@@ -2168,7 +2168,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* anytime controls reference (auto-opens once at free roam) */}
-      <ControlsGuide open={controlsOpen} onClose={() => setControlsOpen(false)} isTouch={isTouch} hasPad={hasPad} />
+      <ControlsGuide open={controlsOpen} onClose={() => setControlsOpen(false)} isTouch={isTouch} hasPad={hasPad} force={store.force} />
       <SettingsOverlay
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}

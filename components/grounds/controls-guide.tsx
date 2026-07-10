@@ -1,13 +1,27 @@
 "use client";
-import { useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { PerspectiveCamera, View, useGLTF } from "@react-three/drei";
+import * as THREE from "three";
 import { X, Move, Zap, ChevronsUp, Plane, Camera, Sparkles, MousePointer2, Gamepad2, Hand, Menu } from "lucide-react";
+import type { CreatureType } from "@/lib/types";
+import { blank } from "@/lib/evolve/progression";
+import { GOLD, forceColors, readerPalette } from "@/lib/render/palette";
+import { buildCharacter, applyBoneMorph } from "@/components/grounds/champion-mesh";
+import { Jetpack } from "@/components/grounds/jetpack";
+import { useSettings } from "@/store/settings";
 
-// A complete, platform-aware controls reference, drawn as a COMIC STRIP: each
-// control is a panel showing the champion posed for that action (walk, run,
-// jump, jetpack-fly, camera orbit, interact) above its keycaps and a one-line
-// cue. Reachable any time from the HUD "?" and auto-opened once on first roam.
-// The poses are static hand-built SVG (no extra WebGL contexts over the live
-// world canvas, and nothing to animate) — read-at-a-glance and cheap.
+// A platform-aware controls reference. Each control is a live tile showing the
+// REAL player avatar — the silver Handler rig (RobotExpressive), Force-tinted —
+// struck in the actual posture for that action (walking, sprinting, the jetpack
+// climb, a look-around orbit, a greeting reach…). All tiles are drawn by ONE
+// shared WebGL context via drei's <View> (scissor-tiled), so the whole strip
+// reads as a single integrated diorama without spending a context per cell over
+// the live world canvas. Reachable any time from the HUD "?" and auto-opened
+// once on first roam.
+
+const SHARED_RIG = "/models/RobotExpressive.glb";
+useGLTF.preload(SHARED_RIG);
 
 // ── keycap tokens ──────────────────────────────────────────────────────
 type Token =
@@ -47,160 +61,158 @@ const GAMEPAD: Item[] = [
   { icon: <Menu size={ic} />, action: "Pause", tip: "opens settings", keys: [{ cap: "Start", wide: true }], pose: "menu" },
 ];
 
-// ── comic-strip pose art ────────────────────────────────────────────────
-const GOLD = "#f5d020";
+// ── live pose art (real avatar) ─────────────────────────────────────────
+// Which rig clip drives each control, plus per-pose framing extras.
+type PoseCfg = {
+  clip: "walk" | "run" | "jump" | "idle" | "standing" | "wave";
+  timeScale?: number;
+  /** jump / wave are one-shots in the rig — loop them so the tile keeps demoing */
+  loopOverride?: boolean;
+  /** jetpack + climb: raise the body by this fraction of its height and wear the pack */
+  fly?: boolean;
+  hover?: number;
+  lean?: number;
+  /** slowly turn the figure to demo camera orbit */
+  orbit?: boolean;
+  /** frame the clip lands on when reduced-motion freezes it */
+  still: number;
+};
 
-// Shared robot torso + head; each pose supplies its own limbs/extras as children
-// (drawn first, so they sit behind the body).
-function Fig({ tilt = 0, ox = 0, oy = 0, s = 1, children }: { tilt?: number; ox?: number; oy?: number; s?: number; children?: ReactNode }) {
+const POSE_CFG: Record<Pose, PoseCfg> = {
+  walk: { clip: "walk", still: 0.35 },
+  run: { clip: "run", timeScale: 1.15, still: 0.25 },
+  jump: { clip: "jump", loopOverride: true, timeScale: 0.95, still: 0.42 },
+  fly: { clip: "idle", fly: true, hover: 0.5, lean: 0.16, still: 0.4 },
+  camera: { clip: "standing", orbit: true, still: 0.3 },
+  interact: { clip: "wave", loopOverride: true, timeScale: 0.85, still: 0.68 },
+  menu: { clip: "standing", still: 0.3 },
+};
+
+const BASE_YAW = 0.5; // 3/4 hero angle
+
+function CellCamera() {
+  const ref = useRef<THREE.PerspectiveCamera>(null);
+  useFrame(() => {
+    ref.current?.lookAt(0, 0.95, 0);
+  });
+  return <PerspectiveCamera ref={ref} makeDefault position={[1.15, 1.2, 6.7]} fov={30} near={0.1} far={60} />;
+}
+
+function StageRing({ force }: { force: CreatureType | null }) {
+  const inner = force ? forceColors(force).primary : GOLD;
   return (
-    <g transform={`translate(${ox} ${oy}) rotate(${tilt} 60 62) scale(${s})`}>
-      <g stroke="var(--ink)" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        {children}
-      </g>
-      <rect x={51} y={40} width={18} height={34} rx={7} fill="var(--code-bg)" stroke="var(--ink)" strokeWidth={5} />
-      <rect x={48} y={15} width={24} height={21} rx={9} fill="var(--code-bg)" stroke="var(--ink)" strokeWidth={5} />
-      <circle cx={60} cy={26} r={2.8} fill={GOLD} />
-    </g>
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[0.98, 1.12, 56]} />
+        <meshBasicMaterial color={GOLD} transparent opacity={0.85} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.011, 0]}>
+        <ringGeometry args={[0.7, 0.82, 56]} />
+        <meshBasicMaterial color={inner} transparent opacity={0.5} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </group>
   );
 }
 
-function Panel({ children }: { children: ReactNode }) {
-  return (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden preserveAspectRatio="xMidYMid meet">
-      {children}
-    </svg>
+function PoseFigure({ pose, force }: { pose: Pose; force: CreatureType | null }) {
+  const { scene, animations } = useGLTF(SHARED_RIG);
+  const reduceMotion = useSettings((s) => s.reduceMotion);
+  const cfg = POSE_CFG[pose];
+  const pal = useMemo(() => readerPalette(force), [force]);
+  const built = useMemo(
+    () => buildCharacter(scene, animations, blank(), "#cfd2e8", undefined, 0, pal),
+    [scene, animations, pal],
   );
-}
 
-function PoseArt({ pose }: { pose: Pose }) {
-  const ground = <line x1={26} y1={108} x2={94} y2={108} stroke="var(--line2)" strokeWidth={3} strokeLinecap="round" />;
-  const speed = (x: number) => (
-    <g stroke={GOLD} strokeWidth={3} strokeLinecap="round" opacity={0.7}>
-      <line x1={x} y1={44} x2={x - 14} y2={44} />
-      <line x1={x - 2} y1={58} x2={x - 18} y2={58} />
-      <line x1={x} y1={72} x2={x - 13} y2={72} />
-    </g>
-  );
-  switch (pose) {
-    case "walk":
-      return (
-        <Panel>
-          {ground}
-          <Fig>
-            <path d="M53 45 L45 61" />
-            <path d="M67 45 L75 59" />
-            <path d="M56 73 L49 104" />
-            <path d="M64 73 L73 100" />
-          </Fig>
-        </Panel>
-      );
-    case "run":
-      return (
-        <Panel>
-          {ground}
-          {speed(44)}
-          <Fig tilt={-15} ox={4}>
-            <path d="M53 45 L64 53" />
-            <path d="M67 45 L58 61" />
-            <path d="M56 73 L45 98" />
-            <path d="M64 73 L80 92" />
-          </Fig>
-        </Panel>
-      );
-    case "jump":
-      return (
-        <Panel>
-          <path d="M30 96 Q60 40 90 96" stroke={GOLD} strokeWidth={2.5} strokeDasharray="3 6" fill="none" opacity={0.75} />
-          <ellipse cx={60} cy={110} rx={18} ry={4} fill="var(--line2)" opacity={0.6} />
-          <Fig oy={-16}>
-            <path d="M53 45 L46 27" />
-            <path d="M67 45 L74 27" />
-            <path d="M56 74 L51 90 L60 95" />
-            <path d="M64 74 L69 90 L60 95" />
-          </Fig>
-        </Panel>
-      );
-    case "fly":
-      return (
-        <Panel>
-          <g stroke="var(--line2)" strokeWidth={3} strokeLinecap="round" opacity={0.55}>
-            <line x1={40} y1={102} x2={48} y2={102} />
-            <line x1={72} y1={102} x2={80} y2={102} />
-          </g>
-          <Fig tilt={10} oy={-6}>
-            <path d="M53 47 L39 43" />
-            <path d="M67 47 L81 43" />
-            <path d="M57 74 L57 96" />
-            <path d="M63 74 L63 96" />
-          </Fig>
-          {/* jet flames */}
-          <g>
-            <path d="M52 94 L57 96 L57 112 Z" fill="#ff7a1a" opacity={0.9} />
-            <path d="M63 96 L68 94 L63 112 Z" fill="#ff7a1a" opacity={0.9} />
-            <path d="M55 96 L60 96 L57.5 106 Z" fill={GOLD} />
-          </g>
-        </Panel>
-      );
-    case "camera":
-      return (
-        <Panel>
-          {/* orbit arrows around a camera body */}
-          <g stroke={GOLD} strokeWidth={3} fill="none" opacity={0.8} strokeLinecap="round">
-            <path d="M28 60 A32 20 0 0 1 92 60" strokeDasharray="4 6" />
-            <path d="M92 60 A32 20 0 0 1 28 60" strokeDasharray="4 6" />
-            <path d="M88 52 L92 60 L84 61" />
-            <path d="M32 68 L28 60 L36 59" />
-          </g>
-          <g stroke="var(--ink)" strokeWidth={5} strokeLinejoin="round" fill="var(--code-bg)">
-            <rect x={40} y={50} width={30} height={22} rx={4} />
-            <path d="M70 56 L82 50 L82 72 L70 66 Z" />
-          </g>
-          <circle cx={53} cy={61} r={5.5} fill="none" stroke={GOLD} strokeWidth={4} />
-        </Panel>
-      );
-    case "interact": {
-      const mini = (ox: number, flip: boolean) => (
-        <g transform={`translate(${ox} 0) ${flip ? "scale(-1 1) translate(-120 0)" : ""}`} stroke="var(--ink)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" fill="var(--code-bg)">
-          <rect x={44} y={52} width={16} height={26} rx={6} />
-          <rect x={43} y={34} width={18} height={16} rx={7} />
-          <path d="M60 60 L70 58" fill="none" />
-        </g>
-      );
-      return (
-        <Panel>
-          {ground}
-          {mini(-14, false)}
-          {mini(14, true)}
-          {/* interaction spark */}
-          <g transform="translate(60 56)">
-            <path d="M0 -11 L3 -3 L11 0 L3 3 L0 11 L-3 3 L-11 0 L-3 -3 Z" fill={GOLD} />
-            <text x={0} y={4} textAnchor="middle" fontSize={9} fontWeight={800} fill="#141018" fontFamily="var(--font-mono, monospace)">E</text>
-          </g>
-        </Panel>
-      );
+  const groupRef = useRef<THREE.Group>(null);
+  const flyingRef = useRef<boolean>(!!cfg.fly);
+  const burstRef = useRef(0);
+  const yaw = useRef(BASE_YAW);
+  const jetT = useRef(0);
+  const framed = useRef(false);
+
+  // dispose the cloned rig + materials when the tile unmounts
+  useEffect(() => {
+    return () => {
+      built.mixer.stopAllAction();
+      built.root.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        m.geometry?.dispose?.();
+        const mat = m.material as THREE.Material | THREE.Material[];
+        if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+        else mat?.dispose?.();
+      });
+    };
+  }, [built]);
+
+  // drive the clip that matches this control
+  useEffect(() => {
+    const a = built.actions[cfg.clip];
+    if (!a) return;
+    if (cfg.loopOverride) {
+      a.setLoop(THREE.LoopRepeat, Infinity);
+      a.clampWhenFinished = false;
     }
-    case "menu":
-      return (
-        <Panel>
-          <Fig ox={-16} s={0.9}>
-            <path d="M53 46 L45 62" />
-            <path d="M67 46 L75 62" />
-            <path d="M56 73 L52 100" />
-            <path d="M64 73 L68 100" />
-          </Fig>
-          {/* floating menu panel */}
-          <g transform="translate(70 40)">
-            <rect x={0} y={0} width={34} height={44} rx={6} fill="var(--code-bg)" stroke="var(--ink)" strokeWidth={4} />
-            <line x1={7} y1={12} x2={27} y2={12} stroke={GOLD} strokeWidth={3.5} strokeLinecap="round" />
-            <line x1={7} y1={22} x2={27} y2={22} stroke="var(--muted)" strokeWidth={3.5} strokeLinecap="round" />
-            <line x1={7} y1={32} x2={20} y2={32} stroke="var(--muted)" strokeWidth={3.5} strokeLinecap="round" />
-          </g>
-        </Panel>
-      );
-    default:
-      return <Panel>{null}</Panel>;
-  }
+    a.reset().setEffectiveTimeScale(cfg.timeScale ?? 1).setEffectiveWeight(1).play();
+    framed.current = false;
+    return () => {
+      a.stop();
+    };
+  }, [built, cfg]);
+
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    if (reduceMotion) {
+      // freeze on a representative frame — no looping motion, no orbit, no jet puffs
+      if (!framed.current) {
+        built.mixer.update(cfg.still);
+        applyBoneMorph(built.bones, built.boneBase, built.morph);
+        framed.current = true;
+      }
+    } else {
+      built.mixer.update(dt);
+      applyBoneMorph(built.bones, built.boneBase, built.morph);
+      if (cfg.orbit) yaw.current += dt * 0.7;
+      if (cfg.fly) {
+        jetT.current += dt;
+        if (jetT.current > 0.055) {
+          jetT.current = 0;
+          burstRef.current++;
+        }
+      }
+    }
+    if (groupRef.current) groupRef.current.rotation.y = yaw.current;
+  });
+
+  const hover = cfg.fly && cfg.hover ? cfg.hover * built.h : 0;
+  return (
+    <group ref={groupRef}>
+      <group position={[0, hover, 0]} rotation={[cfg.lean ?? 0, 0, 0]}>
+        <primitive object={built.root} />
+        {cfg.fly && <Jetpack h={built.h} flyingRef={flyingRef} burstRef={burstRef} />}
+      </group>
+      <StageRing force={force} />
+    </group>
+  );
+}
+
+function PoseTile({ pose, force }: { pose: Pose; force: CreatureType | null }) {
+  const rim = force ? forceColors(force).primary : GOLD;
+  return (
+    <>
+      <color attach="background" args={["#0b0916"]} />
+      <CellCamera />
+      <ambientLight intensity={0.6} />
+      <hemisphereLight args={["#b9a7ff", "#160f2c", 0.7]} />
+      <directionalLight position={[4, 7, 5]} intensity={1.6} />
+      <pointLight position={[-4, 2.5, -2]} intensity={26} color={rim} distance={20} />
+      <pointLight position={[3, 1.2, 5]} intensity={14} color="#ffffff" distance={18} />
+      <Suspense fallback={null}>
+        <PoseFigure pose={pose} force={force} />
+      </Suspense>
+    </>
+  );
 }
 
 function Cap({ children, wide, accent }: { children: ReactNode; wide?: boolean; accent?: boolean }) {
@@ -266,7 +278,20 @@ function Keys({ tokens }: { tokens: Token[] }) {
   );
 }
 
-export function ControlsGuide({ open, onClose, isTouch, hasPad }: { open: boolean; onClose: () => void; isTouch: boolean; hasPad?: boolean }) {
+export function ControlsGuide({
+  open,
+  onClose,
+  isTouch,
+  hasPad,
+  force = null,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isTouch: boolean;
+  hasPad?: boolean;
+  /** the Trainer's pledged Clan — tints the avatar's trim/glow to match the world */
+  force?: CreatureType | null;
+}) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -305,7 +330,7 @@ export function ControlsGuide({ open, onClose, isTouch, hasPad }: { open: boolea
         className="panel"
         onPointerDown={(e) => e.stopPropagation()}
         style={{
-          width: "min(700px, 100%)",
+          width: "min(720px, 100%)",
           maxHeight: "92vh",
           overflow: "auto",
           padding: "20px 22px 22px",
@@ -337,7 +362,7 @@ export function ControlsGuide({ open, onClose, isTouch, hasPad }: { open: boolea
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
           {items.map((it, i) => (
             <div
               key={it.action}
@@ -350,21 +375,21 @@ export function ControlsGuide({ open, onClose, isTouch, hasPad }: { open: boolea
                 overflow: "hidden",
               }}
             >
-              {/* comic cell */}
-              <div
+              {/* live avatar cell (rendered by the shared canvas below) */}
+              <View
                 style={{
                   position: "relative",
                   aspectRatio: "1 / 1",
                   borderBottom: "1px solid var(--line)",
-                  background: "radial-gradient(120% 90% at 50% 8%, color-mix(in srgb, var(--gold) 7%, var(--code-bg)), var(--code-bg))",
+                  background: "#0b0916",
                 }}
               >
-                <span className="mono" style={{ position: "absolute", top: 6, left: 8, fontSize: 9, color: "var(--muted2)", opacity: 0.8 }}>{i + 1}</span>
-                <PoseArt pose={it.pose} />
-              </div>
+                <PoseTile pose={it.pose} force={force} />
+              </View>
               {/* caption strip */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "11px 12px 13px", alignItems: "center", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", opacity: 0.8 }}>{i + 1}</span>
                   <span style={{ color: "var(--gold)", display: "inline-flex" }}>{it.icon}</span>
                   <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: 0.2 }}>{it.action}</span>
                 </div>
@@ -375,6 +400,18 @@ export function ControlsGuide({ open, onClose, isTouch, hasPad }: { open: boolea
           ))}
         </div>
       </div>
+
+      {/* One shared WebGL context paints every tile above (scissor-tiled) — a single
+          integrated diorama, not a context per cell over the live world. */}
+      <Canvas
+        onPointerDown={(e) => e.stopPropagation()}
+        eventSource={typeof document !== "undefined" ? document.body : undefined}
+        dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : [1, 2]}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        style={{ position: "fixed", inset: 0, zIndex: 131, pointerEvents: "none" }}
+      >
+        <View.Port />
+      </Canvas>
     </div>
   );
 }
