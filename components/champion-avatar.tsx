@@ -82,9 +82,8 @@ function AvatarStyles() {
   return (
     <style>{`
     .evo-av{position:relative;width:var(--sz);height:var(--sz);display:grid;place-items:center;flex:0 0 auto}
-    .evo-port{position:relative;width:78%;height:78%;border-radius:22%;overflow:hidden;
-      border:2px solid var(--ac);
-      box-shadow:0 0 38px -12px var(--ac), inset 0 0 26px -16px var(--ac);z-index:2;background:#0a0812}
+    .evo-port{position:relative;width:82%;height:82%;border-radius:22%;overflow:hidden;
+      box-shadow:0 0 40px -12px var(--ac), inset 0 0 26px -16px var(--ac);z-index:2;background:#0a0812}
     .evo-port canvas{width:100%!important;height:100%!important;display:block}
     .evo-wear{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
       background:repeating-linear-gradient(125deg,transparent 0 7px,rgba(0,0,0,.5) 7px 8px),

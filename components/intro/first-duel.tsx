@@ -123,7 +123,7 @@ export function FirstDuelOverlay({
   }
 
   if (phase === "evolve" && evolve) {
-    return <EvolveStep evolve={evolve} isMobile={isMobile} onDone={onEvolveDone} />;
+    return <EvolveStep evolve={evolve} onDone={onEvolveDone} />;
   }
 
   if (phase === "concord") {
@@ -552,11 +552,9 @@ function projectEvolved(c: Champion): Champion {
 
 function EvolveStep({
   evolve,
-  isMobile,
   onDone,
 }: {
   evolve: { before: Champion; after: Champion; key: string; type: RosterEntry["type"] };
-  isMobile: boolean;
   onDone: () => void;
 }) {
   const { before, after, key, type } = evolve;
@@ -571,7 +569,6 @@ function EvolveStep({
   const beforeDoc = doctrine(before, beforeLf.level);
   const afterDoc = doctrine(after, afterLf.level);
   const leveled = afterLf.level > beforeLf.level;
-  const avSize = isMobile ? 124 : 248;
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const shareWrapRef = useRef<HTMLDivElement | null>(null);
@@ -630,22 +627,20 @@ function EvolveStep({
             ckey={key}
             type={type}
             champion={after}
-            size={avSize}
             label="NOW"
             caption={`L${afterLf.level} · SL ${skillLevel(after)}`}
             accent="var(--muted2)"
           />
           <div className="evo2-arrow" style={{ ["--ac" as string]: col }}>
             <span className="evo2-chev">→</span>
-            <span className="evo2-evolves mono">EVOLVES</span>
+            <span className="evo2-evolves mono">HEADING</span>
           </div>
           <EvoPod
             ckey={key}
             type={type}
             champion={projected}
-            size={avSize}
-            label={`AT ${projTier}`}
-            caption={`L${projLf.level} · ${projTier}`}
+            label={`PROJECTED · ${projTier}`}
+            caption={`where ${name} is heading`}
             accent={col}
             hero
           />
@@ -707,7 +702,6 @@ function EvoPod({
   ckey,
   type,
   champion,
-  size,
   label,
   caption,
   accent,
@@ -716,15 +710,14 @@ function EvoPod({
   ckey: string;
   type: RosterEntry["type"];
   champion: Champion;
-  size: number;
   label: string;
   caption: string;
   accent: string;
   hero?: boolean;
 }) {
   return (
-    <div className={hero ? "evo2-pod evo2-hero" : "evo2-pod"} style={{ ["--ac" as string]: accent, width: size }}>
-      <div className="evo2-frame" style={{ height: size }}>
+    <div className={hero ? "evo2-pod evo2-hero" : "evo2-pod"} style={{ ["--ac" as string]: accent }}>
+      <div className="evo2-frame">
         <span className="evo2-tag mono">{label}</span>
         <RenderBoundary fallback={<div className="evo2-fallback" />}>
           <ChampionPortraitScene type={type} champion={champion} preset="portrait" identityKey={ckey} />
@@ -752,18 +745,18 @@ function EvolveStyles() {
     .evo2-title{font-size:28px;font-weight:800;letter-spacing:-.3px;line-height:1.12;margin:0 0 9px;color:var(--ink)}
     .evo2-sub{max-width:486px;margin:0 auto;color:var(--muted);font-size:13.5px;line-height:1.55}
 
-    .evo2-stage{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:20px}
-    .evo2-pod{display:flex;flex-direction:column;align-items:center;min-width:0}
-    .evo2-frame{position:relative;width:100%;border-radius:18px;overflow:hidden;
+    .evo2-stage{position:relative;z-index:1;display:flex;align-items:stretch;justify-content:center;gap:12px;margin-bottom:20px}
+    .evo2-pod{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center}
+    /* borderless, full-bleed: each pod fills its half; the portrait bleeds to the
+       rounded edge with only a soft inner glow (no hard frame). */
+    .evo2-frame{position:relative;width:100%;aspect-ratio:4/5;border-radius:18px;overflow:hidden;
       background:linear-gradient(180deg,#0d0b16,#08070f);
-      border:1px solid color-mix(in srgb,var(--ac) 24%,var(--line));
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.05), inset 0 0 46px -26px var(--ac)}
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05), inset 0 0 46px -22px var(--ac)}
     .evo2-frame canvas{width:100%!important;height:100%!important;display:block;border-radius:18px}
     .evo2-fallback{position:absolute;inset:0;background:linear-gradient(180deg,#0d0b16,#08070f)}
-    .evo2-hero .evo2-frame{border-color:color-mix(in srgb,var(--ac) 62%,var(--line2));
-      box-shadow:0 0 0 1px color-mix(in srgb,var(--ac) 34%,transparent),
-                 0 22px 60px -24px color-mix(in srgb,var(--ac) 75%,transparent),
-                 inset 0 0 60px -26px var(--ac)}
+    .evo2-hero .evo2-frame{
+      box-shadow:0 22px 60px -24px color-mix(in srgb,var(--ac) 75%,transparent),
+                 inset 0 0 60px -22px var(--ac)}
     .evo2-tag{position:absolute;top:10px;left:10px;z-index:3;font-size:8.5px;letter-spacing:1.8px;
       padding:4px 9px;border-radius:999px;color:var(--ac);
       background:color-mix(in srgb,#08070f 72%,transparent);

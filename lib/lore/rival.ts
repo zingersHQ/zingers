@@ -32,7 +32,7 @@ export interface RivalMemory {
 const KEY = "zingers_rival_v1";
 
 const NAMES = ["Cassia Vane", "Doran Kell", "Sable Wren", "Ives Marrow", "Lyra Crane", "Orin Vask", "Nova Quill", "Thorne Ashby"];
-const EPITHETS = ["the Unread", "the Closer", "the Patient Knife", "the Frame-Breaker", "the Latecomer", "the Quiet Verdict", "the Second Reader", "the Echo"];
+const EPITHETS = ["the Unread", "the Closer", "the Patient Knife", "the Frame-Breaker", "the Latecomer", "the Quiet Verdict", "the Understudy", "the Echo"];
 
 function rngFrom(seed: number) {
   let s = seed >>> 0;
@@ -104,13 +104,13 @@ export function rivalChallengeBeat(rival: Rival, m: RivalMemory): BeatScript {
   const stance = rivalStance(m);
   const lines: Record<Stance, string[]> = {
     first: [
-      `So you're the Reader everyone's whispering about. I'm ${rival.name}. ${rival.epithet}.`,
+      `So you're the Trainer everyone's whispering about. I'm ${rival.name}. ${rival.epithet}.`,
       `I read the Vault too — I just got here first. Let's see whose mind holds.`,
     ],
     even: [`Tied up, you and I. ${rival.name} doesn't stay tied for long.`, `Field your best. I'll close it anyway.`],
     ahead: [`You're ahead. For now.`, `Enjoy the lead — I've been studying how you fight. This one's mine.`],
     behind: [`Down again? I almost feel bad. Almost.`, `Come on. Make it interesting this time.`],
-    grudge: [`Every season, the same two Readers. You and me.`, `One of us opens that door. It won't be you.`],
+    grudge: [`Every season, the same two Trainers. You and me.`, `One of us opens that door. It won't be you.`],
   };
   return {
     kicker: m.met ? `RIVAL · ${m.wins}–${m.losses}` : "A RIVAL APPEARS",

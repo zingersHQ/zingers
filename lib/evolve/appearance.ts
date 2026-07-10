@@ -94,9 +94,12 @@ export function appearanceOf(p: Champion): Appearance {
   const nCtl = n("control");
   const nFlr = n("flair");
   const nCre = n("creativity");
-  // progression amplifier: more complex/refined → more violent deviation
-  const prog = Math.min(1.5, lf.level / 20 + ti * 0.12);
-  const gain = 0.5 + prog * 2.4; // rookie ≈0.6×, legend ≈4.1×
+  // progression amplifier: more complex/refined → more violent deviation. The
+  // tier term (ti) is weighted heavily so CROSSING a tier produces a visible
+  // silhouette jump — evolution you can read across the arena, not just a smooth
+  // per-level creep (the per-win nudge is deliberately sub-pixel).
+  const prog = Math.min(1.6, lf.level / 20 + ti * 0.22);
+  const gain = 0.5 + prog * 2.4; // rookie ≈0.6×, legend ≈4.3×
   const g = gain * 0.5; // per-axis morph gain (kept gentle; clamps below shape it)
 
   const morph: BoneMorph = {
@@ -123,7 +126,9 @@ export function appearanceOf(p: Champion): Appearance {
     ti,
     gain,
     prog,
-    h: 1.7 + Math.min(0.95, lf.level * 0.045) + (nFlr * 0.1 - nRes * 0.05) * gain,
+    // stature grows smoothly with level, plus a discrete per-tier step so each
+    // tier-up is a legible height jump in-world.
+    h: 1.7 + Math.min(0.9, lf.level * 0.04) + ti * 0.09 + (nFlr * 0.1 - nRes * 0.05) * gain,
     width: morph.torsoGirth,
     headScale: morph.headScale,
     handScale: morph.handScale,

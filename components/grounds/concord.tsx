@@ -17,6 +17,7 @@ import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { CreatureType } from "@/lib/types";
 import { FORCES, WHEEL, FORCE_MOTTO } from "@/lib/lore/canon";
+import { usePrefersReducedMotion } from "@/components/arena/juice";
 
 const GOLD = "#f5d020";
 
@@ -305,6 +306,7 @@ function Vaultgate({
   const beamRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
   const col = gate.color;
+  const reduced = usePrefersReducedMotion();
   // face the gate inward toward the seal at the plaza centre
   const rot = useMemo(() => Math.atan2(-gate.pos[0], -gate.pos[2]), [gate.pos]);
   // how much this gate is faded back (the doors we don't want taken yet)
@@ -313,22 +315,32 @@ function Vaultgate({
   const lift = firstStop ? (urgent ? 1.9 : 1.5) : 1;
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const pulse = urgent ? 3.2 : firstStop ? 2.2 : 1.6;
+    // Slow, elegant breathing for the focus gate — a calm beam that draws the eye
+    // without strobing. Urgent (idle) speeds it up a touch; reduced-motion freezes
+    // to a steady mid-brightness so the gate still reads as "the one" while still.
+    const rate = urgent ? 1.5 : firstStop ? 0.85 : 1.4;
+    const breathe = reduced ? 0.5 : Math.sin(t * rate) * 0.5 + 0.5; // 0..1
     if (portalRef.current) {
       const m = portalRef.current.material as THREE.MeshBasicMaterial;
-      const base = (0.32 + Math.sin(t * pulse) * (firstStop ? 0.16 : 0.1)) * dim * lift;
+      const amp = firstStop ? 0.18 : 0.1;
+      const base = (0.32 + (breathe - 0.5) * 2 * amp) * dim * lift;
       m.opacity = Math.min(0.95, base);
     }
     if (beamRef.current) {
       const m = beamRef.current.material as THREE.MeshBasicMaterial;
-      // hide the beam on dimmed gates; punch it up on the focus gate
-      m.opacity = dimmed ? 0 : (0.09 + Math.sin(t * 1.3) * 0.03) * lift * (firstStop ? 2.4 : 1);
+      // hide the beam on dimmed gates; on the focus gate it's a bright, slow column
+      const beamBase = firstStop ? 0.24 : 0.09;
+      const beamAmp = reduced ? 0 : firstStop ? 0.1 : 0.03;
+      m.opacity = dimmed ? 0 : (beamBase + (breathe - 0.5) * 2 * beamAmp) * lift;
+      // gentle vertical drift so the light reads as "beaming up" toward the gate
+      const sy = firstStop && !reduced ? 1 + breathe * 0.14 : 1;
+      beamRef.current.scale.set(1, sy, 1);
     }
     if (ringRef.current) {
       const m = ringRef.current.material as THREE.MeshBasicMaterial;
-      const base = firstStop ? 0.55 + (Math.sin(t * pulse) * 0.5 + 0.5) * 0.4 : 0.7;
+      const base = firstStop ? 0.55 + breathe * 0.4 : 0.7;
       m.opacity = base * dim;
-      const s = firstStop ? 1 + (Math.sin(t * pulse) * 0.5 + 0.5) * 0.12 : 1;
+      const s = firstStop && !reduced ? 1 + breathe * 0.12 : 1;
       ringRef.current.scale.set(s, s, 1);
     }
   });

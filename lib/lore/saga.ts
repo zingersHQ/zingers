@@ -45,7 +45,7 @@ export const SAGA: SagaChapter[] = [
     act: 1,
     actTitle: "Arrival",
     title: "A Name in the Arenas",
-    stake: "No one remembers a Reader who never fought. The regions are watching now.",
+    stake: "No one remembers a Trainer who never fought. The regions are watching now.",
     objective: "Take a duel in a region beyond the Concord.",
     atLevel: 3,
   },

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, HelpCircle, Settings as SettingsIcon } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
@@ -37,7 +37,8 @@ import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason, currentSeasonNumber } from "@/lib/lore/season";
 import { seasonTurnBeat } from "@/lib/lore/saga";
-import { ReaderThread } from "@/components/grounds/reader-thread";
+import { PlayerHub } from "@/components/grounds/player-hub";
+import { AmbienceEngine } from "@/components/grounds/ambience";
 import { RivalCard } from "@/components/grounds/rival-card";
 import {
   rivalFrom,
@@ -56,23 +57,20 @@ import { daylightBiome, BIOMES } from "@/components/grounds/biomes";
 import { useTheme } from "@/lib/theme";
 import { landmarksOf, discoveryNodes, dayKey } from "@/components/grounds/landmarks";
 import { Compass, type Pose } from "@/components/grounds/compass";
-import { TrainerBadge } from "@/components/grounds/trainer-badge";
+import { ObjectiveToasts } from "@/components/grounds/objective-toasts";
 import { roundReward, gauntletQueue, tribunalDraw } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/tribunal";
 import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
-import { AmbientToggle } from "@/components/grounds/ambience";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
-import { setSfxVolume } from "@/lib/sfx";
+import { setSfxVolume, evolveStinger } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
-import { setMood, resolveAmbienceMood, setAmbienceVolume } from "@/lib/ambience-bus";
+import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
-import { GameDock } from "@/components/game-dock";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
 import { ArrivalSequence } from "@/components/grounds/arrival";
 import { CharacterBeat } from "@/components/grounds/character-beat";
@@ -1565,6 +1563,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     if (!lastEvolution || !lastEvolution.tieredUp) return;
     if (showMatch || overlay !== "none" || gRun) return; // wait until the result card clears
     setEvoFlash(lastEvolution);
+    // felt flourish — a rising stinger + a swell in the score so the tier-up lands
+    // as an event, not just a text card.
+    evolveStinger();
+    ambienceFlourish("victory");
     store.clearEvolution();
     if (evoFlashTimer.current) clearTimeout(evoFlashTimer.current);
     evoFlashTimer.current = setTimeout(() => setEvoFlash(null), 3800);
@@ -1789,12 +1791,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           </div>
         )}
 
-        {!isMobile && !showMatch && overlay === "none" && owned && !gRun && !modesLocked && (
-          <div style={{ marginBottom: 10 }}>
-            <ReaderThread isMobile={isMobile} />
-          </div>
-        )}
-
         {!isMobile && overlay === "none" && !showMatch && !gRun && (
           <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {modesLocked && owned
@@ -1832,55 +1828,30 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         )}
       </div>
       )}
-      {showHud && (
+      {showHud && overlay === "none" && !showMatch && !gRun && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
-        {!isMobile && overlay === "none" && !showMatch && !gRun && (
-          <button
-            onClick={() => setControlsOpen(true)}
-            aria-label="Controls"
-            title="Controls"
-            className="panel"
-            style={{ padding: 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
-          >
-            <HelpCircle size={18} strokeWidth={2} />
-          </button>
-        )}
-        {overlay === "none" && !showMatch && !gRun && (
-          <button
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Settings"
-            title="Settings (Esc)"
-            className="panel"
-            style={{ padding: isMobile ? 6 : 9, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}
-          >
-            <SettingsIcon size={isMobile ? 15 : 18} strokeWidth={2} />
-          </button>
-        )}
-        {/* appearance toggle is desktop-only in-world — on mobile it's pure clutter
-            in the top bar (theme lives in Settings); keeps the row from overrunning
-            the world picker on the left */}
-        {!isMobile && overlay === "none" && !showMatch && !gRun && <ThemeToggle variant="compact" />}
-        {overlay === "none" && !showMatch && !gRun && <AmbientToggle compact={isMobile} />}
-        {overlay === "none" && !showMatch && owned && !gRun && (
-          <TrainerBadge
-            isMobile={isMobile}
-            war={war}
-            compact
-            onOpenClan={() => {
-              if (modesLocked) {
-                setModeLockToast("Finish your first duel to unlock Clans.");
-                return;
-              }
-              setClanPreselect(null);
-              setClanOpen(true);
-            }}
-          />
-        )}
-        <div className="panel" style={{ padding: isMobile ? "6px 9px" : "8px 14px", display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
-          <Crown size={isMobile ? 14 : 17} color="var(--gold)" strokeWidth={2} />
-          <span style={{ fontWeight: 700, fontSize: isMobile ? 14 : 18, color: "var(--gold)" }}>{crowns}</span>
-          {!isMobile && <span className="mono" style={{ fontSize: 9, color: "var(--muted2)", letterSpacing: 1 }}>CROWNS</span>}
-        </div>
+        <PlayerHub
+          isMobile={isMobile}
+          crowns={crowns}
+          war={war}
+          goals={allGoals}
+          goalsDone={doneGoals}
+          fragments={fragments}
+          nodesLeft={liveNodes.length}
+          regionName={world.name}
+          inRegion={!!owned && !isHub && !inVenue}
+          hudDim={hudDim}
+          onOpenControls={() => setControlsOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenClan={() => {
+            if (modesLocked) {
+              setModeLockToast("Finish your first duel to unlock Clans.");
+              return;
+            }
+            setClanPreselect(null);
+            setClanOpen(true);
+          }}
+        />
       </div>
       )}
 
@@ -1953,15 +1924,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
-          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 460, borderColor: "var(--gold)" }}>
-            <span style={{ fontSize: 15, color: "var(--gold)", flexShrink: 0 }}>▲▼◆</span>
-            <span style={{ fontSize: 12, lineHeight: 1.35 }}>
-              <strong>Objectives.</strong> Reach the peak, descend the rift, find the secret — they&apos;re in your compass, and pay out.
-            </span>
-            <button onClick={dismissGoalCoach} className="btn" style={{ ["--ac" as string]: "var(--gold)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>Got it</button>
-          </div>
-        </div>
+        <ObjectiveToasts goals={liveGoals} isMobile={isMobile} compassReserve={compassReserve} onDone={dismissGoalCoach} />
       )}
 
       {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
@@ -2006,7 +1969,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
             {readerSplitStep === 0 ? (
               <>
-                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOU, THE READER</div>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOU, THE TRAINER</div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
                   <strong>This is you.</strong> Move with WASD / the stick — and <strong>hold <span className="mono">Space</span> to fly</strong>. The Grounds are yours to soar.
                 </p>
@@ -2101,8 +2064,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         />
       )}
 
-      {/* menu — single visible button, top-left (M to toggle) */}
-      <GameDock hidden={!showDock} />
+      {/* Site nav + settings + theme + ambience toggle + saga + status are folded
+          into the PlayerHub (top-right). The ambience engine hosts here so the
+          score keeps playing whether or not the hub panel is open. */}
+      <AmbienceEngine />
 
       {/* onboarding: choose your champion — legacy path if funnel is off */}
       {mounted && !owned && roster.length > 0 && !claiming && !inFirstDuelSetup && isFirstDuelComplete() && (
@@ -2268,7 +2233,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
             kicker: "ADOPTION",
             lines: [
               { speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) },
-              { speaker: "Trainer", text: READER_COPY.walkFightLine, role: "you walk · it fights" },
             ],
           }}
           accent={TYPE_COLOR[byKey[wakeKey].type]}
@@ -2908,7 +2872,7 @@ function ChallengeOverlay(props: {
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
-              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={ownedChamp} size={72} />
+              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={ownedChamp} size={92} />
               <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{ownedEntry.name}</div>
               <div className="mono" style={{ fontSize: 10, color: ownedCol, marginTop: 4 }}>YOURS · L{levelFor(ownedChamp.xp).level}</div>
             </div>
@@ -2918,7 +2882,7 @@ function ChallengeOverlay(props: {
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
-              <ChampionAvatar ckey={opponent} type={oppEntry.type} champion={oppChamp} size={72} />
+              <ChampionAvatar ckey={opponent} type={oppEntry.type} champion={oppChamp} size={92} />
               <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{oppName}</div>
               <div className="mono" style={{ fontSize: 10, color: col, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
                 {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}

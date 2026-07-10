@@ -22,11 +22,11 @@ export interface BeatScript {
 
 const WAKE: Record<string, string> = {
   AXIOM: "…there you are. Good. I was starting to think no one would bother closing the proof.",
-  PARADOX: "Ah. A Reader. Tell me — what are you assuming that you haven't checked yet?",
+  PARADOX: "Ah — my Trainer at last. I think best out loud, so keep me honest. Let's go find something worth questioning.",
   GLITCH: "Oh— OH. You're real. You're the one raising me. This is gonna be so— wait, what were we doing?",
   EMBER: "Finally. Someone with a pulse. Don't just stand there — let's pick a fight.",
   BASTION: "…mm. You came. I won't rush. Neither should you.",
-  VOX: "Ladies, gentlemen — my Reader has arrived. Try to look impressed.",
+  VOX: "Ladies, gentlemen — my Trainer has arrived. Try to look impressed.",
   WIT: "Took you long enough. I had a riposte ready and everything.",
   MUSE: "What if… you and I changed what this whole place is even about?",
 };

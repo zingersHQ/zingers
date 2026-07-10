@@ -198,8 +198,10 @@ export function CharacterBeat({
     </>
   );
 
-  // Shared overlay chrome: parallax field, letterbox bars, and the skip affordance.
-  const chrome = (
+  // Shared backdrop: parallax star field + accent vignette. No top bar / SKIP —
+  // dialogue beats advance via the caption button (and Esc), so the "top bar with
+  // a skip" is gone from every talking-head beat.
+  const backdrop = (
     <>
       <BeatStyles />
       <div className="beat-stars" style={{ ["--ac" as string]: accent } as React.CSSProperties} aria-hidden />
@@ -211,6 +213,13 @@ export function CharacterBeat({
           pointerEvents: "none",
         }}
       />
+    </>
+  );
+
+  // Cinematic chrome (letterbox bars + a skip-all affordance) is reserved for the
+  // full-screen "stage" vignette, where skipping a multi-beat cutscene matters.
+  const cinemaChrome = (
+    <>
       <div className="beat-bar beat-bar--top" aria-hidden />
       <div className="beat-bar beat-bar--bottom" aria-hidden />
       <button
@@ -232,7 +241,8 @@ export function CharacterBeat({
         className="beat-root"
         style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, overflow: "hidden", display: "flex", flexDirection: "column" }}
       >
-        {chrome}
+        {backdrop}
+        {cinemaChrome}
         {sound && <OnboardingAudio compact />}
 
         {script.kicker && (
@@ -274,7 +284,7 @@ export function CharacterBeat({
       className="beat-root"
       style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, display: "grid", placeItems: "center", padding: 20, overflow: "hidden" }}
     >
-      {chrome}
+      {backdrop}
 
       <div style={{ position: "relative", width: "min(540px, 94vw)", textAlign: "center", zIndex: 3 }}>
         {script.kicker && (
