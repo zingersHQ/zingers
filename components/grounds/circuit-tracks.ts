@@ -71,7 +71,7 @@ function buildSector(tier: number, worldId: string): CircuitTrackDef {
       index: i + 1,
       label: `Gate ${i + 1}`,
       pos: [g.x, g.y, g.z] as [number, number, number],
-      radius: Math.max(2.7, 3.2 - tier * 0.04),
+      radius: Math.max(3.3, 4.0 - tier * 0.05),
     })),
     {
       index: gatePos.length,
@@ -81,7 +81,7 @@ function buildSector(tier: number, worldId: string): CircuitTrackDef {
         number,
         number,
       ],
-      radius: Math.max(3, 3.6 - tier * 0.03),
+      radius: Math.max(3.6, 4.4 - tier * 0.04),
       finish: true,
     },
   ];

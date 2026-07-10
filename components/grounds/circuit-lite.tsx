@@ -58,13 +58,13 @@ interface RunReward {
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard (sticky, accelerating fall), thrust punches up through it,
 // and a tap gives an instant kick. This is what kills the "floaty ghost" feel.
-const FORWARD = 10.5;       // cruise forward speed (u/s) — faster, punchier pace
-const FORWARD_SPOOL = 3.5;  // ease up to cruise from a standstill (a launch feel)
-const GRAVITY = 36;         // heavy downward accel (u/s²) — the mech has weight
-const THRUST_ACCEL = 62;    // jetpack up accel while held → net +26 up (powerful)
-const PRESS_KICK = 5.0;     // instant upward velocity pop on each new press (a flap)
-const MAX_FALL = 20;        // terminal fall speed (sticky, but never uncontrollable)
-const MAX_RISE = 15;        // climb clamp — full-hold still overshoots, controllably
+const FORWARD = 8.2;        // cruise forward speed (u/s) — gentle enough to read each gate
+const FORWARD_SPOOL = 2.6;  // ease up to cruise from a standstill (a launch feel)
+const GRAVITY = 24;         // downward accel (u/s²) — weight without a stone drop
+const THRUST_ACCEL = 40;    // jetpack up accel while held → net +16 up (controllable climb)
+const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
+const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontrollable)
+const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
 const LATERAL_EASE = 7;     // auto-thread: ease x toward the next gate's centre
 const FLOOR_Y = -9;         // fall below this → run over
 
@@ -284,6 +284,50 @@ function Flyer({
       </group>
       {/* ascent sigil — the run marks the champion (essence §3): a halo whose glyphs
           grow with your best depth, orbiting above the flyer */}
+      <AscentSigil depth={ascentDepth} />
+    </group>
+  );
+}
+
+// ── ready pose: the OWNED champion waits on the start pad, idling, so the tab
+// reads as "your champion, about to fly" instead of an empty platform. Swaps to
+// the live Flyer the instant you press. ──────────────────────────────────────
+function ReadyPose({
+  track,
+  champType,
+  champion,
+  ascentDepth,
+}: {
+  track: CircuitTrackDef;
+  champType: CreatureType;
+  champion: Champion;
+  ascentDepth: number;
+}) {
+  const grp = useRef<THREE.Group>(null);
+  const { camera } = useThree();
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (grp.current) grp.current.position.y = track.spawn[1] + CHAMP_Y + Math.sin(t * 1.6) * 0.07;
+    // frame the hero centre-stage while it waits (look right at it, not down-track)
+    camera.lookAt(track.spawn[0], track.spawn[1] + 0.5, track.spawn[2] + 0.4);
+  });
+  return (
+    <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
+      <group scale={CHAMP_SCALE}>
+        <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody /></group>}>
+          <ChampionMesh
+            type={champType}
+            champion={champion}
+            position={[0, 0, 0]}
+            rotation={CHAMP_FACE}
+            showLabel={false}
+            hideFloaters
+            breatheIntensity={0.9}
+            restPose="standing"
+            sceneScale={1}
+          />
+        </Suspense>
+      </group>
       <AscentSigil depth={ascentDepth} />
     </group>
   );
@@ -534,6 +578,9 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           <Physics paused>
             <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} />
           </Physics>
+          {phase === "ready" && (
+            <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} />
+          )}
           {running && (
             <Flyer
               key={`${runId}-${sector}`}

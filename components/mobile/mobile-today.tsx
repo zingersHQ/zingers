@@ -10,7 +10,7 @@
 // moved behind the hub instead of being the landing screen.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Globe, Settings, Swords, Eye, Rocket, Sparkles } from "lucide-react";
+import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles } from "lucide-react";
 import type { BattleEnd, BattleTurn, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
@@ -165,46 +165,20 @@ function Hub({
   onOpenDaily: () => void;
   onNavigate?: (tab: string) => void;
 }) {
-  const [showSettings, setShowSettings] = useState(false);
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 22 }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
-        {/* top bar */}
-        <div style={{ display: "flex", alignItems: "center", position: "relative", padding: "14px 14px 10px" }}>
+        {/* top bar — wordmark + streak. Bottom tabs are the only mobile nav; the
+            immersive 3D Grounds is a desktop surface, so no gear/opt-in here. */}
+        <div style={{ display: "flex", alignItems: "center", padding: "14px 14px 10px" }}>
           <span className="glow" style={{ fontSize: 22, fontWeight: 900, letterSpacing: 0.5, color: "var(--accent)" }}>
             {BRAND.name ?? "Zingers"}
           </span>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
-              <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
-              <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
-              <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>STREAK</span>
-            </span>
-            <button
-              type="button"
-              aria-label="Settings"
-              onClick={() => setShowSettings((s) => !s)}
-              style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 10, border: "1px solid var(--line2)", background: "transparent", color: showSettings ? "var(--accent)" : "var(--muted2)", cursor: "pointer" }}
-            >
-              <Settings size={17} strokeWidth={2.2} />
-            </button>
-          </div>
-
-          {showSettings && (
-            <div className="panel" style={{ position: "absolute", top: 52, right: 14, zIndex: 10, width: 240, padding: 8, boxShadow: "0 18px 50px -20px #000" }}>
-              <a
-                href="/grounds?world=1"
-                className="mono"
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", borderRadius: 9, color: "var(--muted)", fontSize: 11.5, textDecoration: "none" }}
-              >
-                <Globe size={14} strokeWidth={2.2} style={{ color: "var(--accent)", flexShrink: 0 }} />
-                <span style={{ flex: 1, lineHeight: 1.3 }}>
-                  3D Grounds <span style={{ opacity: 0.7 }}>· experimental on phone</span>
-                </span>
-                <ChevronRight size={13} strokeWidth={2.2} />
-              </a>
-            </div>
-          )}
+          <span className="mono" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
+            <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
+            <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
+            <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>STREAK</span>
+          </span>
         </div>
 
         {/* hero: your living champion, full-bleed scene (or the adopt cold-start) */}
