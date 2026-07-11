@@ -416,12 +416,34 @@ export function Landing() {
       </div>
 
       <Styles />
-      {entering && <EnteringOverlay />}
+      {entering && <EnteringOverlay href={playHref} />}
     </main>
   );
 }
 
-function EnteringOverlay() {
+// Delays (ms): show reassurance once a load is clearly taking a moment, and hard
+// fall back to a full-page navigation if the client-side route transition never
+// swaps this page out — which happens on a slow mobile bundle download, or when
+// a tab left open across a deploy asks for a chunk hash that no longer exists
+// (the lazy import 404s and the SPA transition hangs forever). A real navigation
+// fetches a fresh document + chunks, so the player is never stranded here.
+const ENTER_SLOW_MS = 4500;
+const ENTER_FAILSAFE_MS = 11000;
+
+function EnteringOverlay({ href }: { href: string }) {
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const slowT = setTimeout(() => setSlow(true), ENTER_SLOW_MS);
+    // If this overlay is still mounted after the failsafe window, the SPA
+    // transition is stuck/too slow — force a fresh full-page load of the route.
+    const failsafeT = setTimeout(() => window.location.assign(href), ENTER_FAILSAFE_MS);
+    return () => {
+      clearTimeout(slowT);
+      clearTimeout(failsafeT);
+    };
+  }, [href]);
+
   return (
     <div
       aria-live="polite"
@@ -456,8 +478,28 @@ function EnteringOverlay() {
           ENTERING THE GROUNDS
         </div>
         <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--muted)" }}>
-          Summoning the world…
+          {slow ? "Still summoning the world — one moment…" : "Summoning the world…"}
         </p>
+        {slow && (
+          <button
+            type="button"
+            onClick={() => window.location.assign(href)}
+            className="mono"
+            style={{
+              marginTop: 16,
+              background: "none",
+              border: "1px solid var(--line2)",
+              borderRadius: 99,
+              color: "var(--muted)",
+              fontSize: 11,
+              letterSpacing: 1,
+              padding: "7px 16px",
+              cursor: "pointer",
+            }}
+          >
+            Taking too long? Reload
+          </button>
+        )}
       </div>
     </div>
   );

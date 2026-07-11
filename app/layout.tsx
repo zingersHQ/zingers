@@ -4,6 +4,7 @@ import "./globals.css";
 import { Nav } from "@/components/nav";
 import { PlayerSync } from "@/components/player-sync";
 import { SessionPing } from "@/components/session-ping";
+import { ChunkReloadGuard } from "@/components/chunk-reload-guard";
 import { BRAND, pageTitle, STORAGE } from "@/lib/brand";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", weight: ["400", "500", "700"] });
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body className={`${grotesk.variable} ${mono.variable}`}>
+        <ChunkReloadGuard />
         <PlayerSync />
         <SessionPing />
         <Nav />
