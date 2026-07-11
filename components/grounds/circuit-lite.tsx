@@ -88,8 +88,10 @@ const ACCENT = BIOME.lights.arenaPoint;
 type Phase = "ready" | "running" | "failed" | "done";
 type FailReason = "fall" | "gates";
 
-// prototype fallback body while the champion GLTF resolves (also our old mech)
-function MechBody() {
+// prototype fallback body while the champion GLTF resolves (also our old mech,
+// and the mobile/lite flyer — cheap enough to keep the WebGL context alive on
+// low-end GPUs that choke on the full GLTF rig).
+function MechBody({ flying = false }: { flying?: boolean }) {
   return (
     <>
       <mesh castShadow>
@@ -100,6 +102,19 @@ function MechBody() {
         <boxGeometry args={[0.42, 0.16, 0.04]} />
         <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
+      {flying && (
+        // a couple of cheap thruster cones so the mobile flyer reads as jetting up
+        <group position={[0, -0.5, -0.12]}>
+          <mesh position={[-0.16, 0, 0]} rotation={[Math.PI, 0, 0]}>
+            <coneGeometry args={[0.12, 0.5, 10]} />
+            <meshBasicMaterial color={ACCENT} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          </mesh>
+          <mesh position={[0.16, 0, 0]} rotation={[Math.PI, 0, 0]}>
+            <coneGeometry args={[0.12, 0.5, 10]} />
+            <meshBasicMaterial color={ACCENT} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          </mesh>
+        </group>
+      )}
     </>
   );
 }
@@ -144,6 +159,7 @@ function Flyer({
   onGate,
   onSectorClear,
   onFail,
+  lite = false,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
@@ -154,6 +170,9 @@ function Flyer({
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
+  /** mobile: render the cheap MechBody (no GLTF rig / mixer / jetpack) so the
+   *  WebGL context survives on low-end GPUs instead of looping context loss */
+  lite?: boolean;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -266,22 +285,27 @@ function Flyer({
   return (
     <group ref={grp} position={track.spawn}>
       {/* the OWNED champion, in a real flight pose + its own jetpack (companionDrive).
-          The mech is only the fallback while the GLTF resolves. */}
+          On mobile (lite) we render the cheap MechBody instead — the full GLTF rig
+          was overloading low-end GPUs into a WebGL context-loss loop. */}
       <group position={[0, CHAMP_Y, 0]} scale={CHAMP_SCALE}>
-        <Suspense fallback={<group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody /></group>}>
-          <ChampionMesh
-            type={champType}
-            champion={champion}
-            position={[0, 0, 0]}
-            rotation={0}
-            showLabel={false}
-            hideFloaters
-            breatheIntensity={0.5}
-            restPose="standing"
-            companionDrive={companionDrive}
-            sceneScale={1}
-          />
-        </Suspense>
+        {lite ? (
+          <group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody flying /></group>
+        ) : (
+          <Suspense fallback={<group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody /></group>}>
+            <ChampionMesh
+              type={champType}
+              champion={champion}
+              position={[0, 0, 0]}
+              rotation={0}
+              showLabel={false}
+              hideFloaters
+              breatheIntensity={0.5}
+              restPose="standing"
+              companionDrive={companionDrive}
+              sceneScale={1}
+            />
+          </Suspense>
+        )}
       </group>
       {/* ascent sigil — the run marks the champion (essence §3): a halo whose glyphs
           grow with your best depth, orbiting above the flyer */}
@@ -298,11 +322,13 @@ function ReadyPose({
   champType,
   champion,
   ascentDepth,
+  lite = false,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
   champion: Champion;
   ascentDepth: number;
+  lite?: boolean;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -315,19 +341,23 @@ function ReadyPose({
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
       <group scale={CHAMP_SCALE}>
-        <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody /></group>}>
-          <ChampionMesh
-            type={champType}
-            champion={champion}
-            position={[0, 0, 0]}
-            rotation={CHAMP_FACE}
-            showLabel={false}
-            hideFloaters
-            breatheIntensity={0.9}
-            restPose="standing"
-            sceneScale={1}
-          />
-        </Suspense>
+        {lite ? (
+          <group scale={1 / CHAMP_SCALE}><MechBody /></group>
+        ) : (
+          <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody /></group>}>
+            <ChampionMesh
+              type={champType}
+              champion={champion}
+              position={[0, 0, 0]}
+              rotation={CHAMP_FACE}
+              showLabel={false}
+              hideFloaters
+              breatheIntensity={0.9}
+              restPose="standing"
+              sceneScale={1}
+            />
+          </Suspense>
+        )}
       </group>
       <AscentSigil depth={ascentDepth} />
     </group>
@@ -380,6 +410,11 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   // which can fire late or never.
   const [glLost, setGlLost] = useState(false);
   const [glEpoch, setGlEpoch] = useState(0);
+  // when the context can't be sustained (keeps dying), stop auto-rebuilding so we
+  // don't strobe "RESTORING GRAPHICS" forever — show a calm manual retry instead.
+  const [glFatal, setGlFatal] = useState(false);
+  const glRebuildsRef = useRef(0);   // auto-rebuild attempts so far (capped)
+  const glTeardownRef = useRef(false); // true while WE intentionally remount the Canvas
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
@@ -615,7 +650,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           key={`${runId}-${glEpoch}`}
           frameloop="always"
           shadows={!embedded}
-          dpr={embedded ? [0.6, 1] : [1, 1.5]}
+          dpr={embedded ? 1 : [1, 1.5]}
           camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
           gl={{ antialias: !embedded, powerPreference: embedded ? "default" : "high-performance" }}
           style={{ pointerEvents: "none" }}
@@ -629,17 +664,36 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             // + render loop) rather than gambling on `webglcontextrestored` —
             // that event can fire late or never, and R3F won't reliably resume
             // its loop on the old context, which is what leaves the game frozen.
+            //
+            // TWO guards keep this from strobing "RESTORING GRAPHICS" forever:
+            //  1) glTeardownRef — React unmounting the old Canvas (our own remount)
+            //     makes R3F call gl.forceContextLoss(), which re-fires THIS handler.
+            //     Ignore those self-inflicted losses so a rebuild can't feed itself.
+            //  2) a hard cap — if the GPU keeps dropping a fresh context, stop
+            //     rebuilding and show a calm manual "retry" instead of a flicker.
             canvas.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
-              setGlLost(true);
+              if (glTeardownRef.current) return;
               holdRef.current = false;
               setHolding(false);
               stopJet();
               setPhase((p) => (p === "running" ? "ready" : p));
+              if (glRebuildsRef.current >= 2) {
+                setGlLost(false);
+                setGlFatal(true);
+                return;
+              }
+              glRebuildsRef.current += 1;
+              setGlLost(true);
+              glTeardownRef.current = true;
               window.setTimeout(() => {
                 setGlEpoch((n) => n + 1);
                 setGlLost(false);
-              }, 400);
+                // release the guard once the remount has settled on a fresh context
+                window.setTimeout(() => {
+                  glTeardownRef.current = false;
+                }, 600);
+              }, 450);
             });
           }}
         >
@@ -655,7 +709,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} />
           </Physics>
           {phase === "ready" && (
-            <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} />
+            <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} lite={embedded} />
           )}
           {running && (
             <Flyer
@@ -669,6 +723,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
+              lite={embedded}
             />
           )}
         </Canvas>
@@ -687,13 +742,39 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       {/* ── renderer recovery: the GPU dropped our WebGL context (common on
            phones under load). We asked for it back; hold the player here so the
            game doesn't look frozen while it comes back. ── */}
-      {glLost && (
+      {glLost && !glFatal && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.72)", zIndex: 40, pointerEvents: "none" }}>
           <div className="mono" style={{ textAlign: "center", color: ACCENT }}>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>RESTORING GRAPHICS…</div>
             <div style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 0.5 }}>
               the renderer hiccuped — one moment
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── the GPU kept dropping the context after repeated auto-rebuilds. Stop
+           the strobe and hand control back to the player with one manual retry. ── */}
+      {glFatal && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.9)", zIndex: 45, pointerEvents: "auto", padding: 24 }}>
+          <div className="mono" style={{ textAlign: "center", color: ACCENT, maxWidth: 320 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>GRAPHICS OVERLOADED</div>
+            <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 8, lineHeight: 1.5 }}>
+              This device keeps dropping the 3D renderer. Close other tabs/apps to free memory, then tap to restart the Climb.
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                glRebuildsRef.current = 0;
+                glTeardownRef.current = false;
+                setGlFatal(false);
+                setGlLost(false);
+                setGlEpoch((n) => n + 1);
+              }}
+              style={{ marginTop: 16, padding: "10px 22px", borderRadius: 999, border: `1px solid ${ACCENT}`, background: "transparent", color: ACCENT, fontWeight: 800, letterSpacing: 1, fontSize: 12, cursor: "pointer" }}
+            >
+              RESTART CLIMB
+            </button>
           </div>
         </div>
       )}
