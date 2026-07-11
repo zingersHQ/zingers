@@ -24,6 +24,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { PerformanceMonitor, AdaptiveDpr } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
@@ -362,6 +363,14 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const [board, setBoard] = useState<BoardRow[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [reward, setReward] = useState<RunReward | null>(null);
+  // WebGL context loss = the canvas freezes on its last frame (champion still
+  // drawn, nothing moves). Mobile GPUs evict contexts under memory/thermal
+  // pressure; without recovery the game is dead until reload. `glEpoch` keys the
+  // Canvas so we can rebuild it (fresh context + render loop) after a loss —
+  // more reliable than waiting on the browser's `webglcontextrestored` event,
+  // which can fire late or never.
+  const [glLost, setGlLost] = useState(false);
+  const [glEpoch, setGlEpoch] = useState(0);
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
@@ -561,17 +570,40 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     >
       {mounted && (
         <Canvas
-          key={runId}
+          key={`${runId}-${glEpoch}`}
           shadows={!embedded}
           dpr={embedded ? [0.6, 1] : [1, 1.5]}
           camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
-          gl={{ antialias: !embedded, powerPreference: "high-performance" }}
+          gl={{ antialias: !embedded, powerPreference: embedded ? "default" : "high-performance" }}
           style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = BIOME.exposure;
+            const canvas = gl.domElement;
+            // preventDefault() asks the browser to keep the drawing buffer so it
+            // can be restored. On loss we bail the run back to the pad, cut the
+            // jet, and rebuild the whole canvas after a short beat (fresh context
+            // + render loop) rather than gambling on `webglcontextrestored` —
+            // that event can fire late or never, and R3F won't reliably resume
+            // its loop on the old context, which is what leaves the game frozen.
+            canvas.addEventListener("webglcontextlost", (e) => {
+              e.preventDefault();
+              setGlLost(true);
+              holdRef.current = false;
+              setHolding(false);
+              stopJet();
+              setPhase((p) => (p === "running" ? "ready" : p));
+              window.setTimeout(() => {
+                setGlEpoch((n) => n + 1);
+                setGlLost(false);
+              }, 400);
+            });
           }}
         >
+          {/* auto-scale render resolution when the GPU can't keep up so frame
+              drops self-correct instead of compounding into a context loss */}
+          <PerformanceMonitor />
+          <AdaptiveDpr pixelated={false} />
           <color attach="background" args={[BIOME.bg]} />
           <fog attach="fog" args={[BIOME.fog.color, 30, 190]} />
           <Lights lite={embedded} />
@@ -596,6 +628,20 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             />
           )}
         </Canvas>
+      )}
+
+      {/* ── renderer recovery: the GPU dropped our WebGL context (common on
+           phones under load). We asked for it back; hold the player here so the
+           game doesn't look frozen while it comes back. ── */}
+      {glLost && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.72)", zIndex: 40, pointerEvents: "none" }}>
+          <div className="mono" style={{ textAlign: "center", color: ACCENT }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>RESTORING GRAPHICS…</div>
+            <div style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 0.5 }}>
+              the renderer hiccuped — one moment
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── top HUD: altitude score + sector progress ── */}
