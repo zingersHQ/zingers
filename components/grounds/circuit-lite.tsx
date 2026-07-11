@@ -88,10 +88,8 @@ const ACCENT = BIOME.lights.arenaPoint;
 type Phase = "ready" | "running" | "failed" | "done";
 type FailReason = "fall" | "gates";
 
-// prototype fallback body while the champion GLTF resolves (also our old mech,
-// and the mobile/lite flyer — cheap enough to keep the WebGL context alive on
-// low-end GPUs that choke on the full GLTF rig).
-function MechBody({ flying = false }: { flying?: boolean }) {
+// prototype fallback body while the champion GLTF resolves (also our old mech)
+function MechBody() {
   return (
     <>
       <mesh castShadow>
@@ -102,19 +100,6 @@ function MechBody({ flying = false }: { flying?: boolean }) {
         <boxGeometry args={[0.42, 0.16, 0.04]} />
         <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
-      {flying && (
-        // a couple of cheap thruster cones so the mobile flyer reads as jetting up
-        <group position={[0, -0.5, -0.12]}>
-          <mesh position={[-0.16, 0, 0]} rotation={[Math.PI, 0, 0]}>
-            <coneGeometry args={[0.12, 0.5, 10]} />
-            <meshBasicMaterial color={ACCENT} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-          <mesh position={[0.16, 0, 0]} rotation={[Math.PI, 0, 0]}>
-            <coneGeometry args={[0.12, 0.5, 10]} />
-            <meshBasicMaterial color={ACCENT} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-        </group>
-      )}
     </>
   );
 }
@@ -159,7 +144,6 @@ function Flyer({
   onGate,
   onSectorClear,
   onFail,
-  lite = false,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
@@ -170,9 +154,6 @@ function Flyer({
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
-  /** mobile: render the cheap MechBody (no GLTF rig / mixer / jetpack) so the
-   *  WebGL context survives on low-end GPUs instead of looping context loss */
-  lite?: boolean;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -285,27 +266,22 @@ function Flyer({
   return (
     <group ref={grp} position={track.spawn}>
       {/* the OWNED champion, in a real flight pose + its own jetpack (companionDrive).
-          On mobile (lite) we render the cheap MechBody instead — the full GLTF rig
-          was overloading low-end GPUs into a WebGL context-loss loop. */}
+          The mech is only the fallback while the GLTF resolves. */}
       <group position={[0, CHAMP_Y, 0]} scale={CHAMP_SCALE}>
-        {lite ? (
-          <group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody flying /></group>
-        ) : (
-          <Suspense fallback={<group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody /></group>}>
-            <ChampionMesh
-              type={champType}
-              champion={champion}
-              position={[0, 0, 0]}
-              rotation={0}
-              showLabel={false}
-              hideFloaters
-              breatheIntensity={0.5}
-              restPose="standing"
-              companionDrive={companionDrive}
-              sceneScale={1}
-            />
-          </Suspense>
-        )}
+        <Suspense fallback={<group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody /></group>}>
+          <ChampionMesh
+            type={champType}
+            champion={champion}
+            position={[0, 0, 0]}
+            rotation={0}
+            showLabel={false}
+            hideFloaters
+            breatheIntensity={0.5}
+            restPose="standing"
+            companionDrive={companionDrive}
+            sceneScale={1}
+          />
+        </Suspense>
       </group>
       {/* ascent sigil — the run marks the champion (essence §3): a halo whose glyphs
           grow with your best depth, orbiting above the flyer */}
@@ -322,13 +298,11 @@ function ReadyPose({
   champType,
   champion,
   ascentDepth,
-  lite = false,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
   champion: Champion;
   ascentDepth: number;
-  lite?: boolean;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -341,23 +315,19 @@ function ReadyPose({
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
       <group scale={CHAMP_SCALE}>
-        {lite ? (
-          <group scale={1 / CHAMP_SCALE}><MechBody /></group>
-        ) : (
-          <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody /></group>}>
-            <ChampionMesh
-              type={champType}
-              champion={champion}
-              position={[0, 0, 0]}
-              rotation={CHAMP_FACE}
-              showLabel={false}
-              hideFloaters
-              breatheIntensity={0.9}
-              restPose="standing"
-              sceneScale={1}
-            />
-          </Suspense>
-        )}
+        <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody /></group>}>
+          <ChampionMesh
+            type={champType}
+            champion={champion}
+            position={[0, 0, 0]}
+            rotation={CHAMP_FACE}
+            showLabel={false}
+            hideFloaters
+            breatheIntensity={0.9}
+            restPose="standing"
+            sceneScale={1}
+          />
+        </Suspense>
       </group>
       <AscentSigil depth={ascentDepth} />
     </group>
@@ -673,6 +643,11 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             //     rebuilding and show a calm manual "retry" instead of a flicker.
             canvas.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
+              // surface the loss on the on-device HUD: how many, self-inflicted
+              // (teardown) or real, and any driver status message. This is the
+              // single clue that tells us WHY Climb loses its context on a phone.
+              const msg = (e as WebGLContextEvent).statusMessage || "";
+              setDiagErr(`ctxlost#${glRebuildsRef.current + 1}${glTeardownRef.current ? " (teardown)" : ""} ${msg}`.slice(0, 90));
               if (glTeardownRef.current) return;
               holdRef.current = false;
               setHolding(false);
@@ -709,7 +684,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} />
           </Physics>
           {phase === "ready" && (
-            <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} lite={embedded} />
+            <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} />
           )}
           {running && (
             <Flyer
@@ -723,7 +698,6 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
-              lite={embedded}
             />
           )}
         </Canvas>
