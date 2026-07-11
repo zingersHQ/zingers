@@ -1,5 +1,5 @@
 "use client";
-import { memo, useMemo, useRef } from "react";
+import { memo, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RigidBody } from "@react-three/rapier";
@@ -48,12 +48,35 @@ const CheckpointRing = memo(function CheckpointRing({
   );
 });
 
-const TrackPlatform = memo(function TrackPlatform({ plat, biome }: { plat: CircuitPlatform; biome: BiomeConfig }) {
+// Physics wrapper that collapses to a plain group when the scene is rendered
+// `static` (the mobile one-thumb Climb): there, movement is kinematic and gate
+// hits are manual z-plane checks, so the Rapier bodies are pure dead weight —
+// and the physics WASM/world is exactly the kind of memory a phone GPU can't
+// spare, which is what pushes the WebGL context over the edge. Desktop (the
+// Handler venue in world.tsx) still gets real fixed colliders.
+function PhysBody({
+  staticMode,
+  position,
+  children,
+}: {
+  staticMode: boolean;
+  position?: [number, number, number];
+  children: ReactNode;
+}) {
+  if (staticMode) return <group position={position}>{children}</group>;
+  return (
+    <RigidBody type="fixed" colliders="cuboid" position={position}>
+      {children}
+    </RigidBody>
+  );
+}
+
+const TrackPlatform = memo(function TrackPlatform({ plat, biome, staticMode }: { plat: CircuitPlatform; biome: BiomeConfig; staticMode: boolean }) {
   const color =
     plat.accent === "top" ? biome.platform.top : plat.accent === "b" ? biome.platform.b : biome.platform.a;
   const topY = plat.pos[1] + plat.size[1] / 2;
   return (
-    <RigidBody type="fixed" colliders="cuboid">
+    <PhysBody staticMode={staticMode}>
       <mesh position={plat.pos} castShadow receiveShadow>
         <boxGeometry args={plat.size} />
         <meshStandardMaterial
@@ -68,20 +91,20 @@ const TrackPlatform = memo(function TrackPlatform({ plat, biome }: { plat: Circu
         <ringGeometry args={[Math.min(plat.size[0], plat.size[2]) / 2 - 0.14, Math.min(plat.size[0], plat.size[2]) / 2, 44]} />
         <meshBasicMaterial color={color} transparent opacity={0.45} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
-    </RigidBody>
+    </PhysBody>
   );
 });
 
 /** Void safety net — catches a fall (triggers run failure in the Handler). */
-function SafetyFloor({ color, track }: { color: string; track: CircuitTrackDef }) {
+function SafetyFloor({ color, track, staticMode }: { color: string; track: CircuitTrackDef; staticMode: boolean }) {
   const { maxZ } = sectorBounds(track);
   return (
-    <RigidBody type="fixed" colliders="cuboid" position={[0, -12, maxZ * 0.45]}>
+    <PhysBody staticMode={staticMode} position={[0, -12, maxZ * 0.45]}>
       <mesh receiveShadow>
         <boxGeometry args={[48, 1, maxZ + 24]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.08} metalness={0.2} roughness={0.9} />
       </mesh>
-    </RigidBody>
+    </PhysBody>
   );
 }
 
@@ -89,19 +112,23 @@ export const CircuitScene = memo(function CircuitScene({
   track,
   biome,
   highlightIndex,
+  staticMode = false,
 }: {
   track: CircuitTrackDef;
   biome: BiomeConfig;
   /** optional: pulse this checkpoint as the next target (used by the one-thumb mode) */
   highlightIndex?: number;
+  /** render the track as plain meshes (no Rapier bodies) — the mobile one-thumb
+   *  Climb is fully kinematic, so it drops the physics engine entirely. */
+  staticMode?: boolean;
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
   return (
     <>
-      <SafetyFloor color={floor} track={track} />
+      <SafetyFloor color={floor} track={track} staticMode={staticMode} />
       {track.platforms.map((p, i) => (
-        <TrackPlatform key={i} plat={p} biome={biome} />
+        <TrackPlatform key={i} plat={p} biome={biome} staticMode={staticMode} />
       ))}
       {track.checkpoints.map((cp) => (
         <CheckpointRing

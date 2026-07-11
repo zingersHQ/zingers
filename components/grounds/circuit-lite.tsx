@@ -24,7 +24,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Physics } from "@react-three/rapier";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { ChampionMesh } from "./champion-mesh";
@@ -371,13 +370,22 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const [board, setBoard] = useState<BoardRow[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [reward, setReward] = useState<RunReward | null>(null);
-  // WebGL context loss handling. The ONLY thing needed is preventDefault() on
-  // `webglcontextlost` so the browser restores the context (a phone GPU evicts
-  // it under memory pressure) — the R3F render loop keeps running and picks the
-  // restored context straight back up. The old approach of REBUILDING the Canvas
-  // on every loss was the actual bug: each rebuild reset the run to the ready pad
-  // and churned the context, so the champion rendered but the game never moved.
-  const [glLost, setGlLost] = useState(false);
+  // WebGL context loss handling — a phone GPU evicts our context under memory
+  // pressure. The happy path is: preventDefault() on `webglcontextlost` asks the
+  // browser to hand the SAME context back; when `webglcontextrestored` fires the
+  // running R3F loop picks it straight up (no rebuild, no reset). But on real
+  // phones that restore event often NEVER comes — the context stays dead and the
+  // game freezes forever behind the "restoring…" veil (the reported bug).
+  //
+  // So we add a watchdog: if the browser hasn't restored within a grace window,
+  // we rebuild the Canvas ONCE (fresh context) and reset to the ready pad. We cap
+  // rebuilds inside a rolling window so a chronically-starved device can't churn
+  // in a loop — past the cap we stop auto-recovering and hand the player a manual
+  // "reload graphics" button instead of a silent freeze.
+  const [glLost, setGlLost] = useState(false); // context out, auto-recovery pending
+  const [glDead, setGlDead] = useState(false); // auto-recovery exhausted → manual retry
+  const glWatchdog = useRef<number | null>(null);
+  const glRebuilds = useRef<number[]>([]); // timestamps of recent forced rebuilds
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
@@ -559,8 +567,60 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     setNewBest(false);
     setReward(null);
     setPhase("ready");
-    setRunId((n) => n + 1);
+    setRunId((n) => n + 1); // new Canvas key → fresh WebGL context + clean pad
   }, [setHold]);
+
+  // ── WebGL context-loss watchdog ──────────────────────────────────────────
+  // How long to wait for the browser to restore the SAME context before we give
+  // up and rebuild; how many rebuilds we allow inside a rolling window before we
+  // stop auto-churning and ask the player to retry by hand.
+  const GL_RESTORE_GRACE_MS = 2500;
+  const GL_REBUILD_WINDOW_MS = 20000;
+  const GL_MAX_REBUILDS = 3;
+
+  const clearGlWatchdog = useCallback(() => {
+    if (glWatchdog.current != null) {
+      window.clearTimeout(glWatchdog.current);
+      glWatchdog.current = null;
+    }
+  }, []);
+
+  // the browser gave the context back on its own — the loop already resumed on it
+  const onGlRestored = useCallback(() => {
+    clearGlWatchdog();
+    glRebuilds.current = []; // a clean restore means the device is healthy again
+    setGlLost(false);
+    setGlDead(false);
+  }, [clearGlWatchdog]);
+
+  const onGlLost = useCallback(() => {
+    setGlLost(true);
+    clearGlWatchdog();
+    glWatchdog.current = window.setTimeout(() => {
+      // still lost after the grace window → the browser isn't coming back for us
+      const now = performance.now();
+      glRebuilds.current = glRebuilds.current.filter((t) => now - t < GL_REBUILD_WINDOW_MS);
+      if (glRebuilds.current.length < GL_MAX_REBUILDS) {
+        glRebuilds.current.push(now);
+        setGlLost(false);
+        restart(); // rebuild the Canvas on a fresh context, back at the ready pad
+      } else {
+        // chronic loss — stop churning and let the player decide when to retry
+        setGlLost(false);
+        setGlDead(true);
+      }
+    }, GL_RESTORE_GRACE_MS);
+  }, [clearGlWatchdog, restart]);
+
+  // manual recovery from the "graphics keep dropping" card
+  const recoverGraphics = useCallback(() => {
+    glRebuilds.current = [];
+    setGlDead(false);
+    setGlLost(false);
+    restart();
+  }, [restart]);
+
+  useEffect(() => () => clearGlWatchdog(), [clearGlWatchdog]);
 
   const onGate = useCallback((nextIdx: number) => {
     setGates((g) => g + 1);
@@ -626,17 +686,17 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = BIOME.exposure;
             const canvas = gl.domElement;
-            // Non-destructive recovery: preventDefault() lets the browser restore
-            // the SAME context, and R3F's always-on loop resumes on it — no Canvas
-            // rebuild, no run reset. We only flash a brief overlay while it's out.
+            // preventDefault() first (asks the browser to restore the SAME
+            // context, the cheapest path); the watchdog handles the case where
+            // that restore never arrives so we can't freeze forever.
             canvas.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
               const msg = (e as WebGLContextEvent).statusMessage || "";
               setDiagErr(`ctxlost ${msg}`.slice(0, 90));
-              setGlLost(true);
+              onGlLost();
             });
             canvas.addEventListener("webglcontextrestored", () => {
-              setGlLost(false);
+              onGlRestored();
             });
           }}
         >
@@ -644,9 +704,10 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           <color attach="background" args={[BIOME.bg]} />
           <fog attach="fog" args={[BIOME.fog.color, 30, 190]} />
           <Lights lite={embedded} />
-          <Physics paused>
-            <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} />
-          </Physics>
+          {/* fully kinematic + manual gate checks → no Rapier. Dropping the
+              physics world/WASM is real memory back on phones, where it was
+              helping tip the WebGL context into eviction. */}
+          <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} staticMode />
           {phase === "ready" && (
             <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} />
           )}
@@ -681,13 +742,34 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
            on phones under load). preventDefault() means the browser hands it back
            and the loop resumes on the SAME canvas — this overlay just covers the
            blink; the run keeps its state underneath. ── */}
-      {glLost && (
+      {glLost && !glDead && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.72)", zIndex: 40, pointerEvents: "none" }}>
           <div className="mono" style={{ textAlign: "center", color: ACCENT }}>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>RESTORING GRAPHICS…</div>
             <div style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 0.5 }}>
               the renderer hiccuped — one moment
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── auto-recovery exhausted: the GPU keeps dropping our context (a
+           memory-starved device). Stop churning and let the player retry when
+           ready, so it never sits frozen behind the veil. ── */}
+      {glDead && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.86)", zIndex: 45, padding: 24 }}>
+          <div className="mono" style={{ textAlign: "center", color: "#fff", maxWidth: 320 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: 1, color: ACCENT }}>GRAPHICS KEEP DROPPING</div>
+            <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 8, marginBottom: 18, letterSpacing: 0.5, lineHeight: 1.5 }}>
+              your device ran low on graphics memory. close other tabs, then reload the climb.
+            </div>
+            <button
+              type="button"
+              onClick={recoverGraphics}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: ACCENT, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
+            >
+              <RotateCcw size={16} strokeWidth={2.4} /> Reload graphics
+            </button>
           </div>
         </div>
       )}
