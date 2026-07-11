@@ -8,11 +8,13 @@ import { useChampions } from "@/store/champions";
 import { cardOf } from "@/lib/cards/card";
 import { ROSTER } from "@/lib/engine/roster";
 import { ChampionCardFrame, shareQuery } from "@/components/collection/card-frame";
+import { useIsMobile } from "@/lib/use-device";
 
 export default function ChampionPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = use(params);
   const ckey = key.toUpperCase();
   const [mounted, setMounted] = useState(false);
+  const isMobile = useIsMobile();
   const { get, getRecipe, owned } = useChampions();
 
   useEffect(() => {
@@ -34,49 +36,48 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
     .sort((a, b) => b[1] - a[1])
     .map(([label, value]) => ({ label, value }));
 
-  return (
-    <main style={{ maxWidth: 1180, margin: "0 auto", padding: "26px 22px 90px" }}>
-      <Link href="/collection" className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>
-        ← collection
+  const heroButtons = (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <Link href={shareHref} className="btn btn-primary" style={{ ["--ac" as string]: card.rarityHex, flex: "1 1 140px", textAlign: "center" }}>
+        Share card
       </Link>
+      <Link href="/arena" className="btn" style={{ ["--ac" as string]: col, flex: "1 1 140px", textAlign: "center" }}>
+        Fight
+      </Link>
+    </div>
+  );
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 440px) minmax(0, 1fr)", gap: 22, alignItems: "start", marginTop: 14 }}>
-        <ChampionCardFrame
-          card={card}
-          champion={c || blank()}
-          owned={owned === ckey}
-          footer={
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-              <Link href={shareHref} className="btn btn-primary" style={{ ["--ac" as string]: card.rarityHex, flex: "1 1 140px", textAlign: "center" }}>
-                Share card
-              </Link>
-              <Link href="/arena" className="btn" style={{ ["--ac" as string]: col, flex: "1 1 140px", textAlign: "center" }}>
-                Fight
-              </Link>
-            </div>
-          }
-        />
+  const cardFrame = (
+    <ChampionCardFrame
+      card={card}
+      champion={c || blank()}
+      owned={owned === ckey}
+      orientation={isMobile ? "row" : "portrait"}
+      footer={isMobile ? undefined : <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>{heroButtons}</div>}
+    />
+  );
 
-        <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="panel" style={{ ["--ac" as string]: col, padding: 22 }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col, marginBottom: 10 }}>
-              CARD SAGA · GENERATED FROM THE RECORD
-            </div>
-            <h1 style={{ fontSize: 42, fontWeight: 800, margin: 0, lineHeight: 1 }}>{card.name}</h1>
-            <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "12px 0 0" }}>{card.saga}</p>
-            <p style={{ color: "var(--muted2)", fontSize: 13, lineHeight: 1.55, margin: "12px 0 0" }}>
-              {entry.persona}. This card echoes <strong style={{ color: "var(--ink)" }}>{card.lineage}</strong>, carries the physics of{" "}
-              <strong style={{ color: col }}>{card.force.name}</strong>, and can be re-rendered from its career state at any time.
-            </p>
-          </div>
+  const detailStack = (
+    <>
+      <div className="panel" style={{ ["--ac" as string]: col, padding: isMobile ? 18 : 22 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: col, marginBottom: 10 }}>
+          CARD SAGA · GENERATED FROM THE RECORD
+        </div>
+        <h1 style={{ fontSize: isMobile ? 30 : 42, fontWeight: 800, margin: 0, lineHeight: 1.05 }}>{card.name}</h1>
+        <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "12px 0 0" }}>{card.saga}</p>
+        <p style={{ color: "var(--muted2)", fontSize: 13, lineHeight: 1.55, margin: "12px 0 0" }}>
+          {entry.persona}. This card echoes <strong style={{ color: "var(--ink)" }}>{card.lineage}</strong>, carries the physics of{" "}
+          <strong style={{ color: col }}>{card.force.name}</strong>, and can be re-rendered from its career state at any time.
+        </p>
+      </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            <Stat n={card.skillLevel} l="SKILL LEVEL" c="var(--gold)" />
-            <Stat n={card.skills.length} l="SKILLS" c={col} />
-            <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
-          </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+        <Stat n={card.skillLevel} l="SKILL LEVEL" c="var(--gold)" />
+        <Stat n={card.skills.length} l="SKILLS" c={col} />
+        <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
+      </div>
 
-          <div className="panel" style={{ padding: 20 }}>
+      <div className="panel" style={{ padding: 20 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
               ABILITIES · CARD TEXT
             </div>
@@ -93,7 +94,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             <div className="panel" style={{ padding: 20 }}>
               <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
                 COMBAT STATS
@@ -144,7 +145,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               FORM &amp; RECORD
             </div>
             {prof ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 12 }}>
                 <Meter label="Win rate" v={prof.winRate} c="var(--good)" />
                 <Meter label="Deception" v={prof.deception} c="var(--bad)" />
                 <Meter label="Detection" v={prof.detection} c="#4aa3ff" />
@@ -168,8 +169,27 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               <span>tier {app.tier.name}</span>
             </div>
           </div>
-        </section>
-      </div>
+    </>
+  );
+
+  return (
+    <main style={{ maxWidth: 1180, margin: "0 auto", padding: "26px 22px 90px" }}>
+      <Link href="/collection" className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+        ← collection
+      </Link>
+
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 14 }}>
+          {cardFrame}
+          {heroButtons}
+          {detailStack}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 440px) minmax(0, 1fr)", gap: 22, alignItems: "start", marginTop: 14 }}>
+          {cardFrame}
+          <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>{detailStack}</section>
+        </div>
+      )}
     </main>
   );
 }

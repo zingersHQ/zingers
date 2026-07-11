@@ -27,6 +27,7 @@ export function ChampionCardFrame({
   champion,
   owned = false,
   compact = false,
+  orientation = "portrait",
   footer,
   style,
 }: {
@@ -34,11 +35,14 @@ export function ChampionCardFrame({
   champion: Champion;
   owned?: boolean;
   compact?: boolean;
+  /** "row" lays the thumbnail beside the details — a compact card header. */
+  orientation?: "portrait" | "row";
   footer?: ReactNode;
   style?: CSSProperties;
 }) {
   const hasRecord = card.battles > 0;
   const wr = card.battles ? Math.round((card.wins / card.battles) * 100) : 0;
+  const row = orientation === "row";
 
   return (
     <article
@@ -46,7 +50,7 @@ export function ChampionCardFrame({
       style={{
         ["--ac" as string]: card.rarityHex,
         display: "flex",
-        flexDirection: "column",
+        flexDirection: row ? "row" : "column",
         overflow: "hidden",
         padding: 0,
         color: "inherit",
@@ -55,7 +59,14 @@ export function ChampionCardFrame({
         ...style,
       }}
     >
-      <div style={{ position: "relative", aspectRatio: "4 / 5", overflow: "hidden", background: "#0a0812" }}>
+      <div
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          background: "#0a0812",
+          ...(row ? { width: 128, flex: "0 0 auto" } : { aspectRatio: "4 / 5" }),
+        }}
+      >
         <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" eager />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)" }} />
         <Badge left color={card.force.hex}>
@@ -72,7 +83,16 @@ export function ChampionCardFrame({
         )}
       </div>
 
-      <div style={{ padding: compact ? "14px 14px 16px" : "18px 18px 20px", display: "flex", flexDirection: "column", gap: compact ? 10 : 12 }}>
+      <div
+        style={{
+          padding: compact ? "14px 14px 16px" : "18px 18px 20px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: row ? "center" : undefined,
+          gap: compact ? 10 : 12,
+          ...(row ? { flex: "1 1 auto", minWidth: 0 } : {}),
+        }}
+      >
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontSize: compact ? 19 : 28, fontWeight: 800, letterSpacing: 0.5 }}>{card.name}</span>
           <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>{hasRecord ? `LV ${card.level}` : "UNFOUGHT"}</span>
