@@ -334,6 +334,15 @@ function ReadyPose({
   );
 }
 
+// TEMP diagnostic: ticks a ref on every rendered frame so the HUD can prove
+// whether the R3F render loop is actually running on the device.
+function LoopProbe({ counter }: { counter: React.RefObject<number> }) {
+  useFrame(() => {
+    if (counter.current != null) counter.current += 1;
+  });
+  return null;
+}
+
 function Lights({ lite = false }: { lite?: boolean }) {
   return (
     <>
@@ -375,6 +384,39 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const holdRef = useRef(false);
   const altRef = useRef(0);
   const runStart = useRef(0); // performance.now() when the run went live
+
+  // ── TEMP on-device diagnostic (remove once the mobile freeze is understood) ──
+  // A useFrame probe increments frameProbe every rendered frame; we read it here
+  // off-loop so a stuck counter proves the R3F render loop is dead (vs. moving).
+  const frameProbe = useRef(0);
+  const [diag, setDiag] = useState("f:0 fps:-- dpr:-- gl:--");
+  const [diagErr, setDiagErr] = useState("");
+  useEffect(() => {
+    let prevF = 0;
+    let prevT = performance.now();
+    const id = setInterval(() => {
+      const now = performance.now();
+      const f = frameProbe.current;
+      const fps = Math.round(((f - prevF) * 1000) / Math.max(1, now - prevT));
+      prevF = f;
+      prevT = now;
+      const cv = typeof document !== "undefined" ? document.querySelector("canvas") : null;
+      const ctx = cv ? (cv.getContext("webgl2") || cv.getContext("webgl")) : null;
+      const dpr = typeof window !== "undefined" ? Math.round((window.devicePixelRatio || 0) * 100) / 100 : 0;
+      setDiag(`f:${f} fps:${fps} dpr:${dpr} gl:${ctx ? (ctx.isContextLost() ? "LOST" : "ok") : "none"} n:${document.querySelectorAll("canvas").length}`);
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    const onErr = (e: ErrorEvent) => setDiagErr((e.message || String(e.error) || "err").slice(0, 90));
+    const onRej = (e: PromiseRejectionEvent) => setDiagErr(("promise: " + String(e.reason)).slice(0, 90));
+    window.addEventListener("error", onErr);
+    window.addEventListener("unhandledrejection", onRej);
+    return () => {
+      window.removeEventListener("error", onErr);
+      window.removeEventListener("unhandledrejection", onRej);
+    };
+  }, []);
 
   // which champion is flying: the adopted mind, else a sensible roster default
   const owned = useChampions((s) => s.owned);
@@ -571,6 +613,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       {mounted && (
         <Canvas
           key={`${runId}-${glEpoch}`}
+          frameloop="always"
           shadows={!embedded}
           dpr={embedded ? [0.6, 1] : [1, 1.5]}
           camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
@@ -600,6 +643,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             });
           }}
         >
+          <LoopProbe counter={frameProbe} />
           {/* auto-scale render resolution when the GPU can't keep up so frame
               drops self-correct instead of compounding into a context loss */}
           <PerformanceMonitor />
@@ -629,6 +673,16 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           )}
         </Canvas>
       )}
+
+      {/* ── TEMP on-device diagnostic (remove after the mobile freeze is solved):
+           if `f:` stops climbing, the R3F render loop is dead on this device. ── */}
+      <div
+        className="mono"
+        style={{ position: "absolute", top: 3, left: 3, zIndex: 70, fontSize: 9, lineHeight: 1.3, color: "#00ff6a", background: "rgba(0,0,0,.72)", padding: "3px 6px", borderRadius: 4, pointerEvents: "none", maxWidth: "70vw", wordBreak: "break-word" }}
+      >
+        {diag}
+        {diagErr ? <div style={{ color: "#ff6a6a" }}>ERR {diagErr}</div> : null}
+      </div>
 
       {/* ── renderer recovery: the GPU dropped our WebGL context (common on
            phones under load). We asked for it back; hold the player here so the
