@@ -318,19 +318,22 @@ function Vaultgate({
     // Slow, elegant breathing for the focus gate — a calm beam that draws the eye
     // without strobing. Urgent (idle) speeds it up a touch; reduced-motion freezes
     // to a steady mid-brightness so the gate still reads as "the one" while still.
-    const rate = urgent ? 1.5 : firstStop ? 0.85 : 1.4;
+    const rate = urgent ? 1.85 : firstStop ? 1.1 : 1.4;
     const breathe = reduced ? 0.5 : Math.sin(t * rate) * 0.5 + 0.5; // 0..1
     if (portalRef.current) {
       const m = portalRef.current.material as THREE.MeshBasicMaterial;
-      const amp = firstStop ? 0.18 : 0.1;
-      const base = (0.32 + (breathe - 0.5) * 2 * amp) * dim * lift;
-      m.opacity = Math.min(0.95, base);
+      // focus gate blinks with a wider opacity swing (dips more transparent, peaks
+      // brighter) so the "this is your door" call-out reads more insistently.
+      const amp = firstStop ? 0.28 : 0.1;
+      const center = firstStop ? 0.3 : 0.32;
+      const base = (center + (breathe - 0.5) * 2 * amp) * dim * lift;
+      m.opacity = Math.min(0.98, base);
     }
     if (beamRef.current) {
       const m = beamRef.current.material as THREE.MeshBasicMaterial;
       // hide the beam on dimmed gates; on the focus gate it's a bright, slow column
-      const beamBase = firstStop ? 0.24 : 0.09;
-      const beamAmp = reduced ? 0 : firstStop ? 0.1 : 0.03;
+      const beamBase = firstStop ? 0.22 : 0.09;
+      const beamAmp = reduced ? 0 : firstStop ? 0.16 : 0.03;
       m.opacity = dimmed ? 0 : (beamBase + (breathe - 0.5) * 2 * beamAmp) * lift;
       // gentle vertical drift so the light reads as "beaming up" toward the gate
       const sy = firstStop && !reduced ? 1 + breathe * 0.14 : 1;
@@ -338,7 +341,7 @@ function Vaultgate({
     }
     if (ringRef.current) {
       const m = ringRef.current.material as THREE.MeshBasicMaterial;
-      const base = firstStop ? 0.55 + breathe * 0.4 : 0.7;
+      const base = firstStop ? 0.35 + breathe * 0.6 : 0.7;
       m.opacity = base * dim;
       const s = firstStop && !reduced ? 1 + breathe * 0.12 : 1;
       ringRef.current.scale.set(s, s, 1);
