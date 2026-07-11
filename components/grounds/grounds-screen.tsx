@@ -751,12 +751,17 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     return () => clearTimeout(t);
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
-  // Warm the first-fight world (void kit + world chunk) while the player is still
-  // on champion select / strategy — the canvas stays hidden but assets download.
+  // Warm the guided first-fight world (its ~23 nature glTFs + the world chunk) as
+  // EARLY as possible — the moment a first-run player is detected, while the intro
+  // deck, the "summoning" beat, champion select and the strategy dial are still on
+  // screen. Those seconds of background download are what stop the battleground
+  // after Train from hitting a cold 5s+ "loading the grounds…" wall. Idempotent
+  // (preloadNatureBiome + useGLTF.preload both dedupe), so the pick/train pass is
+  // just a belt-and-braces retry for odd entry paths.
   useEffect(() => {
-    if (firstDuelPhase !== "pick" && firstDuelPhase !== "train") return;
+    if (!mounted || owned || isFirstDuelComplete()) return;
     warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
-  }, [firstDuelPhase]);
+  }, [mounted, owned, firstDuelPhase]);
 
   // Mount the 3D scene against the arena the guided duel actually uses, not the
   // Concord hub — otherwise the player pays a second biome load after Train.

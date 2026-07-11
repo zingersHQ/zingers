@@ -10,7 +10,9 @@ import { showcaseChampion } from "@/lib/render/showcase";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
 import { FirstRun } from "@/components/intro/first-run";
 import { FOUNDING_REGIONS, FORCES } from "@/lib/lore/canon";
-import { worldByRegion } from "@/components/grounds/worlds";
+import { worldByRegion, worldById } from "@/components/grounds/worlds";
+import { warmGroundsChunk } from "@/lib/render/preload-grounds";
+import { FIRST_FIGHT_WORLD } from "@/lib/first-duel";
 import { useIsMobile } from "@/lib/use-device";
 import { playEntryHref } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
@@ -265,6 +267,16 @@ export function Landing() {
   // competes for attention while the player pages through the story.
   const [deckIndex, setDeckIndex] = useState(0);
   const deckFocused = deckIndex > 0;
+
+  // The instant a visitor engages the onboarding deck (pages past slide 1) they're
+  // heading for the guided first fight. Start pulling that arena's heavy grounds
+  // assets (void nature kit + world chunk) now, in the background, so by the time
+  // they finish the deck → pick → strategy → Train, the battleground is warm and
+  // doesn't stall on a cold "loading the grounds…". Idempotent + browser-cached.
+  useEffect(() => {
+    if (!deckFocused) return;
+    warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
+  }, [deckFocused]);
 
   const enterTutorial = goPlay;
 
