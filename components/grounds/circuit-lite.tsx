@@ -24,7 +24,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PerformanceMonitor, AdaptiveDpr } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
@@ -372,23 +371,18 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const [board, setBoard] = useState<BoardRow[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [reward, setReward] = useState<RunReward | null>(null);
-  // WebGL context loss = the canvas freezes on its last frame (champion still
-  // drawn, nothing moves). Mobile GPUs evict contexts under memory/thermal
-  // pressure; without recovery the game is dead until reload. `glEpoch` keys the
-  // Canvas so we can rebuild it (fresh context + render loop) after a loss —
-  // more reliable than waiting on the browser's `webglcontextrestored` event,
-  // which can fire late or never.
+  // WebGL context loss handling. The ONLY thing needed is preventDefault() on
+  // `webglcontextlost` so the browser restores the context (a phone GPU evicts
+  // it under memory pressure) — the R3F render loop keeps running and picks the
+  // restored context straight back up. The old approach of REBUILDING the Canvas
+  // on every loss was the actual bug: each rebuild reset the run to the ready pad
+  // and churned the context, so the champion rendered but the game never moved.
   const [glLost, setGlLost] = useState(false);
-  const [glEpoch, setGlEpoch] = useState(0);
-  // when the context can't be sustained (keeps dying), stop auto-rebuilding so we
-  // don't strobe "RESTORING GRAPHICS" forever — show a calm manual retry instead.
-  const [glFatal, setGlFatal] = useState(false);
-  const glRebuildsRef = useRef(0);   // auto-rebuild attempts so far (capped)
-  const glTeardownRef = useRef(false); // true while WE intentionally remount the Canvas
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
   const runStart = useRef(0); // performance.now() when the run went live
+  const phaseRef = useRef<Phase>("ready"); // mirror for the off-loop diagnostic
 
   // ── TEMP on-device diagnostic (remove once the mobile freeze is understood) ──
   // A useFrame probe increments frameProbe every rendered frame; we read it here
@@ -408,7 +402,10 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       const cv = typeof document !== "undefined" ? document.querySelector("canvas") : null;
       const ctx = cv ? (cv.getContext("webgl2") || cv.getContext("webgl")) : null;
       const dpr = typeof window !== "undefined" ? Math.round((window.devicePixelRatio || 0) * 100) / 100 : 0;
-      setDiag(`f:${f} fps:${fps} dpr:${dpr} gl:${ctx ? (ctx.isContextLost() ? "LOST" : "ok") : "none"} n:${document.querySelectorAll("canvas").length}`);
+      setDiag(
+        `f:${f} fps:${fps} dpr:${dpr} gl:${ctx ? (ctx.isContextLost() ? "LOST" : "ok") : "none"} n:${document.querySelectorAll("canvas").length}` +
+          ` | ph:${phaseRef.current} hold:${holdRef.current ? 1 : 0} alt:${Math.round(altRef.current)}`,
+      );
     }, 500);
     return () => clearInterval(id);
   }, []);
@@ -604,6 +601,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
   const running = phase === "running";
   const live = phase === "ready" || phase === "running";
+  phaseRef.current = phase; // keep the off-loop diagnostic in sync
   // cumulative-ish altitude so the score always reads as a climb across sectors
   const shownAlt = Math.max(0, Math.round(sector * 28 + alt));
 
@@ -617,7 +615,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     >
       {mounted && (
         <Canvas
-          key={`${runId}-${glEpoch}`}
+          key={runId}
           frameloop="always"
           shadows={!embedded}
           dpr={embedded ? 1 : [1, 1.5]}
@@ -628,55 +626,21 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = BIOME.exposure;
             const canvas = gl.domElement;
-            // preventDefault() asks the browser to keep the drawing buffer so it
-            // can be restored. On loss we bail the run back to the pad, cut the
-            // jet, and rebuild the whole canvas after a short beat (fresh context
-            // + render loop) rather than gambling on `webglcontextrestored` —
-            // that event can fire late or never, and R3F won't reliably resume
-            // its loop on the old context, which is what leaves the game frozen.
-            //
-            // TWO guards keep this from strobing "RESTORING GRAPHICS" forever:
-            //  1) glTeardownRef — React unmounting the old Canvas (our own remount)
-            //     makes R3F call gl.forceContextLoss(), which re-fires THIS handler.
-            //     Ignore those self-inflicted losses so a rebuild can't feed itself.
-            //  2) a hard cap — if the GPU keeps dropping a fresh context, stop
-            //     rebuilding and show a calm manual "retry" instead of a flicker.
+            // Non-destructive recovery: preventDefault() lets the browser restore
+            // the SAME context, and R3F's always-on loop resumes on it — no Canvas
+            // rebuild, no run reset. We only flash a brief overlay while it's out.
             canvas.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
-              // surface the loss on the on-device HUD: how many, self-inflicted
-              // (teardown) or real, and any driver status message. This is the
-              // single clue that tells us WHY Climb loses its context on a phone.
               const msg = (e as WebGLContextEvent).statusMessage || "";
-              setDiagErr(`ctxlost#${glRebuildsRef.current + 1}${glTeardownRef.current ? " (teardown)" : ""} ${msg}`.slice(0, 90));
-              if (glTeardownRef.current) return;
-              holdRef.current = false;
-              setHolding(false);
-              stopJet();
-              setPhase((p) => (p === "running" ? "ready" : p));
-              if (glRebuildsRef.current >= 2) {
-                setGlLost(false);
-                setGlFatal(true);
-                return;
-              }
-              glRebuildsRef.current += 1;
+              setDiagErr(`ctxlost ${msg}`.slice(0, 90));
               setGlLost(true);
-              glTeardownRef.current = true;
-              window.setTimeout(() => {
-                setGlEpoch((n) => n + 1);
-                setGlLost(false);
-                // release the guard once the remount has settled on a fresh context
-                window.setTimeout(() => {
-                  glTeardownRef.current = false;
-                }, 600);
-              }, 450);
+            });
+            canvas.addEventListener("webglcontextrestored", () => {
+              setGlLost(false);
             });
           }}
         >
           <LoopProbe counter={frameProbe} />
-          {/* auto-scale render resolution when the GPU can't keep up so frame
-              drops self-correct instead of compounding into a context loss */}
-          <PerformanceMonitor />
-          <AdaptiveDpr pixelated={false} />
           <color attach="background" args={[BIOME.bg]} />
           <fog attach="fog" args={[BIOME.fog.color, 30, 190]} />
           <Lights lite={embedded} />
@@ -713,42 +677,17 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
         {diagErr ? <div style={{ color: "#ff6a6a" }}>ERR {diagErr}</div> : null}
       </div>
 
-      {/* ── renderer recovery: the GPU dropped our WebGL context (common on
-           phones under load). We asked for it back; hold the player here so the
-           game doesn't look frozen while it comes back. ── */}
-      {glLost && !glFatal && (
+      {/* ── renderer recovery: the GPU briefly dropped our WebGL context (common
+           on phones under load). preventDefault() means the browser hands it back
+           and the loop resumes on the SAME canvas — this overlay just covers the
+           blink; the run keeps its state underneath. ── */}
+      {glLost && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.72)", zIndex: 40, pointerEvents: "none" }}>
           <div className="mono" style={{ textAlign: "center", color: ACCENT }}>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>RESTORING GRAPHICS…</div>
             <div style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 0.5 }}>
               the renderer hiccuped — one moment
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── the GPU kept dropping the context after repeated auto-rebuilds. Stop
-           the strobe and hand control back to the player with one manual retry. ── */}
-      {glFatal && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.9)", zIndex: 45, pointerEvents: "auto", padding: 24 }}>
-          <div className="mono" style={{ textAlign: "center", color: ACCENT, maxWidth: 320 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>GRAPHICS OVERLOADED</div>
-            <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 8, lineHeight: 1.5 }}>
-              This device keeps dropping the 3D renderer. Close other tabs/apps to free memory, then tap to restart the Climb.
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                glRebuildsRef.current = 0;
-                glTeardownRef.current = false;
-                setGlFatal(false);
-                setGlLost(false);
-                setGlEpoch((n) => n + 1);
-              }}
-              style={{ marginTop: 16, padding: "10px 22px", borderRadius: 999, border: `1px solid ${ACCENT}`, background: "transparent", color: ACCENT, fontWeight: 800, letterSpacing: 1, fontSize: 12, cursor: "pointer" }}
-            >
-              RESTART CLIMB
-            </button>
           </div>
         </div>
       )}
