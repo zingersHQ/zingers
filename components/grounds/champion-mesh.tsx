@@ -14,7 +14,6 @@ import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-rega
 import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
-import { FORCES } from "@/lib/lore/canon";
 import { ANIM, flightAttitudePlanar, type GestureClip, type RestPose } from "@/lib/render/animations";
 import { useSettings } from "@/store/settings";
 import { Jetpack } from "@/components/grounds/jetpack";
@@ -559,7 +558,6 @@ export function ChampionMesh({
   keeper,
   speechLine,
   speechEmote,
-  showForce = false,
   clan = null,
   hideFloaters = false,
   padLeash,
@@ -575,8 +573,6 @@ export function ChampionMesh({
   onSelect?: () => void;
   label?: string;
   showLabel?: boolean;
-  /** show the fighter's Force as a clean sigil + plain-name chip under the name */
-  showForce?: boolean;
   /** when set, plant this Trainer's Clan standard beside the fighter (allegiance
    *  marker layered ON TOP of the Force base colour — never replaces it) */
   clan?: CreatureType | null;
@@ -1360,20 +1356,10 @@ export function ChampionMesh({
         </Html>
       )}
 
-      {showLabel && (label || selected) && (
+      {showLabel && label && (
         <Html position={[0, app.h + 1.0, 0]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
-          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontWeight: 700, color: "#fff", textShadow: "0 2px 8px #000", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.82 }}>
-            {label && (
-              <div style={{ fontSize: 20 }}>
-                {label}
-                {showForce && (
-                  <div style={{ fontSize: 11, color: colHex, letterSpacing: 0.6, fontWeight: 700 }}>
-                    {FORCES[type].sigil} {FORCES[type].name}
-                  </div>
-                )}
-              </div>
-            )}
-            <div style={{ fontSize: 10, color: colHex, letterSpacing: 1, opacity: 0.72 }}>{tier.name}</div>
+          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", fontSize: 18, fontWeight: 800, color: "#fff", textShadow: "0 2px 10px #000, 0 0 20px rgba(0,0,0,.45)", whiteSpace: "nowrap", textAlign: "center", opacity: selected ? 1 : 0.88, letterSpacing: 0.4 }}>
+            {label}
           </div>
         </Html>
       )}

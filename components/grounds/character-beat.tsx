@@ -191,7 +191,16 @@ export function CharacterBeat({
         type="button"
         className="btn btn-primary pop"
         onClick={advance}
-        style={{ ["--ac" as string]: accent, marginTop: 18, padding: isMobile ? "11px 22px" : "12px 28px", fontSize: isMobile ? 14 : 15 }}
+        style={{
+          ["--ac" as string]: accent,
+          marginTop: 18,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: isMobile ? "11px 22px" : "12px 28px",
+          fontSize: isMobile ? 14 : 15,
+        }}
       >
         {last ? "Continue" : done ? "Next" : "Skip line"}
       </button>

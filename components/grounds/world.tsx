@@ -923,7 +923,6 @@ function RegionChampions({
             champion={c.champion}
             identityKey={c.key}
             label={c.name + (owned ? "  ◆ YOURS" : "")}
-            showForce={!owned}
             clan={owned ? pledged : null}
             position={[home[0], 0, home[2]]}
             rotation={owned ? Math.atan2(arena[0] - home[0], arena[2] - home[2]) : 0}
@@ -1252,7 +1251,6 @@ function OwnedCompanion({
         type={c.type}
         champion={c.champion}
         identityKey={c.key}
-        showForce={false}
         clan={pledged}
         position={[0, 0, 0]}
         rotation={0}

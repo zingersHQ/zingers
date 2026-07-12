@@ -86,7 +86,6 @@ export function Amphitheatre({
             champion={fighters.a.champion}
             identityKey={fighters.a.key}
             label={fighters.a.name}
-            showForce
             position={PODIUM_A}
             rotation={Math.PI / 2}
             punchSignal={fighters.punchA}
@@ -99,7 +98,6 @@ export function Amphitheatre({
             champion={fighters.b.champion}
             identityKey={fighters.b.key}
             label={fighters.b.name}
-            showForce
             position={PODIUM_B}
             rotation={-Math.PI / 2}
             punchSignal={fighters.punchB}

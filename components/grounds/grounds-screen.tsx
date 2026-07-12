@@ -1528,9 +1528,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
   const dockPad = showDock ? DOCK_H + 8 : 0;
-  // the bottom-docked compass bar reserves vertical space so the touch controls,
-  // proximity prompt and coachmark always stack cleanly above it (regions only).
-  const compassReserve = !isHub && owned ? (isMobile ? 76 : 92) : 0;
   // Keep the world HUD (season banner, music, crowns, altitude) tucked away
   // until the first-run tutorial and champion claim are done — otherwise its
   // zIndex pokes through on top of those higher-priority overlays.
@@ -1539,6 +1536,29 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [controlsOpen, setControlsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hasPad, setHasPad] = useState(false);
+  // World-nav chrome (compass, hub chip, world picker) only while freely roaming
+  // the 3D scene. Hide whenever a sheet, cinematic beat, or modal owns the screen
+  // — the compass sat at z-index 100 above CharacterBeat (92), breaking keeper
+  // dialogues and other overlays.
+  const cinematicOpen =
+    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat;
+  const worldUiBlocked =
+    showMatch ||
+    overlay !== "none" ||
+    !!gRun ||
+    !!travelCard ||
+    !!claiming ||
+    controlsOpen ||
+    settingsOpen ||
+    clanOpen ||
+    cinematicOpen ||
+    !!nodeFlash ||
+    !!goalFlash ||
+    !!evoFlash ||
+    !!pledgeFlash;
+  const showCompass = showHud && !worldUiBlocked && owned && !isHub && !inVenue;
+  // Reserve bottom space only when the compass is actually visible.
+  const compassReserve = showCompass ? (isMobile ? 76 : 92) : 0;
   const audioVolume = useSettings((s) => s.volume);
   const voiceOn = useSettings((s) => s.voice);
   const alwaysShowHud = useSettings((s) => s.alwaysShowHud);
@@ -1741,7 +1761,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       {/* HUD — sits above the WebGL canvas and touch layer */}
       {showHud && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, left: 58, zIndex: 100, pointerEvents: "none", maxWidth: isMobile ? "calc(100vw - 148px)" : 400 }}>
-        {!showMatch && overlay === "none" && owned && !gRun && !inVenue && (
+        {!showMatch && overlay === "none" && owned && !gRun && !inVenue && !worldUiBlocked && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
               <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 240, maxWidth: "calc(100vw - 32px)", zIndex: 2 }}>
@@ -1796,7 +1816,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           </div>
         )}
 
-        {!isMobile && overlay === "none" && !showMatch && !gRun && (
+        {!isMobile && overlay === "none" && !showMatch && !gRun && !worldUiBlocked && (
           <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {modesLocked && owned
               ? FIRST_DUEL_TAGLINE
@@ -1833,7 +1853,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         )}
       </div>
       )}
-      {showHud && overlay === "none" && !showMatch && !gRun && (
+      {showHud && !worldUiBlocked && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
         <PlayerHub
           isMobile={isMobile}
@@ -1861,7 +1881,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
-      {showHud && !showMatch && overlay === "none" && !isHub && !inVenue && towerAgents.length > 0 && (
+      {showHud && !showMatch && overlay === "none" && !isHub && !inVenue && !worldUiBlocked && towerAgents.length > 0 && (
         <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
@@ -1886,10 +1906,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
       {/* the compass — a heading tape docked at the bottom (regions only; the
           Concord's gates guide you directly, so no compass is shown in the hub) */}
-      {showHud && !showMatch && overlay === "none" && owned && !gRun && !isHub && !inVenue && (
+      {showCompass && (
         <div
           className={`grounds-hud${hudDim ? " is-dim" : ""}`}
-          style={{ position: "absolute", left: 0, right: 0, bottom: isMobile ? 12 : 16, display: "flex", justifyContent: "center", padding: isMobile ? "0 12px" : "0 16px", zIndex: 100, pointerEvents: "none" }}
+          style={{ position: "absolute", left: 0, right: 0, bottom: isMobile ? 12 : 16, display: "flex", justifyContent: "center", padding: isMobile ? "0 12px" : "0 16px", zIndex: 44, pointerEvents: "none" }}
         >
           <Compass landmarks={landmarks} goals={allGoals} goalsDone={doneGoals} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
         </div>
@@ -1928,7 +1948,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         />
       )}
 
-      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && liveGoals.length > 0 && (
+      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && (
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} compassReserve={compassReserve} onDone={dismissGoalCoach} />
       )}
 
@@ -2275,6 +2295,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           accent={TYPE_COLOR[byKey[companionBeat.key].type]}
           voice="champion"
           championType={championTypeForKey(companionBeat.key)}
+          layout="stage"
           portrait={{
             key: companionBeat.key,
             type: byKey[companionBeat.key].type,
@@ -2290,7 +2311,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
       {/* proximity action — centered above the touch controls so it never
           overlaps the jump / sprint cluster. Tap on touch, E on desktop. */}
-      {owned && near && overlay === "none" && !inMatch && !result && !gRun && !(near.kind === "venue" && near.venue === "league") && (
+      {owned && near && overlay === "none" && !inMatch && !result && !gRun && !worldUiBlocked && !(near.kind === "venue" && near.venue === "league") && (
         <div
           style={{
             position: "absolute",
@@ -3223,13 +3244,36 @@ function MatchHud(props: {
               </div>
             )}
 
-            {/* actions */}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="btn" style={{ ["--ac" as string]: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={share}>
+            {/* actions — full-width row; equal halves when paired */}
+            <div style={{ display: "flex", gap: 8, width: "100%" }}>
+              <button
+                className="btn"
+                style={{
+                  ["--ac" as string]: "var(--gold)",
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                }}
+                onClick={share}
+              >
                 {copied ? <Check size={15} strokeWidth={2.4} /> : <ArrowUpRight size={15} strokeWidth={2.2} />}
                 {copied ? "link copied" : "share card"}
               </button>
-              <button className="btn btn-primary" style={{ ["--ac" as string]: ac }} onClick={onClose}>
+              <button
+                className="btn btn-primary"
+                style={{
+                  ["--ac" as string]: ac,
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onClick={onClose}
+              >
                 back to The Grounds
               </button>
             </div>
