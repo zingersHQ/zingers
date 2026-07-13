@@ -386,6 +386,15 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const [glDead, setGlDead] = useState(false); // auto-recovery exhausted → manual retry
   const glWatchdog = useRef<number | null>(null);
   const glRebuilds = useRef<number[]>([]); // timestamps of recent forced rebuilds
+  // Mirror of runId, read inside the per-canvas context-loss listener. React
+  // unmounting the old Canvas makes R3F call gl.forceContextLoss(), which fires
+  // that canvas's `webglcontextlost` — a SELF-inflicted loss, not a GPU eviction.
+  // Without a guard it schedules another rebuild → unmount → loss → … an endless
+  // strobe that keeps snapping the run back to the ready pad (the champion
+  // "renders but never moves"). Each listener records the runId its canvas was
+  // born at; if that no longer matches the mounted runId the loss is a teardown
+  // of a stale canvas and is ignored. (Regression history: 07c849a → ca950ce.)
+  const runIdRef = useRef(0);
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
@@ -559,7 +568,14 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     };
   }, [phase, press, setHold]);
 
-  const restart = useCallback(() => {
+  // Ordinary restart ("Try again"/"Run again"): reset the run state and REUSE
+  // the live WebGL context. We deliberately do NOT bump runId here — remounting
+  // the Canvas spins up a brand-new context (and tears the old one down, firing
+  // a teardown context-loss), which is exactly what pushed a memory-tight phone
+  // into the "GRAPHICS KEEP DROPPING" loop. The Flyer already remounts fresh
+  // (it unmounts at `ready` and its key includes the sector), so the run is
+  // clean without touching the context.
+  const resetRun = useCallback(() => {
     setHold(false);
     setGates(0);
     setSector(0);
@@ -567,7 +583,6 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     setNewBest(false);
     setReward(null);
     setPhase("ready");
-    setRunId((n) => n + 1); // new Canvas key → fresh WebGL context + clean pad
   }, [setHold]);
 
   // ── WebGL context-loss watchdog ──────────────────────────────────────────
@@ -593,6 +608,15 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     setGlDead(false);
   }, [clearGlWatchdog]);
 
+  // Hard rebuild: mount a fresh Canvas on a new WebGL context. This is ONLY for
+  // recovering a context the browser never restored — never an ordinary restart.
+  // Bumping runId unmounts the old Canvas; the teardown loss R3F fires on it is
+  // ignored by the per-canvas listener because its bornAt no longer matches.
+  const rebuildCanvas = useCallback(() => {
+    resetRun();
+    setRunId((n) => n + 1); // new Canvas key → fresh WebGL context + clean pad
+  }, [resetRun]);
+
   const onGlLost = useCallback(() => {
     setGlLost(true);
     clearGlWatchdog();
@@ -603,22 +627,22 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       if (glRebuilds.current.length < GL_MAX_REBUILDS) {
         glRebuilds.current.push(now);
         setGlLost(false);
-        restart(); // rebuild the Canvas on a fresh context, back at the ready pad
+        rebuildCanvas(); // fresh context, back at the ready pad
       } else {
         // chronic loss — stop churning and let the player decide when to retry
         setGlLost(false);
         setGlDead(true);
       }
     }, GL_RESTORE_GRACE_MS);
-  }, [clearGlWatchdog, restart]);
+  }, [clearGlWatchdog, rebuildCanvas]);
 
   // manual recovery from the "graphics keep dropping" card
   const recoverGraphics = useCallback(() => {
     glRebuilds.current = [];
     setGlDead(false);
     setGlLost(false);
-    restart();
-  }, [restart]);
+    rebuildCanvas();
+  }, [rebuildCanvas]);
 
   useEffect(() => () => clearGlWatchdog(), [clearGlWatchdog]);
 
@@ -662,6 +686,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const running = phase === "running";
   const live = phase === "ready" || phase === "running";
   phaseRef.current = phase; // keep the off-loop diagnostic in sync
+  runIdRef.current = runId; // let per-canvas GL listeners spot a stale canvas
   // cumulative-ish altitude so the score always reads as a climb across sectors
   const shownAlt = Math.max(0, Math.round(sector * 28 + alt));
 
@@ -685,17 +710,26 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = BIOME.exposure;
+            // the fresh context is live — lift any "restoring" veil left over
+            // from the loss that triggered this rebuild
+            const bornAt = runId; // this canvas's identity; stale ones are ignored
+            setGlLost(false);
+            clearGlWatchdog();
             const canvas = gl.domElement;
             // preventDefault() first (asks the browser to restore the SAME
             // context, the cheapest path); the watchdog handles the case where
             // that restore never arrives so we can't freeze forever.
             canvas.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
+              // ignore a teardown loss on a canvas we've already replaced —
+              // otherwise our own rebuild re-triggers recovery in an endless loop
+              if (runIdRef.current !== bornAt) return;
               const msg = (e as WebGLContextEvent).statusMessage || "";
               setDiagErr(`ctxlost ${msg}`.slice(0, 90));
               onGlLost();
             });
             canvas.addEventListener("webglcontextrestored", () => {
+              if (runIdRef.current !== bornAt) return;
               onGlRestored();
             });
           }}
@@ -953,7 +987,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
 
             <button
               type="button"
-              onClick={restart}
+              onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: ACCENT, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
