@@ -8,13 +8,14 @@
 // and marks the champion everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useMemo, useState } from "react";
-import { Crown, Sparkles, Dumbbell, Gem } from "lucide-react";
+import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
 import { TYPE_COLOR, blank } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { TRAIN_COST } from "@/lib/economy";
 import { ROSTER } from "@/lib/engine/roster";
+import { IMPRINT_LESSONS } from "@/lib/imprints";
 import { useChampions } from "@/store/champions";
 import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
@@ -33,12 +34,15 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
   const setStrat = useChampions((s) => s.setStrat);
   const trainChampion = useChampions((s) => s.trainChampion);
   const trainWithFragment = useChampions((s) => s.trainWithFragment);
+  const imprint = useChampions((s) => s.imprint);
   const crowns = useChampions((s) => s.crowns);
   const fragments = useChampions((s) => s.fragments);
   const trainerXp = useChampions((s) => s.trainerXp);
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [imprinting, setImprinting] = useState<string | null>(null);
+  const [reply, setReply] = useState<string | null>(null);
 
   const champ = useMemo(() => (owned ? progress[owned] ?? blank() : null), [owned, progress]);
   const strat: Strat = (owned && recipes[owned]?.strat) || DEFAULT_STRAT;
@@ -68,6 +72,18 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
     const ok = trainWithFragment(owned);
     flash(ok ? "Fragment spent. A free session banked." : "No fragments to spend.");
   }, [owned, trainWithFragment, flash]);
+
+  const teach = useCallback(
+    async (lessonId: string) => {
+      if (!owned || imprinting) return;
+      setImprinting(lessonId);
+      setReply(null);
+      const out = await imprint(owned, lessonId);
+      setImprinting(null);
+      setReply(out.reply);
+    },
+    [owned, imprinting, imprint],
+  );
 
   // No champion yet → the adoption door (desktop does this in the 3D first-duel;
   // on a phone this IS the raise lane's entry). Once adopted, `owned` flips and
@@ -135,6 +151,39 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "2px 0 0" }}>
             You set conditions; the champion decides its own moves in battle. Changes take hold next fight.
           </p>
+        </div>
+
+        {/* imprint — teach one lesson; the mind answers and internalizes it */}
+        <div className="panel" style={{ ["--ac" as string]: col, padding: 16, marginTop: 12 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Brain size={12} strokeWidth={2.4} /> IMPRINT · TEACH {name.toUpperCase()} A LESSON
+          </div>
+          <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
+            One lesson sticks in memory and gently shifts how it fights.
+          </p>
+          <div style={{ display: "grid", gap: 8 }}>
+            {IMPRINT_LESSONS.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => teach(l.id)}
+                disabled={!!imprinting}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", borderRadius: 11, border: "1px solid var(--line2)", background: imprinting === l.id ? `color-mix(in srgb, ${col} 16%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: imprinting ? "wait" : "pointer", opacity: imprinting && imprinting !== l.id ? 0.5 : 1 }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{l.label}</div>
+                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>{l.hint}</div>
+                </div>
+                <span className="mono" style={{ fontSize: 11, color: col, fontWeight: 700 }}>{imprinting === l.id ? "…" : "Teach"}</span>
+              </button>
+            ))}
+          </div>
+          {reply && (
+            <div style={{ marginTop: 12, padding: 12, borderRadius: 11, background: "var(--panel2, #15131f)", border: `1px solid ${col}` }}>
+              <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 4 }}>{name.toUpperCase()}</div>
+              <div style={{ fontSize: 13.5, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{reply}&rdquo;</div>
+            </div>
+          )}
         </div>
 
         {/* train — spend to evolve the body along the strategy */}

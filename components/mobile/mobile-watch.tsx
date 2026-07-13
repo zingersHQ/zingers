@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Shuffle, Lock, Flame, Trophy, Mic } from "lucide-react";
 import type { BattleEnd, Champion, RosterEntry, Style } from "@/lib/types";
-import { TYPE_COLOR, blankStyle, accrue } from "@/lib/evolve/progression";
+import { TYPE_COLOR, blankStyle, accrue, dominant } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -40,9 +40,11 @@ export function MobileWatch() {
 
   const bout = useBout();
   const get = useChampions((s) => s.get);
+  const owned = useChampions((s) => s.owned);
   const predict = useChampions((s) => s.predict);
   const predictResult = useChampions((s) => s.predictResult);
   const recordBattle = useChampions((s) => s.recordBattle);
+  const learnFromBout = useChampions((s) => s.learnFromBout);
 
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -83,6 +85,14 @@ export function MobileWatch() {
       for (const turn of historyRef.current) accrue(turn.actor === aKey ? styles[aKey] : styles[bKey], turn);
       const loserKey = end.winner === aKey ? bKey : aKey;
       recordBattle(end.winner, loserKey, styles);
+      // If the player's OWN champion was in this bout, its mind learns too — so
+      // phone play grows memory + saga exactly like the desktop grounds do.
+      if (owned && (owned === aKey || owned === bKey)) {
+        const wonOwned = end.winner === owned;
+        const oppKey = owned === aKey ? bKey : aKey;
+        const dom = dominant(get(owned));
+        learnFromBout({ key: owned, opponentName: byKey[oppKey]?.name || oppKey, won: wonOwned, axisLabel: dom.axis.label });
+      }
       if (pick !== null) {
         const correct = (pick === "a" && end.winner === aKey) || (pick === "b" && end.winner === bKey);
         predictResult(correct);
@@ -91,7 +101,7 @@ export function MobileWatch() {
       }
       setView("done");
     },
-    [aKey, bKey, pick, predictResult, recordBattle],
+    [aKey, bKey, pick, predictResult, recordBattle, owned, learnFromBout, get, byKey],
   );
 
   const start = useCallback(() => {

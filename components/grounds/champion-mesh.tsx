@@ -5,7 +5,7 @@ import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.j
 import { Html, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Champion, CreatureType } from "@/lib/types";
-import { TYPE_COLOR, levelFor, tierFor, tierIndex, dominant } from "@/lib/evolve/progression";
+import { TYPE_COLOR, levelFor, tierIndex, dominant, TIERS } from "@/lib/evolve/progression";
 import { appearanceOf, type Appearance, type BoneMorph } from "@/lib/evolve/appearance";
 import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
 import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
@@ -636,8 +636,14 @@ export function ChampionMesh({
   const { scene, animations } = useGLTF(modelFor(type));
 
   const lf = levelFor(champion.xp);
-  const tier = tierFor(lf.level);
   const ti = tierIndex(lf.level);
+  // Promotion Trials: the visible TIER heraldry (parts, aura, crown) tracks the
+  // tier the champion has actually CLAIMED (won a trial for), not merely reached
+  // by XP — so a tier-up is an earned event, not a passive tick. `claimedTier`
+  // is optional; absent → equals the level tier, so existing champions and the
+  // flag-off path are unaffected (no one is ever demoted).
+  const claimedTi = Math.min(ti, champion.claimedTier ?? ti);
+  const claimedTier = TIERS[claimedTi];
 
   // per-individual seed → distinct multi-colour scheme + skeletal jitter. Prefer
   // an explicit id; else fall back to a hash of the career so different builds
@@ -661,7 +667,7 @@ export function ChampionMesh({
   // / chest / back) — the "this is a different model of robot" layer. Cheap + pure,
   // so it's left for the compiler to memoize.
   const domAxis = dominant(champion);
-  const pheno = phenotypeOf(type, seed, ti, domAxis.axis.k, domAxis.value);
+  const pheno = phenotypeOf(type, seed, claimedTi, domAxis.axis.k, domAxis.value);
 
   // Build the real rigged body: clone the shared RobotExpressive rig, recolour it
   // per region, scale to height + morph the SKELETON to this Force's proportions,
@@ -1203,7 +1209,7 @@ export function ChampionMesh({
     }
   }, companionFrame ? -1 : companionRigDrive ? 2 : 0);
 
-  const auraOpacity = (0.05 + ti * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
+  const auraOpacity = (0.05 + claimedTi * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
   const auraR = app.h * (auraDim ? 0.46 : 0.62);
   // the body's core bone — drives the energy decor so it rides the live motion
   // (idle sway, the punch lunge, the hit recoil) instead of hanging at the static
@@ -1277,7 +1283,7 @@ export function ChampionMesh({
 
         {/* legend crown — fused to the head bone so it rides the gaze instead of
             hovering at a fixed point; the inner group keeps its slow spin + bob */}
-        {tier.crown && (
+        {claimedTier.crown && (
           <BoneFollower bone={built.bones["head"]}>
             <group ref={crownRef} position={[0, app.h + 0.3, 0]}>
               {Array.from({ length: 8 }).map((_, i) => {

@@ -1,9 +1,9 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Champion, CreatureType, DailyResult, DailyState, ForcePoints, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
+import type { AxisSnapshot, CareerEvent, CareerEventKind, Champion, CreatureType, DailyResult, DailyState, ForcePoints, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
-import { applyResult, blank, blankStyle } from "@/lib/evolve/progression";
+import { applyResult, blank, blankStyle, levelFor, tierIndex, TIERS } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
 import { TRAINER_XP } from "@/lib/evolve/trainer";
 import { currentSeasonNumber } from "@/lib/lore/season";
@@ -16,6 +16,13 @@ import {
   RECRUIT_COST,
 } from "@/lib/economy";
 import { commitBet as commitBetRequest, fetchBalance, walletEvent } from "@/lib/wallet-client";
+import { ROSTER } from "@/lib/engine/roster";
+import { getOwnerToken } from "@/lib/owner";
+import { championImprintAck } from "@/lib/lore/character-beats";
+import { lessonById, clampDial } from "@/lib/imprints";
+import { TRIALS } from "@/lib/flags";
+
+const nameOf = (key: string): string => ROSTER[key]?.name ?? key;
 
 // Re-export the canonical economy numbers so existing imports from the store
 // keep working; the single source of truth now lives in lib/economy.ts.
@@ -90,6 +97,9 @@ export interface EvolutionFlash {
   tieredUp: boolean;
   tier: string;
   unlocked: string | null; // the phenotype slot a tier-up reveals, if any
+  // Promotion Trials: the bout crossed into a new tier the champion hasn't
+  // claimed yet — a trial is owed before the heraldry lands (TRIALS flag on).
+  pendingTrial?: boolean;
 }
 
 // Which solid body part each tier bolts on (mirrors lib/render/phenotype.ts gating).
@@ -99,6 +109,68 @@ const TIER_UNLOCK: Record<string, string> = {
   ELITE: "Chest core",
   LEGEND: "Back unit & crown",
 };
+
+// ── The Saga ledger (v5) ─────────────────────────────────────────────────────
+// Append-only per-champion life events, capped so a long career stays light in
+// the save blob. Milestone kinds are PINNED — a legend's tier crossings and
+// Keeper cracks are never trimmed; only routine bouts/trains age out.
+const EVENT_CAP = 60;
+const PINNED_EVENTS: Set<CareerEventKind> = new Set(["claimed", "tierup", "trial", "keeper", "sealed", "season"]);
+
+function appendCapped(list: CareerEvent[] | undefined, ev: CareerEvent): CareerEvent[] {
+  const next = [...(list || []), ev];
+  if (next.length <= EVENT_CAP) return next;
+  const pinned = next.filter((e) => PINNED_EVENTS.has(e.kind));
+  const loose = next.filter((e) => !PINNED_EVENTS.has(e.kind));
+  const room = Math.max(0, EVENT_CAP - pinned.length);
+  const keptLoose = room >= loose.length ? loose : loose.slice(loose.length - room);
+  return [...pinned, ...keptLoose].sort((a, b) => a.ts - b.ts);
+}
+
+// Snapshot the axes when the build actually shifts (level change) or at most
+// every 12h — enough to draw a growth curve without bloating the save.
+const SNAP_CAP = 40;
+const SNAP_MIN_MS = 12 * 60 * 60 * 1000;
+
+function styleFrom(c: Champion): Style {
+  return { aggression: c.aggression, control: c.control, resilience: c.resilience, flair: c.flair, creativity: c.creativity };
+}
+
+function shouldSnapshot(list: AxisSnapshot[] | undefined, level: number, now: number): boolean {
+  if (!list || list.length === 0) return true;
+  const last = list[list.length - 1];
+  return last.level !== level || now - last.ts > SNAP_MIN_MS;
+}
+
+// The origin event — written once, the first time a mind becomes the player's.
+function ensureClaimed(events: Record<string, CareerEvent[]>, key: string): Record<string, CareerEvent[]> {
+  const list = events[key] || [];
+  if (list.some((e) => e.kind === "claimed")) return events;
+  const now = Date.now();
+  const ev: CareerEvent = { id: `${now}-claimed-${key}`, ts: now, kind: "claimed", title: "Claimed from the Hum", detail: "You pulled this mind out of the murmur before it faded." };
+  return { ...events, [key]: appendCapped(list, ev) };
+}
+
+// Shared patch for a training session: append a "train" event + axis snapshot
+// for one of the player's own champions. Used by both paid and fragment training.
+function trainPatch(
+  events: Record<string, CareerEvent[]>,
+  snapshots: Record<string, AxisSnapshot[]>,
+  mine: boolean,
+  key: string,
+  evolved: Champion,
+): { events: Record<string, CareerEvent[]>; snapshots: Record<string, AxisSnapshot[]> } {
+  if (!mine) return { events, snapshots };
+  const now = Date.now();
+  const ev: CareerEvent = { id: `${now}-train-${Math.random().toString(36).slice(2, 6)}`, ts: now, kind: "train", title: "Trained at the pad" };
+  const nextEvents = { ...events, [key]: appendCapped(events[key], ev) };
+  const lvl = levelFor(evolved.xp).level;
+  let nextSnaps = snapshots;
+  if (shouldSnapshot(snapshots[key], lvl, now)) {
+    nextSnaps = { ...snapshots, [key]: [...(snapshots[key] || []), { ts: now, level: lvl, axes: styleFrom(evolved) }].slice(-SNAP_CAP) };
+  }
+  return { events: nextEvents, snapshots: nextSnaps };
+}
 
 interface ChampionStore {
   progress: Progress;
@@ -127,6 +199,22 @@ interface ChampionStore {
   // transient one-shot "owned champion evolved this bout" flash (see EvolutionFlash)
   lastEvolution: EvolutionFlash | null;
   clearEvolution: () => void;
+  // ── The Saga ledger (v5) ───────────────────────────────────────────────────
+  // Per-champion life events + axis-history for the growth radar, and the
+  // last-visit stamp that windows the mobile "while you were away" Report.
+  events: Record<string, CareerEvent[]>;
+  snapshots: Record<string, AxisSnapshot[]>;
+  lastVisit: number;
+  // Append a life event to a champion's saga (id + ts generated here).
+  pushEvent: (key: string, ev: Omit<CareerEvent, "id" | "ts"> & { ts?: number }) => void;
+  // Capture the champion's current axes if the build has meaningfully shifted.
+  snapshotAxes: (key: string) => void;
+  // Stamp "now" as the last time the player looked (call after showing Report).
+  touchVisit: () => void;
+  // Promotion Trials: grant the next tier a champion has EARNED by winning its
+  // trial — bumps claimedTier, writes a `trial` saga event, and fires the tier-up
+  // Celebration flash. No-op if nothing is owed. (TRIALS flow; see grounds.)
+  claimTier: (key: string) => void;
   lastServerSync: number; // updatedAt of the last save we reconciled with the server
   applyServerSave: (save: PlayerSave) => void;
   snapshotSave: () => PlayerSave;
@@ -136,6 +224,12 @@ interface ChampionStore {
   setPersona: (key: string, persona: string) => void;
   setAgent: (key: string, agent: Recipe["agent"]) => void;
   learnFromBout: (args: { key: string; opponentName: string; won: boolean; axisLabel: string }) => void;
+  // Apply a taught lesson locally: append a memory note, gently nudge doctrine,
+  // snapshot, and write an `imprint` saga event. Pure — `imprint` does the call.
+  applyImprint: (key: string, args: { note: string; dial: Partial<Strat> }) => void;
+  // The full Imprint flow: POST /api/imprint (capped house LLM, template
+  // fallback) then applyImprint with the result. Returns the champion's reply.
+  imprint: (key: string, lessonId: string) => Promise<{ reply: string; live: boolean }>;
   setOwned: (key: string) => void;
   adoptStarterRookie: (key: string) => void;
   // Whether a mind is in the player's roster (recruited, or the adopted champion).
@@ -194,6 +288,9 @@ export const useChampions = create<ChampionStore>()(
       goals: { season: currentSeasonNumber(), done: [] },
       lastEvolution: null,
       clearEvolution: () => set({ lastEvolution: null }),
+      events: {},
+      snapshots: {},
+      lastVisit: 0,
       owned: null,
       roster: [],
       predict: { streak: 0, best: 0 },
@@ -223,6 +320,9 @@ export const useChampions = create<ChampionStore>()(
             force: save.force ?? null,
             forceSeason: save.forceSeason ?? null,
             forcePoints: save.forcePoints || { season: currentSeasonNumber(), points: 0 },
+            events: save.events && typeof save.events === "object" ? save.events : s.events,
+            snapshots: save.snapshots && typeof save.snapshots === "object" ? save.snapshots : s.snapshots,
+            lastVisit: typeof save.lastVisit === "number" && Number.isFinite(save.lastVisit) ? save.lastVisit : s.lastVisit,
             lastServerSync: save.updatedAt,
           };
         }),
@@ -248,12 +348,55 @@ export const useChampions = create<ChampionStore>()(
           force: s.force,
           forceSeason: s.forceSeason,
           forcePoints: s.forcePoints,
+          events: s.events,
+          snapshots: s.snapshots,
+          lastVisit: s.lastVisit,
           updatedAt: Date.now(),
         };
       },
 
       get: (key) => get().progress[key] || blank(),
       getRecipe: (key) => get().recipes[key] || { strat: { ...DEFAULT_STRAT } },
+
+      pushEvent: (key, ev) =>
+        set((s) => {
+          const ts = ev.ts ?? Date.now();
+          const id = `${ts}-${ev.kind}-${Math.random().toString(36).slice(2, 6)}`;
+          const full: CareerEvent = { ...ev, id, ts };
+          return { events: { ...s.events, [key]: appendCapped(s.events[key], full) } };
+        }),
+
+      snapshotAxes: (key) =>
+        set((s) => {
+          const c = s.progress[key];
+          if (!c) return {};
+          const level = levelFor(c.xp).level;
+          const now = Date.now();
+          if (!shouldSnapshot(s.snapshots[key], level, now)) return {};
+          const snap: AxisSnapshot = { ts: now, level, axes: styleFrom(c) };
+          const next = [...(s.snapshots[key] || []), snap].slice(-SNAP_CAP);
+          return { snapshots: { ...s.snapshots, [key]: next } };
+        }),
+
+      touchVisit: () => set({ lastVisit: Date.now() }),
+
+      claimTier: (key) =>
+        set((s) => {
+          const c = s.progress[key];
+          if (!c) return {};
+          const lvl = levelFor(c.xp).level;
+          const target = tierIndex(lvl);
+          const cur = c.claimedTier ?? target;
+          if (cur >= target) return {}; // nothing owed
+          const claimedTier = cur + 1;
+          const next = { ...c, claimedTier };
+          const tierName = TIERS[claimedTier].name;
+          const now = Date.now();
+          const ev: CareerEvent = { id: `${now}-trial-${Math.random().toString(36).slice(2, 6)}`, ts: now, kind: "trial", title: `Won the ${tierName} trial`, tier: tierName, level: lvl, won: true };
+          const events = { ...s.events, [key]: appendCapped(s.events[key], ev) };
+          const flash: EvolutionFlash = { key, won: true, leveledUp: false, newLevel: lvl, tieredUp: true, tier: tierName, unlocked: TIER_UNLOCK[tierName] ?? null };
+          return { progress: { ...s.progress, [key]: next }, events, lastEvolution: flash };
+        }),
 
       setStrat: (key, strat) =>
         set((s) => ({ recipes: { ...s.recipes, [key]: { ...(s.recipes[key] || {}), strat } } })),
@@ -290,10 +433,62 @@ export const useChampions = create<ChampionStore>()(
           return { recipes: { ...s.recipes, [key]: { ...cur, strat, memory } } };
         }),
 
+      applyImprint: (key, { note, dial }) =>
+        set((s) => {
+          const cur = s.recipes[key] || { strat: { ...DEFAULT_STRAT } };
+          const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+          const strat = { ...(cur.strat || DEFAULT_STRAT) };
+          const d = clampDial(dial);
+          if (d.risk) strat.risk = clamp(strat.risk + d.risk);
+          if (d.focus) strat.focus = clamp(strat.focus + d.focus);
+          if (d.aggression) strat.aggression = clamp(strat.aggression + d.aggression);
+          const trimmed = note.trim().slice(0, 160);
+          const memory = trimmed
+            ? [trimmed, ...(cur.memory || []).filter((n) => !n.startsWith(trimmed.split(" ").slice(0, 3).join(" ")))].slice(0, 6)
+            : cur.memory || [];
+          const recipes = { ...s.recipes, [key]: { ...cur, strat, memory } };
+          const now = Date.now();
+          const ev: CareerEvent = { id: `${now}-imprint-${Math.random().toString(36).slice(2, 6)}`, ts: now, kind: "imprint", title: "Took a lesson to heart", detail: trimmed || undefined };
+          const events = { ...s.events, [key]: appendCapped(s.events[key], ev) };
+          let snapshots = s.snapshots;
+          const c = s.progress[key];
+          if (c) {
+            const lvl = levelFor(c.xp).level;
+            if (shouldSnapshot(s.snapshots[key], lvl, now)) {
+              snapshots = { ...s.snapshots, [key]: [...(s.snapshots[key] || []), { ts: now, level: lvl, axes: styleFrom(c) }].slice(-SNAP_CAP) };
+            }
+          }
+          return { recipes, events, snapshots };
+        }),
+
+      imprint: async (key, lessonId) => {
+        const recipe = get().recipes[key] || { strat: { ...DEFAULT_STRAT } };
+        const lesson = lessonById(lessonId);
+        try {
+          const token = getOwnerToken();
+          const res = await fetch("/api/imprint", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ownerToken: token, key, lessonId, lesson: lesson?.label, persona: recipe.persona, memory: recipe.memory, strat: recipe.strat }),
+          });
+          if (res.ok) {
+            const dta = (await res.json()) as { reply?: string; note?: string; dial?: Partial<Strat>; live?: boolean };
+            const note = dta.note ?? lesson?.note ?? "";
+            const dial = dta.dial ?? lesson?.dial ?? {};
+            get().applyImprint(key, { note, dial });
+            return { reply: (dta.reply ?? championImprintAck(key)).toString(), live: !!dta.live };
+          }
+        } catch {
+          /* offline / error → deterministic preset below */
+        }
+        if (lesson) get().applyImprint(key, { note: lesson.note, dial: lesson.dial });
+        return { reply: championImprintAck(key), live: false };
+      },
+
       // Adopting a champion also implicitly recruits it into the roster, so your
       // starter never shows as "locked" in the collection.
       setOwned: (key) =>
-        set((s) => ({ owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key] })),
+        set((s) => ({ owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key], events: ensureClaimed(s.events, key) })),
 
       // The ORIGIN moment: the very first champion a player adopts starts life as
       // a true rookie (level 1, ROOKIE tier) so they actually live the rookie →
@@ -306,7 +501,7 @@ export const useChampions = create<ChampionStore>()(
       // duel plays out identically.
       adoptStarterRookie: (key) =>
         set((s) => {
-          if (s.owned) return { owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key] };
+          if (s.owned) return { owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key], events: ensureClaimed(s.events, key) };
           const rookie = blank();
           const dir = SEED.find(([k]) => k === key);
           if (dir) (rookie[dir[2]] as number) = 5;
@@ -314,6 +509,7 @@ export const useChampions = create<ChampionStore>()(
             owned: key,
             roster: s.roster.includes(key) ? s.roster : [...s.roster, key],
             progress: { ...s.progress, [key]: rookie },
+            events: ensureClaimed(s.events, key),
           };
         }),
 
@@ -427,7 +623,14 @@ export const useChampions = create<ChampionStore>()(
         });
         return true;
       },
-      crackKeeper: () => set((s) => ({ trainerXp: s.trainerXp + TRAINER_XP.keeperCracked })),
+      crackKeeper: () =>
+        set((s) => {
+          const trainerXp = s.trainerXp + TRAINER_XP.keeperCracked;
+          if (!s.owned) return { trainerXp };
+          const now = Date.now();
+          const ev: CareerEvent = { id: `${now}-keeper-${Math.random().toString(36).slice(2, 6)}`, ts: now, kind: "keeper", title: "Stood with you as a Keeper yielded", detail: "A word toward the Long Vault." };
+          return { trainerXp, events: { ...s.events, [s.owned]: appendCapped(s.events[s.owned], ev) } };
+        }),
 
       // a paid training session: spends Crowns, adds XP + nudges style axes toward
       // the recipe dials — so money visibly evolves the body and shifts the build.
@@ -435,12 +638,20 @@ export const useChampions = create<ChampionStore>()(
         const res = await walletEvent("train");
         if (res) {
           if (!res.ok) return false; // server says you can't afford it
-          set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: res.balance, trainerXp: s.trainerXp + TRAINER_XP.train }));
+          set((s) => {
+            const evolved = evolveTrained(s.progress[key], s.recipes[key]?.strat);
+            const patch = trainPatch(s.events, s.snapshots, s.owned === key || s.roster.includes(key), key, evolved);
+            return { progress: { ...s.progress, [key]: evolved }, crowns: res.balance, trainerXp: s.trainerXp + TRAINER_XP.train, ...patch };
+          });
           return true;
         }
         // offline fallback: optimistic local spend
         if (get().crowns < TRAIN_COST) return false;
-        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, crowns: s.crowns - TRAIN_COST, trainerXp: s.trainerXp + TRAINER_XP.train }));
+        set((s) => {
+          const evolved = evolveTrained(s.progress[key], s.recipes[key]?.strat);
+          const patch = trainPatch(s.events, s.snapshots, s.owned === key || s.roster.includes(key), key, evolved);
+          return { progress: { ...s.progress, [key]: evolved }, crowns: s.crowns - TRAIN_COST, trainerXp: s.trainerXp + TRAINER_XP.train, ...patch };
+        });
         return true;
       },
 
@@ -448,7 +659,11 @@ export const useChampions = create<ChampionStore>()(
       // feeds champion power directly.
       trainWithFragment: (key) => {
         if (get().fragments < 1) return false;
-        set((s) => ({ progress: { ...s.progress, [key]: evolveTrained(s.progress[key], s.recipes[key]?.strat) }, fragments: s.fragments - 1, trainerXp: s.trainerXp + TRAINER_XP.train }));
+        set((s) => {
+          const evolved = evolveTrained(s.progress[key], s.recipes[key]?.strat);
+          const patch = trainPatch(s.events, s.snapshots, s.owned === key || s.roster.includes(key), key, evolved);
+          return { progress: { ...s.progress, [key]: evolved }, fragments: s.fragments - 1, trainerXp: s.trainerXp + TRAINER_XP.train, ...patch };
+        });
         return true;
       },
 
@@ -481,19 +696,75 @@ export const useChampions = create<ChampionStore>()(
           progress[loserKey] = l;
           recordArena(progress, winnerKey, loserKey); // arena ELO: the honest climb
 
-          // capture the OWNED champion's growth so the HUD can celebrate it
+          // capture the OWNED champion's growth so the HUD can celebrate it. Under
+          // the TRIALS flag a tier crossing is NOT auto-granted: we flag it as a
+          // pending trial instead of firing the tier-up now (grounds runs the
+          // trial, then calls claimTier to pay off the celebration).
           let lastEvolution = s.lastEvolution;
           const ownedDelta = s.owned === winnerKey ? dw : s.owned === loserKey ? dl : null;
-          if (ownedDelta && (ownedDelta.leveledUp || ownedDelta.tieredUp)) {
-            lastEvolution = {
-              key: s.owned!,
-              won: s.owned === winnerKey,
-              leveledUp: ownedDelta.leveledUp,
-              newLevel: ownedDelta.newLevel,
-              tieredUp: ownedDelta.tieredUp,
-              tier: ownedDelta.tier,
-              unlocked: ownedDelta.tieredUp ? TIER_UNLOCK[ownedDelta.tier] ?? null : null,
+          if (ownedDelta) {
+            const gateTrial = TRIALS && ownedDelta.pendingTrial;
+            const showTier = ownedDelta.tieredUp && !gateTrial;
+            if (ownedDelta.leveledUp || showTier || gateTrial) {
+              lastEvolution = {
+                key: s.owned!,
+                won: s.owned === winnerKey,
+                leveledUp: ownedDelta.leveledUp,
+                newLevel: ownedDelta.newLevel,
+                tieredUp: showTier,
+                tier: ownedDelta.tier,
+                unlocked: showTier ? TIER_UNLOCK[ownedDelta.tier] ?? null : null,
+                pendingTrial: gateTrial || undefined,
+              };
+            }
+          }
+
+          // The Saga ledger: write a life event for any of the player's OWN
+          // champions in this bout (owned or recruited) — never for a random
+          // matchup the player only spectated. Milestones (level/tier) ride
+          // alongside the bout so the biography reads in order.
+          const events = { ...s.events };
+          const snapshots = { ...s.snapshots };
+          const now = Date.now();
+          const mine = (k: string) => s.owned === k || s.roster.includes(k);
+          const sides: { key: string; delta: typeof dw; won: boolean; opp: string }[] = [
+            { key: winnerKey, delta: dw, won: true, opp: loserKey },
+            { key: loserKey, delta: dl, won: false, opp: winnerKey },
+          ];
+          for (const side of sides) {
+            if (!mine(side.key)) continue;
+            const oppName = nameOf(side.opp);
+            const push = (ev: CareerEvent) => {
+              events[side.key] = appendCapped(events[side.key], ev);
             };
+            const stamp = (kind: CareerEventKind, salt: string): string => `${now}-${kind}-${salt}`;
+            // A tier crossing on the OWNED champion is "gated" under TRIALS: the
+            // tier isn't earned until a trial is won, so we don't stamp `tierup`
+            // yet (claimTier does, as a `trial` event) and we pin claimedTier to
+            // the pre-crossing tier so its body waits.
+            const afterTier = tierIndex(side.delta.newLevel);
+            const gated = TRIALS && side.key === s.owned && side.delta.pendingTrial;
+            progress[side.key].claimedTier = gated ? Math.max(0, afterTier - 1) : afterTier;
+            push({
+              id: stamp("bout", side.key),
+              ts: now,
+              kind: "bout",
+              won: side.won,
+              opponent: oppName,
+              title: side.won ? `Defeated ${oppName}` : `Lost to ${oppName}`,
+              level: side.delta.newLevel,
+            });
+            if (side.delta.leveledUp && (!side.delta.tieredUp || gated)) {
+              push({ id: stamp("levelup", side.key), ts: now + 1, kind: "levelup", title: `Reached level ${side.delta.newLevel}`, level: side.delta.newLevel });
+            }
+            if (side.delta.tieredUp && !gated) {
+              push({ id: stamp("tierup", side.key), ts: now + 1, kind: "tierup", title: `Rose to ${side.delta.tier}`, tier: side.delta.tier, level: side.delta.newLevel });
+            }
+            // snapshot the (post-bout) axes if the build shifted
+            const lvl = levelFor(progress[side.key].xp).level;
+            if (shouldSnapshot(snapshots[side.key], lvl, now)) {
+              snapshots[side.key] = [...(snapshots[side.key] || []), { ts: now, level: lvl, axes: styleFrom(progress[side.key]) }].slice(-SNAP_CAP);
+            }
           }
 
           // trainer rank accrual + Force meta-war contribution (only when the
@@ -508,7 +779,7 @@ export const useChampions = create<ChampionStore>()(
             const base = forcePoints.season === season ? forcePoints.points : 0;
             forcePoints = { season, points: base + 1 };
           }
-          return { progress, trainerXp, forcePoints, lastEvolution };
+          return { progress, trainerXp, forcePoints, lastEvolution, events, snapshots };
         }),
 
       recordHouseGame: (end, votesLog) => {
@@ -560,8 +831,17 @@ export const useChampions = create<ChampionStore>()(
       merge: (persisted, current) => {
         const p = (persisted as Partial<ChampionStore>) || {};
         const progress = { ...seeded(), ...(p.progress || {}) };
-        // never restore a stale evolution flash across reloads
-        return { ...current, ...p, progress, lastEvolution: null } as ChampionStore;
+        // never restore a stale evolution flash across reloads; default the v5
+        // saga ledger fields for pre-v5 caches that never had them.
+        return {
+          ...current,
+          ...p,
+          progress,
+          events: p.events && typeof p.events === "object" ? p.events : {},
+          snapshots: p.snapshots && typeof p.snapshots === "object" ? p.snapshots : {},
+          lastVisit: typeof p.lastVisit === "number" ? p.lastVisit : 0,
+          lastEvolution: null,
+        } as ChampionStore;
       },
     },
   ),

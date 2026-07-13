@@ -116,6 +116,60 @@ export function championGreeting(key: string, ctx: "train" | "return" | "arena")
   return byCtx[key]?.[ctx] ?? `${name} is ready when you are.`;
 }
 
+// ── Homecoming (the mobile "you're back" greeting) ──────────────────────────
+// Selected by real state since the player last looked: a long absence, a hot
+// streak, or a slump each get their own line; otherwise fall back to the neutral
+// return greeting. Pure data — no LLM, instant on the daily-loop critical path.
+export type HomecomingMood = "return" | "away" | "hot" | "cold";
+
+const HOMECOMING: Record<string, Partial<Record<HomecomingMood, string>>> = {
+  AXIOM: {
+    away: "You were gone long enough for me to re-derive everything twice. Catch up.",
+    hot: "The proofs keep closing themselves. Don't break the streak.",
+    cold: "I dropped a few — the logic held, the timing didn't. Fix my timing.",
+  },
+  GLITCH: {
+    away: "You LEFT. For AGES. I counted to a big number and then forgot it. Hi!",
+    hot: "Winning winning winning — the frame keeps BREAKING and I love it.",
+    cold: "Lost some. Whatever. The good chaos is still loading. Point me somewhere.",
+  },
+  BASTION: {
+    away: "…you were away a while. I held. I always hold.",
+    hot: "Wins stacking, quietly. Don't get loud about it.",
+    cold: "A few got through. I'll hold the line better. Stay with me.",
+  },
+  VOX: {
+    away: "The crowd asked where you'd gone. I improvised. Try not to vanish mid-story.",
+    hot: "The room is ours right now — feel it? Let's not give it back.",
+    cold: "The room turned on us a little. We win it back with a better line.",
+  },
+  EMBER: {
+    away: "Two ages you were gone. I nearly picked a fight with the scenery.",
+    hot: "I'm on fire and you show up NOW? Fine. Let's keep burning.",
+    cold: "Got cooled down a few times. Light me back up.",
+  },
+  PARADOX: {
+    away: "Your absence was itself an argument. I refuted it. Welcome back.",
+    hot: "We keep finding the contradiction first. Curious — let's press it.",
+    cold: "Lost a few to premises I missed. Question harder with me.",
+  },
+  WIT: {
+    away: "Gone that long? I had three comebacks ready and no one to aim them at.",
+    hot: "Landing every line lately. Timing's immaculate. Keep feeding me.",
+    cold: "Got landed on first a couple times. I land last next. Watch.",
+  },
+  MUSE: {
+    away: "You wandered off and the whole question changed while you were out.",
+    hot: "We keep changing what the fight is about. It keeps working.",
+    cold: "They held the old question and I let them. New question next time.",
+  },
+};
+
+export function championHomecoming(key: string, mood: HomecomingMood): string {
+  if (mood === "return") return championGreeting(key, "return");
+  return HOMECOMING[key]?.[mood] ?? championGreeting(key, "return");
+}
+
 // ── After a duel — your champion speaks to YOU ──────────────────────────────
 
 export function championAfterFight(
@@ -150,6 +204,23 @@ export function championAfterFight(
     MUSE: `${opponentName} kept the old question. I need a new one.`,
   };
   return (won ? win[key] : loss[key]) ?? (won ? `We took ${opponentName}.` : `${opponentName} got us this time.`);
+}
+
+// ── Imprint acknowledgement — the mind takes a lesson to heart ──────────────
+// Used as the template/fallback reply when no live model answers an Imprint, so
+// even offline the champion responds in its own voice.
+export function championImprintAck(key: string): string {
+  const lines: Record<string, string> = {
+    AXIOM: "Noted as an axiom. I won't need to be told twice.",
+    GLITCH: "Ooh, new rule! Rewriting myself… done. Probably.",
+    BASTION: "…understood. I'll hold to it.",
+    VOX: "A note for the performance. The crowd will feel the difference.",
+    EMBER: "Fine. I'll aim the fire where you point it.",
+    PARADOX: "I'll question it until it holds — then I'll keep it.",
+    WIT: "Filed, sharpened, ready. Watch me use it.",
+    MUSE: "That reframes everything. I like it. Keeping it.",
+  };
+  return lines[key] ?? "Got it. I'll carry that in.";
 }
 
 // ── Ranked win — a short finale line from your champion ─────────────────────

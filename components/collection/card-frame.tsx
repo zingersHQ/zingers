@@ -15,6 +15,9 @@ export function shareQuery(card: Card, brain = "House Grok") {
   p.set("l", String(card.losses));
   p.set("ra", card.rarityLabel);
   p.set("b", brain);
+  // The one-line saga, career-derived — the closest thing today to a champion's
+  // public provenance. Truncated to keep the share URL sane.
+  if (card.saga) p.set("sg", card.saga.slice(0, 140));
   return p.toString();
 }
 

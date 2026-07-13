@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
@@ -9,6 +9,8 @@ import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL, type EvolutionFlash } from "@/store/champions";
 import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
+import { IMPRINT_LESSONS } from "@/lib/imprints";
+import { TRIALS } from "@/lib/flags";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { FirstRun } from "@/components/intro/first-run";
@@ -217,6 +219,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // pre/post-duel rival cinematic: "before" gates the launch, "after" reports it
   const [rivalBeat, setRivalBeat] = useState<{ phase: "before" | "after"; won?: boolean } | null>(null);
   const inRivalDuel = useRef(false);
+  // Promotion Trials (TRIALS flag): a pending nomination to earn the next tier,
+  // and a guard so its bout's onEnd pays off with claimTier instead of coasting.
+  const [trialNom, setTrialNom] = useState<{ key: string; tier: string } | null>(null);
+  const inTrialDuel = useRef(false);
   const evolveBeforeRef = useRef<Champion | null>(null);
   const inFirstDuelFight = useRef(false);
   const firstFightWorldRef = useRef<string | null>(null);
@@ -627,6 +633,17 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         localStorage.setItem(STORAGE.seasonSeen, String(now));
       } else if (Number(seenRaw) < now && introDone && isFirstDuelComplete()) {
         setSeasonBeat(true);
+        // Stamp the season turn into the active champion's saga — it survived a
+        // Vault door opening, and the biography should remember that.
+        const ownedKey = useChampions.getState().owned;
+        if (ownedKey) {
+          useChampions.getState().pushEvent(ownedKey, {
+            kind: "season",
+            season: now,
+            title: `Lived through the turn of Season ${now}`,
+            detail: "A Vault door opened while it fought.",
+          });
+        }
       } else {
         localStorage.setItem(STORAGE.seasonSeen, String(now));
       }
@@ -1252,6 +1269,52 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     });
   }, [owned, rival, rivalMemory, store, getRecipe, bout]);
 
+  // A Promotion Trial — a nominated proving duel that must be WON to claim the
+  // tier the champion's XP has reached. Mirrors the rival mock-duel path; on a
+  // win it calls claimTier (which fires the tier-up Celebration) + a Reflection.
+  const launchTrialDuel = useCallback((tier: string) => {
+    if (!owned) return;
+    const opp = firstDuelOpponent(owned, roster);
+    inTrialDuel.current = true;
+    counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
+    setResult(null);
+    setOpponent(opp);
+    setOpponentId(null);
+    setDuelMeta(null);
+    const bKey = matchOpponentKey(opp, null);
+    setMatchView({ aKey: owned, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0, cinematic: true });
+    const ra = getRecipe(owned);
+    const rb = getRecipe(opp);
+    const seed = 400 + (store.get(owned).xp % 9000);
+    const url = `/api/battle?a=${owned}&b=${opp}&mock=1&seed=${seed}&${sideParams("a", ra)}&${sideParams("b", rb)}`;
+    bout.begin(url, (end: BattleEnd) => {
+      inTrialDuel.current = false;
+      const styles: Record<string, Style> = { [owned]: blankStyle(), [opp]: blankStyle() };
+      for (const turn of historyRef.current) accrue(turn.actor === owned ? styles[owned] : styles[opp], turn);
+      const winnerKey = end.winner;
+      const won = winnerKey === owned;
+      const loserKey = won ? opp : owned;
+      store.recordBattle(winnerKey, loserKey, styles);
+      const dom = dominant(store.get(owned));
+      store.learnFromBout({ key: owned, opponentName: byKey[opp]?.name || opp, won, axisLabel: dom.axis.label });
+      if (won) store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
+      store.awardTrainerXp(won ? TRAINER_XP.boutWin : TRAINER_XP.boutLoss);
+      setMatchView(null);
+      setOpponent(null);
+      outcomeSfx(won);
+      if (won) {
+        // pay off: claim the tier (fires the existing tier-up Celebration via the
+        // lastEvolution effect) and reflect in the champion's own voice.
+        store.claimTier(owned);
+        const name = byKey[owned]?.name ?? owned;
+        setCompanionBeat({ key: owned, kicker: "TRIAL WON · REFORGED", lines: [{ speaker: name, text: championRankedFinale(owned) }] });
+      } else {
+        // lost — the tier stays owed; let them try again from the nomination.
+        setTrialNom({ key: owned, tier });
+      }
+    });
+  }, [owned, roster, store, getRecipe, bout, byKey]);
+
   const startMatch = useCallback(async () => {
     if (!owned || !opponent) return;
     // Commit-reveal wager: stake is taken server-side BEFORE the bout so it can't
@@ -1541,7 +1604,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // — the compass sat at z-index 100 above CharacterBeat (92), breaking keeper
   // dialogues and other overlays.
   const cinematicOpen =
-    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat;
+    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat || !!trialNom;
   const worldUiBlocked =
     showMatch ||
     overlay !== "none" ||
@@ -1595,6 +1658,15 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     store.clearEvolution();
     if (evoFlashTimer.current) clearTimeout(evoFlashTimer.current);
     evoFlashTimer.current = setTimeout(() => setEvoFlash(null), 3800);
+  }, [lastEvolution, showMatch, overlay, gRun, store]);
+
+  // Promotion Trials: a bout crossed into an unclaimed tier — raise a nomination
+  // (a real trial duel is owed) instead of granting the tier. Off unless TRIALS.
+  useEffect(() => {
+    if (!TRIALS || !lastEvolution || !lastEvolution.pendingTrial) return;
+    if (showMatch || overlay !== "none" || gRun) return;
+    setTrialNom({ key: lastEvolution.key, tier: lastEvolution.tier });
+    store.clearEvolution();
   }, [lastEvolution, showMatch, overlay, gRun, store]);
 
   useEffect(() => {
@@ -2192,6 +2264,29 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         />
       )}
 
+      {/* Promotion Trial nomination — a Keeper names the proving duel the champion
+          must WIN to claim the tier its record has reached. Off unless TRIALS. */}
+      {TRIALS && trialNom && byKey[trialNom.key] && (
+        <CharacterBeat
+          script={{
+            kicker: "PROMOTION TRIAL",
+            lines: [
+              {
+                speaker: "Keeper",
+                text: `${byKey[trialNom.key].name} has fought its way to the threshold of ${trialNom.tier}. The tier is not given — it is taken. Win the trial and be reforged.`,
+              },
+            ],
+          }}
+          accent={TYPE_COLOR[byKey[trialNom.key].type]}
+          voice="keeper"
+          onComplete={() => {
+            const tier = trialNom.tier;
+            setTrialNom(null);
+            launchTrialDuel(tier);
+          }}
+        />
+      )}
+
       {/* anytime controls reference (auto-opens once at free roam) */}
       <ControlsGuide open={controlsOpen} onClose={() => setControlsOpen(false)} isTouch={isTouch} hasPad={hasPad} force={store.force} />
       <SettingsOverlay
@@ -2596,6 +2691,17 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
   const [persona, setPersonaLocal] = useState(recipe.persona ?? "");
   const [flash, setFlash] = useState<{ xp: number; leveledTo: number | null } | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [imprinting, setImprinting] = useState<string | null>(null);
+  const [imprintReply, setImprintReply] = useState<string | null>(null);
+
+  const teach = async (lessonId: string) => {
+    if (imprinting) return;
+    setImprinting(lessonId);
+    setImprintReply(null);
+    const out = await store.imprint(ckey, lessonId);
+    setImprinting(null);
+    setImprintReply(out.reply);
+  };
 
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
@@ -2642,6 +2748,31 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
         <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
         <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
+
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 8px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          IMPRINT · teach one lesson (it answers &amp; remembers)
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {IMPRINT_LESSONS.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => teach(l.id)}
+              disabled={!!imprinting}
+              className="mono"
+              style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: imprinting ? "wait" : "pointer", opacity: imprinting && imprinting !== l.id ? 0.5 : 1 }}
+            >
+              <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}</span>
+              <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>{imprinting === l.id ? "teaching…" : l.hint}</span>
+            </button>
+          ))}
+        </div>
+        {imprintReply && (
+          <div style={{ marginTop: 10, padding: 11, borderRadius: 10, background: "var(--panel2)", border: `1px solid ${col}` }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 3 }}>{entry.name.toUpperCase()}</div>
+            <div style={{ fontSize: 13, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{imprintReply}&rdquo;</div>
+          </div>
+        )}
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
           PERSONA · its voice (optional)
@@ -3047,6 +3178,8 @@ function MatchHud(props: {
 }) {
   const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile } = props;
   const t = bout.turn;
+  const [study, setStudy] = useState(false);
+  const canSkip = bout.phase === "live" && (t?.round ?? 0) >= 2 && !result && !bout.end;
   const a = byKey[owned];
   const b = byKey[opponent];
   const aName = a?.name ?? owned;
@@ -3141,6 +3274,16 @@ function MatchHud(props: {
               {t.info.crit && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ HIGHLIGHT</span>}
               {t.info.se && <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>SUPER EFFECTIVE</span>}
               {t.dmg > 0 && <span className="mono" style={{ color: "var(--bad)", fontWeight: 700 }}>−{t.dmg}</span>}
+              {canSkip && (
+                <button
+                  type="button"
+                  onClick={bout.skipToVerdict}
+                  className="mono"
+                  style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 999, border: "1px solid var(--line2)", background: "transparent", color: "var(--muted)", fontSize: isMobile ? 10 : 11, cursor: "pointer" }}
+                >
+                  <FastForward size={12} strokeWidth={2.2} /> Skip to verdict
+                </button>
+              )}
             </div>
             <div style={{ fontStyle: "italic", fontSize: isMobile ? 14 : 15, margin: "8px 0 6px", lineHeight: 1.4, overflowWrap: "anywhere" }}>
               &ldquo;{t.line}&rdquo;
@@ -3148,6 +3291,28 @@ function MatchHud(props: {
             <div className="mono" style={{ fontSize: isMobile ? 10 : 11, color: "var(--muted)", lineHeight: 1.45, overflowWrap: "anywhere" }}>
               why › {t.why} <span style={{ color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 4 }}>· <Scale size={11} strokeWidth={2} /> {t.ruling} (q={t.q.toFixed(2)})</span>
             </div>
+            {t.trace && t.trace.length > 0 && (
+              <div style={{ marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setStudy((v) => !v)}
+                  className="mono"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 999, border: `1px solid ${study ? "var(--accent)" : "var(--line2)"}`, background: "transparent", color: study ? "var(--accent)" : "var(--muted2)", fontSize: 10, cursor: "pointer" }}
+                >
+                  <FlaskConical size={11} strokeWidth={2.2} /> {study ? "Hide study" : "Study the read"}
+                </button>
+                {study && (
+                  <div className="mono" style={{ marginTop: 6, padding: 10, borderRadius: 8, background: "rgba(255,255,255,.03)", border: "1px solid var(--line)", display: "grid", gap: 5 }}>
+                    {t.trace.map((step, i) => (
+                      <div key={i} style={{ fontSize: 10, lineHeight: 1.5, overflowWrap: "anywhere" }}>
+                        <span style={{ color: "var(--accent)" }}>{step.tool}</span>
+                        <span style={{ color: "var(--muted)" }}> → {typeof step.result === "string" ? step.result : JSON.stringify(step.result)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

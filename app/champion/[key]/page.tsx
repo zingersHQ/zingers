@@ -1,6 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock } from "lucide-react";
 import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
 import { houseProfile } from "@/lib/evolve/elo";
 import { appearanceOf } from "@/lib/evolve/appearance";
@@ -8,14 +9,16 @@ import { useChampions } from "@/store/champions";
 import { cardOf } from "@/lib/cards/card";
 import { ROSTER } from "@/lib/engine/roster";
 import { ChampionCardFrame, shareQuery } from "@/components/collection/card-frame";
+import { StyleRadar } from "@/components/collection/style-radar";
 import { useIsMobile } from "@/lib/use-device";
+import type { CareerEvent, CareerEventKind } from "@/lib/types";
 
 export default function ChampionPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = use(params);
   const ckey = key.toUpperCase();
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
-  const { get, getRecipe, owned } = useChampions();
+  const { get, getRecipe, owned, events, snapshots } = useChampions();
 
   useEffect(() => {
     setMounted(true);
@@ -29,6 +32,9 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
   const recipe = getRecipe(ckey);
   const card = cardOf(ckey, c || blank(), { memory: recipe.memory });
   const col = card.force.hex;
+  const saga = [...(events[ckey] || [])].sort((a, b) => b.ts - a.ts);
+  const earliest = snapshots[ckey]?.[0]?.axes ?? null;
+  const memory = recipe.memory || [];
   const prof = houseProfile(c);
   const app = appearanceOf(c);
   const shareHref = `/c/${card.key}?${shareQuery(card, recipe.agent?.provider ? `${recipe.agent.provider}` : "House Grok")}`;
@@ -77,6 +83,35 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
         <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
       </div>
 
+      {saga.length > 0 && (
+        <div className="panel" style={{ padding: 20 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 14 }}>
+            THE SAGA · A LIFE IN THE GROUNDS
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {saga.slice(0, 24).map((ev, i) => (
+              <SagaRow key={ev.id} ev={ev} accent={col} last={i === Math.min(saga.length, 24) - 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {memory.length > 0 && (
+        <div className="panel" style={{ ["--ac" as string]: col, padding: 20 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 12 }}>
+            MEMORY · WHAT THIS MIND CARRIES INTO A FIGHT
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {memory.map((note, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.5 }}>
+                <Brain size={14} strokeWidth={2} style={{ color: col, marginTop: 3, flexShrink: 0 }} />
+                <span style={{ color: "var(--muted)" }}>{note}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="panel" style={{ padding: 20 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
               ABILITIES · CARD TEXT
@@ -108,6 +143,14 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
                 FIGHTING STYLE · DRIVES THE BODY
               </div>
+              <div style={{ display: "grid", placeItems: "center", padding: "4px 0 12px" }}>
+                <StyleRadar current={{ aggression: c.aggression, control: c.control, resilience: c.resilience, flair: c.flair, creativity: c.creativity }} earliest={earliest} accent={col} />
+              </div>
+              {earliest && (
+                <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", textAlign: "center", margin: "0 0 12px", letterSpacing: 0.5 }}>
+                  SOLID · NOW &nbsp;·&nbsp; DASHED · WHERE IT STARTED
+                </p>
+              )}
               {AXES.map((ax) => (
                 <Meter key={ax.k} label={`${ax.glyph} ${ax.label}`} v={Math.round(c[ax.k] || 0)} c={ax.color} max={24} />
               ))}
@@ -191,6 +234,64 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
         </div>
       )}
     </main>
+  );
+}
+
+const EVENT_META: Record<CareerEventKind, { Icon: typeof Sparkles; tone: "milestone" | "win" | "loss" | "neutral" }> = {
+  claimed: { Icon: Sparkles, tone: "milestone" },
+  bout: { Icon: Swords, tone: "neutral" },
+  levelup: { Icon: ArrowUpCircle, tone: "neutral" },
+  tierup: { Icon: ChevronsUp, tone: "milestone" },
+  trial: { Icon: Award, tone: "milestone" },
+  train: { Icon: Dumbbell, tone: "neutral" },
+  imprint: { Icon: Brain, tone: "neutral" },
+  keeper: { Icon: KeyRound, tone: "milestone" },
+  season: { Icon: DoorOpen, tone: "milestone" },
+  sealed: { Icon: Lock, tone: "milestone" },
+};
+
+function relTime(ts: number): string {
+  const d = Date.now() - ts;
+  const m = Math.floor(d / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const days = Math.floor(h / 24);
+  if (days < 30) return `${days}d ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
+function SagaRow({ ev, accent, last }: { ev: CareerEvent; accent: string; last: boolean }) {
+  const meta = EVENT_META[ev.kind] ?? EVENT_META.bout;
+  const iconColor =
+    meta.tone === "milestone"
+      ? accent
+      : ev.kind === "bout"
+        ? ev.won
+          ? "var(--good)"
+          : "var(--bad)"
+        : ev.kind === "levelup"
+          ? "var(--gold)"
+          : "var(--muted2)";
+  const { Icon } = meta;
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      {/* rail: icon + connector line */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", border: `1px solid ${iconColor}55`, background: `${iconColor}14` }}>
+          <Icon size={14} strokeWidth={2} style={{ color: iconColor }} />
+        </div>
+        {!last && <div style={{ width: 1, flex: 1, minHeight: 14, background: "var(--line)", margin: "2px 0" }} />}
+      </div>
+      <div style={{ paddingBottom: last ? 0 : 14, minWidth: 0 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13.5, fontWeight: meta.tone === "milestone" ? 700 : 500, color: meta.tone === "milestone" ? "var(--ink)" : "var(--muted)" }}>{ev.title}</span>
+          <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>{relTime(ev.ts)}</span>
+        </div>
+        {ev.detail && <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", lineHeight: 1.45, marginTop: 3 }}>{ev.detail}</div>}
+      </div>
+    </div>
   );
 }
 

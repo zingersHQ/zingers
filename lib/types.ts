@@ -371,6 +371,11 @@ export interface Champion {
   // objective benchmark
   rating?: number;
   house?: HouseStats;
+  // Promotion Trials (opt-in via the TRIALS flag): the highest tier index this
+  // champion has actually EARNED by winning a trial. Its visible heraldry gates
+  // on this, not on the tier its XP merely reaches. Optional/absent → treated as
+  // "fully claimed to the current level" so no existing champion is demoted.
+  claimedTier?: number;
 }
 
 export type Progress = Record<string, Champion>;
@@ -416,6 +421,47 @@ export interface Recipe {
 }
 
 export const DEFAULT_STRAT: Strat = { risk: 50, focus: 50, aggression: 50 };
+
+// ── The Saga ledger: a champion's life written from real events ──────────────
+// Append-only per champion. This is the biography spine — everything a champion
+// lived through, in order, so the profile can show a saga and the mobile Report
+// can summarise "what happened while you were away". Client-first (persisted in
+// the save blob), tamper-tolerant by design: these are the player's own memories
+// of their own champion, not an authority for rank or economy.
+export type CareerEventKind =
+  | "claimed" // the origin moment — pulled from the Hum
+  | "bout" // a duel fought (won or lost)
+  | "levelup" // crossed a level
+  | "tierup" // crossed a tier (Rookie→Adept→…)
+  | "trial" // won a promotion trial (earned the tier)
+  | "train" // a training session
+  | "imprint" // a lesson the handler taught it
+  | "keeper" // a Keeper was cracked while it was the active champion
+  | "season" // survived a season turn (a Vault door opened)
+  | "sealed"; // its record was sealed in the Long Vault (Legend honour)
+
+export interface CareerEvent {
+  id: string; // stable id (ts + kind + salt) — de-dupes across sync
+  ts: number; // ms epoch
+  kind: CareerEventKind;
+  title: string; // short headline, already player-facing
+  detail?: string; // one supporting line (e.g. a quoted bout moment)
+  won?: boolean; // for bout/trial events
+  opponent?: string; // opponent display name for bout/trial events
+  level?: number; // level at the time (levelup/tierup)
+  tier?: string; // tier name (tierup/trial)
+  season?: number; // season number (season events)
+  rank?: number; // trainer/ladder rank snapshot, when known
+}
+
+// A point-in-time snapshot of the five style axes, appended when a champion's
+// build meaningfully shifts. Powers the "how this mind grew" radar on the
+// profile — the raising fantasy made visible over a career, not just current.
+export interface AxisSnapshot {
+  ts: number; // ms epoch
+  level: number; // champion level at snapshot
+  axes: Style; // the five axes at that moment
+}
 
 // ── Player save (server-authoritative, keyed by the anonymous owner token) ────
 // Mirrors the client store's persisted slice so a legend survives a cache wipe
@@ -468,7 +514,15 @@ export interface PlayerSave {
   force: CreatureType | null; // pledged Clan / Force (null = no clan)
   forceSeason: number | null; // the season the current Clan was joined in (locks the choice for that season)
   forcePoints: ForcePoints; // this season's contribution to the pledged Force
+  // The Saga ledger — per-champion life story (v5+). Append-only, capped per
+  // champion in the store. Absent on pre-v5 saves; migrated to {} on load.
+  events?: Record<string, CareerEvent[]>;
+  // Per-champion style-axis history for the growth radar (v5+).
+  snapshots?: Record<string, AxisSnapshot[]>;
+  // ms epoch of the last time the player opened the game — powers the mobile
+  // "while you were away" Report window. Absent on pre-v5 saves.
+  lastVisit?: number;
   updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
 }
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;

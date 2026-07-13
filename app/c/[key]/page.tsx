@@ -15,7 +15,7 @@ function str(sp: SP, k: string, d: string) {
 }
 
 function cardQuery(sp: SP): string {
-  const keys = ["sl", "sk", "r", "lv", "t", "d", "w", "l", "ra", "b"];
+  const keys = ["sl", "sk", "r", "lv", "t", "d", "w", "l", "ra", "b", "sg"];
   const p = new URLSearchParams();
   for (const k of keys) p.set(k, str(sp, k, ""));
   return p.toString();
@@ -28,7 +28,8 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const c = ROSTER[k];
   if (!c) return { title: BRAND.name };
   const img = `/api/card/${k}?${cardQuery(sp)}`;
-  const desc = `${str(sp, "d", "Unproven")} · Skill Level ${str(sp, "sl", str(sp, "lv", "1"))} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
+  const saga = str(sp, "sg", "");
+  const desc = saga || `${str(sp, "d", "Unproven")} · Skill Level ${str(sp, "sl", str(sp, "lv", "1"))} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
   const title = pageTitle(c.name);
   return {
     title,
@@ -54,6 +55,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   const losses = str(sp, "l", "0");
   const rarity = str(sp, "ra", "Common");
   const brain = str(sp, "b", "House · Grok");
+  const saga = str(sp, "sg", "");
   const force = FORCES[c.type];
 
   return (
@@ -88,7 +90,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
               <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.name}</div>
               <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>SL {sl} · {tier} · brain: {brain}</div>
               <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "18px 0 0" }}>
-                A snapshot of a raised Zingers mind: its rank, rarity, strategy, and portrait are all derived from the champion's career.
+                {saga || "A snapshot of a raised Zingers mind: its rank, rarity, strategy, and portrait are all derived from the champion's career."}
               </p>
             </div>
           </div>

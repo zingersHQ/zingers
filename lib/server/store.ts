@@ -5,7 +5,7 @@
 // local dev, but the real shared ladder requires the Redis env vars.
 import "server-only";
 import { Redis } from "@upstash/redis";
-import type { CreatureType, ForcePoints, PlayerSave, Recipe } from "@/lib/types";
+import type { AxisSnapshot, CareerEvent, CareerEventKind, CreatureType, ForcePoints, PlayerSave, Recipe, Style } from "@/lib/types";
 import { STARTING_CROWNS } from "@/lib/economy";
 
 const FORCES: readonly CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
@@ -26,6 +26,72 @@ function cleanForcePoints(raw: unknown): ForcePoints {
     // from ever dominating the season war.
     points: Number.isFinite(points) ? Math.max(0, Math.min(100_000, Math.floor(points))) : 0,
   };
+}
+
+// ── Saga ledger (v5) sanitization ────────────────────────────────────────────
+// The saga is the player's own biography of their champion; it never gates rank
+// or economy, so we only bound it (sizes + string lengths) to keep the save blob
+// small and safe — not to arbitrate truth.
+const EVENT_KINDS: readonly CareerEventKind[] = ["claimed", "bout", "levelup", "tierup", "trial", "train", "imprint", "keeper", "season", "sealed"];
+const MAX_EVENTS_PER_CHAMPION = 80;
+const MAX_SNAPSHOTS_PER_CHAMPION = 60;
+const AXIS_KEYS: readonly (keyof Style)[] = ["aggression", "control", "resilience", "flair", "creativity"];
+
+function cleanEvents(raw: unknown): Record<string, CareerEvent[]> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Record<string, CareerEvent[]> = {};
+  for (const [key, list] of Object.entries(raw as Record<string, unknown>).slice(0, MAX_PROGRESS_KEYS)) {
+    if (!Array.isArray(list)) continue;
+    const events: CareerEvent[] = [];
+    for (const e of (list as unknown[]).slice(-MAX_EVENTS_PER_CHAMPION)) {
+      if (!e || typeof e !== "object") continue;
+      const ev = e as Partial<CareerEvent>;
+      if (typeof ev.id !== "string" || typeof ev.kind !== "string" || !(EVENT_KINDS as readonly string[]).includes(ev.kind)) continue;
+      if (typeof ev.ts !== "number" || !Number.isFinite(ev.ts)) continue;
+      events.push({
+        id: ev.id.slice(0, 48),
+        ts: Math.floor(ev.ts),
+        kind: ev.kind as CareerEventKind,
+        title: typeof ev.title === "string" ? ev.title.slice(0, 120) : "",
+        detail: typeof ev.detail === "string" ? ev.detail.slice(0, 200) : undefined,
+        won: typeof ev.won === "boolean" ? ev.won : undefined,
+        opponent: typeof ev.opponent === "string" ? ev.opponent.slice(0, 48) : undefined,
+        level: typeof ev.level === "number" && Number.isFinite(ev.level) ? Math.floor(ev.level) : undefined,
+        tier: typeof ev.tier === "string" ? ev.tier.slice(0, 24) : undefined,
+        season: typeof ev.season === "number" && Number.isFinite(ev.season) ? Math.floor(ev.season) : undefined,
+        rank: typeof ev.rank === "number" && Number.isFinite(ev.rank) ? Math.floor(ev.rank) : undefined,
+      });
+    }
+    if (events.length) out[key.slice(0, 64)] = events;
+  }
+  return out;
+}
+
+function cleanSnapshots(raw: unknown): Record<string, AxisSnapshot[]> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Record<string, AxisSnapshot[]> = {};
+  for (const [key, list] of Object.entries(raw as Record<string, unknown>).slice(0, MAX_PROGRESS_KEYS)) {
+    if (!Array.isArray(list)) continue;
+    const snaps: AxisSnapshot[] = [];
+    for (const s of (list as unknown[]).slice(-MAX_SNAPSHOTS_PER_CHAMPION)) {
+      if (!s || typeof s !== "object") continue;
+      const snap = s as Partial<AxisSnapshot>;
+      if (typeof snap.ts !== "number" || !Number.isFinite(snap.ts)) continue;
+      const src = (snap.axes ?? {}) as Partial<Style>;
+      const axes = {} as Style;
+      for (const a of AXIS_KEYS) {
+        const v = Number(src[a]);
+        axes[a] = Number.isFinite(v) ? Math.max(0, Math.min(1000, v)) : 0;
+      }
+      snaps.push({
+        ts: Math.floor(snap.ts),
+        level: typeof snap.level === "number" && Number.isFinite(snap.level) ? Math.floor(snap.level) : 1,
+        axes,
+      });
+    }
+    if (snaps.length) out[key.slice(0, 64)] = snaps;
+  }
+  return out;
 }
 
 export interface LadderChampion {
@@ -81,6 +147,10 @@ export interface Store {
   // spend is MEASURED (not guessed) before any aggressive monetization.
   incrUsage(day: number, calls: number, inTok: number, outTok: number): Promise<void>;
   getUsage(day: number): Promise<UsageDay>;
+  // Per-owner, per-UTC-day Imprint counter — the guardrail that caps how many
+  // model-backed lessons one player can spend our budget on in a day. Atomic
+  // INCR; returns the post-increment count so the route can gate the LLM call.
+  incrImprint(token: string, day: number): Promise<number>;
   // Server-authoritative wallet (online-first): the balance lives here, not in
   // the client save blob. adjustWallet is atomic and rejects overdraft.
   getWallet(token: string): Promise<number>;
@@ -128,6 +198,7 @@ const K = {
   war: (season: number) => `z:war:${season}`,
   warMember: (token: string, season: number) => `z:warme:${season}:${token}`,
   usage: (day: number) => `z:cost:${day}`,
+  imprint: (token: string, day: number) => `z:imp:${day}:${token}`,
   wallet: (token: string) => `z:wallet:${token}`,
   bet: (token: string) => `z:bet:${token}`,
   events: (day: number) => `z:ev:${day}`,
@@ -205,6 +276,9 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
     force: cleanForce(s.force),
     forceSeason: typeof s.forceSeason === "number" && Number.isFinite(s.forceSeason) ? Math.floor(s.forceSeason) : null,
     forcePoints: cleanForcePoints(s.forcePoints),
+    events: cleanEvents(s.events),
+    snapshots: cleanSnapshots(s.snapshots),
+    lastVisit: typeof s.lastVisit === "number" && Number.isFinite(s.lastVisit) ? Math.floor(s.lastVisit) : undefined,
     updatedAt: Date.now(),
   };
 }
@@ -293,6 +367,12 @@ class UpstashStore implements Store {
     const h = (await this.r.hgetall<Record<string, string>>(K.usage(day))) || {};
     return { calls: Number(h.calls) || 0, inTok: Number(h.in) || 0, outTok: Number(h.out) || 0 };
   }
+  async incrImprint(token: string, day: number) {
+    const k = K.imprint(token, day);
+    const n = await this.r.incr(k);
+    if (n === 1) await this.r.expire(k, 2 * 86_400); // self-expire after 2 days
+    return n;
+  }
   private async ensureWallet(token: string) {
     await this.r.set(K.wallet(token), STARTING_CROWNS, { nx: true });
   }
@@ -355,6 +435,7 @@ class MemoryStore implements Store {
   private war = new Map<number, Record<CreatureType, number>>();
   private warMembers = new Map<string, number>(); // `${season}:${token}` → points
   private usage = new Map<number, UsageDay>();
+  private imprints = new Map<string, number>(); // `${day}:${token}` → count
   private wallets = new Map<string, number>();
   private bets = new Map<string, PendingBet>();
   private events = new Map<number, Map<string, number>>();
@@ -417,6 +498,12 @@ class MemoryStore implements Store {
   }
   async getUsage(day: number) {
     return this.usage.get(day) ?? { calls: 0, inTok: 0, outTok: 0 };
+  }
+  async incrImprint(token: string, day: number) {
+    const k = `${day}:${token}`;
+    const n = (this.imprints.get(k) ?? 0) + 1;
+    this.imprints.set(k, n);
+    return n;
   }
   async getWallet(token: string) {
     if (!this.wallets.has(token)) this.wallets.set(token, STARTING_CROWNS);

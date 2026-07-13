@@ -166,11 +166,17 @@ export interface ResultDelta {
   tieredUp: boolean;
   tier: string;
   doctrine: string;
+  // Promotion Trials: this bout pushed the champion's XP tier past the tier it
+  // has CLAIMED, so a trial is owed before the new tier's heraldry is granted.
+  // The store/UI decide whether to gate on this (behind the TRIALS flag); the
+  // pure model just reports it.
+  pendingTrial: boolean;
 }
 // apply a finished battle to a champion's career (mutates p); returns what changed
 export function applyResult(p: Champion, { won, style = blankStyle(), margin = 0 }: { won: boolean; style?: Style; margin?: number }): ResultDelta {
   const before = levelFor(p.xp).level;
   const beforeTier = tierIndex(before);
+  const claimed = p.claimedTier ?? beforeTier;
   p.battles += 1;
   if (won) p.wins++;
   else p.losses++;
@@ -178,5 +184,12 @@ export function applyResult(p: Champion, { won, style = blankStyle(), margin = 0
   for (const a of AXES) p[a.k] += style[a.k] * (won ? 1 : 0.5);
   const after = levelFor(p.xp).level;
   const afterTier = tierIndex(after);
-  return { leveledUp: after > before, newLevel: after, tieredUp: afterTier > beforeTier, tier: TIERS[afterTier].name, doctrine: doctrine(p, after) };
+  return {
+    leveledUp: after > before,
+    newLevel: after,
+    tieredUp: afterTier > beforeTier,
+    tier: TIERS[afterTier].name,
+    doctrine: doctrine(p, after),
+    pendingTrial: afterTier > claimed,
+  };
 }

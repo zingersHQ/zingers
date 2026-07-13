@@ -76,6 +76,36 @@ export function useBout() {
     }
   }, []);
 
+  // Jump straight to the verdict: flush every buffered turn into history at once
+  // (no per-turn voice/SFX), then fire the end. The end callback is deferred one
+  // macrotask so React commits the history flush first — consumers mirror
+  // `history` into a ref for style accrual, and it must see every turn.
+  const skipToVerdict = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    stopCreature();
+    const rest = queue.current;
+    queue.current = [];
+    const turns = rest.filter((e): e is BattleTurn => e.type === "turn");
+    const endEv = rest.find((e): e is BattleEnd => e.type === "end");
+    if (turns.length) {
+      const last = turns[turns.length - 1];
+      setState((s) => ({ ...s, turn: last, history: [...s.history, ...turns], hpA: last.a_hp, hpB: last.b_hp }));
+    }
+    if (endEv) {
+      timer.current = setTimeout(() => {
+        ambienceFlourish("victory");
+        setAmbienceIntensity(0);
+        setState((s) => ({ ...s, phase: "done", end: endEv, hpA: endEv.a_hp, hpB: endEv.b_hp }));
+        pendingEnd.current?.(endEv, ranked.current);
+      }, 0);
+    } else {
+      // the end event hasn't streamed in yet — resume fast pumping so we finalize
+      // the moment it arrives (the queue is now drained of turns).
+      timer.current = setTimeout(pump, 120);
+    }
+  }, [pump]);
+
   const begin = useCallback(
     (url: string, onEnd?: (e: BattleEnd, ranked: BattleRanked | null) => void) => {
       stop();
@@ -109,5 +139,5 @@ export function useBout() {
 
   useEffect(() => () => stop(), [stop]);
 
-  return { ...state, begin, stop };
+  return { ...state, begin, stop, skipToVerdict };
 }

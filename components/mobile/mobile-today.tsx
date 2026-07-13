@@ -9,12 +9,13 @@
 // recordDaily from the store; the predict/bout/done views are unchanged, just
 // moved behind the hub instead of being the landing screen.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles } from "lucide-react";
-import type { BattleEnd, BattleTurn, Champion, DailyResponse, DailyResult } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles, ArrowUpCircle, ChevronsUp, Dumbbell, KeyRound, DoorOpen, Award } from "lucide-react";
+import type { BattleEnd, BattleTurn, CareerEvent, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
 import { ROSTER } from "@/lib/engine/roster";
+import { championHomecoming, type HomecomingMood } from "@/lib/lore/character-beats";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
@@ -46,6 +47,30 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
   const daily = useChampions((s) => s.daily);
   const recordDaily = useChampions((s) => s.recordDaily);
   const owned = useChampions((s) => s.owned);
+  const events = useChampions((s) => s.events);
+  const touchVisit = useChampions((s) => s.touchVisit);
+
+  // Snapshot when the player LAST looked, once, before we stamp "now" — this is
+  // the window the Homecoming greeting + Report read to say "while you were away".
+  const [sinceVisit] = useState(() => (typeof window === "undefined" ? 0 : useChampions.getState().lastVisit));
+  useEffect(() => {
+    touchVisit();
+  }, [touchVisit]);
+
+  // The champion's own events since the last visit → drives the greeting mood
+  // and the Report digest. Purely local + instant; no network on the hot path.
+  const homecoming = useMemo(() => {
+    if (!owned) return null;
+    const list = events[owned] || [];
+    const since = list.filter((e) => e.ts > sinceVisit).sort((a, b) => b.ts - a.ts);
+    const bouts = since.filter((e) => e.kind === "bout");
+    const wins = bouts.filter((e) => e.won).length;
+    const losses = bouts.filter((e) => e.won === false).length;
+    const daysAway = sinceVisit ? Math.floor((Date.now() - sinceVisit) / 86_400_000) : 0;
+    const mood: HomecomingMood = daysAway >= 3 ? "away" : wins >= 2 && wins > losses ? "hot" : losses >= 2 && losses > wins ? "cold" : "return";
+    const latest = list.length ? list[list.length - 1] : null;
+    return { line: championHomecoming(owned, mood), since, wins, losses, latest };
+  }, [owned, events, sinceVisit]);
 
   const historyRef = useRef<BattleTurn[]>([]);
   historyRef.current = bout.history;
@@ -136,10 +161,19 @@ export function MobileToday({ onNavigate }: { onNavigate?: (tab: string) => void
       plan={plan}
       solvedToday={!!solvedToday}
       result={daily.result}
+      homecoming={homecoming}
       onOpenDaily={() => setView(solvedToday ? "done" : "predict")}
       onNavigate={onNavigate}
     />
   );
+}
+
+interface Homecoming {
+  line: string;
+  since: CareerEvent[];
+  wins: number;
+  losses: number;
+  latest: CareerEvent | null;
 }
 
 // ─── the hub (home) ──────────────────────────────────────────────────────────
@@ -152,6 +186,7 @@ function Hub({
   plan,
   solvedToday,
   result,
+  homecoming,
   onOpenDaily,
   onNavigate,
 }: {
@@ -162,6 +197,7 @@ function Hub({
   plan: DailyResponse | null;
   solvedToday: boolean;
   result: DailyResult | null;
+  homecoming: Homecoming | null;
   onOpenDaily: () => void;
   onNavigate?: (tab: string) => void;
 }) {
@@ -181,6 +217,13 @@ function Hub({
           </span>
         </div>
 
+        {/* homecoming: your champion greets you the moment you open the app */}
+        {mounted && owned && ROSTER[owned] && homecoming && (
+          <div style={{ padding: "0 14px 4px" }}>
+            <HomecomingCard owned={owned} get={get} line={homecoming.line} />
+          </div>
+        )}
+
         {/* hero: your living champion, full-bleed scene (or the adopt cold-start) */}
         {mounted && owned && ROSTER[owned] ? (
           <ChampionHero owned={owned} get={get} onNavigate={onNavigate} />
@@ -191,6 +234,11 @@ function Hub({
         )}
 
         <div style={{ padding: "12px 14px 0" }}>
+          {/* the Report — what happened to your champion while you were away */}
+          {mounted && owned && ROSTER[owned] && homecoming && (
+            <ReportCard owned={owned} homecoming={homecoming} onNavigate={onNavigate} />
+          )}
+
           {/* today's tribunal — one legible card into the call/watch flow */}
           <TribunalCard plan={plan} get={get} mounted={mounted} solvedToday={solvedToday} result={result} onOpen={onOpenDaily} />
 
@@ -214,6 +262,86 @@ function Hub({
         </div>
       </div>
     </div>
+  );
+}
+
+function HomecomingCard({ owned, get, line }: { owned: string; get: (k: string) => Champion; line: string }) {
+  const type = ROSTER[owned].type;
+  const col = TYPE_COLOR[type];
+  return (
+    <div className="panel" style={{ ["--ac" as string]: col, display: "flex", gap: 11, alignItems: "center", padding: "11px 13px", border: `1px solid color-mix(in srgb, ${col} 35%, var(--line))` }}>
+      <ChampionAvatar ckey={owned} type={type} champion={get(owned)} size={40} />
+      <div style={{ minWidth: 0 }}>
+        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: col }}>{ROSTER[owned].name.toUpperCase()}</div>
+        <div style={{ fontSize: 13.5, lineHeight: 1.4, color: "var(--ink)", fontStyle: "italic" }}>&ldquo;{line}&rdquo;</div>
+      </div>
+    </div>
+  );
+}
+
+const REPORT_ICON: Partial<Record<CareerEvent["kind"], typeof Swords>> = {
+  bout: Swords,
+  levelup: ArrowUpCircle,
+  tierup: ChevronsUp,
+  trial: Award,
+  train: Dumbbell,
+  keeper: KeyRound,
+  season: DoorOpen,
+};
+
+function reportRel(ts: number): string {
+  const d = Date.now() - ts;
+  const h = Math.floor(d / 3_600_000);
+  if (h < 1) return "recent";
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+function ReportCard({ owned, homecoming, onNavigate }: { owned: string; homecoming: Homecoming; onNavigate?: (tab: string) => void }) {
+  const type = ROSTER[owned].type;
+  const col = TYPE_COLOR[type];
+  const { since, wins, losses, latest } = homecoming;
+  const shown = since.slice(0, 4);
+  const quiet = since.length === 0;
+  return (
+    <button
+      type="button"
+      onClick={() => onNavigate?.("champion")}
+      className="panel"
+      style={{ ["--ac" as string]: col, width: "100%", textAlign: "left", padding: "13px 14px", cursor: "pointer", marginBottom: 12 }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span className="mono" style={{ fontSize: 10, letterSpacing: 1.4, color: "var(--muted2)" }}>{quiet ? "WHILE YOU WERE AWAY" : "SINCE YOU LAST LOOKED"}</span>
+        {!quiet && (wins > 0 || losses > 0) && (
+          <span className="mono" style={{ marginLeft: "auto", fontSize: 11, fontWeight: 800 }}>
+            <span style={{ color: "var(--good)" }}>{wins}W</span>
+            <span style={{ color: "var(--muted2)" }}> · </span>
+            <span style={{ color: "var(--bad)" }}>{losses}L</span>
+          </span>
+        )}
+        <ChevronRight size={14} strokeWidth={2.2} style={{ color: "var(--muted2)", marginLeft: (wins || losses) && !quiet ? 4 : "auto" }} />
+      </div>
+
+      {quiet ? (
+        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 7, lineHeight: 1.45 }}>
+          {latest ? `${ROSTER[owned].name} rests between fights. ${latest.title}.` : `${ROSTER[owned].name} is ready. Nothing new to report.`}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 7, marginTop: 9 }}>
+          {shown.map((ev) => {
+            const Icon = REPORT_ICON[ev.kind] ?? Sparkles;
+            const tint = ev.kind === "bout" ? (ev.won ? "var(--good)" : "var(--bad)") : ev.kind === "tierup" || ev.kind === "trial" ? col : "var(--muted2)";
+            return (
+              <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5 }}>
+                <Icon size={13} strokeWidth={2.2} style={{ color: tint, flexShrink: 0 }} />
+                <span style={{ color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</span>
+                <span className="mono" style={{ marginLeft: "auto", fontSize: 10, color: "var(--muted2)", flexShrink: 0 }}>{reportRel(ev.ts)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </button>
   );
 }
 

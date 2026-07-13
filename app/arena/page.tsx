@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Dices, Zap, Scale } from "lucide-react";
-import type { BattleEnd, Champion, RosterEntry, Style } from "@/lib/types";
+import { Dices, Zap, Scale, FastForward, FlaskConical } from "lucide-react";
+import type { BattleEnd, Champion, RosterEntry, Style, ToolStep } from "@/lib/types";
 import { TYPE_COLOR, blankStyle, accrue } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
@@ -455,6 +455,21 @@ function PickColumn(props: {
   );
 }
 
+function TraceView({ trace }: { trace: ToolStep[] }) {
+  return (
+    <div className="mono" style={{ marginTop: 10, padding: 12, borderRadius: 10, background: "rgba(255,255,255,.02)", border: "1px solid var(--line)", display: "grid", gap: 8 }}>
+      <div style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--accent)" }}>ENGINE TRACE · TOOLS THIS MIND INVOKED</div>
+      {trace.map((step, i) => (
+        <div key={i} style={{ fontSize: 11, lineHeight: 1.5 }}>
+          <span style={{ color: "var(--accent)" }}>{step.tool}</span>
+          <span style={{ color: "var(--muted2)" }}>({Object.entries(step.args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(", ")})</span>
+          <span style={{ color: "var(--muted)" }}> → {typeof step.result === "string" ? step.result : JSON.stringify(step.result)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BoutView(props: {
   bout: ReturnType<typeof useBout>;
   a: RosterEntry;
@@ -473,6 +488,10 @@ function BoutView(props: {
   const t = bout.turn;
   const lineActor = t?.actor;
   const reduced = usePrefersReducedMotion();
+  // opt-in "study" mode reveals the engine's tool trace under the why-line; the
+  // default watch stays the single legible bubble.
+  const [study, setStudy] = useState(false);
+  const canSkip = bout.phase === "live" && (t?.round ?? 0) >= 2 && !bout.end;
 
   // screen shake on impact, scaled to the latest turn's damage (juice only —
   // the class is applied imperatively so the fighter panels never remount)
@@ -519,6 +538,19 @@ function BoutView(props: {
           {intro && !bout.end && <VsIntro aName={a.name} bName={b.name} acol={acol} bcol={bcol} />}
         </div>
 
+        {canSkip && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={bout.skipToVerdict}
+              className="mono"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 999, border: "1px solid var(--line2)", background: "transparent", color: "var(--muted)", fontSize: 12, cursor: "pointer" }}
+            >
+              <FastForward size={13} strokeWidth={2.2} /> Skip to verdict
+            </button>
+          </div>
+        )}
+
         {t && (
           <div className="panel pop" key={t.round} style={{ marginTop: 14, padding: 16, ["--ac" as string]: t.actor === a.key ? acol : bcol }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -539,9 +571,22 @@ function BoutView(props: {
               <span style={{ color: "var(--muted2)" }}>why&nbsp;&rsaquo;&nbsp;</span>
               {t.why || "-"}
             </p>
-            <div className="mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Scale size={12} strokeWidth={2} /> jury: {t.ruling}
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Scale size={12} strokeWidth={2} /> jury: {t.ruling}
+              </div>
+              {t.trace && t.trace.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStudy((v) => !v)}
+                  className="mono"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 999, border: `1px solid ${study ? "var(--accent)" : "var(--line2)"}`, background: "transparent", color: study ? "var(--accent)" : "var(--muted2)", fontSize: 10.5, cursor: "pointer" }}
+                >
+                  <FlaskConical size={11} strokeWidth={2.2} /> {study ? "Hide study" : "Study"}
+                </button>
+              )}
             </div>
+            {study && t.trace && t.trace.length > 0 && <TraceView trace={t.trace} />}
             {/* Why this landed — the engine's own math, made legible: the judge only
                 nudges a bounded quality multiplier; type + statuses do the rest. */}
             <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
