@@ -12,6 +12,11 @@ import { ONBOARDING_BG } from "@/lib/iconography";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { useIsMobile } from "@/lib/use-device";
 
+// Caption panel + quote block are fixed so line-to-line text changes never
+// resize the champion stage (which would remount/refit the 3D canvas).
+const BEAT_CAPTION_H = { mobile: 278, desktop: 296 } as const;
+const BEAT_QUOTE_H = { mobile: 92, desktop: 100 } as const;
+
 // A directed narrative beat — not a static slide. The live 3D portrait rises and
 // floats, the frame is letterboxed for cinema, each new line pulses a glow and
 // types itself in, and a slow parallax field drifts behind. One presentation
@@ -137,19 +142,32 @@ export function CharacterBeat({
 
   const col = portrait ? TYPE_COLOR[portrait.type] : accent;
   const trainerLine = line.speaker === "Trainer" || line.speaker === "The Trainer";
+  const captionH = isMobile ? BEAT_CAPTION_H.mobile : BEAT_CAPTION_H.desktop;
+  const quoteH = isMobile ? BEAT_QUOTE_H.mobile : BEAT_QUOTE_H.desktop;
 
   // speaker + typewriter line + progress dots + advance button — identical in
   // both layouts, so the voice/typewriter logic has one home.
   const caption = (
     <>
-      <div className="beat-speaker" style={{ fontSize: 13, fontWeight: 700, color: accent, letterSpacing: 0.5 }}>{line.speaker}</div>
-      {line.role && (
-        <div className="beat-speaker mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--muted2)", marginTop: 2 }}>
-          {line.role.toUpperCase()}
+      <div style={{ minHeight: 34 }}>
+        <div className="beat-speaker" style={{ fontSize: 13, fontWeight: 700, color: accent, letterSpacing: 0.5 }}>{line.speaker}</div>
+        <div
+          className="beat-speaker mono"
+          style={{
+            fontSize: 9,
+            letterSpacing: 1.2,
+            color: "var(--muted2)",
+            marginTop: 2,
+            minHeight: 13,
+            visibility: line.role ? "visible" : "hidden",
+          }}
+        >
+          {(line.role ?? " ").toUpperCase()}
         </div>
-      )}
+      </div>
 
       <p
+        className="beat-quote"
         onClick={() => {
           if (!done) skipLine();
         }}
@@ -161,7 +179,10 @@ export function CharacterBeat({
           maxWidth: trainerLine ? "36ch" : "30ch",
           color: trainerLine ? "var(--muted)" : "var(--ink)",
           fontStyle: trainerLine ? "normal" : "italic",
-          minHeight: "2.9em",
+          height: quoteH,
+          minHeight: quoteH,
+          maxHeight: quoteH,
+          overflow: "hidden",
           cursor: done ? "default" : "pointer",
         }}
       >
@@ -247,8 +268,17 @@ export function CharacterBeat({
   if (layout === "stage") {
     return (
       <div
-        className="beat-root"
-        style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, overflow: "hidden", display: "flex", flexDirection: "column" }}
+        className="beat-root beat-root--stage"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 92,
+          background: ONBOARDING_BG,
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateRows: `minmax(0, 1fr) ${captionH}px`,
+          ["--beat-caption-h" as string]: `${captionH}px`,
+        }}
       >
         {backdrop}
         {cinemaChrome}
@@ -263,7 +293,7 @@ export function CharacterBeat({
           </div>
         )}
 
-        <div className="beat-stage" style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 2 }}>
+        <div className="beat-stage" style={{ minHeight: 0, position: "relative", zIndex: 2, overflow: "hidden" }}>
           {portrait && (
             <ChampionPortraitScene
               key={portrait.key}
@@ -280,7 +310,19 @@ export function CharacterBeat({
           <div aria-hidden style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "46%", background: "linear-gradient(to top, #050409 8%, transparent)", pointerEvents: "none" }} />
         </div>
 
-        <div style={{ position: "relative", zIndex: 3, textAlign: "center", padding: isMobile ? "0 18px calc(5.5vh + 14px)" : "0 20px calc(5.5vh + 22px)" }}>
+        <div
+          className="beat-caption"
+          style={{
+            position: "relative",
+            zIndex: 3,
+            height: captionH,
+            minHeight: captionH,
+            maxHeight: captionH,
+            boxSizing: "border-box",
+            textAlign: "center",
+            padding: isMobile ? "0 18px calc(5.5vh + 14px)" : "0 20px calc(5.5vh + 22px)",
+          }}
+        >
           <div style={{ maxWidth: 560, margin: "0 auto" }}>{caption}</div>
         </div>
       </div>
@@ -290,12 +332,33 @@ export function CharacterBeat({
   // Portrait: the original talking-head thumbnail — right for pure dialogue beats.
   return (
     <div
-      className="beat-root"
-      style={{ position: "fixed", inset: 0, zIndex: 92, background: ONBOARDING_BG, display: "grid", placeItems: "center", padding: 20, overflow: "hidden" }}
+      className="beat-root beat-root--portrait"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 92,
+        background: ONBOARDING_BG,
+        display: "grid",
+        gridTemplateRows: `minmax(0, 1fr) ${captionH}px`,
+        overflow: "hidden",
+        ["--beat-caption-h" as string]: `${captionH}px`,
+      }}
     >
       {backdrop}
 
-      <div style={{ position: "relative", width: "min(540px, 94vw)", textAlign: "center", zIndex: 3 }}>
+      <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px 20px 0",
+          textAlign: "center",
+        }}
+      >
         {script.kicker && (
           <div className="beat-kicker mono" style={{ fontSize: 10, letterSpacing: 2.5, color: accent, marginBottom: 14 }}>
             {script.kicker}
@@ -303,7 +366,7 @@ export function CharacterBeat({
         )}
 
         {portrait && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "center", flexShrink: 0 }}>
             <div className="beat-portrait" style={{ position: "relative", padding: 8, borderRadius: 20, border: `2px solid ${col}`, boxShadow: `0 0 48px -12px ${col}`, background: `color-mix(in srgb, ${col} 12%, #0c0b12)` }}>
               {/* per-line glow pulse (cheap remount, leaves the 3D canvas untouched) */}
               <span key={idx} className="beat-glow" style={{ ["--ac" as string]: col } as React.CSSProperties} aria-hidden />
@@ -311,8 +374,22 @@ export function CharacterBeat({
             </div>
           </div>
         )}
+      </div>
 
-        {caption}
+      <div
+        className="beat-caption"
+        style={{
+          position: "relative",
+          zIndex: 3,
+          height: captionH,
+          minHeight: captionH,
+          maxHeight: captionH,
+          boxSizing: "border-box",
+          padding: "0 20px 20px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ width: "min(540px, 94vw)", margin: "0 auto" }}>{caption}</div>
       </div>
     </div>
   );
