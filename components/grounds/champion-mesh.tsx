@@ -562,6 +562,7 @@ export function ChampionMesh({
   hideFloaters = false,
   padLeash,
   companionDrive,
+  companionRenderPriority,
   /** World-scene scale (0.5 in the Grounds; 1 in battles / portraits). */
   sceneScale = 1,
 }: {
@@ -628,6 +629,13 @@ export function ChampionMesh({
     velRef: RefObject<THREE.Vector3>;
     headingRef: RefObject<number>;
   };
+  /** useFrame render priority for the companionDrive path. Defaults to 2 so the
+   *  companion updates after the world's controllers. A positive priority puts
+   *  R3F into MANUAL-render mode (it stops auto-rendering unless something like
+   *  EffectComposer renders for it) — so a canvas WITHOUT a manual render pass
+   *  (the mobile Climb) must pass 0 here, or the frame silently freezes while
+   *  useFrame keeps ticking. See @react-three/fiber loop: `!internal.priority`. */
+  companionRenderPriority?: number;
   sceneScale?: number;
 }) {
   const colHex = baseColorOverride || TYPE_COLOR[type] || "#8888ff";
@@ -1207,7 +1215,7 @@ export function ChampionMesh({
         crownRef.current.position.y = app.h + 0.3 + Math.sin(t * 1.4) * 0.05;
       }
     }
-  }, companionFrame ? -1 : companionRigDrive ? 2 : 0);
+  }, companionFrame ? -1 : companionRigDrive ? (companionRenderPriority ?? 2) : 0);
 
   const auraOpacity = (0.05 + claimedTi * 0.045) * 0.32 * (auraDim ? 0.32 : 1);
   const auraR = app.h * (auraDim ? 0.46 : 0.62);

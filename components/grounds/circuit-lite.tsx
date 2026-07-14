@@ -66,11 +66,12 @@ const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontroll
 const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
 const LATERAL_EASE = 7;     // auto-thread: ease x toward the next gate's centre
 const FLOOR_Y = -9;         // fall below this → run over
-// Soft ceiling: a full hold parks you just above the next ring's rim instead of
-// rocketing off-screen into the empty void (which read as "nothing is moving"
-// and guaranteed a blind "missed a gate" death ~2s in). From the ceiling, one
-// short release dips you through the opening — hold to rise, blip to thread.
-const CEIL_ABOVE_GATE = 0.35; // hover a hair above the ring's rim (a blip threads it)
+// Soft ceiling: a full hold parks you INSIDE the next ring's opening (upper
+// half), not above its rim — so simply holding threads the gate instead of
+// overshooting into the void for a blind "missed a gate" death. The pass check
+// allows |dy| <= radius*0.95, so capping at radius*0.5 keeps a pure hold well
+// within the window; release to drop lower in the opening.
+const CEIL_GATE_FRAC = 0.5; // park this fraction of the radius above gate centre
 
 // ── chase camera ── (3/4 trailing cam: the track ahead reads in DEPTH).
 // The old pure-side rail cam was unplayable on portrait phones: a 55° vertical
@@ -240,8 +241,8 @@ function Flyer({
     vy.current = THREE.MathUtils.clamp(vy.current + accel * dt, -MAX_FALL, MAX_RISE);
     pos.current.y += vy.current * dt;
 
-    // soft ceiling above the next gate — keeps the action (and the ring) in frame
-    const ceilY = cp ? cp.pos[1] + cp.radius + CEIL_ABOVE_GATE : Infinity;
+    // soft ceiling inside the next gate's opening — a hold threads it, not misses
+    const ceilY = cp ? cp.pos[1] + cp.radius * CEIL_GATE_FRAC : Infinity;
     if (pos.current.y > ceilY) {
       pos.current.y = ceilY;
       if (vy.current > 0) vy.current = 0;
@@ -264,7 +265,9 @@ function Flyer({
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
-    // trailing chase camera, exp-damped
+    // trailing chase camera, exp-damped — tracks the flyer so it stays framed
+    // low-centre; the world scrolling past and the gate moving relative to the
+    // (centred) hero are what read the motion and let you aim vertically.
     camWant.current.set(pos.current.x + CAM_SIDE, pos.current.y + CAM_UP, pos.current.z - CAM_BACK);
     const kc = 1 - Math.exp(-CAM_LERP * dt);
     camera.position.lerp(camWant.current, kc);
@@ -324,6 +327,7 @@ function Flyer({
             breatheIntensity={0.5}
             restPose="standing"
             companionDrive={companionDrive}
+            companionRenderPriority={0}
             sceneScale={1}
           />
         </Suspense>
