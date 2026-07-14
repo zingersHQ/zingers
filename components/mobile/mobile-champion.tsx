@@ -7,7 +7,7 @@
 // portrait the rest of the app uses, so training here visibly reshapes the body
 // and marks the champion everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
@@ -15,7 +15,7 @@ import { TYPE_COLOR, blank } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { TRAIN_COST } from "@/lib/economy";
 import { ROSTER } from "@/lib/engine/roster";
-import { IMPRINT_LESSONS } from "@/lib/imprints";
+import { IMPRINT_LESSONS, describeDial, imprintDayIndex } from "@/lib/imprints";
 import { useChampions } from "@/store/champions";
 import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
@@ -35,6 +35,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
   const trainChampion = useChampions((s) => s.trainChampion);
   const trainWithFragment = useChampions((s) => s.trainWithFragment);
   const imprint = useChampions((s) => s.imprint);
+  const imprintDays = useChampions((s) => s.imprintDays);
   const crowns = useChampions((s) => s.crowns);
   const fragments = useChampions((s) => s.fragments);
   const trainerXp = useChampions((s) => s.trainerXp);
@@ -43,6 +44,13 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
   const [toast, setToast] = useState<string | null>(null);
   const [imprinting, setImprinting] = useState<string | null>(null);
   const [reply, setReply] = useState<string | null>(null);
+  // Axes an Imprint just nudged — the STRATEGY dials glow briefly so the lesson
+  // visibly lands. Cleared on a timer.
+  const [litAxes, setLitAxes] = useState<Set<keyof Strat>>(() => new Set());
+  const litTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (litTimer.current) clearTimeout(litTimer.current); }, []);
+
+  const day = imprintDayIndex();
 
   const champ = useMemo(() => (owned ? progress[owned] ?? blank() : null), [owned, progress]);
   const strat: Strat = (owned && recipes[owned]?.strat) || DEFAULT_STRAT;
@@ -80,9 +88,20 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
       setReply(null);
       const out = await imprint(owned, lessonId);
       setImprinting(null);
+      if (!out.applied) {
+        flash("Already internalized today — try a different lesson.");
+        return;
+      }
       setReply(out.reply);
+      const who = ROSTER[owned]?.name ?? owned;
+      const moved = describeDial(out.dial);
+      flash(moved ? `${who} took it to heart. ${moved}.` : `${who} took it to heart.`);
+      const axes = new Set(Object.keys(out.dial) as (keyof Strat)[]);
+      setLitAxes(axes);
+      if (litTimer.current) clearTimeout(litTimer.current);
+      litTimer.current = setTimeout(() => setLitAxes(new Set()), 1800);
     },
-    [owned, imprinting, imprint],
+    [owned, imprinting, imprint, flash],
   );
 
   // No champion yet → the adoption door (desktop does this in the 3D first-duel;
@@ -119,24 +138,31 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
           </div>
         </div>
 
-        {/* the champion body */}
-        <div className="panel" style={{ ["--ac" as string]: col, padding: 18, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center" }}>
-          <ChampionAvatar ckey={owned} type={type} champion={champ} size={128} />
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4 }}>{name}</div>
-            <div className="mono" style={{ fontSize: 11, color: col, marginTop: 2 }}>
-              {forceName(type)} · L{dl.level} {dl.tier}
+        {/* champion profile — compact horizontal card */}
+        <div className="panel champ-profile" style={{ ["--ac" as string]: col, padding: "12px 13px" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <ChampionAvatar ckey={owned} type={type} champion={champ} size={76} />
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>{name}</div>
+              <div className="mono" style={{ fontSize: 10, color: col, marginTop: 3 }}>
+                {forceName(type)} · L{dl.level} {dl.tier}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic", lineHeight: 1.35, marginTop: 6 }}>
+                {dl.doctrine}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 10px", marginTop: 8 }}>
+                <Sigils champion={champ} start />
+                <span className="mono" style={{ fontSize: 10, color: "var(--muted2)", letterSpacing: 0.3 }}>
+                  {champ.wins}W · {champ.losses}L{battles ? ` · ${wr}%` : ""}
+                </span>
+              </div>
             </div>
           </div>
-          <div style={{ width: "100%", maxWidth: 260 }}>
+          <div style={{ marginTop: 10 }}>
             <XpBar champion={champ} color={col} />
-            <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>{dl.into} / {dl.span} XP TO NEXT</div>
-          </div>
-          <Sigils champion={champ} />
-          <div style={{ fontSize: 13, color: "var(--ink)", fontStyle: "italic", lineHeight: 1.4 }}>{dl.doctrine}</div>
-          <div style={{ display: "flex", gap: 18, marginTop: 2 }}>
-            <Stat label="RECORD" value={`${champ.wins}W · ${champ.losses}L`} />
-            <Stat label="WIN RATE" value={battles ? `${wr}%` : "—"} />
+            <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>
+              {dl.into} / {dl.span} XP TO NEXT
+            </div>
           </div>
         </div>
 
@@ -146,7 +172,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
             STRATEGY · HOW {name.toUpperCase()} THINKS
           </div>
           {DIALS.map((d) => (
-            <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} onChange={(v) => setDial(d.key, v)} color={col} hints={d.hints} />
+            <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} onChange={(v) => setDial(d.key, v)} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />
           ))}
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "2px 0 0" }}>
             You set conditions; the champion decides its own moves in battle. Changes take hold next fight.
@@ -159,24 +185,28 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
             <Brain size={12} strokeWidth={2.4} /> IMPRINT · TEACH {name.toUpperCase()} A LESSON
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            One lesson sticks in memory and gently shifts how it fights.
+            One lesson sticks in memory and gently shifts how it fights. Each lesson lands once a day.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
-            {IMPRINT_LESSONS.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                onClick={() => teach(l.id)}
-                disabled={!!imprinting}
-                style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", borderRadius: 11, border: "1px solid var(--line2)", background: imprinting === l.id ? `color-mix(in srgb, ${col} 16%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: imprinting ? "wait" : "pointer", opacity: imprinting && imprinting !== l.id ? 0.5 : 1 }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>{l.label}</div>
-                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>{l.hint}</div>
-                </div>
-                <span className="mono" style={{ fontSize: 11, color: col, fontWeight: 700 }}>{imprinting === l.id ? "…" : "Teach"}</span>
-              </button>
-            ))}
+            {IMPRINT_LESSONS.map((l) => {
+              const learned = imprintDays[owned]?.[l.id] === day;
+              const locked = learned || (!!imprinting && imprinting !== l.id);
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() => teach(l.id)}
+                  disabled={!!imprinting || learned}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", borderRadius: 11, border: "1px solid var(--line2)", background: imprinting === l.id ? `color-mix(in srgb, ${col} 16%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: learned ? "default" : imprinting ? "wait" : "pointer", opacity: locked ? 0.5 : 1 }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{l.label}</div>
+                    <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>{learned ? "Learned today · back tomorrow" : l.hint}</div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 11, color: learned ? "var(--muted2)" : col, fontWeight: 700 }}>{imprinting === l.id ? "…" : learned ? "✓" : "Teach"}</span>
+                </button>
+              );
+            })}
           </div>
           {reply && (
             <div style={{ marginTop: 12, padding: 12, borderRadius: 11, background: "var(--panel2, #15131f)", border: `1px solid ${col}` }}>
@@ -222,15 +252,6 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
           {toast}
         </div>
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div className="mono" style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>{value}</div>
-      <div className="mono" style={{ fontSize: 8.5, letterSpacing: 1, color: "var(--muted2)", marginTop: 1 }}>{label}</div>
     </div>
   );
 }

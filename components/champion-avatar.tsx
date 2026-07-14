@@ -51,9 +51,9 @@ export function ChampionAvatar({
   );
 }
 
-export function Sigils({ champion }: { champion: Champion }) {
+export function Sigils({ champion, start }: { champion: Champion; start?: boolean }) {
   return (
-    <div className="evo-sigils">
+    <div className="evo-sigils" style={start ? { justifyContent: "flex-start" } : undefined}>
       {sigils(champion).map((s) => (
         <span key={s.k} className="evo-sig" style={{ ["--sc" as string]: s.color }} title={`${s.label} ${ROMAN[s.lvl]}`}>
           <span className="g">{s.glyph}</span>

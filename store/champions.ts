@@ -19,7 +19,7 @@ import { commitBet as commitBetRequest, fetchBalance, walletEvent } from "@/lib/
 import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
 import { championImprintAck } from "@/lib/lore/character-beats";
-import { lessonById, clampDial } from "@/lib/imprints";
+import { lessonById, clampDial, imprintDayIndex } from "@/lib/imprints";
 import { TRIALS } from "@/lib/flags";
 
 const nameOf = (key: string): string => ROSTER[key]?.name ?? key;
@@ -227,9 +227,16 @@ interface ChampionStore {
   // Apply a taught lesson locally: append a memory note, gently nudge doctrine,
   // snapshot, and write an `imprint` saga event. Pure — `imprint` does the call.
   applyImprint: (key: string, args: { note: string; dial: Partial<Strat> }) => void;
+  // Per-champion Imprint cooldown ledger: lessonId → UTC-day it was last taught.
+  // A lesson can be internalised once per champion per day so it's a real daily
+  // decision, not a spam button. Resets with the daily loop (imprintDayIndex()).
+  imprintDays: Record<string, Record<string, number>>;
+  // Whether a given lesson can be taught to a champion right now (off cooldown).
+  canImprint: (key: string, lessonId: string) => boolean;
   // The full Imprint flow: POST /api/imprint (capped house LLM, template
-  // fallback) then applyImprint with the result. Returns the champion's reply.
-  imprint: (key: string, lessonId: string) => Promise<{ reply: string; live: boolean }>;
+  // fallback) then applyImprint with the result. `applied` is false when the
+  // lesson is still on its daily cooldown; `dial` is what actually moved.
+  imprint: (key: string, lessonId: string) => Promise<{ reply: string; live: boolean; applied: boolean; dial: Partial<Strat> }>;
   setOwned: (key: string) => void;
   adoptStarterRookie: (key: string) => void;
   // Whether a mind is in the player's roster (recruited, or the adopted champion).
@@ -290,6 +297,7 @@ export const useChampions = create<ChampionStore>()(
       clearEvolution: () => set({ lastEvolution: null }),
       events: {},
       snapshots: {},
+      imprintDays: {},
       lastVisit: 0,
       owned: null,
       roster: [],
@@ -461,9 +469,21 @@ export const useChampions = create<ChampionStore>()(
           return { recipes, events, snapshots };
         }),
 
+      canImprint: (key, lessonId) => get().imprintDays[key]?.[lessonId] !== imprintDayIndex(),
+
       imprint: async (key, lessonId) => {
+        // Daily cooldown: a lesson only sticks once per champion per UTC day.
+        // Guards against spamming the same lesson (which otherwise just saturates
+        // the dials into a silent no-op); the UI disables cooled-down buttons too.
+        if (!get().canImprint(key, lessonId)) {
+          return { reply: "", live: false, applied: false, dial: {} };
+        }
         const recipe = get().recipes[key] || { strat: { ...DEFAULT_STRAT } };
         const lesson = lessonById(lessonId);
+        let note = lesson?.note ?? "";
+        let dial: Partial<Strat> = lesson?.dial ?? {};
+        let reply = championImprintAck(key);
+        let live = false;
         try {
           const token = getOwnerToken();
           const res = await fetch("/api/imprint", {
@@ -473,16 +493,18 @@ export const useChampions = create<ChampionStore>()(
           });
           if (res.ok) {
             const dta = (await res.json()) as { reply?: string; note?: string; dial?: Partial<Strat>; live?: boolean };
-            const note = dta.note ?? lesson?.note ?? "";
-            const dial = dta.dial ?? lesson?.dial ?? {};
-            get().applyImprint(key, { note, dial });
-            return { reply: (dta.reply ?? championImprintAck(key)).toString(), live: !!dta.live };
+            note = dta.note ?? note;
+            dial = dta.dial ?? dial;
+            reply = (dta.reply ?? reply).toString();
+            live = !!dta.live;
           }
         } catch {
-          /* offline / error → deterministic preset below */
+          /* offline / error → deterministic preset applied below */
         }
-        if (lesson) get().applyImprint(key, { note: lesson.note, dial: lesson.dial });
-        return { reply: championImprintAck(key), live: false };
+        get().applyImprint(key, { note, dial });
+        const day = imprintDayIndex();
+        set((s) => ({ imprintDays: { ...s.imprintDays, [key]: { ...(s.imprintDays[key] || {}), [lessonId]: day } } }));
+        return { reply, live, applied: true, dial: clampDial(dial) };
       },
 
       // Adopting a champion also implicitly recruits it into the roster, so your
@@ -839,6 +861,7 @@ export const useChampions = create<ChampionStore>()(
           progress,
           events: p.events && typeof p.events === "object" ? p.events : {},
           snapshots: p.snapshots && typeof p.snapshots === "object" ? p.snapshots : {},
+          imprintDays: p.imprintDays && typeof p.imprintDays === "object" ? p.imprintDays : {},
           lastVisit: typeof p.lastVisit === "number" ? p.lastVisit : 0,
           lastEvolution: null,
         } as ChampionStore;

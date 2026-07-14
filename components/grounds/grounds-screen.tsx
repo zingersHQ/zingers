@@ -9,7 +9,8 @@ import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL, type EvolutionFlash } from "@/store/champions";
 import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
-import { IMPRINT_LESSONS } from "@/lib/imprints";
+import { IMPRINT_LESSONS, describeDial, imprintDayIndex } from "@/lib/imprints";
+import type { Strat } from "@/lib/types";
 import { TRIALS } from "@/lib/flags";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
@@ -2693,6 +2694,10 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [imprinting, setImprinting] = useState<string | null>(null);
   const [imprintReply, setImprintReply] = useState<string | null>(null);
+  const [imprintMoved, setImprintMoved] = useState<string>("");
+  const [litAxes, setLitAxes] = useState<Set<keyof Strat>>(() => new Set());
+  const litTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const day = imprintDayIndex();
 
   const teach = async (lessonId: string) => {
     if (imprinting) return;
@@ -2700,10 +2705,18 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
     setImprintReply(null);
     const out = await store.imprint(ckey, lessonId);
     setImprinting(null);
+    if (!out.applied) return; // on cooldown — button is disabled anyway
     setImprintReply(out.reply);
+    setImprintMoved(describeDial(out.dial));
+    setLitAxes(new Set(Object.keys(out.dial) as (keyof Strat)[]));
+    if (litTimer.current) clearTimeout(litTimer.current);
+    litTimer.current = setTimeout(() => setLitAxes(new Set()), 1800);
   };
 
-  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
+  useEffect(() => () => {
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    if (litTimer.current) clearTimeout(litTimer.current);
+  }, []);
 
   const reflectTrain = (before: typeof champ) => {
     const after = store.get(ckey);
@@ -2745,31 +2758,38 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 10px" }}>
           DOCTRINE · how it fights (free to tune anytime)
         </div>
-        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
-        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
-        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
+        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} highlight={litAxes.has("aggression")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
+        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} highlight={litAxes.has("focus")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
+        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} highlight={litAxes.has("risk")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 8px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          IMPRINT · teach one lesson (it answers &amp; remembers)
+          IMPRINT · teach one lesson a day (it answers &amp; remembers)
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {IMPRINT_LESSONS.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => teach(l.id)}
-              disabled={!!imprinting}
-              className="mono"
-              style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: imprinting ? "wait" : "pointer", opacity: imprinting && imprinting !== l.id ? 0.5 : 1 }}
-            >
-              <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}</span>
-              <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>{imprinting === l.id ? "teaching…" : l.hint}</span>
-            </button>
-          ))}
+          {IMPRINT_LESSONS.map((l) => {
+            const learned = store.imprintDays[ckey]?.[l.id] === day;
+            const dim = learned || (!!imprinting && imprinting !== l.id);
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => teach(l.id)}
+                disabled={!!imprinting || learned}
+                className="mono"
+                style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: learned ? "default" : imprinting ? "wait" : "pointer", opacity: dim ? 0.5 : 1 }}
+              >
+                <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}{learned ? " ✓" : ""}</span>
+                <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>{imprinting === l.id ? "teaching…" : learned ? "learned today · back tomorrow" : l.hint}</span>
+              </button>
+            );
+          })}
         </div>
         {imprintReply && (
           <div style={{ marginTop: 10, padding: 11, borderRadius: 10, background: "var(--panel2)", border: `1px solid ${col}` }}>
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 3 }}>{entry.name.toUpperCase()}</div>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 3, display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <span>{entry.name.toUpperCase()}</span>
+              {imprintMoved && <span style={{ color: "var(--muted2)" }}>{imprintMoved}</span>}
+            </div>
             <div style={{ fontSize: 13, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{imprintReply}&rdquo;</div>
           </div>
         )}
