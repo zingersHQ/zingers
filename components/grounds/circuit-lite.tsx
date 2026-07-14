@@ -5,7 +5,7 @@
 // The MOBILE native body of the Circuit (see docs/essence.md › "One soul, native
 // bodies"). It REUSES the existing 3D scene (CircuitScene + the void biome + the
 // shared CIRCUIT_SECTORS track data) but swaps the six-DOF Handler controller for
-// a single-input, auto-forward flyer under a side/rail camera — so the whole game
+// a single-input, auto-forward flyer under a trailing chase camera — so the whole game
 // collapses to: HOLD to rise, release to fall, thread the gate, one fall resets.
 //
 // • Slice 0 — proved the FEEL (heavy gravity, punchy thrust).
@@ -27,7 +27,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { ChampionMesh } from "./champion-mesh";
-import { CIRCUIT_SECTORS, CIRCUIT_SECTOR_COUNT, loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
+import { CIRCUIT_SECTORS, CIRCUIT_SECTOR_COUNT, loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter, sectorBounds } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { biomeById } from "./biomes";
 import { formatCircuitMs } from "./circuit";
@@ -66,13 +66,23 @@ const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontroll
 const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
 const LATERAL_EASE = 7;     // auto-thread: ease x toward the next gate's centre
 const FLOOR_Y = -9;         // fall below this → run over
+// Soft ceiling: a full hold parks you just above the next ring's rim instead of
+// rocketing off-screen into the empty void (which read as "nothing is moving"
+// and guaranteed a blind "missed a gate" death ~2s in). From the ceiling, one
+// short release dips you through the opening — hold to rise, blip to thread.
+const CEIL_ABOVE_GATE = 0.35; // hover a hair above the ring's rim (a blip threads it)
 
-// ── side/rail camera ── (centred pure-side rail: the hero stays mid-frame)
-const CAM_SIDE = 12;      // camera offset out to the +X side (the rail distance)
-const CAM_UP = 2.2;       // slight lift above the flyer
-const CAM_BACK = 0.5;     // ~pure side (tiny bias behind) so the hero sits centred
-const CAM_LEAD = 3.0;     // mild forward bias so the track ahead still reads
-const CAM_HEIGHT = 1.6;   // look at the champion's torso, not its feet
+// ── chase camera ── (3/4 trailing cam: the track ahead reads in DEPTH).
+// The old pure-side rail cam was unplayable on portrait phones: a 55° vertical
+// FOV at ~0.5 aspect leaves a ~29° horizontal FOV → only ~6 world units of
+// track visible sideways, while gates sit 9–11 units apart. The next ring was
+// literally never on screen ("playing blindly"). Trailing the flyer and looking
+// down-track puts the upcoming gates in frame at any aspect ratio.
+const CAM_SIDE = 3.2;     // slight +X offset so the body reads in 3/4, not dead-on
+const CAM_UP = 2.6;       // lift above the flyer
+const CAM_BACK = 7.0;     // trail behind the flyer (travel is +Z)
+const CAM_LEAD = 9.0;     // look well down-track so the next ring is centred
+const CAM_HEIGHT = 0.8;   // look-at lift — keeps the hero low-centre of frame
 const CAM_LERP = 6;       // exp-damping rate for smooth follow (frame-rate indep.)
 
 // ── champion body (the real owned mind, riding the jetpack) ──
@@ -99,6 +109,35 @@ function MechBody() {
         <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
     </>
+  );
+}
+
+// Drift motes: a static field of glowing specks filling the sector's volume.
+// The void biome is a featureless backdrop, so without near-field reference
+// points the chase cam reads as "nothing is moving" even at full speed. These
+// are world-static (no self-animation — safe under reduced motion, zero
+// per-frame cost); the flyer streaking past them is what sells the speed.
+function DriftMotes({ track }: { track: CircuitTrackDef }) {
+  const geom = useMemo(() => {
+    const { maxY, maxZ } = sectorBounds(track);
+    const n = 260;
+    const arr = new Float32Array(n * 3);
+    let s = 48271; // tiny deterministic LCG — stable layout per sector
+    const rnd = () => ((s = (s * 16807) % 2147483647), s / 2147483647);
+    for (let i = 0; i < n; i++) {
+      arr[i * 3] = (rnd() - 0.5) * 38;
+      arr[i * 3 + 1] = -7 + rnd() * (maxY + 16);
+      arr[i * 3 + 2] = -8 + rnd() * (maxZ + 20);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+    return g;
+  }, [track]);
+  useEffect(() => () => geom.dispose(), [geom]);
+  return (
+    <points geometry={geom}>
+      <pointsMaterial color={ACCENT} size={0.13} sizeAttenuation transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
+    </points>
   );
 }
 
@@ -188,6 +227,8 @@ function Flyer({
     fwd.current += (FORWARD - fwd.current) * (1 - Math.exp(-FORWARD_SPOOL * dt));
     pos.current.z += fwd.current * dt;
 
+    const cp = track.checkpoints[cpNext.current];
+
     // vertical: ACCELERATION model — heavy gravity always pulling, powerful
     // thrust punching up through it, plus an instant kick on each fresh press.
     if (held && !wasHeld.current) {
@@ -199,8 +240,14 @@ function Flyer({
     vy.current = THREE.MathUtils.clamp(vy.current + accel * dt, -MAX_FALL, MAX_RISE);
     pos.current.y += vy.current * dt;
 
+    // soft ceiling above the next gate — keeps the action (and the ring) in frame
+    const ceilY = cp ? cp.pos[1] + cp.radius + CEIL_ABOVE_GATE : Infinity;
+    if (pos.current.y > ceilY) {
+      pos.current.y = ceilY;
+      if (vy.current > 0) vy.current = 0;
+    }
+
     // lateral auto-thread toward the next gate centre (keeps it a ONE-input game)
-    const cp = track.checkpoints[cpNext.current];
     const targetX = cp ? cp.pos[0] : 0;
     pos.current.x += (targetX - pos.current.x) * (1 - Math.exp(-LATERAL_EASE * dt));
 
@@ -217,8 +264,8 @@ function Flyer({
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
-    // side/rail camera, exp-damped
-    camWant.current.set(pos.current.x + CAM_SIDE, pos.current.y + CAM_UP, pos.current.z + CAM_BACK);
+    // trailing chase camera, exp-damped
+    camWant.current.set(pos.current.x + CAM_SIDE, pos.current.y + CAM_UP, pos.current.z - CAM_BACK);
     const kc = 1 - Math.exp(-CAM_LERP * dt);
     camera.position.lerp(camWant.current, kc);
     lookAt.current.lerp(
@@ -704,7 +751,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
           frameloop="always"
           shadows={!embedded}
           dpr={embedded ? 1 : [1, 1.5]}
-          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] + CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
+          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] - CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
           gl={{ antialias: !embedded, powerPreference: embedded ? "default" : "high-performance" }}
           style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
@@ -742,6 +789,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
               physics world/WASM is real memory back on phones, where it was
               helping tip the WebGL context into eviction. */}
           <CircuitScene track={track} biome={BIOME} highlightIndex={running ? targetIdx : undefined} staticMode />
+          <DriftMotes track={track} />
           {phase === "ready" && (
             <ReadyPose track={track} champType={champType} champion={champion} ascentDepth={ascentDepth} />
           )}
