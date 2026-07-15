@@ -36,6 +36,7 @@ import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WOR
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
 import { VENUES, CONCORD_VENUE_SPOTS } from "@/components/grounds/venues";
+import { AMPHI_SPAWN, AMPHI_SPAWN_HEADING } from "@/components/grounds/amphitheatre";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason, currentSeasonNumber } from "@/lib/lore/season";
@@ -503,9 +504,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         const s = desktopCircuitSector(0).spawn;
         setTimeout(() => travelRef.current?.(s[0], s[2], 0), 80);
       } else if (venue === "amphitheatre") {
-        // drop in on the sand facing the ring (−z, toward the throne), clear of
-        // the exit portal (z≈17) so its leave-prompt isn't up the instant you land.
-        setTimeout(() => travelRef.current?.(0, 12, Math.PI), 80);
+        // Handler already mounts on AMPHI_SPAWN (world.tsx venueSpawn). Re-assert
+        // pose + facing after the body is ready so a remount can't leave you at
+        // the host knoll in the void.
+        setTimeout(() => travelRef.current?.(AMPHI_SPAWN[0], AMPHI_SPAWN[2], AMPHI_SPAWN_HEADING), 80);
       }
     },
     [capturePose, worldId],

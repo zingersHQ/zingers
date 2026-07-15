@@ -46,6 +46,13 @@ const RIM_R = FLOOR_R + 0.8;
 // the walk-up proximity target lands exactly on the stone.
 export const DAILY_HERALD_POS: [number, number, number] = [14.5, 0, 9];
 
+// Drop-in on the sand facing the ring (−z / throne), clear of the exit portal at
+// z≈17. Capsule centre ≈ FOOT_OFF+0.1 above the floor slab (y=0). Shared with
+// world.tsx so the Handler MOUNTS here — a delayed travelRef teleport used to
+// leave the body at the host-world knoll (void, no ground) for a frame.
+export const AMPHI_SPAWN: [number, number, number] = [0, 0.77, 12];
+export const AMPHI_SPAWN_HEADING = Math.PI; // face −z toward the throne
+
 // ── the venue's physics: a flat combat floor at y≈0 + a low containment rim ───
 // The visible sand is a plain mesh (no body); WITHOUT this the player capsule has
 // nothing to stand on inside the venue (region/hub ground is gated off by

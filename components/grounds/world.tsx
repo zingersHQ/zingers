@@ -30,7 +30,7 @@ import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
 import { type GalleryFocus } from "./gallery";
-import { Amphitheatre, AmphitheatreColliders, DAILY_HERALD_POS } from "./amphitheatre";
+import { Amphitheatre, AmphitheatreColliders, DAILY_HERALD_POS, AMPHI_SPAWN, AMPHI_SPAWN_HEADING } from "./amphitheatre";
 import { MATCH_SPREAD } from "./match-stage";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
@@ -372,12 +372,19 @@ export default function World({
   useEffect(() => {
     preloadNatureBiome(biome.id);
   }, [biome.id]);
-  const circuitSpawn = inCircuit ? circuitTrack.spawn : null;
+  // Venue spawns must be the RigidBody's INITIAL position — a delayed travelRef
+  // teleport leaves the capsule at the host-world knoll (void, no floor) for the
+  // first frames. Circuit and Amphitheatre both mount on their own sand/pad.
+  const venueSpawn = inCircuit ? circuitTrack.spawn : inAmphitheatre ? AMPHI_SPAWN : null;
   const spawnCam = useMemo(() => {
-    if (circuitSpawn) {
+    if (inCircuit && venueSpawn) {
       // behind + slightly above the pad looking down-track (+Z), matched to the
       // controller's settled chase pose (dist 8.6, low pitch) so frame 0 doesn't pop
-      return [circuitSpawn[0], circuitSpawn[1] + 2.5, circuitSpawn[2] - 8.4] as [number, number, number];
+      return [venueSpawn[0], venueSpawn[1] + 2.5, venueSpawn[2] - 8.4] as [number, number, number];
+    }
+    if (inAmphitheatre && venueSpawn) {
+      // behind the player looking toward the throne (−z): player at z=12 facing π
+      return [venueSpawn[0], venueSpawn[1] + 3.2, venueSpawn[2] + 8.4] as [number, number, number];
     }
     if (hasRift(shape)) {
       const { dirx, dirz } = riftDir(shape);
@@ -385,12 +392,14 @@ export default function World({
       return [knoll.x + dirx * 14, knoll.peak + 7, knoll.z + dirz * 14] as [number, number, number];
     }
     return [knoll.x, knoll.peak + 7, knoll.z + 14] as [number, number, number];
-  }, [circuitSpawn, shape, knoll]);
+  }, [venueSpawn, inCircuit, inAmphitheatre, shape, knoll]);
   const handlerPos = useRef(
-    new THREE.Vector3(circuitSpawn ? circuitSpawn[0] : knoll.x, circuitSpawn ? circuitSpawn[1] : 0, circuitSpawn ? circuitSpawn[2] : knoll.z),
+    new THREE.Vector3(venueSpawn ? venueSpawn[0] : knoll.x, venueSpawn ? venueSpawn[1] : 0, venueSpawn ? venueSpawn[2] : knoll.z),
   );
-  // Face inward toward the plaza from the spawn knoll (not +Z / away from the action).
-  const handlerHeading = useRef(Math.atan2(-knoll.x, -knoll.z));
+  // Face the ring in the Amphitheatre, down-track in the Circuit, else plaza-inward.
+  const handlerHeading = useRef(
+    inAmphitheatre ? AMPHI_SPAWN_HEADING : inCircuit ? 0 : Math.atan2(-knoll.x, -knoll.z),
+  );
   const sc = biome.scene;
   // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
   // of an arena + tower + spire. Driven by the presence of gates from the world.
@@ -791,7 +800,7 @@ export default function World({
               circuitTunnelTarget={circuitTunnelTarget}
               venueExitTarget={venueExitTarget}
               onVenueExit={onVenueExit}
-              spawnPos={circuitSpawn ?? undefined}
+              spawnPos={venueSpawn ?? undefined}
               trainPad={trainPad}
               challengeTargets={challengeTargets}
               groundTargets={groundTargets}
@@ -2688,20 +2697,17 @@ function Handler({
     };
   }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre]);
 
-  // circuit spawn faces down the track (+z); wild spawn faces the plaza / inward.
+  // Circuit → +z down-track; Amphitheatre → −z toward the throne; wild → plaza.
   useEffect(() => {
     if (spawnPos) {
-      // face straight down the track (+z). Set EVERY orientation source the way
-      // the wild branch does — heading, the published handlerHeading, the camera
-      // cue AND the visible body (inner) — otherwise the champion/camera can be
-      // left aimed back at the return portal (the "spawns facing the exit" bug).
-      heading.current = 0;
-      handlerHeading.current = 0;
+      const face = inAmphitheatre ? AMPHI_SPAWN_HEADING : 0;
+      heading.current = face;
+      handlerHeading.current = face;
       if (camCue.current) {
-        camCue.current.heading = 0;
+        camCue.current.heading = face;
         camCue.current.recenter = true;
       }
-      if (inner.current) inner.current.rotation.set(0, 0, 0);
+      if (inner.current) inner.current.rotation.set(0, face, 0);
     } else {
       const face = Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
       heading.current = face;
@@ -2709,7 +2715,7 @@ function Handler({
       if (camCue.current) camCue.current.heading = face;
       if (inner.current) inner.current.rotation.set(0, face, 0);
     }
-  }, [spawnPos, spawnKnoll, camCue, handlerHeading]);
+  }, [spawnPos, spawnKnoll, camCue, handlerHeading, inAmphitheatre]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
   // points at and fades in the new clip, so the `cur` ref can never desync from
@@ -2852,6 +2858,12 @@ function Handler({
     // the actual floor collider.
     const floorY = inAmphitheatre ? 0 : terrainHeight(t.x, t.z, shape, spawnKnoll);
     const restY = floorY + FOOT_OFF; // capsule half-height + radius (2/3-scale body)
+    // Amphitheatre: the host-terrain safety net (below) used to force ground.current≥1
+    // with no matching exit while the capsule sat below the wild heightfield. That
+    // left sensorGround stuck true aloft — hold-Space kept flight (v.y>0.6 skips the
+    // jump refund) but releasing thrust sank vy and refunded jumps → walk anim mid-air
+    // with the pack retracting. Clear any poison once clearly above the sand.
+    if (inAmphitheatre && t.y > restY + 1.0) ground.current = 0;
     const sensorGround = ground.current > 0;
 
     // ── spawn settle guard ──
@@ -3211,7 +3223,11 @@ function Handler({
     // drop "under-earth" (worst on Ember's spires). If our centre ever ends up
     // below the surface height at our (x,z), lift back onto it. Read a fresh
     // translation so this doesn't double-fire after a checkpoint rescue above.
-    if (!circuitMode) {
+    // Skip in the Amphitheatre: walkable floor is the venue slab at y=0, not the
+    // host heightfield. Using terrainHeight here yanked the body toward wild Y and
+    // poisoned ground.current (see sensor clear above) — flight collapsed to walk
+    // the moment Space was released.
+    if (!circuitMode && !inAmphitheatre) {
       const p = rb.translation();
       const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
       const FEET = FOOT_OFF;
@@ -3667,6 +3683,7 @@ function CameraController({
   // In the Circuit the track runs +Z and the flyer faces +Z, so "behind" is
   // yaw = π. Boot there (not 0 = in front) so the very first frame is already a
   // chase shot down-track instead of swinging around from the flyer's face.
+  // Amphitheatre faces −Z (throne) — default yaw 0 already puts the camera behind.
   const yaw = useRef(inCircuit ? Math.PI : 0);
   const pitch = useRef(PITCH_GROUND);
   const dist = useRef(CAM_DIST_DEFAULT);
