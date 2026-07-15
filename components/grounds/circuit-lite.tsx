@@ -519,7 +519,7 @@ function HazardField({ hazards }: { hazards: Hazard[] }) {
 
 // `embedded` = rendered inside the mobile shell as the Climb tab (docs/mobile.md):
 // fill the parent tab area, drop the standalone island chrome.
-export default function CircuitLite({ embedded = false }: { embedded?: boolean } = {}) {
+export default function CircuitLite({ embedded = false, onExit }: { embedded?: boolean; onExit?: () => void } = {}) {
   const [mounted, setMounted] = useState(false);
   const [runId, setRunId] = useState(0);
   const [sector, setSector] = useState(0);
@@ -944,7 +944,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       <div
         style={{
           position: "absolute",
-          top: embedded ? 12 : 54,
+          top: embedded && !onExit ? 12 : 54,
           left: 12,
           zIndex: 18,
           pointerEvents: "none",
@@ -1047,40 +1047,45 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
         <div style={{ position: "absolute", inset: 0, zIndex: 22, pointerEvents: "none", boxShadow: "inset 0 0 90px 12px rgba(255,74,106,.55)", background: "radial-gradient(circle at center, transparent 55%, rgba(255,74,106,.18) 100%)" }} />
       )}
 
-      {/* ── standalone island chrome (hidden when embedded in the mobile shell) ── */}
-      {!embedded && (
-        <Link
-          href="/grounds"
-          aria-label="Back to the Grounds"
-          style={{
-            position: "absolute",
-            top: 14,
-            left: 12,
-            zIndex: 20,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: "#e6e2f5",
-            textDecoration: "none",
-            background: "rgba(8,7,14,.55)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,.12)",
-            padding: "7px 13px 7px 9px",
-            borderRadius: 999,
-            pointerEvents: "auto",
-            boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
-          }}
-        >
-          <ChevronLeft size={15} strokeWidth={2.4} /> Grounds
-        </Link>
-      )}
+      {/* ── back chrome — a rounded pill top-left. Standalone links to /grounds;
+           embedded (mobile shell) calls onExit to leave the immersive Climb and
+           return to the previous tab, so the shell can drop its bottom bar. ── */}
+      {(!embedded || onExit) && (() => {
+        const backStyle = {
+          position: "absolute" as const,
+          top: 14,
+          left: 12,
+          zIndex: 20,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: "#e6e2f5",
+          textDecoration: "none",
+          background: "rgba(8,7,14,.55)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,.12)",
+          padding: "7px 13px 7px 9px",
+          borderRadius: 999,
+          pointerEvents: "auto" as const,
+          boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
+        };
+        return onExit ? (
+          <button type="button" onClick={onExit} aria-label="Leave the Climb" style={{ ...backStyle, cursor: "pointer" }}>
+            <ChevronLeft size={15} strokeWidth={2.4} /> Back
+          </button>
+        ) : (
+          <Link href="/grounds" aria-label="Back to the Grounds" style={backStyle}>
+            <ChevronLeft size={15} strokeWidth={2.4} /> Grounds
+          </Link>
+        );
+      })()}
 
       {/* ── ready gate: wait for the first press so you never die before reacting ── */}
       {phase === "ready" && !reachCardOn && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", zIndex: 15, paddingBottom: embedded ? 72 : 0 }}>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", zIndex: 15, paddingBottom: embedded && !onExit ? 72 : 0 }}>
           <div className="mono" style={{ textAlign: "center", color: "#fff", textShadow: `0 0 20px ${accent}` }}>
             <div style={{ fontSize: embedded ? 17 : 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 1 }}>

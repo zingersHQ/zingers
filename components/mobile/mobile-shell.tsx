@@ -14,7 +14,7 @@
 // All reuse the existing engine/store/APIs; none reuse the desktop page layouts.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useState } from "react";
-import { Home, Eye, Shield, Rocket, Trophy, Lock } from "lucide-react";
+import { Home, Eye, Shield, Rocket, Trophy, Lock, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CircuitLite from "@/components/grounds/circuit-lite";
 import MobileToday from "@/components/mobile/mobile-today";
@@ -44,6 +44,8 @@ const ACCENT = "var(--accent, #7cf6c8)";
 
 export function MobileShell() {
   const [tab, setTab] = useState<TabId>("today");
+  // where a "back/close" from an immersive context returns to (the last browse tab)
+  const [prevTab, setPrevTab] = useState<TabId>("today");
   const [lockHint, setLockHint] = useState(false);
 
   // Climb is a flight game — it needs a champion to fly. Keep it locked until one
@@ -56,17 +58,35 @@ export function MobileShell() {
     (id: TabId) => {
       if (id === "climb" && climbLocked) {
         // Don't enter Climb without a champion — steer them to claim one first.
+        setPrevTab(tab);
         setTab("champion");
         setLockHint(true);
         window.setTimeout(() => setLockHint(false), 2800);
         return;
       }
+      setPrevTab(tab);
       setTab(id);
     },
-    [climbLocked],
+    [climbLocked, tab],
   );
 
   const activeTab: TabId = tab === "climb" && climbLocked ? "today" : tab;
+
+  // Immersive contexts drop the bottom tab bar for a clean, focused surface and
+  // carry their own back/close affordance instead (docs/mobile.md homogenisation):
+  //   • Climb — the one-thumb flight game wants an unobstructed canvas.
+  //   • Champion selection — a fresh trainer commits here; picking is the exit.
+  // Everything else (Today · Watch · Champion profile · Rank) keeps the tab bar
+  // as the single, consistent primary navigation. No burger anywhere.
+  const adopting = activeTab === "champion" && climbLocked;
+  const immersive = activeTab === "climb" || adopting;
+
+  // Leave an immersive context back to the last browse tab (never back into
+  // another immersive one, and never a locked Climb).
+  const exitImmersive = useCallback(() => {
+    const safe = prevTab !== activeTab && prevTab !== "climb" && !(prevTab === "champion" && climbLocked) ? prevTab : "today";
+    setTab(safe);
+  }, [prevTab, activeTab, climbLocked]);
 
   return (
     <div
@@ -85,7 +105,7 @@ export function MobileShell() {
       {/* content area — positioned so the full-bleed Climb canvas can fill it */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         {activeTab === "climb" ? (
-          <CircuitLite embedded />
+          <CircuitLite embedded onExit={exitImmersive} />
         ) : activeTab === "today" ? (
           <MobileToday onNavigate={(t) => selectTab(t as TabId)} />
         ) : activeTab === "watch" ? (
@@ -94,6 +114,36 @@ export function MobileShell() {
           <MobileChampion onNavigate={(t) => selectTab(t as TabId)} />
         ) : (
           <MobileRank />
+        )}
+
+        {/* selection close — champion pick is chromeless; a top-right X returns to
+            the last browse tab so a trainer is never trapped without a bottom bar */}
+        {adopting && (
+          <button
+            type="button"
+            onClick={exitImmersive}
+            aria-label="Close champion selection"
+            style={{
+              position: "absolute",
+              top: "calc(12px + env(safe-area-inset-top, 0px))",
+              right: 12,
+              zIndex: 30,
+              width: 38,
+              height: 38,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: 999,
+              background: "rgba(8,7,14,.55)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,.12)",
+              color: "#e6e2f5",
+              cursor: "pointer",
+              boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
+            }}
+          >
+            <X size={18} strokeWidth={2.4} />
+          </button>
         )}
       </div>
 
@@ -125,7 +175,10 @@ export function MobileShell() {
       )}
       <style>{`@keyframes mshLockHint { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }`}</style>
 
-      {/* bottom tab bar — thumb-reachable, with iOS safe-area padding */}
+      {/* bottom tab bar — thumb-reachable, with iOS safe-area padding. Hidden in
+          immersive contexts (Climb, champion selection), which carry their own
+          back/close instead — one consistent nav model, no burger. */}
+      {!immersive && (
       <nav
         style={{
           display: "flex",
@@ -172,6 +225,7 @@ export function MobileShell() {
           );
         })}
       </nav>
+      )}
     </div>
   );
 }

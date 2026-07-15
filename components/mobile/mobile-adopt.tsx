@@ -14,7 +14,7 @@ import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { ROSTER } from "@/lib/engine/roster";
 import { useChampions } from "@/store/champions";
-import { ChampionAvatar } from "@/components/champion-avatar";
+import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { CharacterBeat } from "@/components/grounds/character-beat";
 import { firstFlightScript } from "@/lib/lore/character-beats";
 import {
@@ -64,19 +64,25 @@ export function MobileAdopt() {
     );
   }
 
+  // Borderless renders sized by how many there are: 1 → full width, 2 → half,
+  // 3 → third; 4 wraps to a 2-grid, 5+ to a 3-grid. The champion is the hero of
+  // this screen, so it shows the full body (no avatar chrome), as big as fits.
+  const cols = starters.length <= 3 ? starters.length : starters.length === 4 ? 2 : 3;
+  const pickedHook = picked ? (FIRST_DUEL_HOOKS[picked] ?? "A mind worth raising.") : null;
+
   return (
-    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "20px 14px 24px" }}>
-      <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 18 }}>
-          <Sparkles size={26} strokeWidth={2} style={{ color: "var(--accent)" }} />
-          <div style={{ fontSize: 22, fontWeight: 800, margin: "8px 0 4px" }}>Choose your champion</div>
-          <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
-            You raise the mind that fights. Pick one to begin. It starts green and
+    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "calc(18px + env(safe-area-inset-top, 0px)) 14px calc(20px + env(safe-area-inset-bottom, 0px))" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <Sparkles size={24} strokeWidth={2} style={{ color: "var(--accent)" }} />
+          <div style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 4px" }}>Choose your champion</div>
+          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
+            You raise the mind that fights. Pick one to begin — it starts green and
             evolves as you train it and call fights.
           </p>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10 }}>
           {starters.map((key) => {
             const type = ROSTER[key].type;
             const col = TYPE_COLOR[type];
@@ -86,48 +92,68 @@ export function MobileAdopt() {
                 key={key}
                 type="button"
                 onClick={() => setPicked(key)}
-                className="panel"
+                aria-pressed={on}
                 style={{
-                  ["--ac" as string]: col,
+                  position: "relative",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  gap: 12,
-                  padding: "11px 13px",
-                  textAlign: "left",
+                  gap: 0,
+                  padding: 0,
+                  textAlign: "center",
                   cursor: "pointer",
-                  border: on ? `1.5px solid ${col}` : "1px solid var(--line, rgba(255,255,255,.1))",
-                  background: on ? "var(--panel2, #15131f)" : "transparent",
-                  boxShadow: on ? `0 0 40px -20px ${col}` : "none",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  border: on ? `1.5px solid ${col}` : "1px solid var(--line, rgba(255,255,255,.09))",
+                  background: on ? "var(--panel2, #15131f)" : "rgba(255,255,255,.02)",
+                  boxShadow: on ? `0 0 44px -18px ${col}` : "none",
+                  transition: "border-color .14s, box-shadow .14s, background .14s",
                 }}
               >
-                <ChampionAvatar ckey={key} type={type} champion={previewRookieChampion(key)} size={52} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>{ROSTER[key].name}</div>
-                  <div className="mono" style={{ fontSize: 10, color: col, margin: "1px 0 3px" }}>{forceName(type)}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--muted, #9a96b8)", lineHeight: 1.35 }}>
-                    {FIRST_DUEL_HOOKS[key] ?? "A mind worth raising."}
-                  </div>
+                {/* borderless full-body render — fills the cell, sized by count */}
+                <div style={{ width: "100%", aspectRatio: "1 / 1", position: "relative" }}>
+                  <ChampionPortraitScene
+                    type={type}
+                    champion={previewRookieChampion(key)}
+                    identityKey={key}
+                    preset="portrait"
+                    animMode="standing"
+                    scale={1.05}
+                  />
+                  {on && (
+                    <span
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        width: 24,
+                        height: 24,
+                        borderRadius: 999,
+                        display: "grid",
+                        placeItems: "center",
+                        background: col,
+                        color: "#0a0a12",
+                        boxShadow: "0 2px 10px rgba(0,0,0,.4)",
+                      }}
+                    >
+                      <Check size={15} strokeWidth={3} />
+                    </span>
+                  )}
                 </div>
-                <span
-                  aria-hidden
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 999,
-                    display: "grid",
-                    placeItems: "center",
-                    flexShrink: 0,
-                    border: on ? "none" : "1.5px solid var(--line2, rgba(255,255,255,.2))",
-                    background: on ? col : "transparent",
-                    color: "#0a0a12",
-                  }}
-                >
-                  {on && <Check size={15} strokeWidth={3} />}
-                </span>
+                <div style={{ padding: "8px 8px 11px", width: "100%" }}>
+                  <div style={{ fontSize: cols >= 3 ? 13 : 16, fontWeight: 800, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ROSTER[key].name}</div>
+                  <div className="mono" style={{ fontSize: 9.5, color: col, marginTop: 2, letterSpacing: 0.4 }}>{forceName(type)}</div>
+                </div>
               </button>
             );
           })}
         </div>
+
+        {/* the picked mind's hook — one supporting line, replaces the per-card copy */}
+        <p style={{ minHeight: 34, fontSize: 12.5, lineHeight: 1.4, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", textAlign: "center", margin: "12px auto 0", maxWidth: 340 }}>
+          {pickedHook ?? "Tap a champion to meet it."}
+        </p>
 
         <button
           type="button"
@@ -135,7 +161,7 @@ export function MobileAdopt() {
           disabled={!picked}
           style={{
             width: "100%",
-            marginTop: 18,
+            marginTop: 10,
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",

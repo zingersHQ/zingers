@@ -133,11 +133,24 @@ export class Ambience {
     } catch {
       /* resume may reject if not from a gesture */
     }
+    // Idempotent: start() can be called again while already playing (a second
+    // engine host mounts, the arm gesture fires, a scene re-requests the score).
+    // Without this guard each call spins up a SECOND tick()/scheduleBird() loop
+    // on the same engine while the first is still scheduled — two overlapping
+    // scores, slightly out of phase (the "music plays twice" bug). If we're
+    // already running, just (re)ramp the volume and bail — never a second loop.
+    const wasOn = this.on;
     this.on = true;
     const now = ctx.currentTime;
     out.gain.cancelScheduledValues(now);
     out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), now);
     out.gain.linearRampToValueAtTime(this.vol, now + 1.2);
+    if (wasOn) return;
+    // defensive: clear any stray timers before opening a fresh loop
+    if (this.stepTimer) clearTimeout(this.stepTimer);
+    if (this.birdTimer) clearTimeout(this.birdTimer);
+    this.stepTimer = null;
+    this.birdTimer = null;
     this.tick();
     if (SCORES[this.mood].birds) this.scheduleBird();
     this.applyShimmer();
