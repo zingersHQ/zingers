@@ -83,36 +83,51 @@ function PortalPlane({ radius, color, spin = 0.35 }: { radius: number; color: st
 
 export type PortalTheme = "concord" | "gauntlet" | "void" | "grounds";
 
-// The monumental arch shell. ~Vaultgate ×2 (7u wide × 10u tall) so it reads as a
-// destination across the plaza. Architecture varies by host world; the swirling
-// plane is the shared identity. Used for both the Ascent (entry) and Return.
+// The portal arch is a HALF VERTICAL OVAL standing on the ground with the
+// swirling plane inside it (replacing the old twin-pylon+lintel columns, which
+// read as ugly boxes). It's a rounded ellipse arch — feet on the ground, a tall
+// oval crown — monumental enough to read as a destination across the plaza. The
+// stone tint varies by host world; the swirling plane is the shared identity.
+const ARCH_RX = 3.6; // half-width — the legs meet the ground at ±RX
+const ARCH_SY = 1.7; // vertical stretch → a tall oval; apex sits at RX·SY
+const ARCH_APEX = ARCH_RX * ARCH_SY; // ≈ 6.1u tall
+/** Where the swirling plane sits inside the oval, and how wide it can be without
+ *  clipping the frame. Shared so every portal frames its plane identically. */
+export const PORTAL_OPEN_Y = 2.8;
+export const PORTAL_RADIUS = 2.4;
+export const PORTAL_LABEL_Y = ARCH_APEX + 0.9;
+
 function ArchShell({ accent, theme }: { accent: string; theme: PortalTheme }) {
   const stone = theme === "gauntlet" ? "#2a1208" : theme === "void" ? "#0c1832" : theme === "grounds" ? "#152012" : "#141230";
-  const jagged = theme === "gauntlet";
   return (
     <>
-      {/* twin pylons */}
-      <mesh position={[-3.4, 5, 0]} rotation={[0, 0, jagged ? 0.06 : 0]} castShadow>
-        <boxGeometry args={[1.1, 10, 1.1]} />
-        <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.32} metalness={0.45} roughness={0.6} />
+      {/* the half-oval frame — a torus arc (rainbow) stretched tall into an oval */}
+      <group scale={[1, ARCH_SY, 1]}>
+        <mesh castShadow>
+          <torusGeometry args={[ARCH_RX, 0.42, 16, 64, Math.PI]} />
+          <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.42} metalness={0.5} roughness={0.55} />
+        </mesh>
+      </group>
+      {/* keystone at the crown of the oval */}
+      <mesh position={[0, ARCH_APEX, 0]} castShadow>
+        <boxGeometry args={[1.3, 0.7, 1.2]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.7} metalness={0.6} roughness={0.3} />
       </mesh>
-      <mesh position={[3.4, 5, 0]} rotation={[0, 0, jagged ? -0.06 : 0]} castShadow>
-        <boxGeometry args={[1.1, 10, 1.1]} />
-        <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.32} metalness={0.45} roughness={0.6} />
-      </mesh>
-      {/* lintel */}
-      <mesh position={[0, 10.1, 0]} castShadow>
-        <boxGeometry args={[8, 1.2, 1.4]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.6} metalness={0.6} roughness={0.35} />
-      </mesh>
-      {/* inner glow frame */}
-      <mesh position={[0, 5.2, -0.1]}>
-        <ringGeometry args={[3.1, 3.35, 40]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      {/* stone feet where the legs plant on the ground */}
+      {[-ARCH_RX, ARCH_RX].map((x, i) => (
+        <mesh key={i} position={[x, 0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.72, 0.95, 1.1, 10]} />
+          <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.3} metalness={0.45} roughness={0.6} />
+        </mesh>
+      ))}
+      {/* inner glow rim hugging the opening (an ellipse to match the oval) */}
+      <mesh position={[0, PORTAL_OPEN_Y, -0.12]} scale={[1, 1.55, 1]}>
+        <ringGeometry args={[PORTAL_RADIUS * 1.02, PORTAL_RADIUS * 1.1, 56]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.3} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
       {/* ground ring at the threshold */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
-        <ringGeometry args={[3.2, 3.9, 56]} />
+        <ringGeometry args={[ARCH_RX * 0.66, ARCH_RX * 0.92, 56]} />
         <meshBasicMaterial color={accent} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
     </>
@@ -182,10 +197,10 @@ export function AscentPortal({
   return (
     <group position={pos} rotation={[0, rot, 0]}>
       <ArchShell accent={accent} theme={theme} />
-      <group position={[0, 5.2, 0]}>
-        <PortalPlane radius={2.95} color={accent} />
+      <group position={[0, PORTAL_OPEN_Y, 0]}>
+        <PortalPlane radius={PORTAL_RADIUS} color={accent} />
       </group>
-      <Html position={[0, 11.4, 0]} center distanceFactor={26} style={{ pointerEvents: "none" }}>
+      <Html position={[0, PORTAL_LABEL_Y, 0]} center distanceFactor={22} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
           <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: accent, fontWeight: 800 }}>THE ASCENT</div>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>REACH {reachRoman} · {reachName.toUpperCase()}</div>
@@ -204,19 +219,23 @@ export function AscentReturnPortal({
   accent,
   theme = "concord",
   label,
+  rotationY = 0,
 }: {
   pos: [number, number, number];
   accent: string;
   theme?: PortalTheme;
   label: string;
+  /** face the portal a given way (regions face it inward toward the plaza; the
+   *  Circuit return keeps the default +z so it faces the down-track spawn). */
+  rotationY?: number;
 }) {
   return (
-    <group position={pos}>
+    <group position={pos} rotation={[0, rotationY, 0]}>
       <ArchShell accent={accent} theme={theme} />
-      <group position={[0, 5.2, 0]}>
-        <PortalPlane radius={2.95} color={accent} spin={-0.3} />
+      <group position={[0, PORTAL_OPEN_Y, 0]}>
+        <PortalPlane radius={PORTAL_RADIUS} color={accent} spin={-0.3} />
       </group>
-      <Html position={[0, 11.4, 0]} center distanceFactor={24} style={{ pointerEvents: "none" }}>
+      <Html position={[0, PORTAL_LABEL_Y, 0]} center distanceFactor={22} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
           <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: accent, fontWeight: 800 }}>RETURN</div>
           <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>{label.toUpperCase()}</div>

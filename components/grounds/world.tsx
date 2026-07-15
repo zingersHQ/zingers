@@ -49,13 +49,12 @@ import { atCircuitFinishEarly, crossedCircuitGate } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
   CONCORD_VENUE_SPOTS,
-  REGION_RETURN_SPOT,
   VENUE_EXIT,
   VENUES,
   circuitSpotFor,
   type VenueId,
 } from "./venues";
-import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal, AscentPortal, AscentReturnPortal } from "./venue-portals";
+import { ConcordVenuePortal, VenueExitPortal, AscentPortal, AscentReturnPortal, type PortalTheme } from "./venue-portals";
 import { reachThemeByIndex } from "./climb/reaches";
 import { preloadNatureBiome } from "@/lib/render/preload-grounds";
 
@@ -449,9 +448,12 @@ export default function World({
   );
   const returnTarget = useMemo(() => {
     if (!inRegion) return null;
-    const { angle, dist } = REGION_RETURN_SPOT;
-    const x = Math.cos(angle) * dist;
-    const z = Math.sin(angle) * dist;
+    // The way home stands where you arrived — the spawn knoll — nudged a few
+    // metres outward so you emerge from it and it sits at your back, facing the
+    // plaza (docs: "back to the Concord should be at the point you start").
+    const r = Math.hypot(knoll.x, knoll.z) || 1;
+    const x = knoll.x + (knoll.x / r) * 6;
+    const z = knoll.z + (knoll.z / r) * 6;
     return new THREE.Vector3(x, terrainHeight(x, z, shape, knoll) + 1, z);
   }, [inRegion, shape, knoll]);
   const circuitTunnelTarget = useMemo(() => {
@@ -682,15 +684,31 @@ export default function World({
               {!match && <GoalMarkers goals={goals} />}
               {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
               {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
-              {returnTarget && <ReturnPortal pos={[returnTarget.x, terrainHeight(returnTarget.x, returnTarget.z, shape, knoll), returnTarget.z]} />}
-              {circuitTunnelTarget && (
-                <CircuitTunnelPortal
-                  pos={[circuitTunnelTarget.pos.x, terrainHeight(circuitTunnelTarget.pos.x, circuitTunnelTarget.pos.z, shape, knoll), circuitTunnelTarget.pos.z]}
-                  label={circuitTunnelTarget.label}
-                  accent={biome.lights.arenaPoint}
-                  variant={regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds"}
+              {/* Back to the Concord — the monumental Return Portal standing at
+                  the spawn point, facing the plaza (you emerge from it here). */}
+              {returnTarget && (
+                <AscentReturnPortal
+                  pos={[returnTarget.x, terrainHeight(returnTarget.x, returnTarget.z, shape, knoll), returnTarget.z]}
+                  label="The Concord"
+                  accent="#f5d020"
+                  theme={(regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds") as PortalTheme}
+                  rotationY={Math.atan2(-returnTarget.x, -returnTarget.z)}
                 />
               )}
+              {/* The Circuit — the same monumental Ascent Portal as the Concord,
+                  set out on its own bearing away from the arena. */}
+              {circuitTunnelTarget && (() => {
+                const cr = reachThemeByIndex(0);
+                return (
+                  <AscentPortal
+                    pos={[circuitTunnelTarget.pos.x, terrainHeight(circuitTunnelTarget.pos.x, circuitTunnelTarget.pos.z, shape, knoll), circuitTunnelTarget.pos.z]}
+                    accent={VENUES.circuit.color}
+                    theme={(regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds") as PortalTheme}
+                    reachRoman={cr.roman}
+                    reachName={cr.name}
+                  />
+                );
+              })()}
             </>
           )}
 

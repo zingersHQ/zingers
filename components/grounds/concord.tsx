@@ -315,10 +315,10 @@ function Vaultgate({
   const lift = firstStop ? (urgent ? 1.9 : 1.5) : 1;
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    // Slow, elegant breathing for the focus gate — a calm beam that draws the eye
-    // without strobing. Urgent (idle) speeds it up a touch; reduced-motion freezes
-    // to a steady mid-brightness so the gate still reads as "the one" while still.
-    const rate = urgent ? 1.85 : firstStop ? 1.1 : 1.4;
+    // A brisk, eye-catching pulse for the focus gate — quick enough to grab the
+    // eye without strobing. Urgent (idle) pushes it faster still; reduced-motion
+    // freezes to a steady mid-brightness so the gate still reads as "the one".
+    const rate = urgent ? 3.4 : firstStop ? 2.6 : 2.2;
     const breathe = reduced ? 0.5 : Math.sin(t * rate) * 0.5 + 0.5; // 0..1
     if (portalRef.current) {
       const m = portalRef.current.material as THREE.MeshBasicMaterial;

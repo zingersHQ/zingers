@@ -38,11 +38,14 @@ export const CONCORD_VENUE_SPOTS: { venue: VenueId; angle: number; dist: number 
 /** Walk-up return arch in each region — the only way out to the Concord. */
 export const REGION_RETURN_SPOT = { angle: Math.PI * 0.92, dist: 33 };
 
-/** Thematic circuit tunnel entrance per region world. */
+/** The Circuit portal per region world — set OUT IN THE WILDS beyond the plaza
+ *  rim (PLAZA_R = 36), on its own bearing well away from the central arena, so
+ *  it reads as its own destination on another part of the map (not on the
+ *  colosseum). Its own thematic name lives on the walk-up prompt. */
 export const REGION_CIRCUIT_SPOT: Record<string, { angle: number; dist: number; label: string }> = {
-  grounds: { angle: Math.PI * 1.18, dist: 30, label: "The Ascent Tunnel" },
-  gauntlet: { angle: Math.PI * 0.35, dist: 28, label: "Ember Chute" },
-  void: { angle: Math.PI * 1.65, dist: 32, label: "Void Sleeve" },
+  grounds: { angle: Math.PI * 1.18, dist: 56, label: "The Ascent Tunnel" },
+  gauntlet: { angle: Math.PI * 0.35, dist: 54, label: "Ember Chute" },
+  void: { angle: Math.PI * 1.65, dist: 58, label: "Void Sleeve" },
 };
 
 export function circuitSpotFor(worldId: string) {
