@@ -47,6 +47,9 @@ export const ORG_PAGES: OrgPage[] = [
   // product
   { slug: "product/onepager", section: "product", order: 0, title: "One-pager", file: "docs/ONEPAGER.md", description: "Elevator pitch." },
   { slug: "product/twopager", section: "product", order: 1, title: "Two-pager", file: "docs/TWOPAGER.md", description: "Extended pitch." },
+  { slug: "product/story", section: "product", order: 2, title: "Story one-pager", file: "docs/STORY.md", description: "The concept: the Hum, champions, Forces, worlds, and seasons." },
+  { slug: "product/technical", section: "product", order: 3, title: "Technical one-pager", file: "docs/TECHNICAL.md", description: "Stack, engine-vs-LLM, architecture, and performance." },
+  { slug: "product/ai-crypto", section: "product", order: 4, title: "AI & crypto one-pager", file: "docs/AI-CRYPTO.md", description: "The agent layer and the $ZING / Crowns model." },
 ];
 
 const PAGE_BY_SLUG = new Map(ORG_PAGES.map((p) => [p.slug, p]));
