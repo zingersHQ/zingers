@@ -1,12 +1,123 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Html } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import type { VenueId } from "./venues";
 import { VENUES } from "./venues";
 
 const GOLD = "#f5d020";
+
+// ── the shared portal plane ────────────────────────────────────────────────
+// The identity of every Ascent/Return portal: a slowly-swirling additive disc
+// in the destination's accent, with the drift-mote speckle rising through it
+// (the Climb's signature texture). Cached per color so re-mounts are cheap
+// (game-feel rule: expensive canvas textures are cached per palette).
+const swirlCache = new Map<string, THREE.CanvasTexture>();
+function swirlTexture(color: string): THREE.CanvasTexture {
+  const hit = swirlCache.get(color);
+  if (hit) return hit;
+  const S = 256;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = S;
+  const ctx = cv.getContext("2d")!;
+  const c = new THREE.Color(color);
+  const rgb = `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`;
+  // radial core glow
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0, `rgba(${rgb},0.95)`);
+  g.addColorStop(0.35, `rgba(${rgb},0.5)`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  // swirled spokes
+  ctx.globalCompositeOperation = "lighter";
+  ctx.translate(S / 2, S / 2);
+  for (let i = 0; i < 5; i++) {
+    ctx.rotate((Math.PI * 2) / 5);
+    ctx.beginPath();
+    for (let r = 6; r < S / 2; r += 2) {
+      const a = r * 0.05;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.strokeStyle = `rgba(${rgb},0.22)`;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  swirlCache.set(color, tex);
+  return tex;
+}
+
+function PortalPlane({ radius, color, spin = 0.35 }: { radius: number; color: string; spin?: number }) {
+  const disc = useRef<THREE.Mesh>(null);
+  const born = useRef(0);
+  const tex = useMemo(() => swirlTexture(color), [color]);
+  useFrame((_, dt) => {
+    const step = Math.min(dt, 0.05);
+    if (disc.current) {
+      disc.current.rotation.z += spin * step; // rad/s × dt — fps-independent
+      // one-shot emerge ripple: a brief scale/brightness pulse on mount
+      if (born.current < 1) {
+        born.current = Math.min(1, born.current + step * 1.6);
+        const pulse = 1 + Math.sin(born.current * Math.PI) * 0.14;
+        disc.current.scale.setScalar(pulse);
+      }
+    }
+  });
+  return (
+    <group>
+      <mesh ref={disc}>
+        <circleGeometry args={[radius, 48]} />
+        <meshBasicMaterial map={tex} color={color} transparent opacity={0.85} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      <mesh>
+        <ringGeometry args={[radius * 0.98, radius * 1.06, 60]} />
+        <meshBasicMaterial color={color} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </group>
+  );
+}
+
+export type PortalTheme = "concord" | "gauntlet" | "void" | "grounds";
+
+// The monumental arch shell. ~Vaultgate ×2 (7u wide × 10u tall) so it reads as a
+// destination across the plaza. Architecture varies by host world; the swirling
+// plane is the shared identity. Used for both the Ascent (entry) and Return.
+function ArchShell({ accent, theme }: { accent: string; theme: PortalTheme }) {
+  const stone = theme === "gauntlet" ? "#2a1208" : theme === "void" ? "#0c1832" : theme === "grounds" ? "#152012" : "#141230";
+  const jagged = theme === "gauntlet";
+  return (
+    <>
+      {/* twin pylons */}
+      <mesh position={[-3.4, 5, 0]} rotation={[0, 0, jagged ? 0.06 : 0]} castShadow>
+        <boxGeometry args={[1.1, 10, 1.1]} />
+        <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.32} metalness={0.45} roughness={0.6} />
+      </mesh>
+      <mesh position={[3.4, 5, 0]} rotation={[0, 0, jagged ? -0.06 : 0]} castShadow>
+        <boxGeometry args={[1.1, 10, 1.1]} />
+        <meshStandardMaterial color={stone} emissive={accent} emissiveIntensity={0.32} metalness={0.45} roughness={0.6} />
+      </mesh>
+      {/* lintel */}
+      <mesh position={[0, 10.1, 0]} castShadow>
+        <boxGeometry args={[8, 1.2, 1.4]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.6} metalness={0.6} roughness={0.35} />
+      </mesh>
+      {/* inner glow frame */}
+      <mesh position={[0, 5.2, -0.1]}>
+        <ringGeometry args={[3.1, 3.35, 40]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      {/* ground ring at the threshold */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
+        <ringGeometry args={[3.2, 3.9, 56]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </>
+  );
+}
 
 /** Concord game door — smaller and cooler than a Vaultgate (regions only). */
 export function ConcordVenuePortal({
@@ -45,6 +156,70 @@ export function ConcordVenuePortal({
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
           <div className="mono" style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700 }}>GAME</div>
           <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", textShadow: "0 2px 8px #000" }}>{def.shortLabel}</div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+/** The monumental Ascent Portal — the Circuit entrance in the Concord plaza.
+ *  ~2× Vaultgate scale with the swirling Reach-accent plane and the Reach it
+ *  opens blazoned above. Trigger stays the existing proximity/act prompt. */
+export function AscentPortal({
+  pos,
+  accent,
+  theme = "concord",
+  reachRoman,
+  reachName,
+}: {
+  pos: [number, number, number];
+  accent: string;
+  theme?: PortalTheme;
+  reachRoman: string;
+  reachName: string;
+}) {
+  const rot = useMemo(() => Math.atan2(-pos[0], -pos[2]), [pos]);
+  return (
+    <group position={pos} rotation={[0, rot, 0]}>
+      <ArchShell accent={accent} theme={theme} />
+      <group position={[0, 5.2, 0]}>
+        <PortalPlane radius={2.95} color={accent} />
+      </group>
+      <Html position={[0, 11.4, 0]} center distanceFactor={26} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: accent, fontWeight: 800 }}>THE ASCENT</div>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>REACH {reachRoman} · {reachName.toUpperCase()}</div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+/** The Return Portal — stands behind the Circuit spawn; you emerge from it and
+ *  walk back through it to exit. Replaces the bare exit ring. Its plane wears
+ *  the destination world's accent (the portal shows where it goes). The trigger
+ *  is still the proximity act at VENUE_EXIT.circuit.pos, so nothing rewires. */
+export function AscentReturnPortal({
+  pos,
+  accent,
+  theme = "concord",
+  label,
+}: {
+  pos: [number, number, number];
+  accent: string;
+  theme?: PortalTheme;
+  label: string;
+}) {
+  return (
+    <group position={pos}>
+      <ArchShell accent={accent} theme={theme} />
+      <group position={[0, 5.2, 0]}>
+        <PortalPlane radius={2.95} color={accent} spin={-0.3} />
+      </group>
+      <Html position={[0, 11.4, 0]} center distanceFactor={24} style={{ pointerEvents: "none" }}>
+        <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
+          <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: accent, fontWeight: 800 }}>RETURN</div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>{label.toUpperCase()}</div>
         </div>
       </Html>
     </group>

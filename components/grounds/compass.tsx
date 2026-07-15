@@ -148,7 +148,7 @@ export function Compass({
   const deg = ((p.heading * 180) / Math.PI + 360) % 360;
   const facing = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 
-  const barH = isMobile ? 60 : 72;
+  const barH = isMobile ? 68 : 84;
 
   // map a relative bearing onto the tape: x-fraction, plus a curved-drum 3D tilt
   const place = (rel: number) => {
@@ -228,11 +228,15 @@ export function Compass({
         {/* markers */}
         {markers.map((m) => {
           const { frac, o, offscreen } = place(m.rel);
-          const scale = 1 - Math.abs(o) * 0.2;
+          // center-weighted: the marker you're heading toward GROWS to the reticle
+          // (1.25× dead-centre) and shrinks to 0.78× at the edges, so the target
+          // you're walking toward pops instead of every icon reading the same.
+          const scale = 0.78 + 0.47 * Math.cos(Math.min(1, Math.abs(o)) * (Math.PI / 2));
+          const centered = !offscreen && Math.abs(o) < 0.12; // near the reticle
           const opacity = m.done ? 0.45 : 1 - Math.abs(o) * 0.4 - (offscreen ? 0.12 : 0);
-          const badge = m.group === "goal" ? (isMobile ? 22 : 24) : isMobile ? 18 : 20;
-          const iconSize = m.group === "goal" ? 13 : 11;
-          const ring = m.here || m.travelable ? m.color : `${m.color}77`;
+          const badge = m.group === "goal" ? (isMobile ? 26 : 32) : isMobile ? 20 : 26;
+          const iconSize = m.group === "goal" ? (isMobile ? 15 : 18) : isMobile ? 12 : 14;
+          const ring = centered || m.here || m.travelable ? m.color : `${m.color}77`;
           return (
             <div
               key={`${m.group}:${m.id}`}
@@ -264,9 +268,13 @@ export function Compass({
                   display: "grid",
                   placeItems: "center",
                   color: m.done ? "var(--muted)" : m.color,
-                  background: m.done ? "rgba(255,255,255,.06)" : `${m.color}24`,
-                  border: `1.5px solid ${m.done ? "var(--line2)" : ring}`,
-                  boxShadow: m.here || m.travelable ? `0 0 12px -3px ${m.color}` : "none",
+                  background: m.done ? "rgba(255,255,255,.06)" : centered ? `${m.color}3a` : `${m.color}24`,
+                  border: `${centered ? 2.5 : 1.5}px solid ${m.done ? "var(--line2)" : ring}`,
+                  boxShadow: centered
+                    ? `0 0 18px -2px ${m.color}, 0 0 0 3px ${m.color}33`
+                    : m.here || m.travelable
+                      ? `0 0 12px -3px ${m.color}`
+                      : "none",
                 }}
               >
                 {m.done ? <Check size={iconSize} strokeWidth={2.6} /> : <m.Icon size={iconSize} strokeWidth={2.4} />}
@@ -279,7 +287,7 @@ export function Compass({
                   </span>
                 )}
               </div>
-              <span className="mono" style={{ fontSize: 7.5, letterSpacing: 0.3, color: m.here ? m.color : "var(--muted2)", fontWeight: 700, whiteSpace: "nowrap" }}>
+              <span className="mono" style={{ fontSize: centered ? 9.5 : 7.5, letterSpacing: 0.3, color: m.here || centered ? m.color : "var(--muted2)", fontWeight: 700, whiteSpace: "nowrap" }}>
                 {m.here ? "HERE" : `${Math.round(m.dist)}m`}
               </span>
             </div>

@@ -55,7 +55,8 @@ import {
   circuitSpotFor,
   type VenueId,
 } from "./venues";
-import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal } from "./venue-portals";
+import { ConcordVenuePortal, ReturnPortal, CircuitTunnelPortal, VenueExitPortal, AscentPortal, AscentReturnPortal } from "./venue-portals";
+import { reachThemeByIndex } from "./climb/reaches";
 import { preloadNatureBiome } from "@/lib/render/preload-grounds";
 
 export interface WorldLife {
@@ -612,7 +613,12 @@ export default function World({
               {CONCORD_VENUE_SPOTS.map((s) => {
                 const x = Math.cos(s.angle) * s.dist;
                 const z = Math.sin(s.angle) * s.dist;
-                return <ConcordVenuePortal key={s.venue} venue={s.venue} pos={[x, terrainHeight(x, z, shape), z]} />;
+                const y = terrainHeight(x, z, shape);
+                if (s.venue === "circuit") {
+                  const r = reachThemeByIndex(0);
+                  return <AscentPortal key={s.venue} pos={[x, y, z]} accent={VENUES.circuit.color} theme="concord" reachRoman={r.roman} reachName={r.name} />;
+                }
+                return <ConcordVenuePortal key={s.venue} venue={s.venue} pos={[x, y, z]} />;
               })}
             </>
           )}
@@ -634,7 +640,22 @@ export default function World({
           {inCircuit && !showcase && (
             <>
               <CircuitScene track={circuitTrack} biome={biome} />
-              <VenueExitPortal pos={VENUE_EXIT.circuit.pos} label="Exit the tunnel" accent={VENUES.circuit.color} />
+              {ownedKey && (
+                <CircuitSpectator
+                  champions={champions}
+                  ownedKey={ownedKey}
+                  pledged={pledged}
+                  accent={biome.lights.arenaPoint}
+                  phase={circuitPhase}
+                  pos={[circuitTrack.spawn[0] - 4.4, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
+                />
+              )}
+              <AscentReturnPortal
+                pos={VENUE_EXIT.circuit.pos}
+                label={venueHostWorldId === "concord" ? "The Concord" : "The Wilds"}
+                accent={venueHostWorldId === "concord" ? "#f5d020" : biome.lights.arenaPoint}
+                theme={regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : venueHostWorldId === "concord" ? "concord" : "grounds"}
+              />
             </>
           )}
 
@@ -1265,6 +1286,72 @@ function OwnedCompanion({
         companionDrive={companionDrive}
         sceneScale={WORLD_AGENT_SCALE}
       />
+    </group>
+  );
+}
+
+// ── Circuit spectator pedestal ───────────────────────────────────────────────
+// Inside the Circuit the Trainer flies alone (canon: the Trainer flies, the
+// champion fights) — so rather than excluding the companion, it stands on a
+// pedestal beside the launch pad and *watches your climb*. It re-mounts each
+// sector (the venue re-keys per sector), cheering on a clear. Static, so it
+// skips the whole follow rig — no perf cost during flight.
+function CircuitSpectator({
+  champions,
+  ownedKey,
+  pledged,
+  accent,
+  phase,
+  pos,
+}: {
+  champions: GroundChampion[];
+  ownedKey: string | null;
+  pledged?: CreatureType | null;
+  accent: string;
+  phase?: CircuitPhase | null;
+  pos: [number, number, number];
+}) {
+  const c = champions.find((x) => x.key === ownedKey);
+  const [act, setAct] = useState(0);
+  const prevPhase = useRef<CircuitPhase | null | undefined>(phase);
+  useEffect(() => {
+    if (phase !== prevPhase.current) {
+      // clearing a sector or finishing the run → the champion celebrates
+      if (phase === "sector" || phase === "done") setAct((n) => n + 1);
+      prevPhase.current = phase;
+    }
+  }, [phase]);
+  if (!c) return null;
+  const [px, py, pz] = pos;
+  const top = py + 1.6;
+  return (
+    <group>
+      <mesh position={[px, py + 0.8, pz]} castShadow>
+        <cylinderGeometry args={[0.92, 1.12, 1.6, 24]} />
+        <meshStandardMaterial color="#141230" emissive={accent} emissiveIntensity={0.32} metalness={0.4} roughness={0.6} />
+      </mesh>
+      <mesh position={[px, top + 0.02, pz]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.62, 0.94, 32]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      <group position={[px, top, pz]}>
+        <ChampionMesh
+          key={c.key}
+          type={c.type}
+          champion={c.champion}
+          identityKey={c.key}
+          clan={pledged}
+          position={[0, 0, 0]}
+          rotation={0}
+          selected
+          restPose="standing"
+          breatheIntensity={0.42}
+          idlePhase={c.key.length * 0.7}
+          actSignal={act}
+          actName="wave"
+          sceneScale={WORLD_AGENT_SCALE}
+        />
+      </group>
     </group>
   );
 }
@@ -2516,8 +2603,17 @@ function Handler({
   // circuit spawn faces down the track (+z); wild spawn faces the plaza / inward.
   useEffect(() => {
     if (spawnPos) {
+      // face straight down the track (+z). Set EVERY orientation source the way
+      // the wild branch does — heading, the published handlerHeading, the camera
+      // cue AND the visible body (inner) — otherwise the champion/camera can be
+      // left aimed back at the return portal (the "spawns facing the exit" bug).
       heading.current = 0;
-      if (camCue.current) camCue.current.heading = 0;
+      handlerHeading.current = 0;
+      if (camCue.current) {
+        camCue.current.heading = 0;
+        camCue.current.recenter = true;
+      }
+      if (inner.current) inner.current.rotation.set(0, 0, 0);
     } else {
       const face = Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
       heading.current = face;

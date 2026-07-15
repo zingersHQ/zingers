@@ -1622,7 +1622,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     !!pledgeFlash;
   const showCompass = showHud && !worldUiBlocked && owned && !isHub && !inVenue;
   // Reserve bottom space only when the compass is actually visible.
-  const compassReserve = showCompass ? (isMobile ? 76 : 92) : 0;
+  const compassReserve = showCompass ? (isMobile ? 84 : 104) : 0;
   const audioVolume = useSettings((s) => s.volume);
   const voiceOn = useSettings((s) => s.voice);
   const alwaysShowHud = useSettings((s) => s.alwaysShowHud);
