@@ -112,12 +112,15 @@ export const CircuitScene = memo(function CircuitScene({
   track,
   biome,
   highlightIndex,
+  goldIndex,
   staticMode = false,
 }: {
   track: CircuitTrackDef;
   biome: BiomeConfig;
   /** optional: pulse this checkpoint as the next target (used by the one-thumb mode) */
   highlightIndex?: number;
+  /** optional: render this checkpoint as a gold "golden ring" surprise reward */
+  goldIndex?: number;
   /** render the track as plain meshes (no Rapier bodies) — the mobile one-thumb
    *  Climb is fully kinematic, so it drops the physics engine entirely. */
   staticMode?: boolean;
@@ -130,15 +133,18 @@ export const CircuitScene = memo(function CircuitScene({
       {track.platforms.map((p, i) => (
         <TrackPlatform key={i} plat={p} biome={biome} staticMode={staticMode} />
       ))}
-      {track.checkpoints.map((cp) => (
-        <CheckpointRing
-          key={cp.index}
-          cp={cp}
-          color={cp.finish ? biome.platform.top : accent}
-          finish={cp.finish}
-          highlight={cp.index === highlightIndex}
-        />
-      ))}
+      {track.checkpoints.map((cp) => {
+        const gold = cp.index === goldIndex;
+        return (
+          <CheckpointRing
+            key={cp.index}
+            cp={cp}
+            color={gold ? "#f5d020" : cp.finish ? biome.platform.top : accent}
+            finish={cp.finish}
+            highlight={cp.index === highlightIndex || gold}
+          />
+        );
+      })}
     </>
   );
 });

@@ -26,6 +26,8 @@ import type { CircuitPersonalBest } from "./circuit-tracks";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { sectorDifficulty } from "./climb/difficulty";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
+import { sectorHazards, hazardState, hazardHits, type Hazard } from "./climb/hazards";
+import { sectorModifier, type Modifier } from "./climb/modifiers";
 import type { BiomeConfig } from "./biomes";
 import { formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
@@ -34,6 +36,7 @@ import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
+import { setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
 
 // a leaderboard row as returned by /api/circuit
 interface BoardRow {
@@ -65,6 +68,15 @@ const FLOOR_Y = -9;         // fall below this → run over
 // Soft ceiling: a full hold parks you INSIDE the next ring's opening so simply
 // holding threads the gate instead of overshooting into the void.
 const CEIL_GATE_FRAC = 0.5;
+
+// ── stumble (docs/climb.md §4) — a hazard hit is NOT a death; it shoves you and
+// briefly locks control, so it usually CASCADES into a miss or a fall without
+// adding a third fail state. Then a grace window so you're not chain-stunned. ──
+const STUMBLE_VY = -6;      // downward shove on a hit
+const STUMBLE_LOCK = 0.4;   // seconds control is ignored after a hit
+const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + grace)
+const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
+const GOLD_RING_CROWNS = 25;
 
 // ── chase camera ── (3/4 trailing cam: the track ahead reads in DEPTH). Pulled
 // further back than the first pass so the champion sits smaller/lower in frame
@@ -161,6 +173,7 @@ function AscentSigil({ reaches, accent }: { reaches: number; accent: string }) {
 function Flyer({
   track,
   speed,
+  hazards,
   champType,
   champion,
   ascentReaches,
@@ -170,9 +183,11 @@ function Flyer({
   onGate,
   onSectorClear,
   onFail,
+  onStumble,
 }: {
   track: CircuitTrackDef;
   speed: number;
+  hazards: Hazard[];
   champType: CreatureType;
   champion: Champion;
   ascentReaches: number;
@@ -182,6 +197,7 @@ function Flyer({
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
+  onStumble: () => void;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -193,6 +209,8 @@ function Flyer({
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
   const prevZ = useRef(track.spawn[2]);
   const dead = useRef(false);
+  const lockUntil = useRef(0);   // control ignored until this clock time (stumble)
+  const immuneUntil = useRef(0); // no new stumble until this clock time (grace)
 
   // drive ChampionMesh's own flight pose + jetpack (reads these each frame)
   const flyingRef = useRef(true);
@@ -209,10 +227,13 @@ function Flyer({
   const camWant = useRef(new THREE.Vector3());
   const lookAt = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2] + CAM_LEAD));
 
-  useFrame((_, dtRaw) => {
+  useFrame((state, dtRaw) => {
     if (dead.current) return;
     const dt = Math.min(0.05, dtRaw);
-    const held = !!holdRef.current;
+    const tSec = state.clock.elapsedTime;
+    // control is briefly ignored right after a stumble, so the shove reads
+    const controlLocked = tSec < lockUntil.current;
+    const held = !controlLocked && !!holdRef.current;
 
     // auto-forward, spooling up to this sector's cruise speed
     fwd.current += (speed - fwd.current) * (1 - Math.exp(-FORWARD_SPOOL * dt));
@@ -268,6 +289,23 @@ function Flyer({
       dead.current = true;
       onFail("fall");
       return;
+    }
+
+    // hazard collision → a STUMBLE (shove + brief lockout), not a death. Usually
+    // cascades into a miss/fall, so no third fail state (§4). Grace after a hit.
+    if (hazards.length && tSec >= immuneUntil.current) {
+      const px = pos.current.x;
+      const py = pos.current.y;
+      const pz = pos.current.z;
+      for (let hi = 0; hi < hazards.length; hi++) {
+        if (hazardHits(hazards[hi]!, tSec, px, py, pz)) {
+          vy.current = STUMBLE_VY;
+          lockUntil.current = tSec + STUMBLE_LOCK;
+          immuneUntil.current = tSec + STUMBLE_IMMUNE;
+          onStumble();
+          break;
+        }
+      }
     }
 
     // gate threading — cross the next gate's z-plane inside its opening, or miss
@@ -372,14 +410,111 @@ function Lights({ biome, lite = false }: { biome: BiomeConfig; lite?: boolean })
   );
 }
 
-// Applies the current Reach biome's tone-mapping exposure to the renderer — so a
-// day-skin Reach reads brighter than a night one without rebuilding the canvas.
-function ExposureRig({ exposure }: { exposure: number }) {
-  const { gl } = useThree();
+// Sky-shift: eases the scene's background, fog and exposure toward the current
+// Reach's targets each frame (docs/climb.md §2). Managing them imperatively lets
+// a Reach boundary or a Duskfall modifier LERP in over ~1s instead of snapping.
+function SkyShift({ bg, fogColor, fogNear, fogFar, exposure }: { bg: string; fogColor: string; fogNear: number; fogFar: number; exposure: number }) {
+  const { scene, gl } = useThree();
+  const bgRef = useRef<THREE.Color | null>(null);
+  const fogRef = useRef<THREE.Fog | null>(null);
+  const target = useMemo(() => ({ bg: new THREE.Color(bg), fog: new THREE.Color(fogColor) }), [bg, fogColor]);
+  const nearRef = useRef(fogNear);
+  const farRef = useRef(fogFar);
+  const expRef = useRef(exposure);
+  nearRef.current = fogNear;
+  farRef.current = fogFar;
+  expRef.current = exposure;
   useEffect(() => {
-    gl.toneMappingExposure = exposure;
-  }, [gl, exposure]);
+    if (!bgRef.current) {
+      bgRef.current = new THREE.Color(bg);
+      scene.background = bgRef.current;
+    }
+    if (!fogRef.current) {
+      fogRef.current = new THREE.Fog(fogColor, fogNear, fogFar);
+      scene.fog = fogRef.current;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene]);
+  useFrame((_, dt) => {
+    const k = 1 - Math.exp(-2.0 * Math.min(0.05, dt));
+    if (bgRef.current) bgRef.current.lerp(target.bg, k);
+    if (fogRef.current) {
+      fogRef.current.color.lerp(target.fog, k);
+      fogRef.current.near += (nearRef.current - fogRef.current.near) * k;
+      fogRef.current.far += (farRef.current - fogRef.current.far) * k;
+    }
+    gl.toneMappingExposure += (expRef.current - gl.toneMappingExposure) * k;
+  });
   return null;
+}
+
+const HAZARD_COLOR: Record<Hazard["kind"], string> = {
+  driftCrystal: "#8affff",
+  cinderArc: "#ff7a2a",
+  plume: "#ff5a1a",
+  wardenWisp: "#ff4a6a",
+  ringRotor: "#ffd66a",
+};
+
+// A single hazard, animated purely from hazardState(h, t) so it stays in lockstep
+// with the flyer's collision test. ≤5 per sector, so per-hazard meshes are cheap.
+function HazardMesh({ h }: { h: Hazard }) {
+  const grp = useRef<THREE.Group>(null);
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  const color = HAZARD_COLOR[h.kind];
+  useFrame((state) => {
+    const s = hazardState(h, state.clock.elapsedTime);
+    const g = grp.current;
+    if (!g) return;
+    g.position.set(s.x, s.y, s.z);
+    if (h.kind === "ringRotor") g.rotation.z = s.angle;
+    if (h.kind === "plume") {
+      const sc = s.active ? 1 : 0.12 + s.telegraph * 0.88;
+      g.scale.y = sc;
+      g.visible = s.active || s.telegraph > 0.02;
+    }
+    if (mat.current) {
+      mat.current.emissiveIntensity = h.kind === "plume" ? (s.active ? 1.8 : 0.5 + s.telegraph * 1.0) : 1.4;
+      mat.current.opacity = h.kind === "plume" ? (s.active ? 0.92 : 0.25 + s.telegraph * 0.5) : 0.95;
+    }
+  });
+
+  let geom: React.ReactNode;
+  if (h.kind === "driftCrystal") geom = <octahedronGeometry args={[h.radius, 0]} />;
+  else if (h.kind === "cinderArc") geom = <sphereGeometry args={[h.radius, 12, 12]} />;
+  else if (h.kind === "wardenWisp") geom = <sphereGeometry args={[h.radius, 12, 12]} />;
+  else if (h.kind === "ringRotor") geom = <boxGeometry args={[(h.gate?.r ?? 2) * 1.8, 0.24, 0.24]} />;
+  else geom = <cylinderGeometry args={[h.radius, h.radius * 0.7, h.height, 10]} />; // plume
+
+  const inner = (
+    <mesh position={h.kind === "plume" ? [0, h.height / 2, 0] : [0, 0, 0]}>
+      {geom}
+      <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.2} roughness={0.5} toneMapped={false} depthWrite={h.kind !== "plume"} />
+    </mesh>
+  );
+
+  return (
+    <group ref={grp}>
+      {inner}
+      {/* a faint danger halo so hazards read from a distance (the telegraph) */}
+      {(h.kind === "wardenWisp" || h.kind === "driftCrystal") && (
+        <mesh>
+          <sphereGeometry args={[h.radius * 1.7, 12, 12]} />
+          <meshBasicMaterial color={color} transparent opacity={0.14} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function HazardField({ hazards }: { hazards: Hazard[] }) {
+  return (
+    <>
+      {hazards.map((h) => (
+        <HazardMesh key={h.id} h={h} />
+      ))}
+    </>
+  );
 }
 
 // `embedded` = rendered inside the mobile shell as the Climb tab (docs/mobile.md):
@@ -420,12 +555,23 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
   const champType = (ROSTER[activeKey]?.type ?? "LOGIC") as CreatureType;
   const champion = useMemo(() => getChampion(activeKey), [getChampion, activeKey]);
 
-  // ── the current sector's theme + difficulty (the Reach it lives in) ──
+  // ── the current sector's theme + difficulty + modifier (the Reach it lives in) ──
   const track = CLIMB_SECTORS[sector]!;
   const theme: ReachTheme = reachTheme(sector);
   const biome = theme.biome;
   const accent = theme.accent;
-  const speed = useMemo(() => sectorDifficulty(sector).speed, [sector]);
+  const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
+  const speed = useMemo(() => sectorDifficulty(sector).speed * (modifier?.speedMult ?? 1), [sector, modifier]);
+  const hazards = useMemo(() => sectorHazards(sector, track), [sector, track]);
+  const moteColor = modifier?.moteColor ?? accent;
+  const fogNear = 30 * (modifier?.fogNearMult ?? 1);
+  const exposure = biome.exposure * (modifier?.warm ? 1.08 : 1);
+
+  // a golden ring hides in some sectors (§7b surprise): threading it pays Crowns
+  const [goldGate, setGoldGate] = useState(-1);
+  const bonusCrowns = useRef(0);
+  const [stumbleFlash, setStumbleFlash] = useState(false);
+  const stumbleTimer = useRef<number | null>(null);
 
   // depth is soul: your best depth marks the champion with an ascent sigil whose
   // glyph count is the number of Reaches you've reached (§6).
@@ -479,8 +625,9 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
       if (better) {
         const reaches = Math.ceil(run.sectors / 10);
         crowns = Math.round(run.sectors * 3 + reaches * 15 + (clearedAll ? 50 : 0)); // craft → Crowns
-        if (crowns > 0) void awardGauntlet(crowns);
       }
+      crowns += bonusCrowns.current; // golden-ring surprise pays regardless (§7b)
+      if (crowns > 0) void awardGauntlet(crowns);
       setReward(xp > 0 || crowns > 0 ? { xp, crowns, deeper } : null);
 
       if (better) {
@@ -519,6 +666,30 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     const id = setTimeout(() => setReachCardOn(false), 2600);
     return () => clearTimeout(id);
   }, [theme.index]);
+
+  // roll for a golden ring on each sector (a rationed surprise, §7b). Picks a
+  // non-finish gate so the sector-clear flourish isn't the one that pays.
+  useEffect(() => {
+    const gc = track.checkpoints.length - 1; // gates incl. finish
+    if (gc >= 3 && Math.random() < GOLD_RING_ODDS) setGoldGate(1 + Math.floor(Math.random() * (gc - 1)));
+    else setGoldGate(-1);
+  }, [track, runId]);
+
+  // music intensity per sector — Silent Sky drops it to a bare drone (§5)
+  useEffect(() => {
+    setAmbienceIntensity(modifier?.ambience ?? 0.32);
+  }, [sector, modifier]);
+
+  // a hazard hit: flash the screen edges + duck the score under the thud
+  const onStumble = useCallback(() => {
+    duckAmbience(0.6, 260);
+    setStumbleFlash(true);
+    if (stumbleTimer.current != null) window.clearTimeout(stumbleTimer.current);
+    stumbleTimer.current = window.setTimeout(() => setStumbleFlash(false), 260);
+  }, []);
+  useEffect(() => () => {
+    if (stumbleTimer.current != null) window.clearTimeout(stumbleTimer.current);
+  }, []);
 
   const setHold = useCallback((on: boolean) => {
     holdRef.current = on;
@@ -566,6 +737,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
     setTargetIdx(1);
     setNewBest(false);
     setReward(null);
+    bonusCrowns.current = 0;
     setPhase("ready");
   }, [setHold]);
 
@@ -619,10 +791,20 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
 
   useEffect(() => () => clearGlWatchdog(), [clearGlWatchdog]);
 
-  const onGate = useCallback((nextIdx: number) => {
-    setTargetIdx(nextIdx);
-    rewardSfx("small");
-  }, []);
+  const onGate = useCallback(
+    (nextIdx: number) => {
+      setTargetIdx(nextIdx);
+      // the ring just threaded is nextIdx-1 — if it was the golden ring, pay out
+      if (nextIdx - 1 === goldGate) {
+        bonusCrowns.current += GOLD_RING_CROWNS;
+        setGoldGate(-1);
+        rewardSfx("big");
+      } else {
+        rewardSfx("small");
+      }
+    },
+    [goldGate],
+  );
 
   const onSectorClear = useCallback(() => {
     setHold(false);
@@ -698,12 +880,11 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             });
           }}
         >
-          <ExposureRig exposure={biome.exposure} />
-          <color attach="background" args={[biome.bg]} />
-          <fog attach="fog" args={[biome.fog.color, 30, 190]} />
+          <SkyShift bg={biome.bg} fogColor={biome.fog.color} fogNear={fogNear} fogFar={190} exposure={exposure} />
           <Lights biome={biome} lite={embedded} />
-          <CircuitScene track={track} biome={biome} highlightIndex={running ? targetIdx : undefined} staticMode />
-          <DriftMotes track={track} accent={accent} />
+          <CircuitScene track={track} biome={biome} highlightIndex={running ? targetIdx : undefined} goldIndex={goldGate >= 0 ? goldGate : undefined} staticMode />
+          <DriftMotes track={track} accent={moteColor} />
+          {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {phase === "ready" && (
             <ReadyPose track={track} champType={champType} champion={champion} ascentReaches={ascentReaches} accent={accent} />
           )}
@@ -712,6 +893,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
               key={`${runId}-${sector}`}
               track={track}
               speed={speed}
+              hazards={hazards}
               champType={champType}
               champion={champion}
               ascentReaches={ascentReaches}
@@ -721,6 +903,7 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
+              onStumble={onStumble}
             />
           )}
         </Canvas>
@@ -850,8 +1033,18 @@ export default function CircuitLite({ embedded = false }: { embedded?: boolean }
             <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 5, maxWidth: 280, letterSpacing: 0.3 }}>
               {theme.tagline}
             </div>
+            {modifier && (
+              <div className="mono" style={{ display: "inline-block", marginTop: 8, padding: "3px 10px", borderRadius: 999, border: `1px solid ${accent}`, color: accent, fontSize: 9.5, letterSpacing: 1.5, textShadow: "none" }}>
+                {modifier.label}
+              </div>
+            )}
           </div>
         </div>
+      )}
+
+      {/* ── stumble flash: a hazard clipped you (screen-edge pulse, §4) ── */}
+      {stumbleFlash && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 22, pointerEvents: "none", boxShadow: "inset 0 0 90px 12px rgba(255,74,106,.55)", background: "radial-gradient(circle at center, transparent 55%, rgba(255,74,106,.18) 100%)" }} />
       )}
 
       {/* ── standalone island chrome (hidden when embedded in the mobile shell) ── */}

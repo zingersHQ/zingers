@@ -68,6 +68,28 @@ export interface SectorDifficulty {
   gapSec: [number, number]; // seconds-of-flight between consecutive rings [min,max]
   vertStep: number; // typical vertical delta between rings (world units)
   latAmp: number; // lateral weave amplitude (auto-threaded, affects readability)
+  hazardBudget: number; // how many hazards this sector spends (§4)
+}
+
+// How many hazards a role spends, before the reach cap. Zero on the teaching /
+// breather beats (arrival, rhythm, vista) so difficulty saw-tooths; peaks on the
+// pressure / gauntlet / trial beats.
+const ROLE_HAZARD_BUDGET: Record<Role, number> = {
+  arrival: 0,
+  teach: 1,
+  combine: 1,
+  rhythm: 0,
+  pressure: 2,
+  vista: 0,
+  twist: 1,
+  pressure2: 2,
+  gauntlet: 3,
+  trial: 2,
+};
+
+// Reach cap: 0 in Reach I (pure flight tutorial) climbing to 5 in Reach IX–X.
+export function reachHazardCap(reach: number): number {
+  return Math.max(0, Math.min(5, reach));
 }
 
 // Per-role modifiers to the base spacing/rhythm so difficulty saw-tooths inside
@@ -105,6 +127,7 @@ export function sectorDifficulty(sector: number): SectorDifficulty {
 
   const vertStep = t.vert * (1.4 + 0.16 * b0);
   const latAmp = t.lat * (2.0 + 0.28 * b0);
+  const hazardBudget = Math.min(reachHazardCap(b0), ROLE_HAZARD_BUDGET[role]);
 
-  return { reach: b0, role, k, speed, gateRadius, gates, gapSec: t.gap, vertStep, latAmp };
+  return { reach: b0, role, k, speed, gateRadius, gates, gapSec: t.gap, vertStep, latAmp, hazardBudget };
 }
