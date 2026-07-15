@@ -62,20 +62,22 @@ export function formatCircuitMs(ms: number): string {
 
 type CircuitPos = { x: number; y: number; z: number };
 
-/** True when the player passes through the ring hoop (not just the loose volume around it). */
+/** True when the player threads the gate opening (flies through the disc, not the rim). */
 export function crossedCircuitGate(pos: CircuitPos, cp: CircuitCheckpoint, opts?: { start?: boolean }): boolean {
   const [cx, cy, cz] = cp.pos;
   if (opts?.start) {
+    // start pad: a loose cylinder over the launch — easy to trigger as you leave
     const dh = Math.hypot(pos.x - cx, pos.z - cz);
     const dy = Math.abs(pos.y - cy);
     return dh <= cp.radius && dy <= cp.radius;
   }
-  const horiz = Math.hypot(pos.x - cx, pos.z - cz);
-  if (Math.abs(horiz - cp.radius) > 0.85) return false;
-  if (Math.abs(pos.y - cy) > 1.05) return false;
-  // must be at the gate plane, not just somewhere on the ring's circumference far away
-  if (Math.abs(pos.z - cz) > 1.35) return false;
-  return true;
+  // rings face the track (+Z): a pass is being at the gate's Z-plane WHILE inside
+  // the opening (hypot of lateral + vertical offset ≤ radius). The old check
+  // required horiz ≈ radius — i.e. skimming the torus RIM — so only the start
+  // pad ever counted; flying cleanly through the centre never registered.
+  if (Math.abs(pos.z - cz) > 1.5) return false;
+  const r = Math.hypot(pos.x - cx, pos.y - cy);
+  return r <= cp.radius * 0.95;
 }
 
 /** On the finish pad before every prior gate was cleared — a shortcut, not a clear. */

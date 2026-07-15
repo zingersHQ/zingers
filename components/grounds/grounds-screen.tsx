@@ -1990,12 +1990,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               : "Claim a champion to enter the world"}
           </p>
         )}
-        {!isMobile && overlay === "none" && !showMatch && showChronicle && (
+        {!isMobile && overlay === "none" && !showMatch && !inVenue && showChronicle && (
           <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
             <SeasonBanner compact onClose={dismissChronicle} />
           </div>
         )}
-        {!isMobile && overlay === "none" && !showMatch && isHub && owned && !gRun && !modesLocked && rival && rivalMemory && (
+        {!isMobile && overlay === "none" && !showMatch && isHub && !inVenue && owned && !gRun && !modesLocked && rival && rivalMemory && (
           <div style={{ marginTop: 10 }}>
             <RivalCard
               rival={rival}
