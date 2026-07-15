@@ -7,34 +7,87 @@ import type { BiomeConfig } from "./biomes";
 import type { CircuitCheckpoint, CircuitPlatform, CircuitTrackDef } from "./circuit";
 import { sectorBounds } from "./circuit-tracks";
 
+// the colour a ring flips to the instant you thread it — the "it counted" read
+const PASS_GREEN = "#5cf08a";
+
 const CheckpointRing = memo(function CheckpointRing({
   cp,
   color,
   finish,
   highlight = false,
+  cpNextRef,
 }: {
   cp: CircuitCheckpoint;
   color: string;
   finish?: boolean;
   /** the next gate the flyer is aiming for — pulses so the target reads at a glance */
   highlight?: boolean;
+  /** live "next checkpoint index" — when present, rings flip green as you pass
+   *  them and the current target pulses (the desktop 6-DOF feedback the mobile
+   *  Climb `highlight` never got). A ref so per-gate progress needs no re-render. */
+  cpNextRef?: React.MutableRefObject<number>;
 }) {
   const r = cp.radius;
   const grp = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    if (!grp.current) return;
-    const s = highlight ? 1 + Math.sin(clock.elapsedTime * 5) * 0.06 : 1;
-    grp.current.scale.setScalar(s);
+  const torusMat = useRef<THREE.MeshBasicMaterial>(null);
+  const floorMat = useRef<THREE.MeshBasicMaterial>(null);
+  const burst = useRef<THREE.Mesh>(null);
+  const burstMat = useRef<THREE.MeshBasicMaterial>(null);
+  const burstT = useRef(0);
+  const wasPassed = useRef(false);
+  const base = useMemo(() => new THREE.Color(color), [color]);
+  const passCol = useMemo(() => new THREE.Color(PASS_GREEN), []);
+  const target = useMemo(() => new THREE.Color(color), [color]);
+
+  useFrame(({ clock }, dt) => {
+    const g = grp.current;
+    if (!g) return;
+    const next = cpNextRef ? cpNextRef.current : -1;
+    const passed = cpNextRef ? cp.index < next : false;
+    const isNext = cpNextRef ? cp.index === next : highlight;
+
+    // fresh crossing → kick the confirmation burst
+    if (passed && !wasPassed.current) burstT.current = 0.55;
+    wasPassed.current = passed;
+
+    g.scale.setScalar(isNext ? 1 + Math.sin(clock.elapsedTime * 5) * 0.07 : 1);
+
+    const k = 1 - Math.exp(-11 * dt);
+    target.copy(passed ? passCol : base);
+    if (torusMat.current) {
+      torusMat.current.color.lerp(target, k);
+      torusMat.current.opacity = passed ? 0.9 : isNext ? 1 : finish ? 0.92 : 0.6;
+    }
+    if (floorMat.current && torusMat.current) floorMat.current.color.copy(torusMat.current.color);
+
+    if (burstT.current > 0) {
+      burstT.current = Math.max(0, burstT.current - dt);
+      const u = 1 - burstT.current / 0.55; // 0 → 1
+      if (burst.current) {
+        burst.current.visible = true;
+        burst.current.scale.setScalar(1 + u * 1.7);
+      }
+      if (burstMat.current) burstMat.current.opacity = (1 - u) * 0.85;
+    } else if (burst.current) {
+      burst.current.visible = false;
+    }
   });
+
   return (
     <group ref={grp} position={cp.pos}>
       <mesh>
         <torusGeometry args={[r, highlight ? 0.18 : finish ? 0.14 : 0.1, 12, 48]} />
-        <meshBasicMaterial color={color} transparent opacity={highlight ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
+        <meshBasicMaterial ref={torusMat} color={color} transparent opacity={highlight ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
+      </mesh>
+      {/* confirmation burst — a bright ring that blooms outward once on a pass */}
+      <mesh ref={burst} visible={false}>
+        <torusGeometry args={[r, 0.06, 8, 40]} />
+        <meshBasicMaterial ref={burstMat} color={PASS_GREEN} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]}>
         <ringGeometry args={[r - 0.2, r + 0.35, 48]} />
         <meshBasicMaterial
+          ref={floorMat}
           color={color}
           transparent
           opacity={0.55}
@@ -114,6 +167,7 @@ export const CircuitScene = memo(function CircuitScene({
   highlightIndex,
   goldIndex,
   staticMode = false,
+  cpNextRef,
 }: {
   track: CircuitTrackDef;
   biome: BiomeConfig;
@@ -124,6 +178,8 @@ export const CircuitScene = memo(function CircuitScene({
   /** render the track as plain meshes (no Rapier bodies) — the mobile one-thumb
    *  Climb is fully kinematic, so it drops the physics engine entirely. */
   staticMode?: boolean;
+  /** live next-checkpoint index (desktop) — rings flip green as you pass them */
+  cpNextRef?: React.MutableRefObject<number>;
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
@@ -142,6 +198,7 @@ export const CircuitScene = memo(function CircuitScene({
             color={gold ? "#f5d020" : cp.finish ? biome.platform.top : accent}
             finish={cp.finish}
             highlight={cp.index === highlightIndex || gold}
+            cpNextRef={cpNextRef}
           />
         );
       })}

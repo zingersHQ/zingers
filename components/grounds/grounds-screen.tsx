@@ -69,9 +69,9 @@ import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
-import { setSfxVolume, evolveStinger } from "@/lib/sfx";
+import { setSfxVolume, evolveStinger, jumpBeep } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
-import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish } from "@/lib/ambience-bus";
+import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
@@ -94,13 +94,17 @@ import { ClanSheet } from "@/components/grounds/clan-sheet";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import {
-  circuitSector,
-  CIRCUIT_SECTOR_COUNT,
   loadCircuitPersonalBest,
   saveCircuitPersonalBest,
   isCircuitRunBetter,
   type CircuitPersonalBest,
 } from "@/components/grounds/circuit-tracks";
+import {
+  desktopCircuitSector,
+  DESKTOP_CIRCUIT_COUNT,
+  reachTheme,
+} from "@/components/grounds/climb/desktop-adapter";
+import { sectorHazards } from "@/components/grounds/climb/hazards";
 import { DOCK_H } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
@@ -220,11 +224,18 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const venueHostWorldId = gameSession?.hostWorldId ?? worldId;
   const inVenue = !!activeVenue;
   const theme = useTheme();
+  // declared up here (not with the rest of the Circuit state below) because the
+  // venue biome reads it to pick the current sector's Reach sky
+  const [circuitSectorIdx, setCircuitSectorIdx] = useState(0);
   const biome = useMemo(() => {
-    const skin =
-      activeVenue === "amphitheatre" ? BIOMES[4] : activeVenue === "circuit" ? worldById(venueHostWorldId).biome : world.biome;
+    // The Circuit wears the CURRENT SECTOR's Reach sky (the shared Ascent skins,
+    // docs/circuit-world.md §1) — the venue remounts per sector (its <World> key
+    // carries the sector index), so this is the desktop sky-shift. Reach recipes
+    // already pick day/night deliberately, so don't re-apply the OS light grade.
+    if (activeVenue === "circuit") return reachTheme(circuitSectorIdx).biome;
+    const skin = activeVenue === "amphitheatre" ? BIOMES[4] : world.biome;
     return theme === "light" ? daylightBiome(skin) : skin;
-  }, [world.biome, activeVenue, venueHostWorldId, theme]);
+  }, [world.biome, activeVenue, venueHostWorldId, theme, circuitSectorIdx]);
   const scenario = world.scenario;
   const isHub = world.kind === "hub";
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
@@ -360,7 +371,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
   const [circuitFailReason, setCircuitFailReason] = useState<CircuitFailReason>("fall");
-  const [circuitSectorIdx, setCircuitSectorIdx] = useState(0);
   const [circuitRunMs, setCircuitRunMs] = useState(0);
   const [circuitSectorMs, setCircuitSectorMs] = useState(0);
   const [circuitCpPassed, setCircuitCpPassed] = useState(0);
@@ -370,7 +380,22 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const circuitCpNext = useRef(0);
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
-  const circuitTrack = useMemo(() => circuitSector(circuitSectorIdx, venueHostWorldId), [circuitSectorIdx, venueHostWorldId]);
+  const circuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
+  const circuitReach = useMemo(() => reachTheme(circuitSectorIdx), [circuitSectorIdx]);
+  // the same pure-time hazards the mobile Climb fields for this sector (empty in
+  // the early Reaches / breather beats) — rendered + collided against on desktop
+  const circuitHazards = useMemo(
+    () => (activeVenue === "circuit" ? sectorHazards(circuitSectorIdx, circuitTrack) : []),
+    [activeVenue, circuitSectorIdx, circuitTrack],
+  );
+  const [circuitStumble, setCircuitStumble] = useState(false);
+  const circuitStumbleTimer = useRef<number | null>(null);
+  const onCircuitStumble = useCallback(() => {
+    duckAmbience(0.5, 300);
+    setCircuitStumble(true);
+    if (circuitStumbleTimer.current != null) window.clearTimeout(circuitStumbleTimer.current);
+    circuitStumbleTimer.current = window.setTimeout(() => setCircuitStumble(false), 280);
+  }, []);
 
   const capturePose = useCallback(() => {
     const p = poseRef.current;
@@ -385,7 +410,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const loadCircuitBoard = useCallback(() => {
     const tok = getOwnerToken();
     setCircuitBoardLoading(true);
-    fetch(`/api/circuit?limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
+    fetch(`/api/circuit?body=flight&limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
       .then((d: { entries?: CircuitBoardEntry[]; mine?: CircuitPersonalBest | null }) => {
         setCircuitBoard(
@@ -415,7 +440,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       fetch("/api/circuit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: tok, handle: getHandle(), sectors, totalMs, clearedAll }),
+        body: JSON.stringify({ token: tok, handle: getHandle(), sectors, totalMs, clearedAll, body: "flight" }),
       })
         .then(() => loadCircuitBoard())
         .catch(() => {});
@@ -433,9 +458,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitSectorMs(0);
     setCircuitPhase("ready");
     setCircuitFailReason("fall");
-    const s = circuitSector(0, venueHostWorldId).spawn;
-    setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
-  }, [venueHostWorldId]);
+    const s = desktopCircuitSector(0).spawn;
+    // face +Z down-track (heading 0) so you re-spawn looking at gate 1, not the exit
+    setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+  }, []);
 
   const travelToWorld = useCallback(
     (destId: string, restore = true) => {
@@ -474,8 +500,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       setCircuitPhase("ready");
       setCircuitFailReason("fall");
       if (venue === "circuit") {
-        const s = circuitSector(0, worldId).spawn;
-        setTimeout(() => travelRef.current?.(s[0], s[2]), 80);
+        const s = desktopCircuitSector(0).spawn;
+        setTimeout(() => travelRef.current?.(s[0], s[2], 0), 80);
       } else if (venue === "amphitheatre") {
         // drop in on the sand facing the ring (−z, toward the throne), clear of
         // the exit portal (z≈17) so its leave-prompt isn't up the instant you land.
@@ -508,20 +534,20 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitCpPassed(0);
     setCircuitSectorMs(0);
     circuitSectorStart.current = 0;
-    if (next >= CIRCUIT_SECTOR_COUNT) {
+    if (next >= DESKTOP_CIRCUIT_COUNT) {
       const total = performance.now() - circuitRunStart.current;
       setCircuitRunMs(total);
       setCircuitPhase("done");
-      submitCircuitRun(CIRCUIT_SECTOR_COUNT, total, true);
+      submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
       store.awardTrainerXp(120);
       outcomeSfx(true);
       return;
     }
     setCircuitSectorIdx(next);
     setCircuitPhase("ready");
-    const s = circuitSector(next, venueHostWorldId).spawn;
-    setTimeout(() => travelRef.current?.(s[0], s[2]), 50);
-  }, [circuitSectorIdx, venueHostWorldId, submitCircuitRun, store]);
+    const s = desktopCircuitSector(next).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+  }, [circuitSectorIdx, submitCircuitRun, store]);
 
   const onCircuitFail = useCallback((reason: CircuitFailReason = "fall") => {
     if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
@@ -540,6 +566,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       if (!cp) return;
       const now = performance.now();
       setCircuitCpPassed(index + 1);
+      // a rising tick each time you thread a ring (the finish keeps its fanfare),
+      // so crossing a gate has audible confirmation to match the green flash
+      if (index > 0 && !cp.finish && circuitPhase === "running") jumpBeep(Math.min(4, index));
 
       if (index === 0 && (circuitPhase === "ready" || circuitPhase === "running")) {
         if (circuitPhase === "ready") {
@@ -556,9 +585,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         const sectorElapsed = now - circuitSectorStart.current;
         setCircuitSectorMs(sectorElapsed);
         setCircuitRunMs(now - circuitRunStart.current);
-        if (circuitSectorIdx + 1 >= CIRCUIT_SECTOR_COUNT) {
+        if (circuitSectorIdx + 1 >= DESKTOP_CIRCUIT_COUNT) {
           setCircuitPhase("done");
-          submitCircuitRun(CIRCUIT_SECTOR_COUNT, now - circuitRunStart.current, true);
+          submitCircuitRun(DESKTOP_CIRCUIT_COUNT, now - circuitRunStart.current, true);
           store.awardTrainerXp(120);
           outcomeSfx(true);
         } else {
@@ -1855,6 +1884,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
               onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
+              circuitHazards={activeVenue === "circuit" ? circuitHazards : []}
+              onCircuitStumble={activeVenue === "circuit" ? onCircuitStumble : undefined}
               onVenueExit={inVenue ? exitVenue : undefined}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
@@ -2064,9 +2095,29 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           boardLoading={circuitBoardLoading}
           onContinue={advanceCircuitSector}
           onRestart={resetCircuitRun}
-          accent={world.biome.lights.arenaPoint}
+          accent={circuitReach.accent}
           compact={isMobile}
           failReason={circuitFailReason}
+          sectorTotal={DESKTOP_CIRCUIT_COUNT}
+          reachRoman={circuitReach.roman}
+          reachName={circuitReach.name}
+          reachTagline={circuitReach.tagline}
+        />
+      )}
+
+      {/* stumble flash — a hazard clipped you (a shove, not a death): a red edge
+          pulse so the hit reads even when your eyes are on the next ring */}
+      {activeVenue === "circuit" && circuitStumble && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 90,
+            pointerEvents: "none",
+            boxShadow: "inset 0 0 120px 20px rgba(255,60,60,0.55)",
+            animation: "none",
+          }}
         />
       )}
 

@@ -2,7 +2,6 @@
 import { Flag, RotateCcw, Skull, Timer, Trophy, ChevronRight } from "lucide-react";
 import { formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
-import { CIRCUIT_SECTOR_COUNT } from "./circuit-tracks";
 
 export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed";
 export type CircuitFailReason = "fall" | "gates";
@@ -29,6 +28,10 @@ export function CircuitHud({
   accent,
   compact,
   failReason,
+  sectorTotal = 100,
+  reachRoman,
+  reachName,
+  reachTagline,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -44,9 +47,18 @@ export function CircuitHud({
   accent: string;
   compact?: boolean;
   failReason?: CircuitFailReason;
+  /** total sectors in the ascent (100 for the shared Climb ruleset). */
+  sectorTotal?: number;
+  /** the Reach the current sector lives in — its roman numeral / name / tagline. */
+  reachRoman?: string;
+  reachName?: string;
+  reachTagline?: string;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
+  const REACH_SIZE = 10;
+  const reachCount = Math.max(1, Math.ceil(sectorTotal / REACH_SIZE));
+  const reachIdx = Math.floor(sectorIndex / REACH_SIZE);
 
   return (
     <>
@@ -72,9 +84,14 @@ export function CircuitHud({
             : phase === "done"
               ? "FULL CLEAR"
               : running || phase === "sector"
-                ? `SECTOR ${sectorN} / ${CIRCUIT_SECTOR_COUNT}`
-                : "THE CIRCUIT"}
+                ? `SECTOR ${sectorN} / ${sectorTotal}`
+                : "THE ASCENT"}
         </div>
+        {reachName && phase !== "failed" && phase !== "done" && (
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 0.5, color: accent, marginBottom: 6, fontWeight: 700 }}>
+            {reachRoman ? `REACH ${reachRoman} · ` : ""}{reachName}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <Timer size={18} color={accent} strokeWidth={2.2} />
           <span
@@ -102,23 +119,24 @@ export function CircuitHud({
               gap: 4,
             }}
           >
-            <Trophy size={11} strokeWidth={2} /> best {personalBest.sectors}/{CIRCUIT_SECTOR_COUNT} · {formatCircuitMs(personalBest.totalMs)}s
+            <Trophy size={11} strokeWidth={2} /> best {personalBest.sectors}/{sectorTotal} · {formatCircuitMs(personalBest.totalMs)}s
           </div>
         )}
-        {/* sector progress strip */}
+        {/* Reach progress — ten bands, filled up to the one you're climbing (a
+            100-pip per-sector strip would be unreadable) */}
         <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 8 }}>
-          {Array.from({ length: CIRCUIT_SECTOR_COUNT }, (_, i) => {
-            const cleared = i < sectorIndex || (phase === "sector" && i === sectorIndex) || phase === "done";
-            const current = i === sectorIndex && (running || phase === "ready" || phase === "sector");
+          {Array.from({ length: reachCount }, (_, i) => {
+            const done = i < reachIdx || phase === "done";
+            const current = i === reachIdx && phase !== "done" && phase !== "failed";
             return (
               <span
                 key={i}
                 style={{
-                  width: i === sectorIndex ? 14 : 6,
+                  width: current ? 16 : 8,
                   height: 6,
                   borderRadius: 6,
-                  background: cleared ? accent : current ? "transparent" : "var(--line2)",
-                  border: `1.5px solid ${cleared || current ? accent : "var(--line)"}`,
+                  background: done ? accent : current ? "transparent" : "var(--line2)",
+                  border: `1.5px solid ${done || current ? accent : "var(--line)"}`,
                   boxShadow: current ? `0 0 8px ${accent}` : undefined,
                   transition: "width 0.2s",
                 }}
@@ -149,19 +167,19 @@ export function CircuitHud({
           </div>
         )}
         {phase === "ready" && (
-          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5 }}>
-            clear all {CIRCUIT_SECTOR_COUNT} sectors · pass every gate · fall or skip = restart
+          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 240 }}>
+            {reachTagline ? `${reachTagline} · ` : ""}pass every gate · fall or skip = restart
           </div>
         )}
       </div>
 
       {/* Leaderboard — compact, always visible on desktop */}
       {!compact && (
-        <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} />
+        <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
       )}
 
       {phase === "sector" && (
-        <CircuitModal accent={accent} icon={<ChevronRight size={28} color={accent} />} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${CIRCUIT_SECTOR_COUNT - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
+        <CircuitModal accent={accent} icon={<ChevronRight size={28} color={accent} />} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${sectorTotal - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onContinue}>
             Sector {sectorN + 1} <ChevronRight size={16} strokeWidth={2.5} />
           </button>
@@ -169,7 +187,7 @@ export function CircuitHud({
       )}
 
       {phase === "done" && (
-        <CircuitModal accent={accent} icon={<Flag size={28} color={accent} />} kicker="FULL CLEAR" title="All 10 sectors" sub={`${formatCircuitMs(runMs)}s total`}>
+        <CircuitModal accent={accent} icon={<Flag size={28} color={accent} />} kicker="FULL CLEAR" title={`All ${sectorTotal} sectors`} sub={`${formatCircuitMs(runMs)}s total`}>
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> run again
           </button>
@@ -220,11 +238,13 @@ function CircuitBoardPanel({
   loading,
   accent,
   personalBest,
+  sectorTotal = 100,
 }: {
   board: CircuitBoardEntry[];
   loading: boolean;
   accent: string;
   personalBest: CircuitPersonalBest | null;
+  sectorTotal?: number;
 }) {
   return (
     <div
@@ -256,7 +276,7 @@ function CircuitBoardPanel({
                 {e.handle || "anonymous"}
               </span>
               <span className="mono" style={{ color: accent, fontWeight: 700, fontSize: 10 }}>
-                {e.sectors}/{CIRCUIT_SECTOR_COUNT}
+                {e.sectors}/{sectorTotal}
               </span>
             </div>
           ))}
@@ -264,7 +284,7 @@ function CircuitBoardPanel({
       )}
       {personalBest && (
         <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 8, borderTop: "1px solid var(--line)", paddingTop: 6 }}>
-          you · {personalBest.sectors}/{CIRCUIT_SECTOR_COUNT} · {formatCircuitMs(personalBest.totalMs)}s
+          you · {personalBest.sectors}/{sectorTotal} · {formatCircuitMs(personalBest.totalMs)}s
         </div>
       )}
     </div>

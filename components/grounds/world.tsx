@@ -43,6 +43,8 @@ import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
 import { useSettings } from "@/store/settings";
 import { CircuitScene } from "./circuit-scene";
+import { HazardField } from "./climb/hazard-field";
+import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import { atCircuitFinishEarly, crossedCircuitGate } from "./circuit";
@@ -281,6 +283,8 @@ export default function World({
   onCircuitPass,
   onCircuitFail,
   circuitCpNextRef,
+  circuitHazards = [],
+  onCircuitStumble,
   onVenueExit,
   worldLife,
   trainerXp = 0,
@@ -326,6 +330,8 @@ export default function World({
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason) => void;
   circuitCpNextRef?: React.MutableRefObject<number>;
+  circuitHazards?: Hazard[];
+  onCircuitStumble?: () => void;
   onVenueExit?: () => void;
   worldLife?: WorldLife;
   trainerXp?: number;
@@ -369,7 +375,9 @@ export default function World({
   const circuitSpawn = inCircuit ? circuitTrack.spawn : null;
   const spawnCam = useMemo(() => {
     if (circuitSpawn) {
-      return [circuitSpawn[0], circuitSpawn[1] + 4, circuitSpawn[2] - 12] as [number, number, number];
+      // behind + slightly above the pad looking down-track (+Z), matched to the
+      // controller's settled chase pose (dist 8.6, low pitch) so frame 0 doesn't pop
+      return [circuitSpawn[0], circuitSpawn[1] + 2.5, circuitSpawn[2] - 8.4] as [number, number, number];
     }
     if (hasRift(shape)) {
       const { dirx, dirz } = riftDir(shape);
@@ -645,7 +653,8 @@ export default function World({
 
           {inCircuit && !showcase && (
             <>
-              <CircuitScene track={circuitTrack} biome={biome} />
+              <CircuitScene track={circuitTrack} biome={biome} cpNextRef={circuitCpNextRef} />
+              {circuitPhase === "running" && circuitHazards.length > 0 && <HazardField hazards={circuitHazards} />}
               {ownedKey && (
                 <CircuitSpectator
                   champions={champions}
@@ -771,8 +780,10 @@ export default function World({
               circuitMode={inCircuit}
               circuitCheckpoints={circuitCheckpoints}
               circuitCpNextRef={circuitCpNextRef}
+              circuitHazards={circuitPhase === "running" ? circuitHazards : []}
               onCircuitPass={onCircuitPass}
               onCircuitFail={onCircuitFail}
+              onCircuitStumble={onCircuitStumble}
               concordVenueTargets={concordVenueTargets}
               returnTarget={returnTarget}
               circuitTunnelTarget={circuitTunnelTarget}
@@ -2427,8 +2438,10 @@ function Handler({
   circuitMode = false,
   circuitCheckpoints = [],
   circuitCpNextRef,
+  circuitHazards = [],
   onCircuitPass,
   onCircuitFail,
+  onCircuitStumble,
   concordVenueTargets = [],
   returnTarget = null,
   circuitTunnelTarget = null,
@@ -2472,8 +2485,10 @@ function Handler({
   circuitMode?: boolean;
   circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
+  circuitHazards?: Hazard[];
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason) => void;
+  onCircuitStumble?: () => void;
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
   returnTarget?: THREE.Vector3 | null;
   circuitTunnelTarget?: { label: string; pos: THREE.Vector3 } | null;
@@ -2572,6 +2587,10 @@ function Handler({
   // smoothed 0..1 thrust command — eases toward 1 while the jump key is held and
   // back to 0 when released, so tapping doesn't snap the climb target each frame
   const thrust = useRef(0);
+  // Circuit stumble (docs/circuit-world.md §1): a hazard hit locks thrust until
+  // `stumbleLock` (clock-time) and refuses a new hit until `stumbleGrace`.
+  const stumbleLock = useRef(0);
+  const stumbleGrace = useRef(0);
   // eased ankle-tuck amount (rad) — ramps in while flying so the toes point down
   const footTuck = useRef(0);
   // eased 0..1 leg-dangle amount — rides with the foot tuck so the thighs/knees
@@ -2718,7 +2737,7 @@ function Handler({
     };
   }, []);
 
-  useFrame((_, dtRaw) => {
+  useFrame((state, dtRaw) => {
     const dt = Math.min(0.05, dtRaw);
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
@@ -2947,6 +2966,29 @@ function Handler({
     const jumpEdge = spaceEdge || touchEdge || padJumpEdge;
     const jumpHeld = space || (controlsEnabled && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
 
+    // ── Circuit hazard collision → stumble (docs/circuit-world.md §1) ──
+    // The SAME pure-time hazards the mobile Climb renders, tested against the
+    // Handler capsule (approx sphere). A hit is never a death: it kills the
+    // climb, shoves you down, and locks thrust for a beat — you can still catch
+    // yourself before the fall floor. `stumbleActive` gates thrust below.
+    let stumbleActive = state.clock.elapsedTime < stumbleLock.current;
+    let justStumbled = false;
+    if (circuitMode && circuitHazards.length > 0 && controlsEnabled && state.clock.elapsedTime >= stumbleGrace.current) {
+      const tt = state.clock.elapsedTime;
+      for (const h of circuitHazards) {
+        if (hazardHits(h, tt, t.x, t.y, t.z)) {
+          stumbleLock.current = tt + 0.4;
+          stumbleGrace.current = tt + 1.6;
+          stumbleActive = true;
+          justStumbled = true;
+          thrust.current = 0;
+          jetFallSfx();
+          onCircuitStumble?.();
+          break;
+        }
+      }
+    }
+
     // ── hold-to-fly ──
     // Once airborne from the first hop (but not yet flying), keeping the jump button
     // held spools a short timer that auto-deploys the pack. This makes flight
@@ -2978,7 +3020,9 @@ function Handler({
       // velocity (the steering block above just wrote x/z) and only touch y, so
       // thrust never fights your WASD steering.
       const cv = rb.linvel();
-      thrust.current += ((jumpHeld ? 1 : 0) - thrust.current) * (1 - Math.exp(-FLY_SPOOL * dt));
+      // a fresh stumble forces the thrust command to 0 for its lock window, so
+      // the shove reads as a real loss of control (you can't just power through)
+      thrust.current += (((jumpHeld && !stumbleActive) ? 1 : 0) - thrust.current) * (1 - Math.exp(-FLY_SPOOL * dt));
       // blend the vertical target + ease rate by the smoothed thrust: full press →
       // strong, snappy climb; released → a slow, floaty sink
       const targetY = FLY_SINK + (FLY_CLIMB - FLY_SINK) * thrust.current;
@@ -3012,6 +3056,13 @@ function Handler({
         // the stroke that crosses the threshold kicks off the jetpack with a burst
         if (jumps.current > FLY_TRIGGER) jetBurst.current++;
       }
+    }
+    // apply the stumble shove AFTER the flight/jump velocity write so it wins the
+    // frame: kill any upward climb, punch downward, and bleed horizontal drive
+    if (justStumbled) {
+      const lv = rb.linvel();
+      rb.setLinvel({ x: lv.x * 0.5, y: -6, z: lv.z * 0.5 }, true);
+      if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.5);
     }
     // touchdown absorb — squash on the frame we regain the ground with downward speed
     if (grounded && !wasGrounded.current && v.y < -2) stretch.current = -1;
@@ -3494,9 +3545,12 @@ const PITCH_MAX = 1.25;  // ~ 72°: look steeply down
 const PITCH_FLY_UP = -0.12;   // climbing → camera low, looking up ("back & slightly down")
 const PITCH_FLY_HOVER = 0.14; // steady hover → near-level over-the-shoulder
 const PITCH_FLY_DOWN = 0.46;  // sinking → camera high, looking down ("back & slightly up")
-// default follow distance — pulled in a touch so the 2/3-scale Reader still
-// fills the frame the way the full-size body used to at 12
-const CAM_DIST_DEFAULT = 10.5;
+// default follow distance — pulled in closer so the champion reads bigger and
+// the framing feels planted right behind them (nearer + lower was the ask)
+const CAM_DIST_DEFAULT = 8.6;
+// resting over-the-shoulder pitch on the ground/venue — lower than the old 0.34
+// so the lens sits nearer eye-level behind the character (less top-down)
+const PITCH_GROUND = 0.26;
 // orbit-drag + wheel-zoom third-person camera; cinematic director during a bout
 // Passive "postcard" camera for showcase/docs embeds — a slow, high orbit around
 // the plaza so the whole region (arena, tower, spire, rift) reads at a glance.
@@ -3543,8 +3597,11 @@ function CameraController({
   matchWide?: boolean;
 }) {
   const { camera, gl } = useThree();
-  const yaw = useRef(0);
-  const pitch = useRef(0.34);
+  // In the Circuit the track runs +Z and the flyer faces +Z, so "behind" is
+  // yaw = π. Boot there (not 0 = in front) so the very first frame is already a
+  // chase shot down-track instead of swinging around from the flyer's face.
+  const yaw = useRef(inCircuit ? Math.PI : 0);
+  const pitch = useRef(PITCH_GROUND);
   const dist = useRef(CAM_DIST_DEFAULT);
   // wheel/pinch write the TARGET; `dist` eases toward it each frame so zoom is a
   // smooth dolly rather than a per-notch snap (and recenter's reset glides too)
@@ -3567,7 +3624,7 @@ function CameraController({
   const prevFlying = useRef(false);
   const prevSuperrun = useRef(false);
   const recenter = useRef(0);
-  const recenterPitch = useRef(0.34);
+  const recenterPitch = useRef(PITCH_GROUND);
   // Circuit race intro: hold a front-facing hero shot, then sweep behind the runner.
   const circuitIntroHold = useRef(0);
   const prevCircuitPhase = useRef<CircuitPhase | null>(null);
@@ -3612,7 +3669,7 @@ function CameraController({
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== "KeyQ" || e.repeat || isTyping(e.target)) return;
       recenter.current = 0.7;
-      recenterPitch.current = 0.34;
+      recenterPitch.current = PITCH_GROUND;
       distTarget.current = CAM_DIST_DEFAULT; // eased by the per-frame zoom damp — no distance snap
       if (camCue.current) camCue.current.zoom = Math.min(1.2, camCue.current.zoom + 0.4);
     };
@@ -3681,7 +3738,7 @@ function CameraController({
     if (cue?.recenter) {
       cue.recenter = false;
       recenter.current = 0.9;
-      recenterPitch.current = 0.34;
+      recenterPitch.current = PITCH_GROUND;
       distTarget.current = CAM_DIST_DEFAULT; // glides in via the zoom damp below, no snap
       cue.zoom = Math.min(1.2, cue.zoom + 0.4);
     }
@@ -3697,14 +3754,14 @@ function CameraController({
       // deploying/retaking flight always begins with an upward stroke, so sweep
       // behind AND toward the climb pose (camera low, looking up); landing returns
       // to the classic over-the-shoulder pitch.
-      recenterPitch.current = flying ? PITCH_FLY_UP : 0.34;
+      recenterPitch.current = flying ? PITCH_FLY_UP : PITCH_GROUND;
       if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.4);
     }
     prevFlying.current = flying;
 
     if (cue?.superrun && !prevSuperrun.current) {
       recenter.current = 0.55;
-      recenterPitch.current = 0.34;
+      recenterPitch.current = PITCH_GROUND;
     }
     prevSuperrun.current = cue?.superrun ?? false;
 
@@ -3728,7 +3785,10 @@ function CameraController({
 
     if (inCircuit && circuitPhase === "running" && prevCircuitPhase.current !== "running") {
       circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
-      if (cue) yaw.current = cue.heading;
+      // sit the lens BEHIND the flyer looking down-track (heading + π), not in
+      // front of their face — the old `yaw = cue.heading` parked the camera on
+      // the far side so you launched staring back at the return portal/exit.
+      if (cue) yaw.current = cue.heading + Math.PI;
     }
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
     else prevCircuitPhase.current = null;
@@ -3739,7 +3799,7 @@ function CameraController({
       circuitIntroHold.current = Math.max(0, circuitIntroHold.current - dt);
       if (holdBefore > 0 && circuitIntroHold.current === 0) {
         recenter.current = 0.9;
-        recenterPitch.current = 0.34;
+        recenterPitch.current = PITCH_GROUND;
       }
     }
     const circuitFrontLock = inCircuit && (circuitPhase === "ready" || circuitIntroActive);
