@@ -662,7 +662,8 @@ export default function World({
                   pledged={pledged}
                   accent={biome.lights.arenaPoint}
                   phase={circuitPhase}
-                  pos={[circuitTrack.spawn[0] - 4.4, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
+                  padPos={[circuitTrack.spawn[0] - 4.4, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
+                  followPos={handlerPos}
                 />
               )}
               <AscentReturnPortal
@@ -778,6 +779,7 @@ export default function World({
               inVenue={inVenue}
               inAmphitheatre={inAmphitheatre}
               circuitMode={inCircuit}
+              circuitRunning={circuitPhase === "running"}
               circuitCheckpoints={circuitCheckpoints}
               circuitCpNextRef={circuitCpNextRef}
               circuitHazards={circuitPhase === "running" ? circuitHazards : []}
@@ -1335,30 +1337,63 @@ function CircuitSpectator({
   pledged,
   accent,
   phase,
-  pos,
+  padPos,
+  followPos,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
   pledged?: CreatureType | null;
   accent: string;
   phase?: CircuitPhase | null;
-  pos: [number, number, number];
+  /** pedestal at the launch pad (ready / between sectors) */
+  padPos: [number, number, number];
+  /** Handler world position — soft-leash target while running (climb-feel §5) */
+  followPos: React.RefObject<THREE.Vector3>;
 }) {
   const c = champions.find((x) => x.key === ownedKey);
   const [act, setAct] = useState(0);
   const prevPhase = useRef<CircuitPhase | null | undefined>(phase);
+  const grp = useRef<THREE.Group>(null);
+  const flying = phase === "running";
   useEffect(() => {
     if (phase !== prevPhase.current) {
-      // clearing a sector or finishing the run → the champion celebrates
       if (phase === "sector" || phase === "done") setAct((n) => n + 1);
       prevPhase.current = phase;
     }
   }, [phase]);
+
+  // soft leash: park beside/behind the Handler while the run is live; snap back
+  // to the pedestal when not. Priority 0 so the lite/desktop auto-render stays happy.
+  useFrame((_, dtRaw) => {
+    const g = grp.current;
+    if (!g) return;
+    const dt = Math.min(0.05, dtRaw);
+    const [px, py, pz] = padPos;
+    const padTop = py + 1.6;
+    let tx = px;
+    let ty = padTop;
+    let tz = pz;
+    if (flying && followPos.current) {
+      const hp = followPos.current;
+      // wing slot: slightly left and behind, a touch below eye line
+      tx = hp.x - 2.2;
+      ty = hp.y - 0.35;
+      tz = hp.z - 2.8;
+    }
+    const k = 1 - Math.exp(-(flying ? 5.5 : 8) * dt);
+    g.position.x += (tx - g.position.x) * k;
+    g.position.y += (ty - g.position.y) * k;
+    g.position.z += (tz - g.position.z) * k;
+    // face down-track (+Z) while flying with you
+    if (flying) g.rotation.y += (0 - g.rotation.y) * k;
+  }, 0);
+
   if (!c) return null;
-  const [px, py, pz] = pos;
+  const [px, py, pz] = padPos;
   const top = py + 1.6;
   return (
     <group>
+      {/* pedestal stays put — the champion lifts off it when the run starts */}
       <mesh position={[px, py + 0.8, pz]} castShadow>
         <cylinderGeometry args={[0.92, 1.12, 1.6, 24]} />
         <meshStandardMaterial color="#141230" emissive={accent} emissiveIntensity={0.32} metalness={0.4} roughness={0.6} />
@@ -1367,7 +1402,7 @@ function CircuitSpectator({
         <ringGeometry args={[0.62, 0.94, 32]} />
         <meshBasicMaterial color={accent} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
-      <group position={[px, top, pz]}>
+      <group ref={grp} position={[px, top, pz]}>
         <ChampionMesh
           key={c.key}
           type={c.type}
@@ -1383,6 +1418,7 @@ function CircuitSpectator({
           actSignal={act}
           actName="wave"
           sceneScale={WORLD_AGENT_SCALE}
+          companionRenderPriority={0}
         />
       </group>
     </group>
@@ -2256,6 +2292,11 @@ const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead o
 const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
 const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
+// Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
+// skill axis and forward is the heartbeat. W surges, S brakes lightly; A/D = light steer.
+const CIRCUIT_CRUISE = 14;
+const CIRCUIT_SURGE = 18;
+const CIRCUIT_BRAKE = 8;
                            // into a uniform hover instead of a per-press sawtooth
 // Hold-to-fly: after the first hop, HOLDING the jump button this many seconds while
 // airborne auto-deploys the jetpack — so a new player discovers flight by just
@@ -2436,6 +2477,7 @@ function Handler({
   inVenue = false,
   inAmphitheatre = false,
   circuitMode = false,
+  circuitRunning = false,
   circuitCheckpoints = [],
   circuitCpNextRef,
   circuitHazards = [],
@@ -2483,6 +2525,8 @@ function Handler({
   inVenue?: boolean;
   inAmphitheatre?: boolean;
   circuitMode?: boolean;
+  /** Ascent runner heartbeat — auto-forward while the sector is live (climb-feel §4). */
+  circuitRunning?: boolean;
   circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
@@ -2591,6 +2635,7 @@ function Handler({
   // `stumbleLock` (clock-time) and refuses a new hit until `stumbleGrace`.
   const stumbleLock = useRef(0);
   const stumbleGrace = useRef(0);
+  const wasCircuitRunning = useRef(false);
   // eased ankle-tuck amount (rad) — ramps in while flying so the toes point down
   const footTuck = useRef(0);
   // eased 0..1 leg-dangle amount — rides with the foot tuck so the thighs/knees
@@ -2928,7 +2973,29 @@ function Handler({
     }
     wasHeadingSteer.current = headingSteer;
 
-    if (moveLen > 0) {
+    // ── Circuit auto-forward runner (climb-feel §4) ──
+    // Once the sector is live the pack pushes +Z at cruise. Altitude (jump hold)
+    // is the skill; W surges, S brakes, A/D is a light lateral nudge. Ignition on
+    // the ready→running edge deploys the jetpack so you don't have to double-tap.
+    if (circuitRunning && !wasCircuitRunning.current) {
+      jumps.current = FLY_TRIGGER + 1;
+      jetBurst.current++;
+      heading.current = 0;
+      if (inner.current) inner.current.rotation.set(0, 0, 0);
+    }
+    wasCircuitRunning.current = circuitRunning;
+
+    if (circuitRunning) {
+      const cruise = az > 0.2 ? CIRCUIT_SURGE : az < -0.2 ? CIRCUIT_BRAKE : CIRCUIT_CRUISE;
+      const tvx = ax * WALK * 0.55; // light steer only — layouts are coplanar
+      const tvz = cruise;
+      const k = 1 - Math.exp(-(flyingMode ? ACCEL_FLY : ACCEL_GROUND) * dt);
+      rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
+      // ease facing down-track (+Z)
+      let d = 0 - heading.current;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      heading.current += d * (1 - Math.exp(-TURN_AIR * dt));
+    } else if (moveLen > 0) {
       const sp = superActive ? SUPERRUN : sprint ? RUN : WALK;
       // moveX/moveZ carry the analog throttle (their length is 0..1)
       const tvx = moveX * sp, tvz = moveZ * sp;

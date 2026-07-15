@@ -17,8 +17,8 @@ import { reachTheme, reachThemeByIndex, type ReachTheme } from "./reaches";
 import { sectorDifficulty } from "./difficulty";
 
 const GAP_SCALE = 1.55; // forward (Z) ring spacing
-const VERT_SCALE = 1.3; // climb (Y) per ring
-const LAT_SCALE = 1.5; // lateral (X) weave — opens the zig-zag out for wide turns
+const VERT_SCALE = 1.35; // climb (Y) — keep the feel-pass Y rhythm readable at 6-DOF
+const LAT_SCALE = 1; // climb-feel §1c: rings are coplanar (x=0); no lateral stretch
 const RADIUS_SCALE = 1.15; // ring openings (more forgiving threading a hoop at speed)
 const PLAT_SCALE = 1.15; // stepping-stone platform footprints
 

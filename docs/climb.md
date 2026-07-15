@@ -8,11 +8,12 @@
 > the 3D Grounds stay two bodies of one soul: same regions, same skies, same
 > champion, same ledger.
 
-Status: **design draft — approved direction, not yet implemented.**
+Status: **design draft — approved direction; systems largely shipped, feel pass next.**
 Companions: [`essence.md`](./essence.md) (the soul-atom law this must obey),
 [`mobile.md`](./mobile.md) (the shell it lives in), [`game-spec.md`](./game-spec.md),
-[`region-variety.md`](./region-variety.md), `components/grounds/circuit-tracks.ts`
-(the current generator this replaces/extends).
+[`region-variety.md`](./region-variety.md), [`circuit-world.md`](./circuit-world.md)
+(desktop body), [`climb-feel.md`](./climb-feel.md) (**next: corridor grammar,
+runner heartbeat, Flappy silhouette** — amends §1 lateral weave).
 
 ---
 
@@ -22,8 +23,10 @@ From `essence.md` §2–3, the Climb's **soul atom**: *you ascend; altitude is t
 score; one fall returns you to zero; the run marks your champion.* Everything
 below is body, and must never violate these:
 
-1. **One input.** Hold to rise, release to fall. Lateral stays auto-threaded.
-   Any hazard that requires a second input is out.
+1. **One input.** Hold to rise, release to fall. **Amended (see
+   [`climb-feel.md`](./climb-feel.md) §1c):** on mobile, rings share one lateral
+   plane (`x = 0`) — no weave, no auto-X centering. Lateral skill stays out;
+   height is the only skill axis. Any hazard that requires a second input is out.
 2. **One fall = run over, back to sector 1** for ranked runs. Camps (§6) give
    practice starts, never ranked shortcuts.
 3. **Depth is soul → cross-device** (Trainer XP, ascent sigil, Saga events).
@@ -117,7 +120,7 @@ interface SectorDifficulty {
   gates: number;        // rings this sector
   gapSec: [min, max];   // seconds-of-flight between rings
   vertAmp: number;      // vertical spread of the gate line
-  latAmp: number;       // lateral weave (auto-threaded, affects readability)
+  latAmp: number;       // LEGACY — desktop-only / retiring; mobile gates force x=0 (climb-feel §1c)
   hazardBudget: number; // spend from the Reach's hazard menu
   modifiers: Modifier[];
 }
@@ -344,6 +347,10 @@ Phased so every phase ships playable and the current game never regresses:
   motion gated), Reach title cards, signature sectors s10/s25/s50/s75/s90/s100,
   per-Reach best-time board view, perf pass on real device (build, not dev),
   remove the diag HUD behind a debug flag.
+- **P-feel · Corridor & runner heartbeat** — see [`climb-feel.md`](./climb-feel.md).
+  Layout archetypes with real Y rhythm, mobile coplanar rings + green gates +
+  Flappy camera, desktop auto-forward propulsion, flying companion. **Do this
+  before more surprise content** — the base runner must be addictive first.
 
 Per-phase acceptance: 60fps on the POCO in a `next build`, ranked loop
 untouched (`one fall → sector 1`), tsc/lints clean, ledger updated.

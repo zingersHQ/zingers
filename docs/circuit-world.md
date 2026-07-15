@@ -6,16 +6,17 @@
 > function, same hazards/modifiers/rewards — reinterpreted for 6-DOF flight.
 > Entry becomes **monumental portals you walk through** (not a small door),
 > you **emerge from a matching return portal facing the track**, the compass
-> gets **center-weighted, bigger icons**, and the champion companion learns to
-> **stand on platforms beside you** — including a spectator pedestal at the
-> Circuit start, so your climb happens under your champion's eyes.
+> gets **center-weighted, bigger icons**, and the champion companion **flies
+> with you on the run** (pedestal only at ready — see
+> [`climb-feel.md`](./climb-feel.md) §5; wilds platform-standing remains §5a).
 
-Status: **design draft — to implement later.**
+Status: **partially shipped (D0–D2 core + board split); feel pass next.**
 Companions: [`climb.md`](./climb.md) (the shared ruleset; this doc is its §9
-"desktop body" made concrete), [`essence.md`](./essence.md) (one soul, native
-bodies). Current-code facts referenced below were verified against
+"desktop body" made concrete), [`climb-feel.md`](./climb-feel.md) (**next:
+auto-forward runner, layout archetypes, flying companion**), [`essence.md`](./essence.md)
+(one soul, native bodies). Current-code facts referenced below were verified against
 `grounds-screen.tsx`, `world.tsx`, `venues.ts`, `venue-portals.tsx`,
-`concord.tsx`, `compass.tsx`, `circuit-tracks.ts` in July 2026.
+`concord.tsx`, `compass.tsx`, `climb/desktop-adapter.ts` in July 2026.
 
 ---
 
@@ -30,7 +31,7 @@ reinterprets only what the body demands:
 | Shared (identical, from `climb/*`) | Reinterpreted for desktop (this doc) |
 |---|---|
 | sector count, Reach themes + skins, sector names | world scale ×
-| `sectorDifficulty(i)` (speed→pace, radius, gates, gaps, budget) | how "speed" applies (you fly yourself) |
+| `sectorDifficulty(i)` (speed→pace, radius, gates, gaps, budget) | how "speed" applies — **amended:** auto-forward at par pace ([`climb-feel.md`](./climb-feel.md) §4); steer is optional |
 | hazard archetypes + `hazardState(h,t)` pure-time motion | collision vs the Handler capsule, stumble effect |
 | modifiers (Swift/Duskfall/Golden Hour/Silent Sky) | Swift = time-pressure instead of forced speed |
 | golden ring odds/payout | identical |
@@ -204,7 +205,12 @@ champion stays below, breaking the "beside you" fiction. Design:
   how to fly to a point) with `companionDrive`; exponential-damped Y, never
   teleporting. Reduced-motion: fade-hop.
 
-### 5b. The spectator pedestal (the Circuit venue)
+### 5b. The spectator pedestal → flying witness (amended)
+
+> **Amended by [`climb-feel.md`](./climb-feel.md) §5:** the pedestal remains for
+> `ready` (launch pose), but during `running` the champion **flies on a soft
+> leash** beside/behind the Handler — cute accompaniment, not a static statue.
+> Original pedestal-only text below is historical context.
 
 Today the companion is **excluded** from the Circuit (`!inCircuit` gate). Flip
 that into a feature instead of an absence: at every sector's start, a
@@ -217,11 +223,9 @@ Reach's platform palette, matching the mobile ReadyPose vibe):
   moods); on a fall, the sag pose. Then it re-appears on the next sector's
   pedestal with the fly-in (sector remount already re-keys the world, so this
   is the natural mount point).
-- It never flies the course with you (canon: the Trainer flies, the champion
-  fights) — the pedestal *is* the reinterpretation of "stand on a platform
-  next to us" inside the venue: present, grounded, witnessing.
-- The ascent sigil halo renders above it (same `AscentSigil`, glyphs =
-  Reaches), so the identity record is literally in view while you run.
+- It never flies the course *for* you (canon: the Trainer flies, the champion
+  fights) — but it **rides with you** as witness during the run (feel-pass
+  amend). The ascent sigil halo can render above it on ready / beside it in flight.
 
 ---
 
@@ -247,10 +251,14 @@ Ordered so each lands shippable; D1 is the quick-feel win, D2 is the big one.
   region portals become camp doors (scout runs at their Reach), un-lit = dark
   plane + hint line.
 - **D4 · Companion** — §5a standable-surface resolver in the wilds; §5b
-  spectator pedestal in the venue (flag the pedestal so `!inCircuit` exclusion
-  becomes `inCircuit → pedestal mode`).
+  spectator pedestal at `ready`, then **flying leash during `running`**
+  ([`climb-feel.md`](./climb-feel.md) §5 — amends the original pedestal-only
+  witness). Pedestal alone is no longer enough.
+- **D-feel · Corridor & runner** — shared with Climb: layout archetypes,
+  auto-forward propulsion, Flappy-honest mobile plane law. Full plan in
+  [`climb-feel.md`](./climb-feel.md) §§1,4,7. **Do before more content.**
 
-### Open questions (decide during D2)
+### Open questions (decide during D2 / D-feel)
 
 1. **Full-run length on desktop.** 100 scaled sectors at 6-DOF pace ≈ 60–90
    min aspirational full clear. Fine for the fantasy (nobody clears week one),

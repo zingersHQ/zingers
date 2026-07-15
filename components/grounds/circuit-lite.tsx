@@ -58,13 +58,12 @@ interface RunReward {
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
-const FORWARD_SPOOL = 2.6;  // ease up to cruise from a standstill (a launch feel)
+const FORWARD_SPOOL = 8;    // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
 const GRAVITY = 24;         // downward accel (u/s²) — weight without a stone drop
 const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
 const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontrollable)
 const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
-const LATERAL_EASE = 7;     // auto-thread: ease x toward the next gate's centre
 const FLOOR_Y = -9;         // fall below this → run over
 // Soft ceiling: a full hold parks you INSIDE the next ring's opening so simply
 // holding threads the gate instead of overshooting into the void.
@@ -79,20 +78,19 @@ const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + g
 const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
 const GOLD_RING_CROWNS = 25;
 
-// ── chase camera ── (3/4 trailing cam: the track ahead reads in DEPTH). Pulled
-// further back than the first pass so the champion sits smaller/lower in frame
-// and more upcoming gates read at once.
-const CAM_SIDE = 3.6;     // slight +X offset so the body reads in 3/4, not dead-on
-const CAM_UP = 3.2;       // lift above the flyer
-const CAM_BACK = 10.0;    // trail behind the flyer (travel is +Z)
-const CAM_LEAD = 10.0;    // look well down-track so the next rings are centred
-const CAM_HEIGHT = 1.0;   // look-at lift — keeps the hero low-centre of frame
+// ── chase camera ── Flappy read (climb-feel §3): tiny flyer, big corridor,
+// 2–3 rings visible ahead. Character should occupy ≲15% of frame height.
+const CAM_SIDE = 2.4;     // slight +X so the body reads in 3/4, not dead-on
+const CAM_UP = 4.2;       // lift above the flyer
+const CAM_BACK = 16.0;    // trail well behind (travel is +Z)
+const CAM_LEAD = 14.0;    // look well down-track so upcoming rings are centred
+const CAM_HEIGHT = 0.6;   // look-at lift — keeps the hero low-centre of frame
 const CAM_LERP = 6;       // exp-damping rate for smooth follow (frame-rate indep.)
 
 // ── champion body (the real owned mind, riding the jetpack) ──
-const CHAMP_SCALE = 0.7;   // fit the champion to thread a ~3u gate comfortably
+const CHAMP_SCALE = 0.48;  // small silhouette — the Flappy "bird in a big sky"
 const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
-const CHAMP_Y = -0.9;      // drop so the torso centres on the gate-thread point
+const CHAMP_Y = -0.55;     // drop so the torso centres on the gate-thread point
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
@@ -258,9 +256,10 @@ function Flyer({
       if (vy.current > 0) vy.current = 0;
     }
 
-    // lateral auto-thread toward the next gate centre (keeps it a ONE-input game)
-    const targetX = cp ? cp.pos[0] : 0;
-    pos.current.x += (targetX - pos.current.x) * (1 - Math.exp(-LATERAL_EASE * dt));
+    // coplanar corridor (climb-feel §1c): rings sit at x=0 — pin the flyer to the
+    // flight plane. No lateral ease toward a weaving next-gate (that rubber-band
+    // was the "weird correction" players hated).
+    pos.current.x = 0;
 
     // feed the champion's flight rig (poses + emits its own jetpack from these)
     speedRef.current = fwd.current;
@@ -458,6 +457,11 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
   const [phase, setPhase] = useState<Phase>("ready");
   const [failReason, setFailReason] = useState<FailReason>("fall");
   const [targetIdx, setTargetIdx] = useState(1); // next gate to thread (for highlight + pips)
+  // live ref for CircuitScene green-pass feedback (same path as desktop)
+  const cpNextRef = useRef(1);
+  useEffect(() => {
+    cpNextRef.current = targetIdx;
+  }, [targetIdx]);
   const [alt, setAlt] = useState(0);
   const [holding, setHolding] = useState(false);
   const [best, setBest] = useState<CircuitPersonalBest | null>(null);
@@ -814,7 +818,14 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
         >
           <SkyShift bg={biome.bg} fogColor={biome.fog.color} fogNear={fogNear} fogFar={190} exposure={exposure} />
           <Lights biome={biome} lite={embedded} />
-          <CircuitScene track={track} biome={biome} highlightIndex={running ? targetIdx : undefined} goldIndex={goldGate >= 0 ? goldGate : undefined} staticMode />
+          <CircuitScene
+            track={track}
+            biome={biome}
+            highlightIndex={running ? targetIdx : undefined}
+            goldIndex={goldGate >= 0 ? goldGate : undefined}
+            cpNextRef={running ? cpNextRef : undefined}
+            staticMode
+          />
           <DriftMotes track={track} accent={moteColor} />
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {phase === "ready" && (

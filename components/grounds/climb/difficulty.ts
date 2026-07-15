@@ -95,17 +95,19 @@ export function reachHazardCap(reach: number): number {
 // Per-role modifiers to the base spacing/rhythm so difficulty saw-tooths inside
 // a reach (arrival/vista breathe; pressure/gauntlet/trial bite) instead of
 // climbing monotonically. gapSec is in SECONDS; 5.0 is the hard scenic cap.
+// vert multipliers feed climb-feel Y rhythm (real flap room). lat is legacy /
+// unused on mobile (coplanar x=0); kept for any future desktop lane craft.
 const ROLE_TUNING: Record<Role, { gap: [number, number]; gates: number; vert: number; lat: number }> = {
-  arrival: { gap: [1.7, 2.4], gates: 0, vert: 0.8, lat: 0.7 },
-  teach: { gap: [1.7, 2.3], gates: 0, vert: 0.85, lat: 0.8 },
-  combine: { gap: [1.4, 2.1], gates: 0, vert: 1.0, lat: 1.0 },
-  rhythm: { gap: [1.0, 1.5], gates: 0, vert: 0.9, lat: 1.15 }, // tight cadence, pure flow
-  pressure: { gap: [1.2, 1.8], gates: 0, vert: 1.1, lat: 1.15 },
-  vista: { gap: [2.8, 5.0], gates: -1, vert: 0.7, lat: 0.6 }, // the screenshot sector: wide, scenic
-  twist: { gap: [1.4, 2.1], gates: 0, vert: 1.05, lat: 1.2 },
-  pressure2: { gap: [1.1, 1.6], gates: 1, vert: 1.15, lat: 1.2 },
-  gauntlet: { gap: [1.1, 1.7], gates: 1, vert: 1.2, lat: 1.25 },
-  trial: { gap: [1.3, 2.0], gates: 0, vert: 1.15, lat: 1.0 }, // the reach boss-sector
+  arrival: { gap: [1.6, 2.2], gates: 0, vert: 1.15, lat: 0 },
+  teach: { gap: [1.5, 2.1], gates: 0, vert: 1.2, lat: 0 },
+  combine: { gap: [1.3, 1.9], gates: 0, vert: 1.35, lat: 0 },
+  rhythm: { gap: [1.0, 1.35], gates: 0, vert: 1.4, lat: 0 }, // tight equal cadence
+  pressure: { gap: [1.1, 1.7], gates: 0, vert: 1.5, lat: 0 },
+  vista: { gap: [2.8, 5.0], gates: -1, vert: 0.85, lat: 0 }, // scenic glide
+  twist: { gap: [1.3, 1.9], gates: 0, vert: 1.4, lat: 0 },
+  pressure2: { gap: [1.0, 1.5], gates: 1, vert: 1.55, lat: 0 },
+  gauntlet: { gap: [1.0, 1.55], gates: 1, vert: 1.6, lat: 0 },
+  trial: { gap: [1.2, 1.85], gates: 0, vert: 1.5, lat: 0 },
 };
 
 export function sectorDifficulty(sector: number): SectorDifficulty {

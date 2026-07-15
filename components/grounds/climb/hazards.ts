@@ -88,18 +88,23 @@ export function sectorHazards(sector: number, track: CircuitTrackDef): Hazard[] 
     const phase = rnd();
     const id = n;
 
+    // climb-feel §1c/§6: corridor is coplanar (x≈0). Hazards live IN the flight
+    // line so altitude timing is the dodge — not scenery beside a straight tunnel.
+    const xFlight = xLine; // gates are at x=0; keep hazards on that plane
     if (kind === "ringRotor") {
       // guards the NEXT ring — a bar rotating inside its opening
       out.push({ id, kind, x: b.pos[0], y: b.pos[1], z: b.pos[2], radius: 0.42, amp: 0, cycle: 1.1 + rnd() * 0.5, phase, height: 0, gate: { x: b.pos[0], y: b.pos[1], z: b.pos[2], r: b.radius } });
     } else if (kind === "plume") {
-      out.push({ id, kind, x: xLine + (rnd() - 0.5) * 1.5, y: yLine - 3.2, z, radius: 0.8, amp: 0, cycle: 0.42 + rnd() * 0.12, phase, height: 6.2, gate: null });
+      out.push({ id, kind, x: xFlight, y: yLine - 3.2, z, radius: 0.8, amp: 0, cycle: 0.42 + rnd() * 0.12, phase, height: 6.2, gate: null });
     } else if (kind === "cinderArc") {
-      out.push({ id, kind, x: xLine, y: yLine + 0.4, z, radius: 0.78, amp: 3.4 + rnd() * 1.2, cycle: 0.5 + rnd() * 0.25, phase, height: 2.6 + rnd() * 1.0, gate: null });
+      // arc sweeps vertically through the corridor (amp→height), not sideways off-plane
+      out.push({ id, kind, x: xFlight, y: yLine + 0.4, z, radius: 0.78, amp: 0.4, cycle: 0.5 + rnd() * 0.25, phase, height: 2.8 + rnd() * 1.2, gate: null });
     } else if (kind === "driftCrystal") {
-      out.push({ id, kind, x: xLine, y: yLine + (rnd() - 0.5), z, radius: 1.05, amp: 3.0 + rnd() * 1.4, cycle: 0.7 + rnd() * 0.4, phase, height: 0, gate: null });
+      // bob vertically across the opening instead of sliding sideways
+      out.push({ id, kind, x: xFlight, y: yLine, z, radius: 1.05, amp: 2.2 + rnd() * 1.0, cycle: 0.7 + rnd() * 0.4, phase, height: 0, gate: null });
     } else {
       // wardenWisp — the attacker: sweeps up/down through the corridor
-      out.push({ id, kind, x: xLine, y: yLine, z, radius: 0.6, amp: 2.4 + rnd() * 1.0, cycle: 1.2 + rnd() * 0.6, phase, height: 0, gate: null });
+      out.push({ id, kind, x: xFlight, y: yLine, z, radius: 0.6, amp: 2.4 + rnd() * 1.0, cycle: 1.2 + rnd() * 0.6, phase, height: 0, gate: null });
     }
   }
   return out;
@@ -109,7 +114,8 @@ export function sectorHazards(sector: number, track: CircuitTrackDef): Hazard[] 
 export function hazardState(h: Hazard, t: number): HazardState {
   switch (h.kind) {
     case "driftCrystal": {
-      return { x: h.x + Math.sin(t * h.cycle + h.phase * TAU) * h.amp, y: h.y, z: h.z, active: true, telegraph: 1, angle: 0 };
+      // vertical bob through the coplanar corridor (climb-feel — dodge by altitude)
+      return { x: h.x, y: h.y + Math.sin(t * h.cycle + h.phase * TAU) * h.amp, z: h.z, active: true, telegraph: 1, angle: 0 };
     }
     case "wardenWisp": {
       const s = Math.sin(t * h.cycle + h.phase * TAU);
@@ -117,6 +123,7 @@ export function hazardState(h: Hazard, t: number): HazardState {
     }
     case "cinderArc": {
       const u = (t * h.cycle + h.phase) % 1;
+      // lob mostly vertical through the opening (tiny x wobble only)
       return { x: h.x + (u - 0.5) * 2 * h.amp, y: h.y + Math.sin(u * Math.PI) * h.height, z: h.z, active: u > 0.04 && u < 0.96, telegraph: 1, angle: 0 };
     }
     case "plume": {
