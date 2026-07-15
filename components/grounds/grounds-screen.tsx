@@ -35,7 +35,7 @@ import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/compone
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS, FIRST_GUIDE_WORLD } from "@/components/grounds/worlds";
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
-import { VENUES } from "@/components/grounds/venues";
+import { VENUES, CONCORD_VENUE_SPOTS } from "@/components/grounds/venues";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
 import { currentSeason, currentSeasonNumber } from "@/lib/lore/season";
@@ -116,6 +116,35 @@ const World = dynamic(() => import("@/components/grounds/world"), {
 // threshold of the gate-ring (z out past the gates), so they arrive looking in
 // across the plaza toward the Vaultgates. [x, z].
 const CONCORD_SPAWN: [number, number] = [0, 52];
+
+// Where you reappear when you return to the Concord: a few steps INTO the plaza
+// from the very door you left through — a region's Vaultgate or a game's venue
+// portal — facing inward across the seal. Reads as "you just walked out of that
+// door," so the hub arrival mirrors the door you took to leave. Returns null if
+// the origin has no Concord door (nothing to align to).
+function concordDoorArrival(opts: { world?: string; venue?: VenueId }): { x: number; z: number; heading: number } | null {
+  const STEP_IN = 5; // metres inside the arch — clear of it, standing in the plaza
+  let angle: number;
+  let dist: number;
+  if (opts.venue) {
+    const s = CONCORD_VENUE_SPOTS.find((v) => v.venue === opts.venue);
+    if (!s) return null;
+    angle = s.angle;
+    dist = s.dist;
+  } else if (opts.world) {
+    const g = CONCORD_GATES.find((x) => x.world === opts.world);
+    if (!g) return null;
+    angle = g.angle;
+    dist = g.dist;
+  } else {
+    return null;
+  }
+  const d = Math.max(2, dist - STEP_IN);
+  const x = Math.cos(angle) * d;
+  const z = Math.sin(angle) * d;
+  // heading looks from the door back toward the Concord centre (the seal)
+  return { x, z, heading: Math.atan2(-x, -z) };
+}
 
 // Minimum time the pre-picker "Summoning your champions…" beat stays on screen,
 // so it's always readable even when the roster is already cached.
@@ -456,10 +485,19 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
   const exitVenue = useCallback(() => {
     if (!gameSession) return;
-    const { returnPose } = gameSession;
+    const { returnPose, venue, hostWorldId: host } = gameSession;
     setGameSession(null);
     resetCircuitRun();
-    restorePose(returnPose);
+    // when the game was entered from the Concord, leave the same way you came:
+    // step out of that game's venue portal into the plaza, facing the seal. When
+    // it was entered from a region, fall back to where you stood in the wilds.
+    const door = host === "concord" ? concordDoorArrival({ venue }) : null;
+    if (door) {
+      poseRef.current = { x: door.x, z: door.z, heading: door.heading };
+      setTimeout(() => travelRef.current?.(door.x, door.z, door.heading), 90);
+    } else {
+      restorePose(returnPose);
+    }
   }, [gameSession, resetCircuitRun, restorePose]);
 
   const advanceCircuitSector = useCallback(() => {
@@ -1037,9 +1075,18 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       playTravel(worldTravelCard(dest), () => travelToWorld(dest));
     } else if (near?.kind === "return") {
       setNear(null);
+      // arrive at the Concord through the very Vaultgate that reaches this region,
+      // stepping out into the plaza facing the seal — the door mirrors the one you
+      // took to leave, so the round trip reads as one continuous archway.
+      const origin = worldId;
+      const door = concordDoorArrival({ world: origin });
       playTravel(worldTravelCard("concord"), () => {
         saveWorldPose(worldId, capturePose());
-        travelToWorld("concord");
+        travelToWorld("concord", false);
+        setTimeout(() => {
+          if (door) travelRef.current?.(door.x, door.z, door.heading);
+          else travelRef.current?.(CONCORD_SPAWN[0], CONCORD_SPAWN[1]);
+        }, 160);
       });
     } else if (near?.kind === "venue-enter") {
       const v = near.venue;
