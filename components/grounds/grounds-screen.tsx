@@ -477,7 +477,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         const s = circuitSector(0, worldId).spawn;
         setTimeout(() => travelRef.current?.(s[0], s[2]), 80);
       } else if (venue === "amphitheatre") {
-        setTimeout(() => travelRef.current?.(0, 12), 80);
+        // drop in on the sand facing the ring (−z, toward the throne), clear of
+        // the exit portal (z≈17) so its leave-prompt isn't up the instant you land.
+        setTimeout(() => travelRef.current?.(0, 12, Math.PI), 80);
       }
     },
     [capturePose, worldId],

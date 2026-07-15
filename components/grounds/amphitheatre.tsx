@@ -13,6 +13,7 @@
 import { memo, useMemo, useRef } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import * as THREE from "three";
 import type { Champion } from "@/lib/types";
 import type { GroundChampion } from "@/components/grounds/world";
@@ -28,16 +29,55 @@ const STONE = "#2a2218";
 const STONE_HI = "#4a3b26";
 const GOLD = "#ffb14a";
 
-const FLOOR_R = 15; // the sanded combat floor
-const DAIS_R = 4.4; // the raised ring at its centre
-const THRONE: [number, number, number] = [0, 0, -11.5];
+// The bowl is a generous, walkable place — the fighters stay at their fixed
+// central spacing (match-stage.ts), but the STRUCTURE around them is spread wide
+// so it reads as a real arena you can roam, not a cramped diorama.
+const FLOOR_R = 21; // the sanded combat floor (was 15 — too tight to walk)
+const DAIS_R = 5.2; // the raised ring at its centre, around the fighters
+const THRONE: [number, number, number] = [0, 0, -16]; // pushed back behind the bowl
 // the player enters from the south (+z); keep that arc clear of structure
 const ENTRANCE = Math.PI / 2; // bearing of the gap (+z), in scene angle terms
+// the invisible containment rim sits just inside the first seating tier, at the
+// edge of the sand — shared with the physics colliders below.
+const RIM_R = FLOOR_R + 0.8;
 
 // The Daily Tribunal, merged into this venue: a herald's stone off to the side
 // of the floor. Walking up opens today's marquee case. Shared with world.tsx so
 // the walk-up proximity target lands exactly on the stone.
-export const DAILY_HERALD_POS: [number, number, number] = [10, 0, 6.5];
+export const DAILY_HERALD_POS: [number, number, number] = [14.5, 0, 9];
+
+// ── the venue's physics: a flat combat floor at y≈0 + a low containment rim ───
+// The visible sand is a plain mesh (no body); WITHOUT this the player capsule has
+// nothing to stand on inside the venue (region/hub ground is gated off by
+// !inVenue) and free-falls while the walk animation keeps playing — the reported
+// "no ground / walking on air" bug. A fixed slab gives real footing at y=0, and a
+// ring of wall segments keeps you from sprinting off the sand into the void.
+export function AmphitheatreColliders() {
+  const rim = useMemo(() => {
+    const N = 30;
+    const halfW = (Math.PI * RIM_R) / N + 0.35; // tangential half-width + overlap
+    return { N, halfW, seg: Array.from({ length: N }, (_, i) => ((i / N) * Math.PI * 2)) };
+  }, []);
+  return (
+    <group>
+      {/* the flat sand — top face at y=0, matching the visual floor */}
+      <RigidBody type="fixed" colliders={false}>
+        <CuboidCollider args={[FLOOR_R + 3, 0.5, FLOOR_R + 3]} position={[0, -0.5, 0]} />
+      </RigidBody>
+      {/* a low invisible rim at the sand's edge so you can't run into the void */}
+      <RigidBody type="fixed" colliders={false}>
+        {rim.seg.map((a, i) => (
+          <CuboidCollider
+            key={i}
+            args={[rim.halfW, 3, 0.5]}
+            position={[Math.cos(a) * RIM_R, 3, Math.sin(a) * RIM_R]}
+            rotation={[0, -a, 0]}
+          />
+        ))}
+      </RigidBody>
+    </group>
+  );
+}
 
 export function Amphitheatre({
   champions,
@@ -150,9 +190,9 @@ function applyInstanceMatrices(im: THREE.InstancedMesh | null, mats: THREE.Matri
 // the stone never changes.
 const SeatingBowl = memo(function SeatingBowl() {
   const tiers = [
-    { r: 16.5, h: 1.8, y: 0.9 },
-    { r: 21.5, h: 2.9, y: 2.2 },
-    { r: 26.5, h: 4.2, y: 3.8 },
+    { r: 22.5, h: 1.8, y: 0.9 },
+    { r: 28.5, h: 2.9, y: 2.2 },
+    { r: 34.5, h: 4.2, y: 3.8 },
   ];
   return (
     <group>
@@ -194,10 +234,10 @@ const SeatingBowl = memo(function SeatingBowl() {
 // two instanced draws (shafts + capitals) instead of a mesh pair per column
 const Colonnade = memo(function Colonnade() {
   const { shafts, capitals } = useMemo(() => {
-    const N = 20;
+    const N = 26;
     const cols = Array.from({ length: N }, (_, i) => {
       const a = (i / N) * Math.PI * 2;
-      return { a, x: Math.cos(a) * 15.4, z: Math.sin(a) * 15.4 };
+      return { a, x: Math.cos(a) * 21.4, z: Math.sin(a) * 21.4 };
     }).filter((c) => Math.abs(Math.atan2(Math.sin(c.a - ENTRANCE), Math.cos(c.a - ENTRANCE))) > 0.5);
     return {
       shafts: cols.map((c) => new THREE.Matrix4().makeTranslation(c.x, 3.2, c.z)),
@@ -225,7 +265,7 @@ const Braziers = memo(function Braziers() {
     const N = 6;
     return Array.from({ length: N }, (_, i) => {
       const a = (i / N) * Math.PI * 2 + Math.PI / N;
-      return { x: Math.cos(a) * 12.6, z: Math.sin(a) * 12.6 };
+      return { x: Math.cos(a) * 17.5, z: Math.sin(a) * 17.5 };
     });
   }, []);
   const flameRefs = useRef<(THREE.Mesh | null)[]>([]);
@@ -283,7 +323,7 @@ const CombatDais = memo(function CombatDais() {
 const BannerWall = memo(function BannerWall({ ladder }: { ladder: { entry: GroundChampion; champ: Champion }[] }) {
   // seat order around the back arc: #1 centre, then 2/3 flanking, 4/5 outermost
   const order = [4, 2, 0, 1, 3]; // index into ladder by visual slot (left→right)
-  const R = 14.5;
+  const R = 20;
   const spanHalf = 0.72; // radians on each side of due-north
   return (
     <group>

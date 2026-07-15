@@ -30,7 +30,7 @@ import { PlazaSurround, PitArena } from "./structures";
 import type { BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
 import { type GalleryFocus } from "./gallery";
-import { Amphitheatre, DAILY_HERALD_POS } from "./amphitheatre";
+import { Amphitheatre, AmphitheatreColliders, DAILY_HERALD_POS } from "./amphitheatre";
 import { MATCH_SPREAD } from "./match-stage";
 import { RegionDistrict } from "./districts";
 import { type WorldGoal, type GoalKind } from "./goals";
@@ -423,8 +423,11 @@ export default function World({
   const venueTargets = useMemo<{ venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[]>(
     () => {
       if (inAmphitheatre) {
+        // the venue floor is flat at y≈0, NOT the host world's terrain — the herald
+        // stands on the sand, so its walk-up target sits at floor level, not on the
+        // (decoupled) concord/region heightfield beneath the scene.
         const [hx, , hz] = DAILY_HERALD_POS;
-        return [{ venue: "daily", name: "Today's Marquee", pos: new THREE.Vector3(hx, terrainHeight(hx, hz, shape) + 1, hz) }];
+        return [{ venue: "daily", name: "Today's Marquee", pos: new THREE.Vector3(hx, 1, hz) }];
       }
       return [];
     },
@@ -634,6 +637,7 @@ export default function World({
 
           {inAmphitheatre && !showcase && (
             <>
+              <AmphitheatreColliders />
               <Amphitheatre champions={champions} focus={galleryFocus} />
               <VenueExitPortal pos={VENUE_EXIT.amphitheatre.pos} label="Exit to the wilds" accent={VENUES.amphitheatre.color} />
             </>
@@ -2597,7 +2601,9 @@ function Handler({
     travelRef.current = (x, z, faceHeading) => {
       const rb = body.current;
       if (!rb) return;
-      const y = spawnPos ? spawnPos[1] : terrainHeight(x, z, shape, spawnKnoll) + FOOT_OFF + 1.4;
+      // amphitheatre = flat venue sand at y≈0; otherwise drop onto the host terrain
+      const groundY = inAmphitheatre ? 0 : terrainHeight(x, z, shape, spawnKnoll);
+      const y = spawnPos ? spawnPos[1] : groundY + FOOT_OFF + 1.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
@@ -2616,7 +2622,7 @@ function Handler({
     return () => {
       if (travelRef) travelRef.current = null;
     };
-  }, [travelRef, shape, spawnKnoll, spawnPos]);
+  }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre]);
 
   // circuit spawn faces down the track (+z); wild spawn faces the plaza / inward.
   useEffect(() => {
@@ -2773,7 +2779,14 @@ function Handler({
     // character was locked in flight forever: space just re-thrusts instead of
     // jumping and you can't walk. So also treat "settled near the terrain
     // surface" as grounded, independent of the sensor.
-    const floorY = terrainHeight(t.x, t.z, shape, spawnKnoll);
+    // In the Amphitheatre the walkable surface is the venue's own flat sand at
+    // y≈0 (AmphitheatreColliders), NOT the host world's heightfield — which is
+    // gated off (!inVenue) and lives at an unrelated height. Using terrainHeight
+    // here made restY float above/below the real floor, so the capsule fell
+    // through while the walk anim kept playing (the "no ground / walking on air"
+    // bug). Flat 0 aligns restY, the spawn-settle and the grounded fallback with
+    // the actual floor collider.
+    const floorY = inAmphitheatre ? 0 : terrainHeight(t.x, t.z, shape, spawnKnoll);
     const restY = floorY + FOOT_OFF; // capsule half-height + radius (2/3-scale body)
     const sensorGround = ground.current > 0;
 
