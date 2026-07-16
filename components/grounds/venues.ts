@@ -40,13 +40,14 @@ export const REGION_RETURN_SPOT = { angle: Math.PI * 0.92, dist: 33 };
 
 /** The Circuit portal per region world — set FAR OUT IN THE WILDS beyond the
  *  plaza rim (PLAZA_R = 36), on its own bearing well away from the central arena,
- *  crowning a lone mountain (see AscentMountain in world.tsx) with light beams to
- *  the sky, so it reads as a distant destination — the Ascent — you fly up to,
- *  never on the colosseum. Its own thematic name lives on the walk-up prompt. */
+ *  crowning a large terrained mountain (see AscentMountain in world.tsx) with
+ *  light beams to the sky — a distant destination you fly up to, never hugging
+ *  the colosseum. Dist is the mountain centre; keep clear of TERRAIN_HALF (165).
+ *  Its own thematic name lives on the walk-up prompt. */
 export const REGION_CIRCUIT_SPOT: Record<string, { angle: number; dist: number; label: string }> = {
-  grounds: { angle: Math.PI * 1.18, dist: 82, label: "The Ascent Tunnel" },
-  gauntlet: { angle: Math.PI * 0.35, dist: 80, label: "Ember Chute" },
-  void: { angle: Math.PI * 1.65, dist: 84, label: "Void Sleeve" },
+  grounds: { angle: Math.PI * 1.18, dist: 124, label: "The Ascent Tunnel" },
+  gauntlet: { angle: Math.PI * 0.35, dist: 122, label: "Ember Chute" },
+  void: { angle: Math.PI * 1.65, dist: 126, label: "Void Sleeve" },
 };
 
 export function circuitSpotFor(worldId: string) {

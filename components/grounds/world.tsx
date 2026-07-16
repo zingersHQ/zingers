@@ -51,13 +51,12 @@ import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import { atCircuitFinishEarly, crossedCircuitGate } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
-  CONCORD_VENUE_SPOTS,
   VENUE_EXIT,
   VENUES,
   circuitSpotFor,
   type VenueId,
 } from "./venues";
-import { ConcordVenuePortal, VenueExitPortal, AscentPortal, AscentReturnPortal, type PortalTheme } from "./venue-portals";
+import { VenueExitPortal, AscentPortal, AscentReturnPortal, type PortalTheme } from "./venue-portals";
 import { reachThemeByIndex } from "./climb/reaches";
 import { preloadNatureBiome } from "@/lib/render/preload-grounds";
 
@@ -451,21 +450,11 @@ export default function World({
     },
     [inAmphitheatre, shape],
   );
+  // Concord no longer exposes Amphitheatre / Circuit (Ascent) doors — those
+  // access elements were removed from the hub. Region Circuit tunnels remain.
   const concordVenueTargets = useMemo(
-    () =>
-      isHub && !inVenue
-        ? CONCORD_VENUE_SPOTS.map((s) => {
-            const x = Math.cos(s.angle) * s.dist;
-            const z = Math.sin(s.angle) * s.dist;
-            const def = VENUES[s.venue];
-            return {
-              venue: s.venue,
-              label: def.name,
-              pos: new THREE.Vector3(x, terrainHeight(x, z, shape) + 1, z),
-            };
-          })
-        : [],
-    [isHub, inVenue, shape],
+    () => [] as { venue: VenueId; label: string; pos: THREE.Vector3 }[],
+    [],
   );
   const returnTarget = useMemo(() => {
     if (!inRegion) return null;
@@ -631,19 +620,7 @@ export default function World({
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
           {isHub && !inVenue && !match && (
-            <>
-              <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
-              {CONCORD_VENUE_SPOTS.map((s) => {
-                const x = Math.cos(s.angle) * s.dist;
-                const z = Math.sin(s.angle) * s.dist;
-                const y = terrainHeight(x, z, shape);
-                if (s.venue === "circuit") {
-                  const r = reachThemeByIndex(0);
-                  return <AscentPortal key={s.venue} pos={[x, y, z]} accent={VENUES.circuit.color} theme="concord" reachRoman={r.roman} reachName={r.name} />;
-                }
-                return <ConcordVenuePortal key={s.venue} venue={s.venue} pos={[x, y, z]} />;
-              })}
-            </>
+            <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
           )}
 
           {isHub && !inVenue && match && (
@@ -719,8 +696,8 @@ export default function World({
                   rotationY={Math.atan2(-returnTarget.x, -returnTarget.z)}
                 />
               )}
-              {/* The Circuit — the same monumental Ascent Portal as the Concord,
-                  set out on its own bearing away from the arena. */}
+              {/* The Circuit — monumental Ascent Portal on a mountain peak,
+                  set out on its own bearing away from the arena (hub has none). */}
               {circuitTunnelTarget && (() => {
                 const cr = reachThemeByIndex(0);
                 const gx = circuitTunnelTarget.pos.x;
@@ -1447,13 +1424,60 @@ function Beacon({ pos, color, h = 30 }: { pos: [number, number, number]; color: 
 }
 
 // ── Ascent mountain ──────────────────────────────────────────────────────────
-// The Circuit's region portal crowns a lone peak far out in the wilds, with
-// shining light beams shooting to the sky so it's spottable from across the map
-// and reads as a place you fly UP to (the Ascent). Decorative only (no collider)
-// so it never traps the Handler — the jetpack carries you to the summit portal,
-// and the walk-up trigger is planar so standing at the foot works too.
-const ASCENT_PEAK_H = 15;      // summit height above the ground
-const ASCENT_BASE_R = 17;      // mountain base radius
+// The Circuit's region portal crowns a large terrained peak far out in the wilds
+// (not a sad cone): shelves, ridges, and spurs from a local heightfield, with
+// shining light beams so it's spottable from across the map. Decorative only
+// (no collider) so it never traps the Handler — the jetpack carries you to the
+// summit portal, and the walk-up trigger is planar so standing at the foot works.
+const ASCENT_PEAK_H = 32;       // summit height above the ground
+const ASCENT_BASE_R = 44;       // mountain footprint radius
+const ASCENT_ENTER_R = 26;      // planar walk-up / fly-in trigger around the peak
+
+function ascentHash(x: number, z: number) {
+  const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+function ascentNoise(x: number, z: number) {
+  const xi = Math.floor(x), zi = Math.floor(z);
+  const xf = x - xi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf);
+  const v = zf * zf * (3 - 2 * zf);
+  const a = ascentHash(xi, zi);
+  const b = ascentHash(xi + 1, zi);
+  const c = ascentHash(xi, zi + 1);
+  const d = ascentHash(xi + 1, zi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function ascentFbm(x: number, z: number) {
+  let a = 0, amp = 0.5, f = 1;
+  for (let i = 0; i < 4; i++) {
+    a += amp * ascentNoise(x * f, z * f);
+    amp *= 0.5;
+    f *= 2.05;
+  }
+  return a;
+}
+
+/** Local height above the foot at (lx, lz) — terraced envelope + ridge noise. */
+function ascentMountainHeight(lx: number, lz: number, baseR: number, peakH: number): number {
+  const r = Math.hypot(lx, lz);
+  if (r >= baseR) return 0;
+  if (r < 0.4) return peakH;
+  const t = 1 - r / baseR; // 1 at peak → 0 at foot
+  // 5 soft shelves so it reads as a terrained mass, not a cone
+  const terraces = 5;
+  const stepped = Math.floor(t * terraces) / terraces;
+  const within = (t * terraces) % 1;
+  const shelf = stepped + Math.pow(within, 1.65) / terraces;
+  const body = peakH * Math.pow(shelf, 0.9);
+  // asymmetric ridges / spurs
+  const n1 = ascentFbm(lx * 0.07 + 3.1, lz * 0.07 - 1.7);
+  const n2 = ascentFbm(lx * 0.16 - 8.2, lz * 0.16 + 4.4);
+  const ridge = (n1 * 0.7 + n2 * 0.3 - 0.38) * peakH * 0.28 * t;
+  const spur = Math.cos(Math.atan2(lz, lx) * 2.5 + 0.9) * peakH * 0.08 * t * t;
+  return Math.max(0, Math.min(peakH * 1.05, body + ridge + spur));
+}
+
 function AscentMountain({
   pos,
   accent,
@@ -1467,6 +1491,36 @@ function AscentMountain({
 }) {
   const [x, y, z] = pos;
   const beams = useRef<THREE.Group>(null);
+  const geo = useMemo(() => {
+    const SEG = 64;
+    const span = baseR * 2;
+    const g = new THREE.PlaneGeometry(span, span, SEG, SEG);
+    g.rotateX(-Math.PI / 2);
+    const posAttr = g.attributes.position as THREE.BufferAttribute;
+    const colors = new Float32Array(posAttr.count * 3);
+    const low = new THREE.Color("#1a1628");
+    const mid = new THREE.Color("#2e2a42");
+    const high = new THREE.Color("#4a4660");
+    const crown = new THREE.Color(accent);
+    const c = new THREE.Color();
+    for (let i = 0; i < posAttr.count; i++) {
+      const lx = posAttr.getX(i);
+      const lz = posAttr.getZ(i);
+      const h = ascentMountainHeight(lx, lz, baseR, peakH);
+      posAttr.setY(i, h);
+      const n = Math.max(0, Math.min(1, h / peakH));
+      if (n < 0.45) c.lerpColors(low, mid, n / 0.45);
+      else if (n < 0.82) c.lerpColors(mid, high, (n - 0.45) / 0.37);
+      else c.lerpColors(high, crown, (n - 0.82) / 0.18);
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    g.computeVertexNormals();
+    return g;
+  }, [baseR, peakH, accent]);
+
   useFrame((state) => {
     if (!beams.current) return;
     const t = state.clock.elapsedTime;
@@ -1475,27 +1529,26 @@ function AscentMountain({
       if (m) m.opacity = 0.16 + Math.sin(t * 1.6 + i * 1.7) * 0.08;
     });
   });
-  const beamH = 46;
+  const beamH = 62;
   return (
     <group position={[x, y, z]}>
-      {/* the peak — dark rock rising to the summit */}
-      <mesh position={[0, peakH / 2, 0]} castShadow receiveShadow>
-        <coneGeometry args={[baseR, peakH, 40, 1]} />
-        <meshStandardMaterial color="#2a2740" roughness={0.95} metalness={0.05} flatShading />
+      {/* terrained mass — shelves + ridges, not a cone */}
+      <mesh geometry={geo} castShadow receiveShadow>
+        <meshStandardMaterial vertexColors roughness={0.94} metalness={0.06} flatShading />
       </mesh>
-      {/* a lit crown ring at the summit where the portal sits */}
+      {/* lit crown ring at the summit where the portal sits */}
       <mesh position={[0, peakH + 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.4, 3.4, 40]} />
+        <ringGeometry args={[2.8, 4.2, 48]} />
         <meshBasicMaterial color={accent} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
       {/* shining beams to the sky */}
       <group ref={beams} position={[0, peakH, 0]}>
         {[0, 1, 2].map((i) => {
           const a = (i / 3) * Math.PI * 2;
-          const rr = i === 0 ? 0 : 1.6;
+          const rr = i === 0 ? 0 : 1.8;
           return (
             <mesh key={i} position={[Math.cos(a) * rr, beamH / 2, Math.sin(a) * rr]}>
-              <cylinderGeometry args={[i === 0 ? 0.7 : 0.35, i === 0 ? 1.6 : 0.9, beamH, 16, 1, true]} />
+              <cylinderGeometry args={[i === 0 ? 0.85 : 0.4, i === 0 ? 1.9 : 1.05, beamH, 16, 1, true]} />
               <meshBasicMaterial color={accent} transparent opacity={0.2} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
             </mesh>
           );
@@ -3508,7 +3561,7 @@ function Handler({
         // planar trigger covering the mountain foot → summit, so you can enter by
         // walking up to the peak's base or by flying to the portal that crowns it
         const dh = Math.hypot(t.x - circuitTunnelTarget.pos.x, t.z - circuitTunnelTarget.pos.z);
-        if (dh < 9.0) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
+        if (dh < ASCENT_ENTER_R) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
       }
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);

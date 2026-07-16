@@ -1982,8 +1982,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
                   : `INSIDE ${VENUES[activeVenue!].name.toUpperCase()} · WALK TO THE EXIT TO RETURN`
                 : isHub
                   ? isMobile
-                    ? "Gates → regions · game doors → Amphitheatre & Circuit"
-                    : "THE CONCORD · GATES → REGIONS · GAME DOORS FOR AMPHITHEATRE & CIRCUIT"
+                    ? "Gates → regions"
+                    : "THE CONCORD · GATES → REGIONS"
                   : isMobile
                     ? "Walk to glowing spots · return arch → Concord"
                     : scenario.id === "gauntlet"
