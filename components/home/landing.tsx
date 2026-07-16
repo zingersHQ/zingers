@@ -14,7 +14,7 @@ import { worldByRegion, worldById } from "@/components/grounds/worlds";
 import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { FIRST_FIGHT_WORLD } from "@/lib/first-duel";
 import { useIsMobile } from "@/lib/use-device";
-import { playEntryHref } from "@/lib/play-nav";
+import { MOBILE_PLAY_HREF, playEntryHref } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
 
@@ -246,13 +246,28 @@ export function Landing() {
   const isMobile = useIsMobile();
   const [entering, setEntering] = useState(false);
 
+  // Phones: homepage is /m Take flight (Trainer+champion → Climb), not this
+  // desktop Awaken hero. Resolve once on mount (opaque sky while checking) so
+  // the desktop FirstRun never flashes under a phone redirect.
+  const [door, setDoor] = useState<"checking" | "mobile" | "desktop">("checking");
+  useEffect(() => {
+    const phone = typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 640px)").matches;
+    if (phone) {
+      setDoor("mobile");
+      router.replace(MOBILE_PLAY_HREF);
+      return;
+    }
+    setDoor("desktop");
+  }, [router]);
+
   const playHref = playEntryHref(isMobile);
 
-  // Warm the play route while the intro deck is on screen so "Then you fly" →
-  // Play doesn't sit on a frozen slide for a cold chunk download.
+  // Warm the play route while the intro deck is on screen so Start → summoning
+  // doesn't sit on a frozen hero for a cold chunk download.
   useEffect(() => {
+    if (door !== "desktop") return;
     router.prefetch(playHref);
-  }, [router, playHref]);
+  }, [router, playHref, door]);
 
   const goPlay = useCallback(() => {
     setEntering(true);
@@ -268,16 +283,19 @@ export function Landing() {
   const [deckIndex, setDeckIndex] = useState(0);
   const deckFocused = deckIndex > 0;
 
-  // The instant a visitor engages the onboarding deck (pages past slide 1) they're
-  // heading for the guided first fight. Start pulling that arena's heavy grounds
-  // assets (void nature kit + world chunk) now, in the background, so by the time
-  // they finish the deck → pick → strategy → Train, the battleground is warm and
-  // doesn't stall on a cold "loading the grounds…". Idempotent + browser-cached.
+  // Hero Next goes straight to summoning → pick → Train, so warm the first-fight
+  // world as soon as the desktop door is up (and again if they ever page past
+  // slide 1 once the later beats are restored). Idempotent + browser-cached.
+  useEffect(() => {
+    if (door !== "desktop") return;
+    warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
+  }, [door]);
   useEffect(() => {
     if (!deckFocused) return;
     warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
   }, [deckFocused]);
 
+  // Desktop: hero Next/Start/SKIP → /grounds → "Summoning minds…" → pick.
   const enterTutorial = goPlay;
 
   const toHomepage = useCallback(() => {
@@ -289,9 +307,24 @@ export function Landing() {
 
   const startJourney = goPlay;
 
+  // Opaque sky while we decide phone vs desktop — matches /m Take flight so a
+  // phone never sees the desktop Awaken hero for a frame.
+  if (door !== "desktop") {
+    return (
+      <div
+        aria-busy="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "radial-gradient(120% 90% at 50% 8%, #1a2b4d 0%, #12112a 46%, #08070f 100%)",
+        }}
+      />
+    );
+  }
+
   return (
     <main className="lp">
-      {/* ── SLIDE 1: the real intro deck, inline ─────────────────────── */}
+      {/* ── HERO: Awaken beat (later cinematic slides parked) ─────────── */}
       <section className="lp-deck" aria-label="Introduction">
         <FirstRun embedded onClose={enterTutorial} onIndexChange={setDeckIndex} />
         {!deckFocused && (
