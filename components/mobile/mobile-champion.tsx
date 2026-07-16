@@ -2,10 +2,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // M2 — the Champion tab (docs/mobile.md). The phone's raise lane, shown directly
 // (no "open X" bridge): your one owned champion — its body, career record,
-// evolving strategy dials, and paid training. Reuses the real store actions
-// (setStrat / trainChampion / trainWithFragment) and the same career-derived
-// portrait the rest of the app uses, so training here visibly reshapes the body
-// and marks the champion everywhere.
+// strategy readout (shaped by Imprints + bouts), and paid training. Reuses the
+// real store actions (imprint / trainChampion / trainWithFragment) and the same
+// career-derived portrait the rest of the app uses, so training here visibly
+// reshapes the body and marks the champion everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
@@ -31,7 +31,6 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const owned = useChampions((s) => s.owned);
   const progress = useChampions((s) => s.progress);
   const recipes = useChampions((s) => s.recipes);
-  const setStrat = useChampions((s) => s.setStrat);
   const trainChampion = useChampions((s) => s.trainChampion);
   const trainWithFragment = useChampions((s) => s.trainWithFragment);
   const imprint = useChampions((s) => s.imprint);
@@ -59,13 +58,6 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
     setToast(m);
     setTimeout(() => setToast(null), 2600);
   }, []);
-
-  const setDial = useCallback(
-    (k: keyof Strat, v: number) => {
-      if (owned) setStrat(owned, { ...strat, [k]: v });
-    },
-    [owned, strat, setStrat],
-  );
 
   const train = useCallback(async () => {
     if (!owned || busy) return;
@@ -166,31 +158,32 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
         </div>
 
-        {/* strategy — how the mind thinks (edits persist to the recipe) */}
+        {/* strategy — readout only; Imprints + bouts move the dials */}
         <div className="panel" style={{ padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 12 }}>
             STRATEGY · HOW {name.toUpperCase()} THINKS
           </div>
           {DIALS.map((d) => (
-            <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} onChange={(v) => setDial(d.key, v)} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />
+            <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />
           ))}
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "2px 0 0" }}>
-            You set conditions; the champion decides its own moves in battle. Changes take hold next fight.
+            Lessons and fights move these dials. Teach below to reshape how it thinks — it picks its own moves in battle.
           </p>
         </div>
 
-        {/* imprint — teach one lesson; the mind answers and internalizes it */}
+        {/* imprint — the intentional way to shift strategy + write memory */}
         <div className="panel" style={{ ["--ac" as string]: col, padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Brain size={12} strokeWidth={2.4} /> IMPRINT · TEACH {name.toUpperCase()} A LESSON
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            One lesson sticks in memory and gently shifts how it fights. Each lesson lands once a day.
+            Your way to change strategy. One lesson a day sticks in memory and nudges the dials above.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
             {IMPRINT_LESSONS.map((l) => {
               const learned = imprintDays[owned]?.[l.id] === day;
               const locked = learned || (!!imprinting && imprinting !== l.id);
+              const nudge = describeDial(l.dial);
               return (
                 <button
                   key={l.id}
@@ -201,7 +194,9 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700 }}>{l.label}</div>
-                    <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>{learned ? "Learned today · back tomorrow" : l.hint}</div>
+                    <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>
+                      {learned ? "Learned today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
+                    </div>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: learned ? "var(--muted2)" : col, fontWeight: 700 }}>{imprinting === l.id ? "…" : learned ? "✓" : "Teach"}</span>
                 </button>

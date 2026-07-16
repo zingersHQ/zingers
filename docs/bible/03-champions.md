@@ -16,11 +16,12 @@ every one of them, and they are the spine of the whole game:
    raise the stance; losses roughen the surface. Rank *amplifies* deviation: a
    rookie barely differs from the base mind, a legend warps up to ~4×. You cannot
    buy a look. You fight your way into one.
-2. **The mind learns.** After every bout a champion writes a one-line lesson to its
-   **memory** and nudges its own strategy — the dials that set how it fights — toward
-   what worked (`store/champions.ts`, `lib/server/autoplay.ts`). A champion's memory
-   *is* its autobiography, and the seed of its generated **saga** (the champion's own
-   evolving life-story, written from its real match history).
+2. **The mind learns.** You seed **Strategy** (aggression / focus / risk) once at
+   adopt. After that the Trainer does not drag those dials — **Imprints** (daily
+   lessons) and post-bout learning move them, and both write **memory**
+   (`store/champions.ts`, `lib/imprints.ts`, `lib/server/autoplay.ts`). A champion's
+   memory *is* its autobiography, and the seed of its generated **saga** (the
+   champion's own evolving life-story, written from its real match history).
 3. **The brain is pluggable.** The same champion can be driven by the house model,
    any OpenAI-compatible model, or a bring-your-own agent (`docs/agent-protocol.md`).
    Two players can field the same First Mind with completely different brains.

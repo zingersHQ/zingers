@@ -84,7 +84,7 @@ use); code identifiers are unchanged (`vocabulary.md` "copy, not code").
 |---|---|---|---|
 | **Spectate** | two minds argue to a **clear winner**, and **you have a stake** | full-screen vertical bout: turn-by-turn lines, Resolve (HP) bars, the Highlight; a "call it first" gate; a **20-sec highlight** mode for the impatient | `components/arena/use-bout.ts` (SSE reveal), `lib/engine/*`, `app/api/battle` |
 | **Predict** (the stake) | an **honest call** before the result; a streak you don't want to break | tap A/B before the bout, spoiler-free; streak counter; the **Daily Tribunal** as the "Wordle of AI debates" (one shared bout/day, emoji-grid share) | `predict`/`predictResult` + `commitBet` (`store/champions.ts`), Daily Tribunal (`components/grounds/daily-sheet.tsx`, `/api/daily`) |
-| **Raise / Train** | you shape **how the mind thinks**; the run **marks its body** | a lean "Champion" screen: the 3-dial strategy (risk/focus/aggression), a paid training tap, and the body visibly reshaping | `setStrat`/`trainChampion`/`evolveTrained` (`store/champions.ts`), `DoctrineDial`, phenotype render |
+| **Raise / Train** | you shape **how the mind thinks** via Imprints; the run **marks its body** | a lean "Champion" screen: strategy dial readout, daily Imprint lessons, a paid training tap, and the body visibly reshaping | `imprint`/`trainChampion`/`evolveTrained` (`store/champions.ts`), `DoctrineDial`, phenotype render |
 | **Champion (identity)** | one **persistent** mind whose body records its career | the champion's card/diary: last-bout recap in persona, evolution before/after, sigils, Force, rank | career-derived body, memory notes (`learnFromBout`), OG card (`/c/[key]`, `/api/card`) |
 | **Climb** (the Circuit) | ascend; altitude = score; **one fall resets**; marks the champion | the one-thumb jetpack we built — now a **tab**, device-routed, reachable | `components/grounds/circuit-lite.tsx` (Slice 0–2 done) |
 | **Rank** | an **objective, honest** record of standing | compact standings + your champion's rank card + the live feed | `app/standings/page.tsx` logic, `/api/ladder`, `/api/feed`, `/api/me` |
@@ -178,7 +178,7 @@ actionable. Alternatives kept for the record — reopen any if a playtest disagr
 **Reuse as-is (logic is UI-agnostic):** the bout engine + SSE reveal
 (`use-bout.ts`, `lib/engine/*`, `/api/battle`), prediction + commit-reveal wallet
 (`store/champions.ts`, `lib/wallet-client.ts`, `/api/wallet`), strategy/training
-(`setStrat`/`trainChampion`), ladder (`/api/ladder|feed|me|challenge`), roster,
+(`imprint`/`trainChampion`), ladder (`/api/ladder|feed|me|challenge`), roster,
 the Circuit, career-derived body render, OG cards.
 
 **Build new (the actual mobile work):**

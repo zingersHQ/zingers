@@ -1,8 +1,9 @@
 "use client";
 
-/** Doctrine slider — Aggression / Focus / Risk. Shared by train overlays.
- * `highlight` briefly glows the dial when an Imprint just nudged this axis, so
- * the handler can see the lesson actually landed. */
+/** Strategy dial — Aggression / Focus / Risk.
+ * Editable when `onChange` is passed (first-duel seed only). Otherwise a
+ * readout: Imprints and bouts move these values; the handler does not drag them.
+ * `highlight` briefly glows when an Imprint just nudged this axis. */
 export function DoctrineDial({
   label,
   value,
@@ -13,11 +14,12 @@ export function DoctrineDial({
 }: {
   label: string;
   value: number;
-  onChange: (v: number) => void;
+  onChange?: (v: number) => void;
   color: string;
   hints: [string, string];
   highlight?: boolean;
 }) {
+  const editable = typeof onChange === "function";
   return (
     <div
       style={{
@@ -39,8 +41,15 @@ export function DoctrineDial({
         min={0}
         max={100}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: color }}
+        disabled={!editable}
+        onChange={editable ? (e) => onChange(Number(e.target.value)) : undefined}
+        aria-readonly={!editable}
+        style={{
+          width: "100%",
+          accentColor: color,
+          cursor: editable ? "pointer" : "default",
+          opacity: editable ? 1 : 0.85,
+        }}
       />
       <div className="mono" style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted2)" }}>
         <span>{hints[0]}</span>

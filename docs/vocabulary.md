@@ -16,7 +16,8 @@ Our audience is global. Many players read English as a second language, and many
 |---|---|---|
 | **Trainer** | Reader, Handler | The player. You raise the champions; you don't fight. |
 | **Champion** | (mind, for the fighter) | "Mind" is fine for a raw/unclaimed one in lore; the player's fighter is a Champion. |
-| **Strategy** | doctrine | The aggression/focus/risk dials. *Code identifiers* (`doctrine()`, `DoctrineDial`, `card.doctrine`, the `d` URL param) keep their names — only visible English changes. |
+| **Strategy** | doctrine | The aggression/focus/risk dials (seeded at adopt; moved by Imprints and bouts). *Code identifiers* (`doctrine()`, `DoctrineDial`, `card.doctrine`, the `d` URL param) keep their names — only visible English changes. |
+| **Imprint** | lesson / teach (alone) | The daily raising verb that writes memory and nudges Strategy. |
 | **Clan** | Allegiance, House | The Force you swear to. The verb "swear allegiance to your Clan" is fine (plain English). |
 | **regions** / **floating regions** | region-slabs, slabs | Drop "slab". |
 | **floating / drifting** | adrift | Plainer synonyms. |

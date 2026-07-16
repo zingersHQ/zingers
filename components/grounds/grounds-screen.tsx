@@ -2950,19 +2950,20 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         </div>
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 10px" }}>
-          DOCTRINE · how it fights (free to tune anytime)
+          STRATEGY · how it fights (lessons &amp; bouts move these)
         </div>
-        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} highlight={litAxes.has("aggression")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, aggression: v })} />
-        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} highlight={litAxes.has("focus")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, focus: v })} />
-        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} highlight={litAxes.has("risk")} onChange={(v) => store.setStrat(ckey, { ...recipe.strat, risk: v })} />
+        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} highlight={litAxes.has("aggression")} />
+        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} highlight={litAxes.has("focus")} />
+        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} highlight={litAxes.has("risk")} />
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 8px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          IMPRINT · teach one lesson a day (it answers &amp; remembers)
+          IMPRINT · your way to change strategy (one lesson a day)
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {IMPRINT_LESSONS.map((l) => {
             const learned = store.imprintDays[ckey]?.[l.id] === day;
             const dim = learned || (!!imprinting && imprinting !== l.id);
+            const nudge = describeDial(l.dial);
             return (
               <button
                 key={l.id}
@@ -2973,7 +2974,9 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
                 style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: learned ? "default" : imprinting ? "wait" : "pointer", opacity: dim ? 0.5 : 1 }}
               >
                 <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}{learned ? " ✓" : ""}</span>
-                <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>{imprinting === l.id ? "teaching…" : learned ? "learned today · back tomorrow" : l.hint}</span>
+                <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>
+                  {imprinting === l.id ? "teaching…" : learned ? "learned today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
+                </span>
               </button>
             );
           })}

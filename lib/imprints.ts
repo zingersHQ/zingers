@@ -1,8 +1,9 @@
-// Imprints — the daily "raising" verb. A handler teaches one lesson; the mind
-// acknowledges it in character, writes it to memory, and nudges its doctrine.
-// These presets are the source of truth shared by the mobile/desktop UI AND the
-// server route's deterministic fallback, so a lesson means the same thing with
-// or without a live model. Client-safe (pure data + types only).
+// Imprints — the daily "raising" verb and the intentional way to reshape
+// Strategy after adopt. A Trainer teaches one lesson; the mind acknowledges it
+// in character, writes it to memory, and nudges its dials. (Sliders are a
+// readout — only first-duel seeding and post-bout learnFromBout also write
+// strat.) Presets are shared by mobile/desktop UI and the server route's
+// deterministic fallback. Client-safe (pure data + types only).
 import type { Strat } from "@/lib/types";
 
 export interface ImprintLesson {

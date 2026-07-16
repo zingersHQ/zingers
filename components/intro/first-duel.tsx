@@ -240,7 +240,7 @@ function TrainPhase({
           </div>
         </div>
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>
-          DOCTRINE · free to adjust
+          STRATEGY · how it starts (lessons reshape this later)
         </div>
         <DoctrineDial label="Aggression" value={strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} onChange={(v) => patchStrat({ aggression: v })} />
         <DoctrineDial label="Focus" value={strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} onChange={(v) => patchStrat({ focus: v })} />
