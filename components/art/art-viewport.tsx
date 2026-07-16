@@ -549,7 +549,7 @@ export function ArtViewport({
           width: "100%",
           // Hero duo must stay short enough that action buttons stay on-screen.
           ...(wide
-            ? { height: "min(34vh, 320px)", maxHeight: 320 }
+            ? { height: "min(48vh, 460px)", maxHeight: 460 }
             : { aspectRatio: "1 / 1" }),
           background: bg,
         }}
