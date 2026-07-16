@@ -66,11 +66,15 @@ const FORWARD_SPOOL = 8;    // snappy launch into cruise (climb-feel §4 — inf
 // stronger shove down-track. Nudge the one-thumb cruise up to match that feel —
 // "slightly faster in the front direction" — without touching the difficulty math.
 const FORWARD_PUSH = 1.25;
-const GRAVITY = 24;         // downward accel (u/s²) — weight without a stone drop
+const GRAVITY = 24;         // downward accel (u/s²) — hard fall when not cruising
 const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
 const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontrollable)
 const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
+// Auto-forward is always on in Climb — released thumb = cruise glide (slight
+// descent), not a stone drop. Matches desktop world/Circuit cruise feel.
+const CRUISE_SINK = -2.0;   // target vy while gliding forward without thrust
+const CRUISE_GLIDE = 6;     // ease rate toward cruise sink
 const FLOOR_Y = -9;         // fall below this → run over
 // Soft ceiling: a full hold parks you INSIDE the next ring's opening so simply
 // holding threads the gate instead of overshooting into the void.
@@ -252,13 +256,25 @@ function Flyer({
 
     const cp = track.checkpoints[cpNext.current];
 
-    // vertical: ACCELERATION model — heavy gravity, powerful thrust, kick on press
+    // vertical: thrust climbs; released thumb cruises forward with a slight sink
+    // (auto-+Z is always on). Stumble lock drops into a hard gravity fall so the
+    // shove still reads. Kick on each fresh press.
     if (held && !wasHeld.current) {
       vy.current = Math.max(vy.current, 0) + PRESS_KICK;
     }
     wasHeld.current = held;
-    const accel = held ? THRUST_ACCEL - GRAVITY : -GRAVITY;
-    vy.current = THREE.MathUtils.clamp(vy.current + accel * dt, -MAX_FALL, MAX_RISE);
+    if (held) {
+      vy.current = THREE.MathUtils.clamp(
+        vy.current + (THRUST_ACCEL - GRAVITY) * dt,
+        -MAX_FALL,
+        MAX_RISE,
+      );
+    } else if (controlLocked) {
+      vy.current = THREE.MathUtils.clamp(vy.current - GRAVITY * dt, -MAX_FALL, MAX_RISE);
+    } else {
+      const k = 1 - Math.exp(-CRUISE_GLIDE * dt);
+      vy.current = vy.current + (CRUISE_SINK - vy.current) * k;
+    }
     pos.current.y += vy.current * dt;
 
     // soft ceiling inside the next gate's opening — a hold threads it, not misses

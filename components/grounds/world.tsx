@@ -56,7 +56,7 @@ import {
   circuitSpotFor,
   type VenueId,
 } from "./venues";
-import { VenueExitPortal, AscentPortal, AscentReturnPortal, type PortalTheme } from "./venue-portals";
+import { VenueExitPortal, AscentPortal, AscentReturnPortal, PORTAL_OPEN_Y, type PortalTheme } from "./venue-portals";
 import { reachThemeByIndex } from "./climb/reaches";
 import { preloadNatureBiome } from "@/lib/render/preload-grounds";
 
@@ -287,7 +287,6 @@ export default function World({
   circuitCpNextRef,
   circuitHazards = [],
   onCircuitStumble,
-  onVenueExit,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
@@ -338,7 +337,6 @@ export default function World({
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
-  onVenueExit?: () => void;
   worldLife?: WorldLife;
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
@@ -479,6 +477,13 @@ export default function World({
     const z = Math.sin(spot.angle) * spot.dist;
     return { label: spot.label, pos: new THREE.Vector3(x, terrainHeight(x, z, shape, knoll) + 1, z) };
   }, [inRegion, regionWorldId, shape, knoll]);
+  // mountain foot for walk-height / companion floor (portal pos.y is crest+1)
+  const ascentFoot = useMemo<AscentFoot | null>(() => {
+    if (!circuitTunnelTarget) return null;
+    const x = circuitTunnelTarget.pos.x;
+    const z = circuitTunnelTarget.pos.z;
+    return { x, z, baseY: terrainHeight(x, z, shape, knoll) };
+  }, [circuitTunnelTarget, shape, knoll]);
   const venueExitTarget = useMemo(() => {
     if (!inVenue || !activeVenue) return null;
     const ex = VENUE_EXIT[activeVenue];
@@ -756,6 +761,7 @@ export default function World({
                   camCue={camCue}
                   shape={shape}
                   spawnKnoll={knoll}
+                  ascentFoot={ascentFoot}
                 />
               )}
             </>
@@ -788,8 +794,8 @@ export default function World({
               concordVenueTargets={concordVenueTargets}
               returnTarget={returnTarget}
               circuitTunnelTarget={circuitTunnelTarget}
+              ascentFoot={ascentFoot}
               venueExitTarget={venueExitTarget}
-              onVenueExit={onVenueExit}
               spawnPos={venueSpawn ?? undefined}
               trainPad={trainPad}
               challengeTargets={challengeTargets}
@@ -1031,8 +1037,14 @@ const COMPANION_FOLLOW = {
   pathSide: 0.35,
 } as const;
 
-function companionFeetY(x: number, z: number, shape: TerrainShape, knoll: SpawnKnoll): number {
-  return terrainHeight(x, z, shape, knoll);
+function companionFeetY(
+  x: number,
+  z: number,
+  shape: TerrainShape,
+  knoll: SpawnKnoll,
+  ascent: AscentFoot | null = null,
+): number {
+  return worldWalkHeight(x, z, shape, knoll, ascent);
 }
 
 /** Wing slot slightly behind + beside the Handler (relative to body heading). */
@@ -1065,6 +1077,7 @@ function OwnedCompanion({
   camCue,
   shape,
   spawnKnoll,
+  ascentFoot = null,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -1077,6 +1090,7 @@ function OwnedCompanion({
   camCue: React.RefObject<CamCue>;
   shape: TerrainShape;
   spawnKnoll: SpawnKnoll;
+  ascentFoot?: AscentFoot | null;
 }) {
   const [ownedAct, setOwnedAct] = useState(0);
   useEffect(() => {
@@ -1118,7 +1132,7 @@ function OwnedCompanion({
   useEffect(() => {
     const hp = handlerPos.current;
     const hh = handlerHeading.current;
-    const y = companionFeetY(hp.x, hp.z, shape, spawnKnoll);
+    const y = companionFeetY(hp.x, hp.z, shape, spawnKnoll, ascentFoot);
     wpos.current.set(hp.x, y, hp.z);
     wvel.current.set(0, 0, 0);
     smoothHVel.current.set(0, 0, 0);
@@ -1131,7 +1145,7 @@ function OwnedCompanion({
     introBooted.current = false;
     prevWposInit.current = false;
     companionLocoHold.current = 0;
-  }, [ownedKey, shape, spawnKnoll, handlerPos, handlerHeading]);
+  }, [ownedKey, shape, spawnKnoll, ascentFoot, handlerPos, handlerHeading]);
 
   useFrame((_, dtRaw) => {
     if (!rigRef.current || !c) return;
@@ -1166,7 +1180,7 @@ function OwnedCompanion({
     if (!introBooted.current) {
       introBooted.current = true;
       const far = companionDockSlot(hp.x, hp.z, hh, introStart);
-      wpos.current.set(far.tx, companionFeetY(far.tx, far.tz, shape, spawnKnoll), far.tz);
+      wpos.current.set(far.tx, companionFeetY(far.tx, far.tz, shape, spawnKnoll, ascentFoot), far.tz);
       followTarget.current.set(far.tx, wpos.current.y, far.tz);
     }
 
@@ -1194,7 +1208,7 @@ function OwnedCompanion({
     const introDock = companionDockSlot(hp.x, hp.z, hh, slotR);
     const tx = introActive.current ? introDock.tx : ft.x;
     const tz = introActive.current ? introDock.tz : ft.z;
-    const slotGroundY = companionFeetY(tx, tz, shape, spawnKnoll);
+    const slotGroundY = companionFeetY(tx, tz, shape, spawnKnoll, ascentFoot);
     const handlerFlying = cue?.flying ?? hp.y > liftThreshold;
     const dockY = handlerFlying ? Math.max(slotGroundY, hp.y - wingDrop) : slotGroundY;
 
@@ -1432,12 +1446,14 @@ function Beacon({ pos, color, h = 30 }: { pos: [number, number, number]; color: 
 // ── Ascent mountain ──────────────────────────────────────────────────────────
 // The Circuit's region portal crowns a large terrained peak far out in the wilds
 // (not a sad cone): shelves, ridges, and spurs from a local heightfield, with
-// shining light beams so it's spottable from across the map. Decorative only
-// (no collider) so it never traps the Handler — the jetpack carries you to the
-// summit portal, and the walk-up trigger is planar so standing at the foot works.
+// shining light beams so it's spottable from across the map. Solid trimesh +
+// walk-height sampling so you can climb the shelves on foot or jetpack to the
+// summit portal. Crossing the portal plane enters the Circuit (no E).
 const ASCENT_PEAK_H = 32;       // summit height above the ground
 const ASCENT_BASE_R = 44;       // mountain footprint radius
-const ASCENT_ENTER_R = 26;      // planar walk-up / fly-in trigger around the peak
+// Portal cross volume (plane at summit) — see Handler near-detect for Ascent enter
+
+type AscentFoot = { x: number; z: number; baseY: number };
 
 function ascentHash(x: number, z: number) {
   const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -1484,6 +1500,22 @@ function ascentMountainHeight(lx: number, lz: number, baseR: number, peakH: numb
   return Math.max(0, Math.min(peakH * 1.05, body + ridge + spur));
 }
 
+/** Walkable world Y — host terrain, or the Ascent mountain surface when over it. */
+function worldWalkHeight(
+  x: number,
+  z: number,
+  shape: TerrainShape,
+  knoll: SpawnKnoll,
+  ascent: AscentFoot | null = null,
+): number {
+  const ground = terrainHeight(x, z, shape, knoll);
+  if (!ascent) return ground;
+  const lx = x - ascent.x;
+  const lz = z - ascent.z;
+  if (Math.hypot(lx, lz) >= ASCENT_BASE_R) return ground;
+  return Math.max(ground, ascent.baseY + ascentMountainHeight(lx, lz, ASCENT_BASE_R, ASCENT_PEAK_H));
+}
+
 function AscentMountain({
   pos,
   accent,
@@ -1512,7 +1544,10 @@ function AscentMountain({
     for (let i = 0; i < posAttr.count; i++) {
       const lx = posAttr.getX(i);
       const lz = posAttr.getZ(i);
-      const h = ascentMountainHeight(lx, lz, baseR, peakH);
+      const r = Math.hypot(lx, lz);
+      // Sink the square's exterior below the host terrain so the trimesh only
+      // collides on the circular mountain — not a flat pad at the corners.
+      const h = r >= baseR ? -2.5 : ascentMountainHeight(lx, lz, baseR, peakH);
       posAttr.setY(i, h);
       const n = Math.max(0, Math.min(1, h / peakH));
       if (n < 0.45) c.lerpColors(low, mid, n / 0.45);
@@ -1538,10 +1573,12 @@ function AscentMountain({
   const beamH = 62;
   return (
     <group position={[x, y, z]}>
-      {/* terrained mass — shelves + ridges, not a cone */}
-      <mesh geometry={geo} castShadow receiveShadow>
-        <meshStandardMaterial vertexColors roughness={0.94} metalness={0.06} flatShading />
-      </mesh>
+      {/* terrained mass — solid so shelves are walkable (same trimesh path as Terrain) */}
+      <RigidBody type="fixed" colliders="trimesh">
+        <mesh geometry={geo} castShadow receiveShadow>
+          <meshStandardMaterial vertexColors roughness={0.94} metalness={0.06} flatShading />
+        </mesh>
+      </RigidBody>
       {/* lit crown ring at the summit where the portal sits */}
       <mesh position={[0, peakH + 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[2.8, 4.2, 48]} />
@@ -2411,16 +2448,21 @@ const TURN_GROUND = 22, TURN_AIR = 16;
 // second tap (double-tap). Hold to thrust smoothly once aloft.
 const FLY_TRIGGER = 1;     // jumps past this deploy the pack
 // ── jetpack VERTICAL — the mobile Climb's acceleration model (circuit-lite.tsx) ──
-// Heavy gravity always pulling, a powerful thrust punching up through it, and an
-// instant kick on each fresh press: vertical flight is a timed "flap" you master,
-// not an eased hover. gravityScale is 0 while flying (below), so this model owns Y
-// with no double gravity. Scaled ~1.4× the mobile numbers for the larger world /
-// Circuit geometry — same FEEL. One block serves the open world AND the Circuit.
-const FLY_GRAVITY = 30;        // downward accel (u/s²) — real weight
+// Three vertical regimes while the pack is lit (gravityScale is 0 — we own Y):
+//   • thrust held  → powerful climb through gravity (timed "flap")
+//   • forward cruise (W / Circuit auto-+Z), no thrust → slight descent, not a hover
+//   • no forward intent, no thrust → hard fall under FLY_GRAVITY
+// Scaled ~1.4× the mobile numbers for the larger world / Circuit geometry.
+const FLY_GRAVITY = 30;        // downward accel (u/s²) — real weight when idle / cut
 const FLY_THRUST_ACCEL = 54;   // upward accel while the jet is held (net +24 up)
 const FLY_PRESS_KICK = 4.2;    // instant upward velocity pop on each new press (a flap)
 const FLY_MAX_RISE = 13;       // climb clamp — a full hold rises, still aimable
 const FLY_MAX_FALL = 20;       // terminal fall (sticky, never uncontrollable)
+// Cruise glide: powered forward without thrusting — ease toward a gentle sink so
+// W / Circuit cruise reads as "flying forward with a slight descent", not flat
+// horizontal and not a stone drop. Idle (no forward) keeps full FLY_GRAVITY.
+const FLY_CRUISE_SINK = -2.8;  // target vy while cruising without thrust (u/s)
+const FLY_CRUISE_GLIDE = 7;    // ease rate toward cruise sink (frame-rate independent)
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
 // Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
 // skill axis and forward is the heartbeat. W surges, S brakes lightly; A/D = light steer.
@@ -2617,8 +2659,8 @@ function Handler({
   concordVenueTargets = [],
   returnTarget = null,
   circuitTunnelTarget = null,
+  ascentFoot = null,
   venueExitTarget = null,
-  onVenueExit,
   spawnPos,
   trainPad,
   challengeTargets,
@@ -2666,8 +2708,9 @@ function Handler({
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
   returnTarget?: THREE.Vector3 | null;
   circuitTunnelTarget?: { label: string; pos: THREE.Vector3 } | null;
+  /** Region Ascent mountain foot — walk height + safety net over the peak. */
+  ascentFoot?: AscentFoot | null;
   venueExitTarget?: { label: string; pos: THREE.Vector3; radius: number } | null;
-  onVenueExit?: () => void;
   spawnPos?: [number, number, number];
   trainPad: [number, number, number];
   challengeTargets: { key: string; name: string; id: string; handle?: string; pos: THREE.Vector3 }[];
@@ -2723,7 +2766,6 @@ function Handler({
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
   const failCooldown = useRef(0);
-  const venueExitCooldown = useRef(0);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
@@ -2795,8 +2837,8 @@ function Handler({
     travelRef.current = (x, z, faceHeading) => {
       const rb = body.current;
       if (!rb) return;
-      // amphitheatre = flat venue sand at y≈0; otherwise drop onto the host terrain
-      const groundY = inAmphitheatre ? 0 : terrainHeight(x, z, shape, spawnKnoll);
+      // amphitheatre = flat venue sand at y≈0; otherwise drop onto host terrain / Ascent
+      const groundY = inAmphitheatre ? 0 : worldWalkHeight(x, z, shape, spawnKnoll, ascentFoot);
       const y = spawnPos ? spawnPos[1] : groundY + FOOT_OFF + 1.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -2816,7 +2858,7 @@ function Handler({
     return () => {
       if (travelRef) travelRef.current = null;
     };
-  }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre]);
+  }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre, ascentFoot]);
 
   // Circuit → +z down-track; Amphitheatre → −z toward the throne; wild → plaza.
   useEffect(() => {
@@ -2977,7 +3019,7 @@ function Handler({
     // through while the walk anim kept playing (the "no ground / walking on air"
     // bug). Flat 0 aligns restY, the spawn-settle and the grounded fallback with
     // the actual floor collider.
-    const floorY = inAmphitheatre ? 0 : terrainHeight(t.x, t.z, shape, spawnKnoll);
+    const floorY = inAmphitheatre ? 0 : worldWalkHeight(t.x, t.z, shape, spawnKnoll, ascentFoot);
     const restY = floorY + FOOT_OFF; // capsule half-height + radius (2/3-scale body)
     // Amphitheatre: the host-terrain safety net (below) used to force ground.current≥1
     // with no matching exit while the capsule sat below the wild heightfield. That
@@ -3214,21 +3256,28 @@ function Handler({
     if (jumpBuffer.current > 0) jumpBuffer.current = Math.max(0, jumpBuffer.current - dt);
 
     if (jumps.current > FLY_TRIGGER) {
-      // ── jetpack flight — the mobile Climb's ACCELERATION model ──
-      // Gravity pulls hard every frame; a held jet punches up through it; each
-      // fresh press pops an instant upward kick (a flap). This makes altitude a
-      // learnable skill (time your taps) instead of an eased auto-hover. We only
+      // ── jetpack flight — accel climb + cruise glide + idle fall ──
+      // Held jet punches up through gravity (flap skill). Forward cruise without
+      // thrust eases toward a slight sink. No forward intent → hard fall. We only
       // touch Y — the steering block above already wrote X/Z — and gravityScale
       // is 0 while flying (setGravityScale above), so this fully owns vertical.
       const cv = rb.linvel();
       // thrust command still spools (0..1) purely to pace the jet-puff cadence
       thrust.current += (((jumpHeld && !stumbleActive) ? 1 : 0) - thrust.current) * (1 - Math.exp(-FLY_SPOOL * dt));
       const held = jumpHeld && !stumbleActive;
+      // Circuit always auto-forwards; open world needs the front stick (az > 0).
+      const cruising = !stumbleActive && (circuitRunning || az > 0.2);
       let vy = cv.y;
       // instant kick on a NEW press (never during a stumble lock)
       if (jumpEdge && !stumbleActive) vy = Math.max(vy, 0) + FLY_PRESS_KICK;
-      const accelY = held ? FLY_THRUST_ACCEL - FLY_GRAVITY : -FLY_GRAVITY;
-      vy = Math.max(-FLY_MAX_FALL, Math.min(FLY_MAX_RISE, vy + accelY * dt));
+      if (held) {
+        vy = Math.max(-FLY_MAX_FALL, Math.min(FLY_MAX_RISE, vy + (FLY_THRUST_ACCEL - FLY_GRAVITY) * dt));
+      } else if (cruising) {
+        const k = 1 - Math.exp(-FLY_CRUISE_GLIDE * dt);
+        vy = vy + (FLY_CRUISE_SINK - vy) * k;
+      } else {
+        vy = Math.max(-FLY_MAX_FALL, vy - FLY_GRAVITY * dt);
+      }
       rb.setLinvel({ x: cv.x, y: vy, z: cv.z }, true);
       jetEmit.current += dt;
       const emitGap = 0.045 + (1 - thrust.current) * 0.085; // tighter puffs at full thrust
@@ -3351,7 +3400,7 @@ function Handler({
     // the moment Space was released.
     if (!circuitMode && !inAmphitheatre) {
       const p = rb.translation();
-      const floorYNet = terrainHeight(p.x, p.z, shape, spawnKnoll);
+      const floorYNet = worldWalkHeight(p.x, p.z, shape, spawnKnoll, ascentFoot);
       const FEET = FOOT_OFF;
       if (p.y < floorYNet - 0.1) {
         rb.setTranslation({ x: p.x, y: floorYNet + FEET + 0.05, z: p.z }, true);
@@ -3458,18 +3507,9 @@ function Handler({
     }
 
     let next: NearTarget = null;
-    if (!matchActive && circuitMode && inVenue && venueExitTarget && onVenueExit) {
-      const ex = venueExitTarget;
-      const dh = Math.hypot(t.x - ex.pos.x, t.z - ex.pos.z);
-      const dy = Math.abs(t.y - ex.pos.y);
-      if (dh < ex.radius && dy < ex.radius) {
-        const now = performance.now();
-        if (now - venueExitCooldown.current > 800) {
-          venueExitCooldown.current = now;
-          onVenueExit();
-        }
-      }
-    } else if (!matchActive && inVenue && venueExitTarget && !circuitMode) {
+    // Venue exit portals (Circuit return + Amphitheatre) — proximity only; the
+    // screen auto-crosses on enter (no E). Same shape for every game venue.
+    if (!matchActive && inVenue && venueExitTarget) {
       const ex = venueExitTarget;
       const dh = Math.hypot(t.x - ex.pos.x, t.z - ex.pos.z);
       const dy = Math.abs(t.y - ex.pos.y);
@@ -3559,15 +3599,22 @@ function Handler({
       }
       if (!next && bestV) next = { kind: "venue", ...bestV };
     } else if (!matchActive && !isHub && !inVenue) {
+      // Portals auto-cross on the screen (no E) — detect the plane, not a huge pad.
       if (returnTarget) {
+        const planeY = returnTarget.y - 1 + PORTAL_OPEN_Y;
         const dh = Math.hypot(t.x - returnTarget.x, t.z - returnTarget.z);
-        if (dh < 3.2) next = { kind: "return" };
+        const dy = Math.abs(t.y - planeY);
+        if (dh < 3.6 && dy < 3.2) next = { kind: "return" };
       }
       if (!next && circuitTunnelTarget) {
-        // planar trigger covering the mountain foot → summit, so you can enter by
-        // walking up to the peak's base or by flying to the portal that crowns it
-        const dh = Math.hypot(t.x - circuitTunnelTarget.pos.x, t.z - circuitTunnelTarget.pos.z);
-        if (dh < ASCENT_ENTER_R) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
+        // Ascent Portal plane at the summit crown — walk/fly through the disc
+        const mx = circuitTunnelTarget.pos.x;
+        const mz = circuitTunnelTarget.pos.z;
+        const baseY = ascentFoot?.baseY ?? circuitTunnelTarget.pos.y - 1;
+        const planeY = baseY + ASCENT_PEAK_H + PORTAL_OPEN_Y;
+        const dh = Math.hypot(t.x - mx, t.z - mz);
+        const dy = Math.abs(t.y - planeY);
+        if (dh < 3.6 && dy < 3.2) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
       }
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);

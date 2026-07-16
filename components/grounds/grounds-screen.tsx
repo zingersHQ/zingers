@@ -1112,7 +1112,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // The central arena routes to the world's scenario; perched-agent challenges
   // are always a single duel regardless of world.
   const interact = useCallback(async () => {
-    if (overlay !== "none" || inMatch || result || gRun) return;
+    if (overlay !== "none" || inMatch || result || gRun || travelCard) return;
     if (modesLocked) {
       const blocked =
         near?.kind === "keeper" ||
@@ -1202,7 +1202,26 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       setNear(null);
       playTravel(worldTravelCard(venueHostWorldId), () => exitVenue());
     }
-  }, [near, overlay, inMatch, result, gRun, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach, reactCompanion]);
+  }, [near, overlay, inMatch, result, gRun, travelCard, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach, reactCompanion]);
+
+  // Portals cross by walking through — no E. Latch the portal key so nulling
+  // `near` mid-travel (or standing in the plane) doesn't re-fire the veil.
+  const portalAutoKey = useRef<string | null>(null);
+  useEffect(() => {
+    const n = near;
+    let key: string | null = null;
+    if (n?.kind === "gate") key = `gate:${n.world}`;
+    else if (n?.kind === "return") key = "return";
+    else if (n?.kind === "venue-enter") key = `enter:${n.venue}`;
+    else if (n?.kind === "venue-exit") key = `exit:${n.label}`;
+    if (!key) {
+      if (!n && !travelCard) portalAutoKey.current = null;
+      return;
+    }
+    if (portalAutoKey.current === key) return;
+    portalAutoKey.current = key;
+    void interact();
+  }, [near, interact, travelCard]);
 
   const fastTravel = useCallback((pos: [number, number, number]) => {
     travelRef.current?.(pos[0], pos[2]);
@@ -1960,7 +1979,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
               circuitHazards={activeVenue === "circuit" ? circuitHazards : []}
               onCircuitStumble={activeVenue === "circuit" ? onCircuitStumble : undefined}
-              onVenueExit={inVenue ? exitVenue : undefined}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
               goals={isHub ? [] : liveGoals}
@@ -2589,8 +2607,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* proximity action — centered above the touch controls so it never
-          overlaps the jump / sprint cluster. Tap on touch, E on desktop. */}
-      {owned && near && overlay === "none" && !inMatch && !result && !gRun && !worldUiBlocked && !(near.kind === "venue" && near.venue === "league") && (
+          overlaps the jump / sprint cluster. Tap on touch, E on desktop.
+          Portals (gates / return / venue enter·exit) auto-cross — no prompt. */}
+      {owned && near && overlay === "none" && !inMatch && !result && !gRun && !travelCard && !worldUiBlocked && !(near.kind === "venue" && near.venue === "league") && near.kind !== "gate" && near.kind !== "return" && near.kind !== "venue-enter" && near.kind !== "venue-exit" && (
         <div
           style={{
             position: "absolute",
@@ -2624,15 +2643,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           >
             <FightIcon size={18} strokeWidth={2.2} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-              {near.kind === "gate"
-                ? `Enter ${near.label}`
-                : near.kind === "return"
-                ? "Return to the Concord"
-                : near.kind === "venue-enter"
-                ? `Enter ${near.label}`
-                : near.kind === "venue-exit"
-                ? near.label
-                : near.kind === "venue"
+              {near.kind === "venue"
                 ? near.venue === "daily"
                   ? "Read today's Tribunal"
                   : "Enter the Live Gallery"

@@ -177,9 +177,9 @@ export function ConcordVenuePortal({
   );
 }
 
-/** The monumental Ascent Portal — the Circuit entrance in the Concord plaza.
+/** The monumental Ascent Portal — the Circuit entrance crowning the region peak.
  *  ~2× Vaultgate scale with the swirling Reach-accent plane and the Reach it
- *  opens blazoned above. Trigger stays the existing proximity/act prompt. */
+ *  opens blazoned above. Crossing the plane travels (no E). */
 export function AscentPortal({
   pos,
   accent,
@@ -211,9 +211,8 @@ export function AscentPortal({
 }
 
 /** The Return Portal — stands behind the Circuit spawn; you emerge from it and
- *  walk back through it to exit. Replaces the bare exit ring. Its plane wears
- *  the destination world's accent (the portal shows where it goes). The trigger
- *  is still the proximity act at VENUE_EXIT.circuit.pos, so nothing rewires. */
+ *  walk back through it to exit. Its plane wears the destination world's accent
+ *  (the portal shows where it goes). Crossing the plane exits (no E). */
 export function AscentReturnPortal({
   pos,
   accent,

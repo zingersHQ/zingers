@@ -9,7 +9,7 @@
 // Composition:
 //   • the Seal      — the sealed golden Vault door, set into the central plaza
 //   • Clan flags    — the five houses ring the seal; your pledged Clan stands lit
-//   • Vaultgates    — portal arches out to each region (walk in + E to travel)
+//   • Vaultgates    — portal arches out to each region (walk through to travel)
 // ─────────────────────────────────────────────────────────────────────────────
 import { memo, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";

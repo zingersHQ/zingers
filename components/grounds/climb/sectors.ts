@@ -6,7 +6,7 @@
 // role archetypes (staircase / sine rhythm / pressure bite / vista glide) so
 // Arrival ≠ Gauntlet by shape, not only sky tint.
 
-import type { CircuitCheckpoint, CircuitPlatform, CircuitTrackDef } from "../circuit";
+import type { CircuitCheckpoint, CircuitTrackDef } from "../circuit";
 import { hash01 } from "../landmarks";
 import { CLIMB_SECTOR_COUNT, roleIndex, roleOf, sectorDifficulty, type Role } from "./difficulty";
 import { reachTheme } from "./reaches";
@@ -87,14 +87,12 @@ function buildClimbSector(i: number): CircuitTrackDef {
   const rnd = makeRng(i);
   const [gapMin, gapMax] = d.gapSec;
 
-  const platforms: CircuitPlatform[] = [
-    { pos: [0, -0.25, 0], size: [Math.max(9, 12 - d.reach * 0.22), 0.5, 10], accent: "top" },
-  ];
+  // Jetpack-only: rings + hazards, no stepping-stone platforms. Desktop keeps an
+  // invisible launch pad at spawn (circuit-scene); mobile is fully kinematic.
   const gatePos: { x: number; y: number; z: number }[] = [];
 
   let z = 0;
   let y = 2.8;
-  const platW = Math.max(2.4, 3.6 - d.reach * 0.11);
   const yFloor = 1.6;
   const yCeil = 2.8 + d.gates * Math.max(d.vertStep, d.gateRadius * 0.9) + 4;
 
@@ -105,12 +103,8 @@ function buildClimbSector(i: number): CircuitTrackDef {
     y = Math.max(yFloor, Math.min(yCeil, y));
 
     // coplanar corridor — x always 0 (climb-feel §1c)
-    platforms.push({ pos: [0, y - 1.9, z], size: [platW, 0.5, platW], accent: g % 2 ? "a" : "b" });
     gatePos.push({ x: 0, y, z });
   }
-
-  const last = gatePos[gatePos.length - 1]!;
-  platforms.push({ pos: [0, last.y - 1.4, last.z + 5], size: [platW + 2, 0.6, platW + 2], accent: "top" });
 
   const checkpoints: CircuitCheckpoint[] = [
     { index: 0, label: "Start", pos: [0, 2, 6], radius: 3.5 },
@@ -130,7 +124,7 @@ function buildClimbSector(i: number): CircuitTrackDef {
     id: `climb:s${i + 1}`,
     name: sectorName(i),
     spawn: [0, 1.1, -2.5],
-    platforms,
+    platforms: [],
     checkpoints,
   };
 }

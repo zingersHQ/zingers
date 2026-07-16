@@ -2,7 +2,7 @@
 // so layout stays testable. Each sector is short; clearing one unlocks the next.
 // Fall off anywhere → the whole run resets to sector 1.
 
-import type { CircuitCheckpoint, CircuitPlatform, CircuitTrackDef } from "./circuit";
+import type { CircuitCheckpoint, CircuitTrackDef } from "./circuit";
 
 import { hash01 } from "./landmarks";
 
@@ -33,17 +33,13 @@ function sectorName(worldId: string, tier: number): string {
   return list[tier] ?? BASE_SECTOR_NAMES[tier] ?? `Sector ${tier + 1}`;
 }
 
+/** Legacy 10-sector generator — live Ascent uses climb/sectors + desktop-adapter. */
 function buildSector(tier: number, worldId: string): CircuitTrackDef {
   const seed = hash01(worldId);
   const n = tier + 1;
   const lateral = 2.2 + (tier % 4) * 0.65 + (seed - 0.5) * 0.8;
   const vertStep = 2.35 + tier * 0.2 + seed * 0.25;
-  const platW = Math.max(2.3, 3.7 - tier * 0.13 - seed * 0.15);
   const steps = 3 + Math.min(4, Math.floor(tier / 2) + (tier % 2));
-
-  const platforms: CircuitPlatform[] = [
-    { pos: [0, -0.25, 0], size: [Math.max(9, 12 - tier * 0.25), 0.5, 10], accent: "top" },
-  ];
 
   const gatePos: { x: number; y: number; z: number }[] = [];
   let y = 0;
@@ -54,16 +50,14 @@ function buildSector(tier: number, worldId: string): CircuitTrackDef {
     z += 9 + tier * 0.45 + (i === 0 ? 2 : 0);
     y += vertStep + (i % 3 === 0 ? 0.65 : 0);
     const x = side * lateral * (0.85 + Math.sin(i * 1.1 + tier * 0.4) * 0.25);
-    platforms.push({ pos: [x, y - 0.25, z], size: [platW, 0.5, platW], accent: i % 2 ? "a" : "b" });
     gatePos.push({ x: x * 0.25, y: y + 1.4, z });
   }
 
-  // Summit pad — slightly past the last hop
-  const last = platforms[platforms.length - 1]!;
-  const summitZ = last.pos[2] + 7;
-  const summitY = last.pos[1] + vertStep * 0.85;
-  platforms.push({ pos: [last.pos[0] * 0.4, summitY, summitZ], size: [platW + 1.8, 0.6, platW + 1.8], accent: "top" });
-  gatePos.push({ x: last.pos[0] * 0.2, y: summitY + 1.5, z: summitZ });
+  // Finish gate — slightly past the last mid gate
+  const last = gatePos[gatePos.length - 1]!;
+  const summitZ = last.z + 7;
+  const summitY = last.y + vertStep * 0.85;
+  gatePos.push({ x: last.x * 0.8, y: summitY + 1.5, z: summitZ });
 
   const checkpoints: CircuitCheckpoint[] = [
     { index: 0, label: "Start", pos: [0, 2, 7], radius: 3.5 },
@@ -95,7 +89,7 @@ function buildSector(tier: number, worldId: string): CircuitTrackDef {
     id: `${worldId}:circuit-s${n}`,
     name: sectorName(worldId, tier),
     spawn: [0, 1.1, -2.5],
-    platforms,
+    platforms: [],
     checkpoints,
   };
 }
@@ -110,16 +104,12 @@ export function circuitSector(index: number, worldId = "void"): CircuitTrackDef 
   return buildCircuitRun(worldId)[Math.max(0, Math.min(CIRCUIT_SECTOR_COUNT - 1, index))]!;
 }
 
-/** Bounds for the void safety net under a sector. */
+/** Bounds for the void safety net under a sector (rings define the corridor). */
 export function sectorBounds(track: CircuitTrackDef): { maxY: number; maxZ: number } {
   let maxY = 0;
   let maxZ = 0;
-  for (const p of track.platforms) {
-    maxY = Math.max(maxY, p.pos[1] + p.size[1]);
-    maxZ = Math.max(maxZ, p.pos[2] + p.size[2]);
-  }
   for (const cp of track.checkpoints) {
-    maxY = Math.max(maxY, cp.pos[1]);
+    maxY = Math.max(maxY, cp.pos[1] + cp.radius);
     maxZ = Math.max(maxZ, cp.pos[2]);
   }
   return { maxY: maxY + 8, maxZ: maxZ + 12 };

@@ -18,32 +18,20 @@ export interface CircuitCheckpoint {
 export interface CircuitTrackDef {
   id: string;
   name: string;
-  /** Handler capsule centre at rest on the start pad. */
+  /** Handler capsule centre at rest on the (invisible) launch pad. */
   spawn: [number, number, number];
+  /** Legacy field — Ascent is jetpack-only; keep empty. Launch pad is scene-local. */
   platforms: CircuitPlatform[];
   checkpoints: CircuitCheckpoint[];
 }
 
-// A ~75s zig-zag climb: ground hops → jetpack gaps → summit finish. Gaps stay
-// inside the Handler's jump arc + jetpack thrust (see world.tsx tower tuning).
-// Legacy single-track export — the run mode uses CIRCUIT_SECTORS in circuit-tracks.ts.
+// Legacy single-track export — jetpack-only rings. Live Ascent uses climb/sectors
+// + desktop-adapter (100 sectors). platforms stay empty (launch pad is scene-local).
 export const THE_CIRCUIT: CircuitTrackDef = {
   id: "circuit-v1",
   name: "The Circuit",
   spawn: [0, 1.1, -2],
-  platforms: [
-    { pos: [0, -0.25, 0], size: [14, 0.5, 12], accent: "top" },
-    { pos: [0, -0.25, 14], size: [4.2, 0.5, 4.2], accent: "a" },
-    { pos: [2.5, 1.05, 26], size: [3.6, 0.5, 3.6], accent: "b" },
-    { pos: [-1.5, 3.35, 38], size: [3.6, 0.5, 3.6], accent: "a" },
-    { pos: [3, 5.65, 50], size: [3.2, 0.5, 3.2], accent: "b" },
-    { pos: [0, 7.95, 62], size: [3.6, 0.5, 3.6], accent: "a" },
-    { pos: [-3.5, 10.25, 74], size: [3.2, 0.5, 3.2], accent: "b" },
-    { pos: [0, 12.55, 86], size: [4, 0.5, 4], accent: "a" },
-    { pos: [4, 14.85, 98], size: [3.2, 0.5, 3.2], accent: "b" },
-    { pos: [0, 17.15, 110], size: [3.6, 0.5, 3.6], accent: "a" },
-    { pos: [0, 19.45, 122], size: [7, 0.6, 7], accent: "top" },
-  ],
+  platforms: [],
   checkpoints: [
     { index: 0, label: "Start", pos: [0, 2.2, 10], radius: 3.8 },
     { index: 1, label: "Gate 1", pos: [0, 4.8, 38], radius: 3.2 },
