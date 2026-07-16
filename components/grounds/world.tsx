@@ -2351,11 +2351,18 @@ const TURN_GROUND = 22, TURN_AIR = 16;
 // the jump button after the first hop (hold-to-fly, see FLY_HOLD_DEPLOY) or by a
 // second tap (double-tap). Hold to thrust smoothly once aloft.
 const FLY_TRIGGER = 1;     // jumps past this deploy the pack
-const FLY_CLIMB = 9.0;     // target upward velocity while thrusting
-const FLY_SINK = -2.6;     // gentle hover descent when not thrusting (instead of full gravity)
-const FLY_THRUST = 16;     // ease rate toward climb velocity (frame-rate independent)
-const FLY_GLIDE = 6;       // ease rate toward sink velocity when thrust is released
-const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — smooths taps
+// ── jetpack VERTICAL — the mobile Climb's acceleration model (circuit-lite.tsx) ──
+// Heavy gravity always pulling, a powerful thrust punching up through it, and an
+// instant kick on each fresh press: vertical flight is a timed "flap" you master,
+// not an eased hover. gravityScale is 0 while flying (below), so this model owns Y
+// with no double gravity. Scaled ~1.4× the mobile numbers for the larger world /
+// Circuit geometry — same FEEL. One block serves the open world AND the Circuit.
+const FLY_GRAVITY = 30;        // downward accel (u/s²) — real weight
+const FLY_THRUST_ACCEL = 54;   // upward accel while the jet is held (net +24 up)
+const FLY_PRESS_KICK = 4.2;    // instant upward velocity pop on each new press (a flap)
+const FLY_MAX_RISE = 13;       // climb clamp — a full hold rises, still aimable
+const FLY_MAX_FALL = 20;       // terminal fall (sticky, never uncontrollable)
+const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
 // Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
 // skill axis and forward is the heartbeat. W surges, S brakes lightly; A/D = light steer.
 const CIRCUIT_CRUISE = 14;
@@ -3054,7 +3061,11 @@ function Handler({
 
     if (circuitRunning) {
       const cruise = az > 0.2 ? CIRCUIT_SURGE : az < -0.2 ? CIRCUIT_BRAKE : CIRCUIT_CRUISE;
-      const tvx = ax * WALK * 0.55; // light steer only — layouts are coplanar
+      // light lateral steer only (layouts are coplanar). Steer along the CAMERA's
+      // right axis, not world +X: the Circuit lens looks down-track (+Z), so a raw
+      // +X nudge read as screen-LEFT — D/→ moved left and A/← moved right. right.x
+      // (camera-relative) restores intuitive left/right for the trailing camera.
+      const tvx = right.x * ax * WALK * 0.55;
       const tvz = cruise;
       const k = 1 - Math.exp(-(flyingMode ? ACCEL_FLY : ACCEL_GROUND) * dt);
       rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
@@ -3144,25 +3155,22 @@ function Handler({
     if (jumpBuffer.current > 0) jumpBuffer.current = Math.max(0, jumpBuffer.current - dt);
 
     if (jumps.current > FLY_TRIGGER) {
-      // ── jetpack flight ── a fully controlled hover so vertical motion stays
-      // fluid. The key trick: we smooth the THRUST COMMAND (0..1), not just the
-      // resulting velocity. Snapping the climb target between full-up and sink on
-      // every keypress was the bobbing/shaking — to stay aloft you machine-gun the
-      // spacebar, and each tap yanked the target the other way. With the command
-      // eased, a held key spools up to a steady climb and rapid taps average into a
-      // smooth, uniform hover, like holding W gives a uniform walk. Read the LIVE
-      // velocity (the steering block above just wrote x/z) and only touch y, so
-      // thrust never fights your WASD steering.
+      // ── jetpack flight — the mobile Climb's ACCELERATION model ──
+      // Gravity pulls hard every frame; a held jet punches up through it; each
+      // fresh press pops an instant upward kick (a flap). This makes altitude a
+      // learnable skill (time your taps) instead of an eased auto-hover. We only
+      // touch Y — the steering block above already wrote X/Z — and gravityScale
+      // is 0 while flying (setGravityScale above), so this fully owns vertical.
       const cv = rb.linvel();
-      // a fresh stumble forces the thrust command to 0 for its lock window, so
-      // the shove reads as a real loss of control (you can't just power through)
+      // thrust command still spools (0..1) purely to pace the jet-puff cadence
       thrust.current += (((jumpHeld && !stumbleActive) ? 1 : 0) - thrust.current) * (1 - Math.exp(-FLY_SPOOL * dt));
-      // blend the vertical target + ease rate by the smoothed thrust: full press →
-      // strong, snappy climb; released → a slow, floaty sink
-      const targetY = FLY_SINK + (FLY_CLIMB - FLY_SINK) * thrust.current;
-      const rate = FLY_GLIDE + (FLY_THRUST - FLY_GLIDE) * thrust.current;
-      const ky = 1 - Math.exp(-rate * dt);
-      rb.setLinvel({ x: cv.x, y: cv.y + (targetY - cv.y) * ky, z: cv.z }, true);
+      const held = jumpHeld && !stumbleActive;
+      let vy = cv.y;
+      // instant kick on a NEW press (never during a stumble lock)
+      if (jumpEdge && !stumbleActive) vy = Math.max(vy, 0) + FLY_PRESS_KICK;
+      const accelY = held ? FLY_THRUST_ACCEL - FLY_GRAVITY : -FLY_GRAVITY;
+      vy = Math.max(-FLY_MAX_FALL, Math.min(FLY_MAX_RISE, vy + accelY * dt));
+      rb.setLinvel({ x: cv.x, y: vy, z: cv.z }, true);
       jetEmit.current += dt;
       const emitGap = 0.045 + (1 - thrust.current) * 0.085; // tighter puffs at full thrust
       if (jetEmit.current > emitGap) { jetEmit.current = 0; jetBurst.current++; }
@@ -3971,10 +3979,10 @@ function CameraController({
       const climb = cue.climb;
       let pitchTarget = PITCH_FLY_HOVER;
       if (climb > 0.15) {
-        const up = Math.min(1, climb / FLY_CLIMB);
+        const up = Math.min(1, climb / FLY_MAX_RISE);
         pitchTarget = PITCH_FLY_HOVER + up * (PITCH_FLY_UP - PITCH_FLY_HOVER);
       } else if (climb < -0.15) {
-        const dn = Math.min(1, -climb / Math.abs(FLY_SINK));
+        const dn = Math.min(1, -climb / FLY_MAX_FALL);
         pitchTarget = PITCH_FLY_HOVER + dn * (PITCH_FLY_DOWN - PITCH_FLY_HOVER);
       }
       pitch.current += (pitchTarget - pitch.current) * Math.min(1, dt * 2.6);
