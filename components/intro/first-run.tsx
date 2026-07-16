@@ -53,26 +53,43 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
   // place and your role in it, introduces the champion as a companion that flies with
   // you, and ends on the joy of flight (not the fight). On a phone we keep the three
   // that carry the fantasy: the world, the companion, and taking wing.
+  //
+  // TEMP (2026-07): cinematic slides are parked — Next / Start / SKIP close the
+  // deck straight into the "Summoning minds for you to raise…" beat → champion
+  // select. Uncomment the assignment below (and drop the empty `slides`) to restore.
+  const slides: React.ReactNode[] = [];
+  /*
   const slides = isMobile
     ? [<Awaken key="awaken" mobile embedded={embedded} />, <Shape key="shape" mobile embedded={embedded} />, <Legend key="legend" mobile embedded={embedded} />]
     : [<Awaken key="awaken" embedded={embedded} />, <Shape key="shape" embedded={embedded} />, <Forces key="forces" embedded={embedded} />, <Fight key="fight" embedded={embedded} />, <Legend key="legend" embedded={embedded} />];
+  */
   const count = slides.length;
   const LAST = count - 1;
+  const skipDeck = count === 0;
 
   const [i, setI] = useState(0);
-  const next = useCallback(() => setI((v) => (v >= LAST ? v : v + 1)), [LAST]);
+  const next = useCallback(() => {
+    if (skipDeck) {
+      onClose();
+      return;
+    }
+    setI((v) => (v >= LAST ? v : v + 1));
+  }, [LAST, skipDeck, onClose]);
   const back = useCallback(() => setI((v) => Math.max(0, v - 1)), []);
 
   // Keep the active index valid when the layout flips between desktop/mobile.
   useEffect(() => {
+    if (skipDeck) return;
     setI((v) => Math.min(v, LAST));
-  }, [LAST]);
+  }, [LAST, skipDeck]);
 
   // first-journey funnel (docs/two-doors.md §5): reaching the last beat means the
   // visitor watched the cinematic through rather than skipping. Once per browser.
+  // (Skipped while the deck is parked — empty slides would fire this incorrectly.)
   useEffect(() => {
+    if (skipDeck) return;
     if (i >= LAST) trackOnce("fj_cinematic", "zingers_fj_cinematic_v1");
-  }, [i, LAST]);
+  }, [i, LAST, skipDeck]);
 
   // Let the host (the landing page) react to the deck advancing — e.g. hide the
   // rest of the homepage once you leave slide 1 so the deck takes full focus.
@@ -84,15 +101,17 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
     const onKey = (e: KeyboardEvent) => {
       // Space / right / enter page the deck forward — even when embedded, where
       // the deck deliberately takes over focus from the homepage below it.
+      // With the deck parked, those keys (and Enter) are Start → summoning.
       if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        i >= LAST ? onClose() : next();
-      } else if (e.key === "ArrowLeft") back();
+        if (skipDeck || i >= LAST) onClose();
+        else next();
+      } else if (e.key === "ArrowLeft" && !skipDeck) back();
       else if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, LAST, next, back, onClose]);
+  }, [i, LAST, next, back, onClose, skipDeck]);
 
   useEffect(() => armOnboardingAudio(), []);
 
@@ -115,10 +134,12 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
       if (Date.now() - start.t > 700) return;
       if (Math.abs(dx) < 48) return;
       if (Math.abs(dy) > Math.abs(dx) * 0.75) return;
-      if (dx < 0) i >= LAST ? onClose() : next();
-      else back();
+      if (dx < 0) {
+        if (skipDeck || i >= LAST) onClose();
+        else next();
+      } else if (!skipDeck) back();
     },
-    [i, LAST, next, back, onClose],
+    [i, LAST, next, back, onClose, skipDeck],
   );
 
   const touchScroll = embedded && isMobile;
@@ -151,7 +172,50 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
       >
         {/* full-bleed scene with cinematic dip-transition between beats */}
         <div style={{ position: "absolute", inset: 0, background: "#0a0813" }}>
-          <SlideStage active={i} slides={slides} />
+          {!skipDeck && <SlideStage active={i} slides={slides} />}
+          {skipDeck && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "grid",
+                placeItems: "center",
+                padding: 24,
+                textAlign: "center",
+              }}
+            >
+              <div>
+                <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "var(--gold)", opacity: 0.85 }}>
+                  {BRAND.nameUpper}
+                </div>
+                <div style={{ fontSize: "clamp(22px, 5vw, 34px)", fontWeight: 800, marginTop: 14, letterSpacing: 0.3, color: "#f2eefb" }}>
+                  Raise a mind.
+                </div>
+                <p style={{ margin: "12px auto 0", maxWidth: 360, fontSize: 14, lineHeight: 1.45, color: "var(--muted2)" }}>
+                  Claim a living champion, tune how it thinks, and fly with it across the Grounds.
+                </p>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="mono"
+                  style={{
+                    marginTop: 28,
+                    padding: "14px 28px",
+                    borderRadius: 99,
+                    border: "1px solid rgba(255,255,255,.55)",
+                    background: ACC,
+                    color: "#fff",
+                    fontSize: 13,
+                    letterSpacing: 1.6,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  START →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* transparent header overlay: brand · progress dots · skip */}
@@ -188,8 +252,8 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
         </div>
 
         {/* side navigation — transparent, white outline */}
-        {i > 0 && <NavArrow side="left" onClick={back} />}
-        <NavArrow side="right" onClick={() => (i >= LAST ? onClose() : next())} />
+        {!skipDeck && i > 0 && <NavArrow side="left" onClick={back} />}
+        {!skipDeck && <NavArrow side="right" onClick={() => (i >= LAST ? onClose() : next())} />}
       </div>
     </div>
   );
@@ -606,3 +670,8 @@ function Legend({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
     </div>
   );
 }
+
+// Parked cinematic beats — kept reachable while `slides = []` above so restore
+// (uncomment the slides assignment) stays type-checked. Do not delete.
+const _PARKED_FIRST_RUN_BEATS = { Awaken, Shape, Forces, Fight, Legend };
+void _PARKED_FIRST_RUN_BEATS;
