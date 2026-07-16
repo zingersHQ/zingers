@@ -105,14 +105,17 @@ export function MobileShell() {
     setTab("champion");
   }, [tab]);
 
-  // splash door — the epic first screen, shown once per browser. Read the latch
-  // in an effect (never during render) so SSR/first paint match, then reveal it.
-  const [showSplash, setShowSplash] = useState(false);
+  // splash door — shown once per browser. Latch is read in an effect (never
+  // during render) so SSR/first paint match. Until that resolves we hold an
+  // opaque sky gate so the Today homepage never flashes under the Take flight
+  // poster for a frame.
+  const [splashGate, setSplashGate] = useState<"checking" | "splash" | "shell">("checking");
   useEffect(() => {
     try {
-      if (!localStorage.getItem(STORAGE.mSplash)) setShowSplash(true);
+      setSplashGate(localStorage.getItem(STORAGE.mSplash) ? "shell" : "splash");
     } catch {
       // no storage — skip the splash rather than gate the whole app on it
+      setSplashGate("shell");
     }
   }, []);
   const dismissSplash = useCallback(() => {
@@ -121,7 +124,7 @@ export function MobileShell() {
     } catch {
       // best-effort latch
     }
-    setShowSplash(false);
+    setSplashGate("shell");
   }, []);
   const splashFly = useCallback(() => {
     dismissSplash();
@@ -133,6 +136,12 @@ export function MobileShell() {
     setTab("today");
   }, [dismissSplash]);
 
+  const showSplash = splashGate === "splash";
+  // Same sky as MobileSplash — covers the shell while we decide, and sits under
+  // the splash itself so nothing from Today peeks through on first paint.
+  const splashSky =
+    "radial-gradient(120% 90% at 50% 8%, #1a2b4d 0%, #12112a 46%, #08070f 100%)";
+
   return (
     <div
       style={{
@@ -141,67 +150,79 @@ export function MobileShell() {
         zIndex: 1000,
         display: "flex",
         flexDirection: "column",
-        background: "var(--bg, #07060d)",
+        background: splashGate === "shell" ? "var(--bg, #07060d)" : splashSky,
         color: "#fff",
         overflow: "hidden",
         overscrollBehavior: "none",
       }}
     >
+      {splashGate === "checking" && (
+        <div aria-hidden style={{ position: "fixed", inset: 0, zIndex: 1200, background: splashSky }} />
+      )}
       {showSplash && <MobileSplash onFly={splashFly} onEnter={splashEnter} />}
-      {/* content area — positioned so the full-bleed Climb canvas can fill it */}
+      {/* content area — positioned so the full-bleed Climb canvas can fill it.
+          Held back until the splash latch resolves so Today never paints under
+          the Take flight door. */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-        {activeTab === "climb" ? (
-          <CircuitLite
-            embedded
-            onExit={exitImmersive}
-            guestKey={unowned ? loanerKey : undefined}
-            onClaim={unowned ? claimFromClimb : undefined}
-          />
-        ) : activeTab === "today" ? (
-          <MobileToday onNavigate={(t) => selectTab(t as TabId)} />
-        ) : activeTab === "watch" ? (
-          <MobileWatch />
-        ) : activeTab === "champion" ? (
-          <MobileChampion onNavigate={(t) => selectTab(t as TabId)} initialPick={loanerKey} />
-        ) : (
-          <MobileRank />
-        )}
+        {/* Defer mounting the Today/home shell until the splash latch is known and
+            dismissed — otherwise the homepage paints for a frame under Take flight. */}
+        {splashGate === "shell" && (
+          <>
+            {activeTab === "climb" ? (
+              <CircuitLite
+                embedded
+                onExit={exitImmersive}
+                guestKey={unowned ? loanerKey : undefined}
+                onClaim={unowned ? claimFromClimb : undefined}
+              />
+            ) : activeTab === "today" ? (
+              <MobileToday onNavigate={(t) => selectTab(t as TabId)} />
+            ) : activeTab === "watch" ? (
+              <MobileWatch />
+            ) : activeTab === "champion" ? (
+              <MobileChampion onNavigate={(t) => selectTab(t as TabId)} initialPick={loanerKey} />
+            ) : (
+              <MobileRank />
+            )}
 
-        {/* selection close — champion pick is chromeless; a top-right X returns to
-            the last browse tab so a trainer is never trapped without a bottom bar */}
-        {adopting && (
-          <button
-            type="button"
-            onClick={exitImmersive}
-            aria-label="Close champion selection"
-            style={{
-              position: "absolute",
-              top: "calc(12px + env(safe-area-inset-top, 0px))",
-              right: 12,
-              zIndex: 30,
-              width: 38,
-              height: 38,
-              display: "grid",
-              placeItems: "center",
-              borderRadius: 999,
-              background: "rgba(8,7,14,.55)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,.12)",
-              color: "#e6e2f5",
-              cursor: "pointer",
-              boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
-            }}
-          >
-            <X size={18} strokeWidth={2.4} />
-          </button>
+            {/* selection close — champion pick is chromeless; a top-right X returns to
+                the last browse tab so a trainer is never trapped without a bottom bar */}
+            {adopting && (
+              <button
+                type="button"
+                onClick={exitImmersive}
+                aria-label="Close champion selection"
+                style={{
+                  position: "absolute",
+                  top: "calc(12px + env(safe-area-inset-top, 0px))",
+                  right: 12,
+                  zIndex: 30,
+                  width: 38,
+                  height: 38,
+                  display: "grid",
+                  placeItems: "center",
+                  borderRadius: 999,
+                  background: "rgba(8,7,14,.55)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255,255,255,.12)",
+                  color: "#e6e2f5",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
+                }}
+              >
+                <X size={18} strokeWidth={2.4} />
+              </button>
+            )}
+          </>
         )}
       </div>
 
       {/* bottom tab bar — thumb-reachable, with iOS safe-area padding. Hidden in
           immersive contexts (Climb, champion selection), which carry their own
-          back/close instead — one consistent nav model, no burger. */}
-      {!immersive && (
+          back/close instead — one consistent nav model, no burger. Also held
+          back while the Take flight splash gate is up. */}
+      {splashGate === "shell" && !immersive && (
       <nav
         style={{
           display: "flex",

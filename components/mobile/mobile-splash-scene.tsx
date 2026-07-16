@@ -24,6 +24,8 @@ const HERO = showcaseChampion("MUSE");
 
 const CHAR_SCALE = 1.15;     // the Trainer/character — the hero silhouette
 const FOLLOWER_REL = 1 / 3;  // the champion, at the 3D world's proportion
+// Whole pair is 3× smaller on the Take flight poster (reads as sky figures, not giants).
+const SPLASH_PAIR_SCALE = 1 / 3;
 
 // steady jetpack puff cadence while the pilot hovers (a bump = one exhaust puff)
 function JetPuff({ burstRef }: { burstRef: React.RefObject<number> }) {
@@ -66,7 +68,7 @@ function Pair() {
   });
 
   return (
-    <group ref={grp} position={[0, 0.05, 0]}>
+    <group ref={grp} position={[0, 0.05, 0]} scale={SPLASH_PAIR_SCALE}>
       <JetPuff burstRef={burstRef} />
       {/* the Trainer (the character) — jetpack lit, flying, three-quarter view */}
       <group position={[-0.55, 0.12, 0]}>
