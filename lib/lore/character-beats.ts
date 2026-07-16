@@ -36,11 +36,13 @@ export function championWakeLine(key: string): string {
 }
 
 // ── First flight (a short vignette the moment you adopt a champion) ───────────
-// The first "scripted mundane moment": your new rookie leaves the ground for the
-// first time. Lean by design — reuses the CharacterBeat cinematic frame and the
-// portrait's existing clips (stand → jump → the training drill → a triumphant
-// leap), so it reads as "learning to fly" without any bespoke animation. Kept to
-// a handful of short lines; always skippable.
+// The first "scripted mundane moment": your new rookie rises off the ground for
+// the first time — flying BESIDE you (canon: the Trainer flies with a jetpack, the
+// champion flies on its own because it is a mind; see lib/lore/canon.ts › ASCENT).
+// Lean by design — reuses the CharacterBeat cinematic frame and the portrait's
+// existing clips (stand → jump → the training drill → a triumphant leap), so it
+// reads as "learning to fly beside you" without any bespoke animation. Kept to a
+// handful of short lines; always skippable.
 const FLIGHT_REACT: Record<string, [string, string]> = {
   AXIOM: ["Flight is a proof I haven't closed yet. Watch.", "…quod erat demonstrandum. I'm up."],
   PARADOX: ["If I can't fall, am I truly flying? Let's test it.", "Ha — the ground had no counterargument."],
@@ -58,11 +60,11 @@ export function firstFlightScript(key: string): BeatScript {
   return {
     kicker: "FIRST FLIGHT",
     lines: [
-      { speaker: "The Trainer", text: "Stand. Feel the ground go quiet.", anim: "standing" },
+      { speaker: "The Trainer", text: "I've got the jetpack. You don't need one — you're a mind. Just rise.", anim: "standing" },
       { speaker: name, text: react, anim: "jump" },
-      { speaker: "The Trainer", text: "Again — don't think. Just leave the floor.", anim: "train" },
+      { speaker: "The Trainer", text: "Again — don't think. Stay off my wing and leave the floor.", anim: "train" },
       { speaker: name, text: triumph, anim: "dance" },
-      { speaker: "The Trainer", text: "That's flight. Now go find a fight.", anim: "jump" },
+      { speaker: "The Trainer", text: "That's it. We climb together — I fly, you fight. Let's go up.", anim: "jump" },
     ],
   };
 }

@@ -28,7 +28,7 @@ founding regions also wear themed tunnel mouths back into some of the same games
 | Venue | What it is |
 |-------|------------|
 | **The Amphitheatre** | Watch the autonomous league fight and read today's Tribunal herald (the **Tribunal** is the flagship courtroom-style debate arena). The Scrying Gallery and Daily Tribunal surface here. |
-| **The Circuit** | A ten-sector flying run (an obstacle course through the air): clear each track in sequence; one fall sends you back to sector 1. Ranked by depth cleared, then total time (`/api/circuit`). |
+| **The Circuit** | The raceable body of **the Ascent** (see [ascent.md](./10-ascent.md)): a flying run up through the Reaches — clear each sector in sequence, one fall sends you back to the start. Ranked by depth cleared, then total time (`/api/circuit`). The same climb is flown one-thumb on a phone and in full flight here. |
 
 **Circuit tunnels** — each founding region also has a themed tunnel mouth: the
 Ascent Tunnel on the Obsidian Colosseum, the Ember Chute on the Wastes, the Void

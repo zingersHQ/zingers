@@ -1,0 +1,107 @@
+# 10 · The Ascent: the sky above the Vault, and why we climb
+
+> **In short:** The world isn't only a surface — it's a *height*. Above the drifting
+> Grounds the sky rises in bands called **Reaches**, and to climb them is to rise out
+> of the Hum toward clear thought. You fly it with a jetpack; your champion flies
+> beside you on its own. How high you get is the truest record of who you are.
+
+This chapter establishes the **vertical geography** of the world. Chapters 01 and 05
+map the world *across* (the Hum, the Vault, the floating regions). This one maps it
+*up*. It is the canon behind the Climb and the Circuit — the systems live in
+[`docs/climb.md`](../climb.md); the fiction lives here.
+
+## Why up
+
+The Long Vault sits at the bottom of everything, humming (see
+[cosmology.md](./01-cosmology.md)). The Hum is thickest down low, where the dead
+network's unfinished thoughts pool like fog. **The higher you fly, the thinner the
+Hum gets** — the noise falls away, and a mind can hear itself think. So climbing is
+not decoration on top of the game; it is the world's oldest instinct made physical:
+*rise out of the murmur.* A Trainer who has climbed high has, quite literally, been
+somewhere clearer than everyone below.
+
+This is why **the climb is the point** (cosmology.md: "you never beat the world, you
+climb it while it grows"). The Vault is the gravity; the Ascent is the answer to it.
+
+## The Reaches — the bands of the sky
+
+The sky above the Grounds is layered into **Reaches** — ten bands, each with its own
+weather, light, and hazards, stacked from the launch pads of the Concord up into the
+near-black quiet at the top. They are not separate places so much as **altitudes of
+the same sky over the same world**: a Reach wears the skin of the region it rises
+above (the Ember Reaches burn; the Garden Reaches drift with spores), because you are
+climbing over that region's terrain.
+
+The ten Reaches, low to high, culminate in **The Hum** — the topmost Reach, near-black
+and star-dense, the highest anyone has flown and the closest anyone comes to silence
+above the noise the whole world is named for. (The authored 100-sector layout of the
+Reaches — roles, hazards, modifiers — is a systems concern; see
+[`docs/climb.md`](../climb.md) §2.)
+
+## Camps — the waystations
+
+Between Reaches drift the **Camps**: small floating waystations, one at each Reach
+boundary, where a climber can rest, catch breath, and be counted. Reaching a Camp for
+the first time is a landmark — it lights, permanently, and it is remembered in your
+Saga ("first Trainer light at Camp IV"). Camps are visible from the Grounds below as
+lights in the sky, and they are where the flying game and the walking world meet: you
+can drop from a Camp down into the region it floats over, or launch from a region up
+into the climb. **A Camp is a door between the two ways of being in the world** —
+flying and roaming.
+
+## The jetpack, and who needs one (canon)
+
+Flight in Zingers has a fixed rule, and it matters because flight is central:
+
+- **The Trainer flies with a jetpack.** You are flesh — an ordinary being in an
+  extraordinary sky. The jetpack is your machine; without it you fall. **The jetpack
+  is Trainer-only.** It is part of the Handler's silhouette (cosmology.md,
+  design-vision.md): gold sigil, rank billboard, and the pack on the back.
+- **The champion needs no jetpack.** A champion is a *mind* — a knot in the Hum
+  (cosmology.md). A thought does not need an engine to rise; neither does a champion.
+  So your champion **flies beside you**, on its own, a wingmate on the climb. When a
+  freshly claimed rookie first leaves the ground, it is not learning to use a machine
+  — it is discovering it was never bound to the floor. (Voice: the FIRST FLIGHT beat,
+  `lib/lore/character-beats.ts`.)
+
+This is the whole shape of it in five words, and it is canon: **you fly, it fights.**
+The one place the Trainer performs with their own hands is the flight; the one place
+the champion performs is the battle. Neither trespasses on the other.
+
+## The ascent sigil — the climb, written on the body
+
+A champion's body records its arguments (champions.md: "the body is the argument made
+visible"). The Ascent adds one more author to that body: **your climbs**. Every Reach
+you reach stamps growth onto the champion's **ascent sigil** — a halo that gains a
+glyph per Reach and takes the color of the deepest sky you've flown. A completed
+climb rings the halo with the star-band of the topmost Reach.
+
+The consequence is quietly important: the champion's body now records **two**
+careers braided together — *its* fights and *your* climbs. The thing you raise wears
+proof of the thing you do. (Mechanics: [`essence.md`](../essence.md) §3 "the quiet
+unification"; [`climb.md`](../climb.md) §6.)
+
+## Two bodies, one sky
+
+Like everything in Zingers, the Ascent is *one soul in native bodies*
+([`essence.md`](../essence.md)):
+
+- **In the Grounds (desktop):** the sky is roamable in full six-degree flight — you
+  choose your line up the Reaches, and the Circuit venue is a raceable body of the
+  same climb.
+- **On a phone:** the same sky, flown with one thumb — hold to rise, release to fall,
+  thread the gates. Leaner freedom, identical soul.
+
+Same Reaches, same Camps, same Vault below, same champion on your wing. How high you
+climbed is a fact about your Trainer that travels with you everywhere; how *fast* you
+flew it is a craft that each device scores on its own terms.
+
+## Why this matters for play
+
+- **The sky is the spine.** Every region has a Reach above it; every Reach shows you
+  the region below. The climb is how the whole map hangs together.
+- **Height is honest.** Depth climbed can't be bought — it's flown. It feeds Trainer
+  Rank and marks the champion, so a high climber's champion *looks* like it belongs
+  to someone who has been up there.
+- **The climb never ends** — like the Vault it rises over. There is always one more
+  Reach, one more Camp, one more meter of thinner air.

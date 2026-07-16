@@ -28,14 +28,19 @@ of it lives in [`lib/lore/canon.ts`](../../lib/lore/canon.ts); the prose lives h
 | 06 | [seasons.md](./06-seasons.md) | The Chronicle: how living seasons are generated |
 | 07 | [collection.md](./07-collection.md) | Cards, rarity, attributes: the collection layer |
 | 08 | [economy.md](./08-economy.md) | Crowns, and the optional ownership layer beneath |
+| 09 | [glossary.md](./09-glossary.md) | Plain one-line definition of every signature term (mirrors `lib/lore/glossary.ts`) |
+| 10 | [ascent.md](./10-ascent.md) | The sky above the Vault: Reaches, Camps, flight, the ascent sigil (the vertical world) |
 
 ## How the three play-layers sit in the canon
 
-The game is one world entered at three session-lengths (the design north star):
+The game is one world entered at three session-lengths (the design north star). The
+**Ascent** — flying the sky above the Vault (see [ascent.md](./10-ascent.md)) — is the
+spine that threads all three: it's the first thing a newcomer does, and the sky over
+every region shows you what's below:
 
 - **Roam (open-ended)**: *the Grounds* — the drifting, explorable surface of the
-  world. You live in it, watch the league happen around you, walk up to champions
-  and rivals. The connective tissue.
+  world, flown between on a jetpack. You live in it, watch the league happen around
+  you, fly up to champions and rivals. The connective tissue.
 - **Quick match (2–5 min)**: *the Arena / League*. Drop in, fight one ranked bout,
   hold your rank. Always available from anywhere in the world.
 - **Raise (15–60 min)**: *the Campaign & Collection*. The growing RPG: raise minds,

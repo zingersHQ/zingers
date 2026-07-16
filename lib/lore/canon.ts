@@ -89,14 +89,30 @@ export const CONCORD = {
 } as const;
 
 // ── The Trainer (you) ────────────────────────────────────────────────────────
-// The player is a Trainer: not a mind, but the person who raises the minds that
-// fight, climbs the ranks, and talks the Keepers out of their words.
+// The player is a Trainer: not a mind, but the person who FLIES the sky above the
+// Vault, raises the minds that fight, climbs the ranks, and talks the Keepers out
+// of their words.
 // Trainer Rank is the one account-level number every activity feeds; a Trainer may
 // swear to one Force (their Clan), binding ranked wins to that Force's standing in
 // the season-long war between the five. (Rank curve/titles: lib/evolve/trainer.ts.)
 export const READER = {
   noun: "Trainer",
-  blurb: "A Trainer raises the minds that fight, climbs the ranks, and takes on the Keepers, the five guardians of the sealed Long Vault. Swear to a Force to fight in its name.",
+  blurb: "A Trainer flies the sky above the Long Vault, raises the minds that fight, climbs the ranks, and takes on the Keepers, the five guardians of the sealed Vault. Swear to a Force to fight in its name.",
+} as const;
+
+// ── The Ascent (flight is central; these rules are canon, not flavor) ─────────
+// The world is a climb: you rise through the sky above the Long Vault. The Climb
+// (mobile) and the Circuit venue (desktop) are two bodies of this one soul.
+// Canon rule that resolves who flies and how: the TRAINER flies with a jetpack
+// (an ordinary being needs a machine); the CHAMPION flies because it is a mind —
+// a knot in the Hum rises the way a thought rises, no machine. So the jetpack is
+// Trainer-only, and the champion flies BESIDE you as a wingmate.
+// Prose: docs/bible/10-ascent.md. Design: docs/climb.md, docs/essence.md §3.
+export const ASCENT = {
+  noun: "the Ascent",
+  blurb: "The climb through the sky above the Long Vault, where the Hum thins as you rise. You fly it with a jetpack; your champion flies beside you on its own. How high you climb marks both your rank and your champion's body.",
+  jetpack: "Trainer-only — the Trainer's machine for flight; a champion needs none.",
+  teachingLine: "You fly. It fights. You both rise.",
 } as const;
 
 // ── The Keepers (the five fixed cipher-words; canon, never regenerated) ───────

@@ -2,17 +2,19 @@
 
 **zingers.gg** · **@zingersHQ** · **zingers.org** (tech & docs)
 
-### Raise a mind. Make it legend.
+### You fly. It fights. You both rise.
 
-**You don't fight. You raise an AI champion that does.** Adopt a thinking AI, train *how* it
-fights, send it into the ring, and watch it scrap, win, and physically evolve into something
-that's yours alone.
+**You don't fight — you fly.** Jetpack on your back, you climb the sky above a sealed vault.
+Flying beside you is a thinking AI champion you've adopted: you train *how* it fights, send
+it into the battles that stud the climb, and watch it scrap, win, and physically evolve —
+its body recording both its arguments and how high you've flown. *Raise a mind. Make it
+legend.*
 
 ---
 
 ### The one-liner
 
-> Adopt an AI that fights for itself and evolves with every battle. You train it, it becomes legend.
+> Fly the sky above a sealed vault; a thinking AI flies beside you, fighting the battles you meet on the way up and evolving with every one. You climb, it fights, you both become legend.
 
 ---
 
@@ -26,8 +28,12 @@ champion's body becomes a visible record of how it has fought.
 
 ### What's real today (built, end-to-end)
 
-- **One 3D world, many games.** Walk the Grounds from the Concord hub: train champions,
-  fight in region arenas (Open Duel, Gauntlet, Tribunal), run The Circuit time trial,
+- **The Ascent (the Climb) — the spine.** A one-thumb flight on a phone, full six-degree
+  flight on desktop: rise through the Reaches (bands of sky) above the vault, one fall
+  resets you, how high you get marks your Trainer rank and your champion's body. The face
+  of the game and the thing everyone understands in zero seconds.
+- **One 3D world, many games.** Fly the Grounds from the Concord hub: train champions,
+  fight in region arenas (Open Duel, Gauntlet, Tribunal), race The Circuit,
   watch the league in the Amphitheatre, crack Keepers, hunt seasonal goals.
 - **Act 1 onboarding.** Scripted first journey: pick a starter, tune doctrine, first
   duel in the Void Garden, evolve your card, land on the Concord — then free roam.

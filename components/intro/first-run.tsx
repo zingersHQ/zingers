@@ -316,12 +316,12 @@ function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
         kicker="WELCOME"
         title={
           <>
-            Raise a mind.
+            You fly.
             <br />
-            Send it to fight.
+            It fights.
           </>
         }
-        body="You raise the AI minds that do the fighting. Train strange, brilliant champions, tune how they think, and set them loose in a world that's yours to explore."
+        body="You're the Trainer: you take to the sky above a sealed vault, and a thinking mind flies at your side — one you raise, tune, and send into the battles you climb over. This is that mind."
       />
     </div>
   );

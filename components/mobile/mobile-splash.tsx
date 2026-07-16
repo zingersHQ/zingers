@@ -10,9 +10,14 @@
 // splash art asset lands it can layer in behind the copy (two-doors T2 art dep).
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Rocket, ChevronRight } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { track as pingEvent } from "@/lib/track";
+
+// The live hero render (Trainer flying + champion beside) loads after first
+// paint, so the poster copy/CTA are usable instantly on a cold phone.
+const SplashScene = dynamic(() => import("./mobile-splash-scene"), { ssr: false, loading: () => null });
 
 export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: () => void }) {
   useEffect(() => {
@@ -40,20 +45,25 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
         WebkitTapHighlightColor: "transparent",
       }}
     >
+      {/* live hero render — the Trainer flying with the champion at its wing.
+          Sits behind the copy; falls back to nothing (just the sky) if a phone
+          can't spin up WebGL, so the poster + CTA always work. */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <SplashScene />
+      </div>
+
       {/* sky beams — the Ascent's light, rising behind the hero */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5 }}>
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0.45 }}>
         <div style={{ position: "absolute", top: "-10%", left: "50%", width: 3, height: "72%", transform: "translateX(-50%)", background: "linear-gradient(to top, transparent, #39e0ff88)", filter: "blur(1px)", animation: "mSplashBeam 3.6s ease-in-out infinite" }} />
         <div style={{ position: "absolute", top: "-6%", left: "38%", width: 2, height: "60%", background: "linear-gradient(to top, transparent, #7cf6c866)", filter: "blur(1px)", animation: "mSplashBeam 4.4s ease-in-out infinite .6s" }} />
         <div style={{ position: "absolute", top: "-6%", left: "62%", width: 2, height: "60%", background: "linear-gradient(to top, transparent, #b98cff66)", filter: "blur(1px)", animation: "mSplashBeam 4.0s ease-in-out infinite 1.1s" }} />
       </div>
 
-      {/* the hero glyph — a stylised jetpack ascent (fallback for the poster art) */}
-      <div aria-hidden style={{ position: "absolute", top: "16%", left: 0, right: 0, display: "grid", placeItems: "center", pointerEvents: "none" }}>
-        <div style={{ fontSize: 108, lineHeight: 1, filter: "drop-shadow(0 0 34px #39e0ff88)", animation: "mSplashHover 3.2s ease-in-out infinite" }}>🚀</div>
-      </div>
+      {/* scrim — keep the lower-third copy legible over the render */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", background: "linear-gradient(to top, #08070f 4%, rgba(8,7,15,.72) 26%, transparent 52%)" }} />
 
       {/* copy + calls to action, weighted to the thumb */}
-      <div style={{ position: "relative", padding: "0 24px calc(40px + env(safe-area-inset-bottom, 0px))", textAlign: "center" }}>
+      <div style={{ position: "relative", zIndex: 3, padding: "0 24px calc(40px + env(safe-area-inset-bottom, 0px))", textAlign: "center" }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 4, color: "#39e0ff", marginBottom: 10 }}>{BRAND.nameUpper}</div>
         <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.02, margin: "0 0 10px", letterSpacing: -0.5, textShadow: "0 4px 30px rgba(0,0,0,.6)" }}>
           Take flight.

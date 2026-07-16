@@ -8,6 +8,15 @@
 
 Version 1.0 — July 2026
 
+> **Direction note (July 2026, Flight-First):** This doc discovered the principle
+> *through* the Circuit ("the flappy bird was hiding inside the codebase", §3).
+> `design-vision.md` v3.0 and [`two-doors.md`](./two-doors.md) v2.0 then promoted
+> that finding to the top of the product: **the Climb/Ascent is now the spine and
+> face of the game, not one verb among five.** Nothing in this doc's principle or
+> atoms changes — it was already right, and it already lists Climb first. Read the
+> Climb rows below as *the keystone verb the others hang off*, and see
+> [`flyover.md`](./flyover.md) for how the flight previews every other verb.
+
 Companion to [`design-vision.md`](./design-vision.md) (the north star) and
 [`game-spec.md`](./game-spec.md) (the mechanics). Where those say *what* Zingers
 is, this says *how the same Zingers survives crossing from a phone to a desktop.*

@@ -1,10 +1,13 @@
 # First Journey Roadmap
 
-> **Direction note (July 2026):** Being recut to **Flight-First**
-> ([`design-vision.md`](./design-vision.md) v3.0). Target first-90s: wake → **fly**
-> → claim a mind → **it flies beside you** → race a tower/gate → *optional* arena.
-> The shipped flow below (fight-led) is the prior pass; see
-> [`launch-week.md`](./launch-week.md) P4 for the reframe.
+> **Direction note (July 2026):** The product has been recut to **Flight-First** —
+> [`design-vision.md`](./design-vision.md) is now v3.0 and [`two-doors.md`](./two-doors.md)
+> v2.0 (the Ascent is the game, battles are what you meet on the way up). Target
+> first-90s: wake → **fly** → **claim the mind on your wing** → raise it a touch →
+> **climb a Reach/Gate** → the battle reveals itself (now motivated) → arena.
+> The shipped flow below (fight-led) is the prior pass; the concrete recut plan is
+> [`launch-week.md`](./launch-week.md) **P4**, and how the flight teaches the whole
+> game is [`flyover.md`](./flyover.md). Canon: [`docs/bible/10-ascent.md`](./bible/10-ascent.md).
 
 Production pass for Act 1 — from first visit through the Concord landing.
 

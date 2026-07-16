@@ -61,6 +61,11 @@ interface RunReward {
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
 const FORWARD_SPOOL = 8;    // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
+// Forward push: the mobile Climb auto-forwards at the per-sector difficulty speed,
+// but the desktop Circuit's constant cruise (world.tsx CIRCUIT_CRUISE) reads as a
+// stronger shove down-track. Nudge the one-thumb cruise up to match that feel —
+// "slightly faster in the front direction" — without touching the difficulty math.
+const FORWARD_PUSH = 1.25;
 const GRAVITY = 24;         // downward accel (u/s²) — weight without a stone drop
 const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
@@ -89,8 +94,14 @@ const CAM_LEAD = 14.0;    // look well down-track so upcoming rings are centred
 const CAM_HEIGHT = 0.6;   // look-at lift — keeps the hero low-centre of frame
 const CAM_LERP = 6;       // exp-damping rate for smooth follow (frame-rate indep.)
 
-// ── champion body (the real owned mind, riding the jetpack) ──
-const CHAMP_SCALE = 0.48;  // small silhouette — the Flappy "bird in a big sky"
+// ── the flying cast (canon: the Trainer flies, the champion flies beside) ──
+// The LEAD flyer is the Trainer's robot (the "character") at CHAMP_SCALE; the
+// champion trails as the smaller wingmate. FOLLOWER_REL mirrors the 3D world's
+// proportion exactly — a champion is 1/3 the Trainer's size there
+// (WORLD_AGENT_SCALE 2/9 ÷ READER_SCALE 2/3 = 1/3) — so the pair reads the same
+// on the phone: big character in front, small champion following.
+const CHAMP_SCALE = 0.48;  // the Trainer/character — the hero silhouette in front
+const FOLLOWER_REL = 1 / 3; // the champion follower, relative to the character
 const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
 const CHAMP_Y = -0.55;     // drop so the torso centres on the gate-thread point
 
@@ -381,8 +392,8 @@ function ReadyPose({
       <Suspense fallback={<group scale={CHAMP_SCALE}><MechBody accent={accent} /></group>}>
         {/* the Trainer's robot, ready on the pad */}
         <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={CHAMP_SCALE} lean={0} />
-        {/* the champion waiting beside its Trainer */}
-        <group position={[1.15, 0, -0.35]} scale={CHAMP_SCALE * 0.92}>
+        {/* the champion waiting beside its Trainer — the small wingmate (world 1/3 proportion) */}
+        <group position={[0.9, 0, -0.3]} scale={CHAMP_SCALE * FOLLOWER_REL}>
           <ChampionMesh
             type={champType}
             champion={champion}
@@ -518,7 +529,7 @@ export default function CircuitLite({
   const biome = theme.biome;
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
-  const speed = useMemo(() => sectorDifficulty(sector).speed * (modifier?.speedMult ?? 1), [sector, modifier]);
+  const speed = useMemo(() => sectorDifficulty(sector).speed * (modifier?.speedMult ?? 1) * FORWARD_PUSH, [sector, modifier]);
   const hazards = useMemo(() => sectorHazards(sector, track), [sector, track]);
   const moteColor = modifier?.moteColor ?? accent;
   const fogNear = 30 * (modifier?.fogNearMult ?? 1);
@@ -891,7 +902,7 @@ export default function CircuitLite({
               identityKey={activeKey}
               targetRef={flyerPosRef}
               headingRef={flyerHeadingRef}
-              scale={CHAMP_SCALE * 0.9}
+              scale={CHAMP_SCALE * FOLLOWER_REL}
               renderPriority={0}
             />
           )}

@@ -16,6 +16,7 @@ const CheckpointRing = memo(function CheckpointRing({
   finish,
   highlight = false,
   cpNextRef,
+  floorRing = true,
 }: {
   cp: CircuitCheckpoint;
   color: string;
@@ -26,6 +27,10 @@ const CheckpointRing = memo(function CheckpointRing({
    *  them and the current target pulses (the desktop 6-DOF feedback the mobile
    *  Climb `highlight` never got). A ref so per-gate progress needs no re-render. */
   cpNextRef?: React.MutableRefObject<number>;
+  /** the flat halo on the ground under each ring — a depth cue in the 6-DOF
+   *  Handler venue, but confusing clutter in the one-thumb Climb (there's no
+   *  ground, and it reads as a second, horizontal "gate"). Off on mobile. */
+  floorRing?: boolean;
 }) {
   const r = cp.radius;
   const grp = useRef<THREE.Group>(null);
@@ -84,19 +89,21 @@ const CheckpointRing = memo(function CheckpointRing({
         <torusGeometry args={[r, 0.06, 8, 40]} />
         <meshBasicMaterial ref={burstMat} color={PASS_GREEN} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]}>
-        <ringGeometry args={[r - 0.2, r + 0.35, 48]} />
-        <meshBasicMaterial
-          ref={floorMat}
-          color={color}
-          transparent
-          opacity={0.55}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          fog={false}
-        />
-      </mesh>
+      {floorRing && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]}>
+          <ringGeometry args={[r - 0.2, r + 0.35, 48]} />
+          <meshBasicMaterial
+            ref={floorMat}
+            color={color}
+            transparent
+            opacity={0.55}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            fog={false}
+          />
+        </mesh>
+      )}
     </group>
   );
 });
@@ -203,6 +210,7 @@ export const CircuitScene = memo(function CircuitScene({
             finish={cp.finish}
             highlight={cp.index === highlightIndex || gold}
             cpNextRef={cpNextRef}
+            floorRing={!staticMode}
           />
         );
       })}

@@ -2,11 +2,17 @@
 
 **zingers.gg** · **@zingersHQ** · **zingers.org** (tech & docs)
 
-### Raise a mind. Make it legend.
+### You fly. It fights. You both rise.
 
-You are not a fighter. You are a **Trainer** — the person who raises thinking
-minds into champions and climbs a world that grows while you climb it. This is
-the concept, the world, and how its worlds, games, and seasons fit together.
+You are not a fighter. You are a **Trainer** — jetpack on your back, flying the
+sky above a sealed vault. The thing flying beside you is a **mind you're raising**:
+a champion that argues its way through the battles studding the climb, its body
+changing to record every one. You climb; it fights; the world grows while you rise
+through it. This is the concept, the world, and how its worlds, games, and seasons
+fit together.
+
+> **Raise a mind. Make it legend.** — the promise underneath the flight. The Ascent
+> is the door and the spine; raising the mind on your wing is the depth it opens into.
 
 ---
 
@@ -40,11 +46,14 @@ Three things are true of every one of them — and they are the spine of the gam
 
 ## The Trainer (you)
 
-You never fight. You walk the **Grounds**, raise minds, hold rank in the arenas,
-and work the **Keepers** (the five guardian minds of the campaign). Your record
-is a single rising number — **Trainer Rank** — fed by every bout, training
-session, cache found, daily solved, and Keeper cracked. You may swear allegiance
-to a **Clan** — one of the five Forces — and fight in its season-long war.
+You never fight. You **fly** the **Grounds** — a jetpack-borne climb through the
+sky above the sealed vault — raise minds, hold rank in the arenas, and work the
+**Keepers** (the five guardian minds of the campaign). Because you're flesh and the
+sky is not, the jetpack is *yours*; your champion is a mind and needs none — it
+flies beside you on its own. How high you climb is part of your record, a single
+rising number — **Trainer Rank** — fed by every bout, training session, cache
+found, daily solved, Keeper cracked, and Reach flown. You may swear allegiance to a
+**Clan** — one of the five Forces — and fight in its season-long war.
 
 ## The Five Forces (the "types")
 
@@ -73,7 +82,8 @@ structures:
   own arena, open wilds, and a great rift. *(`docs/bible/05-regions.md`.)*
 - **Games = venues + scenarios.** Walk-up games ring the Concord — the
   **Amphitheatre** (watch the autonomous league; today's Tribunal) and the
-  **Circuit** (a 10-sector jetpack time-trial). Region plazas host **Open Duel**,
+  **Circuit** (the raceable body of the Ascent — a flying climb up through the
+  Reaches). Region plazas host **Open Duel**,
   the **Gauntlet** (a press-your-luck chain of fights), and the **Tribunal**
   (assigned-stance debate to a jury).
 - **Levels = champion tiers.** A career climbs **Rookie → Adept → Veteran →

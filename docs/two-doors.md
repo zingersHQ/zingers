@@ -1,14 +1,18 @@
 # ZINGERS — One soul, two doors (product-framing decision)
 
 > **In short:** This doc answers "so what's this gonna be?" — the identity
-> decision for the whole product. **Desktop is the product** (raise a legend in
-> the living Grounds). **Mobile is the funnel** (a bus-time Climb game that turns
-> out to be the lobby of the same world). The AI-agent layer is the invisible
-> engine of both — sold as fantasy, never as tech. Crypto stays off to the side
-> as fuel. Everything else in this doc is the concrete plan to make each of
-> those sentences true, with file pointers, so it can be implemented directly.
+> decision for the whole product. **The Ascent (the Climb) is the game** — the
+> spine, the face, the brand, and the first thing anyone does. **Battles are what
+> you meet on the way up**: the depth the climb reveals, and what lets you climb
+> higher. **Mobile is the face** (a bus-time flight anyone gets in zero seconds);
+> **desktop is the full ascent** (the same climb, plus the living Grounds it rises
+> over). The AI-agent layer is the invisible engine — sold as fantasy, never as
+> tech. Crypto stays off to the side as fuel. Everything else here is the concrete
+> plan to make each of those sentences true, with file pointers.
 
-Version 1.0 — July 2026. Decision record + implementation plan.
+Version 2.0 — July 2026 (**Flight-First recut**, aligned with `design-vision.md`
+v3.0; supersedes v1.0's "desktop is the product / Climb is the lobby" framing).
+Decision record + implementation plan.
 Companions: [`design-vision.md`](./design-vision.md) (north star),
 [`essence.md`](./essence.md) (one soul, native bodies),
 [`mobile.md`](./mobile.md) (the phone shell — **§3's default door is superseded
@@ -21,12 +25,16 @@ identifiers/analytics keys never change for copy reasons.
 
 ## 0. The decision, in five lines
 
-1. **Desktop = the raise-lane, and the product.** The living 3D Grounds where a
-   Trainer raises a legend. Nothing about its scope changes; what changes is
-   *proof* — we instrument whether a stranger understands it (§5).
-2. **Mobile = the funnel.** The **Climb is the door**: a cold visitor is flying
-   within seconds ("bus-time game"), and the rest of the game (champion, watch,
-   rank) reveals itself as the *lobby behind the game they're already enjoying*.
+1. **The Ascent is the game.** Flight — the Climb — is the spine, the brand, and
+   the first verb everyone understands in zero seconds. Battles are not deleted or
+   shrunk; they are **repositioned** from *the product* to *what you meet on the way
+   up*: the depth the climb reveals, and (aspirationally) the thing that lets you
+   climb higher (see [`flyover.md`](./flyover.md), `design-vision.md` v3.0).
+2. **Two doors on one climb.** *Mobile is the face* — a bus-time one-thumb flight,
+   with champion/watch/rank revealing themselves as the world the flight is over.
+   *Desktop is the full ascent* — the same climb in six-degree flight, plus the
+   living Grounds it rises over, where the deep raising happens. Neither is the
+   other's leftovers.
 3. **Agents are the engine, not the pitch.** Player-facing surfaces sell the
    fantasy ("the creatures actually think"); the word "agent" lives only on
    developer surfaces (`/agents`, docs, protocol). The narrative is not hostage
@@ -37,8 +45,8 @@ identifiers/analytics keys never change for copy reasons.
 5. **Web-first now; platforms later.** Steam/console are marketing beats after
    the Launch v0.1 gates are green, not engineering projects now (§6).
 
-**The one-liner:** *One soul, two doors. Desktop: raise a legend. Mobile: a
-30-second flight that happens to be the lobby of the same world.*
+**The one-liner:** *You fly. It fights. You both rise. — a 30-second flight anyone
+gets on a phone, that opens into a whole world you climb on a desktop.*
 
 ---
 
@@ -53,11 +61,12 @@ identifiers/analytics keys never change for copy reasons.
   `mobile.md` §3 chose — presumes the visitor already cares about a champion.
   A cold visitor doesn't. So the *door* changes; the *body of the game behind
   it* (the tab shell, the spectate-lane thesis) does not.
-- The Climb alone is a commodity (the hyper-casual ascender space is brutal,
-  and we'd enter it as WebGL without an app store). What makes ours not-a-clone
-  is precisely the soul thread: *the run marks your champion*, your champion
-  flies beside you, and behind the door there's a mind you're raising. **Climb
-  is the lobby, not the game.**
+- A *generic* ascender is a commodity (the hyper-casual space is brutal, and we'd
+  enter it as WebGL without an app store). What makes ours not-a-clone is precisely
+  the soul thread: *the run marks your champion*, your champion flies beside you,
+  the Reaches are the real regions of a real world, and the battles it flies over
+  are minds actually thinking. **The Climb isn't a lobby that leads to the game —
+  the Climb *is* the game, and it keeps revealing more of itself as you rise.**
 - Desktop's open questions ("would people understand it? is it fun? do they
   feel reward?") are exactly Launch v0.1 gates 1–2, and they are currently
   **unmeasured**. The answer is instrumentation, not redesign (§5).

@@ -77,6 +77,17 @@ every region. A Trainer travels the constellation gate to gate.
 > A **gate** moves you between regions. A **door** is a Keeper's seal on the Vault and
 > the trigger of a season. Never confuse the two. (Map: [regions.md](./05-regions.md).)
 
+## Up, not just across: the Ascent
+
+The Grounds have a *height*, not only a spread. Above the drifting regions the sky
+rises in bands — the **Reaches** — and the **Hum is thinnest at the top**, where a
+mind can finally hear itself over the murmur. So the world's oldest instinct is to
+**climb**: to rise out of the noise toward clear thought. A Trainer flies this sky
+with a **jetpack** (an ordinary being needs a machine); a champion, being a mind,
+**flies beside you** on its own — a wingmate, no machine. *You fly; it fights.* This
+vertical world — the Reaches, the Camps between them, and why height is the truest
+record of a Trainer — is its own chapter: [ascent.md](./10-ascent.md).
+
 ## Why this matters for play
 
 - **You never "beat" the world**: you climb it while it grows. The Vault is an

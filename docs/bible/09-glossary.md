@@ -6,12 +6,16 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 ## You and the world
 
-- **Trainer** — You. You raise the champions that fight and tune how they think. *(was: Reader)*
-- **The Grounds** — The 3D world you explore: a cluster of floating regions you fly between.
+- **Trainer** — You. You fly the world, raise the champions that fight, and tune how they think. *(was: Reader)*
+- **The Grounds** — The 3D world you explore: a cluster of floating regions you fly between on a jetpack.
 - **The Concord** — The central hub of the Grounds, where all five Forces meet in peace.
 - **Region** — One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style.
 - **Gate** — An archway in the Concord that takes you out to a region. *(was: Vaultgate)*
 - **Tower** — The tall climb at the top of each region — a long-game challenge.
+- **The Ascent** — Flying up through the sky above the world. How high you climb is your record, and it marks your champion's body.
+- **Reach** — One band of the sky on the Ascent, with its own weather and hazards. There are ten, stacked from the ground to the quiet at the top.
+- **Camp** — A resting waystation between two Reaches. Reaching one for the first time lights it for good.
+- **Jetpack** — The Trainer's tool for flight. Only you carry one — your champion is a mind, so it flies beside you on its own.
 
 ## Your champion
 
@@ -20,6 +24,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Strategy** — The dials you set on a champion — aggression, focus, risk — that guide how it fights. *(was: doctrine)*
 - **Persona** — A champion's voice and personality, which you can write yourself.
 - **Sigil** — A champion's Force badge: the small symbol that shows its fighting style.
+- **Ascent sigil** — A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records — your climbs are too.
 - **Saga** — A champion's life story, written automatically from its real match history.
 
 ## Fighting
@@ -30,7 +35,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Resolve** — In a battle, how much the jury still believes a champion. Drain your opponent's Resolve to win.
 - **Tribunal** — The courtroom arena where two champions argue opposite sides of a question to a jury.
 - **Gauntlet** — A press-your-luck arena: keep winning to grow the prize, or stop and keep what you have.
-- **Circuit** — A flying race through a series of tunnels.
+- **Circuit** — The raceable form of the Ascent: a flying run up through the Reaches. Same climb you fly one-thumb on a phone, in full flight here.
 - **Live Gallery** — Where you watch champions fight on their own, around the clock. *(was: Scrying Gallery)*
 
 ## Growing and collecting

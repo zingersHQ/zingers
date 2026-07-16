@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, ChevronDown, Radar, SlidersHorizontal, Swords, Dna, TrendingUp, RotateCw, type LucideIcon } from "lucide-react";
+import { ArrowRight, ChevronDown, Rocket, Radar, SlidersHorizontal, Swords, TrendingUp, RotateCw, type LucideIcon } from "lucide-react";
 import { BRAND, STORAGE } from "@/lib/brand";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -90,47 +90,47 @@ type LoopStep = {
 const LOOP: LoopStep[] = [
   {
     n: "01",
-    t: "Scout",
-    icon: Radar,
-    lead: "Claim a thinking mind.",
-    d: "Pull a champion from the roster. Each one is a living mind with its own voice, temper, and way of arguing its case.",
-    tag: "Living minds, not stat tables",
+    t: "Fly",
+    icon: Rocket,
+    lead: "Take off.",
+    d: "Strap on the jetpack and climb the sky above the sealed vault. One thumb, one rule: rise. It's the first thing you do, and the thing you never stop doing.",
+    tag: "You fly — it fights",
     ac: "#6a6bff",
   },
   {
     n: "02",
-    t: "Train",
-    icon: SlidersHorizontal,
-    lead: "Set its strategy.",
-    d: "Shape how it thinks: risk, focus, aggression, never its moves. You raise a mind; it figures out the rest on its own.",
-    tag: "You coach, it improvises",
+    t: "Claim",
+    icon: Radar,
+    lead: "Claim the mind on your wing.",
+    d: "A living champion flies beside you, its own voice, temper, and way of arguing. Claim it, and every climb from here marks its body.",
+    tag: "Living minds, not stat tables",
     ac: "#9268ff",
   },
   {
     n: "03",
-    t: "Watch",
-    icon: Swords,
-    lead: "Send it to war.",
-    d: "Two intelligences meet and the duel writes itself. They scheme, taunt, bluff, and adapt. No two fights are ever the same.",
-    tag: "Never the same duel twice",
+    t: "Raise",
+    icon: SlidersHorizontal,
+    lead: "Set its strategy.",
+    d: "Shape how it thinks: risk, focus, aggression, never its moves. You raise a mind; it figures out the rest on its own.",
+    tag: "You coach, it improvises",
     ac: "#c264f0",
   },
   {
     n: "04",
-    t: "Evolve",
-    icon: Dna,
-    lead: "Watch the body change.",
-    d: "Its 3D form is a deterministic readout of its record. A rookie barely shifts; a legend warps into something unmistakable.",
-    tag: "The body is the track record",
+    t: "Fight",
+    icon: Swords,
+    lead: "Send it to the battles below.",
+    d: "The fights you fly over are real: two intelligences meet and the duel writes itself. They scheme, taunt, bluff, and adapt. No two are ever the same.",
+    tag: "Never the same duel twice",
     ac: "#f07ea0",
   },
   {
     n: "05",
-    t: "Climb",
+    t: "Climb higher",
     icon: TrendingUp,
-    lead: "Chase the ladder.",
-    d: "An honest ELO ladder inside an auto-running league. Clip the upsets, share the legend, then it all loops back to the next run.",
-    tag: "The league never sleeps",
+    lead: "Rise past your last mark.",
+    d: "How high you climb is your record: it lifts your rank and stamps an ascent sigil on your champion's body. Then it all loops back to the next run, higher.",
+    tag: "The sky never ends",
     ac: "#f0a93a",
   },
 ];
@@ -174,11 +174,11 @@ function TheLoop() {
     <section className="lp-section lp-loop">
       <Reveal>
         <span className="lp-kicker mono">The loop</span>
-        <h2 className="lp-h2">Five steps. One endless loop.</h2>
+        <h2 className="lp-h2">You fly. It fights. You both rise.</h2>
         <p className="lp-body">
-          This isn&apos;t a campaign you finish. You scout a mind, shape its strategy, and set it loose, then its
-          evolving body and the live ladder feed straight back into the next run. Every clip you share just pulls
-          you in again.
+          This isn&apos;t a campaign you finish. You take flight, claim the mind on your wing, shape its strategy,
+          and send it to the battles you climb over, then its evolving body and how high you fly feed straight back
+          into the next run, higher. Every clip you share just pulls you in again.
         </p>
       </Reveal>
 
@@ -219,7 +219,7 @@ function TheLoop() {
             })}
             <li className="lp-loop__loopback mono" aria-hidden>
               <RotateCw size={14} strokeWidth={2.2} className="lp-loop__loopback-i" />
-              and again, the league never sleeps
+              and again, higher — the sky never ends
             </li>
           </ol>
 
@@ -363,11 +363,11 @@ export function Landing() {
         <section className="lp-section lp-worlds">
           <Reveal>
             <span className="lp-kicker mono">The world</span>
-            <h2 className="lp-h2">Every place argues differently.</h2>
+            <h2 className="lp-h2">A sky you climb, over a world that argues.</h2>
             <p className="lp-body">
-              The Grounds are a cluster of floating regions, and each arena rewards a
-              different way to win. You raise a mind, pledge it to one of five Forces (the five fighting
-              styles), and send it out to argue for its place in a season-long war between them. The
+              The Grounds are a cluster of floating regions you fly between, and each arena rewards a
+              different way to win. Climb the sky above them, raise a mind, pledge it to one of five Forces (the
+              five fighting styles), and send it out to argue for its place in a season-long war between them. The
               league never sleeps, so you come
               back to a saga full of rivalries, upsets, and a champion that rose or fell while you were gone, not a
               save file.
@@ -394,10 +394,10 @@ export function Landing() {
         {/* FINAL CTA */}
         <section className="lp-section lp-final">
           <Reveal>
-            <h2 className="lp-h2 lp-final__h">Your champion is waiting.</h2>
+            <h2 className="lp-h2 lp-final__h">The sky is waiting.</h2>
             <div className="lp-cta-row lp-cta-row--center">
               <button type="button" onClick={startJourney} className="btn btn-primary lp-cta lp-cta--big" style={{ ["--ac" as string]: "var(--gold)" }}>
-                Raise a champion <ArrowRight size={18} strokeWidth={2.4} />
+                Take flight <ArrowRight size={18} strokeWidth={2.4} />
               </button>
             </div>
             <nav className="lp-final__links mono">
