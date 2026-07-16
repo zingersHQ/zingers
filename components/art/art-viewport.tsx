@@ -252,6 +252,7 @@ function ChampionFigure({
         breatheIntensity={paused ? 0 : 0.5}
         restPose="standing"
         companionDrive={loco ? drive : undefined}
+        companionRenderPriority={0}
         actSignal={gesture ? actSig : 0}
         actName={gesture ?? "wave"}
       />
@@ -327,7 +328,8 @@ function DuoParade({
     return () => clearInterval(id);
   }, [gesture, action, paused]);
 
-  // Priority 3 > ChampionMesh companion (2) so flying/moving refs are fresh when the mesh reads them.
+  // Priority 0 — any positive useFrame priority puts this Canvas into R3F
+  // MANUAL render mode (no EffectComposer here → blank frame forever).
   useFrame((_, dtRaw) => {
     const dt = Math.min(0.05, dtRaw);
     const speed = action === "run" ? 2.4 : action === "walk" ? 1.25 : fly ? 1.8 : 0;
@@ -378,7 +380,7 @@ function DuoParade({
       champSlot.current.position.copy(cPos.current);
       champSlot.current.rotation.y = heading.current;
     }
-  }, 3);
+  });
 
   return (
     <group>
@@ -400,7 +402,7 @@ function DuoParade({
           idleSpeed={paused ? 0 : 0.5}
           breatheIntensity={paused ? 0 : 0.45}
           companionDrive={drive}
-          companionRenderPriority={2}
+          companionRenderPriority={0}
           actSignal={gesture ? actSig : 0}
           actName={gesture ?? "wave"}
         />
