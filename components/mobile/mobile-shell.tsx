@@ -13,16 +13,21 @@
 //   Climb (one-thumb Circuit) · Rank (ladder + live feed).
 // All reuse the existing engine/store/APIs; none reuse the desktop page layouts.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useCallback, useState } from "react";
-import { Home, Eye, Shield, Rocket, Trophy, Lock, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Home, Eye, Shield, Rocket, Trophy, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CircuitLite from "@/components/grounds/circuit-lite";
 import MobileToday from "@/components/mobile/mobile-today";
 import MobileWatch from "@/components/mobile/mobile-watch";
 import MobileChampion from "@/components/mobile/mobile-champion";
 import MobileRank from "@/components/mobile/mobile-rank";
+import MobileSplash from "@/components/mobile/mobile-splash";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
+import { firstDuelStarterKeys } from "@/lib/first-duel";
+import { getOwnerToken } from "@/lib/owner";
+import { track as pingEvent } from "@/lib/track";
+import { STORAGE } from "@/lib/brand";
 
 type TabId = "today" | "watch" | "champion" | "climb" | "rank";
 
@@ -46,31 +51,36 @@ export function MobileShell() {
   const [tab, setTab] = useState<TabId>("today");
   // where a "back/close" from an immersive context returns to (the last browse tab)
   const [prevTab, setPrevTab] = useState<TabId>("today");
-  const [lockHint, setLockHint] = useState(false);
 
-  // Climb is a flight game — it needs a champion to fly. Keep it locked until one
-  // is claimed. `climbLocked` also guards the content so a champion lost while the
-  // Climb tab is open falls back to Today instead of mounting a pilot-less canvas.
+  // Climb is the bus-time door (docs/two-doors.md §3): playable immediately, even
+  // with no champion — a loaner "wild mind" flies with you (guest Climb), and the
+  // fall card offers to claim it. `unowned` still routes the Champion tab to adopt.
   const owned = useChampions((s) => s.owned);
-  const climbLocked = !owned || !ROSTER[owned];
+  const unowned = !owned || !ROSTER[owned];
+
+  // the loaner wild mind: a deterministic weekly starter, seeded off the device
+  // token so a returning guest keeps meeting the same mind (attachment before adoption).
+  const loanerKey = useMemo(() => {
+    const keys = firstDuelStarterKeys().filter((k) => ROSTER[k]);
+    if (!keys.length) return "AXIOM";
+    const tok = getOwnerToken() || "guest";
+    let h = 2166136261;
+    for (let i = 0; i < tok.length; i++) {
+      h ^= tok.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return keys[(h >>> 0) % keys.length]!;
+  }, []);
 
   const selectTab = useCallback(
     (id: TabId) => {
-      if (id === "climb" && climbLocked) {
-        // Don't enter Climb without a champion — steer them to claim one first.
-        setPrevTab(tab);
-        setTab("champion");
-        setLockHint(true);
-        window.setTimeout(() => setLockHint(false), 2800);
-        return;
-      }
       setPrevTab(tab);
       setTab(id);
     },
-    [climbLocked, tab],
+    [tab],
   );
 
-  const activeTab: TabId = tab === "climb" && climbLocked ? "today" : tab;
+  const activeTab: TabId = tab;
 
   // Immersive contexts drop the bottom tab bar for a clean, focused surface and
   // carry their own back/close affordance instead (docs/mobile.md homogenisation):
@@ -78,15 +88,50 @@ export function MobileShell() {
   //   • Champion selection — a fresh trainer commits here; picking is the exit.
   // Everything else (Today · Watch · Champion profile · Rank) keeps the tab bar
   // as the single, consistent primary navigation. No burger anywhere.
-  const adopting = activeTab === "champion" && climbLocked;
+  const adopting = activeTab === "champion" && unowned;
   const immersive = activeTab === "climb" || adopting;
 
   // Leave an immersive context back to the last browse tab (never back into
-  // another immersive one, and never a locked Climb).
+  // another immersive one).
   const exitImmersive = useCallback(() => {
-    const safe = prevTab !== activeTab && prevTab !== "climb" && !(prevTab === "champion" && climbLocked) ? prevTab : "today";
+    const safe = prevTab !== activeTab && prevTab !== "climb" && !(prevTab === "champion" && unowned) ? prevTab : "today";
     setTab(safe);
-  }, [prevTab, activeTab, climbLocked]);
+  }, [prevTab, activeTab, unowned]);
+
+  // guest Climb → claim: jump to the Champion tab (which shows adopt when unowned)
+  const claimFromClimb = useCallback(() => {
+    pingEvent("m_claim_from_climb");
+    setPrevTab(tab);
+    setTab("champion");
+  }, [tab]);
+
+  // splash door — the epic first screen, shown once per browser. Read the latch
+  // in an effect (never during render) so SSR/first paint match, then reveal it.
+  const [showSplash, setShowSplash] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(STORAGE.mSplash)) setShowSplash(true);
+    } catch {
+      // no storage — skip the splash rather than gate the whole app on it
+    }
+  }, []);
+  const dismissSplash = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.mSplash, String(Date.now()));
+    } catch {
+      // best-effort latch
+    }
+    setShowSplash(false);
+  }, []);
+  const splashFly = useCallback(() => {
+    dismissSplash();
+    setPrevTab("today");
+    setTab("climb");
+  }, [dismissSplash]);
+  const splashEnter = useCallback(() => {
+    dismissSplash();
+    setTab("today");
+  }, [dismissSplash]);
 
   return (
     <div
@@ -102,16 +147,22 @@ export function MobileShell() {
         overscrollBehavior: "none",
       }}
     >
+      {showSplash && <MobileSplash onFly={splashFly} onEnter={splashEnter} />}
       {/* content area — positioned so the full-bleed Climb canvas can fill it */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         {activeTab === "climb" ? (
-          <CircuitLite embedded onExit={exitImmersive} />
+          <CircuitLite
+            embedded
+            onExit={exitImmersive}
+            guestKey={unowned ? loanerKey : undefined}
+            onClaim={unowned ? claimFromClimb : undefined}
+          />
         ) : activeTab === "today" ? (
           <MobileToday onNavigate={(t) => selectTab(t as TabId)} />
         ) : activeTab === "watch" ? (
           <MobileWatch />
         ) : activeTab === "champion" ? (
-          <MobileChampion onNavigate={(t) => selectTab(t as TabId)} />
+          <MobileChampion onNavigate={(t) => selectTab(t as TabId)} initialPick={loanerKey} />
         ) : (
           <MobileRank />
         )}
@@ -147,34 +198,6 @@ export function MobileShell() {
         )}
       </div>
 
-      {/* transient nudge when a locked tab is tapped */}
-      {lockHint && (
-        <div
-          role="status"
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
-            transform: "translateX(-50%)",
-            zIndex: 1001,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            maxWidth: "88vw",
-            padding: "9px 14px",
-            borderRadius: 99,
-            background: "rgba(8,7,14,.95)",
-            border: "1px solid var(--line2, rgba(255,255,255,.14))",
-            boxShadow: "0 12px 34px -18px #000",
-            animation: "mshLockHint .3s ease both",
-          }}
-        >
-          <Lock size={13} strokeWidth={2.4} color={ACCENT} />
-          <span style={{ fontSize: 12.5, lineHeight: 1.3 }}>Claim a champion first — then Climb unlocks.</span>
-        </div>
-      )}
-      <style>{`@keyframes mshLockHint { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }`}</style>
-
       {/* bottom tab bar — thumb-reachable, with iOS safe-area padding. Hidden in
           immersive contexts (Climb, champion selection), which carry their own
           back/close instead — one consistent nav model, no burger. */}
@@ -192,16 +215,13 @@ export function MobileShell() {
       >
         {TABS.map((t) => {
           const active = t.id === activeTab;
-          const locked = t.id === "climb" && climbLocked;
-          const Icon = locked ? Lock : t.icon;
+          const Icon = t.icon;
           return (
             <button
               key={t.id}
               type="button"
               onClick={() => selectTab(t.id)}
               aria-current={active ? "page" : undefined}
-              aria-disabled={locked || undefined}
-              title={locked ? "Claim a champion to unlock Climb" : undefined}
               style={{
                 flex: 1,
                 display: "flex",
@@ -212,8 +232,8 @@ export function MobileShell() {
                 padding: "9px 0 8px",
                 border: "none",
                 background: "transparent",
-                color: locked ? "var(--muted2, #6b6785)" : active ? ACCENT : "var(--muted2, #6b6785)",
-                opacity: locked ? 0.45 : 1,
+                color: active ? ACCENT : "var(--muted2, #6b6785)",
+                opacity: 1,
                 cursor: "pointer",
                 WebkitTapHighlightColor: "transparent",
                 transition: "color .12s, opacity .12s",

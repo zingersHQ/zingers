@@ -11,7 +11,13 @@ export const dynamic = "force-dynamic";
 
 // The allowlist: events a client is permitted to report. Server-authoritative
 // events (claim/bout/train/earn/spend/…) are deliberately excluded.
-const CLIENT_EVENTS = new Set<ZEvent>(["session", "new_user", "return", "daily", "explore", "error"]);
+const CLIENT_EVENTS = new Set<ZEvent>([
+  "session", "new_user", "return", "daily", "explore", "error",
+  // first-journey funnel + TTFE buckets + mobile door (docs/two-doors.md §5)
+  "fj_cinematic", "fj_pick", "fj_tune", "fj_duel", "fj_evolve", "fj_land",
+  "ttfe_u5", "ttfe_u8", "ttfe_over",
+  "m_splash", "m_fly", "m_guest_run", "m_claim_from_climb",
+]);
 
 export async function POST(req: Request) {
   const limited = rateLimit(req, "track", 120, 60_000);

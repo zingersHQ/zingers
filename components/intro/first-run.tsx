@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { armOnboardingAudio } from "@/lib/sound-gallery";
+import { trackOnce } from "@/lib/track";
 import { ONBOARDING_BG } from "@/lib/iconography";
 import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
@@ -66,6 +67,12 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
   useEffect(() => {
     setI((v) => Math.min(v, LAST));
   }, [LAST]);
+
+  // first-journey funnel (docs/two-doors.md §5): reaching the last beat means the
+  // visitor watched the cinematic through rather than skipping. Once per browser.
+  useEffect(() => {
+    if (i >= LAST) trackOnce("fj_cinematic", "zingers_fj_cinematic_v1");
+  }, [i, LAST]);
 
   // Let the host (the landing page) react to the deck advancing — e.g. hide the
   // rest of the homepage once you leave slide 1 so the deck takes full focus.

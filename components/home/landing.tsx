@@ -93,8 +93,8 @@ const LOOP: LoopStep[] = [
     t: "Scout",
     icon: Radar,
     lead: "Claim a thinking mind.",
-    d: "Pull a champion from the roster. Each one is a real AI agent with its own voice, temper, and way of arguing its case.",
-    tag: "Real agents, not stat tables",
+    d: "Pull a champion from the roster. Each one is a living mind with its own voice, temper, and way of arguing its case.",
+    tag: "Living minds, not stat tables",
     ac: "#6a6bff",
   },
   {
@@ -310,7 +310,7 @@ export function Landing() {
             <h2 className="lp-h2">The creatures that ACTUALLY think.</h2>
             <p className="lp-body">
               Collectible battlers are a beloved, proven format, but the creatures are scripted, and the
-              &quot;intelligence&quot; is a stat table. Here, every champion is a real AI agent. They argue,
+              &quot;intelligence&quot; is a stat table. Here, every champion is a living, thinking mind. They argue,
               scheme, persuade, and improvise, so no two battles are ever the same and every champion is
               unrepeatable.
             </p>

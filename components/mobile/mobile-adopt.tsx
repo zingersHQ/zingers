@@ -24,9 +24,12 @@ import {
   markFirstDuelComplete,
 } from "@/lib/first-duel";
 
-export function MobileAdopt() {
+export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
   const adoptStarterRookie = useChampions((s) => s.adoptStarterRookie);
-  const [picked, setPicked] = useState<string | null>(null);
+  // preselect the loaner the guest just flew in the Climb, if it's a valid starter
+  const [picked, setPicked] = useState<string | null>(
+    initialPick && ROSTER[initialPick] ? initialPick : null,
+  );
   // key currently playing its "first flight" vignette (before ownership commits)
   const [flying, setFlying] = useState<string | null>(null);
 

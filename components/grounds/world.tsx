@@ -14,6 +14,7 @@ import { readerPalette, GOLD } from "@/lib/render/palette";
 import { flightAttitudePlanar } from "@/lib/render/animations";
 import { ReaderBackSigil, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE } from "./champion-mesh";
+import { FlyingFollower } from "./flying-cast";
 import { Jetpack } from "./jetpack";
 import { keeperKindForName } from "./keeper-regalia";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
@@ -722,14 +723,20 @@ export default function World({
                   set out on its own bearing away from the arena. */}
               {circuitTunnelTarget && (() => {
                 const cr = reachThemeByIndex(0);
+                const gx = circuitTunnelTarget.pos.x;
+                const gz = circuitTunnelTarget.pos.z;
+                const groundY = terrainHeight(gx, gz, shape, knoll);
                 return (
-                  <AscentPortal
-                    pos={[circuitTunnelTarget.pos.x, terrainHeight(circuitTunnelTarget.pos.x, circuitTunnelTarget.pos.z, shape, knoll), circuitTunnelTarget.pos.z]}
-                    accent={VENUES.circuit.color}
-                    theme={(regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds") as PortalTheme}
-                    reachRoman={cr.roman}
-                    reachName={cr.name}
-                  />
+                  <>
+                    <AscentMountain pos={[gx, groundY, gz]} accent={VENUES.circuit.color} />
+                    <AscentPortal
+                      pos={[gx, groundY + ASCENT_PEAK_H, gz]}
+                      accent={VENUES.circuit.color}
+                      theme={(regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds") as PortalTheme}
+                      reachRoman={cr.roman}
+                      reachName={cr.name}
+                    />
+                  </>
                 );
               })()}
             </>
@@ -1362,7 +1369,6 @@ function CircuitSpectator({
   const c = champions.find((x) => x.key === ownedKey);
   const [act, setAct] = useState(0);
   const prevPhase = useRef<CircuitPhase | null | undefined>(phase);
-  const grp = useRef<THREE.Group>(null);
   const flying = phase === "running";
   useEffect(() => {
     if (phase !== prevPhase.current) {
@@ -1370,32 +1376,6 @@ function CircuitSpectator({
       prevPhase.current = phase;
     }
   }, [phase]);
-
-  // soft leash: park beside/behind the Handler while the run is live; snap back
-  // to the pedestal when not. Priority 0 so the lite/desktop auto-render stays happy.
-  useFrame((_, dtRaw) => {
-    const g = grp.current;
-    if (!g) return;
-    const dt = Math.min(0.05, dtRaw);
-    const [px, py, pz] = padPos;
-    const padTop = py + 1.6;
-    let tx = px;
-    let ty = padTop;
-    let tz = pz;
-    if (flying && followPos.current) {
-      const hp = followPos.current;
-      // wing slot: slightly left and behind, a touch below eye line
-      tx = hp.x - 2.2;
-      ty = hp.y - 0.35;
-      tz = hp.z - 2.8;
-    }
-    const k = 1 - Math.exp(-(flying ? 5.5 : 8) * dt);
-    g.position.x += (tx - g.position.x) * k;
-    g.position.y += (ty - g.position.y) * k;
-    g.position.z += (tz - g.position.z) * k;
-    // face down-track (+Z) while flying with you
-    if (flying) g.rotation.y += (0 - g.rotation.y) * k;
-  }, 0);
 
   if (!c) return null;
   const [px, py, pz] = padPos;
@@ -1411,25 +1391,41 @@ function CircuitSpectator({
         <ringGeometry args={[0.62, 0.94, 32]} />
         <meshBasicMaterial color={accent} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
-      <group ref={grp} position={[px, top, pz]}>
-        <ChampionMesh
-          key={c.key}
+      {flying ? (
+        // in flight: the champion trails the Handler on a wing slot, wearing the
+        // world's companion flight pose + jetpack (same behaviour as roaming).
+        <FlyingFollower
+          key={`fly-${c.key}`}
           type={c.type}
           champion={c.champion}
           identityKey={c.key}
           clan={pledged}
-          position={[0, 0, 0]}
-          rotation={0}
-          selected
-          restPose="standing"
-          breatheIntensity={0.42}
-          idlePhase={c.key.length * 0.7}
-          actSignal={act}
-          actName="wave"
-          sceneScale={WORLD_AGENT_SCALE}
-          companionRenderPriority={0}
+          targetRef={followPos}
+          scale={WORLD_AGENT_SCALE}
+          renderPriority={0}
         />
-      </group>
+      ) : (
+        // between runs: waiting on its pedestal beside the launch pad
+        <group position={[px, top, pz]}>
+          <ChampionMesh
+            key={c.key}
+            type={c.type}
+            champion={c.champion}
+            identityKey={c.key}
+            clan={pledged}
+            position={[0, 0, 0]}
+            rotation={0}
+            selected
+            restPose="standing"
+            breatheIntensity={0.42}
+            idlePhase={c.key.length * 0.7}
+            actSignal={act}
+            actName="wave"
+            sceneScale={WORLD_AGENT_SCALE}
+            companionRenderPriority={0}
+          />
+        </group>
+      )}
     </group>
   );
 }
@@ -1447,6 +1443,65 @@ function Beacon({ pos, color, h = 30 }: { pos: [number, number, number]; color: 
       <cylinderGeometry args={[0.4, 1.2, h, 14, 1, true]} />
       <meshBasicMaterial color={color} transparent opacity={0.08} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
     </mesh>
+  );
+}
+
+// ── Ascent mountain ──────────────────────────────────────────────────────────
+// The Circuit's region portal crowns a lone peak far out in the wilds, with
+// shining light beams shooting to the sky so it's spottable from across the map
+// and reads as a place you fly UP to (the Ascent). Decorative only (no collider)
+// so it never traps the Handler — the jetpack carries you to the summit portal,
+// and the walk-up trigger is planar so standing at the foot works too.
+const ASCENT_PEAK_H = 15;      // summit height above the ground
+const ASCENT_BASE_R = 17;      // mountain base radius
+function AscentMountain({
+  pos,
+  accent,
+  peakH = ASCENT_PEAK_H,
+  baseR = ASCENT_BASE_R,
+}: {
+  pos: [number, number, number];
+  accent: string;
+  peakH?: number;
+  baseR?: number;
+}) {
+  const [x, y, z] = pos;
+  const beams = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    if (!beams.current) return;
+    const t = state.clock.elapsedTime;
+    beams.current.children.forEach((b, i) => {
+      const m = (b as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      if (m) m.opacity = 0.16 + Math.sin(t * 1.6 + i * 1.7) * 0.08;
+    });
+  });
+  const beamH = 46;
+  return (
+    <group position={[x, y, z]}>
+      {/* the peak — dark rock rising to the summit */}
+      <mesh position={[0, peakH / 2, 0]} castShadow receiveShadow>
+        <coneGeometry args={[baseR, peakH, 40, 1]} />
+        <meshStandardMaterial color="#2a2740" roughness={0.95} metalness={0.05} flatShading />
+      </mesh>
+      {/* a lit crown ring at the summit where the portal sits */}
+      <mesh position={[0, peakH + 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.4, 3.4, 40]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      {/* shining beams to the sky */}
+      <group ref={beams} position={[0, peakH, 0]}>
+        {[0, 1, 2].map((i) => {
+          const a = (i / 3) * Math.PI * 2;
+          const rr = i === 0 ? 0 : 1.6;
+          return (
+            <mesh key={i} position={[Math.cos(a) * rr, beamH / 2, Math.sin(a) * rr]}>
+              <cylinderGeometry args={[i === 0 ? 0.7 : 0.35, i === 0 ? 1.6 : 0.9, beamH, 16, 1, true]} />
+              <meshBasicMaterial color={accent} transparent opacity={0.2} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+            </mesh>
+          );
+        })}
+      </group>
+    </group>
   );
 }
 
@@ -3442,8 +3497,10 @@ function Handler({
         if (dh < 3.2) next = { kind: "return" };
       }
       if (!next && circuitTunnelTarget) {
+        // planar trigger covering the mountain foot → summit, so you can enter by
+        // walking up to the peak's base or by flying to the portal that crowns it
         const dh = Math.hypot(t.x - circuitTunnelTarget.pos.x, t.z - circuitTunnelTarget.pos.z);
-        if (dh < 3.0) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
+        if (dh < 9.0) next = { kind: "venue-enter", venue: "circuit", label: circuitTunnelTarget.label };
       }
       const dTrain = Math.hypot(t.x - trainPad[0], t.z - trainPad[2]);
       const dArena = Math.hypot(t.x - ARENA[0], t.z - ARENA[2]);

@@ -37,6 +37,23 @@ export const Z_EVENTS = [
   "earn", // SUM of Crowns earned
   "spend", // SUM of Crowns spent
   "error", // a client render/runtime error
+  // ── first-journey funnel (docs/two-doors.md §5) — one per browser, so these
+  //    read as unique-visitor steps through onboarding, not replays ──
+  "fj_cinematic", // finished the intro cinematic (didn't skip)
+  "fj_pick", // picked a starter champion
+  "fj_tune", // tuned its strategy (doctrine)
+  "fj_duel", // finished the first duel
+  "fj_evolve", // saw the first evolution (the payoff moment)
+  "fj_land", // reached the Concord landing
+  // time-to-first-evolution buckets (gate 1) — client-bucketed, one per browser
+  "ttfe_u5", // first evolution in < 5 min
+  "ttfe_u8", // …in 5–8 min
+  "ttfe_over", // …in > 8 min
+  // the mobile Climb-first door (docs/two-doors.md §3)
+  "m_splash", // saw the mobile splash poster
+  "m_fly", // tapped "Fly" from the splash
+  "m_guest_run", // started a guest Climb run (no champion yet)
+  "m_claim_from_climb", // reached adoption via the Climb claim hook
 ] as const;
 
 export type ZEvent = (typeof Z_EVENTS)[number];
@@ -82,6 +99,12 @@ export async function getAnalytics(windowDays = 14): Promise<Analytics> {
 
   const funnel: Analytics["funnel"] = [
     { label: "Visited", key: "session", value: totals.session ?? 0 },
+    { label: "Cinematic", key: "fj_cinematic", value: totals.fj_cinematic ?? 0 },
+    { label: "Picked", key: "fj_pick", value: totals.fj_pick ?? 0 },
+    { label: "Tuned", key: "fj_tune", value: totals.fj_tune ?? 0 },
+    { label: "First duel", key: "fj_duel", value: totals.fj_duel ?? 0 },
+    { label: "Evolved", key: "fj_evolve", value: totals.fj_evolve ?? 0 },
+    { label: "Landed", key: "fj_land", value: totals.fj_land ?? 0 },
     { label: "Claimed", key: "claim", value: totals.claim ?? 0 },
     { label: "Trained", key: "train", value: totals.train ?? 0 },
     { label: "Fought", key: "bout", value: totals.bout ?? 0 },

@@ -24,6 +24,7 @@ import { TRAIN_COST } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
+import { trackOnce, trackFirstEvolution } from "@/lib/track";
 import { armOnboardingAudio, playOnboardingSound } from "@/lib/sound-gallery";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
@@ -98,12 +99,32 @@ export function FirstDuelOverlay({
     if (phase === "concord") playOnboardingSound("concord");
   }, [phase]);
 
+  // first-journey funnel (docs/two-doors.md §5) — fire each step once per browser
+  useEffect(() => {
+    if (phase === "evolve") {
+      // the first duel is done and its payoff is on screen
+      trackOnce("fj_duel", "zingers_fj_duel_v1");
+      trackFirstEvolution();
+    } else if (phase === "concord") {
+      trackOnce("fj_land", "zingers_fj_land_v1");
+    }
+  }, [phase]);
+
   const handlePick = useCallback(
     (key: string) => {
       playOnboardingSound("pick");
+      trackOnce("fj_pick", "zingers_fj_pick_v1");
       onPick(key);
     },
     [onPick],
+  );
+
+  const handleTrain = useCallback(
+    (key: string, strat: Strat) => {
+      trackOnce("fj_tune", "zingers_fj_tune_v1");
+      return onTrain(key, strat);
+    },
+    [onTrain],
   );
 
   if (phase === "pick") {
@@ -117,7 +138,7 @@ export function FirstDuelOverlay({
         starters={starters}
         crowns={crowns}
         isMobile={isMobile}
-        onTrain={onTrain}
+        onTrain={handleTrain}
       />
     );
   }

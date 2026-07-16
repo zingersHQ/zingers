@@ -2,7 +2,7 @@
 export const BRAND = {
   name: "Zingers",
   nameUpper: "ZINGERS",
-  tagline: "train · fight · evolve AI champions",
+  tagline: "train · fight · evolve living champions",
   site: "https://zingers.gg",
   siteTech: "https://zingers.org",
   twitter: "zingersHQ",
@@ -26,6 +26,7 @@ export const STORAGE = {
   controlsSeen: "zingers_controls_seen_v1",
   settings: "zingers_settings_v1",
   readerSplitCoach: "zingers_reader_split_coach_v1",
+  mSplash: "zingers_m_splash_v1", // mobile splash door shown once per browser (docs/two-doors.md §3)
 } as const;
 
 export function pageTitle(suffix?: string) {

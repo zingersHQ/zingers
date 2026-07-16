@@ -21,6 +21,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { ChampionMesh } from "./champion-mesh";
+import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter, sectorBounds } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
@@ -38,6 +39,7 @@ import { getOwnerToken, getHandle } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
 import { setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
+import { track as pingEvent } from "@/lib/track";
 
 // a leaderboard row as returned by /api/circuit
 interface BoardRow {
@@ -174,11 +176,13 @@ function Flyer({
   speed,
   hazards,
   champType,
-  champion,
   ascentReaches,
   accent,
   holdRef,
   altRef,
+  flyerPosRef,
+  flyerHeadingRef,
+  pilotBurstRef,
   onGate,
   onSectorClear,
   onFail,
@@ -188,11 +192,16 @@ function Flyer({
   speed: number;
   hazards: Hazard[];
   champType: CreatureType;
-  champion: Champion;
   ascentReaches: number;
   accent: string;
   holdRef: React.RefObject<boolean>;
   altRef: React.RefObject<number>;
+  /** the pilot's live world position — the FlyingFollower champion trails it */
+  flyerPosRef: React.RefObject<THREE.Vector3>;
+  /** the pilot's heading (down-track) */
+  flyerHeadingRef: React.RefObject<number>;
+  /** bump to emit a jetpack puff from the pilot */
+  pilotBurstRef: React.RefObject<number>;
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
@@ -211,17 +220,9 @@ function Flyer({
   const lockUntil = useRef(0);   // control ignored until this clock time (stumble)
   const immuneUntil = useRef(0); // no new stumble until this clock time (grace)
 
-  // drive ChampionMesh's own flight pose + jetpack (reads these each frame)
+  // the pilot (robot) is always flying here; puff its jetpack while thrusting
   const flyingRef = useRef(true);
-  const movingRef = useRef(true);
-  const speedRef = useRef(0);
-  const runRef = useRef(false);
-  const velRef = useRef(new THREE.Vector3());
-  const headingRef = useRef(CHAMP_FACE);
-  const companionDrive = useMemo(
-    () => ({ flyingRef, movingRef, speedRef, runRef, velRef, headingRef }),
-    [],
-  );
+  const jetEmit = useRef(0);
 
   const camWant = useRef(new THREE.Vector3());
   const lookAt = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2] + CAM_LEAD));
@@ -261,9 +262,16 @@ function Flyer({
     // was the "weird correction" players hated).
     pos.current.x = 0;
 
-    // feed the champion's flight rig (poses + emits its own jetpack from these)
-    speedRef.current = fwd.current;
-    velRef.current.set(0, vy.current, fwd.current);
+    // publish the pilot's world pose so the champion follower can trail it
+    flyerPosRef.current.copy(pos.current);
+    flyerHeadingRef.current = CHAMP_FACE;
+    // puff the pilot's jetpack: a steady cadence while held, sparse while gliding
+    jetEmit.current += dt;
+    const emitGap = held ? 0.05 : 0.16;
+    if (jetEmit.current > emitGap) {
+      jetEmit.current = 0;
+      pilotBurstRef.current += 1;
+    }
 
     if (grp.current) {
       grp.current.position.copy(pos.current);
@@ -335,21 +343,9 @@ function Flyer({
 
   return (
     <group ref={grp} position={track.spawn}>
-      <group position={[0, CHAMP_Y, 0]} scale={CHAMP_SCALE}>
-        <Suspense fallback={<group scale={1 / CHAMP_SCALE} position={[0, -CHAMP_Y, 0]}><MechBody accent={accent} /></group>}>
-          <ChampionMesh
-            type={champType}
-            champion={champion}
-            position={[0, 0, 0]}
-            rotation={0}
-            showLabel={false}
-            hideFloaters
-            breatheIntensity={0.5}
-            restPose="standing"
-            companionDrive={companionDrive}
-            companionRenderPriority={0}
-            sceneScale={1}
-          />
+      <group position={[0, CHAMP_Y, 0]}>
+        <Suspense fallback={<group scale={CHAMP_SCALE}><MechBody accent={accent} /></group>}>
+          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={CHAMP_SCALE} />
         </Suspense>
       </group>
       <AscentSigil reaches={ascentReaches} accent={accent} />
@@ -373,6 +369,8 @@ function ReadyPose({
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
+  const grounded = useRef(false); // pilot is on the pad, jetpack stowed
+  const noBurst = useRef(0);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     if (grp.current) grp.current.position.y = track.spawn[1] + CHAMP_Y + Math.sin(t * 1.6) * 0.07;
@@ -380,21 +378,24 @@ function ReadyPose({
   });
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
-      <group scale={CHAMP_SCALE}>
-        <Suspense fallback={<group scale={1 / CHAMP_SCALE}><MechBody accent={accent} /></group>}>
+      <Suspense fallback={<group scale={CHAMP_SCALE}><MechBody accent={accent} /></group>}>
+        {/* the Trainer's robot, ready on the pad */}
+        <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={CHAMP_SCALE} lean={0} />
+        {/* the champion waiting beside its Trainer */}
+        <group position={[1.15, 0, -0.35]} scale={CHAMP_SCALE * 0.92}>
           <ChampionMesh
             type={champType}
             champion={champion}
             position={[0, 0, 0]}
-            rotation={CHAMP_FACE}
+            rotation={CHAMP_FACE - 0.25}
             showLabel={false}
             hideFloaters
             breatheIntensity={0.9}
             restPose="standing"
             sceneScale={1}
           />
-        </Suspense>
-      </group>
+        </group>
+      </Suspense>
       <AscentSigil reaches={ascentReaches} accent={accent} />
     </group>
   );
@@ -450,7 +451,19 @@ function SkyShift({ bg, fogColor, fogNear, fogFar, exposure }: { bg: string; fog
 
 // `embedded` = rendered inside the mobile shell as the Climb tab (docs/mobile.md):
 // fill the parent tab area, drop the standalone island chrome.
-export default function CircuitLite({ embedded = false, onExit }: { embedded?: boolean; onExit?: () => void } = {}) {
+export default function CircuitLite({
+  embedded = false,
+  onExit,
+  guestKey,
+  onClaim,
+}: {
+  embedded?: boolean;
+  onExit?: () => void;
+  /** loaner "wild mind" flown when the player owns no champion yet (guest Climb) */
+  guestKey?: string;
+  /** the claim hook — reached from the fall card ("Claim this mind") */
+  onClaim?: () => void;
+} = {}) {
   const [mounted, setMounted] = useState(false);
   const [runId, setRunId] = useState(0);
   const [sector, setSector] = useState(0);
@@ -481,15 +494,23 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
   const holdRef = useRef(false);
   const altRef = useRef(0);
   const runStart = useRef(0); // performance.now() when the run went live
+  // the pilot (robot) publishes its live world pose here; the champion follower trails it
+  const flyerPosRef = useRef(new THREE.Vector3());
+  const flyerHeadingRef = useRef(CHAMP_FACE);
+  const pilotBurstRef = useRef(0);
 
   // which champion is flying: the adopted mind, else a sensible roster default
   const owned = useChampions((s) => s.owned);
   const getChampion = useChampions((s) => s.get);
   const awardTrainerXp = useChampions((s) => s.awardTrainerXp);
   const awardGauntlet = useChampions((s) => s.awardGauntlet);
-  const activeKey = owned ?? "AXIOM";
+  // guest Climb (docs/two-doors.md §3): with no owned champion, a loaner "wild
+  // mind" flies with you. Guest runs mark nothing — claim it to keep your climb.
+  const guest = !owned;
+  const activeKey = owned ?? guestKey ?? "AXIOM";
   const champType = (ROSTER[activeKey]?.type ?? "LOGIC") as CreatureType;
   const champion = useMemo(() => getChampion(activeKey), [getChampion, activeKey]);
+  const guestPinged = useRef(false);
 
   // ── the current sector's theme + difficulty + modifier (the Reach it lives in) ──
   const track = CLIMB_SECTORS[sector]!;
@@ -542,6 +563,13 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
   // Reward is gated on genuine improvement so sector 1 can't be farmed.
   const recordRun = useCallback(
     (sectorsCleared: number, clearedAll: boolean) => {
+      // a guest run marks nothing — no XP, no Crowns, no board, no saved best.
+      // Claiming the wild mind is what turns the climb into a real career.
+      if (guest) {
+        setReward(null);
+        setNewBest(false);
+        return;
+      }
       const run: CircuitPersonalBest = {
         sectors: sectorsCleared,
         totalMs: Math.max(0, performance.now() - runStart.current),
@@ -585,7 +613,7 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
           .catch(() => {});
       }
     },
-    [awardTrainerXp, awardGauntlet, loadBoard],
+    [guest, awardTrainerXp, awardGauntlet, loadBoard],
   );
 
   // read the altitude ref at ~12fps so the number ticks without re-rendering
@@ -638,12 +666,16 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
     setPhase((p) => {
       if (p === "ready") {
         runStart.current = performance.now();
+        if (guest && !guestPinged.current) {
+          guestPinged.current = true;
+          pingEvent("m_guest_run");
+        }
         return "running";
       }
       return p;
     });
     setHold(true);
-  }, [setHold]);
+  }, [setHold, guest]);
 
   // keyboard hold (Space) for desktop testing of the one-thumb feel
   useEffect(() => {
@@ -838,15 +870,29 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
               speed={speed}
               hazards={hazards}
               champType={champType}
-              champion={champion}
               ascentReaches={ascentReaches}
               accent={accent}
               holdRef={holdRef}
               altRef={altRef}
+              flyerPosRef={flyerPosRef}
+              flyerHeadingRef={flyerHeadingRef}
+              pilotBurstRef={pilotBurstRef}
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
               onStumble={onStumble}
+            />
+          )}
+          {running && (
+            <FlyingFollower
+              key={`follow-${runId}`}
+              type={champType}
+              champion={champion}
+              identityKey={activeKey}
+              targetRef={flyerPosRef}
+              headingRef={flyerHeadingRef}
+              scale={CHAMP_SCALE * 0.9}
+              renderPriority={0}
             />
           )}
         </Canvas>
@@ -1142,10 +1188,26 @@ export default function CircuitLite({ embedded = false, onExit }: { embedded?: b
               )}
             </div>
 
+            {/* guest Climb: the wild mind you just flew is claimable here — the
+                run marks nothing until you keep it (docs/two-doors.md §3) */}
+            {guest && onClaim && (
+              <>
+                <div className="mono" style={{ fontSize: 10.5, color: "var(--muted, #9a96b8)", lineHeight: 1.5, marginBottom: 12, letterSpacing: 0.3 }}>
+                  A wild mind flew with you. Claim it to keep your climb — earn XP, Crowns, and a place on the board.
+                </div>
+                <button
+                  type="button"
+                  onClick={onClaim}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, marginBottom: 10, width: "100%", justifyContent: "center" }}
+                >
+                  <Sparkles size={16} strokeWidth={2.4} /> Claim {ROSTER[activeKey]?.name ?? "this mind"}
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={resetRun}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: guest && onClaim ? "1px solid rgba(255,255,255,.16)" : "none", background: guest && onClaim ? "transparent" : accent, color: guest && onClaim ? "#e6e2f5" : "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>

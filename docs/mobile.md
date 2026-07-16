@@ -12,6 +12,12 @@ Version 0.1 — July 2026. Companion to [`design-vision.md`](./design-vision.md)
 [`growth-strategy.md`](./growth-strategy.md) (distribution). **Read before building
 any mobile surface.** Copy follows [`vocabulary.md`](./vocabulary.md).
 
+> **Direction note (July 2026):** the **default door** decided in §3 (Today
+> tab) is superseded by [`two-doors.md`](./two-doors.md): the phone now opens
+> on a splash → **Climb-first** door (bus-time game as the lobby of the same
+> shell), with a guest Climb + claim hook. Everything else in this spec — the
+> shell, the verb bodies, the spectate-lane depth, M1–M3 — stands.
+
 ---
 
 ## 0. The honest starting point
@@ -88,6 +94,10 @@ use); code identifiers are unchanged (`vocabulary.md` "copy, not code").
 ---
 
 ## 3. Information architecture (the phone shell)
+
+> **Superseded in part:** the default door is no longer the Today tab — see
+> [`two-doors.md`](./two-doors.md) §3 (splash → Climb-first, guest Climb).
+> The tab set and everything below it is unchanged.
 
 Replace "the only door is the 3D world" with a **native mobile shell**: a
 persistent **bottom tab bar** (thumb-reachable) over full-screen views. Proposed

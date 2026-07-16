@@ -27,7 +27,7 @@ const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
   { key: "risk", label: "Risk", hints: ["Safe", "Reckless"] },
 ];
 
-export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
+export function MobileChampion(_props: { onNavigate?: (tab: string) => void; initialPick?: string }) {
   const owned = useChampions((s) => s.owned);
   const progress = useChampions((s) => s.progress);
   const recipes = useChampions((s) => s.recipes);
@@ -108,7 +108,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void }) {
   // on a phone this IS the raise lane's entry). Once adopted, `owned` flips and
   // the full Champion body below renders.
   if (!owned || !ROSTER[owned] || !champ) {
-    return <MobileAdopt />;
+    return <MobileAdopt initialPick={_props.initialPick} />;
   }
 
   const type = ROSTER[owned].type;

@@ -8,8 +8,18 @@ import { getOwnerToken } from "@/lib/owner";
 
 // Distinguishes a brand-new browser from a returning one (no account needed).
 const SEEN_KEY = "zingers_seen_v1";
+// wall-clock (ms) of the first-ever session → time-to-first-evolution (gate 1)
+const FJ_START_KEY = "zingers_fj_start_v1";
+const TTFE_DONE_KEY = "zingers_ttfe_done_v1";
 
-export type ClientEvent = "session" | "new_user" | "return" | "daily" | "explore" | "error";
+export type ClientEvent =
+  | "session" | "new_user" | "return" | "daily" | "explore" | "error"
+  // first-journey funnel (docs/two-doors.md §5) — one per browser
+  | "fj_cinematic" | "fj_pick" | "fj_tune" | "fj_duel" | "fj_evolve" | "fj_land"
+  // time-to-first-evolution buckets (client-computed, one per browser)
+  | "ttfe_u5" | "ttfe_u8" | "ttfe_over"
+  // the mobile Climb-first door (docs/two-doors.md §3)
+  | "m_splash" | "m_fly" | "m_guest_run" | "m_claim_from_climb";
 
 function post(type: ClientEvent): void {
   if (typeof window === "undefined") return;
@@ -35,12 +45,46 @@ export function track(type: Exclude<ClientEvent, "session" | "new_user" | "retur
   post(type);
 }
 
+// Fire an event at most once per browser (localStorage latch). Used for the
+// first-journey funnel so each step reads as a unique-visitor count, not a replay.
+// If storage is unavailable (private mode), it fires every time — acceptable.
+export function trackOnce(type: ClientEvent, latchKey: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (localStorage.getItem(latchKey)) return;
+    localStorage.setItem(latchKey, String(Date.now()));
+  } catch {
+    // no storage — fall through and still fire the ping
+  }
+  post(type);
+}
+
+// The first evolution is the payoff moment (gate 1). Fire the funnel step once,
+// and bucket the elapsed time since the first session so time-to-first-evolution
+// is visible on /stats without any per-user trail.
+export function trackFirstEvolution(): void {
+  trackOnce("fj_evolve", "zingers_fj_evolve_v1");
+  if (typeof window === "undefined") return;
+  try {
+    if (localStorage.getItem(TTFE_DONE_KEY)) return;
+    const startRaw = localStorage.getItem(FJ_START_KEY);
+    const start = startRaw ? Number(startRaw) : Date.now();
+    const mins = (Date.now() - start) / 60000;
+    localStorage.setItem(TTFE_DONE_KEY, "1");
+    post(mins < 5 ? "ttfe_u5" : mins < 8 ? "ttfe_u8" : "ttfe_over");
+  } catch {
+    // no storage — skip the bucket, the funnel step already fired
+  }
+}
+
 // One call on app load: always a `session`, plus a `new_user`/`return` split so
 // retention is visible without any login.
 export function trackSession(): void {
   if (typeof window === "undefined") return;
   post("session");
   try {
+    // stamp the journey start once, for time-to-first-evolution (gate 1)
+    if (!localStorage.getItem(FJ_START_KEY)) localStorage.setItem(FJ_START_KEY, String(Date.now()));
     if (localStorage.getItem(SEEN_KEY)) {
       post("return");
     } else {
