@@ -10,13 +10,13 @@ import { SHARED_RIG } from "@/lib/render/model-registry";
 import { GOLD, readerPalette } from "@/lib/render/palette";
 import { ChampionMesh, applyBoneMorph, buildCharacter, WORLD_AGENT_SCALE } from "@/components/grounds/champion-mesh";
 import { Jetpack } from "@/components/grounds/jetpack";
+import { ANIM, breatheIntensityForMode, bodyBobForMode, idleSpeedForMode } from "@/lib/render/animations";
 
 type Controls = { target: THREE.Vector3; update: () => void };
 
 /** Match world.tsx: Reader is 2/3, champions are WORLD_AGENT_SCALE (2/9) → champ ≈ ⅓ of Trainer. */
 const READER_SCALE = 2 / 3;
 const DUO_CHAMP_REL = WORLD_AGENT_SCALE / READER_SCALE; // 1/3
-
 
 /** Locomotion / showcase poses available on every art tile. */
 export type ArtAction = "stand" | "walk" | "run" | "jump" | "fly" | "wave" | "punch";
@@ -33,14 +33,18 @@ export const ART_ACTIONS: { id: ArtAction; label: string }[] = [
 
 type ClipKey = "idle" | "standing" | "walk" | "run" | "jump" | "wave" | "punch";
 
-const ACTION_CLIP: Record<ArtAction, { clip: ClipKey; loop: boolean; timeScale?: number; fly?: boolean }> = {
-  stand: { clip: "standing", loop: true },
-  walk: { clip: "walk", loop: true },
-  run: { clip: "run", loop: true, timeScale: 1.12 },
-  jump: { clip: "jump", loop: true, timeScale: 0.95 },
-  fly: { clip: "idle", loop: true, fly: true },
-  wave: { clip: "wave", loop: true, timeScale: 0.85 },
-  punch: { clip: "punch", loop: true },
+/** Match game: Handler rests on Idle (not full-speed Standing — that clip reads as a violent bounce). */
+const ACTION_CLIP: Record<
+  ArtAction,
+  { clip: ClipKey; loop: "repeat" | "pingpong" | "once"; timeScale: number; fly?: boolean }
+> = {
+  stand: { clip: "idle", loop: "repeat", timeScale: ANIM.idleClipScale },
+  walk: { clip: "walk", loop: "repeat", timeScale: 1 },
+  run: { clip: "run", loop: "repeat", timeScale: 1.12 },
+  jump: { clip: "jump", loop: "repeat", timeScale: 0.95 },
+  fly: { clip: "idle", loop: "repeat", timeScale: ANIM.idleClipScale, fly: true },
+  wave: { clip: "wave", loop: "repeat", timeScale: 0.85 },
+  punch: { clip: "punch", loop: "repeat", timeScale: 1 },
 };
 
 function ReaderRings({
@@ -119,25 +123,31 @@ function TrainerFigure({
   const burstRef = useRef(0);
   const emitAcc = useRef(0);
   const bodyRef = useRef<THREE.Group>(null);
+  const treadRef = useRef<THREE.Group>(null);
+  const treadX = useRef(0);
   const cfg = ACTION_CLIP[action];
 
   useEffect(() => {
     flyingRef.current = !!cfg.fly;
     if (cfg.fly) burstRef.current++;
+    treadX.current = 0;
   }, [cfg.fly, action]);
 
   useEffect(() => {
     const clip = built.actions[cfg.clip] ?? built.actions.idle ?? built.actions.standing;
     if (!clip) return;
     Object.values(built.actions).forEach((a) => a?.stop());
-    if (cfg.loop) {
+    if (cfg.loop === "pingpong") {
+      clip.setLoop(THREE.LoopPingPong, Infinity);
+      clip.clampWhenFinished = false;
+    } else if (cfg.loop === "repeat") {
       clip.setLoop(THREE.LoopRepeat, Infinity);
       clip.clampWhenFinished = false;
     } else {
       clip.setLoop(THREE.LoopOnce, 1);
       clip.clampWhenFinished = true;
     }
-    clip.reset().setEffectiveTimeScale(cfg.timeScale ?? 1).setEffectiveWeight(1).fadeIn(0.12).play();
+    clip.reset().setEffectiveTimeScale(cfg.timeScale).setEffectiveWeight(1).fadeIn(0.12).play();
     return () => {
       clip.fadeOut(0.1);
     };
@@ -181,10 +191,21 @@ function TrainerFigure({
       bodyRef.current.position.y += (hover - bodyRef.current.position.y) * a;
       bodyRef.current.rotation.x += (lean - bodyRef.current.rotation.x) * a;
     }
+    // Solo treadmill so Walk/Run read as travel (duo parade handles embedded motion).
+    if (!embedded && treadRef.current && !paused) {
+      if (action === "walk" || action === "run") {
+        const v = action === "run" ? 1.7 : 0.9;
+        treadX.current += v * dt;
+        if (treadX.current > 1.3) treadX.current = -1.3;
+        treadRef.current.position.x = treadX.current;
+      } else {
+        treadRef.current.position.x += (0 - treadRef.current.position.x) * (1 - Math.exp(-6 * dt));
+      }
+    }
   });
 
   return (
-    <group scale={0.85}>
+    <group ref={treadRef} scale={0.85}>
       <group ref={bodyRef}>
         <primitive object={built.root} />
         <Jetpack h={built.h} flyingRef={flyingRef} burstRef={burstRef} />
@@ -217,18 +238,23 @@ function ChampionFigure({
     () => ({ flyingRef, movingRef, speedRef, runRef, velRef, headingRef }),
     [],
   );
+  const tread = useRef<THREE.Group>(null);
+  const treadX = useRef(0);
 
   const [actSig, setActSig] = useState(0);
   const gesture = action === "jump" || action === "wave" || action === "punch" ? action : null;
   const loco = action === "walk" || action === "run" || action === "fly";
+  const standMode = action === "stand";
 
   useEffect(() => {
     flyingRef.current = action === "fly";
     movingRef.current = action === "walk" || action === "run";
     runRef.current = action === "run";
-    speedRef.current = action === "run" ? 4.2 : action === "walk" ? 2.2 : action === "fly" ? 3.5 : 0;
-    velRef.current.set(0, action === "fly" ? 0.4 : 0, speedRef.current);
-    if (action === "fly") velRef.current.set(0.6, 0.5, 2.8);
+    const spd = action === "run" ? 4.2 : action === "walk" ? 2.4 : action === "fly" ? 3.2 : 0;
+    speedRef.current = spd;
+    velRef.current.set(0, action === "fly" ? 0.45 : 0, spd);
+    headingRef.current = 0;
+    treadX.current = 0;
   }, [action]);
 
   useEffect(() => {
@@ -238,8 +264,27 @@ function ChampionFigure({
     return () => clearInterval(id);
   }, [gesture, action, paused]);
 
+  // Light treadmill so walk/run read as travel (clips alone can look planted).
+  useFrame((_, dtRaw) => {
+    if (!tread.current || paused) return;
+    const dt = Math.min(0.05, dtRaw);
+    if (action === "walk" || action === "run") {
+      const v = action === "run" ? 1.6 : 0.85;
+      treadX.current += v * dt;
+      if (treadX.current > 1.2) treadX.current = -1.2;
+      tread.current.position.x = treadX.current;
+      tread.current.position.y = 0;
+    } else if (action === "fly") {
+      tread.current.position.x = Math.sin(performance.now() * 0.0011) * 0.35;
+      tread.current.position.y = 0.55;
+    } else {
+      tread.current.position.x += (0 - tread.current.position.x) * (1 - Math.exp(-6 * dt));
+      tread.current.position.y += (0 - tread.current.position.y) * (1 - Math.exp(-6 * dt));
+    }
+  });
+
   return (
-    <group scale={0.72} position={[0, action === "fly" ? 0.55 : 0, 0]}>
+    <group ref={tread} scale={0.72}>
       <ChampionMesh
         type={type}
         champion={champion}
@@ -248,8 +293,9 @@ function ChampionFigure({
         showLabel={false}
         hideFloaters
         selected
-        idleSpeed={paused ? 0 : 0.55}
-        breatheIntensity={paused ? 0 : 0.5}
+        idleSpeed={standMode ? idleSpeedForMode("breathing") : paused ? 0 : 0.55}
+        breatheIntensity={standMode ? breatheIntensityForMode("breathing") : paused ? 0 : 0.45}
+        bodyBob={standMode ? bodyBobForMode("bounce") : 0}
         restPose="standing"
         companionDrive={loco ? drive : undefined}
         companionRenderPriority={0}
@@ -399,8 +445,9 @@ function DuoParade({
           showLabel={false}
           hideFloaters
           restPose="standing"
-          idleSpeed={paused ? 0 : 0.5}
-          breatheIntensity={paused ? 0 : 0.45}
+          idleSpeed={action === "stand" ? idleSpeedForMode("breathing") : paused ? 0 : 0.5}
+          breatheIntensity={action === "stand" ? breatheIntensityForMode("breathing") : paused ? 0 : 0.45}
+          bodyBob={action === "stand" ? bodyBobForMode("bounce") : 0}
           companionDrive={drive}
           companionRenderPriority={0}
           actSignal={gesture ? actSig : 0}
