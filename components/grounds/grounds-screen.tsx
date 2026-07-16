@@ -70,7 +70,7 @@ import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
-import { setSfxVolume, evolveStinger, jumpBeep } from "@/lib/sfx";
+import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
 import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
@@ -92,6 +92,9 @@ import {
 import { primeCreature, speakCreatureType } from "@/lib/creature-voice";
 import { companionReaction, type CompanionEvent } from "@/lib/lore/companion";
 import { ClanSheet } from "@/components/grounds/clan-sheet";
+import { ClanCinematic, type ClanCeremony } from "@/components/grounds/clan-cinematic";
+import { CLAN_R, concordClanSpots } from "@/components/grounds/concord";
+import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import {
@@ -646,6 +649,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [clanOpen, setClanOpen] = useState(false);
   const [clanPreselect, setClanPreselect] = useState<CreatureType | null>(null);
   const [clanPreview, setClanPreview] = useState<CreatureType | null>(null);
+  // In-world swear shot after a pledge — letterboxed camera + rising flag.
+  const [clanCeremony, setClanCeremony] = useState<ClanCeremony | null>(null);
+  const pendingClanCeremony = useRef<CreatureType | null>(null);
+  const reduceMotionPref = usePrefersReducedMotion();
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
   historyRef.current = bout.history;
@@ -953,7 +960,72 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   }, [readerSplitStep, near?.kind, owned, dismissReaderSplitCoach]);
 
   const inMatch = bout.phase === "live";
-  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen;
+  const controlsEnabled = overlay === "none" && !inMatch && !result && !gRun && !clanOpen && !clanCeremony;
+
+  const placeAtClanFlag = useCallback((type: CreatureType) => {
+    const spot = concordClanSpots().find((s) => s.type === type);
+    if (!spot || !travelRef.current) return { x: spot?.x ?? 0, z: spot?.z ?? 0 };
+    // Stand between the seal and the flag, facing the mast.
+    const ang = Math.atan2(spot.z, spot.x);
+    const standR = CLAN_R - 2.35;
+    const sx = Math.cos(ang) * standR;
+    const sz = Math.sin(ang) * standR;
+    const face = Math.atan2(spot.x - sx, spot.z - sz);
+    travelRef.current(sx, sz, face);
+    return { x: spot.x, z: spot.z };
+  }, []);
+
+  const finishClanCeremony = useCallback((c: ClanCeremony) => {
+    setClanCeremony(null);
+    setPledgeFlash({ name: c.name, motto: c.motto, color: c.color });
+    if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+    pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2200);
+  }, []);
+
+  const beginClanCeremony = useCallback(
+    (type: CreatureType) => {
+      const fm = forceMeta(type);
+      const payload: ClanCeremony = { type, name: fm.name, motto: fm.motto, color: TYPE_COLOR[type] };
+      const reduce = reduceMotionPref || useSettings.getState().reduceMotion;
+      if (reduce) {
+        pledgeSfx();
+        setPledgeFlash({ name: payload.name, motto: payload.motto, color: payload.color });
+        if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+        pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
+        return;
+      }
+      // Ceremony needs the Concord plaza. If you're elsewhere, queue a travel.
+      if (!isHub || inVenue) {
+        pendingClanCeremony.current = type;
+        if (inVenue) exitVenue();
+        if (!isHub) travelToWorld("concord", false);
+        return;
+      }
+      placeAtClanFlag(type);
+      setClanCeremony(payload);
+    },
+    [reduceMotionPref, isHub, inVenue, exitVenue, travelToWorld, placeAtClanFlag],
+  );
+
+  // After a queued Concord travel, park at the flag and open the swear shot.
+  useEffect(() => {
+    if (!isHub || inVenue || !pendingClanCeremony.current) return;
+    const type = pendingClanCeremony.current;
+    pendingClanCeremony.current = null;
+    const fm = forceMeta(type);
+    const payload: ClanCeremony = { type, name: fm.name, motto: fm.motto, color: TYPE_COLOR[type] };
+    const t = setTimeout(() => {
+      placeAtClanFlag(type);
+      setClanCeremony(payload);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [isHub, inVenue, worldId, placeAtClanFlag]);
+
+  const clanShotTarget = useMemo(() => {
+    if (!clanCeremony) return null;
+    const spot = concordClanSpots().find((s) => s.type === clanCeremony.type);
+    return spot ? { x: spot.x, z: spot.z } : null;
+  }, [clanCeremony]);
 
   // Per-place procedural score; battle overlay when a fight or Keeper duel is live.
   useEffect(() => {
@@ -1685,7 +1757,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // — the compass sat at z-index 100 above CharacterBeat (92), breaking keeper
   // dialogues and other overlays.
   const cinematicOpen =
-    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat || !!trialNom;
+    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat || !!trialNom || !!clanCeremony;
   const worldUiBlocked =
     showMatch ||
     overlay !== "none" ||
@@ -1896,6 +1968,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               pledged={store.force}
               choosingClan={clanOpen}
               clanPreview={clanOpen ? clanPreview : null}
+              clanCeremony={!!clanCeremony}
+              clanShot={clanShotTarget}
               tier={growth?.tier ?? 0}
               featured={growth?.featured ?? false}
               featuredWorld={isHub ? featuredWorld : null}
@@ -1992,12 +2066,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               : "Claim a champion to enter the world"}
           </p>
         )}
-        {!isMobile && overlay === "none" && !showMatch && !inVenue && showChronicle && (
+        {!isMobile && overlay === "none" && !showMatch && !inVenue && !worldUiBlocked && showChronicle && (
           <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
             <SeasonBanner compact onClose={dismissChronicle} />
           </div>
         )}
-        {!isMobile && overlay === "none" && !showMatch && isHub && !inVenue && owned && !gRun && !modesLocked && rival && rivalMemory && (
+        {!isMobile && overlay === "none" && !showMatch && isHub && !inVenue && owned && !gRun && !modesLocked && !worldUiBlocked && rival && rivalMemory && (
           <div style={{ marginTop: 10 }}>
             <RivalCard
               rival={rival}
@@ -2237,7 +2311,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* the Clan decision surface — one place to choose / review / lock */}
-      {clanOpen && !modesLocked && (
+      {clanOpen && !modesLocked && !clanCeremony && (
         <ClanSheet
           preselect={clanPreselect}
           suggested={owned ? byKey[owned]?.type ?? null : null}
@@ -2245,16 +2319,23 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           onClose={() => { setClanOpen(false); setClanPreview(null); }}
           onSelectionChange={setClanPreview}
           onPledged={(f) => {
-            const fm = forceMeta(f);
-            setPledgeFlash({ name: fm.name, motto: fm.motto, color: TYPE_COLOR[f] });
-            if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
-            pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
+            setClanOpen(false);
+            setClanPreview(null);
+            beginClanCeremony(f);
           }}
         />
       )}
 
-      {/* clan-joined celebration */}
-      {pledgeFlash && (
+      {/* in-world swear shot — letterbox + rising flag; skip ends into a short flash */}
+      {clanCeremony && (
+        <ClanCinematic
+          ceremony={clanCeremony}
+          onDone={() => finishClanCeremony(clanCeremony)}
+        />
+      )}
+
+      {/* clan-joined celebration — brief after the ceremony (or immediately if reduced motion) */}
+      {pledgeFlash && !clanCeremony && (
         <Celebration
           tone="pledge"
           accent={pledgeFlash.color}

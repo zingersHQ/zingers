@@ -37,6 +37,7 @@ export const ConcordScene = memo(function ConcordScene({
   daylight = false,
   choosing = false,
   clanPreview = null,
+  clanCeremony = false,
 }: {
   gates: ConcordGate[];
   pledged: CreatureType | null;
@@ -52,12 +53,14 @@ export const ConcordScene = memo(function ConcordScene({
   // you're hovering on in the picker; after pledging, only your Clan stays up.
   choosing?: boolean;
   clanPreview?: CreatureType | null;
+  /** Pledge ceremony: reset masts so the chosen rises while the others fall. */
+  clanCeremony?: boolean;
 }) {
   const guiding = guideWorld != null;
   return (
     <group>
       <Seal daylight={daylight} dimmed={guiding} />
-      <ClanFlags pledged={pledged} choosing={choosing} preview={clanPreview} />
+      <ClanFlags pledged={pledged} choosing={choosing} preview={clanPreview} ceremony={clanCeremony} />
       {gates.map((g) => {
         const focused = guiding ? g.world === guideWorld : g.world === featuredWorld;
         const dimmed = guiding && g.world !== guideWorld;
@@ -148,20 +151,36 @@ function ClanFlags({
   pledged,
   choosing = false,
   preview = null,
+  ceremony = false,
 }: {
   pledged: CreatureType | null;
   choosing?: boolean;
   preview?: CreatureType | null;
+  ceremony?: boolean;
 }) {
   const clans = useMemo(() => concordClanSpots(), []);
-  const pickMode = choosing || pledged != null;
+  const pickMode = choosing || pledged != null || ceremony;
   return (
     <>
       {clans.map((b) => {
         const lit = pledged === b.type;
-        const raised = choosing ? preview === b.type : pledged != null ? pledged === b.type : true;
+        const raised = choosing
+          ? preview === b.type
+          : pledged != null || ceremony
+            ? pledged === b.type
+            : true;
         return (
-          <ClanFlag key={b.type} type={b.type} x={b.x} z={b.z} rot={b.rot} lit={lit} raised={raised} pickMode={pickMode} />
+          <ClanFlag
+            key={b.type}
+            type={b.type}
+            x={b.x}
+            z={b.z}
+            rot={b.rot}
+            lit={lit}
+            raised={raised}
+            pickMode={pickMode}
+            ceremony={ceremony}
+          />
         );
       })}
     </>
@@ -176,6 +195,7 @@ function ClanFlag({
   lit,
   raised,
   pickMode,
+  ceremony = false,
 }: {
   type: CreatureType;
   x: number;
@@ -184,6 +204,7 @@ function ClanFlag({
   lit: boolean;
   raised: boolean;
   pickMode: boolean;
+  ceremony?: boolean;
 }) {
   const lore = FORCES[type];
   const col = lore.hex;
@@ -192,9 +213,18 @@ function ClanFlag({
   const mastRef = useRef<THREE.Group>(null);
   const groundRef = useRef<THREE.Group>(null);
   const raisedT = useRef(raised ? 1 : 0);
-  useFrame((state) => {
+  const wasCeremony = useRef(false);
+  useFrame((state, dtRaw) => {
+    // Ceremony open: seed so the pledged mast rises while the others fall.
+    if (ceremony && !wasCeremony.current) {
+      raisedT.current = raised ? 0.28 : 1;
+    }
+    wasCeremony.current = ceremony;
     const target = raised ? 1 : 0;
-    raisedT.current += (target - raisedT.current) * 0.12;
+    const dt = Math.min(0.05, dtRaw);
+    // Slower during the swear shot so the raise/lower reads on camera.
+    const lambda = ceremony ? 1.55 : 7.5;
+    raisedT.current += (target - raisedT.current) * (1 - Math.exp(-lambda * dt));
     const t = raisedT.current;
     const ground = 1 - t;
     if (clothRef.current) clothRef.current.rotation.y = rot + Math.sin(state.clock.elapsedTime * 0.9 + x) * 0.07;

@@ -265,6 +265,8 @@ export default function World({
   pledged = null,
   choosingClan = false,
   clanPreview = null,
+  clanCeremony = false,
+  clanShot = null,
   tier = 0,
   featured = false,
   featuredWorld = null,
@@ -305,6 +307,10 @@ export default function World({
   choosingClan?: boolean;
   /** Clan highlighted in the open picker — its flag stays raised. */
   clanPreview?: CreatureType | null;
+  /** Pledge ceremony — masts diverge (chosen up, others down). */
+  clanCeremony?: boolean;
+  /** World-camera target for the clan swear shot (flag x/z). */
+  clanShot?: { x: number; z: number } | null;
   tier?: number;
   featured?: boolean;
   featuredWorld?: string | null;
@@ -620,7 +626,7 @@ export default function World({
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
           {isHub && !inVenue && !match && (
-            <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} />
+            <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} clanCeremony={clanCeremony} />
           )}
 
           {isHub && !inVenue && match && (
@@ -818,10 +824,10 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} clanShot={clanShot} />
       )}
     </Canvas>
-    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
+    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match && !clanShot} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
     </>
   );
 }
@@ -3785,6 +3791,7 @@ function CameraController({
   inCircuit = false,
   circuitPhase = null,
   matchWide = false,
+  clanShot = null,
 }: {
   match: MatchView | null;
   handlerPos: React.RefObject<THREE.Vector3>;
@@ -3796,6 +3803,8 @@ function CameraController({
   circuitPhase?: CircuitPhase | null;
   /** Pull the bout camera back on touch so both fighters stay in frame. */
   matchWide?: boolean;
+  /** Clan swear shot — frame Trainer + rising flag; free look disabled. */
+  clanShot?: { x: number; z: number } | null;
 }) {
   const { camera, gl } = useThree();
   // In the Circuit the track runs +Z and the flyer faces +Z, so "behind" is
@@ -3833,6 +3842,9 @@ function CameraController({
   // eased 0..1 weight of "frame the Scrying Gallery ring" — ramps up as the player
   // nears the live bout and decays back to free third-person on leave
   const galleryW = useRef(0);
+  // clan swear: eased 0→1 progress for a slow push-in beside the flag
+  const clanShotT = useRef(0);
+  const clanShotActive = useRef(false);
 
   useEffect(() => {
     if (!inCircuit) {
@@ -3842,6 +3854,16 @@ function CameraController({
     }
     if (camCue.current) yaw.current = camCue.current.heading;
   }, [inCircuit, camCue]);
+
+  useEffect(() => {
+    if (clanShot) {
+      clanShotT.current = 0;
+      clanShotActive.current = true;
+    } else {
+      clanShotActive.current = false;
+      clanShotT.current = 0;
+    }
+  }, [clanShot]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -3905,6 +3927,31 @@ function CameraController({
       camera.lookAt(tx, ty, tz);
       return;
     }
+
+    // Clan swear ceremony — three-quarter shot of Trainer + rising mast.
+    // Slow push-in; look stays on the flag cloth so the raise/lower reads.
+    if (clanShot && clanShotActive.current) {
+      clanShotT.current = Math.min(1, clanShotT.current + dt / 8);
+      const u = clanShotT.current;
+      const hp = handlerPos.current;
+      const fx = clanShot.x - hp.x;
+      const fz = clanShot.z - hp.z;
+      const fl = Math.hypot(fx, fz) || 1;
+      const nx = fx / fl;
+      const nz = fz / fl;
+      const sx = -nz;
+      const sz = nx;
+      const pull = 8.4 - u * 1.6;
+      const side = 3.1 - u * 0.35;
+      const cy = hp.y + 2.55 + u * 0.35;
+      const cx = hp.x - nx * pull + sx * side;
+      const cz = hp.z - nz * pull + sz * side;
+      const lookY = 3.2 + u * 1.6;
+      camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-3.8 * dt));
+      camera.lookAt(clanShot.x, lookY, clanShot.z);
+      return;
+    }
+
     const st = useSettings.getState();
     // drain touch orbit / pinch deltas accumulated by the on-screen look pad
     const drag = camDrag.current;
