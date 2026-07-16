@@ -8,10 +8,15 @@ import { blank, TYPE_COLOR } from "@/lib/evolve/progression";
 import { FORCES } from "@/lib/lore/canon";
 import { SHARED_RIG } from "@/lib/render/model-registry";
 import { GOLD, readerPalette } from "@/lib/render/palette";
-import { ChampionMesh, applyBoneMorph, buildCharacter } from "@/components/grounds/champion-mesh";
+import { ChampionMesh, applyBoneMorph, buildCharacter, WORLD_AGENT_SCALE } from "@/components/grounds/champion-mesh";
 import { Jetpack } from "@/components/grounds/jetpack";
 
 type Controls = { target: THREE.Vector3; update: () => void };
+
+/** Match world.tsx: Reader is 2/3, champions are WORLD_AGENT_SCALE (2/9) → champ ≈ ⅓ of Trainer. */
+const READER_SCALE = 2 / 3;
+const DUO_CHAMP_REL = WORLD_AGENT_SCALE / READER_SCALE; // 1/3
+
 
 /** Locomotion / showcase poses available on every art tile. */
 export type ArtAction = "stand" | "walk" | "run" | "jump" | "fly" | "wave" | "punch";
@@ -255,8 +260,8 @@ function ChampionFigure({
 
 /** Side-by-side on one ground plane; walk/fly keep the same facing so jumps stay vertical. */
 const DUO_FACE = 0.35; // shared yaw — both look toward the camera
-const DUO_TX = -1.15;
-const DUO_CX = 1.2;
+const DUO_TX = -0.95;
+const DUO_CX = 0.85;
 const DUO_FLY_Y = 1.05;
 
 /** Trainer + champion side-by-side; walk/fly parade so the mind follows. */
@@ -376,10 +381,11 @@ function DuoParade({
 
   return (
     <group>
+      {/* TrainerFigure is scaled 0.85 inside; champion uses the same base × world ratio (~⅓). */}
       <group ref={trainerSlot} position={[DUO_TX, 0, 0]} rotation={[0, DUO_FACE, 0]}>
         <TrainerFigure force={force} action={action} paused={paused} embedded />
       </group>
-      <group ref={champSlot} position={[DUO_CX, 0, 0]} rotation={[0, DUO_FACE, 0]} scale={0.9}>
+      <group ref={champSlot} position={[DUO_CX, 0, 0]} rotation={[0, DUO_FACE, 0]} scale={0.85 * DUO_CHAMP_REL}>
         <ChampionMesh
           type={type}
           champion={champion}
