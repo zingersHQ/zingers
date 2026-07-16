@@ -183,10 +183,14 @@ export const CircuitScene = memo(function CircuitScene({
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
+  // Mobile Climb (`staticMode`): platforms are non-colliding scenery that read as
+  // clutter against the Flappy push-front. Hide them — rings + hazards carry the
+  // challenge. Desktop keeps solid pads for land / bump.
+  const showPlatforms = !staticMode;
   return (
     <>
       <SafetyFloor color={floor} track={track} staticMode={staticMode} />
-      {track.platforms.map((p, i) => (
+      {showPlatforms && track.platforms.map((p, i) => (
         <TrackPlatform key={i} plat={p} biome={biome} staticMode={staticMode} />
       ))}
       {track.checkpoints.map((cp) => {
