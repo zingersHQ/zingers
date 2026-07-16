@@ -32,11 +32,21 @@ interface Agent {
 
 Return `null` (or an invalid move id) → engine uses a deterministic heuristic fallback.
 
-## Tool loop (live brains)
+## Default: single-shot (fast)
 
-A live champion doesn't just emit a move. It **investigates first**. When the engine
-supplies an `AgentTurnCtx`, the agent runs a bounded reason → act → observe → commit
-loop with the engine's own read-only tools:
+Live house / OpenAI-compatible brains answer with **one** JSON decision call per turn.
+The quality judge is local by default (`mockJudge`) so a turn is one LLM round-trip,
+not a loading screen. Opt into the slower paths only when you need them:
+
+| Env | Effect |
+|-----|--------|
+| `ZINGERS_AGENT_TOOLS=1` | Bounded tool loop (simulate / scout → commit) |
+| `ZINGERS_LLM_JUDGE=1` | LLM wit-scored quality multiplier per turn |
+
+## Tool loop (opt-in)
+
+With `ZINGERS_AGENT_TOOLS=1`, when the engine supplies an `AgentTurnCtx`, the agent
+runs a bounded reason → act → observe → commit loop with the engine's own read-only tools:
 
 | Tool | What it returns (real engine math, no faked output) |
 |------|------------------------------------------------------|
@@ -44,13 +54,11 @@ loop with the engine's own read-only tools:
 | `scout_opponent()` | Opponent's current Resolve, statuses, last line, and recent moves. |
 | `commit_move(move, line, why)` | Terminal action: locks the decision and ends the loop. |
 
-The loop is capped (`MAX_STEPS`, default 3); the final step forces `commit_move` so a
-turn always resolves. Any failure → heuristic fallback, so mock/offline bouts never break.
-Each step is streamed as a `ToolStep` in the turn's `trace[]` (see `lib/types.ts`), so
-spectators can watch a champion scout and simulate before it strikes.
+The loop is capped (`MAX_STEPS`, default 2); the final step forces `commit_move` so a
+turn always resolves. Any failure → single-shot JSON, then heuristic fallback.
+Each step is streamed as a `ToolStep` in the turn's `trace[]` (see `lib/types.ts`).
 
-Implemented for the house Grok brain and any OpenAI-compatible model that supports
-function calling; `http` and mock agents skip the loop and answer the `act(view)` contract directly.
+`http` and mock agents skip the loop and answer the `act(view)` contract directly.
 
 ## Providers
 

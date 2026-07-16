@@ -91,8 +91,9 @@ export async function projectMonthly(input: ProjectionInput): Promise<Projection
   const today = await getStore().getUsage(utcDay());
   const avgInTok = today.calls ? today.inTok / today.calls : 450;
   const avgOutTok = today.calls ? today.outTok / today.calls : 120;
-  // A live bout: each turn is ~1 actor decision + 1 judge call; ~7 turns/bout.
-  const callsPerBout = 16;
+  // A live bout (default fast path): 1 actor decision/turn, local judge; ~7 turns.
+  // Tool-loop / LLM-judge opt-ins raise this — measured averages still self-calibrate.
+  const callsPerBout = 8;
   const usdPerBout = callsPerBout * usdFor(avgInTok, avgOutTok);
   const boutsPerDay = input.dau * input.boutsPerPlayerPerDay + input.leagueBoutsPerDay;
   const monthlyUsd = usdPerBout * boutsPerDay * 30;

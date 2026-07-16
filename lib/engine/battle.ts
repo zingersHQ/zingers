@@ -209,6 +209,12 @@ async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number,
   };
 }
 
+function llmJudgeEnabled(): boolean {
+  // Default OFF — a second LLM call per turn made live bouts feel like a loading
+  // screen. Opt in with ZINGERS_LLM_JUDGE=1 when you want wit-scored multipliers.
+  return process.env.ZINGERS_LLM_JUDGE === "1";
+}
+
 async function judge(
   att: Fighter,
   opp: Fighter,
@@ -218,7 +224,7 @@ async function judge(
   mock: boolean,
   rng: Rng,
 ): Promise<[number, boolean, string]> {
-  if (mock || !KEY) {
+  if (mock || !KEY || !llmJudgeEnabled()) {
     const m = mockJudge(rng);
     return [m.quality, m.highlight, m.ruling];
   }

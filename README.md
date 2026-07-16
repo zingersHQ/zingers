@@ -21,6 +21,8 @@ npm run build && npm start
 |----------|----------|-------------|
 | `XAI_API_KEY` | No | House Grok agent. Without it, bouts use fast mock mode unless you bring your own agent. |
 | `ZINGERS_MODEL` | No | Default `grok-4.20-0309-non-reasoning` |
+| `ZINGERS_AGENT_TOOLS` | No | Set `1` to enable the multi-step tool loop (slower). Default is single-shot JSON. |
+| `ZINGERS_LLM_JUDGE` | No | Set `1` for LLM wit scoring per turn. Default is local judge (fast). |
 
 ### Scripts
 

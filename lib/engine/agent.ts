@@ -3,7 +3,7 @@
 // these legal moves, what do you do? Built-in Grok, any OpenAI-compatible model,
 // or a bring-your-own HTTP agent all implement the same `act(view)` contract.
 import "server-only";
-import { chat, chatWith, chatRawWith, houseCfg, parseJson, type ChatCfg, type RawMessage, type ToolFunctionSpec } from "./xai";
+import { chatWith, chatRawWith, houseCfg, parseJson, type ChatCfg, type RawMessage, type ToolFunctionSpec } from "./xai";
 import type { AgentConfig, Strat, ToolStep } from "@/lib/types";
 import { safeHttpAgentEndpoint } from "@/lib/server/url-safety";
 
@@ -62,11 +62,16 @@ export interface AgentTools {
   scoutOpponent(): ScoutResult;
 }
 
-// Optional per-turn context. When present, a live agent runs a tool loop and
-// records each step via onStep (for SSE). Absent (mock/HTTP) → single decision.
+// Optional per-turn context. When present AND ZINGERS_AGENT_TOOLS=1, a live
+// agent may run a bounded tool loop (slow: multi LLM RTT). Default path is a
+// single JSON decision — bouts stay snappy. Absent (mock/HTTP) → single decision.
 export interface AgentTurnCtx {
   tools: AgentTools;
   onStep: (step: ToolStep) => void;
+}
+
+function agentToolsEnabled(): boolean {
+  return process.env.ZINGERS_AGENT_TOOLS === "1";
 }
 
 export interface Agent {
@@ -135,8 +140,10 @@ function coerce(out: { move?: string; intent?: string; line?: string; why?: stri
   };
 }
 
-// ── the tool loop (reason → act → observe → commit) ──────────────────────────
-const MAX_STEPS = 3; // bounded so bouts stay fast/cheap; then a commit is forced
+// ── the tool loop (opt-in via ZINGERS_AGENT_TOOLS=1) ──────────────────────────
+// Default bouts skip this: each tool step is another full LLM round-trip and
+// stacked to ~30s/turn. Kept for study / research when you explicitly enable it.
+const MAX_STEPS = 2; // one investigate + forced commit
 
 const SIMULATE_TOOL: ToolFunctionSpec = {
   type: "function",
@@ -200,14 +207,14 @@ async function runToolLoop(cfg: ChatCfg, v: AgentView, ctx: AgentTurnCtx): Promi
       content:
         buildSystem(v) +
         " You decide your turn by USING TOOLS, not by writing JSON. simulate_move runs the engine's real damage math on a legal move; scout_opponent reads their live state. " +
-        "Investigate the best candidates, then call commit_move to lock your move and your in-character bar. Be decisive — at most a couple of tool calls before you commit.",
+        "At most one investigate tool call, then commit_move. Be decisive.",
     },
     {
       role: "user",
       content:
         buildState(v) +
         TACTICS +
-        "Check the real numbers with simulate_move on your top one or two candidates, then commit_move with the smartest move and a TRASH-TALK BAR: ONE punchy sentence, MAX 14 words, turning their last words against them. Do NOT reply in plain text — call a tool.",
+        "Optionally simulate_move once on your top candidate, then commit_move with the smartest move and a TRASH-TALK BAR: ONE punchy sentence, MAX 14 words, turning their last words against them. Do NOT reply in plain text — call a tool.",
     },
   ];
 
@@ -217,8 +224,8 @@ async function runToolLoop(cfg: ChatCfg, v: AgentView, ctx: AgentTurnCtx): Promi
       tools: forceCommit ? [COMMIT_TOOL] : ALL_TOOLS,
       toolChoice: forceCommit ? { type: "function", function: { name: "commit_move" } } : "auto",
       temperature: 0.9,
-      maxTokens: 500,
-      timeoutMs: 45000,
+      maxTokens: 400,
+      timeoutMs: 20000,
       attempts: 2,
     });
     if (!msg) return null;
@@ -257,15 +264,22 @@ async function runToolLoop(cfg: ChatCfg, v: AgentView, ctx: AgentTurnCtx): Promi
   return null;
 }
 
+// Single-shot decision: one LLM round-trip. This is the default bout path —
+// trash-talk latency beats multi-step tool investigation.
+async function actSingleShot(cfg: ChatCfg, v: AgentView, temperature = 0.92): Promise<AgentDecision | null> {
+  const txt = await chatWith(cfg, buildMessages(v), temperature, 180, 15000, 2);
+  return coerce(parseJson(txt));
+}
+
 // ── adapters ─────────────────────────────────────────────────────────────────
 class GrokAgent implements Agent {
   readonly label = "House · Grok";
   async act(v: AgentView, ctx?: AgentTurnCtx) {
-    if (ctx) {
+    if (ctx && agentToolsEnabled()) {
       const d = await runToolLoop(houseCfg(), v, ctx);
       if (d) return d;
     }
-    return coerce(parseJson(await chat(buildMessages(v), 0.92)));
+    return actSingleShot(houseCfg(), v, 0.92);
   }
 }
 
@@ -277,12 +291,11 @@ class OpenAICompatAgent implements Agent {
     this.cfg = { endpoint: cfg.baseUrl.replace(/\/$/, "") + "/chat/completions", key: cfg.apiKey, model: cfg.model };
   }
   async act(v: AgentView, ctx?: AgentTurnCtx) {
-    if (ctx) {
+    if (ctx && agentToolsEnabled()) {
       const d = await runToolLoop(this.cfg, v, ctx);
       if (d) return d;
     }
-    const txt = await chatWith(this.cfg, buildMessages(v), 0.9, 220, 45000, 2);
-    return coerce(parseJson(txt));
+    return actSingleShot(this.cfg, v, 0.9);
   }
 }
 

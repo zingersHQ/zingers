@@ -6,7 +6,7 @@
 // Pure math, no server required:  node scripts/cost-scenarios.mjs
 // Override any assumption via env (same vars as the live model where they exist):
 //   ZINGERS_PRICE_IN / ZINGERS_PRICE_OUT  — USD per 1M tokens (default 0.20 / 0.50)
-//   CALLS_PER_BOUT   — actor+judge calls per duel (default 16, per cost.ts)
+//   CALLS_PER_BOUT   — actor calls per duel (default 8: 1/turn × ~7 turns + headroom)
 //   BPP              — live bouts a player runs/watches per day (default 5)
 //   LEAGUE_PAID      — autonomous league bouts/day that spend REAL LLM (default 0:
 //                      the league runs mock=1/free by default — see app/api/sim)
@@ -16,7 +16,7 @@
 
 const PRICE_IN = Number(process.env.ZINGERS_PRICE_IN ?? 0.2); // $/1M in
 const PRICE_OUT = Number(process.env.ZINGERS_PRICE_OUT ?? 0.5); // $/1M out
-const CALLS_PER_BOUT = Number(process.env.CALLS_PER_BOUT ?? 16);
+const CALLS_PER_BOUT = Number(process.env.CALLS_PER_BOUT ?? 8);
 const BPP = Number(process.env.BPP ?? 5);
 const LEAGUE_PAID = Number(process.env.LEAGUE_PAID ?? 0);
 
