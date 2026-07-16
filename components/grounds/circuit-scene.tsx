@@ -2,7 +2,7 @@
 import { memo, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RigidBody } from "@react-three/rapier";
+import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import type { CircuitCheckpoint, CircuitTrackDef } from "./circuit";
 import { sectorBounds } from "./circuit-tracks";
@@ -104,16 +104,17 @@ function PhysBody({
 }
 
 /** Invisible launch slab under spawn — desktop only. Lets the Handler stand
- *  during ready without stepping-stone platforms along the track. Mobile Climb
- *  is kinematic and never needs it. */
+ *  during ready without stepping-stone platforms along the track. Explicit
+ *  CuboidCollider (not auto from a hidden mesh) so Rapier always has a floor
+ *  before the settle timeout. Mobile Climb is kinematic and never needs it. */
 function LaunchPad({ spawn, staticMode }: { spawn: [number, number, number]; staticMode: boolean }) {
   if (staticMode) return null;
   const [sx, sy, sz] = spawn;
+  // Pad top at y≈0 when spawn.y≈1.1 (matches amphitheatre sand). Half-extents
+  // [5, 0.25, 4] → box 10×0.5×8 centered under the capsule.
   return (
-    <RigidBody type="fixed" colliders="cuboid" position={[sx, sy - 1.35, sz]}>
-      <mesh visible={false}>
-        <boxGeometry args={[10, 0.5, 8]} />
-      </mesh>
+    <RigidBody type="fixed" colliders={false} position={[sx, sy - 1.35, sz]}>
+      <CuboidCollider args={[5, 0.25, 4]} />
     </RigidBody>
   );
 }

@@ -2837,8 +2837,8 @@ function Handler({
     travelRef.current = (x, z, faceHeading) => {
       const rb = body.current;
       if (!rb) return;
-      // amphitheatre = flat venue sand at y≈0; otherwise drop onto host terrain / Ascent
-      const groundY = inAmphitheatre ? 0 : worldWalkHeight(x, z, shape, spawnKnoll, ascentFoot);
+      // venue floors (amphitheatre sand / circuit pad) = y≈0; else host terrain / Ascent
+      const groundY = inAmphitheatre || circuitMode ? 0 : worldWalkHeight(x, z, shape, spawnKnoll, ascentFoot);
       const y = spawnPos ? spawnPos[1] : groundY + FOOT_OFF + 1.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -2858,7 +2858,7 @@ function Handler({
     return () => {
       if (travelRef) travelRef.current = null;
     };
-  }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre, ascentFoot]);
+  }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre, circuitMode, ascentFoot]);
 
   // Circuit → +z down-track; Amphitheatre → −z toward the throne; wild → plaza.
   useEffect(() => {
@@ -3012,21 +3012,19 @@ function Handler({
     // character was locked in flight forever: space just re-thrusts instead of
     // jumping and you can't walk. So also treat "settled near the terrain
     // surface" as grounded, independent of the sensor.
-    // In the Amphitheatre the walkable surface is the venue's own flat sand at
-    // y≈0 (AmphitheatreColliders), NOT the host world's heightfield — which is
-    // gated off (!inVenue) and lives at an unrelated height. Using terrainHeight
-    // here made restY float above/below the real floor, so the capsule fell
-    // through while the walk anim kept playing (the "no ground / walking on air"
-    // bug). Flat 0 aligns restY, the spawn-settle and the grounded fallback with
-    // the actual floor collider.
-    const floorY = inAmphitheatre ? 0 : worldWalkHeight(t.x, t.z, shape, spawnKnoll, ascentFoot);
+    // Venue floors (Amphitheatre sand, Circuit LaunchPad) sit at y≈0. Host
+    // heightfield is gated off (!inVenue) and lives at an unrelated height —
+    // using it here made restY float above/below the real pad so the capsule
+    // fell through after the settle timeout (Circuit: instant "fall" fail on
+    // load). Flat 0 aligns restY + spawn-settle with the actual floor collider.
+    const floorY = inAmphitheatre || circuitMode ? 0 : worldWalkHeight(t.x, t.z, shape, spawnKnoll, ascentFoot);
     const restY = floorY + FOOT_OFF; // capsule half-height + radius (2/3-scale body)
-    // Amphitheatre: the host-terrain safety net (below) used to force ground.current≥1
+    // Venue: the host-terrain safety net (below) used to force ground.current≥1
     // with no matching exit while the capsule sat below the wild heightfield. That
     // left sensorGround stuck true aloft — hold-Space kept flight (v.y>0.6 skips the
     // jump refund) but releasing thrust sank vy and refunded jumps → walk anim mid-air
-    // with the pack retracting. Clear any poison once clearly above the sand.
-    if (inAmphitheatre && t.y > restY + 1.0) ground.current = 0;
+    // with the pack retracting. Clear any poison once clearly above the sand/pad.
+    if ((inAmphitheatre || circuitMode) && t.y > restY + 1.0) ground.current = 0;
     const sensorGround = ground.current > 0;
 
     // ── spawn settle guard ──
@@ -3539,8 +3537,10 @@ function Handler({
           onCircuitFail("gates");
         }
       }
-      // fell off the track — one fall ends the entire run (no checkpoint respawn)
-      if (t.y < -8) {
+      // Fell off the track — one fall ends the run (no checkpoint respawn).
+      // Only while the sector is live: during ready the LaunchPad can still be
+      // mounting, and a y<-8 check would insta-fail before the Trainer presses GO.
+      if (circuitRunning && t.y < -8) {
         const now = performance.now();
         if (onCircuitFail && now - failCooldown.current > 800) {
           failCooldown.current = now;
