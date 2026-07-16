@@ -253,6 +253,12 @@ function ChampionFigure({
   );
 }
 
+/** Side-by-side on one ground plane; walk/fly keep the same facing so jumps stay vertical. */
+const DUO_FACE = 0.35; // shared yaw — both look toward the camera
+const DUO_TX = -1.15;
+const DUO_CX = 1.2;
+const DUO_FLY_Y = 1.05;
+
 /** Trainer + champion side-by-side; walk/fly parade so the mind follows. */
 function DuoParade({
   force,
@@ -267,12 +273,11 @@ function DuoParade({
   action: ArtAction;
   paused: boolean;
 }) {
-  const root = useRef<THREE.Group>(null);
   const trainerSlot = useRef<THREE.Group>(null);
   const champSlot = useRef<THREE.Group>(null);
-  const tPos = useRef(new THREE.Vector3());
-  const cPos = useRef(new THREE.Vector3(1.35, 0, -1.1));
-  const heading = useRef(0);
+  const tPos = useRef(new THREE.Vector3(DUO_TX, 0, 0));
+  const cPos = useRef(new THREE.Vector3(DUO_CX, 0, 0));
+  const heading = useRef(DUO_FACE);
   const phase = useRef(0);
 
   const flyingRef = useRef(false);
@@ -280,7 +285,8 @@ function DuoParade({
   const speedRef = useRef(0);
   const runRef = useRef(false);
   const velRef = useRef(new THREE.Vector3());
-  const headRef = useRef(0);
+  const headRef = useRef(DUO_FACE);
+  // Keep drive mounted for the whole duo life so jetpack/rings stay wired for Fly.
   const drive = useMemo(
     () => ({ flyingRef, movingRef, speedRef, runRef, velRef, headingRef: headRef }),
     [],
@@ -289,97 +295,91 @@ function DuoParade({
   const [actSig, setActSig] = useState(0);
   const gesture = action === "jump" || action === "wave" || action === "punch" ? action : null;
   const parade = action === "walk" || action === "run" || action === "fly";
+  const fly = action === "fly";
+  const walk = action === "walk" || action === "run";
+
+  // Stamp pose flags immediately (before ChampionMesh useFrame) so Fly isn't a frame late.
+  useEffect(() => {
+    flyingRef.current = fly;
+    movingRef.current = walk;
+    runRef.current = action === "run";
+    speedRef.current = action === "run" ? 3.2 : action === "walk" ? 1.8 : fly ? 2.4 : 0;
+    velRef.current.set(0, fly ? 0.45 : 0, speedRef.current);
+    headRef.current = DUO_FACE;
+    if (!parade) {
+      tPos.current.set(DUO_TX, 0, 0);
+      cPos.current.set(DUO_CX, 0, 0);
+      heading.current = DUO_FACE;
+      phase.current = 0;
+    }
+  }, [action, fly, walk, parade]);
 
   useEffect(() => {
     if (!gesture || paused) return;
     setActSig((s) => s + 1);
-    const id = setInterval(() => setActSig((s) => s + 1), 2000);
+    const id = setInterval(() => setActSig((s) => s + 1), action === "jump" ? 1400 : 2000);
     return () => clearInterval(id);
-  }, [gesture, paused]);
+  }, [gesture, action, paused]);
 
+  // Priority 3 > ChampionMesh companion (2) so flying/moving refs are fresh when the mesh reads them.
   useFrame((_, dtRaw) => {
     const dt = Math.min(0.05, dtRaw);
-    const fly = action === "fly";
-    const walk = action === "walk" || action === "run";
-    const speed = action === "run" ? 2.6 : action === "walk" ? 1.35 : fly ? 2.1 : 0;
+    const speed = action === "run" ? 2.4 : action === "walk" ? 1.25 : fly ? 1.8 : 0;
 
-    if (!paused && parade) {
-      phase.current += dt * (fly ? 0.55 : 0.7);
-    }
+    if (!paused && parade) phase.current += dt * (fly ? 0.5 : 0.65);
 
-    let tx = 0;
-    let ty = fly && !parade ? 1.0 : 0;
+    let tx = DUO_TX;
+    let ty = fly ? DUO_FLY_Y : 0;
     let tz = 0;
-    let wantH = 0;
-    let sx = 1.45;
-    let sy = ty;
-    let sz = -0.35;
+    let cx = DUO_CX;
+    let cy = ty;
+    let cz = 0;
+    let wantH = DUO_FACE;
 
     if (parade) {
-      // gentle circular parade so the pair stays framed
-      const r = fly ? 1.6 : 1.1;
-      const ang = phase.current;
-      tx = Math.sin(ang) * r;
-      tz = Math.cos(ang) * r - r;
-      ty = fly ? 1.15 : 0;
-      wantH = ang + Math.PI / 2;
-      const backX = -Math.sin(wantH);
-      const backZ = -Math.cos(wantH);
-      const sideX = Math.cos(wantH);
-      const sideZ = -Math.sin(wantH);
-      sx = tx + backX * 1.55 + sideX * 1.15;
-      sy = ty + (fly ? -0.35 : 0);
-      sz = tz + backZ * 1.55 + sideZ * 1.15;
+      // Lateral sway on shared ground/air plane — same Y, same facing (no diagonal chase).
+      const sway = Math.sin(phase.current) * (fly ? 0.55 : 0.7);
+      tx = DUO_TX + sway;
+      cx = DUO_CX + sway;
+      tz = Math.cos(phase.current) * (fly ? 0.35 : 0.45) - (fly ? 0.35 : 0.45);
+      cz = tz;
+      wantH = DUO_FACE;
     }
 
-    const a = 1 - Math.exp(-(paused ? 20 : 5) * dt);
+    const a = 1 - Math.exp(-(paused ? 22 : 7) * dt);
     tPos.current.x += (tx - tPos.current.x) * a;
     tPos.current.y += (ty - tPos.current.y) * a;
     tPos.current.z += (tz - tPos.current.z) * a;
+    cPos.current.x += (cx - cPos.current.x) * a;
+    cPos.current.y += (cy - cPos.current.y) * a;
+    cPos.current.z += (cz - cPos.current.z) * a;
     let dH = wantH - heading.current;
     dH = Math.atan2(Math.sin(dH), Math.cos(dH));
     heading.current += dH * a;
-
-    const th = heading.current;
-    const catchK = paused ? 20 : 4.2;
-    const ca = 1 - Math.exp(-catchK * dt);
-    cPos.current.x += (sx - cPos.current.x) * ca;
-    cPos.current.y += (sy - cPos.current.y) * ca;
-    cPos.current.z += (sz - cPos.current.z) * ca;
 
     flyingRef.current = fly;
     movingRef.current = walk;
     runRef.current = action === "run";
     speedRef.current = speed;
-    velRef.current.set(
-      Math.cos(th) * speed * 0.2,
-      fly ? 0.35 : 0,
-      -Math.sin(th) * speed * 0.2 + (walk || fly ? speed : 0),
-    );
-    headRef.current = th;
+    velRef.current.set(fly || walk ? Math.sin(heading.current) * speed : 0, fly ? 0.4 : 0, fly || walk ? Math.cos(heading.current) * speed : 0);
+    headRef.current = heading.current;
 
     if (trainerSlot.current) {
       trainerSlot.current.position.copy(tPos.current);
-      trainerSlot.current.rotation.y = th;
+      trainerSlot.current.rotation.y = heading.current;
     }
     if (champSlot.current) {
       champSlot.current.position.copy(cPos.current);
-      let cH = th;
-      if (parade) {
-        const vx = sx - cPos.current.x;
-        const vz = sz - cPos.current.z;
-        if (Math.hypot(vx, vz) > 0.08) cH = Math.atan2(vx, vz);
-      }
-      champSlot.current.rotation.y = cH;
+      champSlot.current.rotation.y = heading.current;
     }
-  });
+  }, 3);
 
   return (
-    <group ref={root}>
-      <group ref={trainerSlot}>
+    <group>
+      <group ref={trainerSlot} position={[DUO_TX, 0, 0]} rotation={[0, DUO_FACE, 0]}>
         <TrainerFigure force={force} action={action} paused={paused} embedded />
       </group>
-      <group ref={champSlot} scale={0.92}>
+      <group ref={champSlot} position={[DUO_CX, 0, 0]} rotation={[0, DUO_FACE, 0]} scale={0.9}>
         <ChampionMesh
           type={type}
           champion={champion}
@@ -392,7 +392,8 @@ function DuoParade({
           restPose="standing"
           idleSpeed={paused ? 0 : 0.5}
           breatheIntensity={paused ? 0 : 0.45}
-          companionDrive={parade ? drive : undefined}
+          companionDrive={drive}
+          companionRenderPriority={2}
           actSignal={gesture ? actSig : 0}
           actName={gesture ?? "wave"}
         />
@@ -431,19 +432,20 @@ function FitOnce({
     const cam = camera as THREE.PerspectiveCamera;
     const tanV = Math.tan((cam.fov * Math.PI) / 180 / 2);
     const aspect = cam.aspect || 1;
-    const fill = wide ? 0.62 : 0.72;
+    // Duo: prefer width fit so the pair stays side-by-side in a short viewport.
+    const fill = wide ? 0.78 : 0.72;
     const dist = Math.max(
-      size.current.y / 2 / (tanV * fill),
+      size.current.y / 2 / (tanV * (wide ? 0.88 : fill)),
       size.current.x / 2 / (tanV * aspect * fill),
-      wide ? 7.5 : 4.5,
+      wide ? 6.2 : 4.5,
     );
-    camera.position.set(wide ? 2.2 : 0, ctr.current.y + (wide ? 0.4 : 0.15), dist);
+    camera.position.set(0, Math.max(0.9, ctr.current.y + (wide ? 0.15 : 0.12)), dist);
     const c = controls as Controls | null;
     if (c?.target) {
-      c.target.set(ctr.current.x * 0.3, ctr.current.y, ctr.current.z * 0.2);
+      c.target.set(0, Math.max(0.85, ctr.current.y * 0.85), 0);
       c.update();
     } else {
-      camera.lookAt(0, ctr.current.y, 0);
+      camera.lookAt(0, Math.max(0.85, ctr.current.y * 0.85), 0);
     }
     done.current = true;
   });
@@ -539,13 +541,16 @@ export function ArtViewport({
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: wide ? "16 / 10" : "1 / 1",
+          // Hero duo must stay short enough that action buttons stay on-screen.
+          ...(wide
+            ? { height: "min(34vh, 320px)", maxHeight: 320 }
+            : { aspectRatio: "1 / 1" }),
           background: bg,
         }}
       >
         <Canvas
           dpr={[1, 2]}
-          camera={{ position: [0, 1.4, wide ? 11 : 7.5], fov: wide ? 34 : 30 }}
+          camera={{ position: [0, 1.2, wide ? 9 : 7.5], fov: wide ? 32 : 30 }}
           gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
           style={{ width: "100%", height: "100%", display: "block" }}
         >
