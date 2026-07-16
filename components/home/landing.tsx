@@ -244,7 +244,6 @@ function TheLoop() {
 export function Landing() {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const [entering, setEntering] = useState(false);
 
   // Phones: homepage is /m Take flight (Trainer+champion → Climb), not this
   // desktop Awaken hero. Resolve once on mount (opaque sky while checking) so
@@ -270,11 +269,20 @@ export function Landing() {
   }, [router, playHref, door]);
 
   const goPlay = useCallback(() => {
-    setEntering(true);
     try {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
+    // No landing "Summoning the world…" overlay — that was a fake second beat
+    // in front of /grounds' real "Summoning minds for you to raise…". Push
+    // straight there; silent failsafe only if the SPA transition hangs.
     router.push(playHref);
+    window.setTimeout(() => {
+      try {
+        if (window.location.pathname === "/" || window.location.pathname === "") {
+          window.location.assign(playHref);
+        }
+      } catch {}
+    }, ENTER_FAILSAFE_MS);
   }, [router, playHref]);
 
   // Once the embedded intro deck advances past its first slide we hand the whole
@@ -449,94 +457,13 @@ export function Landing() {
       </div>
 
       <Styles />
-      {entering && <EnteringOverlay href={playHref} />}
     </main>
   );
 }
 
-// Delays (ms): show reassurance once a load is clearly taking a moment, and hard
-// fall back to a full-page navigation if the client-side route transition never
-// swaps this page out — which happens on a slow mobile bundle download, or when
-// a tab left open across a deploy asks for a chunk hash that no longer exists
-// (the lazy import 404s and the SPA transition hangs forever). A real navigation
-// fetches a fresh document + chunks, so the player is never stranded here.
-const ENTER_SLOW_MS = 4500;
+// Silent failsafe if the SPA transition never leaves `/` — no fake summoning
+// overlay; /grounds owns the real "Summoning minds…" beat.
 const ENTER_FAILSAFE_MS = 11000;
-
-function EnteringOverlay({ href }: { href: string }) {
-  const [slow, setSlow] = useState(false);
-
-  useEffect(() => {
-    const slowT = setTimeout(() => setSlow(true), ENTER_SLOW_MS);
-    // If this overlay is still mounted after the failsafe window, the SPA
-    // transition is stuck/too slow — force a fresh full-page load of the route.
-    const failsafeT = setTimeout(() => window.location.assign(href), ENTER_FAILSAFE_MS);
-    return () => {
-      clearTimeout(slowT);
-      clearTimeout(failsafeT);
-    };
-  }, [href]);
-
-  return (
-    <div
-      aria-live="polite"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 200,
-        display: "grid",
-        placeItems: "center",
-        background: "radial-gradient(120% 90% at 50% 38%, #15101f 0%, #0a0712 60%, #050309 100%)",
-        color: "#f2eefb",
-      }}
-    >
-      <style>{`@keyframes lpOrb { 0%,80%,100% { opacity:.25; transform: scale(.82);} 40% { opacity:1; transform: scale(1);} } @keyframes lpRise { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }`}</style>
-      <div style={{ textAlign: "center", animation: "lpRise .5s ease both", padding: 24 }}>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18 }}>
-          {[0, 1, 2].map((n) => (
-            <span
-              key={n}
-              aria-hidden
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 99,
-                background: "var(--accent)",
-                animation: `lpOrb 1.1s ease-in-out ${n * 0.18}s infinite`,
-              }}
-            />
-          ))}
-        </div>
-        <div className="mono" style={{ fontSize: 11, letterSpacing: 2.5, color: "var(--muted2)" }}>
-          ENTERING THE GROUNDS
-        </div>
-        <p style={{ margin: "10px 0 0", fontSize: 14, color: "var(--muted)" }}>
-          {slow ? "Still summoning the world — one moment…" : "Summoning the world…"}
-        </p>
-        {slow && (
-          <button
-            type="button"
-            onClick={() => window.location.assign(href)}
-            className="mono"
-            style={{
-              marginTop: 16,
-              background: "none",
-              border: "1px solid var(--line2)",
-              borderRadius: 99,
-              color: "var(--muted)",
-              fontSize: 11,
-              letterSpacing: 1,
-              padding: "7px 16px",
-              cursor: "pointer",
-            }}
-          >
-            Taking too long? Reload
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function Styles() {
   return (
