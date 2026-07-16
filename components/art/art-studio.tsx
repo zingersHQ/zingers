@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { WHEEL, FORCES } from "@/lib/lore/canon";
 import { GOLD } from "@/lib/render/palette";
@@ -27,6 +27,63 @@ const BACKDROPS = [
   { id: "black", label: "Black", color: "#050505" },
   { id: "green", label: "Key green", color: "#00b140" },
 ] as const;
+
+/** Only mount WebGL when near the viewport — keeps the hero duo's context alive. */
+function LazySolo({
+  children,
+  minHeight = 320,
+}: {
+  children: React.ReactNode;
+  minHeight?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let off: ReturnType<typeof setTimeout> | undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          if (off) clearTimeout(off);
+          setLive(true);
+        } else {
+          off = setTimeout(() => setLive(false), 600);
+        }
+      },
+      { rootMargin: "80px 0px" },
+    );
+    io.observe(el);
+    return () => {
+      if (off) clearTimeout(off);
+      io.disconnect();
+    };
+  }, []);
+  return (
+    <div ref={ref} style={{ minHeight }}>
+      {live ? (
+        children
+      ) : (
+        <div
+          className="mono"
+          style={{
+            minHeight,
+            display: "grid",
+            placeItems: "center",
+            border: "1px solid var(--line)",
+            borderRadius: 10,
+            color: "var(--muted2)",
+            fontSize: 10,
+            letterSpacing: 1,
+            background: "#0a0812",
+          }}
+        >
+          scroll near
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ArtStudio() {
   const [bg, setBg] = useState<string>(BACKDROPS[0].color);
@@ -69,7 +126,6 @@ export function ArtStudio() {
 
   return (
     <main style={{ maxWidth: 1280, margin: "0 auto", padding: "22px 18px 80px" }}>
-      {/* ── Hero: story + Trainer with champion ─────────────────────────── */}
       <section style={{ marginBottom: 28 }}>
         <p
           className="mono"
@@ -131,6 +187,7 @@ export function ArtStudio() {
         </div>
 
         <ArtViewport
+          key={`duo-${duoClan}-${duoMind}`}
           subject={duoSubject}
           bg={bg}
           paused={paused}
@@ -140,7 +197,6 @@ export function ArtStudio() {
         />
       </section>
 
-      {/* ── Studio controls + solo reference tiles ─────────────────────── */}
       <header style={{ marginBottom: 14 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>Solo references</h2>
         <p style={{ margin: 0, color: "var(--muted)", fontSize: 13, lineHeight: 1.5, maxWidth: 680 }}>
@@ -247,14 +303,9 @@ export function ArtStudio() {
         }}
       >
         {soloTiles.map((t) => (
-          <ArtViewport
-            key={t.id}
-            subject={t.subject}
-            bg={bg}
-            paused={paused}
-            label={t.label}
-            accent={t.accent}
-          />
+          <LazySolo key={t.id}>
+            <ArtViewport subject={t.subject} bg={bg} paused={paused} label={t.label} accent={t.accent} />
+          </LazySolo>
         ))}
       </div>
     </main>

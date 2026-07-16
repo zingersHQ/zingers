@@ -146,10 +146,11 @@ function TrainerFigure({
   useEffect(() => {
     return () => {
       built.mixer.stopAllAction();
+      // Materials are cloned in buildCharacter — safe to dispose.
+      // Geometries stay shared with the useGLTF cache (SkeletonUtils) — NEVER dispose them.
       built.root.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh) return;
-        m.geometry?.dispose?.();
         const mat = m.material as THREE.Material | THREE.Material[];
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
         else mat?.dispose?.();
@@ -430,6 +431,22 @@ function FitOnce({
 
   useFrame(() => {
     if (done.current || !g.current) return;
+
+    // Duo: fixed hero framing — bbox auto-fit was racing skinned meshes and could
+    // leave the camera nowhere useful after a clan/champion swap.
+    if (wide) {
+      camera.position.set(0, 1.55, 7.2);
+      const c = controls as Controls | null;
+      if (c?.target) {
+        c.target.set(0, 0.95, 0);
+        c.update();
+      } else {
+        camera.lookAt(0, 0.95, 0);
+      }
+      done.current = true;
+      return;
+    }
+
     box.current.setFromObject(g.current);
     if (box.current.isEmpty() || !isFinite(box.current.min.y)) return;
     box.current.getSize(size.current);
@@ -438,14 +455,9 @@ function FitOnce({
     const cam = camera as THREE.PerspectiveCamera;
     const tanV = Math.tan((cam.fov * Math.PI) / 180 / 2);
     const aspect = cam.aspect || 1;
-    // Duo: prefer width fit so the pair stays side-by-side in a short viewport.
-    const fill = wide ? 0.78 : 0.72;
-    const dist = Math.max(
-      size.current.y / 2 / (tanV * (wide ? 0.88 : fill)),
-      size.current.x / 2 / (tanV * aspect * fill),
-      wide ? 6.2 : 4.5,
-    );
-    camera.position.set(0, Math.max(0.9, ctr.current.y + (wide ? 0.15 : 0.12)), dist);
+    const fill = 0.72;
+    const dist = Math.max(size.current.y / 2 / (tanV * fill), size.current.x / 2 / (tanV * aspect * fill), 4.5);
+    camera.position.set(0, Math.max(0.9, ctr.current.y + 0.12), dist);
     const c = controls as Controls | null;
     if (c?.target) {
       c.target.set(0, Math.max(0.85, ctr.current.y * 0.85), 0);
@@ -519,6 +531,12 @@ export function ArtViewport({
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [action, setAction] = useState<ArtAction>("stand");
+  const canvasKey =
+    subject.kind === "duo"
+      ? `duo-${subject.force}-${subject.type}`
+      : subject.kind === "champion"
+        ? `champ-${subject.type}`
+        : `trainer-${subject.force ?? "none"}`;
 
   const download = () => {
     const canvas = wrapRef.current?.querySelector("canvas");
@@ -547,7 +565,6 @@ export function ArtViewport({
         style={{
           position: "relative",
           width: "100%",
-          // Hero duo must stay short enough that action buttons stay on-screen.
           ...(wide
             ? { height: "min(48vh, 460px)", maxHeight: 460 }
             : { aspectRatio: "1 / 1" }),
@@ -555,8 +572,9 @@ export function ArtViewport({
         }}
       >
         <Canvas
+          key={canvasKey}
           dpr={[1, 2]}
-          camera={{ position: [0, 1.2, wide ? 9 : 7.5], fov: wide ? 32 : 30 }}
+          camera={{ position: [0, 1.55, wide ? 7.2 : 7.5], fov: wide ? 32 : 30 }}
           gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
           style={{ width: "100%", height: "100%", display: "block" }}
         >
