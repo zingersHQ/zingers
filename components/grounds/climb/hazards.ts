@@ -12,7 +12,7 @@ import { hash01 } from "../landmarks";
 import { reachIndex, sectorDifficulty } from "./difficulty";
 
 const TAU = Math.PI * 2;
-export const FLYER_RADIUS = 0.55; // the champion's collision sphere at CHAMP_SCALE
+export const FLYER_RADIUS = 0.55; // pilot collision sphere at READER_SCALE
 
 export type HazardKind = "driftCrystal" | "cinderArc" | "ringRotor" | "plume" | "wardenWisp";
 

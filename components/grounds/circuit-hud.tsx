@@ -200,7 +200,6 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onContinue}>
             Sector {sectorN + 1} <ChevronRight size={16} strokeWidth={2.5} />
           </button>
-          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
 
@@ -209,7 +208,6 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> run again
           </button>
-          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
 
@@ -218,7 +216,6 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> try again
           </button>
-          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
     </>

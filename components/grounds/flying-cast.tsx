@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { ChampionMesh, buildCharacter, applyBoneMorph } from "./champion-mesh";
+import { ChampionMesh, buildCharacter, applyBoneMorph, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { Jetpack } from "./jetpack";
 import { blank } from "@/lib/evolve/progression";
 import { readerPalette } from "@/lib/render/palette";
@@ -27,7 +27,9 @@ import type { Champion, CreatureType } from "@/lib/types";
 // A wing slot behind + beside + slightly below the pilot; the champion closes
 // the gap with a catch-up velocity and falls a touch faster than it rises so it
 // reads heavy, like the open-world companion (docs game-feel: exp damping only).
-const WING_BACK = 2.8;      // world units behind the pilot
+// Offsets are authored for a WORLD_AGENT_SCALE follower next to a READER_SCALE
+// Trainer — scale the slot with `scale / WORLD_AGENT_SCALE` so Climb stays matched.
+const WING_BACK = 2.8;      // world units behind the pilot (at WORLD_AGENT_SCALE)
 const WING_SIDE = 1.9;      // …and to the (left) side
 const WING_DROP = 0.5;      // …a touch below eye line
 const CATCH_ACCEL = 9;      // velocity ramp toward target (lower = heavier)
@@ -43,7 +45,7 @@ export function RobotPilot({
   flyingRef,
   burstRef,
   faceHeading = 0,
-  scale = 0.5,
+  scale = READER_SCALE,
   lean = 0.16,
 }: {
   force?: CreatureType | null;
@@ -106,7 +108,7 @@ export function FlyingFollower({
   clan = null,
   targetRef,
   headingRef,
-  scale = 0.42,
+  scale = WORLD_AGENT_SCALE,
   renderPriority = 0,
 }: {
   type: CreatureType;
@@ -117,6 +119,7 @@ export function FlyingFollower({
   targetRef: React.RefObject<THREE.Vector3>;
   /** the pilot's heading (radians); the wing slot sits behind it */
   headingRef?: React.RefObject<number>;
+  /** Absolute body scale — use WORLD_AGENT_SCALE next to a READER_SCALE Trainer. */
   scale?: number;
   renderPriority?: number;
 }) {
@@ -145,14 +148,17 @@ export function FlyingFollower({
     const dt = Math.min(0.05, dtRaw);
     const th = headingRef?.current ?? 0;
 
-    // wing slot behind + beside + below the pilot, relative to its heading
+    // wing slot behind + beside + below the pilot, relative to its heading.
+    // Authored for WORLD_AGENT_SCALE; keep the same Trainer↔champ spacing when
+    // Climb passes a presentation-scaled follower.
+    const slot = scale / WORLD_AGENT_SCALE;
     const backX = -Math.sin(th);
     const backZ = -Math.cos(th);
     const sideX = Math.cos(th);
     const sideZ = -Math.sin(th);
-    const sx = tp.x + backX * WING_BACK + sideX * WING_SIDE;
-    const sy = tp.y - WING_DROP;
-    const sz = tp.z + backZ * WING_BACK + sideZ * WING_SIDE;
+    const sx = tp.x + (backX * WING_BACK + sideX * WING_SIDE) * slot;
+    const sy = tp.y - WING_DROP * slot;
+    const sz = tp.z + (backZ * WING_BACK + sideZ * WING_SIDE) * slot;
 
     if (!booted.current) {
       booted.current = true;

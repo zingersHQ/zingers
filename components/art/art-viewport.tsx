@@ -8,15 +8,14 @@ import { blank, TYPE_COLOR } from "@/lib/evolve/progression";
 import { FORCES } from "@/lib/lore/canon";
 import { SHARED_RIG } from "@/lib/render/model-registry";
 import { GOLD, readerPalette } from "@/lib/render/palette";
-import { ChampionMesh, applyBoneMorph, buildCharacter, WORLD_AGENT_SCALE } from "@/components/grounds/champion-mesh";
+import { ChampionMesh, applyBoneMorph, buildCharacter, WORLD_AGENT_SCALE, READER_SCALE, CHAMPION_REL_TO_TRAINER } from "@/components/grounds/champion-mesh";
 import { Jetpack } from "@/components/grounds/jetpack";
 import { ANIM, breatheIntensityForMode, bodyBobForMode, idleSpeedForMode } from "@/lib/render/animations";
 
 type Controls = { target: THREE.Vector3; update: () => void };
 
-/** Match world.tsx: Reader is 2/3, champions are WORLD_AGENT_SCALE (2/9) → champ ≈ ⅓ of Trainer. */
-const READER_SCALE = 2 / 3;
-const DUO_CHAMP_REL = WORLD_AGENT_SCALE / READER_SCALE; // 1/3
+/** Match world.tsx: Reader READER_SCALE, champions WORLD_AGENT_SCALE → champ ≈ ⅓ of Trainer. */
+const DUO_CHAMP_REL = CHAMPION_REL_TO_TRAINER;
 
 /** Locomotion / showcase poses available on every art tile. */
 export type ArtAction = "stand" | "walk" | "run" | "jump" | "fly" | "wave" | "punch";

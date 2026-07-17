@@ -1,17 +1,17 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
 // Infinite flight hero — shared homepage face for desktop `/` and mobile `/m`.
-// The Trainer (jetpack) and champion (mind-flight) hold frame while a looping
-// belt of Void Garden islands + Quaternius nature dressing streams past — the
-// same models/skins used in the live Grounds, not a separate poster kit.
+// Front camera on the Trainer + champion as they pulse-fly (thrust → coast →
+// thrust) over a scrolling belt of Grounds-style rolling terrain + nature kit.
+// No floating islands — hills and montículos they actually fly over.
 // ─────────────────────────────────────────────────────────────────────────────
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { RobotPilot } from "@/components/grounds/flying-cast";
-import { ChampionMesh } from "@/components/grounds/champion-mesh";
-import { NatureIslandDressing } from "@/components/grounds/nature";
+import { ChampionMesh, CHAMPION_REL_TO_TRAINER, READER_SCALE } from "@/components/grounds/champion-mesh";
+import { NatureSurfaceDressing } from "@/components/grounds/nature";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import { biomeById, daylightBiome, type BiomeConfig } from "@/components/grounds/biomes";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
@@ -19,17 +19,20 @@ import { showcaseChampion } from "@/lib/render/showcase";
 import { naturePreset, natureUrl, natureTerrainPalette } from "@/lib/render/nature-kit";
 
 const HERO = showcaseChampion("MUSE");
-const BIOME_ID = "void";
+/** Soft daylight Grounds — same nature kit as the live region. */
+const BIOME_ID = "colosseum";
 
-const CHAR_SCALE = 1.15;
-const FOLLOWER_REL = 1 / 3;
-const PAIR_SCALE = 0.38;
+const CHAR_SCALE = READER_SCALE * 1.35;
+const PAIR_SCALE = 0.42;
 
-// Loop length along Z — islands wrap by this period so the belt never ends.
-const LOOP = 72;
-const ISLAND_SPEED = 5.2;
-const CLOUD_SPEED = 1.35;
-const MOTE_SPEED = 7.5;
+// Seamless scroll length for the terrain belt under the flyers.
+const LOOP = 96;
+const GROUND_SPEED = 6.4;
+const CLOUD_SPEED = 1.1;
+const MOTE_SPEED = 5.5;
+
+// Flight pulse: thrust climb → release (small sink) → thrust again.
+const FLIGHT_CYCLE = 2.85;
 
 type Variant = "desktop" | "mobile";
 
@@ -55,9 +58,10 @@ function SkyDome({ top, bottom }: { top: string; bottom: string }) {
   );
 }
 
-function JetPuff({ burstRef }: { burstRef: React.RefObject<number> }) {
+function JetPuff({ burstRef, activeRef }: { burstRef: React.RefObject<number>; activeRef: React.RefObject<boolean> }) {
   const acc = useRef(0);
   useFrame((_, dtRaw) => {
+    if (!activeRef.current) return;
     acc.current += Math.min(0.05, dtRaw);
     if (acc.current > 0.07) {
       acc.current = 0;
@@ -67,50 +71,109 @@ function JetPuff({ burstRef }: { burstRef: React.RefObject<number> }) {
   return null;
 }
 
+/** Soft rolling hills + montículos for the hero strip (mostly flat new world). */
+function heroHeight(x: number, z: number, seed: number): number {
+  const n = (a: number, b: number) => {
+    const s = Math.sin(a * 127.1 + b * 311.7 + seed * 17.3) * 43758.5453;
+    return s - Math.floor(s);
+  };
+  const vn = (a: number, b: number) => {
+    const xi = Math.floor(a);
+    const zi = Math.floor(b);
+    const xf = a - xi;
+    const zf = b - zi;
+    const u = xf * xf * (3 - 2 * xf);
+    const v = zf * zf * (3 - 2 * zf);
+    const x1 = n(xi, zi) * (1 - u) + n(xi + 1, zi) * u;
+    const x2 = n(xi, zi + 1) * (1 - u) + n(xi + 1, zi + 1) * u;
+    return x1 * (1 - v) + x2 * v;
+  };
+  const fbm = (a: number, b: number) => {
+    let amp = 0.5;
+    let f = 1;
+    let sum = 0;
+    for (let i = 0; i < 4; i++) {
+      sum += vn(a * f, b * f) * amp;
+      amp *= 0.5;
+      f *= 2;
+    }
+    return sum;
+  };
+  const rolling = fbm(x * 0.035 + 3, z * 0.035 + 3) * 2.4;
+  const hills = fbm(x * 0.07 - 5, z * 0.07 - 5) * 1.35;
+  // small montículos — sparse bumps
+  const bump = Math.max(0, fbm(x * 0.16 + 11, z * 0.16 + 11) - 0.58) * 2.6;
+  return Math.max(0, rolling + hills * 0.85 + bump);
+}
+
 function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
   const grp = useRef<THREE.Group>(null);
   const flyingRef = useRef(true);
   const burstRef = useRef(0);
+  const alt = useRef(1.35);
+  const pitch = useRef(0.12);
 
   const cFly = useRef(true);
   const cMove = useRef(true);
-  const cSpd = useRef(2.4);
+  const cSpd = useRef(2.8);
   const cRun = useRef(false);
-  const cVel = useRef(new THREE.Vector3(0, 0, -2.4));
+  const cVel = useRef(new THREE.Vector3(0, 0.4, 2.8));
   const cHead = useRef(0);
   const drive = useMemo(
     () => ({ flyingRef: cFly, movingRef: cMove, speedRef: cSpd, runRef: cRun, velRef: cVel, headingRef: cHead }),
     [],
   );
 
-  useFrame((s) => {
+  useFrame((s, dtRaw) => {
     const g = grp.current;
     if (!g) return;
+    const dt = Math.min(0.05, dtRaw);
+
     if (reduceMotion) {
-      g.position.y = 0.08;
-      g.rotation.y = -0.35;
-      g.rotation.z = 0.04;
+      flyingRef.current = true;
+      cFly.current = true;
+      g.position.set(0, 1.4, 0.4);
+      g.rotation.set(0.1, 0, 0);
       return;
     }
+
     const t = s.clock.elapsedTime;
-    g.position.y = 0.08 + Math.sin(t * 1.05) * 0.11;
-    g.rotation.y = -0.35 + Math.sin(t * 0.28) * 0.08;
-    g.rotation.z = 0.04 + Math.sin(t * 0.55) * 0.03;
+    const u = (t % FLIGHT_CYCLE) / FLIGHT_CYCLE;
+    // Two thrust beats per cycle with a soft release (small sink) between.
+    const thrustA = u < 0.34;
+    const thrustB = u > 0.52 && u < 0.82;
+    const thrusting = thrustA || thrustB;
+    flyingRef.current = thrusting;
+    cFly.current = thrusting;
+    cVel.current.set(0, thrusting ? 1.1 : -0.55, 2.8);
+
+    const wantAlt = thrusting ? 1.85 : 1.05;
+    const wantPitch = thrusting ? 0.22 : -0.08;
+    const k = 1 - Math.exp(-(thrusting ? 3.2 : 2.4) * dt);
+    alt.current += (wantAlt - alt.current) * k;
+    pitch.current += (wantPitch - pitch.current) * k;
+
+    // Gentle bank / sway — organic, not a turntable spin.
+    const swayX = Math.sin(t * 0.55) * 0.12;
+    const bank = Math.sin(t * 0.4) * 0.04;
+    g.position.set(swayX, alt.current, 0.35 + Math.sin(t * 0.9) * 0.08);
+    g.rotation.set(pitch.current, 0, bank);
   });
 
   return (
-    <group ref={grp} position={[-0.35, 0.15, 1.1]} scale={PAIR_SCALE} rotation={[0.08, -0.35, 0.05]}>
-      <JetPuff burstRef={burstRef} />
-      <group position={[-0.55, 0.12, 0]}>
-        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.28} />
+    <group ref={grp} scale={PAIR_SCALE}>
+      <JetPuff burstRef={burstRef} activeRef={flyingRef} />
+      {/* Face the camera (+Z): front-on flight over the world. */}
+      <group position={[-0.55, 0, 0]}>
+        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.22} />
       </group>
-      <group position={[1.05, -0.22, -0.45]} scale={CHAR_SCALE * FOLLOWER_REL}>
+      <group position={[0.95, -0.18, -0.35]} scale={CHAR_SCALE * CHAMPION_REL_TO_TRAINER}>
         <ChampionMesh
           type={HERO.type}
           champion={HERO.champion}
           identityKey={HERO.key}
           position={[0, 0, 0]}
-          rotation={-0.15}
+          rotation={-0.08}
           showLabel={false}
           hideFloaters
           restPose="standing"
@@ -124,114 +187,111 @@ function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
   );
 }
 
-type IslandSpec = { x: number; y: number; z: number; r: number; lane: number };
-
-function buildIslands(count: number, seed: number): IslandSpec[] {
-  let s = seed >>> 0;
-  const rnd = () => {
-    s = (s + 0x6d2b79f5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-  const out: IslandSpec[] = [];
-  for (let i = 0; i < count; i++) {
-    const lane = i % 3;
-    const x = (lane - 1) * (9 + rnd() * 4) + (rnd() - 0.5) * 3.5;
-    const y = -2.2 + rnd() * 3.8 + (lane === 1 ? -0.6 : 0.4);
-    const z = -LOOP * 0.45 + (i / count) * LOOP + (rnd() - 0.5) * 4;
-    out.push({ x, y, z, r: 2.4 + rnd() * 2.2, lane });
-  }
-  return out;
-}
-
-function IslandMesh({
+function TerrainSegment({
   biome,
   earth,
-  spec,
+  seed,
+  width,
+  length,
+  segs,
+  density,
 }: {
   biome: BiomeConfig;
   earth: { low: string; mid: string; high: string };
-  spec: IslandSpec;
+  seed: number;
+  width: number;
+  length: number;
+  segs: number;
+  density: number;
 }) {
+  const { geo, dressPoints } = useMemo(() => {
+    const g = new THREE.PlaneGeometry(width, length, segs, Math.floor(segs * (length / width)));
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position as THREE.BufferAttribute;
+    const colors = new Float32Array(pos.count * 3);
+    const low = new THREE.Color(earth.low);
+    const mid = new THREE.Color(earth.mid);
+    const high = new THREE.Color(earth.high);
+    const c = new THREE.Color();
+    const band = 4.2;
+    const samples: [number, number, number][] = [];
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const h = heroHeight(x, z, seed);
+      pos.setY(i, h);
+      const t = Math.max(0, Math.min(1, h / band));
+      if (t < 0.5) c.lerpColors(low, mid, t / 0.5);
+      else c.lerpColors(mid, high, (t - 0.5) / 0.5);
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    g.computeVertexNormals();
+
+    // Dress samples on a coarse grid so trees sit on the mesh, not floats.
+    const step = 4.2;
+    for (let z = -length * 0.45; z <= length * 0.45; z += step) {
+      for (let x = -width * 0.42; x <= width * 0.42; x += step) {
+        const jx = x + ((Math.abs(z * 12.3) % 2.1) - 1.05);
+        const jz = z + ((Math.abs(x * 9.7) % 2.1) - 1.05);
+        // Keep a clear flight corridor under the pair (centre strip).
+        if (Math.abs(jx) < 3.2) continue;
+        const h = heroHeight(jx, jz, seed);
+        samples.push([jx, h, jz]);
+      }
+    }
+    return { geo: g, dressPoints: samples };
+  }, [earth, seed, width, length, segs]);
+
+  useEffect(() => () => geo.dispose(), [geo]);
+
   return (
-    <group position={[spec.x, spec.y, spec.z]}>
-      <mesh castShadow={false} receiveShadow={false}>
-        <cylinderGeometry args={[spec.r, spec.r * 0.42, 1.35 + spec.r * 0.12, 9]} />
+    <group>
+      <mesh geometry={geo} receiveShadow={false}>
         <meshStandardMaterial
-          color={biome.platform.a}
-          emissive={biome.floatCrystal.emissive}
-          emissiveIntensity={0.18}
-          metalness={0.28}
-          roughness={0.62}
-          flatShading
+          vertexColors
+          metalness={0.04}
+          roughness={0.96}
+          envMapIntensity={0.08}
         />
       </mesh>
-      <mesh position={[0, 0.72, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow={false}>
-        <circleGeometry args={[spec.r * 0.92, 20]} />
-        <meshStandardMaterial color={earth.mid} roughness={0.96} metalness={0.02} />
-      </mesh>
-      <mesh position={[0, 0.68, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[spec.r * 0.55, spec.r * 0.9, 18]} />
-        <meshStandardMaterial color={earth.high} roughness={0.97} metalness={0} />
-      </mesh>
+      <NatureSurfaceDressing biome={biome} points={dressPoints} density={density} />
     </group>
   );
 }
 
-function IslandBelt({
+function TerrainBelt({
   biome,
-  count,
   reduceMotion,
+  mobile,
 }: {
   biome: BiomeConfig;
-  count: number;
   reduceMotion: boolean;
+  mobile: boolean;
 }) {
   const root = useRef<THREE.Group>(null);
-  const islands = useMemo(() => buildIslands(count, biome.terrain.seed + 91001), [biome.terrain.seed, count]);
   const earth = useMemo(() => natureTerrainPalette(biome.id), [biome.id]);
-  const tops = useMemo(
-    () => islands.map((it) => [it.x, it.y + 0.78, it.z] as [number, number, number]),
-    [islands],
-  );
+  const width = mobile ? 42 : 56;
+  const segs = mobile ? 28 : 40;
+  const density = mobile ? 0.85 : 1;
 
   useFrame((_, dtRaw) => {
     const g = root.current;
     if (!g || reduceMotion) return;
     const dt = Math.min(0.05, dtRaw);
-    g.position.z += ISLAND_SPEED * dt;
-    if (g.position.z >= LOOP) g.position.z -= LOOP;
+    // Scroll ground toward -Z: flyers face +Z (camera), world streams past.
+    g.position.z -= GROUND_SPEED * dt;
+    if (g.position.z <= -LOOP) g.position.z += LOOP;
   });
 
-  // Two copies of the belt, one LOOP apart — seamless wrap when the root snaps.
   return (
-    <group ref={root}>
-      <IslandSegment islands={islands} tops={tops} biome={biome} earth={earth} />
-      <group position={[0, 0, -LOOP]}>
-        <IslandSegment islands={islands} tops={tops} biome={biome} earth={earth} />
+    <group ref={root} position={[0, -2.15, 0]}>
+      <TerrainSegment biome={biome} earth={earth} seed={biome.terrain.seed + 404} width={width} length={LOOP} segs={segs} density={density} />
+      <group position={[0, 0, LOOP]}>
+        <TerrainSegment biome={biome} earth={earth} seed={biome.terrain.seed + 404} width={width} length={LOOP} segs={segs} density={density} />
       </group>
-    </group>
-  );
-}
-
-function IslandSegment({
-  islands,
-  tops,
-  biome,
-  earth,
-}: {
-  islands: IslandSpec[];
-  tops: [number, number, number][];
-  biome: BiomeConfig;
-  earth: { low: string; mid: string; high: string };
-}) {
-  return (
-    <group>
-      {islands.map((spec, i) => (
-        <IslandMesh key={i} biome={biome} earth={earth} spec={spec} />
-      ))}
-      <NatureIslandDressing biome={biome} positions={tops} />
     </group>
   );
 }
@@ -245,11 +305,11 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
       return s / 2147483647;
     };
     return Array.from({ length: count }, () => ({
-      x: (rnd() - 0.5) * 48,
-      y: -1 + rnd() * 8,
-      z: -LOOP * 0.5 + rnd() * LOOP,
-      s: 1.6 + rnd() * 2.8,
-      o: 0.22 + rnd() * 0.2,
+      x: (rnd() - 0.5) * 52,
+      y: 4 + rnd() * 7,
+      z: -LOOP * 0.4 + rnd() * LOOP,
+      s: 1.8 + rnd() * 3.2,
+      o: 0.18 + rnd() * 0.18,
     }));
   }, [count]);
 
@@ -257,8 +317,8 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
     const g = root.current;
     if (!g || reduceMotion) return;
     const dt = Math.min(0.05, dtRaw);
-    g.position.z += CLOUD_SPEED * dt;
-    if (g.position.z >= LOOP) g.position.z -= LOOP;
+    g.position.z -= CLOUD_SPEED * dt;
+    if (g.position.z <= -LOOP) g.position.z += LOOP;
   });
 
   return (
@@ -270,7 +330,7 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
         </mesh>
       ))}
       {puffs.map((p, i) => (
-        <mesh key={`d-${i}`} position={[p.x, p.y, p.z - LOOP]} scale={p.s}>
+        <mesh key={`d-${i}`} position={[p.x, p.y, p.z + LOOP]} scale={p.s}>
           <sphereGeometry args={[1, 10, 8]} />
           <meshBasicMaterial color="#fff6e8" transparent opacity={p.o} depthWrite={false} />
         </mesh>
@@ -282,7 +342,7 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
 function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: boolean }) {
   const root = useRef<THREE.Points>(null);
   const geom = useMemo(() => {
-    const n = 140;
+    const n = 110;
     const arr = new Float32Array(n * 3);
     let s = 99191;
     const rnd = () => {
@@ -290,9 +350,9 @@ function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: bo
       return s / 2147483647;
     };
     for (let i = 0; i < n; i++) {
-      arr[i * 3] = (rnd() - 0.5) * 36;
-      arr[i * 3 + 1] = -4 + rnd() * 12;
-      arr[i * 3 + 2] = -LOOP * 0.5 + rnd() * LOOP;
+      arr[i * 3] = (rnd() - 0.5) * 28;
+      arr[i * 3 + 1] = 0.5 + rnd() * 6;
+      arr[i * 3 + 2] = -LOOP * 0.4 + rnd() * LOOP;
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
@@ -304,18 +364,18 @@ function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: bo
     const pts = root.current;
     if (!pts || reduceMotion) return;
     const dt = Math.min(0.05, dtRaw);
-    pts.position.z += MOTE_SPEED * dt;
-    if (pts.position.z >= LOOP) pts.position.z -= LOOP;
+    pts.position.z -= MOTE_SPEED * dt;
+    if (pts.position.z <= -LOOP) pts.position.z += LOOP;
   });
 
   return (
     <points ref={root} geometry={geom}>
       <pointsMaterial
         color={accent}
-        size={0.11}
+        size={0.1}
         sizeAttenuation
         transparent
-        opacity={0.45}
+        opacity={0.4}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
@@ -326,24 +386,22 @@ function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: bo
 function FlightWorld({ variant, reduceMotion }: { variant: Variant; reduceMotion: boolean }) {
   const biome = useMemo(() => {
     const day = daylightBiome(biomeById(BIOME_ID));
-    // golden-hour push on the daylight void skin (matches the flight art)
     return {
       ...day,
       sky: { top: "#7eb6e8", bottom: "#f3c89a" },
       bg: "#e8b878",
-      fog: { color: "#e8c9a0", near: 18, far: 78 },
+      fog: { color: "#e8c9a0", near: 14, far: 62 },
       lights: {
         ...day.lights,
         hemiSky: "#ffe2b8",
         hemiGround: "#6a5a40",
         sun: "#ffd09a",
-        sunInt: day.lights.sunInt * 1.15,
+        sunInt: day.lights.sunInt * 1.12,
       },
     } satisfies BiomeConfig;
   }, []);
 
-  const islandCount = variant === "mobile" ? 7 : 11;
-  const cloudCount = variant === "mobile" ? 10 : 16;
+  const cloudCount = variant === "mobile" ? 8 : 14;
 
   return (
     <>
@@ -351,23 +409,22 @@ function FlightWorld({ variant, reduceMotion }: { variant: Variant; reduceMotion
       <fog attach="fog" args={[biome.fog.color, biome.fog.near, biome.fog.far]} />
       <SkyDome top={biome.sky.top} bottom={biome.sky.bottom} />
       <hemisphereLight args={[biome.lights.hemiSky, biome.lights.hemiGround, biome.lights.hemiInt * 1.35]} />
-      <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt * 1.4} />
-      <directionalLight position={[14, 22, 8]} intensity={biome.lights.sunInt} color={biome.lights.sun} />
-      <pointLight position={[-1.2, -0.4, 2.2]} intensity={2.1} color="#39e0ff" distance={8} />
+      <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt * 1.35} />
+      <directionalLight position={[12, 26, 10]} intensity={biome.lights.sunInt} color={biome.lights.sun} />
+      <pointLight position={[0.4, 1.6, 4.2]} intensity={1.6} color="#ffe0b0" distance={12} />
       <Suspense fallback={null}>
         <CloudPuffs reduceMotion={reduceMotion} count={cloudCount} />
-        <IslandBelt biome={biome} count={islandCount} reduceMotion={reduceMotion} />
-        <DriftMotes accent={biome.floatCrystal.emissive} reduceMotion={reduceMotion} />
+        <TerrainBelt biome={biome} reduceMotion={reduceMotion} mobile={variant === "mobile"} />
+        <DriftMotes accent={biome.lights.arenaPoint} reduceMotion={reduceMotion} />
         <FlightPair reduceMotion={reduceMotion} />
       </Suspense>
     </>
   );
 }
 
-// Preload island dressing (trees/plants) + shared rig — not the full Void kit.
 {
   const kit = naturePreset(BIOME_ID);
-  for (const id of [...kit.trees, ...kit.plants]) useGLTF.preload(natureUrl(id));
+  for (const id of [...kit.trees, ...kit.plants, ...kit.grass, ...kit.rocks]) useGLTF.preload(natureUrl(id));
 }
 useGLTF.preload("/models/RobotExpressive.glb");
 
@@ -386,10 +443,11 @@ export default function InfiniteFlightHero({
         shadows={false}
         frameloop="always"
         gl={{ antialias: variant === "desktop", powerPreference: variant === "mobile" ? "default" : "high-performance" }}
-        camera={{ position: [2.4, 1.35, 6.2], fov: variant === "mobile" ? 44 : 40, near: 0.1, far: 120 }}
+        // Front camera looking at the pair (they face +Z toward the lens).
+        camera={{ position: [0.15, 2.05, 7.4], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
         style={{ pointerEvents: "none", width: "100%", height: "100%" }}
         onCreated={({ camera }) => {
-          camera.lookAt(-0.2, 0.45, -2.5);
+          camera.lookAt(0, 1.35, 0.2);
         }}
       >
         <FlightWorld variant={variant} reduceMotion={reduceMotion} />

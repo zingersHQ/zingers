@@ -56,7 +56,9 @@ export function circuitSpotFor(worldId: string) {
 
 /** Where you walk to leave an active game scene (a few metres behind the entry). */
 export const VENUE_EXIT = {
-  circuit: { pos: [0, 1.2, -9] as [number, number, number], radius: 3.2 },
+  // Further behind the spawn pad so the arrival deck reads as a walk back through
+  // the door you came from (camera intro frames portal → character → track).
+  circuit: { pos: [0, 1.2, -18] as [number, number, number], radius: 3.4 },
   amphitheatre: { pos: [0, 1.0, 17] as [number, number, number], radius: 3.6 },
 };
 

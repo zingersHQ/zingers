@@ -810,6 +810,64 @@ export const NatureIslandDressing = memo(function NatureIslandDressing({
   return <NaturePlacements placements={props} />;
 });
 
+/** Seat trees / plants / grass on real ground samples (Y = surface). Used by the
+ *  homepage flight hero — no floating islands, no extra Y fudge. */
+export const NatureSurfaceDressing = memo(function NatureSurfaceDressing({
+  biome,
+  points,
+  density = 1,
+}: {
+  biome: BiomeConfig;
+  /** Surface points `[x, y, z]` — y must be the ground height. */
+  points: [number, number, number][];
+  density?: number;
+}) {
+  const preset = naturePreset(biome.id);
+  const props = useMemo(() => {
+    const rng = mulberry(biome.terrain.seed + 66101);
+    const out: PropPlacement[] = [];
+    const liveTrees = preset.trees.filter((t) => !t.startsWith("Dead"));
+    const treePool = liveTrees.length ? liveTrees : preset.trees;
+    for (const pos of points) {
+      const roll = rng();
+      if (roll < 0.38 * density) {
+        out.push({
+          modelId: treePool[Math.floor(rng() * treePool.length)]!,
+          pos: [pos[0], pos[1], pos[2]],
+          rot: [0, rng() * Math.PI * 2, (rng() - 0.5) * 0.06],
+          scale: 0.85 + rng() * 0.55,
+        });
+      } else if (roll < 0.72 * density) {
+        out.push({
+          modelId: preset.plants[Math.floor(rng() * preset.plants.length)]!,
+          pos: [pos[0] + (rng() - 0.5) * 1.4, pos[1], pos[2] + (rng() - 0.5) * 1.4],
+          rot: [0, rng() * Math.PI * 2, 0],
+          scale: 0.65 + rng() * 0.45,
+        });
+      } else if (preset.grass.length && roll < 0.92 * density) {
+        out.push({
+          modelId: preset.grass[Math.floor(rng() * preset.grass.length)]!,
+          pos: [pos[0] + (rng() - 0.5) * 1.8, pos[1], pos[2] + (rng() - 0.5) * 1.8],
+          rot: [0, rng() * Math.PI * 2, 0],
+          scale: 0.7 + rng() * 0.5,
+        });
+      }
+      if (rng() < 0.22 * density && preset.rocks.length) {
+        const s = 0.45 + rng() * 0.7;
+        out.push({
+          modelId: preset.rocks[Math.floor(rng() * preset.rocks.length)]!,
+          pos: [pos[0] + (rng() - 0.5) * 2.2, pos[1], pos[2] + (rng() - 0.5) * 2.2],
+          rot: [(rng() - 0.5) * 0.25, rng() * Math.PI * 2, (rng() - 0.5) * 0.2],
+          scale: s,
+        });
+      }
+    }
+    return out;
+  }, [biome, points, density, preset]);
+
+  return <NaturePlacements placements={props} />;
+});
+
 /** Foreground vegetation ring for close intro cameras — side trees, back understory,
  *  edge grass. Keeps the clearing open so the champion stays the focus. */
 export const NatureFraming = memo(function NatureFraming({ biome, shape }: { biome: BiomeConfig; shape: TerrainShape }) {

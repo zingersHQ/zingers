@@ -22,8 +22,12 @@ const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
 /** Small mascots in the open world — 2/3 of the previous third-scale after a
  *  second "characters are too big" playtest pass (was 1/3; now 2/9). Battle /
- *  portrait tiles stay at 1. The Reader mirrors this via READER_SCALE in world.tsx. */
+ *  portrait tiles stay at 1. Pair with READER_SCALE: champ ≈ ⅓ of Trainer. */
 export const WORLD_AGENT_SCALE = 2 / 9;
+/** Trainer / Handler body scale in the Grounds + Ascent (world.tsx, Climb, Circuit). */
+export const READER_SCALE = 2 / 3;
+/** Champion size relative to the Trainer — keep Climb/Circuit/hero in lockstep. */
+export const CHAMPION_REL_TO_TRAINER = WORLD_AGENT_SCALE / READER_SCALE; // 1/3
 
 /** @deprecated Companion no longer mirrors Handler loco — kept for type compat during cleanup. */
 export interface HandlerMimicState {

@@ -20,7 +20,7 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
-import { ChampionMesh } from "./champion-mesh";
+import { ChampionMesh, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter, sectorBounds } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
@@ -99,15 +99,14 @@ const CAM_HEIGHT = 0.6;   // look-at lift — keeps the hero low-centre of frame
 const CAM_LERP = 6;       // exp-damping rate for smooth follow (frame-rate indep.)
 
 // ── the flying cast (canon: the Trainer flies, the champion flies beside) ──
-// The LEAD flyer is the Trainer's robot (the "character") at CHAMP_SCALE; the
-// champion trails as the smaller wingmate. FOLLOWER_REL mirrors the 3D world's
-// proportion exactly — a champion is 1/3 the Trainer's size there
-// (WORLD_AGENT_SCALE 2/9 ÷ READER_SCALE 2/3 = 1/3) — so the pair reads the same
-// on the phone: big character in front, small champion following.
-const CHAMP_SCALE = 0.48;  // the Trainer/character — the hero silhouette in front
-const FOLLOWER_REL = 1 / 3; // the champion follower, relative to the character
+// Same absolute scales as the Grounds / desktop Circuit (world.tsx):
+// Trainer = READER_SCALE (2/3), champion = WORLD_AGENT_SCALE (2/9) → ~⅓.
+// Camera stay-back (CAM_*) keeps the Flappy "small bird, big sky" read — don't
+// invent a second proportion for the phone.
+const PILOT_SCALE = READER_SCALE;
+const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
 const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
-const CHAMP_Y = -0.55;     // drop so the torso centres on the gate-thread point
+const CHAMP_Y = -0.72;     // drop so the torso centres on the gate-thread point
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
@@ -366,8 +365,8 @@ function Flyer({
   return (
     <group ref={grp} position={track.spawn}>
       <group position={[0, CHAMP_Y, 0]}>
-        <Suspense fallback={<group scale={CHAMP_SCALE}><MechBody accent={accent} /></group>}>
-          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={CHAMP_SCALE} />
+        <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
+          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} />
         </Suspense>
       </group>
       <AscentSigil reaches={ascentReaches} accent={accent} />
@@ -400,11 +399,11 @@ function ReadyPose({
   });
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
-      <Suspense fallback={<group scale={CHAMP_SCALE}><MechBody accent={accent} /></group>}>
+      <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
         {/* the Trainer's robot, ready on the pad */}
-        <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={CHAMP_SCALE} lean={0} />
-        {/* the champion waiting beside its Trainer — the small wingmate (world 1/3 proportion) */}
-        <group position={[0.9, 0, -0.3]} scale={CHAMP_SCALE * FOLLOWER_REL}>
+        <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0} />
+        {/* champion beside Trainer — same WORLD_AGENT_SCALE as Grounds / desktop Circuit */}
+        <group position={[1.15, 0, -0.35]}>
           <ChampionMesh
             type={champType}
             champion={champion}
@@ -414,7 +413,7 @@ function ReadyPose({
             hideFloaters
             breatheIntensity={0.9}
             restPose="standing"
-            sceneScale={1}
+            sceneScale={FOLLOWER_SCALE}
           />
         </group>
       </Suspense>
@@ -916,7 +915,7 @@ export default function CircuitLite({
               identityKey={activeKey}
               targetRef={flyerPosRef}
               headingRef={flyerHeadingRef}
-              scale={CHAMP_SCALE * FOLLOWER_REL}
+              scale={FOLLOWER_SCALE}
               renderPriority={0}
             />
           )}
@@ -1236,7 +1235,6 @@ export default function CircuitLite({
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>
-            <div className="mono" style={{ fontSize: 10, color: "var(--muted2, #6b6785)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
           </div>
         </div>
       )}

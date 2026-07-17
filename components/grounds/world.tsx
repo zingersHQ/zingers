@@ -13,7 +13,7 @@ import { trainerLevel } from "@/lib/evolve/trainer";
 import { readerPalette, GOLD } from "@/lib/render/palette";
 import { flightAttitudePlanar } from "@/lib/render/animations";
 import { ReaderBackSigil, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
-import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE } from "./champion-mesh";
+import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
 import { FlyingFollower } from "./flying-cast";
 import { Jetpack } from "./jetpack";
 import { keeperKindForName } from "./keeper-regalia";
@@ -351,7 +351,7 @@ export default function World({
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
   const inAmphitheatre = activeVenue === "amphitheatre";
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -396,9 +396,9 @@ export default function World({
   const initialSpawn = venueSpawn ?? earlyResume;
   const spawnCam = useMemo(() => {
     if (inCircuit && venueSpawn) {
-      // behind + slightly above the pad looking down-track (+Z), matched to the
-      // controller's settled chase pose (dist 8.6, low pitch) so frame 0 doesn't pop
-      return [venueSpawn[0], venueSpawn[1] + 2.5, venueSpawn[2] - 8.4] as [number, number, number];
+      // Start in FRONT of the pad looking at the flyer (return portal behind them).
+      // CameraController holds, then Q-sweeps to chase down-track.
+      return [venueSpawn[0], venueSpawn[1] + 2.5, venueSpawn[2] + 8.4] as [number, number, number];
     }
     if (inAmphitheatre && venueSpawn) {
       // behind the player looking toward the throne (−z): player at z=12 facing π
@@ -693,7 +693,7 @@ export default function World({
                   pledged={pledged}
                   accent={biome.lights.arenaPoint}
                   phase={circuitPhase}
-                  padPos={[circuitTrack.spawn[0] - 4.4, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
+                  padPos={[circuitTrack.spawn[0] - 1.9, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
                   followPos={handlerPos}
                 />
               )}
@@ -2456,16 +2456,14 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
   );
 }
 
-// WALK/RUN eased ~10% for the 2/3-scale Reader (READER_SCALE below) so the
-// smaller body doesn't read as skating across the plaza; jump/fly speeds keep
-// their world-tuned arcs — the Tower gaps depend on them.
+// WALK/RUN eased ~10% for the 2/3-scale Reader (READER_SCALE from champion-mesh)
+// so the smaller body doesn't read as skating across the plaza; jump/fly speeds
+// keep their world-tuned arcs — the Tower gaps depend on them.
 const WALK = 7.8, RUN = 13.6, SUPERRUN = RUN * 2, SUPERRUN_DELAY = 3, JUMP = 10.4, AIR_JUMP = 9.6;
 // ── Reader scale (the 2/3 resize) ────────────────────────────────────────────
-// The whole cast shrank to 2/3 (champions via WORLD_AGENT_SCALE); the Reader
-// follows through this knob. Everything that hangs off body height derives from
-// FOOT_OFF so the capsule, feet sensor, ground snap and spawn heights move in
-// lockstep. Battle scenes stay full scale.
-const READER_SCALE = 2 / 3;
+// Shared with Climb / Circuit via READER_SCALE + WORLD_AGENT_SCALE. Everything
+// that hangs off body height derives from FOOT_OFF so the capsule, feet sensor,
+// ground snap and spawn heights move in lockstep. Battle scenes stay full scale.
 const CAP_HALF = 0.55 * READER_SCALE; // capsule cylindrical half-height
 const CAP_RAD = 0.45 * READER_SCALE;  // capsule radius
 const FOOT_OFF = CAP_HALF + CAP_RAD;  // capsule centre → soles (≈0.67)
@@ -2558,6 +2556,8 @@ interface CamCue {
   recenter: boolean;   // one-shot request to swing the lens squarely behind the player
   touchActive: boolean; // on-screen stick is being held — freeze camera yaw auto-follow so
                         // the camera-relative steer basis stays fixed (no walk/fly-in-circles)
+  /** Circuit: true while the chase cam is settling — Handler ignores move/jump. */
+  inputLock: boolean;
 }
 
 // on-screen touch control channels (mobile)
@@ -3017,7 +3017,10 @@ function Handler({
     let ax = 0, az = 0;
     let touchSprint = false;
     let padSprint = false;
-    if (controlsEnabled) {
+    // Circuit camera settle: ignore sticks until the chase cam finishes rotating
+    // so "forward" isn't camera-relative mid-swing (W → sideways).
+    const inputLocked = !!camCue.current?.inputLock;
+    if (controlsEnabled && !inputLocked) {
       if (keys["KeyW"] || keys["ArrowUp"]) az += 1;
       if (keys["KeyS"] || keys["ArrowDown"]) az -= 1;
       if (keys["KeyD"] || keys["ArrowRight"]) ax += 1;
@@ -3234,18 +3237,19 @@ function Handler({
     }
 
     // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
-    const space = controlsEnabled && !!keys["Space"];
+    const canJump = controlsEnabled && !inputLocked;
+    const space = canJump && !!keys["Space"];
     const spaceEdge = space && !prevSpace.current;
     prevSpace.current = space;
     const tj = touchBtn.current ? touchBtn.current.jump : 0;
-    const touchEdge = controlsEnabled && tj > prevTouchJump.current;
+    const touchEdge = canJump && tj > prevTouchJump.current;
     prevTouchJump.current = tj;
     // gamepad A — rising-edge hop + held for hold-to-fly, mirroring Space
     const padJ = getPad();
-    const padJumpEdge = controlsEnabled && padJ.jump > prevPadJump.current;
+    const padJumpEdge = canJump && padJ.jump > prevPadJump.current;
     prevPadJump.current = padJ.jump;
     const jumpEdge = spaceEdge || touchEdge || padJumpEdge;
-    const jumpHeld = space || (controlsEnabled && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
+    const jumpHeld = space || (canJump && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
 
     // Ready pad: jump / first thrust starts the sector (shared with mobile Climb's first press).
     if (circuitMode && !circuitRunning && jumpEdge && onCircuitStart) {
@@ -3883,6 +3887,9 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
 }
 
 const CIRCUIT_INTRO_HOLD_S = 1.5;
+/** Arrival: face the Trainer (portal at their back), then Q-sweep to chase. */
+const CIRCUIT_ARRIVE_HOLD_S = 1.35;
+const CIRCUIT_ARRIVE_SWEEP_S = 1.05;
 
 function CameraController({
   match,
@@ -3910,11 +3917,10 @@ function CameraController({
   clanShot?: { x: number; z: number } | null;
 }) {
   const { camera, gl } = useThree();
-  // In the Circuit the track runs +Z and the flyer faces +Z, so "behind" is
-  // yaw = π. Boot there (not 0 = in front) so the very first frame is already a
-  // chase shot down-track instead of swinging around from the flyer's face.
-  // Amphitheatre faces −Z (throne) — default yaw 0 already puts the camera behind.
-  const yaw = useRef(inCircuit ? Math.PI : 0);
+  // Circuit boots facing the Trainer (yaw = heading = 0 → lens in front, portal
+  // behind them), then Q-sweeps to chase (heading + π). Amphitheatre / wilds
+  // default yaw 0 already puts the camera behind a −Z-facing spawn.
+  const yaw = useRef(0);
   const pitch = useRef(PITCH_GROUND);
   const dist = useRef(CAM_DIST_DEFAULT);
   // wheel/pinch write the TARGET; `dist` eases toward it each frame so zoom is a
@@ -3941,6 +3947,11 @@ function CameraController({
   const recenterPitch = useRef(PITCH_GROUND);
   // Circuit race intro: hold a front-facing hero shot, then sweep behind the runner.
   const circuitIntroHold = useRef(0);
+  // Arrival: hold face-on (portal in background), then Q-sweep to chase down-track.
+  const circuitArriveHold = useRef(0);
+  // Seconds remaining of "don't steer" while the chase cam settles (enter / intro).
+  // Separate from generic recenter so mid-run takeoff sweeps don't freeze controls.
+  const circuitInputLock = useRef(0);
   const prevCircuitPhase = useRef<CircuitPhase | null>(null);
   // eased 0..1 weight of "frame the Scrying Gallery ring" — ramps up as the player
   // nears the live bout and decays back to free third-person on leave
@@ -3952,10 +3963,22 @@ function CameraController({
   useEffect(() => {
     if (!inCircuit) {
       circuitIntroHold.current = 0;
+      circuitArriveHold.current = 0;
+      circuitInputLock.current = 0;
       prevCircuitPhase.current = null;
+      if (camCue.current) camCue.current.inputLock = false;
       return;
     }
-    if (camCue.current) yaw.current = camCue.current.heading;
+    // Arrival choreography: face the Trainer with the return portal behind them,
+    // hold, then Q-sweep until the lens sits behind looking down the Circuit.
+    const h = camCue.current?.heading ?? 0;
+    yaw.current = h; // front of character
+    pitch.current = PITCH_GROUND;
+    distTarget.current = CAM_DIST_DEFAULT;
+    recenter.current = 0; // arrive hold owns the lens — ignore spawn recenters
+    circuitArriveHold.current = CIRCUIT_ARRIVE_HOLD_S;
+    circuitInputLock.current = CIRCUIT_ARRIVE_HOLD_S + CIRCUIT_ARRIVE_SWEEP_S;
+    if (camCue.current) camCue.current.inputLock = true;
   }, [inCircuit, camCue]);
 
   useEffect(() => {
@@ -4089,10 +4112,19 @@ function CameraController({
     // lens behind the champion, framing the Grounds gate it's been turned toward)
     if (cue?.recenter) {
       cue.recenter = false;
-      recenter.current = 0.9;
-      recenterPitch.current = PITCH_GROUND;
-      distTarget.current = CAM_DIST_DEFAULT; // glides in via the zoom damp below, no snap
-      cue.zoom = Math.min(1.2, cue.zoom + 0.4);
+      // Arrival hold owns the lens — don't let Handler spawn recenter yank us to chase early.
+      if (circuitArriveHold.current > 0) {
+        // ignore
+      } else {
+        recenter.current = 0.9;
+        recenterPitch.current = PITCH_GROUND;
+        distTarget.current = CAM_DIST_DEFAULT; // glides in via the zoom damp below, no snap
+        cue.zoom = Math.min(1.2, cue.zoom + 0.4);
+        // Try-again / pad teleport on Circuit ready — lock sticks until the swing ends.
+        if (inCircuit && circuitPhase === "ready") {
+          circuitInputLock.current = Math.max(circuitInputLock.current, 1.0);
+        }
+      }
     }
 
     // ── companion re-framing on takeoff / touchdown ──
@@ -4137,6 +4169,7 @@ function CameraController({
 
     if (inCircuit && circuitPhase === "running" && prevCircuitPhase.current !== "running") {
       circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
+      circuitInputLock.current = Math.max(circuitInputLock.current, CIRCUIT_INTRO_HOLD_S + 0.95);
       // sit the lens BEHIND the flyer looking down-track (heading + π), not in
       // front of their face — the old `yaw = cue.heading` parked the camera on
       // the far side so you launched staring back at the return portal/exit.
@@ -4144,6 +4177,20 @@ function CameraController({
     }
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
     else prevCircuitPhase.current = null;
+
+    // Arrival: hold face-on (portal behind the Trainer), then Q-sweep to chase.
+    const circuitArriveActive = inCircuit && circuitArriveHold.current > 0;
+    if (circuitArriveActive) {
+      const holdBefore = circuitArriveHold.current;
+      circuitArriveHold.current = Math.max(0, circuitArriveHold.current - dt);
+      if (cue) yaw.current = cue.heading; // stay face-on while holding
+      if (holdBefore > 0 && circuitArriveHold.current === 0) {
+        recenter.current = CIRCUIT_ARRIVE_SWEEP_S;
+        recenterPitch.current = PITCH_GROUND;
+        distTarget.current = CAM_DIST_DEFAULT;
+        if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.35);
+      }
+    }
 
     const circuitIntroActive = inCircuit && circuitIntroHold.current > 0;
     if (circuitIntroActive) {
@@ -4154,10 +4201,14 @@ function CameraController({
         recenterPitch.current = PITCH_GROUND;
       }
     }
-    const circuitFrontLock = inCircuit && (circuitPhase === "ready" || circuitIntroActive);
+    const circuitFrontLock = inCircuit && (circuitPhase === "ready" || circuitIntroActive || circuitArriveActive);
 
-    const recentering = recenter.current > 0 && !dragging.current;
+    const recentering = recenter.current > 0 && !dragging.current && !circuitArriveActive;
     if (recenter.current > 0) recenter.current = Math.max(0, recenter.current - dt);
+    if (circuitInputLock.current > 0) circuitInputLock.current = Math.max(0, circuitInputLock.current - dt);
+
+    // Freeze move/jump only during Circuit enter/intro settle — not mid-run takeoff recenters.
+    if (cue) cue.inputLock = circuitInputLock.current > 0;
 
     if (recentering && cue) {
       // deliberate, eased swing to directly behind the character + pitch reset —

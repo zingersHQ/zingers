@@ -6,6 +6,7 @@ import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import type { CircuitCheckpoint, CircuitTrackDef } from "./circuit";
 import { sectorBounds } from "./circuit-tracks";
+import { VENUE_EXIT } from "./venues";
 
 // the colour a ring flips to the instant you thread it — the "it counted" read
 const PASS_GREEN = "#5cf08a";
@@ -103,10 +104,12 @@ function PhysBody({
   );
 }
 
-/** Small visible launch pad under spawn. Desktop: Rapier floor so the Handler
- *  can stand in ready until they jump to start. Mobile Climb is kinematic — same
- *  mesh, no collider. Explicit CuboidCollider so Rapier has a floor before settle. */
-function LaunchPad({
+/**
+ * Walkable arrival deck — from the return portal up to the launch mark.
+ * Desktop: Rapier floor so you can walk back through the portal. Mobile Climb
+ * is kinematic — compact launch mark only (exit is a tab, not a walk).
+ */
+function ArrivalDeck({
   spawn,
   staticMode,
   accent,
@@ -116,39 +119,61 @@ function LaunchPad({
   accent: string;
 }) {
   const [sx, sy, sz] = spawn;
-  // Compact pad (~3.2×3.2); top near y≈0 when spawn.y≈1.1 (capsule centre).
-  const padPos: [number, number, number] = [sx, sy - 1.35, sz];
-  const mesh = (
-    <mesh receiveShadow castShadow>
-      <boxGeometry args={[3.2, 0.35, 3.2]} />
-      <meshStandardMaterial
-        color="#2a2438"
-        emissive={accent}
-        emissiveIntensity={0.22}
-        metalness={0.35}
-        roughness={0.62}
-      />
-    </mesh>
-  );
-  const rim = (
-    <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[1.35, 1.55, 28]} />
-      <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
-    </mesh>
-  );
+  const padY = sy - 1.35; // top near y≈0 when spawn.y≈1.1
+
   if (staticMode) {
     return (
-      <group position={padPos}>
-        {mesh}
-        {rim}
+      <group position={[sx, padY, sz]}>
+        <mesh receiveShadow>
+          <boxGeometry args={[3.2, 0.35, 3.2]} />
+          <meshStandardMaterial color="#2a2438" emissive={accent} emissiveIntensity={0.22} metalness={0.35} roughness={0.62} />
+        </mesh>
+        <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.35, 1.55, 28]} />
+          <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
+        </mesh>
       </group>
     );
   }
+
+  const portalZ = VENUE_EXIT.circuit.pos[2];
+  // Deck runs from just past the portal plane to a short step beyond spawn so the
+  // launch mark sits on solid ground and you can walk back to exit.
+  const zBack = portalZ + 1.2;
+  const zFront = sz + 2.8;
+  const zMid = (zBack + zFront) / 2;
+  const zLen = Math.abs(zFront - zBack);
+  const halfZ = zLen / 2;
+  const halfX = 2.35;
+  const pos: [number, number, number] = [sx, padY, zMid];
+
   return (
-    <RigidBody type="fixed" colliders={false} position={padPos}>
-      <CuboidCollider args={[1.7, 0.22, 1.7]} />
-      {mesh}
-      {rim}
+    <RigidBody type="fixed" colliders={false} position={pos}>
+      <CuboidCollider args={[halfX, 0.22, halfZ]} />
+      <mesh receiveShadow castShadow>
+        <boxGeometry args={[halfX * 2, 0.35, zLen]} />
+        <meshStandardMaterial
+          color="#2a2438"
+          emissive={accent}
+          emissiveIntensity={0.14}
+          metalness={0.35}
+          roughness={0.62}
+        />
+      </mesh>
+      {/* launch mark under the spawn */}
+      <mesh position={[0, 0.2, sz - zMid]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.2, 1.45, 28]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
+      </mesh>
+      {/* soft edge rails so the walk back to the portal reads as a path */}
+      <mesh position={[-halfX + 0.08, 0.28, 0]}>
+        <boxGeometry args={[0.12, 0.18, zLen * 0.98]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.35} metalness={0.5} roughness={0.4} />
+      </mesh>
+      <mesh position={[halfX - 0.08, 0.28, 0]}>
+        <boxGeometry args={[0.12, 0.18, zLen * 0.98]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.35} metalness={0.5} roughness={0.4} />
+      </mesh>
     </RigidBody>
   );
 }
@@ -188,12 +213,12 @@ export const CircuitScene = memo(function CircuitScene({
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
-  // Jetpack-only Ascent: rings + hazards carry the challenge. No stepping-stone
-  // platforms (mobile already hid them; desktop no longer lands between gates).
+  // Jetpack-only Ascent: rings + hazards carry the challenge. Arrival deck is the
+  // only walkable surface (spawn ↔ return portal); no stepping-stones along the run.
   return (
     <>
       <SafetyFloor color={floor} track={track} staticMode={staticMode} />
-      <LaunchPad spawn={track.spawn} staticMode={staticMode} accent={accent} />
+      <ArrivalDeck spawn={track.spawn} staticMode={staticMode} accent={accent} />
       {track.checkpoints.map((cp) => {
         const gold = cp.index === goldIndex;
         return (
