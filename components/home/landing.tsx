@@ -324,7 +324,7 @@ export function Landing() {
         style={{
           position: "fixed",
           inset: 0,
-          background: "radial-gradient(120% 90% at 50% 8%, #1a2b4d 0%, #12112a 46%, #08070f 100%)",
+          background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)",
         }}
       />
     );

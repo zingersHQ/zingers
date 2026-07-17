@@ -21,6 +21,11 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning an agent…</div>,
 });
 
+const InfiniteFlightHero = dynamic(() => import("@/components/home/infinite-flight-hero"), {
+  ssr: false,
+  loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning the sky…</div>,
+});
+
 // Standalone world vista for beats with no 3D figure (the Forces wheel).
 const BiomeBackdropCanvas = dynamic(() => import("@/components/grounds/biome-backdrop").then((m) => m.BiomeBackdropCanvas), { ssr: false, loading: () => null });
 
@@ -314,23 +319,15 @@ function Stage({ children }: { children: React.ReactNode }) {
 }
 
 // ── Beat 1 — AWAKEN ──────────────────────────────────────────────────────────
-// A mind ignites: slow camera push-in onto a breathing agent, aura alight.
+// Infinite flight: Trainer + champion over a looping belt of real Grounds
+// islands (Void Garden daylight + nature kit). Same hero as the mobile door.
 function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
   return (
-    <div style={FULL}>
+    <div style={{ ...FULL, background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)" }}>
       <Stage>
-        <AgentShowcase
-          champion={HERO}
-          type={HERO_TYPE}
-          scale={mobile ? 0.6 : 0.78}
-          dolly
-          gesture="idle"
-          animMode="standing"
-          biomeId="concord"
-          backdropRichness={INTRO_BACKDROP.richness}
-          backdropFraming={INTRO_BACKDROP.framing}
-          scrollThrough={embedded}
-        />
+        <div style={{ position: "absolute", inset: 0, pointerEvents: embedded ? "none" : undefined }}>
+          <InfiniteFlightHero variant={mobile ? "mobile" : "desktop"} />
+        </div>
       </Stage>
       <LowerThird
         mobile={mobile}
@@ -342,7 +339,7 @@ function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             It fights.
           </>
         }
-        body="You're the Trainer: you take to the sky above a sealed vault, and a thinking mind flies at your side — one you raise, tune, and send into the battles you climb over. This is that mind."
+        body="You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise it, tune it, and send it into the battles you climb over — you both rise."
       />
     </div>
   );

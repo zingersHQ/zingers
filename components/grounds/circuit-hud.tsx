@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import { Flag, RotateCcw, Skull, Timer, Trophy, ChevronRight } from "lucide-react";
 import { formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
@@ -59,6 +60,22 @@ export function CircuitHud({
   const REACH_SIZE = 10;
   const reachCount = Math.max(1, Math.ceil(sectorTotal / REACH_SIZE));
   const reachIdx = Math.floor(sectorIndex / REACH_SIZE);
+
+  // Space / Enter confirms the end-of-sector primary action (next / try again).
+  useEffect(() => {
+    if (phase !== "sector" && phase !== "failed" && phase !== "done") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== "Enter") return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+      e.preventDefault();
+      if (phase === "sector") onContinue();
+      else onRestart();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase, onContinue, onRestart]);
 
   return (
     <>
@@ -167,8 +184,8 @@ export function CircuitHud({
           </div>
         )}
         {phase === "ready" && (
-          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 240 }}>
-            {reachTagline ? `${reachTagline} · ` : ""}pass every gate · fall or skip = restart
+          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 260 }}>
+            {reachTagline ? `${reachTagline} · ` : ""}jump to start · thread every gate · miss or fall = restart
           </div>
         )}
       </div>
@@ -183,6 +200,7 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onContinue}>
             Sector {sectorN + 1} <ChevronRight size={16} strokeWidth={2.5} />
           </button>
+          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
 
@@ -191,6 +209,7 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> run again
           </button>
+          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
 
@@ -199,6 +218,7 @@ export function CircuitHud({
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> try again
           </button>
+          <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
         </CircuitModal>
       )}
     </>

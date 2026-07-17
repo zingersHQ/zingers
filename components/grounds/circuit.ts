@@ -77,3 +77,22 @@ export function atCircuitFinishEarly(pos: CircuitPos, checkpoints: { pos: [numbe
   const dy = Math.abs(pos.y - fy);
   return dh <= finish.radius * 0.9 && dy <= finish.radius * 0.9;
 }
+
+/**
+ * Shared Ascent rule (desktop Circuit + mobile Climb): when the flyer crosses the
+ * next gate's Z-plane, they must be inside the opening. Outside = miss → run over.
+ * Returns null when this frame did not cross the plane.
+ */
+export function circuitGatePlaneCross(
+  prevZ: number,
+  z: number,
+  pos: CircuitPos,
+  cp: Pick<CircuitCheckpoint, "pos" | "radius">,
+): "pass" | "miss" | null {
+  const gz = cp.pos[2];
+  if (!(prevZ < gz && z >= gz)) return null;
+  const dx = Math.abs(pos.x - cp.pos[0]);
+  const dy = Math.abs(pos.y - cp.pos[1]);
+  const r = cp.radius * 0.95;
+  return dx <= r && dy <= r ? "pass" : "miss";
+}

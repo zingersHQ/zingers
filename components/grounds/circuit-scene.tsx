@@ -103,18 +103,52 @@ function PhysBody({
   );
 }
 
-/** Invisible launch slab under spawn — desktop only. Lets the Handler stand
- *  during ready without stepping-stone platforms along the track. Explicit
- *  CuboidCollider (not auto from a hidden mesh) so Rapier always has a floor
- *  before the settle timeout. Mobile Climb is kinematic and never needs it. */
-function LaunchPad({ spawn, staticMode }: { spawn: [number, number, number]; staticMode: boolean }) {
-  if (staticMode) return null;
+/** Small visible launch pad under spawn. Desktop: Rapier floor so the Handler
+ *  can stand in ready until they jump to start. Mobile Climb is kinematic — same
+ *  mesh, no collider. Explicit CuboidCollider so Rapier has a floor before settle. */
+function LaunchPad({
+  spawn,
+  staticMode,
+  accent,
+}: {
+  spawn: [number, number, number];
+  staticMode: boolean;
+  accent: string;
+}) {
   const [sx, sy, sz] = spawn;
-  // Pad top at y≈0 when spawn.y≈1.1 (matches amphitheatre sand). Half-extents
-  // [5, 0.25, 4] → box 10×0.5×8 centered under the capsule.
+  // Compact pad (~3.2×3.2); top near y≈0 when spawn.y≈1.1 (capsule centre).
+  const padPos: [number, number, number] = [sx, sy - 1.35, sz];
+  const mesh = (
+    <mesh receiveShadow castShadow>
+      <boxGeometry args={[3.2, 0.35, 3.2]} />
+      <meshStandardMaterial
+        color="#2a2438"
+        emissive={accent}
+        emissiveIntensity={0.22}
+        metalness={0.35}
+        roughness={0.62}
+      />
+    </mesh>
+  );
+  const rim = (
+    <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[1.35, 1.55, 28]} />
+      <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
+    </mesh>
+  );
+  if (staticMode) {
+    return (
+      <group position={padPos}>
+        {mesh}
+        {rim}
+      </group>
+    );
+  }
   return (
-    <RigidBody type="fixed" colliders={false} position={[sx, sy - 1.35, sz]}>
-      <CuboidCollider args={[5, 0.25, 4]} />
+    <RigidBody type="fixed" colliders={false} position={padPos}>
+      <CuboidCollider args={[1.7, 0.22, 1.7]} />
+      {mesh}
+      {rim}
     </RigidBody>
   );
 }
@@ -159,7 +193,7 @@ export const CircuitScene = memo(function CircuitScene({
   return (
     <>
       <SafetyFloor color={floor} track={track} staticMode={staticMode} />
-      <LaunchPad spawn={track.spawn} staticMode={staticMode} />
+      <LaunchPad spawn={track.spawn} staticMode={staticMode} accent={accent} />
       {track.checkpoints.map((cp) => {
         const gold = cp.index === goldIndex;
         return (

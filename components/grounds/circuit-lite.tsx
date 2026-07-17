@@ -31,7 +31,7 @@ import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import type { BiomeConfig } from "./biomes";
-import { formatCircuitMs } from "./circuit";
+import { circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
@@ -343,26 +343,21 @@ function Flyer({
       }
     }
 
-    // gate threading — cross the next gate's z-plane inside its opening, or miss
+    // gate threading — shared plane-cross rule with desktop Circuit (miss = run over)
     if (cp) {
-      const gz = cp.pos[2];
-      if (prevZ.current < gz && pos.current.z >= gz) {
-        const dx = Math.abs(pos.current.x - cp.pos[0]);
-        const dy = Math.abs(pos.current.y - cp.pos[1]);
-        const r = cp.radius * 0.95;
-        if (dx <= r && dy <= r) {
-          cpNext.current += 1;
-          if (cp.finish) {
-            dead.current = true;
-            onSectorClear();
-          } else {
-            onGate(cpNext.current);
-          }
-        } else {
+      const cross = circuitGatePlaneCross(prevZ.current, pos.current.z, pos.current, cp);
+      if (cross === "pass") {
+        cpNext.current += 1;
+        if (cp.finish) {
           dead.current = true;
-          onFail("gates");
-          return;
+          onSectorClear();
+        } else {
+          onGate(cpNext.current);
         }
+      } else if (cross === "miss") {
+        dead.current = true;
+        onFail("gates");
+        return;
       }
     }
     prevZ.current = pos.current.z;
@@ -704,25 +699,6 @@ export default function CircuitLite({
     setHold(true);
   }, [setHold, guest]);
 
-  // keyboard hold (Space) for desktop testing of the one-thumb feel
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        if (phase === "ready" || phase === "running") press();
-      }
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === "Space") setHold(false);
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, [phase, press, setHold]);
-
   // Ordinary restart: reset run state and REUSE the live WebGL context (never
   // bump runId — remounting the Canvas spins a fresh context and can push a
   // memory-tight phone into a loss loop). The Flyer remounts fresh on its own.
@@ -735,6 +711,28 @@ export default function CircuitLite({
     bonusCrowns.current = 0;
     setPhase("ready");
   }, [setHold]);
+
+  // Space: hold-to-fly while live; confirm try/run again on outcome overlays
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== "Enter") return;
+      e.preventDefault();
+      if (phase === "failed" || phase === "done") {
+        resetRun();
+        return;
+      }
+      if (e.code === "Space" && (phase === "ready" || phase === "running")) press();
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === "Space") setHold(false);
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, [phase, press, setHold, resetRun]);
 
   // ── WebGL context-loss watchdog ──────────────────────────────────────────
   const GL_RESTORE_GRACE_MS = 2500;
@@ -1105,7 +1103,7 @@ export default function CircuitLite({
           <div className="mono" style={{ textAlign: "center", color: "#fff", textShadow: `0 0 20px ${accent}` }}>
             <div style={{ fontSize: embedded ? 17 : 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 1 }}>
-              rise to thread each ring · release to drop · one fall = restart
+              thread every ring · miss or fall = restart
             </div>
           </div>
         </div>
@@ -1238,6 +1236,7 @@ export default function CircuitLite({
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>
+            <div className="mono" style={{ fontSize: 10, color: "var(--muted2, #6b6785)", marginTop: 10, letterSpacing: 1 }}>SPACE</div>
           </div>
         </div>
       )}

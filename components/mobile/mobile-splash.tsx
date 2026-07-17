@@ -1,13 +1,14 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
 // Mobile splash door (docs/two-doors.md §3) — the bus-time entrance. A phone
-// opens on ONE epic screen: the Trainer taking wing, jetpack lit, champion in
-// tow — and a single loud CTA, "Fly", that drops you straight into a guest Climb.
-// A quiet secondary lets returning trainers step into the Grounds instead.
+// opens on ONE epic screen: infinite flight of the Trainer + champion over a
+// looping belt of real Grounds islands — and a single loud CTA, "Fly", that
+// drops you straight into a guest Climb. A quiet secondary lets returning
+// trainers step into the Grounds instead.
 //
 // Fantasy, not tech (vocabulary): no "agent", no "$ZING", no "AI" here — just the
-// world and the joy of flight. This is a TYPOGRAPHIC fallback poster; when the
-// splash art asset lands it can layer in behind the copy (two-doors T2 art dep).
+// world and the joy of flight. The WebGL hero is shared with the desktop `/`
+// Awaken beat (`components/home/infinite-flight-hero.tsx`).
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
@@ -15,8 +16,8 @@ import { Rocket, ChevronRight } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { track as pingEvent } from "@/lib/track";
 
-// The live hero render (Trainer flying + champion beside) loads after first
-// paint, so the poster copy/CTA are usable instantly on a cold phone.
+// Infinite-flight hero loads after first paint so the poster copy/CTA are
+// usable instantly on a cold phone.
 const SplashScene = dynamic(() => import("./mobile-splash-scene"), { ssr: false, loading: () => null });
 
 export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: () => void }) {
@@ -39,28 +40,27 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
         flexDirection: "column",
         justifyContent: "flex-end",
         overflow: "hidden",
-        background: "radial-gradient(120% 90% at 50% 8%, #1a2b4d 0%, #12112a 46%, #08070f 100%)",
+        background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)",
         color: "#fff",
         userSelect: "none",
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {/* live hero render — the Trainer flying with the champion at its wing.
-          Sits behind the copy; falls back to nothing (just the sky) if a phone
-          can't spin up WebGL, so the poster + CTA always work. */}
+      {/* live infinite-flight hero — Trainer + champion over looping Grounds islands.
+          Sits behind the copy; falls back to the warm sky if a phone can't spin
+          up WebGL, so the poster + CTA always work. */}
       <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <SplashScene />
       </div>
 
-      {/* sky beams — the Ascent's light, rising behind the hero */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0.45 }}>
-        <div style={{ position: "absolute", top: "-10%", left: "50%", width: 3, height: "72%", transform: "translateX(-50%)", background: "linear-gradient(to top, transparent, #39e0ff88)", filter: "blur(1px)", animation: "mSplashBeam 3.6s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", top: "-6%", left: "38%", width: 2, height: "60%", background: "linear-gradient(to top, transparent, #7cf6c866)", filter: "blur(1px)", animation: "mSplashBeam 4.4s ease-in-out infinite .6s" }} />
-        <div style={{ position: "absolute", top: "-6%", left: "62%", width: 2, height: "60%", background: "linear-gradient(to top, transparent, #b98cff66)", filter: "blur(1px)", animation: "mSplashBeam 4.0s ease-in-out infinite 1.1s" }} />
+      {/* soft sun shafts — golden-hour read over the live sky */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0.4 }}>
+        <div style={{ position: "absolute", top: "-12%", left: "42%", width: 4, height: "78%", transform: "rotate(-12deg)", background: "linear-gradient(to top, transparent, #ffe2a888)", filter: "blur(2px)", animation: "mSplashBeam 3.6s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "-8%", left: "58%", width: 3, height: "64%", transform: "rotate(8deg)", background: "linear-gradient(to top, transparent, #ffc87866)", filter: "blur(2px)", animation: "mSplashBeam 4.4s ease-in-out infinite .6s" }} />
       </div>
 
       {/* scrim — keep the lower-third copy legible over the render */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", background: "linear-gradient(to top, #08070f 4%, rgba(8,7,15,.72) 26%, transparent 52%)" }} />
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", background: "linear-gradient(to top, #1a1020 4%, rgba(26,16,32,.72) 28%, transparent 56%)" }} />
 
       {/* copy + calls to action, weighted to the thumb */}
       <div style={{ position: "relative", zIndex: 3, padding: "0 24px calc(40px + env(safe-area-inset-bottom, 0px))", textAlign: "center" }}>

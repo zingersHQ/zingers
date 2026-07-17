@@ -48,7 +48,7 @@ import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
-import { atCircuitFinishEarly, crossedCircuitGate } from "./circuit";
+import { atCircuitFinishEarly, circuitGatePlaneCross } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
   VENUE_EXIT,
@@ -287,9 +287,11 @@ export default function World({
   circuitCpNextRef,
   circuitHazards = [],
   onCircuitStumble,
+  onCircuitStart,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
+  resumeSpawn = null,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -334,6 +336,8 @@ export default function World({
   circuitPhase?: CircuitPhase | null;
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason) => void;
+  /** Jump / first thrust while ready — starts the Ascent sector (wind, timers). */
+  onCircuitStart?: () => void;
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
@@ -341,6 +345,8 @@ export default function World({
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
   gpuLite?: boolean;
+  /** After leaving a venue, mount the Handler at this wilds pose (Ascent portal exit). */
+  resumeSpawn?: { x: number; z: number; heading?: number } | null;
 }) {
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
@@ -376,10 +382,18 @@ export default function World({
   useEffect(() => {
     preloadNatureBiome(biome.id);
   }, [biome.id]);
-  // Venue spawns must be the RigidBody's INITIAL position — a delayed travelRef
-  // teleport leaves the capsule at the host-world knoll (void, no floor) for the
-  // first frames. Circuit and Amphitheatre both mount on their own sand/pad.
+  // Venue / resume spawns must be the RigidBody's INITIAL position — a delayed
+  // travelRef teleport leaves the capsule at the host knoll for the first frames.
   const venueSpawn = inCircuit ? circuitTrack.spawn : inAmphitheatre ? AMPHI_SPAWN : null;
+  // Rough wilds resume (refined with ascentFoot below once the mountain foot exists).
+  const earlyResume = !inVenue && resumeSpawn
+    ? ([
+        resumeSpawn.x,
+        terrainHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll) + 1.2,
+        resumeSpawn.z,
+      ] as [number, number, number])
+    : null;
+  const initialSpawn = venueSpawn ?? earlyResume;
   const spawnCam = useMemo(() => {
     if (inCircuit && venueSpawn) {
       // behind + slightly above the pad looking down-track (+Z), matched to the
@@ -390,19 +404,31 @@ export default function World({
       // behind the player looking toward the throne (−z): player at z=12 facing π
       return [venueSpawn[0], venueSpawn[1] + 3.2, venueSpawn[2] + 8.4] as [number, number, number];
     }
+    if (earlyResume && resumeSpawn) {
+      const h = resumeSpawn.heading ?? Math.atan2(-knoll.x, -knoll.z);
+      return [
+        earlyResume[0] - Math.sin(h) * 12,
+        earlyResume[1] + 5,
+        earlyResume[2] - Math.cos(h) * 12,
+      ] as [number, number, number];
+    }
     if (hasRift(shape)) {
       const { dirx, dirz } = riftDir(shape);
       // sit further out behind spawn, looking inward toward the plaza
       return [knoll.x + dirx * 14, knoll.peak + 7, knoll.z + dirz * 14] as [number, number, number];
     }
     return [knoll.x, knoll.peak + 7, knoll.z + 14] as [number, number, number];
-  }, [venueSpawn, inCircuit, inAmphitheatre, shape, knoll]);
+  }, [venueSpawn, earlyResume, resumeSpawn, inCircuit, inAmphitheatre, shape, knoll]);
   const handlerPos = useRef(
-    new THREE.Vector3(venueSpawn ? venueSpawn[0] : knoll.x, venueSpawn ? venueSpawn[1] : 0, venueSpawn ? venueSpawn[2] : knoll.z),
+    new THREE.Vector3(initialSpawn ? initialSpawn[0] : knoll.x, initialSpawn ? initialSpawn[1] : 0, initialSpawn ? initialSpawn[2] : knoll.z),
   );
-  // Face the ring in the Amphitheatre, down-track in the Circuit, else plaza-inward.
+  // Face the ring in the Amphitheatre, down-track in the Circuit, else resume / plaza-inward.
   const handlerHeading = useRef(
-    inAmphitheatre ? AMPHI_SPAWN_HEADING : inCircuit ? 0 : Math.atan2(-knoll.x, -knoll.z),
+    inAmphitheatre
+      ? AMPHI_SPAWN_HEADING
+      : inCircuit
+        ? 0
+        : resumeSpawn?.heading ?? Math.atan2(-knoll.x, -knoll.z),
   );
   const sc = biome.scene;
   // Hub mode: the Concord renders a built settlement (gates/clan flags/seal) instead
@@ -484,6 +510,13 @@ export default function World({
     const z = circuitTunnelTarget.pos.z;
     return { x, z, baseY: terrainHeight(x, z, shape, knoll) };
   }, [circuitTunnelTarget, shape, knoll]);
+  // Exact wilds resume on the Ascent mountain surface (portal exit), not the knoll.
+  const bodySpawn = useMemo(() => {
+    if (venueSpawn) return venueSpawn;
+    if (!resumeSpawn || inVenue) return null;
+    const y = worldWalkHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll, ascentFoot) + 0.75;
+    return [resumeSpawn.x, y, resumeSpawn.z] as [number, number, number];
+  }, [venueSpawn, resumeSpawn, inVenue, shape, knoll, ascentFoot]);
   const venueExitTarget = useMemo(() => {
     if (!inVenue || !activeVenue) return null;
     const ex = VENUE_EXIT[activeVenue];
@@ -790,13 +823,14 @@ export default function World({
               circuitHazards={circuitPhase === "running" ? circuitHazards : []}
               onCircuitPass={onCircuitPass}
               onCircuitFail={onCircuitFail}
+              onCircuitStart={onCircuitStart}
               onCircuitStumble={onCircuitStumble}
               concordVenueTargets={concordVenueTargets}
               returnTarget={returnTarget}
               circuitTunnelTarget={circuitTunnelTarget}
               ascentFoot={ascentFoot}
               venueExitTarget={venueExitTarget}
-              spawnPos={venueSpawn ?? undefined}
+              spawnPos={bodySpawn ?? undefined}
               trainPad={trainPad}
               challengeTargets={challengeTargets}
               groundTargets={groundTargets}
@@ -2655,6 +2689,7 @@ function Handler({
   circuitHazards = [],
   onCircuitPass,
   onCircuitFail,
+  onCircuitStart,
   onCircuitStumble,
   concordVenueTargets = [],
   returnTarget = null,
@@ -2704,6 +2739,7 @@ function Handler({
   circuitHazards?: Hazard[];
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason) => void;
+  onCircuitStart?: () => void;
   onCircuitStumble?: () => void;
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
   returnTarget?: THREE.Vector3 | null;
@@ -2766,6 +2802,7 @@ function Handler({
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
   const failCooldown = useRef(0);
+  const circuitPrevZ = useRef<number | null>(null);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
@@ -3210,6 +3247,11 @@ function Handler({
     const jumpEdge = spaceEdge || touchEdge || padJumpEdge;
     const jumpHeld = space || (controlsEnabled && (!!touchBtn.current?.jumpHeld || padJ.jumpHeld));
 
+    // Ready pad: jump / first thrust starts the sector (shared with mobile Climb's first press).
+    if (circuitMode && !circuitRunning && jumpEdge && onCircuitStart) {
+      onCircuitStart();
+    }
+
     // ── Circuit hazard collision → stumble (docs/circuit-world.md §1) ──
     // The SAME pure-time hazards the mobile Climb renders, tested against the
     // Handler capsule (approx sphere). A hit is never a death: it kills the
@@ -3513,17 +3555,31 @@ function Handler({
       const dy = Math.abs(t.y - ex.pos.y);
       if (dh < ex.radius && dy < ex.radius) next = { kind: "venue-exit", label: ex.label };
     }
-    if (!matchActive && circuitMode && onCircuitPass && circuitCpNextRef) {
+    if (!matchActive && circuitMode && circuitCpNextRef) {
       const nextIdx = circuitCpNextRef.current;
       const cp = circuitCheckpoints[nextIdx];
       const pos = { x: t.x, y: t.y, z: t.z };
-      if (cp) {
-        if (crossedCircuitGate(pos, { index: cp.index, label: "", pos: cp.posTuple, radius: cp.radius, finish: cp.finish }, { start: cp.index === 0 })) {
+      // After a sector teleport, ignore one huge Δz so we don't "miss" every gate at once.
+      const teleported = circuitPrevZ.current != null && Math.abs(t.z - circuitPrevZ.current) > 10;
+      const prevZ = teleported || circuitPrevZ.current == null ? t.z : circuitPrevZ.current;
+      // Shared with mobile Climb: crossing a gate's Z-plane outside the opening = miss.
+      // Only while running — ready is pad idle until jump starts the sector.
+      if (circuitRunning && !teleported && cp && onCircuitPass) {
+        const cross = circuitGatePlaneCross(prevZ, t.z, pos, { pos: cp.posTuple, radius: cp.radius });
+        if (cross === "pass") {
           onCircuitPass(cp.index);
           circuitCpNextRef.current = nextIdx + 1;
+        } else if (cross === "miss" && onCircuitFail) {
+          const now = performance.now();
+          if (now - failCooldown.current > 800) {
+            failCooldown.current = now;
+            onCircuitFail("gates");
+          }
         }
       }
+      circuitPrevZ.current = t.z;
       if (
+        circuitRunning &&
         onCircuitFail &&
         atCircuitFinishEarly(
           pos,
@@ -3539,7 +3595,7 @@ function Handler({
       }
       // Fell off the track — one fall ends the run (no checkpoint respawn).
       // Only while the sector is live: during ready the LaunchPad can still be
-      // mounting, and a y<-8 check would insta-fail before the Trainer presses GO.
+      // mounting, and a y<-8 check would insta-fail before the Trainer jumps.
       if (circuitRunning && t.y < -8) {
         const now = performance.now();
         if (onCircuitFail && now - failCooldown.current > 800) {

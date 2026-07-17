@@ -36,6 +36,8 @@ export function PlayerHub({
   regionName,
   inRegion,
   hudDim,
+  highlight,
+  onHighlightOpen,
   onOpenControls,
   onOpenSettings,
   onOpenClan,
@@ -50,6 +52,10 @@ export function PlayerHub({
   regionName: string;
   inRegion: boolean;
   hudDim?: boolean;
+  /** Pulse the hub trigger while the objectives coach flies into it. */
+  highlight?: boolean;
+  /** Fired when the trainer opens the hub during the objectives coach. */
+  onHighlightOpen?: () => void;
   onOpenControls: () => void;
   onOpenSettings: () => void;
   onOpenClan: () => void;
@@ -66,6 +72,11 @@ export function PlayerHub({
 
   const close = useCallback(() => setOpen(false), []);
 
+  const openHub = useCallback(() => {
+    setOpen(true);
+    if (highlight) onHighlightOpen?.();
+  }, [highlight, onHighlightOpen]);
+
   // M toggles the hub; Esc closes it (the grounds screen owns Esc→settings only
   // while the hub is shut).
   useEffect(() => {
@@ -81,12 +92,16 @@ export function PlayerHub({
       }
       if (e.key.toLowerCase() === "m" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen((v) => {
+          const next = !v;
+          if (next && highlight) onHighlightOpen?.();
+          return next;
+        });
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [open]);
+  }, [open, highlight, onHighlightOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,11 +121,20 @@ export function PlayerHub({
 
   return (
     <>
+      <style>{`
+        @keyframes hubCatch {
+          0%, 100% { box-shadow: 0 0 0 0 transparent; }
+          50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 45%, transparent), 0 0 22px -4px var(--gold); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hub-trigger.is-catch { animation: none !important; }
+        }
+      `}</style>
       {/* always-visible trigger: emblem · level · crowns */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className={`panel hub-trigger${hudDim ? " is-dim" : ""}`}
+        onClick={openHub}
+        className={`panel hub-trigger${hudDim ? " is-dim" : ""}${highlight ? " is-catch" : ""}`}
         aria-label="Open your hub"
         aria-expanded={open}
         style={{
@@ -121,8 +145,9 @@ export function PlayerHub({
           padding: isMobile ? "6px 10px" : "7px 12px",
           cursor: "pointer",
           pointerEvents: "auto",
-          borderColor: open ? fc : "var(--line)",
+          borderColor: open || highlight ? (highlight ? "var(--gold)" : fc) : "var(--line)",
           touchAction: "manipulation",
+          animation: highlight ? "hubCatch 1.2s ease-in-out infinite" : undefined,
         }}
       >
         <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: 6, background: `${fc}22`, color: fc, fontSize: 12, fontWeight: 800 }}>
@@ -134,6 +159,24 @@ export function PlayerHub({
           <Crown size={isMobile ? 13 : 15} color="var(--gold)" strokeWidth={2.2} />
           <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: "var(--gold)" }}>{crowns}</span>
         </span>
+        {highlight && (
+          <span
+            title="World objectives"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 18,
+              height: 18,
+              borderRadius: 5,
+              background: "color-mix(in srgb, var(--gold) 22%, transparent)",
+              color: "var(--gold)",
+              marginLeft: 2,
+            }}
+          >
+            <Target size={11} strokeWidth={2.4} />
+          </span>
+        )}
       </button>
 
       {open && (

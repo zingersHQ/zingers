@@ -3,60 +3,79 @@ import { useEffect } from "react";
 import { Crown, Gem } from "lucide-react";
 import type { WorldGoal } from "./goals";
 
-// The one-time objectives intro, as a short cascade of toasts instead of a single
-// static banner. Each objective (peak / depth / secret) slides up in turn, holds,
-// then fades — and the whole stack points down at the compass tape that tracks
-// them from now on. Non-interactive (pointer-through) and self-dismissing.
+// One-time objectives intro: each goal (peak / depth / secret) appears mid-screen,
+// holds long enough to read, then flies up into the top-right Player Hub trigger
+// where they can be reviewed later (tap / M). Non-interactive and self-dismissing.
 const KIND_ICON: Record<WorldGoal["kind"], string> = { peak: "▲", depth: "▼", secret: "◆" };
 
 const STAGGER = 900; // ms between toasts appearing
-const LIFE = 5000; // ms each toast is on screen
+const LIFE = 5200; // ms each toast's full animation
 
 export function ObjectiveToasts({
   goals,
   isMobile,
-  compassReserve,
   onDone,
 }: {
   goals: WorldGoal[];
   isMobile: boolean;
-  compassReserve: number;
   onDone: () => void;
 }) {
   const shown = goals.slice(0, 3);
-  const total = STAGGER * (shown.length - 1) + LIFE + 400;
+  const total = STAGGER * (shown.length - 1) + LIFE + 500;
 
   useEffect(() => {
     const id = setTimeout(onDone, total);
     return () => clearTimeout(id);
   }, [onDone, total]);
 
+  // Fly toward the hub at top:14 right:16. Distances are relative to the
+  // centered stack so the exit lands under/into the hub trigger.
+  const flyX = isMobile ? "min(38vw, 160px)" : "min(42vw, 280px)";
+  const flyY = isMobile ? "calc(-42vh + 28px)" : "calc(-44vh + 20px)";
+
   return (
     <div
+      aria-live="polite"
       style={{
         position: "absolute",
-        bottom: (isMobile ? 96 : 70) + compassReserve,
-        left: 0,
-        right: 0,
+        inset: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        justifyContent: "center",
         gap: 8,
         pointerEvents: "none",
         zIndex: 59,
-        padding: isMobile ? "0 104px 0 16px" : "0 16px",
+        padding: isMobile ? "0 20px" : "0 24px",
+        paddingBottom: isMobile ? "12vh" : "8vh",
       }}
     >
       <style>{`
         @keyframes objToast {
-          0% { opacity:0; transform: translateY(16px) scale(.96); }
-          6% { opacity:1; transform: none; }
-          80% { opacity:1; transform: none; }
-          100% { opacity:0; transform: translateY(-8px) scale(.98); }
+          0% { opacity: 0; transform: translateY(18px) scale(.96); }
+          7% { opacity: 1; transform: none; }
+          52% { opacity: 1; transform: none; }
+          100% {
+            opacity: 0;
+            transform: translate(${flyX}, ${flyY}) scale(.28);
+          }
         }
-        @keyframes objArrow { 0%,100% { transform: translateY(0); opacity:.5 } 50% { transform: translateY(4px); opacity:1 } }
-        @media (prefers-reduced-motion: reduce){
-          .obj-toast { animation: none !important; opacity: 1 !important; transform: none !important; }
+        @keyframes objCue {
+          0% { opacity: 0; transform: translateY(8px); }
+          12% { opacity: 1; transform: none; }
+          72% { opacity: 1; transform: none; }
+          100% { opacity: 0; transform: translate(${flyX}, ${flyY}) scale(.6); }
+        }
+        @keyframes objArrow {
+          0%, 100% { transform: translate(0, 0); opacity: .55 }
+          50% { transform: translate(3px, -3px); opacity: 1 }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .obj-toast, .obj-cue {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
           .obj-arrow { animation: none !important; }
         }
       `}</style>
@@ -75,7 +94,7 @@ export function ObjectiveToasts({
             maxWidth: 380,
             width: "100%",
             opacity: 0,
-            animation: `objToast ${LIFE}ms ease ${i * STAGGER}ms forwards`,
+            animation: `objToast ${LIFE}ms cubic-bezier(.2,.7,.2,1) ${i * STAGGER}ms forwards`,
             boxShadow: `0 8px 28px -12px ${g.color}`,
           }}
         >
@@ -98,20 +117,21 @@ export function ObjectiveToasts({
       ))}
 
       <div
-        className="obj-toast obj-arrow mono"
+        className="obj-cue mono"
         style={{
           opacity: 0,
-          animation: `objToast ${LIFE}ms ease ${shown.length * STAGGER}ms forwards`,
+          animation: `objCue ${LIFE}ms ease ${shown.length * STAGGER}ms forwards`,
           fontSize: 10,
           letterSpacing: 1.2,
           color: "var(--muted)",
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
+          marginTop: 4,
         }}
       >
-        <span className="obj-arrow" style={{ animation: "objArrow 1.1s ease-in-out infinite", color: "var(--gold)" }}>▾</span>
-        TRACKED IN YOUR COMPASS
+        <span className="obj-arrow" style={{ animation: "objArrow 1.1s ease-in-out infinite", color: "var(--gold)" }}>↗</span>
+        REVIEW IN YOUR HUB · M
       </div>
     </div>
   );

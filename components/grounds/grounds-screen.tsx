@@ -224,6 +224,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [worldId, setWorldId] = useState(() => loadLastWorld() ?? DEFAULT_WORLD.id);
   const world = useMemo(() => worldById(worldId), [worldId]);
   const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  /** Mount Handler at this wilds pose after leaving a venue (Ascent portal exit). */
+  const [wildResume, setWildResume] = useState<{ x: number; z: number; heading?: number } | null>(null);
   const activeVenue = gameSession?.venue ?? null;
   const venueHostWorldId = gameSession?.hostWorldId ?? worldId;
   const inVenue = !!activeVenue;
@@ -377,11 +379,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [circuitFailReason, setCircuitFailReason] = useState<CircuitFailReason>("fall");
   const [circuitRunMs, setCircuitRunMs] = useState(0);
   const [circuitSectorMs, setCircuitSectorMs] = useState(0);
-  const [circuitCpPassed, setCircuitCpPassed] = useState(0);
+  const [circuitCpPassed, setCircuitCpPassed] = useState(1);
   const [circuitPersonalBest, setCircuitPersonalBest] = useState<CircuitPersonalBest | null>(null);
   const [circuitBoard, setCircuitBoard] = useState<CircuitBoardEntry[]>([]);
   const [circuitBoardLoading, setCircuitBoardLoading] = useState(false);
-  const circuitCpNext = useRef(0);
+  const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
   const circuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
@@ -407,8 +409,18 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   }, [altitude]);
 
   const restorePose = useCallback((pose: { x: number; z: number; y?: number; heading?: number }) => {
-    poseRef.current = { x: pose.x, z: pose.z, heading: pose.heading ?? Math.PI };
-    setTimeout(() => travelRef.current?.(pose.x, pose.z), 60);
+    const heading = pose.heading ?? Math.PI;
+    poseRef.current = { x: pose.x, z: pose.z, heading };
+    // Venue remount clears travelRef briefly — retry until the Handler hooks up.
+    let tries = 0;
+    const attempt = () => {
+      if (travelRef.current) {
+        travelRef.current(pose.x, pose.z, heading);
+        return;
+      }
+      if (++tries < 50) window.setTimeout(attempt, 40);
+    };
+    window.setTimeout(attempt, 40);
   }, []);
 
   const loadCircuitBoard = useCallback(() => {
@@ -453,11 +465,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   );
 
   const resetCircuitRun = useCallback(() => {
-    circuitCpNext.current = 0;
+    circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
     setCircuitSectorIdx(0);
-    setCircuitCpPassed(0);
+    setCircuitCpPassed(1);
     setCircuitRunMs(0);
     setCircuitSectorMs(0);
     setCircuitPhase("ready");
@@ -494,11 +506,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       const pose = capturePose();
       saveWorldPose(worldId, pose);
       setGameSession({ venue, hostWorldId: worldId, returnPose: pose });
-      circuitCpNext.current = 0;
+      setWildResume(null);
+      circuitCpNext.current = 1;
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
       setCircuitSectorIdx(0);
-      setCircuitCpPassed(0);
+      setCircuitCpPassed(1);
       setCircuitRunMs(0);
       setCircuitSectorMs(0);
       setCircuitPhase("ready");
@@ -523,20 +536,29 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     resetCircuitRun();
     // when the game was entered from the Concord, leave the same way you came:
     // step out of that game's venue portal into the plaza, facing the seal. When
-    // it was entered from a region, fall back to where you stood in the wilds.
+    // it was entered from a region, return to the Ascent portal you walked through.
     const door = host === "concord" ? concordDoorArrival({ venue }) : null;
     if (door) {
+      setWildResume({ x: door.x, z: door.z, heading: door.heading });
       poseRef.current = { x: door.x, z: door.z, heading: door.heading };
-      setTimeout(() => travelRef.current?.(door.x, door.z, door.heading), 90);
+      restorePose({ x: door.x, z: door.z, heading: door.heading });
     } else {
+      setWildResume({ x: returnPose.x, z: returnPose.z, heading: returnPose.heading });
       restorePose(returnPose);
     }
   }, [gameSession, resetCircuitRun, restorePose]);
 
+  // Drop the one-shot wilds resume once the Handler has had time to mount on it.
+  useEffect(() => {
+    if (!wildResume || gameSession) return;
+    const t = window.setTimeout(() => setWildResume(null), 600);
+    return () => window.clearTimeout(t);
+  }, [wildResume, gameSession]);
+
   const advanceCircuitSector = useCallback(() => {
     const next = circuitSectorIdx + 1;
-    circuitCpNext.current = 0;
-    setCircuitCpPassed(0);
+    circuitCpNext.current = 1;
+    setCircuitCpPassed(1);
     setCircuitSectorMs(0);
     circuitSectorStart.current = 0;
     if (next >= DESKTOP_CIRCUIT_COUNT) {
@@ -565,26 +587,24 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     outcomeSfx(false);
   }, [circuitPhase, circuitSectorIdx, submitCircuitRun]);
 
+  /** Jump on the launch pad starts the sector — wind / cruise / timers. */
+  const onCircuitStart = useCallback(() => {
+    if (circuitPhase !== "ready") return;
+    const now = performance.now();
+    if (circuitSectorIdx === 0 && !circuitRunStart.current) circuitRunStart.current = now;
+    circuitSectorStart.current = now;
+    setCircuitPhase("running");
+  }, [circuitPhase, circuitSectorIdx]);
+
   const onCircuitPass = useCallback(
     (index: number) => {
       const cp = circuitTrack.checkpoints[index];
-      if (!cp) return;
+      if (!cp || circuitPhase !== "running") return;
       const now = performance.now();
       setCircuitCpPassed(index + 1);
       // a rising tick each time you thread a ring (the finish keeps its fanfare),
       // so crossing a gate has audible confirmation to match the green flash
-      if (index > 0 && !cp.finish && circuitPhase === "running") jumpBeep(Math.min(4, index));
-
-      if (index === 0 && (circuitPhase === "ready" || circuitPhase === "running")) {
-        if (circuitPhase === "ready") {
-          if (circuitSectorIdx === 0 && !circuitRunStart.current) circuitRunStart.current = now;
-          circuitSectorStart.current = now;
-          setCircuitPhase("running");
-        }
-        return;
-      }
-
-      if (circuitPhase !== "running") return;
+      if (!cp.finish) jumpBeep(Math.min(4, index));
 
       if (cp.finish) {
         const sectorElapsed = now - circuitSectorStart.current;
@@ -1976,9 +1996,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               circuitPhase={activeVenue === "circuit" ? circuitPhase : null}
               onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
               onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
+              onCircuitStart={activeVenue === "circuit" ? onCircuitStart : undefined}
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
               circuitHazards={activeVenue === "circuit" ? circuitHazards : []}
               onCircuitStumble={activeVenue === "circuit" ? onCircuitStumble : undefined}
+              resumeSpawn={!activeVenue ? wildResume : null}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
               goals={isHub ? [] : liveGoals}
@@ -2113,6 +2135,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           regionName={world.name}
           inRegion={!!owned && !isHub && !inVenue}
           hudDim={hudDim}
+          highlight={goalCoach && !isHub && !inVenue && liveGoals.length > 0}
+          onHighlightOpen={dismissGoalCoach}
           onOpenControls={() => setControlsOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenClan={() => {
@@ -2216,7 +2240,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && (
-        <ObjectiveToasts goals={liveGoals} isMobile={isMobile} compassReserve={compassReserve} onDone={dismissGoalCoach} />
+        <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
       )}
 
       {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
