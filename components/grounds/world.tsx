@@ -15,6 +15,7 @@ import { flightAttitudePlanar } from "@/lib/render/animations";
 import { ReaderBackSigil, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
 import { FlyingFollower } from "./flying-cast";
+import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { Jetpack } from "./jetpack";
 import { keeperKindForName } from "./keeper-regalia";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
@@ -24,6 +25,7 @@ import {
   NatureSpawnPath,
   NatureRift,
   NaturePeaks,
+  NaturePockets,
   NatureIslandDressing,
   NatureGround,
 } from "./nature";
@@ -713,6 +715,9 @@ export default function World({
               <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
               <NatureRift biome={biome} shape={shape} colliders />
               <NaturePeaks biome={biome} shape={shape} colliders />
+              {/* Scenic pockets (grove / ash thicket) — dressing only; keep-outs for
+                  spawn, rift, Ascent, landmarks. Own seed → existing scatter unchanged. */}
+              <NaturePockets biome={biome} shape={shape} worldId={regionWorldId} colliders />
               {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
@@ -1046,30 +1051,7 @@ function RegionChampions({
 // Your champion, rendered as a persistent companion that follows the Reader in
 // EVERY explorable scene (the Concord hub as well as region slabs). Follow logic
 // lives on an outer rig group so R3F never fights ref-driven motion inside the mesh.
-// Wing slot in world units, sized for the third-scale companion body (all the
-// distance-flavoured values shrank 2/3 with the cast resize).
-const COMPANION_FOLLOW = {
-  slotR: 2.0,
-  slotBack: 0.92,   // mostly behind (idle dock, multiplied by slotR)
-  slotSide: 0.38,   // …with a little offset to the side
-  introSec: 2.0,
-  introStart: 11,
-  arrived: 0.8,
-  wingDrop: 0.75,
-  liftThreshold: 2.0,
-  approachArc: 2.4,
-  catchK: 1.4,       // closes lag gently — not twitchy on heading flips
-  catchMax: 20,
-  accel: 9,           // lower = heavier follow, stacks short taps into one arc
-  idleSettle: 4.5,
-  velSmooth: 5.5,     // smooth Handler path velocity (filters tap-spam)
-  headingSmooth: 3.2, // follow heading eases toward path / Handler facing
-  slotSmooth: 6,      // chase target position lags — main path not micro-jitter
-  rigHeadingSmooth: 5,
-  minPathSpeed: 0.55, // above this: trail behind path instead of instant wing slot
-  pathBack: 1.6,      // world units behind on the smoothed path
-  pathSide: 0.35,
-} as const;
+// Wing slot / leash numbers live in companion-follow.ts (shared with Climb / Circuit).
 
 function companionFeetY(
   x: number,
@@ -1079,24 +1061,6 @@ function companionFeetY(
   ascent: AscentFoot | null = null,
 ): number {
   return worldWalkHeight(x, z, shape, knoll, ascent);
-}
-
-/** Wing slot slightly behind + beside the Handler (relative to body heading). */
-function companionDockSlot(
-  hx: number,
-  hz: number,
-  hh: number,
-  r: number = COMPANION_FOLLOW.slotR,
-): { tx: number; tz: number } {
-  const backX = -Math.sin(hh);
-  const backZ = -Math.cos(hh);
-  const sideX = Math.cos(hh);
-  const sideZ = -Math.sin(hh);
-  const { slotBack, slotSide } = COMPANION_FOLLOW;
-  return {
-    tx: hx + (backX * slotBack + sideX * slotSide) * r,
-    tz: hz + (backZ * slotBack + sideZ * slotSide) * r,
-  };
 }
 
 function OwnedCompanion({

@@ -22,20 +22,11 @@ import { Jetpack } from "./jetpack";
 import { blank } from "@/lib/evolve/progression";
 import { readerPalette } from "@/lib/render/palette";
 import type { Champion, CreatureType } from "@/lib/types";
+import { COMPANION_FOLLOW, companionPathSlot } from "./companion-follow";
 
-// ── follow feel (mirrors OwnedCompanion.COMPANION_FOLLOW, flight subset) ──────
-// A wing slot behind + beside + slightly below the pilot; the champion closes
-// the gap with a catch-up velocity and falls a touch faster than it rises so it
-// reads heavy, like the open-world companion (docs game-feel: exp damping only).
-// Offsets are authored for a WORLD_AGENT_SCALE follower next to a READER_SCALE
-// Trainer — scale the slot with `scale / WORLD_AGENT_SCALE` so Climb stays matched.
-const WING_BACK = 2.8;      // world units behind the pilot (at WORLD_AGENT_SCALE)
-const WING_SIDE = 1.9;      // …and to the (left) side
-const WING_DROP = 0.5;      // …a touch below eye line
-const CATCH_ACCEL = 9;      // velocity ramp toward target (lower = heavier)
-const CATCH_K = 3.4;        // extra speed per unit of lag
-const CATCH_MAX = 26;       // planar speed cap (can outrun to catch up)
-const EXTRA_GRAV = 1.35;    // sink faster than rise → weighty, world-like fall
+// Flight leash uses the same COMPANION_FOLLOW numbers as Grounds OwnedCompanion
+// (path trail + wingDrop + catch). Sink a touch faster than rise for weight.
+const EXTRA_GRAV = 1.35;
 
 // ── the Trainer's robot, flying with a jetpack (the pilot) ────────────────────
 // Builds the RobotExpressive rig with the Reader palette, plays the idle clip as a
@@ -147,18 +138,13 @@ export function FlyingFollower({
     if (!rg || !tp) return;
     const dt = Math.min(0.05, dtRaw);
     const th = headingRef?.current ?? 0;
+    const { wingDrop, catchK, catchMax, accel, rigHeadingSmooth } = COMPANION_FOLLOW;
 
-    // wing slot behind + beside + below the pilot, relative to its heading.
-    // Authored for WORLD_AGENT_SCALE; keep the same Trainer↔champ spacing when
-    // Climb passes a presentation-scaled follower.
-    const slot = scale / WORLD_AGENT_SCALE;
-    const backX = -Math.sin(th);
-    const backZ = -Math.cos(th);
-    const sideX = Math.cos(th);
-    const sideZ = -Math.sin(th);
-    const sx = tp.x + (backX * WING_BACK + sideX * WING_SIDE) * slot;
-    const sy = tp.y - WING_DROP * slot;
-    const sz = tp.z + (backZ * WING_BACK + sideZ * WING_SIDE) * slot;
+    // Same path-trail slot the Grounds companion uses while the Trainer is moving.
+    const slot = companionPathSlot(tp.x, tp.z, th);
+    const sx = slot.tx;
+    const sy = tp.y - wingDrop;
+    const sz = slot.tz;
 
     if (!booted.current) {
       booted.current = true;
@@ -171,19 +157,19 @@ export function FlyingFollower({
     const ez = sz - pos.current.z;
 
     // catch-up planar velocity (target vel is implicit in the moving slot); clamp
-    let wantVx = ex * CATCH_K;
-    let wantVz = ez * CATCH_K;
+    let wantVx = ex * catchK;
+    let wantVz = ez * catchK;
     const wantPlanar = Math.hypot(wantVx, wantVz);
-    if (wantPlanar > CATCH_MAX && wantPlanar > 0) {
-      const k = CATCH_MAX / wantPlanar;
+    if (wantPlanar > catchMax && wantPlanar > 0) {
+      const k = catchMax / wantPlanar;
       wantVx *= k;
       wantVz *= k;
     }
-    const kv = 1 - Math.exp(-CATCH_ACCEL * dt);
+    const kv = 1 - Math.exp(-accel * dt);
     vel.current.x += (wantVx - vel.current.x) * kv;
     vel.current.z += (wantVz - vel.current.z) * kv;
     // vertical: fall a touch faster than it rises (weighty, world-like)
-    const wantVy = ey * CATCH_K * (ey < 0 ? EXTRA_GRAV : 1);
+    const wantVy = ey * catchK * (ey < 0 ? EXTRA_GRAV : 1);
     vel.current.y += (wantVy - vel.current.y) * kv;
 
     pos.current.x += vel.current.x * dt;
@@ -200,7 +186,7 @@ export function FlyingFollower({
     if (planar > 0.4) wantH = Math.atan2(vel.current.x, vel.current.z);
     let dH = wantH - rigHeading.current;
     dH = Math.atan2(Math.sin(dH), Math.cos(dH));
-    rigHeading.current += dH * (1 - Math.exp(-5 * dt));
+    rigHeading.current += dH * (1 - Math.exp(-rigHeadingSmooth * dt));
     headRef.current = rigHeading.current;
 
     rg.position.copy(pos.current);

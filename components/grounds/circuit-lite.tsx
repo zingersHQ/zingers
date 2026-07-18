@@ -22,6 +22,8 @@ import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles
 import { CircuitScene } from "./circuit-scene";
 import { ChampionMesh, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
+import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
+import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter, sectorBounds } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
@@ -107,6 +109,8 @@ const PILOT_SCALE = READER_SCALE;
 const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
 const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
 const CHAMP_Y = -0.72;     // drop so the torso centres on the gate-thread point
+/** Ready-pose wing dock — same COMPANION_FOLLOW slot as Grounds OwnedCompanion. */
+const READY_DOCK = companionDockSlot(0, 0, CHAMP_FACE);
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
@@ -402,8 +406,8 @@ function ReadyPose({
       <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
         {/* the Trainer's robot, ready on the pad */}
         <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0} />
-        {/* champion beside Trainer — same WORLD_AGENT_SCALE as Grounds / desktop Circuit */}
-        <group position={[1.15, 0, -0.35]}>
+        {/* champion on the Grounds wing dock — same COMPANION_FOLLOW slot as the 3D world */}
+        <group position={[READY_DOCK.tx, -COMPANION_FOLLOW.wingDrop * 0.35, READY_DOCK.tz]}>
           <ChampionMesh
             type={champType}
             champion={champion}
@@ -422,12 +426,33 @@ function ReadyPose({
   );
 }
 
-function Lights({ biome, lite = false }: { biome: BiomeConfig; lite?: boolean }) {
+function Lights({
+  biome,
+  lite = false,
+  shadowMapSize = 1024,
+}: {
+  biome: BiomeConfig;
+  lite?: boolean;
+  shadowMapSize?: number;
+}) {
   return (
     <>
       <hemisphereLight args={[biome.lights.hemiSky, biome.lights.hemiGround, biome.lights.hemiInt]} />
       <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt} />
-      <directionalLight position={[18, 30, 14]} intensity={biome.lights.sunInt} color={biome.lights.sun} castShadow={!lite} />
+      <directionalLight
+        position={[18, 30, 14]}
+        intensity={biome.lights.sunInt}
+        color={biome.lights.sun}
+        castShadow={!lite}
+        shadow-mapSize={[shadowMapSize, shadowMapSize]}
+        shadow-camera-near={2}
+        shadow-camera-far={90}
+        shadow-camera-left={-28}
+        shadow-camera-right={28}
+        shadow-camera-top={36}
+        shadow-camera-bottom={-20}
+        shadow-bias={-0.00025}
+      />
     </>
   );
 }
@@ -485,6 +510,8 @@ export default function CircuitLite({
   /** the claim hook — reached from the fall card ("Claim this mind") */
   onClaim?: () => void;
 } = {}) {
+  const gfxTier = useGraphicsTier();
+  const gfx = useMemo(() => climbCanvasGfx(gfxTier, embedded), [gfxTier, embedded]);
   const [mounted, setMounted] = useState(false);
   const [runId, setRunId] = useState(0);
   const [sector, setSector] = useState(0);
@@ -847,16 +874,20 @@ export default function CircuitLite({
     >
       {mounted && (
         <Canvas
-          key={runId}
+          key={`${runId}-${gfxTier}`}
           frameloop="always"
-          shadows={!embedded}
-          dpr={embedded ? 1 : [1, 1.5]}
-          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] - CAM_BACK], fov: 55, near: 0.1, far: embedded ? 320 : 600 }}
-          gl={{ antialias: !embedded, powerPreference: embedded ? "default" : "high-performance" }}
+          shadows={gfx.shadows}
+          dpr={gfx.dpr}
+          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] - CAM_BACK], fov: 55, near: 0.1, far: gfx.far }}
+          gl={{ antialias: gfx.antialias, powerPreference: gfx.powerPreference }}
           style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = biome.exposure;
+            if (gfx.shadows) {
+              gl.shadowMap.enabled = true;
+              gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
             const bornAt = runId;
             setGlLost(false);
             clearGlWatchdog();
@@ -873,7 +904,7 @@ export default function CircuitLite({
           }}
         >
           <SkyShift bg={biome.bg} fogColor={biome.fog.color} fogNear={fogNear} fogFar={190} exposure={exposure} />
-          <Lights biome={biome} lite={embedded} />
+          <Lights biome={biome} lite={gfx.liteLights} shadowMapSize={gfx.shadowMapSize} />
           <CircuitScene
             track={track}
             biome={biome}

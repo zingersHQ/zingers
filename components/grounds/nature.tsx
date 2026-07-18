@@ -20,6 +20,8 @@ import {
   type SpawnKnoll,
 } from "./terrain";
 import { naturePreset, natureUrl } from "@/lib/render/nature-kit";
+import { pocketsFor, type RegionPocket } from "@/lib/render/region-features";
+import { circuitSpotFor } from "./venues";
 
 function mulberry(seed: number) {
   let s = seed >>> 0;
@@ -724,6 +726,30 @@ export const NatureRift = memo(function NatureRift({ biome, shape, colliders = f
       }
     }
 
+    // Bank understory — appended after rocks so existing rock RNG stays identical.
+    // Soft plants/accents along the lips; no colliders (walkable rift floor stays clear).
+    for (let i = 0; i < N; i++) {
+      if (i % 3 !== 0) continue;
+      const r = start + (i / (N - 1)) * (end - start);
+      const x = dirx * r;
+      const z = dirz * r;
+      const y = terrainHeight(x, z, shape) + 0.04;
+      const w = shape.canyonHalfWidth * (0.7 + 0.25 * Math.sin(i));
+      const perpx = -dirz;
+      const perpz = dirx;
+      for (const side of [-1, 1] as const) {
+        if (rng() > 0.55) continue;
+        const plantId = preset.plants[Math.floor(rng() * preset.plants.length)];
+        if (!plantId) continue;
+        paths.push({
+          modelId: plantId,
+          pos: [x + perpx * w * 0.78 * side + (rng() - 0.5) * 1.2, y, z + perpz * w * 0.78 * side + (rng() - 0.5) * 1.2],
+          rot: [0, rng() * Math.PI * 2, 0],
+          scale: 0.7 + rng() * 0.4,
+        });
+      }
+    }
+
     return { glow: { col, segs, len: (end - start) / N + 1.8, lit: [2, 7, 12] as number[] }, pathProps: paths, mounts: mnts };
   }, [biome, shape, preset]);
   // wall boulders block; the walkable rift floor between them stays clear. The
@@ -984,6 +1010,194 @@ export const NaturePeaks = memo(function NaturePeaks({ biome, shape, richness = 
     return propColliders(props, { minRockScale: 1.1, avoid: [{ x: knoll.x, z: knoll.z, r: 8 }] });
   }, [props, biome]);
 
+  return (
+    <>
+      <NaturePlacements placements={props} />
+      {colliders && <PropColliders items={cols} />}
+    </>
+  );
+});
+
+/** Hard keep-out zones so scenic pockets never block spawn / rift / Ascent / landmarks. */
+function pocketBlocked(
+  x: number,
+  z: number,
+  biome: BiomeConfig,
+  shape: TerrainShape,
+  knoll: SpawnKnoll,
+  worldId: string,
+): boolean {
+  if (Math.hypot(x, z) < PLAZA_R + 12) return true;
+  if (Math.hypot(x - knoll.x, z - knoll.z) < knoll.radius + 10) return true;
+  if (hasRift(shape)) {
+    const along = riftAlong(x, z, shape);
+    const { dirx, dirz } = riftDir(shape);
+    const perpx = -dirz;
+    const perpz = dirx;
+    const perp = x * perpx + z * perpz;
+    if (along > PLAZA_R + 2 && Math.abs(perp) < shape.canyonHalfWidth * 1.35) return true;
+  }
+  const ascent = circuitSpotFor(worldId);
+  const ax = Math.cos(ascent.angle) * ascent.dist;
+  const az = Math.sin(ascent.angle) * ascent.dist;
+  if (Math.hypot(x - ax, z - az) < 52) return true;
+  const lm = biome.scene.landmarks;
+  for (const spot of [lm.train, lm.spire]) {
+    const lx = Math.cos(spot.angle) * spot.dist;
+    const lz = Math.sin(spot.angle) * spot.dist;
+    if (Math.hypot(x - lx, z - lz) < 16) return true;
+  }
+  const twA = biome.scene.towerAngle;
+  const tx = Math.cos(twA) * 55;
+  const tz = Math.sin(twA) * 55;
+  if (Math.hypot(x - tx, z - tz) < 22) return true;
+  return false;
+}
+
+function fillPocket(
+  pocket: RegionPocket,
+  biome: BiomeConfig,
+  shape: TerrainShape,
+  knoll: SpawnKnoll,
+  worldId: string,
+  rng: () => number,
+): PropPlacement[] {
+  const preset = naturePreset(biome.id);
+  const liveTrees = preset.trees.filter((t) => !t.startsWith("Dead"));
+  const treePool =
+    pocket.kind === "thicket"
+      ? preset.trees.filter((t) => t.startsWith("Dead") || t.startsWith("Twisted")).length
+        ? preset.trees.filter((t) => t.startsWith("Dead") || t.startsWith("Twisted"))
+        : preset.trees
+      : liveTrees.length
+        ? liveTrees
+        : preset.trees;
+
+  const cx = Math.cos(pocket.angle) * pocket.dist;
+  const cz = Math.sin(pocket.angle) * pocket.dist;
+  const out: PropPlacement[] = [];
+  const grid = new SpawnGrid(3.4, pocket.kind === "grove" ? 2.6 : 3.1);
+  const tries = Math.round(48 * pocket.density);
+  let placed = 0;
+  const maxTrees = Math.round((pocket.kind === "grove" ? 22 : 14) * pocket.density);
+
+  for (let i = 0; i < tries && placed < maxTrees; i++) {
+    const ang = rng() * Math.PI * 2;
+    const rad = Math.sqrt(rng()) * pocket.radius;
+    const x = cx + Math.cos(ang) * rad;
+    const z = cz + Math.sin(ang) * rad;
+    if (pocketBlocked(x, z, biome, shape, knoll, worldId)) continue;
+    if (!grid.canPlace(x, z)) continue;
+    const y = terrainHeight(x, z, shape, knoll);
+    if (y < 0.45) continue;
+
+    grid.add(x, z);
+    placed++;
+    out.push({
+      modelId: treePool[Math.floor(rng() * treePool.length)]!,
+      pos: [x, y, z],
+      rot: [0, rng() * Math.PI * 2, (rng() - 0.5) * 0.08],
+      scale: (pocket.kind === "grove" ? 0.95 : 0.8) + rng() * 0.45,
+    });
+
+    // Understory — plants never get colliders.
+    if (rng() < 0.72 && preset.plants.length) {
+      out.push({
+        modelId: preset.plants[Math.floor(rng() * preset.plants.length)]!,
+        pos: [x + (rng() - 0.5) * 2.2, y, z + (rng() - 0.5) * 2.2],
+        rot: [0, rng() * Math.PI * 2, 0],
+        scale: 0.7 + rng() * 0.45,
+      });
+    }
+    if (rng() < 0.55 && preset.grass.length) {
+      out.push({
+        modelId: preset.grass[Math.floor(rng() * preset.grass.length)]!,
+        pos: [x + (rng() - 0.5) * 2.8, y, z + (rng() - 0.5) * 2.8],
+        rot: [0, rng() * Math.PI * 2, 0],
+        scale: 0.75 + rng() * 0.4,
+      });
+    }
+    if (rng() < 0.22 && preset.accents.length) {
+      out.push({
+        modelId: preset.accents[Math.floor(rng() * preset.accents.length)]!,
+        pos: [x + (rng() - 0.5) * 1.8, y, z + (rng() - 0.5) * 1.8],
+        rot: [0, rng() * Math.PI * 2, 0],
+        scale: 0.65 + rng() * 0.35,
+        ...(biome.id === "void"
+          ? { emissive: "#34ffd0", emissiveIntensity: 0.35 }
+          : biome.id === "ember"
+            ? { emissive: "#ff6a2a", emissiveIntensity: 0.28 }
+            : {}),
+      });
+    }
+  }
+
+  // A few sitting rocks so the grove reads planted, not floating trees.
+  const rockN = Math.round(5 * pocket.density);
+  for (let i = 0; i < rockN; i++) {
+    const ang = rng() * Math.PI * 2;
+    const rad = Math.sqrt(rng()) * pocket.radius * 0.9;
+    const x = cx + Math.cos(ang) * rad;
+    const z = cz + Math.sin(ang) * rad;
+    if (pocketBlocked(x, z, biome, shape, knoll, worldId)) continue;
+    const y = terrainHeight(x, z, shape, knoll);
+    if (y < 0.5) continue;
+    out.push({
+      modelId: preset.rocks[Math.floor(rng() * preset.rocks.length)]!,
+      pos: [x, y, z],
+      rot: [(rng() - 0.5) * 0.35, rng() * Math.PI * 2, (rng() - 0.5) * 0.25],
+      scale: 0.9 + rng() * 0.9,
+    });
+  }
+
+  return out;
+}
+
+/**
+ * Scenic wilds pockets (grove / ash thicket) — dressing only on existing terrain.
+ * Does not change heightfield, plaza, knoll, rift carve, or Ascent. Own RNG seed
+ * so existing NatureScatter / Peaks layouts stay bit-identical.
+ */
+export const NaturePockets = memo(function NaturePockets({
+  biome,
+  shape,
+  worldId,
+  colliders = false,
+}: {
+  biome: BiomeConfig;
+  shape: TerrainShape;
+  /** Host world id for Ascent keep-out (`grounds` / `gauntlet` / `void`). */
+  worldId: string;
+  colliders?: boolean;
+}) {
+  const pockets = pocketsFor(biome.id);
+  const props = useMemo(() => {
+    if (!pockets.length) return [] as PropPlacement[];
+    const rng = mulberry(biome.terrain.seed + 99017);
+    const knoll = spawnKnollFor(biome);
+    const out: PropPlacement[] = [];
+    for (const pocket of pockets) {
+      out.push(...fillPocket(pocket, biome, shape, knoll, worldId, rng));
+    }
+    return out;
+  }, [biome, shape, worldId, pockets]);
+
+  const cols = useMemo(() => {
+    if (!props.length) return [];
+    const knoll = spawnKnollFor(biome);
+    const ascent = circuitSpotFor(worldId);
+    const ax = Math.cos(ascent.angle) * ascent.dist;
+    const az = Math.sin(ascent.angle) * ascent.dist;
+    return propColliders(props, {
+      minRockScale: 1.15,
+      avoid: [
+        { x: knoll.x, z: knoll.z, r: 10 },
+        { x: ax, z: az, r: 48 },
+      ],
+    });
+  }, [props, biome, worldId]);
+
+  if (!props.length) return null;
   return (
     <>
       <NaturePlacements placements={props} />
