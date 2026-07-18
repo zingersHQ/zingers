@@ -5,7 +5,7 @@
 // lift, no hard thrust beats) over scrolling Grounds-style rolling terrain.
 // No floating islands — hills and montículos they actually fly over.
 // ─────────────────────────────────────────────────────────────────────────────
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
@@ -17,6 +17,7 @@ import { biomeById, daylightBiome, type BiomeConfig } from "@/components/grounds
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { showcaseChampion } from "@/lib/render/showcase";
 import { naturePreset, natureUrl, natureTerrainPalette } from "@/lib/render/nature-kit";
+import { FlightHeroPoster } from "@/components/home/flight-hero-poster";
 
 const HERO = showcaseChampion("MUSE");
 /** Soft daylight Grounds — same nature kit as the live region. */
@@ -116,7 +117,7 @@ function heroHeight(x: number, z: number, seed: number): number {
   return Math.max(0, rolling + hills * 0.85 + bump);
 }
 
-function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
+function FlightPair({ reduceMotion, animate }: { reduceMotion: boolean; animate: boolean }) {
   const grp = useRef<THREE.Group>(null);
   const flyingRef = useRef(true);
   const burstRef = useRef(0);
@@ -147,8 +148,14 @@ function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
     flyingRef.current = true;
     cFly.current = true;
 
-    if (reduceMotion) {
+    // Frozen first-frame / reduced-motion: hold the opening cruise pose.
+    if (reduceMotion || !animate) {
       intensityRef.current = 0.4;
+      alt.current = CRUISE_Y;
+      pitch.current = 0.1;
+      bank.current = 0;
+      sway.current = 0;
+      zOff.current = 0.35;
       g.position.set(0, CRUISE_Y, 0.35);
       g.rotation.set(0.1, 0, 0);
       return;
@@ -287,7 +294,10 @@ function TerrainSegment({
           envMapIntensity={0.08}
         />
       </mesh>
-      <NatureSurfaceDressing biome={biome} points={dressPoints} density={density} />
+      {/* Nature kit is the slow path — hills + cast paint first, trees fill in. */}
+      <Suspense fallback={null}>
+        <NatureSurfaceDressing biome={biome} points={dressPoints} density={density} />
+      </Suspense>
     </group>
   );
 }
@@ -296,10 +306,12 @@ function TerrainBelt({
   biome,
   reduceMotion,
   mobile,
+  animate,
 }: {
   biome: BiomeConfig;
   reduceMotion: boolean;
   mobile: boolean;
+  animate: boolean;
 }) {
   const root = useRef<THREE.Group>(null);
   const earth = useMemo(() => natureTerrainPalette(biome.id), [biome.id]);
@@ -309,7 +321,7 @@ function TerrainBelt({
 
   useFrame((_, dtRaw) => {
     const g = root.current;
-    if (!g || reduceMotion) return;
+    if (!g || reduceMotion || !animate) return;
     const dt = Math.min(0.05, dtRaw);
     // Scroll ground toward -Z: flyers face +Z (camera), world streams past.
     g.position.z -= GROUND_SPEED * dt;
@@ -326,7 +338,7 @@ function TerrainBelt({
   );
 }
 
-function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: number }) {
+function CloudPuffs({ reduceMotion, count, animate }: { reduceMotion: boolean; count: number; animate: boolean }) {
   const root = useRef<THREE.Group>(null);
   const puffs = useMemo(() => {
     let s = 424242;
@@ -345,7 +357,7 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
 
   useFrame((_, dtRaw) => {
     const g = root.current;
-    if (!g || reduceMotion) return;
+    if (!g || reduceMotion || !animate) return;
     const dt = Math.min(0.05, dtRaw);
     g.position.z -= CLOUD_SPEED * dt;
     if (g.position.z <= -LOOP) g.position.z += LOOP;
@@ -369,7 +381,7 @@ function CloudPuffs({ reduceMotion, count }: { reduceMotion: boolean; count: num
   );
 }
 
-function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: boolean }) {
+function DriftMotes({ accent, reduceMotion, animate }: { accent: string; reduceMotion: boolean; animate: boolean }) {
   const root = useRef<THREE.Points>(null);
   const geom = useMemo(() => {
     const n = 110;
@@ -392,7 +404,7 @@ function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: bo
 
   useFrame((_, dtRaw) => {
     const pts = root.current;
-    if (!pts || reduceMotion) return;
+    if (!pts || reduceMotion || !animate) return;
     const dt = Math.min(0.05, dtRaw);
     pts.position.z -= MOTE_SPEED * dt;
     if (pts.position.z <= -LOOP) pts.position.z += LOOP;
@@ -413,7 +425,17 @@ function DriftMotes({ accent, reduceMotion }: { accent: string; reduceMotion: bo
   );
 }
 
-function FlightWorld({ variant, reduceMotion }: { variant: Variant; reduceMotion: boolean }) {
+function FlightWorld({
+  variant,
+  reduceMotion,
+  animate,
+  onCastReady,
+}: {
+  variant: Variant;
+  reduceMotion: boolean;
+  animate: boolean;
+  onCastReady: () => void;
+}) {
   const biome = useMemo(() => {
     const day = daylightBiome(biomeById(BIOME_ID));
     return {
@@ -442,11 +464,13 @@ function FlightWorld({ variant, reduceMotion }: { variant: Variant; reduceMotion
       <ambientLight color={biome.lights.ambient} intensity={biome.lights.ambientInt * 1.35} />
       <directionalLight position={[12, 26, 10]} intensity={biome.lights.sunInt} color={biome.lights.sun} />
       <pointLight position={[0.4, 1.6, 4.2]} intensity={1.6} color="#ffe0b0" distance={12} />
+      {/* Cast + hills first (our models). Nature kit suspends separately inside TerrainSegment. */}
       <Suspense fallback={null}>
-        <CloudPuffs reduceMotion={reduceMotion} count={cloudCount} />
-        <TerrainBelt biome={biome} reduceMotion={reduceMotion} mobile={variant === "mobile"} />
-        <DriftMotes accent={biome.lights.arenaPoint} reduceMotion={reduceMotion} />
-        <FlightPair reduceMotion={reduceMotion} />
+        <CloudPuffs reduceMotion={reduceMotion} count={cloudCount} animate={animate} />
+        <TerrainBelt biome={biome} reduceMotion={reduceMotion} mobile={variant === "mobile"} animate={animate} />
+        <DriftMotes accent={biome.lights.arenaPoint} reduceMotion={reduceMotion} animate={animate} />
+        <FlightPair reduceMotion={reduceMotion} animate={animate} />
+        <ReadyCue onReady={onCastReady} />
       </Suspense>
     </>
   );
@@ -458,30 +482,78 @@ function FlightWorld({ variant, reduceMotion }: { variant: Variant; reduceMotion
 }
 useGLTF.preload("/models/RobotExpressive.glb");
 
+/** Fires once the Suspense tree has drawn a frame — safe to crossfade off the poster. */
+function ReadyCue({ onReady }: { onReady: () => void }) {
+  const sent = useRef(false);
+  useFrame(() => {
+    if (sent.current) return;
+    sent.current = true;
+    // Wait one paint so the first GL frame is actually on screen under the poster.
+    requestAnimationFrame(() => onReady());
+  });
+  return null;
+}
+
 export default function InfiniteFlightHero({
   variant = "desktop",
+  onReady,
+  showPoster = true,
+  freeze = false,
 }: {
   variant?: Variant;
+  /** Called when the live scene has drawn — parents can drop their own poster. */
+  onReady?: () => void;
+  /** Still of the real first frame (captured from this scene) until WebGL is ready. */
+  showPoster?: boolean;
+  /** Hold the opening cruise pose (capture page / reduced-motion). */
+  freeze?: boolean;
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
+  const [castReady, setCastReady] = useState(false);
+  // Animate only after the cast has painted — poster crossfades off at the same beat.
+  const animate = castReady && !freeze && !reduceMotion;
+
+  const markReady = () => {
+    setCastReady(true);
+    onReady?.();
+  };
 
   return (
-    <RenderBoundary fallback={null}>
-      <Canvas
-        dpr={dpr}
-        shadows={false}
-        frameloop="always"
-        gl={{ antialias: variant === "desktop", powerPreference: variant === "mobile" ? "default" : "high-performance" }}
-        // Front camera looking at the pair (they face +Z toward the lens).
-        camera={{ position: [0.12, 4.55, 8.1], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
-        style={{ pointerEvents: "none", width: "100%", height: "100%" }}
-        onCreated={({ camera }) => {
-          camera.lookAt(0, CRUISE_Y - 0.15, 0.25);
-        }}
-      >
-        <FlightWorld variant={variant} reduceMotion={reduceMotion} />
-      </Canvas>
-    </RenderBoundary>
+    <div style={{ position: "absolute", inset: 0 }} data-flight-hero-ready={castReady ? "1" : "0"}>
+      {showPoster && <FlightHeroPoster visible={!castReady} priority />}
+      <RenderBoundary fallback={null}>
+        <Canvas
+          dpr={dpr}
+          shadows={false}
+          frameloop="always"
+          gl={{
+            antialias: variant === "desktop",
+            powerPreference: variant === "mobile" ? "default" : "high-performance",
+            // Needed so still capture can read the real first frame off the canvas.
+            preserveDrawingBuffer: true,
+          }}
+          // Front camera looking at the pair (they face +Z toward the lens).
+          camera={{ position: [0.12, 4.55, 8.1], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
+          style={{
+            pointerEvents: "none",
+            width: "100%",
+            height: "100%",
+            opacity: castReady || !showPoster ? 1 : 0,
+            transition: "opacity 0.55s ease",
+          }}
+          onCreated={({ camera }) => {
+            camera.lookAt(0, CRUISE_Y - 0.15, 0.25);
+          }}
+        >
+          <FlightWorld
+            variant={variant}
+            reduceMotion={reduceMotion || freeze}
+            animate={animate}
+            onCastReady={markReady}
+          />
+        </Canvas>
+      </RenderBoundary>
+    </div>
   );
 }

@@ -9,6 +9,7 @@ import { ONBOARDING_BG } from "@/lib/iconography";
 import { LowerThird } from "@/components/intro/lower-third";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { RenderBoundary } from "@/components/grounds/render-guard";
+import { FlightHeroPoster } from "@/components/home/flight-hero-poster";
 import { FORCES, wheelNeighbors } from "@/lib/lore/canon";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -23,7 +24,7 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
 
 const InfiniteFlightHero = dynamic(() => import("@/components/home/infinite-flight-hero"), {
   ssr: false,
-  loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning the sky…</div>,
+  loading: () => <FlightHeroPoster />,
 });
 
 // Standalone world vista for beats with no 3D figure (the Forces wheel).
@@ -322,11 +323,18 @@ function Stage({ children }: { children: React.ReactNode }) {
 // Infinite flight: Trainer + champion over a looping belt of real Grounds
 // islands (Void Garden daylight + nature kit). Same hero as the mobile door.
 function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
+  const [live, setLive] = useState(false);
   return (
     <div style={{ ...FULL, background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)" }}>
+      {/* Sync poster for LCP / SEO — real captured first frame; WebGL crossfades over it. */}
+      <FlightHeroPoster visible={!live} />
       <Stage>
-        <div style={{ position: "absolute", inset: 0, pointerEvents: embedded ? "none" : undefined }}>
-          <InfiniteFlightHero variant={mobile ? "mobile" : "desktop"} />
+        <div style={{ position: "absolute", inset: 0, pointerEvents: embedded ? "none" : undefined, zIndex: 0 }}>
+          <InfiniteFlightHero
+            variant={mobile ? "mobile" : "desktop"}
+            showPoster={false}
+            onReady={() => setLive(true)}
+          />
         </div>
       </Stage>
       <LowerThird

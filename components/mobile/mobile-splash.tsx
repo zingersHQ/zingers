@@ -10,17 +10,20 @@
 // world and the joy of flight. The WebGL hero is shared with the desktop `/`
 // Awaken beat (`components/home/infinite-flight-hero.tsx`).
 // ─────────────────────────────────────────────────────────────────────────────
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Rocket, ChevronRight } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { track as pingEvent } from "@/lib/track";
+import { FlightHeroPoster } from "@/components/home/flight-hero-poster";
 
-// Infinite-flight hero loads after first paint so the poster copy/CTA are
+// Infinite-flight hero loads after first paint so the captured still + CTA are
 // usable instantly on a cold phone.
 const SplashScene = dynamic(() => import("./mobile-splash-scene"), { ssr: false, loading: () => null });
 
 export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: () => void }) {
+  const [live, setLive] = useState(false);
+
   useEffect(() => {
     pingEvent("m_splash");
   }, []);
@@ -46,11 +49,10 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {/* live infinite-flight hero — Trainer + champion over looping Grounds islands.
-          Sits behind the copy; falls back to the warm sky if a phone can't spin
-          up WebGL, so the poster + CTA always work. */}
+      {/* Captured first frame (our models) for instant paint / SEO; live WebGL fades over it. */}
       <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <SplashScene />
+        <FlightHeroPoster visible={!live} />
+        <SplashScene onReady={() => setLive(true)} />
       </div>
 
       {/* soft sun shafts — golden-hour read over the live sky */}
