@@ -15,6 +15,8 @@ export interface ReachTheme {
   tagline: string; // one-line fantasy beat (shown on the entry title card)
   biome: BiomeConfig; // the world skin this Reach wears
   accent: string; // the ring / mote / HUD accent for this Reach
+  /** nature-kit biome id for ClimbDressing props (same as biome.id base skin) */
+  propBiomeId: string;
 }
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
@@ -38,7 +40,15 @@ const RECIPE: Array<[string, boolean, string, string]> = [
 const THEMES: ReachTheme[] = RECIPE.map(([id, day, name, tagline], i) => {
   const base = biomeById(id);
   const biome = day ? daylightBiome(base) : base;
-  return { index: i, roman: ROMAN[i]!, name, tagline, biome, accent: biome.lights.arenaPoint };
+  return {
+    index: i,
+    roman: ROMAN[i]!,
+    name,
+    tagline,
+    biome,
+    accent: biome.lights.arenaPoint,
+    propBiomeId: id,
+  };
 });
 
 export function reachTheme(sector: number): ReachTheme {

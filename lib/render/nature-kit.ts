@@ -130,6 +130,18 @@ export function natureModelsForBiome(biomeId: string): string[] {
   return Array.from(new Set([...p.rocks, ...p.pebbles, ...p.trees, ...p.plants, ...p.paths, ...p.accents, ...p.grass]));
 }
 
+/** Lean subset for mobile Climb dressing — silhouette landmarks + sparse turf.
+ *  Keeps preload/draw budget tiny vs. the full Grounds kit. */
+export function climbNatureModels(biomeId: string): string[] {
+  const p = naturePreset(biomeId);
+  const trees = p.trees.slice(0, 2);
+  const rocks = p.rocks.slice(0, 2);
+  const plants = p.plants.slice(0, 1);
+  const grass = p.grass.slice(0, 2);
+  const accents = p.accents.slice(0, 1);
+  return Array.from(new Set([...trees, ...rocks, ...plants, ...grass, ...accents]));
+}
+
 /** Every glTF the nature layer may load — union of all biome kits. */
 export const ALL_NATURE_MODELS: string[] = Array.from(
   new Set(Object.values(NATURE_BY_BIOME).flatMap((p) => natureModelsForBiomeFromPreset(p))),

@@ -178,9 +178,22 @@ function ArrivalDeck({
   );
 }
 
-/** Void safety net — catches a fall (triggers run failure in the Handler). */
-function SafetyFloor({ color, track, staticMode }: { color: string; track: CircuitTrackDef; staticMode: boolean }) {
+/** Void safety net — catches a fall (triggers run failure in the Handler).
+ *  When Climb dressing paints a terrain band, skip the visible slab so the
+ *  nature ground reads cleanly (fail plane stays kinematic via FLOOR_Y). */
+function SafetyFloor({
+  color,
+  track,
+  staticMode,
+  visible = true,
+}: {
+  color: string;
+  track: CircuitTrackDef;
+  staticMode: boolean;
+  visible?: boolean;
+}) {
   const { maxZ } = sectorBounds(track);
+  if (!visible) return null;
   return (
     <PhysBody staticMode={staticMode} position={[0, -12, maxZ * 0.45]}>
       <mesh receiveShadow>
@@ -198,6 +211,7 @@ export const CircuitScene = memo(function CircuitScene({
   goldIndex,
   staticMode = false,
   cpNextRef,
+  showFloor = true,
 }: {
   track: CircuitTrackDef;
   biome: BiomeConfig;
@@ -210,6 +224,8 @@ export const CircuitScene = memo(function CircuitScene({
   staticMode?: boolean;
   /** live next-checkpoint index (desktop) — rings flip green as you pass them */
   cpNextRef?: React.MutableRefObject<number>;
+  /** false when ClimbDressing supplies the under-corridor ground */
+  showFloor?: boolean;
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
@@ -217,7 +233,7 @@ export const CircuitScene = memo(function CircuitScene({
   // only walkable surface (spawn ↔ return portal); no stepping-stones along the run.
   return (
     <>
-      <SafetyFloor color={floor} track={track} staticMode={staticMode} />
+      <SafetyFloor color={floor} track={track} staticMode={staticMode} visible={showFloor} />
       <ArrivalDeck spawn={track.spawn} staticMode={staticMode} accent={accent} />
       {track.checkpoints.map((cp) => {
         const gold = cp.index === goldIndex;

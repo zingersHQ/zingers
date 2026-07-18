@@ -30,7 +30,7 @@ import {
   NatureGround,
 } from "./nature";
 import { PlazaSurround, PitArena } from "./structures";
-import type { BiomeConfig } from "./biomes";
+import { daylightBiome, type BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
 import { type GalleryFocus } from "./gallery";
 import { Amphitheatre, AmphitheatreColliders, DAILY_HERALD_POS, AMPHI_SPAWN, AMPHI_SPAWN_HEADING } from "./amphitheatre";
@@ -45,7 +45,10 @@ import { RenderBoundary } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
 import { useSettings } from "@/store/settings";
+import { useTheme } from "@/lib/theme";
+import { useGraphicsTier } from "@/lib/graphics-tier";
 import { CircuitScene } from "./circuit-scene";
+import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
@@ -283,6 +286,7 @@ export default function World({
   activeVenue = null,
   venueHostWorldId = "grounds",
   circuitTrack = circuitSector(0, "void"),
+  circuitSectorIdx = 0,
   circuitPhase = null,
   onCircuitPass,
   onCircuitFail,
@@ -335,6 +339,8 @@ export default function World({
   /** Which world you entered the venue from — selects the circuit variant. */
   venueHostWorldId?: string;
   circuitTrack?: CircuitTrackDef;
+  /** 0..99 sector index — drives ClimbDressing role beats + Reach seed. */
+  circuitSectorIdx?: number;
   circuitPhase?: CircuitPhase | null;
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason) => void;
@@ -353,6 +359,16 @@ export default function World({
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
   const inAmphitheatre = activeVenue === "amphitheatre";
+  const theme = useTheme();
+  const gfxTier = useGraphicsTier();
+  // Desktop Circuit land = the HOST world you portal'd from (Ember chute → ember
+  // hills; Void sleeve → garden). Reach biome still skins sky/rings via `biome`.
+  const circuitGroundBiome = useMemo(() => {
+    if (!inCircuit) return biome;
+    const skin = worldById(venueHostWorldId).biome;
+    return theme === "light" ? daylightBiome(skin) : skin;
+  }, [inCircuit, venueHostWorldId, theme, biome]);
+  const circuitDressTier = gpuLite ? "low" : gfxTier === "low" ? "mid" : gfxTier;
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
@@ -384,6 +400,10 @@ export default function World({
   useEffect(() => {
     preloadNatureBiome(biome.id);
   }, [biome.id]);
+  useEffect(() => {
+    if (!inCircuit) return;
+    preloadNatureBiome(circuitGroundBiome.id);
+  }, [inCircuit, circuitGroundBiome.id]);
   // Venue / resume spawns must be the RigidBody's INITIAL position — a delayed
   // travelRef teleport leaves the capsule at the host knoll for the first frames.
   const venueSpawn = inCircuit ? circuitTrack.spawn : inAmphitheatre ? AMPHI_SPAWN : null;
@@ -686,7 +706,27 @@ export default function World({
 
           {inCircuit && !showcase && (
             <>
-              <CircuitScene track={circuitTrack} biome={biome} cpNextRef={circuitCpNextRef} />
+              <ClimbDressing
+                key={`dress-${circuitSectorIdx}-${circuitGroundBiome.id}-${biome.id}`}
+                biome={biome}
+                groundBiome={circuitGroundBiome}
+                track={circuitTrack}
+                sector={circuitSectorIdx}
+                tier={circuitDressTier}
+                showSky={false}
+                densityScale={1.4}
+              />
+              <ClimbDriftMotes
+                track={circuitTrack}
+                accent={biome.lights.arenaPoint}
+                countScale={climbMoteScale(circuitSectorIdx)}
+              />
+              <CircuitScene
+                track={circuitTrack}
+                biome={biome}
+                cpNextRef={circuitCpNextRef}
+                showFloor={false}
+              />
               {circuitPhase === "running" && circuitHazards.length > 0 && <HazardField hazards={circuitHazards} />}
               {ownedKey && (
                 <CircuitSpectator

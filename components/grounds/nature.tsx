@@ -162,11 +162,15 @@ function InstancedPlacements({
   placements,
   emissive,
   emissiveIntensity,
+  castShadow = true,
+  receiveShadow = true,
 }: {
   modelId: string;
   placements: PropPlacement[];
   emissive?: string;
   emissiveIntensity?: number;
+  castShadow?: boolean;
+  receiveShadow?: boolean;
 }) {
   const { scene } = useGLTF(natureUrl(modelId));
   const { lift, parts } = useMemo(() => modelInfo(scene), [scene]);
@@ -213,7 +217,12 @@ function InstancedPlacements({
   return (
     <group ref={group}>
       {parts.map((p, i) => (
-        <instancedMesh key={i} args={[p.geo, mats[i], placements.length]} castShadow receiveShadow />
+        <instancedMesh
+          key={i}
+          args={[p.geo, mats[i], placements.length]}
+          castShadow={castShadow}
+          receiveShadow={receiveShadow}
+        />
       ))}
     </group>
   );
@@ -283,8 +292,17 @@ function PropColliders({ items }: { items: PropColliderSpec[] }) {
 }
 
 // Group arbitrary placements by model (and emissive tint) so a whole prop list
-// renders as a handful of instanced draws.
-function NaturePlacements({ placements }: { placements: PropPlacement[] }) {
+// renders as a handful of instanced draws. Exported for Climb dressing (and any
+// other scene that builds its own PropPlacement list off the nature kit).
+export function NaturePlacements({
+  placements,
+  castShadow = true,
+  receiveShadow = true,
+}: {
+  placements: PropPlacement[];
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+}) {
   const groups = useMemo(() => {
     const by = new Map<string, { p: PropPlacement; list: PropPlacement[] }>();
     for (const p of placements) {
@@ -304,6 +322,8 @@ function NaturePlacements({ placements }: { placements: PropPlacement[] }) {
           placements={g.list}
           emissive={g.p.emissive}
           emissiveIntensity={g.p.emissiveIntensity}
+          castShadow={castShadow}
+          receiveShadow={receiveShadow}
         />
       ))}
     </>

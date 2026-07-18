@@ -24,7 +24,7 @@ import { ChampionMesh, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
-import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter, sectorBounds } from "./circuit-tracks";
+import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { sectorDifficulty } from "./climb/difficulty";
@@ -32,6 +32,7 @@ import { reachTheme, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
+import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import type { BiomeConfig } from "./biomes";
 import { circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
@@ -130,33 +131,6 @@ function MechBody({ accent }: { accent: string }) {
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
     </>
-  );
-}
-
-// Drift motes: a static field of glowing specks filling the sector's volume, so
-// forward motion reads against an otherwise featureless sky (world-static — safe
-// under reduced motion, zero per-frame cost).
-function DriftMotes({ track, accent }: { track: CircuitTrackDef; accent: string }) {
-  const geom = useMemo(() => {
-    const { maxY, maxZ } = sectorBounds(track);
-    const n = 260;
-    const arr = new Float32Array(n * 3);
-    let s = 48271; // tiny deterministic LCG — stable layout per sector
-    const rnd = () => ((s = (s * 16807) % 2147483647), s / 2147483647);
-    for (let i = 0; i < n; i++) {
-      arr[i * 3] = (rnd() - 0.5) * 40;
-      arr[i * 3 + 1] = -7 + rnd() * (maxY + 16);
-      arr[i * 3 + 2] = -8 + rnd() * (maxZ + 20);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
-    return g;
-  }, [track]);
-  useEffect(() => () => geom.dispose(), [geom]);
-  return (
-    <points geometry={geom}>
-      <pointsMaterial color={accent} size={0.13} sizeAttenuation transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
-    </points>
   );
 }
 
@@ -906,6 +880,7 @@ export default function CircuitLite({
         >
           <SkyShift bg={biome.bg} fogColor={biome.fog.color} fogNear={fogNear} fogFar={190} exposure={exposure} />
           <Lights biome={biome} lite={gfx.liteLights} shadowMapSize={gfx.shadowMapSize} />
+          <ClimbDressing key={`dress-${theme.index}-${biome.id}`} biome={biome} track={track} sector={sector} tier={gfxTier} />
           <CircuitScene
             track={track}
             biome={biome}
@@ -913,8 +888,9 @@ export default function CircuitLite({
             goldIndex={goldGate >= 0 ? goldGate : undefined}
             cpNextRef={running ? cpNextRef : undefined}
             staticMode
+            showFloor={false}
           />
-          <DriftMotes track={track} accent={moteColor} />
+          <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector)} />
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {phase === "ready" && (
             <ReadyPose track={track} champType={champType} champion={champion} ascentReaches={ascentReaches} accent={accent} />

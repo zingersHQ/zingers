@@ -1993,6 +1993,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               activeVenue={activeVenue}
               venueHostWorldId={venueHostWorldId}
               circuitTrack={circuitTrack}
+              circuitSectorIdx={circuitSectorIdx}
               circuitPhase={activeVenue === "circuit" ? circuitPhase : null}
               onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
               onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
