@@ -179,8 +179,8 @@ function ArrivalDeck({
 }
 
 /** Void safety net — catches a fall (triggers run failure in the Handler).
- *  When Climb dressing paints a terrain band, skip the visible slab so the
- *  nature ground reads cleanly (fail plane stays kinematic via FLOOR_Y). */
+ *  When Climb dressing paints the visible ground, hide the slab mesh but keep
+ *  the desktop Rapier collider so a fall still has a physical catch plane. */
 function SafetyFloor({
   color,
   track,
@@ -193,12 +193,20 @@ function SafetyFloor({
   visible?: boolean;
 }) {
   const { maxZ } = sectorBounds(track);
-  if (!visible) return null;
   return (
     <PhysBody staticMode={staticMode} position={[0, -12, maxZ * 0.45]}>
-      <mesh receiveShadow>
+      <mesh receiveShadow visible={visible}>
         <boxGeometry args={[48, 1, maxZ + 24]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.08} metalness={0.2} roughness={0.9} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.08}
+          metalness={0.2}
+          roughness={0.9}
+          transparent={!visible}
+          opacity={visible ? 1 : 0}
+          depthWrite={visible}
+        />
       </mesh>
     </PhysBody>
   );

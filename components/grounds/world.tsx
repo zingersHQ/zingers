@@ -677,6 +677,28 @@ export default function World({
           </Html>
         }
       >
+        {/* Circuit dressing is visual-only — outside Physics, own Suspense so a
+            nature-kit suspend can never tear down the Handler / Rapier world. */}
+        {inCircuit && !showcase && (
+          <Suspense fallback={null}>
+            <ClimbDressing
+              key={`dress-${circuitSectorIdx}-${circuitGroundBiome.id}-${biome.id}`}
+              biome={biome}
+              groundBiome={circuitGroundBiome}
+              track={circuitTrack}
+              sector={circuitSectorIdx}
+              tier={circuitDressTier}
+              showSky={false}
+              densityScale={1.4}
+            />
+            <ClimbDriftMotes
+              track={circuitTrack}
+              accent={biome.lights.arenaPoint}
+              countScale={climbMoteScale(circuitSectorIdx)}
+            />
+          </Suspense>
+        )}
+
         <Physics gravity={[0, -22, 0]}>
           {!inVenue && <Terrain biome={biome} nature />}
           {!inVenue && <PlazaFloor biome={biome} />}
@@ -706,21 +728,6 @@ export default function World({
 
           {inCircuit && !showcase && (
             <>
-              <ClimbDressing
-                key={`dress-${circuitSectorIdx}-${circuitGroundBiome.id}-${biome.id}`}
-                biome={biome}
-                groundBiome={circuitGroundBiome}
-                track={circuitTrack}
-                sector={circuitSectorIdx}
-                tier={circuitDressTier}
-                showSky={false}
-                densityScale={1.4}
-              />
-              <ClimbDriftMotes
-                track={circuitTrack}
-                accent={biome.lights.arenaPoint}
-                countScale={climbMoteScale(circuitSectorIdx)}
-              />
               <CircuitScene
                 track={circuitTrack}
                 biome={biome}
@@ -3021,10 +3028,11 @@ function Handler({
     let ax = 0, az = 0;
     let touchSprint = false;
     let padSprint = false;
-    // Circuit camera settle: ignore sticks until the chase cam finishes rotating
-    // so "forward" isn't camera-relative mid-swing (W → sideways).
-    const inputLocked = !!camCue.current?.inputLock;
-    if (controlsEnabled && !inputLocked) {
+    // Camera settle freezes WASD so "forward" isn't mid-swing relative. On Circuit,
+    // jump/thrust stays live — locking Space during arrive/intro made flight dead.
+    const moveLocked = !!camCue.current?.inputLock;
+    const inputLocked = moveLocked && !circuitMode;
+    if (controlsEnabled && !moveLocked) {
       if (keys["KeyW"] || keys["ArrowUp"]) az += 1;
       if (keys["KeyS"] || keys["ArrowDown"]) az -= 1;
       if (keys["KeyD"] || keys["ArrowRight"]) ax += 1;
