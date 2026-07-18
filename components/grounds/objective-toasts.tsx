@@ -29,9 +29,10 @@ export function ObjectiveToasts({
   }, [onDone, total]);
 
   // Fly toward the hub at top:14 right:16. Distances are relative to the
-  // centered stack so the exit lands under/into the hub trigger.
-  const flyX = isMobile ? "min(38vw, 160px)" : "min(42vw, 280px)";
-  const flyY = isMobile ? "calc(-42vh + 28px)" : "calc(-44vh + 20px)";
+  // centered stack so the exit lands under/into the hub trigger — nearly a
+  // full half-viewport so they read as vanishing into the corner, not mid-right.
+  const flyX = isMobile ? "calc(50vw - 40px)" : "calc(50vw - 56px)";
+  const flyY = isMobile ? "calc(-50vh + 28px)" : "calc(-50vh + 32px)";
 
   return (
     <div
