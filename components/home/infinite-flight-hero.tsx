@@ -1,8 +1,8 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
 // Infinite flight hero — shared homepage face for desktop `/` and mobile `/m`.
-// Front camera on the Trainer + champion as they pulse-fly (thrust → coast →
-// thrust) over a scrolling belt of Grounds-style rolling terrain + nature kit.
+// Front camera on the Trainer + champion in a continuous glide (layered soft
+// lift, no hard thrust beats) over scrolling Grounds-style rolling terrain.
 // No floating islands — hills and montículos they actually fly over.
 // ─────────────────────────────────────────────────────────────────────────────
 import { Suspense, useEffect, useMemo, useRef } from "react";
@@ -31,8 +31,8 @@ const GROUND_SPEED = 6.4;
 const CLOUD_SPEED = 1.1;
 const MOTE_SPEED = 5.5;
 
-// Flight pulse: thrust climb → release (small sink) → thrust again.
-const FLIGHT_CYCLE = 2.85;
+/** Cruise height above world origin — clears tree canopy on the terrain belt. */
+const CRUISE_Y = 4.15;
 
 type Variant = "desktop" | "mobile";
 
@@ -58,12 +58,22 @@ function SkyDome({ top, bottom }: { top: string; bottom: string }) {
   );
 }
 
-function JetPuff({ burstRef, activeRef }: { burstRef: React.RefObject<number>; activeRef: React.RefObject<boolean> }) {
+/** Soft jet cadence — denser on lift, never a hard metronome. */
+function JetPuff({
+  burstRef,
+  intensityRef,
+}: {
+  burstRef: React.RefObject<number>;
+  intensityRef: React.RefObject<number>;
+}) {
   const acc = useRef(0);
   useFrame((_, dtRaw) => {
-    if (!activeRef.current) return;
-    acc.current += Math.min(0.05, dtRaw);
-    if (acc.current > 0.07) {
+    const dt = Math.min(0.05, dtRaw);
+    const inten = Math.max(0.15, intensityRef.current);
+    // Interval wanders ~55–110ms so puffs don't lock to a beat.
+    const interval = 0.11 - inten * 0.055;
+    acc.current += dt;
+    if (acc.current > interval) {
       acc.current = 0;
       burstRef.current += 1;
     }
@@ -110,14 +120,18 @@ function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
   const grp = useRef<THREE.Group>(null);
   const flyingRef = useRef(true);
   const burstRef = useRef(0);
-  const alt = useRef(1.35);
-  const pitch = useRef(0.12);
+  const intensityRef = useRef(0.55);
+  const alt = useRef(CRUISE_Y);
+  const pitch = useRef(0.1);
+  const bank = useRef(0);
+  const sway = useRef(0);
+  const zOff = useRef(0.35);
 
   const cFly = useRef(true);
   const cMove = useRef(true);
   const cSpd = useRef(2.8);
   const cRun = useRef(false);
-  const cVel = useRef(new THREE.Vector3(0, 0.4, 2.8));
+  const cVel = useRef(new THREE.Vector3(0, 0.25, 2.8));
   const cHead = useRef(0);
   const drive = useMemo(
     () => ({ flyingRef: cFly, movingRef: cMove, speedRef: cSpd, runRef: cRun, velRef: cVel, headingRef: cHead }),
@@ -129,43 +143,59 @@ function FlightPair({ reduceMotion }: { reduceMotion: boolean }) {
     if (!g) return;
     const dt = Math.min(0.05, dtRaw);
 
+    // Continuous flight pose — never hard on/off (that read as jump beats).
+    flyingRef.current = true;
+    cFly.current = true;
+
     if (reduceMotion) {
-      flyingRef.current = true;
-      cFly.current = true;
-      g.position.set(0, 1.4, 0.4);
+      intensityRef.current = 0.4;
+      g.position.set(0, CRUISE_Y, 0.35);
       g.rotation.set(0.1, 0, 0);
       return;
     }
 
     const t = s.clock.elapsedTime;
-    const u = (t % FLIGHT_CYCLE) / FLIGHT_CYCLE;
-    // Two thrust beats per cycle with a soft release (small sink) between.
-    const thrustA = u < 0.34;
-    const thrustB = u > 0.52 && u < 0.82;
-    const thrusting = thrustA || thrustB;
-    flyingRef.current = thrusting;
-    cFly.current = thrusting;
-    cVel.current.set(0, thrusting ? 1.1 : -0.55, 2.8);
 
-    const wantAlt = thrusting ? 1.85 : 1.05;
-    const wantPitch = thrusting ? 0.22 : -0.08;
-    const k = 1 - Math.exp(-(thrusting ? 3.2 : 2.4) * dt);
-    alt.current += (wantAlt - alt.current) * k;
-    pitch.current += (wantPitch - pitch.current) * k;
+    // Layered, incommensurate periods so the path never loops as a metronome.
+    // Soft lift lobes (not binary thrust) + slow wander + micro bob.
+    const liftA = 0.5 + 0.5 * Math.sin(t * 0.48 + Math.sin(t * 0.11) * 0.7);
+    const liftB = 0.5 + 0.5 * Math.sin(t * 0.31 + 1.7 + Math.sin(t * 0.07) * 0.9);
+    const lift = Math.pow(liftA, 1.65) * 0.55 + Math.pow(liftB, 2.1) * 0.35;
+    const wander = Math.sin(t * 0.19 + 0.4) * 0.28 + Math.sin(t * 0.09) * 0.18;
+    const micro = Math.sin(t * 1.7 + Math.sin(t * 0.37) * 1.2) * 0.06;
+    const wantAlt = CRUISE_Y + wander + lift * 0.62 + micro;
 
-    // Gentle bank / sway — organic, not a turntable spin.
-    const swayX = Math.sin(t * 0.55) * 0.12;
-    const bank = Math.sin(t * 0.4) * 0.04;
-    g.position.set(swayX, alt.current, 0.35 + Math.sin(t * 0.9) * 0.08);
-    g.rotation.set(pitch.current, 0, bank);
+    // Pitch follows vertical intent softly — slight nose-up on lift, never a snap.
+    const vertIntent = (wantAlt - alt.current) * 1.8 + Math.sin(t * 0.55) * 0.02;
+    const wantPitch = THREE.MathUtils.clamp(0.08 + vertIntent * 0.12 + lift * 0.06, -0.06, 0.2);
+    const wantBank =
+      Math.sin(t * 0.33 + 0.6) * 0.05 + Math.sin(t * 0.17) * 0.03 + Math.sin(t * 0.71) * 0.015;
+    const wantSway = Math.sin(t * 0.27) * 0.16 + Math.sin(t * 0.43 + 1.1) * 0.07;
+    const wantZ = 0.3 + Math.sin(t * 0.38 + 0.2) * 0.1 + Math.sin(t * 0.14) * 0.05;
+
+    // Heavy damping — glide, not chase.
+    const kPos = 1 - Math.exp(-1.55 * dt);
+    const kRot = 1 - Math.exp(-1.9 * dt);
+    alt.current += (wantAlt - alt.current) * kPos;
+    sway.current += (wantSway - sway.current) * kPos;
+    zOff.current += (wantZ - zOff.current) * kPos;
+    pitch.current += (wantPitch - pitch.current) * kRot;
+    bank.current += (wantBank - bank.current) * kRot;
+
+    intensityRef.current = 0.35 + lift * 0.55;
+    cVel.current.set(sway.current * 0.4, vertIntent * 0.35, 2.6 + lift * 0.35);
+    cSpd.current = 2.5 + lift * 0.4;
+
+    g.position.set(sway.current, alt.current, zOff.current);
+    g.rotation.set(pitch.current, 0, bank.current);
   });
 
   return (
     <group ref={grp} scale={PAIR_SCALE}>
-      <JetPuff burstRef={burstRef} activeRef={flyingRef} />
+      <JetPuff burstRef={burstRef} intensityRef={intensityRef} />
       {/* Face the camera (+Z): front-on flight over the world. */}
       <group position={[-0.55, 0, 0]}>
-        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.22} />
+        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.14} />
       </group>
       <group position={[0.95, -0.18, -0.35]} scale={CHAR_SCALE * CHAMPION_REL_TO_TRAINER}>
         <ChampionMesh
@@ -287,7 +317,7 @@ function TerrainBelt({
   });
 
   return (
-    <group ref={root} position={[0, -2.15, 0]}>
+    <group ref={root} position={[0, -2.85, 0]}>
       <TerrainSegment biome={biome} earth={earth} seed={biome.terrain.seed + 404} width={width} length={LOOP} segs={segs} density={density} />
       <group position={[0, 0, LOOP]}>
         <TerrainSegment biome={biome} earth={earth} seed={biome.terrain.seed + 404} width={width} length={LOOP} segs={segs} density={density} />
@@ -444,10 +474,10 @@ export default function InfiniteFlightHero({
         frameloop="always"
         gl={{ antialias: variant === "desktop", powerPreference: variant === "mobile" ? "default" : "high-performance" }}
         // Front camera looking at the pair (they face +Z toward the lens).
-        camera={{ position: [0.15, 2.05, 7.4], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
+        camera={{ position: [0.12, 4.55, 8.1], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
         style={{ pointerEvents: "none", width: "100%", height: "100%" }}
         onCreated={({ camera }) => {
-          camera.lookAt(0, 1.35, 0.2);
+          camera.lookAt(0, CRUISE_Y - 0.15, 0.25);
         }}
       >
         <FlightWorld variant={variant} reduceMotion={reduceMotion} />
