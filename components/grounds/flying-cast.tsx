@@ -22,11 +22,14 @@ import { Jetpack } from "./jetpack";
 import { blank } from "@/lib/evolve/progression";
 import { readerPalette } from "@/lib/render/palette";
 import type { Champion, CreatureType } from "@/lib/types";
-import { COMPANION_FOLLOW, companionPathSlot } from "./companion-follow";
+import { COMPANION_FOLLOW, companionDockSlot, companionPathSlot } from "./companion-follow";
 
-// Flight leash uses the same COMPANION_FOLLOW numbers as Grounds OwnedCompanion
-// (path trail + wingDrop + catch). Sink a touch faster than rise for weight.
+// Flight leash mirrors Grounds OwnedCompanion's *moving* branch: inherit the
+// pilot's path velocity, then close the wing-slot gap (catchK). Without the
+// inherited velocity, Climb's ~8–12 u/s cruise leaves the champion lagging
+// many units behind the authored pathBack.
 const EXTRA_GRAV = 1.35;
+const VERT_SPRING = 8; // same Y spring OwnedCompanion uses while flying
 
 // ── the Trainer's robot, flying with a jetpack (the pilot) ────────────────────
 // Builds the RobotExpressive rig with the Reader palette, plays the idle clip as a
@@ -119,6 +122,9 @@ export function FlyingFollower({
   const vel = useRef(new THREE.Vector3());
   const booted = useRef(false);
   const rigHeading = useRef(0);
+  const prevPilot = useRef(new THREE.Vector3());
+  const smoothPilotVel = useRef(new THREE.Vector3());
+  const followTarget = useRef(new THREE.Vector3());
 
   // companionDrive: pose flags read by ChampionMesh (flight pose + jetpack)
   const flyingRef = useRef(true);
@@ -138,27 +144,51 @@ export function FlyingFollower({
     if (!rg || !tp) return;
     const dt = Math.min(0.05, dtRaw);
     const th = headingRef?.current ?? 0;
-    const { wingDrop, catchK, catchMax, accel, rigHeadingSmooth } = COMPANION_FOLLOW;
+    const { wingDrop, catchK, catchMax, accel, velSmooth, slotSmooth, rigHeadingSmooth, minPathSpeed } =
+      COMPANION_FOLLOW;
 
-    // Same path-trail slot the Grounds companion uses while the Trainer is moving.
-    const slot = companionPathSlot(tp.x, tp.z, th);
-    const sx = slot.tx;
-    const sy = tp.y - wingDrop;
-    const sz = slot.tz;
-
+    // Measure / smooth pilot path velocity (OwnedCompanion's smv).
     if (!booted.current) {
+      prevPilot.current.copy(tp);
+      smoothPilotVel.current.set(0, 0, 0);
+    }
+    const rawVx = dt > 0 ? (tp.x - prevPilot.current.x) / dt : 0;
+    const rawVy = dt > 0 ? (tp.y - prevPilot.current.y) / dt : 0;
+    const rawVz = dt > 0 ? (tp.z - prevPilot.current.z) / dt : 0;
+    prevPilot.current.copy(tp);
+    const vK = 1 - Math.exp(-velSmooth * dt);
+    const smv = smoothPilotVel.current;
+    smv.x += (rawVx - smv.x) * vK;
+    smv.y += (rawVy - smv.y) * vK;
+    smv.z += (rawVz - smv.z) * vK;
+    const smSpeed = Math.hypot(smv.x, smv.z);
+
+    // Path trail while moving; idle wing dock when nearly still (Grounds parity).
+    const raw =
+      smSpeed > minPathSpeed ? companionPathSlot(tp.x, tp.z, th) : companionDockSlot(tp.x, tp.z, th);
+    const rawSy = tp.y - wingDrop;
+    const ft = followTarget.current;
+    if (!booted.current) {
+      ft.set(raw.tx, rawSy, raw.tz);
+      pos.current.copy(ft);
+      vel.current.set(smv.x, smv.y, smv.z);
+      rigHeading.current = th;
       booted.current = true;
-      pos.current.set(sx, sy, sz);
-      vel.current.set(0, 0, 0);
+    } else {
+      const tK = 1 - Math.exp(-slotSmooth * dt);
+      ft.x += (raw.tx - ft.x) * tK;
+      ft.y += (rawSy - ft.y) * tK;
+      ft.z += (raw.tz - ft.z) * tK;
     }
 
-    const ex = sx - pos.current.x;
-    const ey = sy - pos.current.y;
-    const ez = sz - pos.current.z;
+    const ex = ft.x - pos.current.x;
+    const ey = ft.y - pos.current.y;
+    const ez = ft.z - pos.current.z;
 
-    // catch-up planar velocity (target vel is implicit in the moving slot); clamp
-    let wantVx = ex * catchK;
-    let wantVz = ez * catchK;
+    // Match pilot velocity, then close the slot gap — without smv the champion
+    // trails lag = cruiseSpeed / catchK (~7u at Climb pace) behind the wing.
+    let wantVx = smv.x + ex * catchK;
+    let wantVz = smv.z + ez * catchK;
     const wantPlanar = Math.hypot(wantVx, wantVz);
     if (wantPlanar > catchMax && wantPlanar > 0) {
       const k = catchMax / wantPlanar;
@@ -168,8 +198,8 @@ export function FlyingFollower({
     const kv = 1 - Math.exp(-accel * dt);
     vel.current.x += (wantVx - vel.current.x) * kv;
     vel.current.z += (wantVz - vel.current.z) * kv;
-    // vertical: fall a touch faster than it rises (weighty, world-like)
-    const wantVy = ey * catchK * (ey < 0 ? EXTRA_GRAV : 1);
+    // Vertical: ride the pilot's climb/sink, spring to the wing-drop slot.
+    const wantVy = smv.y + ey * VERT_SPRING * (ey < 0 ? EXTRA_GRAV : 1);
     vel.current.y += (wantVy - vel.current.y) * kv;
 
     pos.current.x += vel.current.x * dt;
@@ -180,10 +210,14 @@ export function FlyingFollower({
     const planar = Math.hypot(vel.current.x, vel.current.z);
     speedRef.current = planar;
     velRef.current.copy(vel.current);
+    movingRef.current = planar > 0.35;
+    flyingRef.current = true;
 
     // face travel direction while chasing, else the pilot's heading
     let wantH = th;
-    if (planar > 0.4) wantH = Math.atan2(vel.current.x, vel.current.z);
+    if (planar > 0.28 || smSpeed > minPathSpeed) {
+      wantH = planar > 0.12 ? Math.atan2(vel.current.x, vel.current.z) : th;
+    }
     let dH = wantH - rigHeading.current;
     dH = Math.atan2(Math.sin(dH), Math.cos(dH));
     rigHeading.current += dH * (1 - Math.exp(-rigHeadingSmooth * dt));

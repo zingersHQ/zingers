@@ -292,8 +292,9 @@ function Flyer({
     // was the "weird correction" players hated).
     pos.current.x = 0;
 
-    // publish the pilot's world pose so the champion follower can trail it
-    flyerPosRef.current.copy(pos.current);
+    // Publish the *visual* Trainer pose (mesh sits at CHAMP_Y). Follower wingDrop
+    // is authored relative to the body, not the gate-thread point above it.
+    flyerPosRef.current.set(pos.current.x, pos.current.y + CHAMP_Y, pos.current.z);
     flyerHeadingRef.current = CHAMP_FACE;
     // puff the pilot's jetpack: a steady cadence while held, sparse while gliding
     jetEmit.current += dt;
@@ -947,7 +948,8 @@ export default function CircuitLite({
               targetRef={flyerPosRef}
               headingRef={flyerHeadingRef}
               scale={FOLLOWER_SCALE}
-              renderPriority={0}
+              // After Flyer (priority 0) so we leash to this frame's pose.
+              renderPriority={1}
             />
           )}
         </Canvas>
