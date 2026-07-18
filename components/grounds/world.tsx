@@ -735,7 +735,10 @@ export default function World({
                 showFloor={false}
               />
               {circuitPhase === "running" && circuitHazards.length > 0 && <HazardField hazards={circuitHazards} />}
-              {ownedKey && (
+              {ownedKey &&
+                circuitPhase !== "sector" &&
+                circuitPhase !== "done" &&
+                circuitPhase !== "failed" && (
                 <CircuitSpectator
                   champions={champions}
                   ownedKey={ownedKey}
@@ -870,6 +873,8 @@ export default function World({
               inAmphitheatre={inAmphitheatre}
               circuitMode={inCircuit}
               circuitRunning={circuitPhase === "running"}
+              circuitPhase={circuitPhase}
+              circuitSectorIdx={circuitSectorIdx}
               circuitCheckpoints={circuitCheckpoints}
               circuitCpNextRef={circuitCpNextRef}
               circuitHazards={circuitPhase === "running" ? circuitHazards : []}
@@ -2695,6 +2700,8 @@ function Handler({
   inAmphitheatre = false,
   circuitMode = false,
   circuitRunning = false,
+  circuitPhase = null,
+  circuitSectorIdx = 0,
   circuitCheckpoints = [],
   circuitCpNextRef,
   circuitHazards = [],
@@ -2745,6 +2752,10 @@ function Handler({
   circuitMode?: boolean;
   /** Ascent runner heartbeat — auto-forward while the sector is live (climb-feel §4). */
   circuitRunning?: boolean;
+  /** Ready / running / sector / failed / done — drives start lock label + vanish. */
+  circuitPhase?: CircuitPhase | null;
+  /** 0-based sector index for the ready-pad sector plaque. */
+  circuitSectorIdx?: number;
   circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
@@ -3018,6 +3029,26 @@ function Handler({
     }
     if (!rb) return;
 
+    // Sector clear / fail / full clear — freeze mid-air and vanish (no gravity drop).
+    const circuitGone =
+      circuitMode &&
+      (circuitPhase === "sector" || circuitPhase === "done" || circuitPhase === "failed");
+    if (circuitGone) {
+      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      rb.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      rb.setGravityScale(0, false);
+      flying.current = false;
+      thrust.current = 0;
+      setJet(0);
+      if (camCue.current) {
+        camCue.current.flying = false;
+        camCue.current.moving = false;
+        camCue.current.speed = 0;
+        camCue.current.climb = 0;
+      }
+      return;
+    }
+
     const t = rb.translation();
     const hp = handlerPos.current;
     const fwd = fwdV.current.set(hp.x - camera.position.x, 0, hp.z - camera.position.z);
@@ -3028,10 +3059,10 @@ function Handler({
     let ax = 0, az = 0;
     let touchSprint = false;
     let padSprint = false;
-    // Camera settle freezes WASD so "forward" isn't mid-swing relative. On Circuit,
-    // jump/thrust stays live — locking Space during arrive/intro made flight dead.
+    // Camera settle freezes WASD so "forward" isn't mid-swing relative. Circuit
+    // ready also freezes jump-to-start until the chase cam sits behind the rings;
+    // once running, thrust stays live (never re-lock Space mid-flight).
     const moveLocked = !!camCue.current?.inputLock;
-    const inputLocked = moveLocked && !circuitMode;
     if (controlsEnabled && !moveLocked) {
       if (keys["KeyW"] || keys["ArrowUp"]) az += 1;
       if (keys["KeyS"] || keys["ArrowDown"]) az -= 1;
@@ -3249,7 +3280,8 @@ function Handler({
     }
 
     // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
-    const canJump = controlsEnabled && !inputLocked;
+    const canJump =
+      controlsEnabled && (circuitMode ? circuitRunning || !moveLocked : !moveLocked);
     const space = canJump && !!keys["Space"];
     const spaceEdge = space && !prevSpace.current;
     prevSpace.current = space;
@@ -3835,27 +3867,80 @@ function Handler({
         />
         {/* interpolated camera anchor — origin-aligned with the body, no offset */}
         <group ref={camAnchor} />
-        <group ref={inner} position={[0, -FOOT_OFF, 0]} scale={READER_SCALE}>
-          <primitive object={built.root} />
-          <ReaderRankEmblem level={readerLv} />
-          {!force && <ReaderBackSigil height={built.h} />}
-          <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
-          <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
-        </group>
-        {/* Reader ground rings — gold by default; pledged adds a Force outer band.
-            They detach + sink toward the floor while flying (see RING_* + the
-            flight ground-rings block above). Bigger outer ring rides higher; the
-            smaller inner ring sinks lowest. */}
-        <mesh ref={ringBig} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04 - FOOT_OFF, 0]}>
-          <ringGeometry args={[0.39, 0.5, 40]} />
-          <meshBasicMaterial color={force ? TYPE_COLOR[force] : GOLD} transparent opacity={0.78} side={THREE.DoubleSide} />
-        </mesh>
-        {force && (
-          <mesh ref={ringSmall} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045 - FOOT_OFF, 0]}>
-            <ringGeometry args={[0.32, 0.38, 40]} />
-            <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
+        <group
+          visible={
+            !(
+              circuitMode &&
+              (circuitPhase === "sector" || circuitPhase === "done" || circuitPhase === "failed")
+            )
+          }
+        >
+          <group ref={inner} position={[0, -FOOT_OFF, 0]} scale={READER_SCALE}>
+            <primitive object={built.root} />
+            <ReaderRankEmblem level={readerLv} />
+            {!force && <ReaderBackSigil height={built.h} />}
+            <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
+            <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
+          </group>
+          {/* Reader ground rings — gold by default; pledged adds a Force outer band.
+              They detach + sink toward the floor while flying (see RING_* + the
+              flight ground-rings block above). Bigger outer ring rides higher; the
+              smaller inner ring sinks lowest. */}
+          <mesh ref={ringBig} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04 - FOOT_OFF, 0]}>
+            <ringGeometry args={[0.39, 0.5, 40]} />
+            <meshBasicMaterial color={force ? TYPE_COLOR[force] : GOLD} transparent opacity={0.78} side={THREE.DoubleSide} />
           </mesh>
-        )}
+          {force && (
+            <mesh ref={ringSmall} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045 - FOOT_OFF, 0]}>
+              <ringGeometry args={[0.32, 0.38, 40]} />
+              <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
+            </mesh>
+          )}
+          {/* Ready plaque — sector number beside the Trainer until the chase cam unlocks. */}
+          {circuitMode && circuitPhase === "ready" && (
+            <Html
+              position={[1.65, 0.55, 0.15]}
+              center
+              distanceFactor={11}
+              zIndexRange={[40, 0]}
+              style={{ pointerEvents: "none" }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-grotesk), sans-serif",
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  background: "rgba(8, 6, 16, 0.72)",
+                  border: "1px solid rgba(245, 208, 32, 0.45)",
+                  boxShadow: "0 0 18px rgba(245, 208, 32, 0.18)",
+                }}
+              >
+                <div
+                  className="mono"
+                  style={{ fontSize: 9, letterSpacing: 1.8, color: "rgba(245, 208, 32, 0.85)", fontWeight: 700 }}
+                >
+                  SECTOR
+                </div>
+                <div
+                  style={{
+                    fontSize: 30,
+                    fontWeight: 800,
+                    lineHeight: 1.05,
+                    color: "#f5f2e8",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {circuitSectorIdx + 1}
+                </div>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
+                  / 100
+                </div>
+              </div>
+            </Html>
+          )}
+        </group>
       </RigidBody>
     </>
   );
@@ -4180,11 +4265,9 @@ function CameraController({
     const speed01 = Math.min(1, speed / (cue?.superrun ? SUPERRUN : RUN));
 
     if (inCircuit && circuitPhase === "running" && prevCircuitPhase.current !== "running") {
+      // Snap chase cam behind the flyer looking down-track — do NOT re-lock
+      // input (thrust must stay live the moment the sector starts).
       circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
-      circuitInputLock.current = Math.max(circuitInputLock.current, CIRCUIT_INTRO_HOLD_S + 0.95);
-      // sit the lens BEHIND the flyer looking down-track (heading + π), not in
-      // front of their face — the old `yaw = cue.heading` parked the camera on
-      // the far side so you launched staring back at the return portal/exit.
       if (cue) yaw.current = cue.heading + Math.PI;
     }
     if (inCircuit) prevCircuitPhase.current = circuitPhase;

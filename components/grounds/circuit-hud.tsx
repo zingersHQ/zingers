@@ -184,8 +184,9 @@ export function CircuitHud({
           </div>
         )}
         {phase === "ready" && (
-          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 260 }}>
-            {reachTagline ? `${reachTagline} · ` : ""}jump to start · thread every gate · miss or fall = restart
+          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 280 }}>
+            {reachTagline ? `${reachTagline} · ` : ""}
+            wait for the chase cam · jump to start · miss or fall = restart
           </div>
         )}
       </div>
