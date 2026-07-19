@@ -1,7 +1,14 @@
 // Optional Trainer identity link — bind a browser wallet to the device owner
-// token and keep a display name with that key. Never gates play; never spends.
+// token and claim a unique display name on that key. Never gates play; never spends.
 import { NextRequest, NextResponse } from "next/server";
-import { issueNonce, linkedIdentity, setLinkedName, unlinkWallet, verifyAndLink } from "@/lib/server/solana-link";
+import {
+  checkTrainerName,
+  issueNonce,
+  linkedIdentity,
+  setLinkedName,
+  unlinkWallet,
+  verifyAndLink,
+} from "@/lib/server/solana-link";
 import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
@@ -15,6 +22,15 @@ export async function GET(req: NextRequest) {
   if (limited) return limited;
 
   const token = req.nextUrl.searchParams.get("token")?.trim() ?? "";
+  const check = req.nextUrl.searchParams.get("check");
+
+  // Availability probe — token optional (needed to report "yours").
+  if (check != null) {
+    if (token && (token.length < 8 || token.length > 128)) return bad("Missing token.");
+    const result = await checkTrainerName(check, token || undefined);
+    return NextResponse.json(result);
+  }
+
   if (token.length < 8 || token.length > 128) return bad("Missing token.");
 
   const want = req.nextUrl.searchParams.get("nonce");
@@ -52,10 +68,15 @@ export async function POST(req: NextRequest) {
     name: body.name,
   });
   if (!result.ok) return bad(result.error, 401);
-  return NextResponse.json({ ok: true, pubkey: result.pubkey, name: result.name });
+  return NextResponse.json({
+    ok: true,
+    pubkey: result.pubkey,
+    name: result.name,
+    nameError: result.nameError,
+  });
 }
 
-/** Save / update the Trainer name on an already-linked key. */
+/** Claim / update the unique Trainer name on an already-linked key. */
 export async function PATCH(req: NextRequest) {
   const limited = rateLimit(req, "solana-link", 30, 60_000);
   if (limited) return limited;
@@ -70,7 +91,10 @@ export async function PATCH(req: NextRequest) {
   if (token.length < 8 || token.length > 128) return bad("Missing token.");
 
   const result = await setLinkedName(token, body.name ?? "");
-  if (!result.ok) return bad(result.error, result.error.startsWith("Connect") ? 409 : 400);
+  if (!result.ok) {
+    const status = result.error.startsWith("Connect") ? 409 : result.error === "Name taken." ? 409 : 400;
+    return bad(result.error, status);
+  }
   return NextResponse.json({ ok: true, name: result.name });
 }
 

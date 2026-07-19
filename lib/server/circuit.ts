@@ -6,8 +6,12 @@
 // by BODY — the mobile one-thumb Climb (`thumb`) and the desktop 6-DOF Circuit
 // (`flight`) each get their own sorted set. A one-thumb time and a 6-DOF time
 // can't share a column. One owner token can hold one entry per body.
+//
+// Display labels are server-authoritative (linked claimed name → short wallet →
+// short token). Client-supplied handles are ignored on submit.
 import "server-only";
 import { Redis } from "@upstash/redis";
+import { resolveTrainerLabel } from "@/lib/server/solana-link";
 
 export type CircuitBody = "thumb" | "flight";
 
@@ -22,11 +26,28 @@ export interface CircuitEntry {
   reach: number; // server-derived: 0 if sectors===0 else ceil(sectors/10)
 }
 
+/** Public board row — no owner token leaked. */
+export interface CircuitPublicEntry {
+  handle: string;
+  sectors: number;
+  totalMs: number;
+  clearedAll: boolean;
+  reach: number;
+  you: boolean;
+}
+
 export interface CircuitBoard {
   shared: boolean;
   body: CircuitBody;
   entries: CircuitEntry[];
   mine: CircuitEntry | null;
+}
+
+export interface CircuitPublicBoard {
+  shared: boolean;
+  body: CircuitBody;
+  entries: CircuitPublicEntry[];
+  mine: CircuitPublicEntry | null;
 }
 
 // per-body keys — the legacy `z:circuit:board` / `z:circuit:entry:<token>` are
@@ -66,14 +87,24 @@ function isBetter(a: CircuitEntry, b: CircuitEntry | null): boolean {
 class RedisCircuit {
   constructor(private r: Redis) {}
 
+  async writeEntry(entry: CircuitEntry): Promise<void> {
+    await this.r.set(entryKey(entry.body, entry.token), entry);
+  }
+
   async submit(entry: CircuitEntry): Promise<{ saved: boolean; entry: CircuitEntry }> {
     const eKey = entryKey(entry.body, entry.token);
     const bKey = boardKey(entry.body);
     const prev = await this.r.get<CircuitEntry>(eKey);
     if (prev && !isBetter(entry, prev)) {
+      // Identity may have changed since the last best — refresh label only.
+      if (prev.handle !== entry.handle) {
+        const refreshed = { ...prev, handle: entry.handle };
+        await this.writeEntry(refreshed);
+        return { saved: false, entry: refreshed };
+      }
       return { saved: false, entry: prev };
     }
-    await this.r.set(eKey, entry);
+    await this.writeEntry(entry);
     await this.r.zadd(bKey, { score: circuitScore(entry.sectors, entry.totalMs), member: entry.token });
     const count = await this.r.zcard(bKey);
     if (count > BOARD_CAP) {
@@ -102,13 +133,22 @@ class MemoryCircuit {
     flight: new Map(),
   };
 
+  writeEntry(entry: CircuitEntry): void {
+    this.entries[entry.body].set(entry.token, entry);
+  }
+
   async submit(entry: CircuitEntry): Promise<{ saved: boolean; entry: CircuitEntry }> {
     const map = this.entries[entry.body];
     const prev = map.get(entry.token) ?? null;
     if (prev && !isBetter(entry, prev)) {
+      if (prev.handle !== entry.handle) {
+        const refreshed = { ...prev, handle: entry.handle };
+        this.writeEntry(refreshed);
+        return { saved: false, entry: refreshed };
+      }
       return { saved: false, entry: prev };
     }
-    map.set(entry.token, entry);
+    this.writeEntry(entry);
     return { saved: true, entry };
   }
 
@@ -148,16 +188,17 @@ export function isCircuitShared(): boolean {
 
 export async function submitCircuitRun(
   token: string,
-  handle: string,
   sectors: number,
   totalMs: number,
   clearedAll: boolean,
   body: CircuitBody = "thumb",
-): Promise<{ saved: boolean; entry: CircuitEntry }> {
+): Promise<{ saved: boolean; entry: CircuitPublicEntry }> {
+  const tok = token.slice(0, 128);
+  const handle = (await resolveTrainerLabel(tok)).slice(0, 48);
   const s = Math.max(0, Math.min(MAX_SECTORS, Math.floor(sectors)));
   const entry: CircuitEntry = {
-    token: token.slice(0, 128),
-    handle: handle.slice(0, 24),
+    token: tok,
+    handle,
     sectors: s,
     totalMs: Math.max(0, Math.min(MAX_MS, Math.floor(totalMs))),
     clearedAll: !!clearedAll,
@@ -165,11 +206,68 @@ export async function submitCircuitRun(
     body,
     reach: reachOf(s),
   };
-  return getCircuitStore().submit(entry);
+  const result = await getCircuitStore().submit(entry);
+  return {
+    saved: result.saved,
+    entry: {
+      handle: result.entry.handle,
+      sectors: result.entry.sectors,
+      totalMs: result.entry.totalMs,
+      clearedAll: result.entry.clearedAll,
+      reach: result.entry.reach,
+      you: true,
+    },
+  };
 }
 
 export async function getCircuitBoard(limit = 20, token?: string, body: CircuitBody = "thumb"): Promise<CircuitBoard> {
   return getCircuitStore().board(Math.min(50, limit), body, token?.slice(0, 128));
+}
+
+/** Resolve live identity labels and strip owner tokens from the public payload. */
+export async function getPublicCircuitBoard(
+  limit = 20,
+  token?: string,
+  body: CircuitBody = "thumb",
+): Promise<CircuitPublicBoard> {
+  const board = await getCircuitBoard(limit, token, body);
+  const mineTok = board.mine?.token;
+  const labelCache = new Map<string, string>();
+  const labelFor = async (tok: string) => {
+    const hit = labelCache.get(tok);
+    if (hit) return hit;
+    const label = await resolveTrainerLabel(tok);
+    labelCache.set(tok, label);
+    return label;
+  };
+
+  const entries: CircuitPublicEntry[] = [];
+  for (const e of board.entries) {
+    const handle = await labelFor(e.token);
+    entries.push({
+      handle,
+      sectors: e.sectors,
+      totalMs: e.totalMs,
+      clearedAll: e.clearedAll,
+      reach: e.reach,
+      you: !!mineTok && e.token === mineTok,
+    });
+  }
+
+  let mine: CircuitPublicEntry | null = null;
+  if (board.mine) {
+    const handle = await labelFor(board.mine.token);
+    mine = {
+      handle,
+      sectors: board.mine.sectors,
+      totalMs: board.mine.totalMs,
+      clearedAll: board.mine.clearedAll,
+      reach: board.mine.reach,
+      you: true,
+    };
+  }
+
+  return { shared: board.shared, body: board.body, entries, mine };
 }
 
 export { scoreToRank, MAX_MS };

@@ -427,14 +427,14 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitBoardLoading(true);
     fetch(`/api/circuit?body=flight&limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
-      .then((d: { entries?: (CircuitBoardEntry & { token?: string })[]; mine?: CircuitPersonalBest | null }) => {
+      .then((d: { entries?: CircuitBoardEntry[]; mine?: CircuitPersonalBest | null }) => {
         setCircuitBoard(
           (d.entries ?? []).map((e) => ({
             handle: e.handle,
             sectors: e.sectors,
             totalMs: e.totalMs,
             clearedAll: e.clearedAll,
-            token: e.token,
+            you: e.you,
           })),
         );
         if (d.mine) setCircuitPersonalBest((prev) => (isCircuitRunBetter(d.mine!, prev) ? d.mine! : prev));
@@ -456,7 +456,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       fetch("/api/circuit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: tok, handle: getHandle(), sectors, totalMs, clearedAll, body: "flight" }),
+        body: JSON.stringify({ token: tok, sectors, totalMs, clearedAll, body: "flight" }),
       })
         .then(() => loadCircuitBoard())
         .catch(() => {});

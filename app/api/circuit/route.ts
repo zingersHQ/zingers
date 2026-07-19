@@ -1,4 +1,4 @@
-import { getCircuitBoard, submitCircuitRun, isCircuitShared, type CircuitBody } from "@/lib/server/circuit";
+import { getPublicCircuitBoard, submitCircuitRun, isCircuitShared, type CircuitBody } from "@/lib/server/circuit";
 import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const limit = Math.min(50, Number(q.get("limit")) || 20);
   const token = q.get("token") || undefined;
   const body = parseBody(q.get("body"));
-  const board = await getCircuitBoard(limit, token, body);
+  const board = await getPublicCircuitBoard(limit, token, body);
   return Response.json({ ...board, shared: isCircuitShared() });
 }
 
@@ -38,10 +38,10 @@ export async function POST(req: Request) {
   if (!Number.isFinite(sectors) || sectors < 0 || sectors > 100) return new Response("bad sectors", { status: 400 });
   if (!Number.isFinite(totalMs) || totalMs < 0 || totalMs > MAX_MS) return new Response("bad time", { status: 400 });
 
-  const handle = typeof b.handle === "string" ? b.handle : "";
+  // Client `handle` is ignored — labels resolve from linked identity server-side.
   const clearedAll = b.clearedAll === true;
   const runBody = parseBody(typeof b.body === "string" ? b.body : null);
 
-  const result = await submitCircuitRun(token, handle, sectors, totalMs, clearedAll, runBody);
+  const result = await submitCircuitRun(token, sectors, totalMs, clearedAll, runBody);
   return Response.json(result);
 }

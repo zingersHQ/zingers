@@ -8,20 +8,17 @@ export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed";
 export type CircuitFailReason = "fall" | "gates";
 
 export interface CircuitBoardEntry {
+  /** Server-resolved: claimed name → short wallet → short token */
   handle: string;
   sectors: number;
   totalMs: number;
   clearedAll: boolean;
-  /** owner token — used for a short display id when no handle is set */
-  token?: string;
+  you?: boolean;
 }
 
 function rankLabel(e: CircuitBoardEntry): string | null {
   const h = e.handle?.trim();
-  if (h) return h;
-  const t = e.token?.trim();
-  if (t && t.length >= 4) return `T-${t.slice(0, 4)}`;
-  return null;
+  return h || null;
 }
 
 export function CircuitHud({
@@ -273,15 +270,24 @@ function CircuitBoardPanel({
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>…</div>
       ) : named.length === 0 ? (
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.4 }}>
-          set a handle in Standings to appear here
+          no runs yet — claim a name in Standings
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {named.map(({ e, label }, i) => (
             <div key={`${label}-${i}`} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
               <span className="mono" style={{ width: 14, color: "var(--muted2)", fontSize: 10 }}>{i + 1}</span>
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>
-                {label}
+              <span
+                style={{
+                  flex: 1,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontWeight: e.you ? 800 : 600,
+                  color: e.you ? accent : undefined,
+                }}
+              >
+                {label}{e.you ? " · you" : ""}
               </span>
               <span className="mono" style={{ color: accent, fontWeight: 700, fontSize: 10 }}>
                 {e.sectors}/{sectorTotal}

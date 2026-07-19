@@ -39,7 +39,7 @@ import { circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
-import { getOwnerToken, getHandle } from "@/lib/owner";
+import { getOwnerToken } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
 import { setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
@@ -567,8 +567,7 @@ export default function CircuitLite({
     fetch(`/api/circuit?body=thumb&limit=8${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
       .then((d: { entries?: BoardRow[]; mine?: CircuitPersonalBest | null }) => {
-        const handle = getHandle();
-        setBoard((d.entries ?? []).map((e) => ({ ...e, you: !!handle && e.handle === handle })));
+        setBoard((d.entries ?? []).map((e) => ({ ...e, you: !!e.you })));
         if (d.mine) setBest((prev) => (isCircuitRunBetter(d.mine!, prev) ? d.mine! : prev));
       })
       .catch(() => {})
@@ -634,7 +633,7 @@ export default function CircuitLite({
         fetch("/api/circuit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: tok, handle: getHandle(), sectors: run.sectors, totalMs: run.totalMs, clearedAll, body: "thumb" }),
+          body: JSON.stringify({ token: tok, sectors: run.sectors, totalMs: run.totalMs, clearedAll, body: "thumb" }),
         })
           .then(() => loadBoard())
           .catch(() => {});
@@ -1218,7 +1217,7 @@ export default function CircuitLite({
               </div>
               {board.length === 0 ? (
                 <div className="mono" style={{ fontSize: 10, color: "var(--muted2, #6b6785)" }}>
-                  {getOwnerToken() ? "no runs yet — set the pace" : "claim a Trainer handle in Standings to rank"}
+                  {getOwnerToken() ? "no runs yet — set the pace" : "claim a Trainer to rank"}
                 </div>
               ) : (
                 board.slice(0, 5).map((r, i) => (

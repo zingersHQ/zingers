@@ -1,11 +1,12 @@
 "use client";
-// Optional wallet identity — keep a Trainer name across devices. Never required
-// to play. Sign-only; no spend UI; no vendor branding in the chrome.
-import { useCallback, useEffect, useState } from "react";
+// Optional wallet identity — claim a unique Trainer name locked to your key.
+// Never required to play. Sign-only; no spend UI; no vendor branding in the chrome.
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Unplug, Wallet } from "lucide-react";
 import bs58 from "bs58";
 import { STORAGE } from "@/lib/brand";
 import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
+import { shortPubkey } from "@/lib/trainer-label";
 import { track as pingEvent } from "@/lib/track";
 
 type WalletProvider = {
@@ -15,16 +16,14 @@ type WalletProvider = {
   signMessage(message: Uint8Array, display?: "utf8" | "hex"): Promise<{ signature: Uint8Array }>;
 };
 
+type NameStatus = "free" | "yours" | "taken" | "invalid" | "checking" | null;
+
 function getWallet(): WalletProvider | null {
   if (typeof window === "undefined") return null;
   const w = window as Window & { solana?: WalletProvider & { isPhantom?: boolean }; phantom?: { solana?: WalletProvider } };
   if (w.solana && typeof w.solana.signMessage === "function") return w.solana;
   if (w.phantom?.solana && typeof w.phantom.solana.signMessage === "function") return w.phantom.solana;
   return null;
-}
-
-function shortPk(pk: string) {
-  return pk.length > 10 ? `${pk.slice(0, 4)}…${pk.slice(-4)}` : pk;
 }
 
 const ink = "var(--ink)";
@@ -44,13 +43,18 @@ export function SolanaConnect({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [status, setStatus] = useState<NameStatus>(null);
+  const checkTimer = useRef<number | null>(null);
+  const claimedName = useRef<string>("");
 
   const applyName = useCallback(
     (n: string | null) => {
       if (n) {
         setName(n);
         persistHandle(n);
+        claimedName.current = n;
         onIdentity?.(n);
+        setStatus("yours");
       } else {
         onIdentity?.(null);
       }
@@ -84,6 +88,36 @@ export function SolanaConnect({
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  const probeName = useCallback((raw: string) => {
+    if (checkTimer.current) window.clearTimeout(checkTimer.current);
+    const trimmed = raw.trim();
+    if (trimmed.length < 2) {
+      setStatus(trimmed.length === 0 ? null : "invalid");
+      return;
+    }
+    if (claimedName.current && trimmed.toLowerCase() === claimedName.current.toLowerCase()) {
+      setStatus("yours");
+      return;
+    }
+    setStatus("checking");
+    checkTimer.current = window.setTimeout(async () => {
+      const token = getOwnerToken();
+      try {
+        const q = new URLSearchParams({ check: trimmed });
+        if (token) q.set("token", token);
+        const r = await fetch(`/api/solana-link?${q}`);
+        const j = (await r.json()) as { status?: NameStatus };
+        setStatus(j.status ?? null);
+      } catch {
+        setStatus(null);
+      }
+    }, 320);
+  }, []);
+
+  useEffect(() => () => {
+    if (checkTimer.current) window.clearTimeout(checkTimer.current);
+  }, []);
 
   const connect = useCallback(async () => {
     setErr(null);
@@ -122,13 +156,20 @@ export function SolanaConnect({
           name: name.trim() || getHandle() || undefined,
         }),
       });
-      const pj = (await pr.json()) as { ok?: boolean; pubkey?: string; name?: string | null; error?: string };
+      const pj = (await pr.json()) as {
+        ok?: boolean;
+        pubkey?: string;
+        name?: string | null;
+        nameError?: string;
+        error?: string;
+      };
       if (!pr.ok || !pj.pubkey) throw new Error(pj.error || "Could not link.");
 
       setPubkey(pj.pubkey);
       localStorage.setItem(STORAGE.solPubkey, pj.pubkey);
       if (pj.name) applyName(pj.name);
       else if (name.trim()) persistHandle(name.trim());
+      if (pj.nameError) setErr(pj.nameError);
       pingEvent("sol_link");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Cancelled.");
@@ -137,7 +178,7 @@ export function SolanaConnect({
     }
   }, [name, applyName]);
 
-  const saveName = useCallback(async () => {
+  const claimName = useCallback(async () => {
     setErr(null);
     const token = getOwnerToken();
     if (!token || !pubkey) return;
@@ -154,12 +195,13 @@ export function SolanaConnect({
         body: JSON.stringify({ token, name: trimmed }),
       });
       const j = (await r.json()) as { ok?: boolean; name?: string; error?: string };
-      if (!r.ok || !j.name) throw new Error(j.error || "Could not save.");
+      if (!r.ok || !j.name) throw new Error(j.error || "Could not claim.");
       applyName(j.name);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1400);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
+      setErr(e instanceof Error ? e.message : "Could not claim.");
+      if (e instanceof Error && e.message === "Name taken.") setStatus("taken");
     } finally {
       setBusy(false);
     }
@@ -204,7 +246,7 @@ export function SolanaConnect({
         }}
       >
         <Wallet size={11} strokeWidth={2} />
-        {name || shortPk(pubkey)}
+        {name || shortPubkey(pubkey)}
       </div>
     );
   }
@@ -235,43 +277,80 @@ export function SolanaConnect({
     fontFamily: "var(--font-mono), monospace",
   };
 
+  const statusLine =
+    status === "checking"
+      ? "checking…"
+      : status === "taken"
+        ? "taken"
+        : status === "free"
+          ? "available"
+          : status === "yours"
+            ? "yours · locked"
+            : status === "invalid"
+              ? "2–24 ordinary characters"
+              : null;
+
+  const statusColor =
+    status === "taken" || status === "invalid"
+      ? "var(--bad, #ff8a9a)"
+      : status === "free" || status === "yours"
+        ? "var(--good, #7dffb3)"
+        : mute;
+
+  const canClaim = !!pubkey && name.trim().length >= 2 && status !== "taken" && status !== "invalid" && status !== "checking";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div>
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.8, color: "var(--muted)", marginBottom: 4 }}>
-          YOUR NAME
+          TRAINER NAME
         </div>
         <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: "0 0 8px" }}>
-          Optional. Connect once to keep it when you change devices.
+          Claim a unique name locked to your wallet. Without a claim the board shows your short address.
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <input
             value={name}
-            onChange={(e) => setName(e.target.value.slice(0, 24))}
+            onChange={(e) => {
+              const next = e.target.value.slice(0, 24);
+              setName(next);
+              setErr(null);
+              probeName(next);
+            }}
             onBlur={() => {
               if (name.trim().length >= 2) persistHandle(name.trim());
             }}
-            placeholder="Trainer name"
+            placeholder="pick a name"
             maxLength={24}
             style={inputStyle}
             aria-label="Trainer name"
           />
           {pubkey ? (
-            <button type="button" onClick={() => void saveName()} disabled={busy} style={{ ...ghostBtn, color: ink, flexShrink: 0 }}>
-              {savedFlash ? "saved" : "save"}
+            <button
+              type="button"
+              onClick={() => void claimName()}
+              disabled={busy || !canClaim || status === "yours"}
+              style={{ ...ghostBtn, color: ink, flexShrink: 0, opacity: busy || !canClaim ? 0.55 : 1 }}
+            >
+              {savedFlash ? "locked" : status === "yours" ? "locked" : "claim"}
             </button>
           ) : null}
         </div>
+        {statusLine && (
+          <p className="mono" style={{ fontSize: 9, color: statusColor, margin: "6px 0 0", lineHeight: 1.4 }}>
+            {statusLine}
+          </p>
+        )}
       </div>
 
       {pubkey ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span className="mono" style={{ fontSize: 11, color: ink, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Wallet size={13} strokeWidth={2} />
-            {name.trim() || shortPk(pubkey)}
+            {name.trim() || shortPubkey(pubkey)}
           </span>
           <span className="mono" style={{ fontSize: 9, color: mute }} title={pubkey}>
-            {shortPk(pubkey)}
+            {shortPubkey(pubkey)}
           </span>
           <button type="button" onClick={() => void disconnect()} disabled={busy} style={{ ...ghostBtn, marginLeft: "auto" }}>
             <Unplug size={12} strokeWidth={2} />
@@ -293,7 +372,7 @@ export function SolanaConnect({
           }}
         >
           <Wallet size={14} strokeWidth={2} />
-          {busy ? "Signing…" : "Connect"}
+          {busy ? "Signing…" : name.trim().length >= 2 ? "Connect & claim" : "Connect to lock a name"}
         </button>
       )}
 
