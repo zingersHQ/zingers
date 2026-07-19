@@ -184,13 +184,13 @@ export function AscentPortal({
   pos,
   accent,
   theme = "concord",
-  reachRoman,
   reachName,
 }: {
   pos: [number, number, number];
   accent: string;
   theme?: PortalTheme;
-  reachRoman: string;
+  /** @deprecated kept for call-site compat — label is reachName only */
+  reachRoman?: string;
   reachName: string;
 }) {
   const rot = useMemo(() => Math.atan2(-pos[0], -pos[2]), [pos]);
@@ -202,8 +202,7 @@ export function AscentPortal({
       </group>
       <Html position={[0, PORTAL_LABEL_Y, 0]} center distanceFactor={22} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-          <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: accent, fontWeight: 800 }}>THE ASCENT</div>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>REACH {reachRoman} · {reachName.toUpperCase()}</div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px #000" }}>{reachName}</div>
         </div>
       </Html>
     </group>

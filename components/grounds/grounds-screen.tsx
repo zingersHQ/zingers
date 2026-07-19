@@ -428,13 +428,14 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitBoardLoading(true);
     fetch(`/api/circuit?body=flight&limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
-      .then((d: { entries?: CircuitBoardEntry[]; mine?: CircuitPersonalBest | null }) => {
+      .then((d: { entries?: (CircuitBoardEntry & { token?: string })[]; mine?: CircuitPersonalBest | null }) => {
         setCircuitBoard(
           (d.entries ?? []).map((e) => ({
             handle: e.handle,
             sectors: e.sectors,
             totalMs: e.totalMs,
             clearedAll: e.clearedAll,
+            token: e.token,
           })),
         );
         if (d.mine) setCircuitPersonalBest((prev) => (isCircuitRunBetter(d.mine!, prev) ? d.mine! : prev));
@@ -2101,7 +2102,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           </div>
         )}
 
-        {!isMobile && overlay === "none" && !showMatch && !gRun && !worldUiBlocked && (
+        {!isMobile && overlay === "none" && !showMatch && !gRun && !worldUiBlocked && activeVenue !== "circuit" && (
           <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1, lineHeight: 1.45, pointerEvents: "none" }}>
             {modesLocked && owned
               ? FIRST_DUEL_TAGLINE
@@ -2138,7 +2139,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         )}
       </div>
       )}
-      {showHud && !worldUiBlocked && (
+      {/* Trainer hub stays out of Circuit — the flight HUD is the only chrome. */}
+      {showHud && !worldUiBlocked && activeVenue !== "circuit" && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
         <PlayerHub
           isMobile={isMobile}
@@ -2233,9 +2235,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           compact={isMobile}
           failReason={circuitFailReason}
           sectorTotal={DESKTOP_CIRCUIT_COUNT}
-          reachRoman={circuitReach.roman}
           reachName={circuitReach.name}
-          reachTagline={circuitReach.tagline}
         />
       )}
 

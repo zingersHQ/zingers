@@ -12,6 +12,16 @@ export interface CircuitBoardEntry {
   sectors: number;
   totalMs: number;
   clearedAll: boolean;
+  /** owner token — used for a short display id when no handle is set */
+  token?: string;
+}
+
+function rankLabel(e: CircuitBoardEntry): string | null {
+  const h = e.handle?.trim();
+  if (h) return h;
+  const t = e.token?.trim();
+  if (t && t.length >= 4) return `T-${t.slice(0, 4)}`;
+  return null;
 }
 
 export function CircuitHud({
@@ -30,9 +40,7 @@ export function CircuitHud({
   compact,
   failReason,
   sectorTotal = 100,
-  reachRoman,
   reachName,
-  reachTagline,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -48,20 +56,13 @@ export function CircuitHud({
   accent: string;
   compact?: boolean;
   failReason?: CircuitFailReason;
-  /** total sectors in the ascent (100 for the shared Climb ruleset). */
   sectorTotal?: number;
-  /** the Reach the current sector lives in — its roman numeral / name / tagline. */
-  reachRoman?: string;
+  /** short Reach name only — no roman/tagline essay */
   reachName?: string;
-  reachTagline?: string;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
-  const REACH_SIZE = 10;
-  const reachCount = Math.max(1, Math.ceil(sectorTotal / REACH_SIZE));
-  const reachIdx = Math.floor(sectorIndex / REACH_SIZE);
 
-  // Space / Enter confirms the end-of-sector primary action (next / try again).
   useEffect(() => {
     if (phase !== "sector" && phase !== "failed" && phase !== "done") return;
     const onKey = (e: KeyboardEvent) => {
@@ -77,6 +78,15 @@ export function CircuitHud({
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, onContinue, onRestart]);
 
+  const title =
+    phase === "failed"
+      ? "RUN OVER"
+      : phase === "done"
+        ? "CLEAR"
+        : reachName
+          ? reachName
+          : `Sector ${sectorN}`;
+
   return (
     <>
       <div
@@ -88,82 +98,34 @@ export function CircuitHud({
           transform: "translateX(-50%)",
           zIndex: 100,
           pointerEvents: "none",
-          padding: "10px 16px",
+          padding: "8px 14px",
           ["--ac" as string]: accent,
           borderColor: running ? accent : "var(--line)",
-          minWidth: 240,
           textAlign: "center",
         }}
       >
-        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 4 }}>
-          {phase === "failed"
-            ? "RUN OVER"
-            : phase === "done"
-              ? "FULL CLEAR"
-              : running || phase === "sector"
-                ? `SECTOR ${sectorN} / ${sectorTotal}`
-                : "THE ASCENT"}
-        </div>
-        {reachName && phase !== "failed" && phase !== "done" && (
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 0.5, color: accent, marginBottom: 6, fontWeight: 700 }}>
-            {reachRoman ? `REACH ${reachRoman} · ` : ""}{reachName}
-          </div>
-        )}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <Timer size={18} color={accent} strokeWidth={2.2} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <span className="mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: accent }}>
+            {title}
+          </span>
+          <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>
+            {sectorN}/{sectorTotal}
+          </span>
+          <Timer size={14} color={accent} strokeWidth={2.2} />
           <span
             style={{
-              fontSize: 28,
+              fontSize: 20,
               fontWeight: 700,
               fontVariantNumeric: "tabular-nums",
               color: running || phase === "done" || phase === "failed" ? accent : "var(--muted)",
+              lineHeight: 1,
             }}
           >
             {phase === "ready" && !runMs ? "—" : formatCircuitMs(runMs || sectorMs)}
           </span>
-          <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>s</span>
         </div>
-        {personalBest && phase !== "done" && phase !== "failed" && (
-          <div
-            className="mono"
-            style={{
-              fontSize: 9,
-              color: "var(--muted2)",
-              marginTop: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 4,
-            }}
-          >
-            <Trophy size={11} strokeWidth={2} /> best {personalBest.sectors}/{sectorTotal} · {formatCircuitMs(personalBest.totalMs)}s
-          </div>
-        )}
-        {/* Reach progress — ten bands, filled up to the one you're climbing (a
-            100-pip per-sector strip would be unreadable) */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 8 }}>
-          {Array.from({ length: reachCount }, (_, i) => {
-            const done = i < reachIdx || phase === "done";
-            const current = i === reachIdx && phase !== "done" && phase !== "failed";
-            return (
-              <span
-                key={i}
-                style={{
-                  width: current ? 16 : 8,
-                  height: 6,
-                  borderRadius: 6,
-                  background: done ? accent : current ? "transparent" : "var(--line2)",
-                  border: `1.5px solid ${done || current ? accent : "var(--line)"}`,
-                  boxShadow: current ? `0 0 8px ${accent}` : undefined,
-                  transition: "width 0.2s",
-                }}
-              />
-            );
-          })}
-        </div>
-        {/* gate dots for current sector */}
         {(running || phase === "ready") && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 8 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 7 }}>
             {Array.from({ length: cpTotal }, (_, i) => {
               const hit = i < cpNext;
               const next = i === cpNext && running;
@@ -171,27 +133,20 @@ export function CircuitHud({
                 <span
                   key={i}
                   style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 7,
+                    width: 6,
+                    height: 6,
+                    borderRadius: 6,
                     background: hit ? accent : next ? "transparent" : "var(--line2)",
                     border: `1.5px solid ${hit || next ? accent : "var(--line)"}`,
-                    opacity: 0.85,
+                    opacity: 0.9,
                   }}
                 />
               );
             })}
           </div>
         )}
-        {phase === "ready" && (
-          <div className="mono" style={{ fontSize: 9, color: "var(--muted)", marginTop: 8, letterSpacing: 0.5, maxWidth: 280 }}>
-            {reachTagline ? `${reachTagline} · ` : ""}
-            wait for the chase cam · jump to start · miss or fall = restart
-          </div>
-        )}
       </div>
 
-      {/* Leaderboard — compact, always visible on desktop */}
       {!compact && (
         <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
       )}
@@ -213,7 +168,7 @@ export function CircuitHud({
       )}
 
       {phase === "failed" && (
-        <CircuitModal accent="#ff5a5a" icon={<Skull size={28} color="#ff5a5a" />} kicker="RUN OVER" title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`} sub={failReason === "gates" ? "Missed a gate — every ring must be crossed. Back to sector 1." : "Back to sector 1. One fall ends the run."}>
+        <CircuitModal accent="#ff5a5a" icon={<Skull size={28} color="#ff5a5a" />} kicker="RUN OVER" title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`} sub={failReason === "gates" ? "Missed a gate. Back to sector 1." : "One fall ends the run."}>
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> try again
           </button>
@@ -264,6 +219,11 @@ function CircuitBoardPanel({
   personalBest: CircuitPersonalBest | null;
   sectorTotal?: number;
 }) {
+  const named = board
+    .map((e) => ({ e, label: rankLabel(e) }))
+    .filter((row): row is { e: CircuitBoardEntry; label: string } => !!row.label)
+    .slice(0, 8);
+
   return (
     <div
       className="panel"
@@ -272,26 +232,28 @@ function CircuitBoardPanel({
         top: 56,
         right: 16,
         zIndex: 99,
-        width: "min(220px, 42vw)",
-        padding: "10px 12px",
+        width: "min(200px, 40vw)",
+        padding: "8px 10px",
         ["--ac" as string]: accent,
         pointerEvents: "none",
       }}
     >
-      <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
-        <Trophy size={11} strokeWidth={2} color={accent} /> RANKINGS
+      <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+        <Trophy size={11} strokeWidth={2} color={accent} /> BOARD
       </div>
       {loading ? (
-        <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>loading…</div>
-      ) : board.length === 0 ? (
-        <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>no runs yet — be first</div>
+        <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>…</div>
+      ) : named.length === 0 ? (
+        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.4 }}>
+          set a handle in Standings to appear here
+        </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          {board.slice(0, 8).map((e, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-              <span className="mono" style={{ width: 16, color: "var(--muted2)", fontSize: 10 }}>{i + 1}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {named.map(({ e, label }, i) => (
+            <div key={`${label}-${i}`} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+              <span className="mono" style={{ width: 14, color: "var(--muted2)", fontSize: 10 }}>{i + 1}</span>
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>
-                {e.handle || "anonymous"}
+                {label}
               </span>
               <span className="mono" style={{ color: accent, fontWeight: 700, fontSize: 10 }}>
                 {e.sectors}/{sectorTotal}
@@ -301,7 +263,7 @@ function CircuitBoardPanel({
         </div>
       )}
       {personalBest && (
-        <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 8, borderTop: "1px solid var(--line)", paddingTop: 6 }}>
+        <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 6, borderTop: "1px solid var(--line)", paddingTop: 5 }}>
           you · {personalBest.sectors}/{sectorTotal} · {formatCircuitMs(personalBest.totalMs)}s
         </div>
       )}
