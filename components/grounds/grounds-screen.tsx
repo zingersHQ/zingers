@@ -2116,9 +2116,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         )}
       </div>
       )}
-      {/* Trainer hub stays out of Circuit — the flight HUD is the only chrome. */}
-      {showHud && !worldUiBlocked && activeVenue !== "circuit" && (
-      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
+      {/* Trainer hub is mobile-only — desktop Grounds stay chrome-quiet (Esc → settings). */}
+      {showHud && !worldUiBlocked && isMobile && activeVenue !== "circuit" && (
+      <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: 5, zIndex: 100, pointerEvents: "auto" }}>
         <PlayerHub
           isMobile={isMobile}
           crowns={crowns}
@@ -2148,7 +2148,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
       {showHud && !showMatch && overlay === "none" && !isHub && !inVenue && !worldUiBlocked && towerAgents.length > 0 && (
-        <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 64, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
+        <div className={`grounds-hud panel${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: isMobile ? 56 : 14, right: 16, padding: isMobile ? "7px 11px" : "10px 14px", minWidth: isMobile ? 0 : 140, pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Mountain size={isMobile ? 14 : 16} color={altitude > 1 ? "#39e0ff" : "var(--muted2)"} strokeWidth={2} />
             <span style={{ fontWeight: 700, fontSize: isMobile ? 16 : 22, color: altitude > 1 ? "#39e0ff" : "var(--muted)" }}>{Math.max(0, altitude).toFixed(1)}</span>
