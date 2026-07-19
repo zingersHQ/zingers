@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { Flag, RotateCcw, Skull, Timer, Trophy, ChevronRight } from "lucide-react";
+import { Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
 import { formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 
@@ -152,9 +152,9 @@ export function CircuitHud({
       )}
 
       {phase === "sector" && (
-        <CircuitModal accent={accent} icon={<ChevronRight size={28} color={accent} />} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${sectorTotal - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
-          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onContinue}>
-            Sector {sectorN + 1} <ChevronRight size={16} strokeWidth={2.5} />
+        <CircuitModal accent={accent} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${sectorTotal - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
+          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%" }} onClick={onContinue}>
+            Continue
           </button>
         </CircuitModal>
       )}
@@ -187,7 +187,7 @@ function CircuitModal({
   children,
 }: {
   accent: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   kicker: string;
   title: string;
   sub: string;
@@ -196,7 +196,7 @@ function CircuitModal({
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 55, padding: 16 }}>
       <div className="panel pop" style={{ ["--ac" as string]: accent, padding: 24, width: "min(400px, 92vw)", textAlign: "center", borderColor: accent }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{icon}</div>
+        {icon && <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{icon}</div>}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>{kicker}</div>
         <div style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>{title}</div>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>{sub}</div>
