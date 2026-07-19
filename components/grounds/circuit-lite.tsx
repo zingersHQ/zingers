@@ -64,12 +64,11 @@ interface RunReward {
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
-const FORWARD_SPOOL = 8;    // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
-// Forward push: the mobile Climb auto-forwards at the per-sector difficulty speed,
-// but the desktop Circuit's constant cruise (world.tsx CIRCUIT_CRUISE) reads as a
-// stronger shove down-track. Nudge the one-thumb cruise up to match that feel —
-// "slightly faster in the front direction" — without touching the difficulty math.
-const FORWARD_PUSH = 1.25;
+const FORWARD_SPOOL = 11;   // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
+// Forward push: mobile Climb multiplies per-sector difficulty speed. Desktop
+// Circuit cruises at ~14 (world.tsx CIRCUIT_CRUISE); raw difficulty is 8.2–12.5,
+// so we push harder so the one-thumb run feels like a runner, not a glide.
+const FORWARD_PUSH = 1.55;
 const GRAVITY = 24;         // downward accel (u/s²) — hard fall when not cruising
 const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
