@@ -2968,16 +2968,22 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           </button>
         </div>
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 10px" }}>
-          STRATEGY · how it fights (lessons &amp; bouts move these)
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 6px" }}>
+          TEMPERAMENT · how it thinks
         </div>
-        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["patient / counter", "relentless"]} highlight={litAxes.has("aggression")} />
-        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["just hit", "set up combos"]} highlight={litAxes.has("focus")} />
-        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["play safe", "swing big"]} highlight={litAxes.has("risk")} />
+        <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
+          Grown by lessons and bouts — not dials you drag.
+        </p>
+        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
+        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />
+        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 8px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          IMPRINT · your way to change strategy (one lesson a day)
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 6px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          LESSONS · shape it today
         </div>
+        <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 10px" }}>
+          Shared menu; your daily pick + the fights between make this mind diverge. One lesson sticks per day.
+        </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {IMPRINT_LESSONS.map((l) => {
             const learned = store.imprintDays[ckey]?.[l.id] === day;

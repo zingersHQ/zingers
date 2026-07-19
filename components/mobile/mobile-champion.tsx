@@ -158,26 +158,26 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
         </div>
 
-        {/* strategy — readout only; Imprints + bouts move the dials */}
+        {/* temperament — status meters; Imprints + bouts grow these (never drag) */}
         <div className="panel" style={{ padding: 16, marginTop: 12 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 12 }}>
-            STRATEGY · HOW {name.toUpperCase()} THINKS
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
+            TEMPERAMENT · HOW {name.toUpperCase()} THINKS
           </div>
+          <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
+            Its fighting nature — grown by lessons you teach and bouts it survives. Not sliders you set.
+          </p>
           {DIALS.map((d) => (
             <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />
           ))}
-          <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "2px 0 0" }}>
-            Lessons and fights move these dials. Teach below to reshape how it thinks — it picks its own moves in battle.
-          </p>
         </div>
 
-        {/* imprint — the intentional way to shift strategy + write memory */}
+        {/* imprint — daily choice is the point: same menu, different career path */}
         <div className="panel" style={{ ["--ac" as string]: col, padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Brain size={12} strokeWidth={2.4} /> IMPRINT · TEACH {name.toUpperCase()} A LESSON
+            <Brain size={12} strokeWidth={2.4} /> LESSONS · SHAPE {name.toUpperCase()} TODAY
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            Your way to change strategy. One lesson a day sticks in memory and nudges the dials above.
+            Same lesson menu for every Trainer — the surprise is which one you pick today, and what the fights do in between. One sticks per day; it remembers in its own voice.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
             {IMPRINT_LESSONS.map((l) => {
