@@ -54,6 +54,7 @@ export const Z_EVENTS = [
   "m_fly", // tapped "Fly" from the splash
   "m_guest_run", // started a guest Climb run (no champion yet)
   "m_claim_from_climb", // reached adoption via the Climb claim hook
+  "sol_link", // optional Phantom Trainer sigil linked
 ] as const;
 
 export type ZEvent = (typeof Z_EVENTS)[number];
@@ -111,6 +112,14 @@ export async function getAnalytics(windowDays = 14): Promise<Analytics> {
     { label: "Returned", key: "return", value: totals.return ?? 0 },
   ];
 
+  // Mobile Climb-first door — gate 2′ (docs/flight-first-plan.md).
+  const doorFunnel: Analytics["doorFunnel"] = [
+    { label: "Splash", key: "m_splash", value: totals.m_splash ?? 0 },
+    { label: "Fly tap", key: "m_fly", value: totals.m_fly ?? 0 },
+    { label: "Guest run", key: "m_guest_run", value: totals.m_guest_run ?? 0 },
+    { label: "Claim from Climb", key: "m_claim_from_climb", value: totals.m_claim_from_climb ?? 0 },
+  ];
+
   return {
     shared: isShared(),
     generatedAt: Date.now(),
@@ -120,5 +129,6 @@ export async function getAnalytics(windowDays = 14): Promise<Analytics> {
     series,
     active: { dau, wau, mau },
     funnel,
+    doorFunnel,
   };
 }

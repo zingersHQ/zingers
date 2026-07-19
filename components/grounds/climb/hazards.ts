@@ -118,13 +118,14 @@ export function hazardState(h: Hazard, t: number): HazardState {
       return { x: h.x, y: h.y + Math.sin(t * h.cycle + h.phase * TAU) * h.amp, z: h.z, active: true, telegraph: 1, angle: 0 };
     }
     case "wardenWisp": {
+      // Y-only sweep (climb-feel §1c) — dodge by altitude, not sideways weave
       const s = Math.sin(t * h.cycle + h.phase * TAU);
-      return { x: h.x + Math.cos(t * h.cycle * 0.5) * 0.4, y: h.y + s * h.amp, z: h.z, active: true, telegraph: 1, angle: 0 };
+      return { x: h.x, y: h.y + s * h.amp, z: h.z, active: true, telegraph: 1, angle: 0 };
     }
     case "cinderArc": {
       const u = (t * h.cycle + h.phase) % 1;
-      // lob mostly vertical through the opening (tiny x wobble only)
-      return { x: h.x + (u - 0.5) * 2 * h.amp, y: h.y + Math.sin(u * Math.PI) * h.height, z: h.z, active: u > 0.04 && u < 0.96, telegraph: 1, angle: 0 };
+      // lob purely vertical through the coplanar corridor
+      return { x: h.x, y: h.y + Math.sin(u * Math.PI) * h.height, z: h.z, active: u > 0.04 && u < 0.96, telegraph: 1, angle: 0 };
     }
     case "plume": {
       const u = (t * h.cycle + h.phase) % 1;

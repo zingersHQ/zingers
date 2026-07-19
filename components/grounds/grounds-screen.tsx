@@ -20,6 +20,7 @@ import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { STORAGE } from "@/lib/brand";
 import {
   firstDuelOpponent,
+  firstDuelStarterKeys,
   firstDuelStarters,
   isFirstDuelComplete,
   markFirstDuelComplete,
@@ -116,6 +117,15 @@ const World = dynamic(() => import("@/components/grounds/world"), {
   loading: () => (
     <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted)" }}>
       summoning the grounds…
+    </div>
+  ),
+});
+
+const CircuitLite = dynamic(() => import("@/components/grounds/circuit-lite"), {
+  ssr: false,
+  loading: () => (
+    <div className="mono" style={{ position: "fixed", inset: 0, zIndex: 100, display: "grid", placeItems: "center", background: "#0a0712", color: "var(--muted)" }}>
+      warming the jetpack…
     </div>
   ),
 });
@@ -499,7 +509,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
   const enterVenue = useCallback(
     (venue: VenueId) => {
-      if (!isFirstDuelComplete() && (venue === "circuit" || venue === "amphitheatre")) {
+      // Circuit is the Flight-First face — playable before the first duel.
+      // Amphitheatre stays locked until Act 1 completes.
+      if (!isFirstDuelComplete() && venue === "amphitheatre") {
         setModeLockToast("Finish your first duel to unlock this.");
         return;
       }
@@ -570,11 +582,22 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       outcomeSfx(true);
       return;
     }
+    // Thin altitude key (flyover §3): Reach II needs one duel win.
+    const mind = owned ? store.get(owned) : null;
+    if (next >= 10 && (!mind || (mind.wins ?? 0) < 1)) {
+      const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
+      setCircuitRunMs(total);
+      submitCircuitRun(next, total, true);
+      setModeLockToast("Altitude gate — win one duel so your mind can fly Reach II.");
+      setCircuitPhase("ready");
+      outcomeSfx(true);
+      return;
+    }
     setCircuitSectorIdx(next);
     setCircuitPhase("ready");
     const s = desktopCircuitSector(next).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [circuitSectorIdx, submitCircuitRun, store]);
+  }, [circuitSectorIdx, submitCircuitRun, store, owned]);
 
   const onCircuitFail = useCallback((reason: CircuitFailReason = "fall") => {
     if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
@@ -863,7 +886,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     if (summonStartedAt.current === null) summonStartedAt.current = Date.now();
     if (roster.length === 0 || firstDuelPhase !== null) return;
     const wait = Math.max(0, MIN_SUMMON_MS - (Date.now() - summonStartedAt.current));
-    const t = setTimeout(() => setFirstDuelPhase("pick"), wait);
+    // Flight-First: open on a guest Climb, then claim → pick (docs/flight-first-plan.md).
+    const t = setTimeout(() => setFirstDuelPhase("fly"), wait);
     return () => clearTimeout(t);
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
@@ -926,6 +950,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const modesLocked = mounted && !isFirstDuelComplete();
   const duelStarters = useMemo(() => firstDuelStarters(roster), [roster]);
   const inFirstDuelSetup =
+    firstDuelPhase === "fly" ||
     firstDuelPhase === "pick" ||
     firstDuelPhase === "train" ||
     firstDuelPhase === "evolve" ||
@@ -1779,7 +1804,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // It mounts during `train` — the last step before the bell — BEHIND the opaque
   // tuning modal, so it's warm (camera ref + assets ready) for the first fight,
   // where `owned` is set and the world is finally shown.
-  const worldOccluded = showIntro || firstDuelPhase === "pick" || (awaitingFirstDuel && firstDuelPhase === null);
+  const worldOccluded =
+    showIntro ||
+    firstDuelPhase === "fly" ||
+    firstDuelPhase === "pick" ||
+    (awaitingFirstDuel && firstDuelPhase === null);
   const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
   const dockPad = showDock ? DOCK_H + 8 : 0;
@@ -2398,8 +2427,36 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         <Onboarding roster={roster} get={store.get} onPick={setWakeKey} />
       )}
 
+      {/* Flight-First door — guest Climb before champion select (desktop P4). */}
+      {mounted && firstDuelPhase === "fly" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 95 }}>
+          <CircuitLite
+            embedded
+            guestKey={
+              firstDuelPick ||
+              firstDuelStarterKeys().find((k) => byKey[k]) ||
+              duelStarters[0]?.key ||
+              "AXIOM"
+            }
+            onClaim={() => {
+              const key =
+                firstDuelPick ||
+                firstDuelStarterKeys().find((k) => byKey[k]) ||
+                duelStarters[0]?.key ||
+                null;
+              if (key) {
+                setFirstDuelPick(key);
+                setWakeKey(key);
+              }
+              setFirstDuelPhase("pick");
+            }}
+            onExit={() => setFirstDuelPhase("pick")}
+          />
+        </div>
+      )}
+
       {/* guided first-duel funnel for new players */}
-      {mounted && firstDuelPhase && duelStarters.length > 0 && (
+      {mounted && firstDuelPhase && firstDuelPhase !== "fly" && duelStarters.length > 0 && (
         <FirstDuelOverlay
           phase={firstDuelPhase}
           starters={duelStarters}
@@ -2549,10 +2606,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE CONCORD</div>
             <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Summoning minds for you to raise…
+              Warming the jetpack…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              {READER_COPY.walkFightLine}
+              You fly. It fights. You both rise.
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (

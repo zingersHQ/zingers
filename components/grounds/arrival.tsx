@@ -1,6 +1,6 @@
 "use client";
 // The hand-off the game was missing: claiming a champion used to flip you into
-// the world with no beat in between — pick an agent, BOOM, you're just standing
+// the world with no beat in between — claim a mind, BOOM, you're just standing
 // there. This sequences that moment like a classic game scene change:
 //   1. CARD    — a "champion claimed" pledge card pops in with confetti.
 //   2. COVER   — a force-tinted veil wipes the screen shut (and behind it the

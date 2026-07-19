@@ -38,7 +38,9 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
 
 // The cinematic intro deck (FirstRun) already delivers the elevator pitch, so the
 // funnel opens straight on champion select — no redundant in-game "pitch" slide.
-export type FirstDuelPhase = "pick" | "train" | "evolve" | "concord";
+// "fly" = desktop Flight-First door (docs/flight-first-plan.md / launch-week P4):
+// first interactive beat is a guest Climb before champion select.
+export type FirstDuelPhase = "fly" | "pick" | "train" | "evolve" | "concord";
 
 const ACC = ICON.accent;
 
@@ -71,7 +73,7 @@ export function FirstDuelOverlay({
   onEvolveDone,
   onConcordDone,
 }: {
-  phase: FirstDuelPhase;
+  phase: Exclude<FirstDuelPhase, "fly">;
   starters: RosterEntry[];
   selected: string | null;
   get: (k: string) => Champion;

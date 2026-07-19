@@ -26,6 +26,7 @@ import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
+import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { sectorDifficulty } from "./climb/difficulty";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
@@ -115,8 +116,11 @@ const READY_DOCK = companionDockSlot(0, 0, CHAMP_FACE);
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
-type Phase = "ready" | "running" | "failed" | "done";
+type Phase = "ready" | "running" | "failed" | "done" | "ceiling";
 type FailReason = "fall" | "gates";
+
+/** Reach II (sector index 10) needs one duel win — thin altitude key (flyover §3). */
+const ALTITUDE_KEY_SECTOR = 10;
 
 // prototype fallback body while the champion GLTF resolves (also our old mech)
 function MechBody({ accent }: { accent: string }) {
@@ -586,9 +590,10 @@ export default function CircuitLite({
   // Reward is gated on genuine improvement so sector 1 can't be farmed.
   const recordRun = useCallback(
     (sectorsCleared: number, clearedAll: boolean) => {
-      // a guest run marks nothing — no XP, no Crowns, no board, no saved best.
-      // Claiming the wild mind is what turns the climb into a real career.
+      // a guest run marks nothing on the board/career yet — but we hold the best
+      // depth so claim can convert it into the first Trainer mark (two-doors §3.3).
       if (guest) {
+        noteGuestClimbDepth(sectorsCleared);
         setReward(null);
         setNewBest(false);
         return;
@@ -718,7 +723,7 @@ export default function CircuitLite({
     const down = (e: KeyboardEvent) => {
       if (e.code !== "Space" && e.key !== "Enter") return;
       e.preventDefault();
-      if (phase === "failed" || phase === "done") {
+      if (phase === "failed" || phase === "done" || phase === "ceiling") {
         resetRun();
         return;
       }
@@ -812,10 +817,19 @@ export default function CircuitLite({
         setPhase("done");
         return s;
       }
+      // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
+      // board still records depth from this run; campaign height pauses here.
+      if (next >= ALTITUDE_KEY_SECTOR && !guest && (champion.wins ?? 0) < 1) {
+        stopJet();
+        rewardSfx("big");
+        recordRun(next, true);
+        setPhase("ceiling");
+        return s;
+      }
       rewardSfx("big");
       return next;
     });
-  }, [setHold, recordRun]);
+  }, [setHold, recordRun, guest, champion.wins]);
 
   const onFail = useCallback(
     (r: FailReason) => {
@@ -1244,6 +1258,42 @@ export default function CircuitLite({
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Thin altitude key — Reach II needs a proven mind (one duel win). */}
+      {phase === "ceiling" && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.68)", backdropFilter: "blur(5px)", zIndex: 30 }}>
+          <div style={{ textAlign: "center", padding: 26, borderRadius: 18, border: `1px solid ${accent}`, background: "rgba(12,11,18,.92)", maxWidth: "88vw", width: 360 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: accent }}>
+              <Sparkles size={30} strokeWidth={2.2} />
+            </div>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>
+              ALTITUDE GATE
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: "8px 0 6px" }}>
+              Your mind isn’t strong enough for this sky yet
+            </div>
+            <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 18, lineHeight: 1.5 }}>
+              Win one duel to open Reach II. The climb asked for a stronger champion — go raise it, then return higher.
+            </div>
+            <button
+              type="button"
+              onClick={resetRun}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "1px solid rgba(255,255,255,.16)", background: "transparent", color: "#e6e2f5", fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
+            >
+              <RotateCcw size={15} strokeWidth={2.4} /> Practice Reach I again
+            </button>
+            {onExit && (
+              <button
+                type="button"
+                onClick={onExit}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
+              >
+                Raise your mind
+              </button>
+            )}
           </div>
         </div>
       )}

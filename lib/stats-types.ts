@@ -18,4 +18,6 @@ export interface Analytics {
   series: DayStat[]; // oldest → newest
   active: { dau: number; wau: number; mau: number };
   funnel: { label: string; key: string; value: number }[];
+  /** Mobile Climb-first door (docs/flight-first-plan.md gate 2′). */
+  doorFunnel: { label: string; key: string; value: number }[];
 }

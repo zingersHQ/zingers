@@ -11,6 +11,7 @@ import type { CreatureType } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { getOwnerToken } from "@/lib/owner";
+import { SolanaConnect } from "@/components/wallet/solana-connect";
 
 interface LadderChampion {
   id: string;
@@ -171,6 +172,10 @@ export function MobileRank() {
             );
           })}
           {!ladder.length && <p className="mono" style={{ color: "var(--muted2)", textAlign: "center", padding: 40, fontSize: 12 }}>loading the ladder…</p>}
+        </div>
+
+        <div style={{ marginTop: 16 }}>
+          <SolanaConnect />
         </div>
 
         {/* live feed */}

@@ -19,7 +19,7 @@ import { setMood } from "@/lib/ambience-bus";
 
 const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ssr: false,
-  loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning an agent…</div>,
+  loading: () => <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 12 }}>summoning a mind…</div>,
 });
 
 const InfiniteFlightHero = dynamic(() => import("@/components/home/infinite-flight-hero"), {
@@ -310,7 +310,7 @@ function Stage({ children }: { children: React.ReactNode }) {
     <RenderBoundary
       fallback={
         <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted2)", fontSize: 11, padding: 24, textAlign: "center" }}>
-          3D preview unavailable. Enable graphics acceleration in your browser to see live agents.
+          3D preview unavailable. Enable graphics acceleration in your browser to see live champions.
         </div>
       }
     >

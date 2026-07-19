@@ -138,7 +138,7 @@ export function LeaguePoster() {
             CHALLENGE CARD
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2, color: "var(--ink)" }}>
-            Share your agent. Get challenged.
+            Share your champion. Get challenged.
           </div>
           <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>
             zingers.gg/c/your-champion

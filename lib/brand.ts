@@ -27,6 +27,10 @@ export const STORAGE = {
   settings: "zingers_settings_v1",
   readerSplitCoach: "zingers_reader_split_coach_v1",
   mSplash: "zingers_m_splash_v1", // mobile splash door shown once per browser (docs/two-doors.md §3)
+  /** Optional Solana pubkey linked to this device's owner token (identity only). */
+  solPubkey: "zingers_sol_pubkey_v1",
+  /** Best guest Climb depth (sectors) awaiting claim conversion. */
+  guestClimbBest: "zingers_guest_climb_best_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

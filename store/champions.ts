@@ -21,6 +21,7 @@ import { getOwnerToken } from "@/lib/owner";
 import { championImprintAck } from "@/lib/lore/character-beats";
 import { lessonById, clampDial, imprintDayIndex } from "@/lib/imprints";
 import { TRIALS } from "@/lib/flags";
+import { guestDepthXp, takeGuestClimbDepth } from "@/lib/guest-climb";
 
 const nameOf = (key: string): string => ROSTER[key]?.name ?? key;
 
@@ -510,7 +511,15 @@ export const useChampions = create<ChampionStore>()(
       // Adopting a champion also implicitly recruits it into the roster, so your
       // starter never shows as "locked" in the collection.
       setOwned: (key) =>
-        set((s) => ({ owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key], events: ensureClaimed(s.events, key) })),
+        set((s) => {
+          const guestXp = !s.owned ? guestDepthXp(takeGuestClimbDepth()) : 0;
+          return {
+            owned: key,
+            roster: s.roster.includes(key) ? s.roster : [...s.roster, key],
+            events: ensureClaimed(s.events, key),
+            ...(guestXp > 0 ? { trainerXp: s.trainerXp + guestXp } : {}),
+          };
+        }),
 
       // The ORIGIN moment: the very first champion a player adopts starts life as
       // a true rookie (level 1, ROOKIE tier) so they actually live the rookie →
@@ -521,9 +530,11 @@ export const useChampions = create<ChampionStore>()(
       // your first, your origin, is reset to green. Mock-battle outcomes don't use
       // career XP (movesets come from the creature key), so the scripted first
       // duel plays out identically.
+      // Guest Climb depth (if any) converts into the first Trainer mark here.
       adoptStarterRookie: (key) =>
         set((s) => {
           if (s.owned) return { owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key], events: ensureClaimed(s.events, key) };
+          const guestXp = guestDepthXp(takeGuestClimbDepth());
           const rookie = blank();
           const dir = SEED.find(([k]) => k === key);
           if (dir) (rookie[dir[2]] as number) = 5;
@@ -532,6 +543,7 @@ export const useChampions = create<ChampionStore>()(
             roster: s.roster.includes(key) ? s.roster : [...s.roster, key],
             progress: { ...s.progress, [key]: rookie },
             events: ensureClaimed(s.events, key),
+            ...(guestXp > 0 ? { trainerXp: s.trainerXp + guestXp } : {}),
           };
         }),
 

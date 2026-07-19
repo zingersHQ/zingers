@@ -19,7 +19,8 @@ export type ClientEvent =
   // time-to-first-evolution buckets (client-computed, one per browser)
   | "ttfe_u5" | "ttfe_u8" | "ttfe_over"
   // the mobile Climb-first door (docs/two-doors.md §3)
-  | "m_splash" | "m_fly" | "m_guest_run" | "m_claim_from_climb";
+  | "m_splash" | "m_fly" | "m_guest_run" | "m_claim_from_climb"
+  | "sol_link";
 
 function post(type: ClientEvent): void {
   if (typeof window === "undefined") return;

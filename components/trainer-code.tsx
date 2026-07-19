@@ -5,6 +5,7 @@
 // to adopt that save here. Play is never gated behind any of this.
 import { useEffect, useState } from "react";
 import { getOwnerToken, setOwnerToken } from "@/lib/owner";
+import { SolanaConnect } from "@/components/wallet/solana-connect";
 
 const ACC = "#7c5cff";
 
@@ -63,6 +64,10 @@ export function TrainerCode() {
         <button onClick={copy} className="btn btn-primary" style={{ ["--ac" as string]: ACC, fontSize: 11, padding: "8px 12px" }}>
           {copied ? "copied" : "copy"}
         </button>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <SolanaConnect />
       </div>
 
       <details style={{ marginTop: 12 }}>

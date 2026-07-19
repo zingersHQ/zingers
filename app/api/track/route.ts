@@ -16,7 +16,7 @@ const CLIENT_EVENTS = new Set<ZEvent>([
   // first-journey funnel + TTFE buckets + mobile door (docs/two-doors.md §5)
   "fj_cinematic", "fj_pick", "fj_tune", "fj_duel", "fj_evolve", "fj_land",
   "ttfe_u5", "ttfe_u8", "ttfe_over",
-  "m_splash", "m_fly", "m_guest_run", "m_claim_from_climb",
+  "m_splash", "m_fly", "m_guest_run", "m_claim_from_climb", "sol_link",
 ]);
 
 export async function POST(req: Request) {

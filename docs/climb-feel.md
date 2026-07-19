@@ -9,12 +9,11 @@
 > propulsion** so both bodies feel like one addictive runner — not “fly through
 > a museum of rings.”
 
-Status: **design draft — implement next (feel pass).**  
+Status: **P-feel.0–1.2 largely shipped** (coplanar rings, archetypes, green
+`cpNextRef`, Flappy cam, desktop auto-forward). **Next:** device-tune + hazard
+Y-corridor (P-feel.4). Active roadmap: [`flight-first-plan.md`](./flight-first-plan.md).  
 Companions: [`climb.md`](./climb.md) (amended by §1c here), [`circuit-world.md`](./circuit-world.md)
-(amended by §4–5 here), [`essence.md`](./essence.md).  
-Verified against live code (July 2026): `climb/sectors.ts` (lateral weave + mild
-rise), `circuit-lite.tsx` (auto X-ease + `highlightIndex` only), desktop
-`Handler` (no forced forward), Circuit spectator pedestal.
+(amended by §4–5 here), [`essence.md`](./essence.md).
 
 ---
 
