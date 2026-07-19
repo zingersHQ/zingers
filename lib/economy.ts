@@ -32,10 +32,16 @@ export const MAX_BET = 100;
 export const BET_PAYOUT_MULT = 2;
 
 // Ceilings for variable, client-reported earns. The server clamps to these so a
-// forged cache/goal/gauntlet payout can't mint unbounded Crowns.
+// forged cache/goal/gauntlet payout can't mint unbounded Crowns. Earns ALSO need
+// a unique claimId (and for gauntlet, a daily payout count) — see /api/wallet.
 export const CACHE_MAX = 200;
 export const GOAL_MAX = 600;
 export const GAUNTLET_MAX = 1200;
+
+/** Soft daily ceiling on Crowns from cache+goal+gauntlet combined (per owner). */
+export const DAILY_VARIABLE_EARN_CAP = 2_500;
+/** Max separate gauntlet payouts one owner can cash per UTC day. */
+export const MAX_GAUNTLET_PAYOUTS_PER_DAY = 8;
 
 export function isLegalBet(stake: number): boolean {
   return (BET_AMOUNTS as readonly number[]).includes(stake);

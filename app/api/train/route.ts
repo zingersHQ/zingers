@@ -2,11 +2,15 @@
 // swap its brain (House Grok ↔ bring-your-own HTTP agent). Owner-token gated; we
 // never store anyone's model API keys server-side.
 import { trainChampion } from "@/lib/server/ladder";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "train", 30, 60_000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await req.json();

@@ -4,6 +4,7 @@ import { sseStream } from "@/lib/sse-server";
 import { autoplayRun } from "@/lib/server/autoplay";
 import { ROSTER } from "@/lib/engine/roster";
 import { rateLimit } from "@/lib/server/rate-limit";
+import { withinDailyBudget } from "@/lib/server/cost";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,10 @@ export async function GET(req: Request) {
   const a = (q.get("a") || "AXIOM").toUpperCase();
   if (!ROSTER[a]) return new Response("unknown creature", { status: 400 });
   const rounds = Math.max(1, Math.min(8, Number(q.get("rounds")) || 6));
-  const mock = q.get("mock") !== "0";
+  let mock = q.get("mock") !== "0";
+  if (!mock && !(await withinDailyBudget())) {
+    return Response.json({ error: "daily LLM budget reached" }, { status: 503 });
+  }
   const seedRaw = q.get("seed");
   const seed = seedRaw && /^\d+$/.test(seedRaw) ? Number(seedRaw) : null;
   return sseStream(autoplayRun(a, rounds, mock, seed));

@@ -2,11 +2,15 @@
 // token (no auth). Brain is House Grok or a self-hosted HTTP webhook — we never
 // store anyone's model API keys server-side.
 import { claimChampion, ensureSeeded } from "@/lib/server/ladder";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "claim", 12, 60_000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await req.json();

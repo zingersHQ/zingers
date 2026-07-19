@@ -34,7 +34,16 @@ async function post(body: Record<string, unknown>): Promise<WalletResp | null> {
       body: JSON.stringify({ ownerToken: token, ...body }),
       keepalive: true,
     });
-    if (!r.ok) return null;
+    if (!r.ok) {
+      // 409 already-claimed / no fragment — still return balance when present
+      try {
+        const j = (await r.json()) as Partial<WalletResp>;
+        if (typeof j.balance === "number") return { ok: false, balance: j.balance };
+      } catch {
+        /* ignore */
+      }
+      return null;
+    }
     const j = (await r.json()) as Partial<WalletResp>;
     if (typeof j.balance !== "number") return null;
     return { ok: j.ok !== false, balance: j.balance };
@@ -56,8 +65,8 @@ export async function fetchBalance(): Promise<number | null> {
   }
 }
 
-export function walletEvent(type: WalletEventType, amount?: number): Promise<WalletResp | null> {
-  return post({ type, amount });
+export function walletEvent(type: WalletEventType, amount?: number, claimId?: string): Promise<WalletResp | null> {
+  return post({ type, amount, ...(claimId ? { claimId } : {}) });
 }
 
 export function commitBet(stake: number, side: "me" | "opp", nonce: string): Promise<WalletResp | null> {

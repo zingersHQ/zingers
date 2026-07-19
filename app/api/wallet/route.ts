@@ -4,16 +4,33 @@
 // variable client-reported earns to ceilings, and rejects overdraft. Betting is
 // commit-reveal — the stake is taken HERE before the bout, and settled by the
 // engine-authoritative path (lib/server/ladder.ts) once the outcome is known.
+//
+// Anti-abuse: variable earns require a claimId (one-shot per day/season); gauntlet
+// also has a per-day payout count; fragment_sell debits a server fragment balance
+// that only fragment_buy credits.
 import { getStore } from "@/lib/server/store";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { track } from "@/lib/server/track";
-import { isLegalBet, walletDelta, type WalletEventType } from "@/lib/economy";
+import { currentSeasonNumber } from "@/lib/lore/season";
+import {
+  DAILY_VARIABLE_EARN_CAP,
+  MAX_GAUNTLET_PAYOUTS_PER_DAY,
+  isLegalBet,
+  walletDelta,
+  type WalletEventType,
+} from "@/lib/economy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const utcDay = () => Math.floor(Date.now() / 86_400_000);
+
 function validToken(t: string): boolean {
   return t.length >= 8 && t.length <= 128;
+}
+
+function validClaimId(id: string): boolean {
+  return /^[a-zA-Z0-9_.:-]{2,64}$/.test(id);
 }
 
 export async function GET(req: Request) {
@@ -24,7 +41,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "wallet", 120, 60_000);
+  const limited = rateLimit(req, "wallet", 60, 60_000);
   if (limited) return limited;
 
   let body: unknown;
@@ -61,19 +78,93 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, balance: r.balance });
   }
 
+  // Fragment buy: Crowns out, server fragment inventory in.
+  if (type === "fragment_buy") {
+    const delta = walletDelta("fragment_buy");
+    if (delta === null) return Response.json({ error: "unknown event" }, { status: 400 });
+    const r = await store.adjustWallet(token, delta);
+    if (!r.ok) return Response.json({ ok: false, balance: r.balance });
+    await store.adjustFragments(token, 1);
+    void track("spend", token, -delta);
+    return Response.json({ ok: true, balance: r.balance });
+  }
+
+  // Fragment sell: only if the server holds a fragment (client inventory alone is not enough).
+  if (type === "fragment_sell") {
+    const frag = await store.adjustFragments(token, -1);
+    if (!frag.ok) return Response.json({ ok: false, balance: await store.getWallet(token), error: "no fragment" }, { status: 409 });
+    const delta = walletDelta("fragment_sell");
+    if (delta === null || delta <= 0) {
+      await store.adjustFragments(token, 1);
+      return Response.json({ error: "unknown event" }, { status: 400 });
+    }
+    const r = await store.adjustWallet(token, delta);
+    if (!r.ok) {
+      await store.adjustFragments(token, 1);
+      return Response.json({ ok: false, balance: r.balance });
+    }
+    void track("earn", token, delta);
+    return Response.json({ ok: true, balance: r.balance });
+  }
+
+  // Variable earns: claimId + daily crown cap (+ gauntlet payout count).
+  if (type === "cache" || type === "goal" || type === "gauntlet") {
+    const claimId = typeof b.claimId === "string" ? b.claimId.trim() : "";
+    if (!validClaimId(claimId)) {
+      return Response.json({ error: "missing or invalid claimId" }, { status: 400 });
+    }
+    const delta = walletDelta(type as WalletEventType, Number(b.amount));
+    if (delta === null || delta <= 0) return Response.json({ error: "invalid amount" }, { status: 400 });
+
+    const day = utcDay();
+    const season = currentSeasonNumber();
+    const scopeKey =
+      type === "goal"
+        ? `goal:${season}:${token}:${claimId}`
+        : type === "cache"
+          ? `cache:${day}:${token}:${claimId}`
+          : `gauntlet:${day}:${token}:${claimId}`;
+    const ttl = type === "goal" ? 40 * 86_400 : 2 * 86_400;
+    const claimed = await store.claimOnce(scopeKey, ttl);
+    if (!claimed) {
+      return Response.json({ ok: false, balance: await store.getWallet(token), error: "already claimed" }, { status: 409 });
+    }
+
+    if (type === "gauntlet") {
+      const n = await store.incrGauntletPayout(token, day);
+      if (n > MAX_GAUNTLET_PAYOUTS_PER_DAY) {
+        return Response.json({ ok: false, balance: await store.getWallet(token), error: "gauntlet daily limit" }, { status: 429 });
+      }
+    }
+
+    const earned = await store.incrDailyEarn(token, day, delta);
+    if (earned > DAILY_VARIABLE_EARN_CAP) {
+      // undo the counter so a later smaller claim can still land under the cap
+      await store.incrDailyEarn(token, day, -delta);
+      return Response.json({ ok: false, balance: await store.getWallet(token), error: "daily earn cap" }, { status: 429 });
+    }
+
+    const r = await store.adjustWallet(token, delta);
+    if (r.ok) {
+      void (async () => {
+        await track("earn", token, delta);
+        if (type === "cache") await track("node", token);
+        else if (type === "goal") await track("goal", token);
+      })();
+    }
+    return Response.json({ ok: r.ok, balance: r.balance });
+  }
+
   const delta = walletDelta(type as WalletEventType, Number(b.amount));
   if (delta === null) return Response.json({ error: "unknown event" }, { status: 400 });
 
   const r = await store.adjustWallet(token, delta);
 
-  // Behaviour analytics (best-effort, non-blocking): never delay the wallet reply.
   if (r.ok) {
     void (async () => {
       if (delta < 0) await track("spend", token, -delta);
       else if (delta > 0) await track("earn", token, delta);
       if (type === "train") await track("train", token);
-      else if (type === "cache") await track("node", token);
-      else if (type === "goal") await track("goal", token);
     })();
   }
 

@@ -3,6 +3,8 @@
 // the response is a well-formed AgentDecision picking a legal move. Returns
 // latency + the decision so a handler (or an MCP client) gets instant feedback.
 import type { AgentView } from "@/lib/engine/agent";
+import { rateLimit } from "@/lib/server/rate-limit";
+import { safeHttpAgentEndpoint } from "@/lib/server/url-safety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,14 +42,22 @@ const SAMPLE: AgentView = {
 };
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "agent-check", 10, 60_000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await req.json();
   } catch {
     return Response.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
-  const endpoint = typeof (body as Record<string, unknown>)?.endpoint === "string" ? (body as Record<string, string>).endpoint : "";
-  if (!endpoint) return Response.json({ ok: false, error: "missing endpoint" }, { status: 400 });
+  const endpointRaw = typeof (body as Record<string, unknown>)?.endpoint === "string" ? (body as Record<string, string>).endpoint : "";
+  if (!endpointRaw) return Response.json({ ok: false, error: "missing endpoint" }, { status: 400 });
+
+  const endpoint = await safeHttpAgentEndpoint(endpointRaw);
+  if (!endpoint) {
+    return Response.json({ ok: false, error: "endpoint must be a public https URL" }, { status: 400 });
+  }
 
   const t0 = Date.now();
   try {

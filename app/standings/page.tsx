@@ -115,7 +115,7 @@ export default function StandingsPage() {
     const res = await fetch("/api/challenge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: c.id }),
+      body: JSON.stringify({ id: c.id, ownerToken: tokenRef.current || getOwnerToken() }),
     }).then((r) => r.json());
     setBusy(null);
     if (res.error) return flash(`Fight failed: ${res.error}`);

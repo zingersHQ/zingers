@@ -2,14 +2,25 @@ import { battleEvents, type BattleOpts } from "@/lib/engine/battle";
 import { readSide, hasExternalAgent } from "@/lib/engine/side-config";
 import { KEY } from "@/lib/engine/xai";
 import { ROSTER, TOPICS, forceBiasMap } from "@/lib/engine/roster";
+import { FOUNDING_REGIONS } from "@/lib/lore/canon";
 import { sseStream } from "@/lib/sse-server";
 import { rateLimit } from "@/lib/server/rate-limit";
+import { withinDailyBudget } from "@/lib/server/cost";
 import { recordGroundsBout } from "@/lib/server/ladder";
 import type { BattleEvent, CreatureType } from "@/lib/types";
 
 const FORCES: CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
 function asForce(v: string | null): CreatureType | null {
   return v && (FORCES as string[]).includes(v) ? (v as CreatureType) : null;
+}
+
+/** Resolve home-advantage region bias from a world/region id — never trust client `bias`. */
+function regionBiasFromWorld(worldOrRegion: string | null): CreatureType | null {
+  if (!worldOrRegion) return null;
+  const id = worldOrRegion.toLowerCase();
+  // world ids from WORLDS → canon region ids
+  const regionId = id === "grounds" ? "colosseum" : id === "gauntlet" ? "wastes" : id === "void" ? "garden" : id;
+  return FOUNDING_REGIONS.find((r) => r.id === regionId)?.bias ?? null;
 }
 
 export const runtime = "nodejs";
@@ -78,13 +89,43 @@ export async function GET(req: Request) {
   const bKey = (q.get("b") || "VOX").toUpperCase();
   if (!ROSTER[aKey] || !ROSTER[bKey]) return new Response("unknown creature", { status: 400 });
   const topic = q.get("topic") || TOPICS[Math.floor(Math.random() * TOPICS.length)];
-  const seedRaw = q.get("seed");
-  const seed = seedRaw && /^\d+$/.test(seedRaw) ? Number(seedRaw) : null;
   const sideA = readSide(q, "a");
   const sideB = readSide(q, "b");
-  // real by default (if the house has a key); only mock if forced, or if there's
-  // no key AND nobody brought their own agent
-  const mock = q.get("mock") === "1" || (!KEY && !hasExternalAgent(sideA, sideB));
+
+  const token = q.get("tok");
+  const oppId = q.get("oid");
+  const wantsRanked = q.get("rank") === "1" && !!token && !!oppId;
+
+  // Ranked fights: never mock, never attacker-chosen seed, never client force bias.
+  if (wantsRanked) {
+    if (q.get("mock") === "1") {
+      return Response.json({ error: "ranked fights cannot use mock mode" }, { status: 400 });
+    }
+    if (!KEY && !hasExternalAgent(sideA, sideB)) {
+      return Response.json({ error: "ranked fights require a live brain" }, { status: 503 });
+    }
+  }
+
+  // real by default (if the house has a key); only mock if forced (unranked), or if
+  // there's no key AND nobody brought their own agent
+  let mock = !wantsRanked && (q.get("mock") === "1" || (!KEY && !hasExternalAgent(sideA, sideB)));
+  if (wantsRanked) mock = false;
+
+  // Over daily LLM budget: unranked falls back to free mock; ranked refuses so
+  // ELO/Crowns can't be farmed on a deterministic mock outcome.
+  if (!mock && KEY) {
+    const ok = await withinDailyBudget();
+    if (!ok) {
+      if (wantsRanked) {
+        return Response.json({ error: "daily LLM budget reached — try again tomorrow" }, { status: 503 });
+      }
+      mock = true;
+    }
+  }
+
+  // Unranked may take a client seed (daily/tribunal reproducibility). Ranked ignores it.
+  const seedRaw = q.get("seed");
+  const seed = wantsRanked ? null : seedRaw && /^\d+$/.test(seedRaw) ? Number(seedRaw) : null;
 
   // Tribunal: the player (side A) holds an ASSIGNED stance, and the room carries a
   // scenario-driven force-bias. Both default to the arena's own behaviour when
@@ -100,9 +141,8 @@ export async function GET(req: Request) {
 
   // Ranked bout: side A is the player, oid is the opponent's ladder id. Recording
   // is what makes the 3D world feed the one global ladder.
-  const token = q.get("tok");
-  const oppId = q.get("oid");
-  if (q.get("rank") === "1" && token && oppId) {
+  if (wantsRanked && token && oppId) {
+    const regionBias = regionBiasFromWorld(q.get("world") || q.get("region"));
     gen = recordOnEnd(gen, {
       token,
       myKey: aKey,
@@ -111,7 +151,7 @@ export async function GET(req: Request) {
       handle: q.get("h") || undefined,
       strat: sideA.strat,
       betNonce: q.get("bet") || undefined,
-      regionBias: asForce(q.get("bias")),
+      regionBias,
     });
   }
 

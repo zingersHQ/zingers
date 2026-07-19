@@ -344,12 +344,18 @@ export async function pickMatchup(): Promise<[string, string] | null> {
   return [a.id, b.id];
 }
 
-// Run one bout for a specific champion against a random ladder opponent.
-export async function challengeChampion(id: string): Promise<{ winner: string; loser: string; delta: number; topic: string } | null> {
+// Run one bout for a specific OWNED champion against a random ladder opponent.
+// Owner-token gated so strangers can't grief someone else's rating.
+export async function challengeChampion(
+  id: string,
+  ownerToken: string,
+): Promise<{ winner: string; loser: string; delta: number; topic: string } | { error: string } | null> {
   await ensureSeeded();
   const store = getStore();
   const me = await store.getChampion(id);
   if (!me) return null;
+  if (me.house) return { error: "house champions cannot be challenged this way" };
+  if (!ownerToken || me.ownerToken !== ownerToken.slice(0, 64)) return { error: "not your champion" };
   const pool = (await store.topChampions(50)).filter((c) => c.id !== id);
   if (!pool.length) return null;
   const opp = pool[Math.floor(Math.random() * pool.length)];

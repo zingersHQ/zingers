@@ -1546,11 +1546,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     const tok = getOwnerToken();
     const oid = opponentId ?? `house-${opponent}`;
     const betParam = betSide && tok ? `&bet=${encodeURIComponent(betNonce)}` : "";
-    // The region this world rewards — drives the Clan "home advantage" perk,
-    // settled server-side off the player's authoritative pledge.
+    // Home advantage: send the world/region id — server maps it to Force bias
+    // (never trust a client-supplied bias= query).
     const regionBias = world.region ? FOUNDING_REGIONS.find((r) => r.id === world.region)?.bias ?? null : null;
-    const biasParam = regionBias ? `&bias=${regionBias}` : "";
-    const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}${betParam}${biasParam}` : "";
+    const worldParam = world.region ? `&world=${encodeURIComponent(world.id)}` : "";
+    const rank = tok ? `&rank=1&tok=${encodeURIComponent(tok)}&oid=${encodeURIComponent(oid)}&h=${encodeURIComponent(getHandle())}${betParam}${worldParam}` : "";
     // The Tribunal argues an ASSIGNED case: the proposition becomes the bout's
     // real topic, the player holds their drawn stance, and the room's force-bias
     // is passed down — so holding your side + staying on topic move the score

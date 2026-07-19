@@ -155,6 +155,15 @@ export interface Store {
   // the client save blob. adjustWallet is atomic and rejects overdraft.
   getWallet(token: string): Promise<number>;
   adjustWallet(token: string, delta: number): Promise<WalletResult>;
+  // Fragment inventory for buy/sell — Crowns alone can't prove a fragment exists.
+  getFragments(token: string): Promise<number>;
+  adjustFragments(token: string, delta: number): Promise<WalletResult>;
+  // One-shot claim keys (cache node / goal id) — SET NX so the same reward can't
+  // be cashed twice. ttlSeconds lets day/season scoped keys self-expire.
+  claimOnce(key: string, ttlSeconds: number): Promise<boolean>;
+  // Per-owner UTC-day counters for variable earns (total Crowns + gauntlet count).
+  incrDailyEarn(token: string, day: number, crowns: number): Promise<number>;
+  incrGauntletPayout(token: string, day: number): Promise<number>;
   // Pending bet for commit-reveal betting: staked BEFORE the outcome is known,
   // settled by the server when the engine decides the bout.
   getPendingBet(token: string): Promise<PendingBet | null>;
@@ -200,6 +209,10 @@ const K = {
   usage: (day: number) => `z:cost:${day}`,
   imprint: (token: string, day: number) => `z:imp:${day}:${token}`,
   wallet: (token: string) => `z:wallet:${token}`,
+  frag: (token: string) => `z:frag:${token}`,
+  claim: (key: string) => `z:claim:${key}`,
+  earnDay: (token: string, day: number) => `z:earn:${day}:${token}`,
+  gauntletDay: (token: string, day: number) => `z:gpay:${day}:${token}`,
   bet: (token: string) => `z:bet:${token}`,
   events: (day: number) => `z:ev:${day}`,
   dau: (day: number) => `z:dau:${day}`,
@@ -391,6 +404,37 @@ class UpstashStore implements Store {
     }
     return { ok: true, balance };
   }
+  async getFragments(token: string) {
+    return Number(await this.r.get<number>(K.frag(token))) || 0;
+  }
+  async adjustFragments(token: string, delta: number) {
+    const d = Math.round(delta);
+    const balance = await this.r.incrby(K.frag(token), d);
+    if (balance < 0) {
+      const reverted = await this.r.incrby(K.frag(token), -d);
+      return { ok: false, balance: Math.max(0, reverted) };
+    }
+    return { ok: true, balance };
+  }
+  async claimOnce(key: string, ttlSeconds: number) {
+    const k = K.claim(key.slice(0, 180));
+    // Upstash returns "OK" on set, null when NX loses the race.
+    const ok = await this.r.set(k, 1, { nx: true, ex: Math.max(60, Math.floor(ttlSeconds)) });
+    return typeof ok === "string" ? ok === "OK" : Boolean(ok);
+  }
+  async incrDailyEarn(token: string, day: number, crowns: number) {
+    const k = K.earnDay(token, day);
+    const d = Math.round(crowns);
+    const n = await this.r.incrby(k, d);
+    await this.r.expire(k, 2 * 86_400);
+    return n;
+  }
+  async incrGauntletPayout(token: string, day: number) {
+    const k = K.gauntletDay(token, day);
+    const n = await this.r.incr(k);
+    if (n === 1) await this.r.expire(k, 2 * 86_400);
+    return n;
+  }
   async getPendingBet(token: string) {
     return (await this.r.get<PendingBet>(K.bet(token))) ?? null;
   }
@@ -437,6 +481,10 @@ class MemoryStore implements Store {
   private usage = new Map<number, UsageDay>();
   private imprints = new Map<string, number>(); // `${day}:${token}` → count
   private wallets = new Map<string, number>();
+  private frags = new Map<string, number>();
+  private claims = new Set<string>();
+  private earnDay = new Map<string, number>();
+  private gauntletDay = new Map<string, number>();
   private bets = new Map<string, PendingBet>();
   private events = new Map<number, Map<string, number>>();
   private dau = new Map<number, Set<string>>();
@@ -515,6 +563,37 @@ class MemoryStore implements Store {
     if (next < 0) return { ok: false, balance: cur };
     this.wallets.set(token, next);
     return { ok: true, balance: next };
+  }
+  async getFragments(token: string) {
+    return this.frags.get(token) ?? 0;
+  }
+  async adjustFragments(token: string, delta: number) {
+    const cur = await this.getFragments(token);
+    const next = cur + Math.round(delta);
+    if (next < 0) return { ok: false, balance: cur };
+    this.frags.set(token, next);
+    return { ok: true, balance: next };
+  }
+  async claimOnce(key: string, ttlSeconds: number) {
+    const k = key.slice(0, 180);
+    if (this.claims.has(k)) return false;
+    this.claims.add(k);
+    if (ttlSeconds > 0) {
+      setTimeout(() => this.claims.delete(k), Math.min(ttlSeconds, 7 * 86_400) * 1000).unref?.();
+    }
+    return true;
+  }
+  async incrDailyEarn(token: string, day: number, crowns: number) {
+    const k = `${day}:${token}`;
+    const n = (this.earnDay.get(k) ?? 0) + Math.round(crowns);
+    this.earnDay.set(k, n);
+    return n;
+  }
+  async incrGauntletPayout(token: string, day: number) {
+    const k = `${day}:${token}`;
+    const n = (this.gauntletDay.get(k) ?? 0) + 1;
+    this.gauntletDay.set(k, n);
+    return n;
   }
   async getPendingBet(token: string) {
     return this.bets.get(token) ?? null;

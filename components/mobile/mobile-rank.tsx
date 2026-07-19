@@ -85,7 +85,11 @@ export function MobileRank() {
     async (c: LadderChampion) => {
       setBusy(c.id);
       try {
-        const res = await fetch("/api/challenge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: c.id }) }).then((r) => r.json());
+        const res = await fetch("/api/challenge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: c.id, ownerToken: tokenRef.current || getOwnerToken() }),
+        }).then((r) => r.json());
         if (res.error) flash(`Fight failed: ${res.error}`);
         else flash(`${res.result.winner} beat ${res.result.loser} (+${res.result.delta})`);
         await Promise.all([refresh(), loadOwned()]);

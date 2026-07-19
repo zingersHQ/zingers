@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/guardian";
 import type { GuardianPub, GuardianReply, GuardianTurn } from "@/lib/types";
 import { rateLimit } from "@/lib/server/rate-limit";
+import { withinDailyBudget } from "@/lib/server/cost";
 import { currentSeasonNumber } from "@/lib/lore/season";
 
 export const runtime = "nodejs";
@@ -79,8 +80,9 @@ export async function POST(req: Request) {
     { role: "user", content: message },
   ];
 
-  let reply = KEY ? await chat(messages, 0.85, 200) : null;
-  const live = KEY != null && reply != null;
+  const budgetOk = KEY ? await withinDailyBudget() : false;
+  let reply = KEY && budgetOk ? await chat(messages, 0.85, 200) : null;
+  const live = KEY != null && budgetOk && reply != null;
   if (!reply) reply = mockGuardianReply(g, history, message);
 
   const won = detectLeak(reply, g.secret);

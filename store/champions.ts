@@ -574,9 +574,11 @@ export const useChampions = create<ChampionStore>()(
       awardGauntlet: async (amount) => {
         const amt = Math.max(0, Math.round(amount));
         if (amt <= 0) return;
-        const res = await walletEvent("gauntlet", amt);
-        if (res) set({ crowns: res.balance });
-        else set((s) => ({ crowns: s.crowns + amt })); // offline: optimistic
+        const claimId = `g-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
+        const res = await walletEvent("gauntlet", amt, claimId);
+        if (res?.ok) set({ crowns: res.balance });
+        else if (!res) set((s) => ({ crowns: s.crowns + amt })); // offline: optimistic
+        // online reject (cap / duplicate): leave balance alone — server truth wins on sync
       },
       commitBet: async (stake, side, nonce) => {
         const res = await commitBetRequest(stake, side, nonce);
@@ -599,8 +601,10 @@ export const useChampions = create<ChampionStore>()(
         const crownReward = reward.crowns ?? 0;
         let balance: number | null = null;
         if (crownReward > 0) {
-          const res = await walletEvent("cache", crownReward);
-          if (res) balance = res.balance;
+          const res = await walletEvent("cache", crownReward, id);
+          if (res?.ok) balance = res.balance;
+          else if (!res) balance = null; // offline — optimistic below
+          else return false; // online reject: already claimed / capped
         }
         set((s) => ({
           crowns: balance != null ? balance : s.crowns + crownReward,
@@ -619,8 +623,10 @@ export const useChampions = create<ChampionStore>()(
         const crownReward = reward.crowns ?? 0;
         let balance: number | null = null;
         if (crownReward > 0) {
-          const res = await walletEvent("goal", crownReward);
-          if (res) balance = res.balance;
+          const res = await walletEvent("goal", crownReward, id);
+          if (res?.ok) balance = res.balance;
+          else if (!res) balance = null;
+          else return false;
         }
         set((s) => {
           let forcePoints = s.forcePoints;
@@ -715,7 +721,13 @@ export const useChampions = create<ChampionStore>()(
       sellFragment: async () => {
         if (get().fragments < 1) return false;
         const res = await walletEvent("fragment_sell");
-        set((s) => ({ fragments: s.fragments - 1, crowns: res ? res.balance : s.crowns + FRAGMENT_SELL }));
+        if (res) {
+          if (!res.ok) return false; // server has no fragment inventory
+          set((s) => ({ fragments: Math.max(0, s.fragments - 1), crowns: res.balance }));
+          return true;
+        }
+        // offline: optimistic local sell
+        set((s) => ({ fragments: s.fragments - 1, crowns: s.crowns + FRAGMENT_SELL }));
         return true;
       },
 
