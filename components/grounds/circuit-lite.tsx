@@ -938,8 +938,10 @@ export default function CircuitLite({
               targetRef={flyerPosRef}
               headingRef={flyerHeadingRef}
               scale={FOLLOWER_SCALE}
-              // After Flyer (priority 0) so we leash to this frame's pose.
-              renderPriority={1}
+              // MUST stay 0 — priority > 0 steals the lite canvas render loop
+              // (no EffectComposer / manual gl.render). Flyer mounts first so
+              // same-priority order still leashes to this frame's pose.
+              renderPriority={0}
             />
           )}
         </Canvas>
