@@ -1,44 +1,6 @@
 "use client";
 import { Html } from "@react-three/drei";
-import type { CreatureType } from "@/lib/types";
-import { trainerLevel, forceMeta } from "@/lib/evolve/trainer";
 import { GOLD } from "@/lib/render/palette";
-
-/** Floating Reader rank label above the Handler. */
-export function ReaderSigilBillboard({
-  trainerXp,
-  force,
-  height,
-}: {
-  trainerXp: number;
-  force: CreatureType | null;
-  height: number;
-}) {
-  const tl = trainerLevel(trainerXp);
-  const fm = force ? forceMeta(force) : null;
-  return (
-    <Html position={[0, height + 0.62, 0]} center distanceFactor={9} style={{ pointerEvents: "none", userSelect: "none" }}>
-      <div
-        className="mono"
-        style={{
-          fontSize: 10,
-          letterSpacing: 1.2,
-          fontWeight: 700,
-          color: GOLD,
-          background: "rgba(8,6,14,.82)",
-          border: `1px solid ${GOLD}`,
-          borderRadius: 8,
-          padding: "4px 10px",
-          whiteSpace: "nowrap",
-          boxShadow: `0 0 16px -4px ${GOLD}`,
-        }}
-      >
-        Lv {tl.level} · {tl.title}
-        {fm ? ` · ${fm.name}` : ""}
-      </div>
-    </Html>
-  );
-}
 
 /** Gold chest badge — brightness scales with Reader level. */
 export function ReaderRankEmblem({ level }: { level: number }) {

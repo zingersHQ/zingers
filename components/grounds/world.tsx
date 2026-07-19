@@ -12,7 +12,7 @@ import { blank, skillLevel, TYPE_COLOR } from "@/lib/evolve/progression";
 import { trainerLevel } from "@/lib/evolve/trainer";
 import { readerPalette, GOLD } from "@/lib/render/palette";
 import { flightAttitudePlanar } from "@/lib/render/animations";
-import { ReaderBackSigil, ReaderRankEmblem, ReaderSigilBillboard } from "./reader-regalia";
+import { ReaderBackSigil, ReaderRankEmblem } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
 import { FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
@@ -3877,7 +3877,6 @@ function Handler({
             <primitive object={built.root} />
             <ReaderRankEmblem level={readerLv} />
             {!force && <ReaderBackSigil height={built.h} />}
-            <ReaderSigilBillboard trainerXp={trainerXp} force={force} height={built.h} />
             <Jetpack h={built.h} flyingRef={flying} burstRef={jetBurst} />
           </group>
           {/* Reader ground rings — gold by default; pledged adds a Force outer band.
