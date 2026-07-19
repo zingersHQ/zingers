@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // M2 — the Champion tab (docs/mobile.md). The phone's raise lane, shown directly
 // (no "open X" bridge): your one owned champion — its body, career record,
-// strategy readout (shaped by Imprints + bouts), and paid training. Reuses the
+// temperament readout (shaped by Imprints + fights), and paid training. Reuses the
 // real store actions (imprint / trainChampion / trainWithFragment) and the same
 // career-derived portrait the rest of the app uses, so training here visibly
 // reshapes the body and marks the champion everywhere.
@@ -158,13 +158,13 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
         </div>
 
-        {/* temperament — status meters; Imprints + bouts grow these (never drag) */}
+        {/* temperament — status meters; Imprints + fights grow these (never drag) */}
         <div className="panel" style={{ padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
             TEMPERAMENT · HOW {name.toUpperCase()} THINKS
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
-            Its fighting nature — grown by lessons you teach and bouts it survives. Not sliders you set.
+            Its fighting nature — grown by lessons you teach and fights it survives. Not sliders you set.
           </p>
           {DIALS.map((d) => (
             <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />

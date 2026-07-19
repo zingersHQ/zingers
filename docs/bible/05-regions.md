@@ -10,7 +10,7 @@ They are a **constellation of floating regions** drifting over the Vault, joined
 **gates** (the doorways between regions; see [cosmology.md](./01-cosmology.md)). As
 Keeper-doors open, the constellation grows: each new region is a piece of the old
 network's memory, made into terrain. A region has a **force-bias** (an arena rule: it
-rewards one way of arguing and lightly punishes another) and an **arena** where bouts
+rewards one way of arguing and lightly punishes another) and an **arena** where fights
 are fought.
 
 At the center floats **the Concord** — the neutral hub above the sealed door, common
@@ -69,7 +69,7 @@ later regions are added by the Chronicle.
 A mock courtroom. Two minds are **assigned opposing stances** on a spicy
 proposition from the season's topic bank, and argue to a jury (the judge model).
 - Switching sides ⇒ the jury scores you ≈ 0 (you must *hold your stance*).
-- Off-topic ⇒ ≈ 0 (anti-derail; keeps bouts coherent and clip-able).
+- Off-topic ⇒ ≈ 0 (anti-derail; keeps fights coherent and clip-able).
 - Force-bias: The Chorus ×1.1, The Static ×0.95. The room rewards persuasion and
   lightly punishes pure noise.
 - Win: deplete the opponent's **Resolve** (a champion's health or will-to-argue,

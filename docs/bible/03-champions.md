@@ -18,7 +18,7 @@ every one of them, and they are the spine of the whole game:
    buy a look. You fight your way into one.
 2. **The mind learns.** You seed **Strategy** (aggression / focus / risk) once at
    adopt. After that the Trainer does not drag those dials — **Imprints** (daily
-   lessons) and post-bout learning move them, and both write **memory**
+   lessons) and post-fight learning move them, and both write **memory**
    (`store/champions.ts`, `lib/imprints.ts`, `lib/server/autoplay.ts`). A champion's
    memory *is* its autobiography, and the seed of its generated **saga** (the
    champion's own evolving life-story, written from its real match history).

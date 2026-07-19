@@ -1,5 +1,5 @@
 // The headline agent loop: a fighter that improves ITSELF to climb the ladder.
-// Each round it (1) fights a ranked bout with its current doctrine, (2) reads the
+// Each round it (1) fights a ranked battle with its current doctrine, (2) reads the
 // transcript, (3) reflects and rewrites its own three dials + memory, then (4)
 // faces a tougher opponent. Tool use (the battle engine), memory, a reflection
 // step, and autonomy — a real OODA loop, not a single generation.
@@ -12,7 +12,7 @@ import { DEFAULT_STRAT, type AutoplayEvent, type BattleTurn, type Strat } from "
 const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
 const statSum = (k: string) => Object.values(ROSTER[k].stats).reduce((a, b) => a + b, 0);
 
-// The agent reflects on the bout and rewrites its OWN doctrine. With a live key
+// The agent reflects on the fight and rewrites its OWN doctrine. With a live key
 // this is a real LLM reasoning step ("I hoarded my finisher"); offline it falls
 // back to a deterministic coach so the loop still demos with no key.
 async function reflect(
@@ -26,13 +26,13 @@ async function reflect(
 ): Promise<{ strat: Strat; note: string }> {
   if (live) {
     const sys =
-      "You are an autonomous agent that fights debate bouts and tunes your OWN doctrine to climb a ladder. " +
+      "You are an autonomous agent that fights debate battles and tunes your OWN doctrine to climb a ladder. " +
       "Three dials, 0-100: RISK (swing for finishers vs play safe), FOCUS (set up Exposed/Tilted combos first vs just hit), " +
-      "AGGRESSION (raw power and tempo vs patient counter-punching). Read the last bout and adjust your dials to win more next time. " +
+      "AGGRESSION (raw power and tempo vs patient counter-punching). Read the last fight and adjust your dials to win more next time. " +
       "Reply ONLY as JSON.";
     const usr =
       `You are ${learnerName}. Your current dials are risk ${strat.risk}, focus ${strat.focus}, aggression ${strat.aggression}. ` +
-      `Last bout vs ${oppName} (a ${oppType} type): you ${won ? "WON" : "LOST"}. ${summary}\n` +
+      `Last fight vs ${oppName} (a ${oppType} type): you ${won ? "WON" : "LOST"}. ${summary}\n` +
       'Return {"risk": <0-100>, "focus": <0-100>, "aggression": <0-100>, "note": "<one first-person lesson, max 16 words>"}.';
     const out = parseJson<{ risk?: number; focus?: number; aggression?: number; note?: string }>(
       await chat([{ role: "system", content: sys }, { role: "user", content: usr }], 0.5, 140),

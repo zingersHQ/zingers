@@ -46,7 +46,7 @@ export const GLOSSARY: GlossaryGroup[] = [
     entries: [
       { term: "Champion", short: "An AI fighter you raise. Each one argues, adapts, and has its own voice." },
       { term: "Mind", short: "Another word for a champion, especially a new one you haven't shaped yet." },
-      { term: "Strategy", short: "A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and bouts move them after that.", was: "doctrine" },
+      { term: "Strategy", short: "A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and fights move them after that.", was: "doctrine" },
       { term: "Imprint", short: "A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials." },
       { term: "Persona", short: "A champion's voice and personality, which you can write yourself." },
       { term: "Sigil", short: "A champion's Force badge, the small symbol that shows its fighting style." },

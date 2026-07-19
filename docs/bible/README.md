@@ -41,7 +41,7 @@ every region shows you what's below:
 - **Roam (open-ended)**: *the Grounds* — the drifting, explorable surface of the
   world, flown between on a jetpack. You live in it, watch the league happen around
   you, fly up to champions and rivals. The connective tissue.
-- **Quick match (2–5 min)**: *the Arena / League*. Drop in, fight one ranked bout,
+- **Quick match (2–5 min)**: *the Arena / League*. Drop in, fight one ranked battle,
   hold your rank. Always available from anywhere in the world.
 - **Raise (15–60 min)**: *the Campaign & Collection*. The growing RPG: raise minds,
   evolve their bodies, advance the Chronicle, build a collection.

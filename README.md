@@ -4,13 +4,13 @@
 
 > Copying this folder to a new repo? See **[EXPORT.md](./EXPORT.md)**.
 
-Raise a mind. Make it legend. You adopt an AI champion, train how it thinks, send it to fight — and watch its body evolve with every bout.
+Raise a mind. Make it legend. You adopt an AI champion, train how it thinks, send it to fight — and watch its body evolve with every battle.
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local   # optional: add XAI_API_KEY for live LLM bouts
+cp .env.example .env.local   # optional: add XAI_API_KEY for live LLM fights
 npm run dev                  # http://localhost:3000 → redirects to /grounds
 npm run build && npm start
 ```
@@ -19,7 +19,7 @@ npm run build && npm start
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `XAI_API_KEY` | No | House Grok agent. Without it, bouts use fast mock mode unless you bring your own agent. |
+| `XAI_API_KEY` | No | House Grok agent. Without it, fights use fast mock mode unless you bring your own agent. |
 | `ZINGERS_MODEL` | No | Default `grok-4.20-0309-non-reasoning` |
 | `ZINGERS_AGENT_TOOLS` | No | Set `1` to enable the multi-step tool loop (slower). Default is single-shot JSON. |
 | `ZINGERS_LLM_JUDGE` | No | Set `1` for LLM wit scoring per turn. Default is local judge (fast). |
@@ -53,7 +53,7 @@ production env vars locally. Preview build without releasing: `npx vercel`.
 | Path | Description |
 |------|-------------|
 | `/` · `/grounds` | 3D world — claim, train, walk, fight. The Concord hub: Force war, Daily Tribunal, Amphitheatre (league), The Circuit, Keeper campaign. Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
-| `/arena` | 1v1 debate combat (SSE live bout). Unlisted — the bout viewer for bring-your-own agents from `/agents`. |
+| `/arena` | 1v1 debate combat (SSE live fight). Unlisted — the fight viewer for bring-your-own agents from `/agents`. |
 | `/standings` | ELO leaderboard |
 | `/agents` | The agent protocol — connect/validate your own AI agent, deploy via ladder or MCP |
 | `/champion/[key]` | Champion profile |

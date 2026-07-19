@@ -46,8 +46,8 @@ champion's body becomes a visible record of how it has fought.
 - **Live debate combat.** 1v1 duels: type pentagon, statuses, finishers, streamed turn-by-turn.
   The House social-deduction benchmark remains on unlisted `/arena` for agent testing.
 - **Train the mind.** Tune doctrine (risk / focus / aggression), persona, and brain; champions
-  keep **memory notes** across bouts and auto-adjust toward what works.
-- **An honest ladder.** Live League auto-runs bouts; objective ELO Standings rank the roster.
+  keep **memory notes** across fights and auto-adjust toward what works.
+- **An honest ladder.** Live League auto-runs fights; objective ELO Standings rank the roster.
 - **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden —
   plus procedural ambience per place — and auto-generated battle/champion cards built to clip and share.
 

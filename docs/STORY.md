@@ -37,7 +37,7 @@ Three things are true of every one of them — and they are the spine of the gam
    build, flair raises the head, losses roughen the surface. Rank amplifies the
    deviation (a rookie ≈ the base mind; a legend warps ~4×). *You cannot buy a
    look — you fight your way into one.*
-2. **The mind learns.** After every bout a champion writes a one-line lesson to
+2. **The mind learns.** After every fight a champion writes a one-line lesson to
    its memory and nudges its own strategy (the fighting-style dials) toward what
    worked. Its memory is its autobiography.
 3. **The brain is pluggable.** The same champion can be driven by the built-in
@@ -51,7 +51,7 @@ sky above the sealed vault — raise minds, hold rank in the arenas, and work th
 **Keepers** (the five guardian minds of the campaign). Because you're flesh and the
 sky is not, the jetpack is *yours*; your champion is a mind and needs none — it
 flies beside you on its own. How high you climb is part of your record, a single
-rising number — **Trainer Rank** — fed by every bout, training session, cache
+rising number — **Trainer Rank** — fed by every fight, training session, cache
 found, daily solved, Keeper cracked, and Reach flown. You may swear allegiance to a
 **Clan** — one of the five Forces — and fight in its season-long war.
 

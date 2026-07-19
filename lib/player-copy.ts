@@ -1,5 +1,5 @@
-// Player-facing fight vocabulary — one word for the product UI.
-// Internal code/analytics may still say "bout"; players see "duel" / "fight".
+// Player-facing fight vocabulary — never "bout" in UI copy.
+// Internal code/analytics may still say bout (useBout, event kind "bout"); players see fight / battle / duel.
 
 export const FIGHT = {
   /** noun: "your first duel", "watch the duel" */

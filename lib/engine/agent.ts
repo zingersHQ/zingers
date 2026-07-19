@@ -94,7 +94,7 @@ export function describeStrat(s: Strat): string {
 }
 
 function buildSystem(v: AgentView): string {
-  const memory = v.memory.length ? ` What you've learned from past bouts (use it): ${v.memory.join("; ")}.` : "";
+  const memory = v.memory.length ? ` What you've learned from past fights (use it): ${v.memory.join("; ")}.` : "";
   return (
     `You are ${v.you.name}, ${v.you.persona}. You are in ${v.arena}. ` +
     `The proposition is: "${v.topic}". You argue ${v.you.stance.toUpperCase()} it. ` +

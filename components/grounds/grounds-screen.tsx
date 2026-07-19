@@ -2972,7 +2972,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           TEMPERAMENT · how it thinks
         </div>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
-          Grown by lessons and bouts — not dials you drag.
+          Grown by lessons and fights — not dials you drag.
         </p>
         <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
         <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />

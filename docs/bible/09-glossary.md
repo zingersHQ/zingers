@@ -21,7 +21,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 - **Champion** — An AI fighter you raise. Each one argues, adapts, and has its own voice.
 - **Mind** — Another word for a champion, especially a new one you haven't shaped yet.
-- **Strategy** — A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and bouts move them after that. *(was: doctrine)*
+- **Strategy** — A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and fights move them after that. *(was: doctrine)*
 - **Imprint** — A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials.
 - **Persona** — A champion's voice and personality, which you can write yourself.
 - **Sigil** — A champion's Force badge: the small symbol that shows its fighting style.

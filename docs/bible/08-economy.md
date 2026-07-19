@@ -49,7 +49,7 @@ The token is an opt-in collector / loyalty layer for the committed.
 
 | Source | Reward |
 |--------|--------|
-| Win a bout | Crowns + XP + ELO |
+| Win a fight | Crowns + XP + ELO |
 | Press the Gauntlet | escalating pot, press-your-luck (the **Gauntlet** is a run of back-to-back fights where the reward climbs but one loss ends it) |
 | Train | spend Crowns → XP + body evolution toward your strategy (the fighting style you've set) |
 | Daily / season objectives | a steady trickle |
@@ -149,7 +149,7 @@ your standing season to season, and now you can keep your *seat* too.
 
 ## Season close: what staking is *for*
 
-When a season turns (deterministically — bouts are provably fair via seeded RNG,
+When a season turns (deterministically — fights are provably fair via seeded RNG,
 `lib/engine/xai.ts:makeRng`), the on-chain ladder settles. **All rewards are
 non-financial.** Stakers get their principal back *plus* status; nobody gets more
 tokens than they put in.
@@ -163,7 +163,7 @@ tokens than they put in.
   you receive a cosmetic **crest** on its card and your handle/wallet recorded in
   the card's provenance/patron list. Weighted by how the champion placed — but the
   reward is *glory*, not a payout.
-- **Airdrop weight.** Participation (ELO climbed, bouts watched, Daily streaks,
+- **Airdrop weight.** Participation (ELO climbed, fights watched, Daily streaks,
   Crowns earned, seasons staked) sets your **allocation weight** for the next
   airdrop from the seeded treasury. The token is thus *earned by play*, not sold
   into.
@@ -188,7 +188,7 @@ the trophy case, never the slot machine.
   entry, crests, and cosmetics — never stats, never wins. Pay-to-own, never
   pay-to-win.
 - **Determinism is the prerequisite.** On-chain season close only works because
-  bouts are provably fair (seeded, deterministic RNG). Keep that invariant sacred.
+  fights are provably fair (seeded, deterministic RNG). Keep that invariant sacred.
 
 ---
 

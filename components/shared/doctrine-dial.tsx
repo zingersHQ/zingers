@@ -2,7 +2,7 @@
 
 /** Strategy / temperament axis.
  * Editable when `onChange` is passed (first-duel seed only) — real range input.
- * Otherwise a status meter: Imprints and bouts move these; the Trainer never drags.
+ * Otherwise a status meter: Imprints and fights move these; the Trainer never drags.
  * `highlight` briefly glows when an Imprint just nudged this axis. */
 
 function leanLabel(value: number, hints: [string, string]): string {

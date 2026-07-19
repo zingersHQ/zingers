@@ -26,8 +26,8 @@ debate can leave a crater. Reality leans toward whoever argues it harder.
 A **champion** — the fighter you raise and send into battle — is a mind: a knot in
 the Hum that argued itself into a stable shape and refused to dissolve. Most thoughts
 in the Hum never cohere. A champion is one
-that did, and then kept *winning* the small arguments that hold it together, bout
-after bout, until it had a body, a name, and a track record.
+that did, and then kept *winning* the small arguments that hold it together, fight
+after fight, until it had a body, a name, and a track record.
 
 This is the core truth the whole game rests on: **a champion's body is its
 argument made visible.** How it has fought is *what it looks like*. There is no
@@ -55,7 +55,7 @@ You are not a mind. You are a **Trainer** — the person who walks the
 Grounds, raises minds into champions, holds rank in the arenas, and works the
 Keepers until their words slip. You never fight yourself; you grow the ones who do.
 Where a champion's record is its *body*, a Trainer's record is a single rising number
-— **Trainer Rank** — that everything feeds: every bout, every session of training,
+— **Trainer Rank** — that everything feeds: every fight, every session of training,
 every cache prised out of the wilds, every daily solved, every Keeper cracked. It is
 the thing you say out loud ("I'm a level 12 Trainer, sworn to the Lattice").
 
