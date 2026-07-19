@@ -20,7 +20,6 @@ import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { STORAGE } from "@/lib/brand";
 import {
   firstDuelOpponent,
-  firstDuelStarterKeys,
   firstDuelStarters,
   isFirstDuelComplete,
   markFirstDuelComplete,
@@ -117,15 +116,6 @@ const World = dynamic(() => import("@/components/grounds/world"), {
   loading: () => (
     <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted)" }}>
       summoning the grounds…
-    </div>
-  ),
-});
-
-const CircuitLite = dynamic(() => import("@/components/grounds/circuit-lite"), {
-  ssr: false,
-  loading: () => (
-    <div className="mono" style={{ position: "fixed", inset: 0, zIndex: 100, display: "grid", placeItems: "center", background: "#0a0712", color: "var(--muted)" }}>
-      warming the jetpack…
     </div>
   ),
 });
@@ -886,8 +876,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     if (summonStartedAt.current === null) summonStartedAt.current = Date.now();
     if (roster.length === 0 || firstDuelPhase !== null) return;
     const wait = Math.max(0, MIN_SUMMON_MS - (Date.now() - summonStartedAt.current));
-    // Flight-First: open on a guest Climb, then claim → pick (docs/flight-first-plan.md).
-    const t = setTimeout(() => setFirstDuelPhase("fly"), wait);
+    // Desktop door: champion pick (native Circuit venue is unlocked for after —
+    // do NOT open CircuitLite here; that's the mobile Climb body).
+    const t = setTimeout(() => setFirstDuelPhase("pick"), wait);
     return () => clearTimeout(t);
   }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
 
@@ -950,7 +941,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const modesLocked = mounted && !isFirstDuelComplete();
   const duelStarters = useMemo(() => firstDuelStarters(roster), [roster]);
   const inFirstDuelSetup =
-    firstDuelPhase === "fly" ||
     firstDuelPhase === "pick" ||
     firstDuelPhase === "train" ||
     firstDuelPhase === "evolve" ||
@@ -1804,11 +1794,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // It mounts during `train` — the last step before the bell — BEHIND the opaque
   // tuning modal, so it's warm (camera ref + assets ready) for the first fight,
   // where `owned` is set and the world is finally shown.
-  const worldOccluded =
-    showIntro ||
-    firstDuelPhase === "fly" ||
-    firstDuelPhase === "pick" ||
-    (awaitingFirstDuel && firstDuelPhase === null);
+  const worldOccluded = showIntro || firstDuelPhase === "pick" || (awaitingFirstDuel && firstDuelPhase === null);
   const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
   const dockPad = showDock ? DOCK_H + 8 : 0;
@@ -2427,36 +2413,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         <Onboarding roster={roster} get={store.get} onPick={setWakeKey} />
       )}
 
-      {/* Flight-First door — guest Climb before champion select (desktop P4). */}
-      {mounted && firstDuelPhase === "fly" && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 95 }}>
-          <CircuitLite
-            embedded
-            guestKey={
-              firstDuelPick ||
-              firstDuelStarterKeys().find((k) => byKey[k]) ||
-              duelStarters[0]?.key ||
-              "AXIOM"
-            }
-            onClaim={() => {
-              const key =
-                firstDuelPick ||
-                firstDuelStarterKeys().find((k) => byKey[k]) ||
-                duelStarters[0]?.key ||
-                null;
-              if (key) {
-                setFirstDuelPick(key);
-                setWakeKey(key);
-              }
-              setFirstDuelPhase("pick");
-            }}
-            onExit={() => setFirstDuelPhase("pick")}
-          />
-        </div>
-      )}
-
-      {/* guided first-duel funnel for new players */}
-      {mounted && firstDuelPhase && firstDuelPhase !== "fly" && duelStarters.length > 0 && (
+      {/* guided first-duel funnel for new players (desktop: pick → train → duel;
+          Circuit is the native 6-DOF venue in-world — never CircuitLite here). */}
+      {mounted && firstDuelPhase && duelStarters.length > 0 && (
         <FirstDuelOverlay
           phase={firstDuelPhase}
           starters={duelStarters}
@@ -2606,10 +2565,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE CONCORD</div>
             <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Warming the jetpack…
+              Summoning minds for you to raise…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              You fly. It fights. You both rise.
+              {READER_COPY.walkFightLine}
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (

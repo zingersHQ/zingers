@@ -69,7 +69,7 @@ No new modes, Reach art sprees, collection trading, House promotion, token UI.
 | **3 Boards chrome** | mostly shipped | PB + board on Climb fall card |
 | **4 Playtests** | todo | 10–30 humans |
 | **5 One altitude key** | shipped (thin) | Reach II needs 1 duel win (Climb + desktop Circuit) |
-| **6 Desktop first 90s** | shipped (thin) | summoning → guest Climb → pick; Circuit unlocked pre-duel |
+| **6 Desktop first 90s** | shipped (corrected) | summoning → **pick** (not CircuitLite); native Circuit venue unlocked pre-duel. Mobile `/m` keeps Climb-first. |
 | **7 Hygiene** | todo | LLM budget, growth after feel |
 
 ---
