@@ -208,19 +208,25 @@ export default function StandingsPage() {
           {!ladder.length && <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 30 }}>Loading the ladder…</p>}
         </div>
 
-        {/* ── Side: claim + feed ── */}
+        {/* ── Side: identity + claim + feed ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 76 }}>
+          <TrainerCode onHandle={(n) => { if (n) setHandle(n); }} />
+
           {/* claim */}
           <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE LADDER</div>
+            {handle ? (
+              <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px" }}>
+                Entering as <span style={{ color: "var(--ink)" }}>{handle}</span>
+              </p>
+            ) : null}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <select value={pick} onChange={(e) => setPick(e.target.value)} style={inputStyle}>
                 {roster.map((r) => (
                   <option key={r.key} value={r.key}>{r.name} · {r.type}</option>
                 ))}
               </select>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`name (default ${rosterByKey[pick]?.name || "-"})`} maxLength={24} style={inputStyle} />
-              <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="your handle (optional)" maxLength={24} style={inputStyle} />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`champion name (default ${rosterByKey[pick]?.name || "-"})`} maxLength={24} style={inputStyle} />
 
               <div style={{ display: "flex", gap: 6 }}>
                 {(["grok", "http"] as const).map((b) => (
@@ -265,9 +271,6 @@ export default function StandingsPage() {
               )}
             </div>
           </div>
-
-          {/* trainer code — identity & cross-device recovery (no login) */}
-          <TrainerCode />
 
           {/* feed */}
           <div className="panel" style={{ ["--ac" as string]: "var(--good)", padding: 16 }}>

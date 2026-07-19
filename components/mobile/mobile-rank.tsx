@@ -178,7 +178,10 @@ export function MobileRank() {
           {!ladder.length && <p className="mono" style={{ color: "var(--muted2)", textAlign: "center", padding: 40, fontSize: 12 }}>loading the ladder…</p>}
         </div>
 
-        <div style={{ marginTop: 16 }}>
+        <div className="panel" style={{ ["--ac" as string]: "#7c5cff", padding: 14, marginTop: 16 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "#7c5cff", marginBottom: 10 }}>
+            TRAINER
+          </div>
           <SolanaConnect />
         </div>
 

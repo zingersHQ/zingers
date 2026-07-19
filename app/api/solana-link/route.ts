@@ -1,7 +1,8 @@
-// Optional Solana Trainer sigil — link a Phantom wallet to the device owner
-// token (docs/flight-first-plan.md). Identity only; never gates play.
+// Optional Trainer identity link — bind a browser wallet to the device owner
+// token and keep a display name with that key. Never gates play; never spends.
 import { NextRequest, NextResponse } from "next/server";
-import { issueNonce, linkedPubkey, unlinkWallet, verifyAndLink } from "@/lib/server/solana-link";
+import { issueNonce, linkedIdentity, setLinkedName, unlinkWallet, verifyAndLink } from "@/lib/server/solana-link";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,9 @@ function bad(msg: string, status = 400) {
 }
 
 export async function GET(req: NextRequest) {
+  const limited = rateLimit(req, "solana-link", 60, 60_000);
+  if (limited) return limited;
+
   const token = req.nextUrl.searchParams.get("token")?.trim() ?? "";
   if (token.length < 8 || token.length > 128) return bad("Missing token.");
 
@@ -19,12 +23,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ nonce, message });
   }
 
-  const pubkey = await linkedPubkey(token);
-  return NextResponse.json({ pubkey });
+  const { pubkey, name } = await linkedIdentity(token);
+  return NextResponse.json({ pubkey, name });
 }
 
 export async function POST(req: NextRequest) {
-  let body: { token?: string; pubkey?: string; signature?: string; message?: string };
+  const limited = rateLimit(req, "solana-link", 20, 60_000);
+  if (limited) return limited;
+
+  let body: { token?: string; pubkey?: string; signature?: string; message?: string; name?: string };
   try {
     body = await req.json();
   } catch {
@@ -35,14 +42,42 @@ export async function POST(req: NextRequest) {
   const signature = typeof body.signature === "string" ? body.signature.trim() : "";
   const message = typeof body.message === "string" ? body.message : "";
   if (token.length < 8 || token.length > 128) return bad("Missing token.");
-  if (!pubkey || !signature || !message) return bad("Missing pubkey, signature, or message.");
+  if (!pubkey || !signature || !message) return bad("Missing signature fields.");
 
-  const result = await verifyAndLink({ ownerToken: token, pubkey, signature, message });
+  const result = await verifyAndLink({
+    ownerToken: token,
+    pubkey,
+    signature,
+    message,
+    name: body.name,
+  });
   if (!result.ok) return bad(result.error, 401);
-  return NextResponse.json({ ok: true, pubkey: result.pubkey });
+  return NextResponse.json({ ok: true, pubkey: result.pubkey, name: result.name });
+}
+
+/** Save / update the Trainer name on an already-linked key. */
+export async function PATCH(req: NextRequest) {
+  const limited = rateLimit(req, "solana-link", 30, 60_000);
+  if (limited) return limited;
+
+  let body: { token?: string; name?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return bad("Invalid JSON.");
+  }
+  const token = typeof body.token === "string" ? body.token.trim() : "";
+  if (token.length < 8 || token.length > 128) return bad("Missing token.");
+
+  const result = await setLinkedName(token, body.name ?? "");
+  if (!result.ok) return bad(result.error, result.error.startsWith("Connect") ? 409 : 400);
+  return NextResponse.json({ ok: true, name: result.name });
 }
 
 export async function DELETE(req: NextRequest) {
+  const limited = rateLimit(req, "solana-link", 20, 60_000);
+  if (limited) return limited;
+
   const token = req.nextUrl.searchParams.get("token")?.trim() ?? "";
   if (token.length < 8 || token.length > 128) return bad("Missing token.");
   await unlinkWallet(token);

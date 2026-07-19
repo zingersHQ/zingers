@@ -1,12 +1,22 @@
-// Optional Solana wallet ↔ owner-token link (docs/flight-first-plan.md §Wallet).
+// Optional wallet ↔ owner-token link (docs/flight-first-plan.md §Wallet).
 // Identity only — no payments, no token balance, no spend approvals.
+// A Trainer name can ride with the linked pubkey so reconnecting restores it.
 import "server-only";
 import { Redis } from "@upstash/redis";
 import { verifyAsync } from "@noble/ed25519";
 import bs58 from "bs58";
 
 const NONCE_TTL_SEC = 10 * 60;
-const MSG_PREFIX = "Zingers Trainer sigil\n";
+const MSG_PREFIX = "Zingers\n";
+
+export function cleanTrainerName(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const t = raw.trim().replace(/\s+/g, " ").slice(0, 24);
+  if (t.length < 2) return "";
+  // Letters, numbers, spaces, light punctuation — no URLs / spam glyphs.
+  if (!/^[\p{L}\p{N} _.\-']+$/u.test(t)) return "";
+  return t;
+}
 
 type LinkStore = {
   putNonce(token: string, nonce: string): Promise<void>;
@@ -15,6 +25,8 @@ type LinkStore = {
   getToken(pubkey: string): Promise<string | null>;
   link(token: string, pubkey: string): Promise<void>;
   unlink(token: string): Promise<void>;
+  getName(pubkey: string): Promise<string | null>;
+  setName(pubkey: string, name: string): Promise<void>;
   shared: boolean;
 };
 
@@ -55,6 +67,17 @@ class RedisLinks implements LinkStore {
     const pk = await this.getPubkey(token);
     await this.r.del(`z:soltok:${token}`);
     if (pk) await this.r.del(`z:solpk:${pk}`);
+    // Keep z:solname — the name follows the key, not the device token.
+  }
+  async getName(pubkey: string) {
+    return (await this.r.get<string>(`z:solname:${pubkey}`)) ?? null;
+  }
+  async setName(pubkey: string, name: string) {
+    if (!name) {
+      await this.r.del(`z:solname:${pubkey}`);
+      return;
+    }
+    await this.r.set(`z:solname:${pubkey}`, name);
   }
 }
 
@@ -63,6 +86,7 @@ class MemoryLinks implements LinkStore {
   private nonces = new Map<string, { n: string; exp: number }>();
   private tok = new Map<string, string>();
   private pk = new Map<string, string>();
+  private names = new Map<string, string>();
   async putNonce(token: string, nonce: string) {
     this.nonces.set(token, { n: nonce, exp: Date.now() + NONCE_TTL_SEC * 1000 });
   }
@@ -91,6 +115,13 @@ class MemoryLinks implements LinkStore {
     this.tok.delete(token);
     if (pk) this.pk.delete(pk);
   }
+  async getName(pubkey: string) {
+    return this.names.get(pubkey) ?? null;
+  }
+  async setName(pubkey: string, name: string) {
+    if (!name) this.names.delete(pubkey);
+    else this.names.set(pubkey, name);
+  }
 }
 
 let cached: LinkStore | null = null;
@@ -103,7 +134,7 @@ export function solanaLinks(): LinkStore {
 }
 
 export function buildSignMessage(nonce: string): string {
-  return `${MSG_PREFIX}Nonce: ${nonce}\nThis proves you control this wallet. It does not spend or approve anything.`;
+  return `${MSG_PREFIX}Nonce: ${nonce}\nConfirm this Trainer on this device. Nothing is spent.`;
 }
 
 export async function issueNonce(ownerToken: string): Promise<{ nonce: string; message: string }> {
@@ -123,7 +154,6 @@ function parsePubkey(pubkey: string): Uint8Array | null {
 
 function parseSig(signature: string): Uint8Array | null {
   try {
-    // Phantom signMessage returns base58 or uint8 array serialized as base58
     const bytes = bs58.decode(signature.trim());
     return bytes.length === 64 ? bytes : null;
   } catch {
@@ -136,17 +166,18 @@ export async function verifyAndLink(opts: {
   pubkey: string;
   signature: string;
   message: string;
-}): Promise<{ ok: true; pubkey: string } | { ok: false; error: string }> {
+  name?: string;
+}): Promise<{ ok: true; pubkey: string; name: string | null } | { ok: false; error: string }> {
   const store = solanaLinks();
   const nonce = await store.takeNonce(opts.ownerToken);
-  if (!nonce) return { ok: false, error: "Nonce expired — try again." };
+  if (!nonce) return { ok: false, error: "Session expired — try again." };
 
   const expected = buildSignMessage(nonce);
   if (opts.message !== expected) return { ok: false, error: "Message mismatch." };
 
   const pk = parsePubkey(opts.pubkey);
   const sig = parseSig(opts.signature);
-  if (!pk || !sig) return { ok: false, error: "Invalid pubkey or signature." };
+  if (!pk || !sig) return { ok: false, error: "Invalid key or signature." };
 
   const msgBytes = new TextEncoder().encode(opts.message);
   const valid = await verifyAsync(sig, msgBytes, pk);
@@ -154,7 +185,34 @@ export async function verifyAndLink(opts: {
 
   const pubkey = opts.pubkey.trim();
   await store.link(opts.ownerToken, pubkey);
-  return { ok: true, pubkey };
+
+  const incoming = cleanTrainerName(opts.name);
+  if (incoming) await store.setName(pubkey, incoming);
+  const name = (await store.getName(pubkey)) || incoming || null;
+
+  return { ok: true, pubkey, name };
+}
+
+export async function linkedIdentity(ownerToken: string): Promise<{ pubkey: string | null; name: string | null }> {
+  const store = solanaLinks();
+  const pubkey = await store.getPubkey(ownerToken);
+  if (!pubkey) return { pubkey: null, name: null };
+  const name = await store.getName(pubkey);
+  return { pubkey, name };
+}
+
+/** Persist a Trainer name onto the linked key. Requires an active link. */
+export async function setLinkedName(
+  ownerToken: string,
+  rawName: string,
+): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
+  const store = solanaLinks();
+  const pubkey = await store.getPubkey(ownerToken);
+  if (!pubkey) return { ok: false, error: "Connect first to keep a name." };
+  const name = cleanTrainerName(rawName);
+  if (!name) return { ok: false, error: "Name needs 2–24 ordinary characters." };
+  await store.setName(pubkey, name);
+  return { ok: true, name };
 }
 
 export async function linkedPubkey(ownerToken: string): Promise<string | null> {
