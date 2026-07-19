@@ -68,7 +68,6 @@ export function RegionScene({ regionId, live = true }: { regionId: string; live?
             gates={[]}
             pledged={null}
             tier={3}
-            featured={false}
             featuredWorld={null}
             showcase
           />
