@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { ArrowRight } from "lucide-react";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { armOnboardingAudio } from "@/lib/sound-gallery";
@@ -57,12 +58,16 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
 
   // Flight-first story — World → Companion → Forces → Arenas → Fly.
   // TEMP (2026-07): later beats are parked. Slide 1 (Awaken) stays as the
-  // desktop homepage hero; Next / → / Enter / Space / SKIP close the deck
+  // desktop homepage hero; Start CTA / Enter / Space / SKIP close the deck
   // straight into "Summoning minds for you to raise…" → champion select.
   // Phone homepage is /m Take flight (Trainer+champion), not this deck —
   // Landing redirects phones there. Uncomment the full assignment to restore.
+  const [i, setI] = useState(0);
+  const startRef = useRef<() => void>(() => {});
+  const onStartHero = useCallback(() => startRef.current(), []);
+
   const slides: React.ReactNode[] = [
-    <Awaken key="awaken" mobile={isMobile} embedded={embedded} />,
+    <Awaken key="awaken" mobile={isMobile} embedded={embedded} onStart={onStartHero} />,
     // <Shape key="shape" mobile={isMobile} embedded={embedded} />,
     // <Forces key="forces" mobile={isMobile} embedded={embedded} />,
     // <Fight key="fight" mobile={isMobile} embedded={embedded} />,
@@ -75,16 +80,18 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
   */
   const count = slides.length;
   const LAST = count - 1;
-  // Hero-only deck: the right control is Start → summoning (not "next slide").
+  // Hero-only deck: Start CTA → summoning (not "next slide").
   const heroOnly = count <= 1;
 
-  const [i, setI] = useState(0);
   const next = useCallback(() => setI((v) => (v >= LAST ? v : v + 1)), [LAST]);
   const back = useCallback(() => setI((v) => Math.max(0, v - 1)), []);
   const startOrAdvance = useCallback(() => {
     if (heroOnly || i >= LAST) onClose();
     else next();
   }, [heroOnly, i, LAST, onClose, next]);
+  useEffect(() => {
+    startRef.current = startOrAdvance;
+  }, [startOrAdvance]);
 
   // Keep the active index valid when the layout flips between desktop/mobile.
   useEffect(() => {
@@ -213,10 +220,10 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
           </button>
         </div>
 
-        {/* side navigation — transparent, white outline.
-            Hero-only: the right control is Start → summoning (no left pager). */}
+        {/* Multi-slide deck keeps side arrows. Hero-only Start lives in the
+            Awaken lower-third (solid CTA) — the faint → chevron was too easy to miss. */}
         {!heroOnly && i > 0 && <NavArrow side="left" onClick={back} />}
-        <NavArrow side="right" onClick={startOrAdvance} label={heroOnly || i >= LAST ? "start" : "next"} />
+        {!heroOnly && <NavArrow side="right" onClick={startOrAdvance} label={i >= LAST ? "start" : "next"} />}
       </div>
     </div>
   );
@@ -322,7 +329,16 @@ function Stage({ children }: { children: React.ReactNode }) {
 // ── Beat 1 — AWAKEN ──────────────────────────────────────────────────────────
 // Infinite flight: Trainer + champion over a looping belt of real Grounds
 // islands (Void Garden daylight + nature kit). Same hero as the mobile door.
-function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) {
+function Awaken({
+  mobile,
+  embedded,
+  onStart,
+}: {
+  mobile?: boolean;
+  embedded?: boolean;
+  /** Solid hero CTA — desktop homepage Start (side chevron was too quiet). */
+  onStart?: () => void;
+}) {
   const [live, setLive] = useState(false);
   return (
     <div style={{ ...FULL, background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)" }}>
@@ -348,7 +364,49 @@ function Awaken({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
           </>
         }
         body="You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise it, tune it, and send it into the battles you climb over — you both rise."
-      />
+      >
+        {onStart && (
+          <button
+            type="button"
+            onClick={onStart}
+            aria-label="Take flight"
+            className="fr-start-cta"
+          >
+            Take flight <ArrowRight size={18} strokeWidth={2.6} />
+          </button>
+        )}
+      </LowerThird>
+      <style>{`
+        .fr-start-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          font-family: var(--font-grotesk), sans-serif;
+          font-size: ${mobile ? 15 : 17}px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          color: #140e08;
+          background: var(--gold);
+          border: none;
+          border-radius: 10px;
+          padding: ${mobile ? "14px 22px" : "16px 28px"};
+          cursor: pointer;
+          box-shadow: 0 0 0 1px rgba(245, 208, 32, 0.55), 0 10px 32px -8px rgba(245, 208, 32, 0.65), 0 4px 18px -4px rgba(0, 0, 0, 0.55);
+          transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease;
+        }
+        .fr-start-cta:hover {
+          filter: brightness(1.06);
+          box-shadow: 0 0 0 1px rgba(245, 208, 32, 0.75), 0 14px 40px -8px rgba(245, 208, 32, 0.75), 0 4px 18px -4px rgba(0, 0, 0, 0.55);
+        }
+        .fr-start-cta:active { transform: translateY(1px); }
+        @media (prefers-reduced-motion: no-preference) {
+          .fr-start-cta { animation: frStartPulse 2.4s ease-in-out infinite; }
+        }
+        @keyframes frStartPulse {
+          0%, 100% { box-shadow: 0 0 0 1px rgba(245, 208, 32, 0.55), 0 10px 32px -8px rgba(245, 208, 32, 0.55), 0 4px 18px -4px rgba(0, 0, 0, 0.55); }
+          50% { box-shadow: 0 0 0 2px rgba(245, 208, 32, 0.85), 0 14px 44px -6px rgba(245, 208, 32, 0.85), 0 4px 18px -4px rgba(0, 0, 0, 0.55); }
+        }
+      `}</style>
     </div>
   );
 }
