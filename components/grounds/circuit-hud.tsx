@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
+import { ChevronLeft, Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
 import { formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 
@@ -36,6 +36,7 @@ export function CircuitHud({
   boardLoading,
   onContinue,
   onRestart,
+  onExit,
   accent,
   compact,
   failReason,
@@ -53,6 +54,8 @@ export function CircuitHud({
   boardLoading: boolean;
   onContinue: () => void;
   onRestart: () => void;
+  /** Leave the Circuit venue — jump on the pad starts the run, so walking out is awkward. */
+  onExit?: () => void;
   accent: string;
   compact?: boolean;
   failReason?: CircuitFailReason;
@@ -89,6 +92,31 @@ export function CircuitHud({
 
   return (
     <>
+      {onExit && (
+        <button
+          type="button"
+          onClick={onExit}
+          aria-label="Exit the Circuit"
+          className="panel"
+          style={{
+            position: "absolute",
+            top: 14,
+            left: 16,
+            zIndex: 120,
+            pointerEvents: "auto",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "7px 12px 7px 9px",
+            cursor: "pointer",
+            fontSize: 12.5,
+            fontWeight: 600,
+            touchAction: "manipulation",
+          }}
+        >
+          <ChevronLeft size={15} strokeWidth={2.4} /> Exit
+        </button>
+      )}
       <div
         className="panel"
         style={{

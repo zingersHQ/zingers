@@ -2208,6 +2208,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           boardLoading={circuitBoardLoading}
           onContinue={advanceCircuitSector}
           onRestart={resetCircuitRun}
+          onExit={exitVenue}
           accent={circuitReach.accent}
           compact={isMobile}
           failReason={circuitFailReason}
