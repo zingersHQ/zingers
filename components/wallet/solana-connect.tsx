@@ -1,5 +1,5 @@
 "use client";
-// Optional wallet identity — claim a unique Trainer name locked to your key.
+// Optional wallet identity — keep a unique Trainer name across devices.
 // Never required to play. Sign-only; no spend UI; no vendor branding in the chrome.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Unplug, Wallet } from "lucide-react";
@@ -195,12 +195,12 @@ export function SolanaConnect({
         body: JSON.stringify({ token, name: trimmed }),
       });
       const j = (await r.json()) as { ok?: boolean; name?: string; error?: string };
-      if (!r.ok || !j.name) throw new Error(j.error || "Could not claim.");
+      if (!r.ok || !j.name) throw new Error(j.error || "Could not save.");
       applyName(j.name);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1400);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not claim.");
+      setErr(e instanceof Error ? e.message : "Could not save.");
       if (e instanceof Error && e.message === "Name taken.") setStatus("taken");
     } finally {
       setBusy(false);
@@ -285,7 +285,7 @@ export function SolanaConnect({
         : status === "free"
           ? "available"
           : status === "yours"
-            ? "yours · locked"
+            ? "yours"
             : status === "invalid"
               ? "2–24 ordinary characters"
               : null;
@@ -303,10 +303,10 @@ export function SolanaConnect({
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div>
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.8, color: "var(--muted)", marginBottom: 4 }}>
-          TRAINER NAME
+          YOUR NAME
         </div>
         <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: "0 0 8px" }}>
-          Claim a unique name locked to your wallet. Without a claim the board shows your short address.
+          Optional. Connect once to keep a unique name across devices. Boards show a short address until then.
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <input
@@ -320,7 +320,7 @@ export function SolanaConnect({
             onBlur={() => {
               if (name.trim().length >= 2) persistHandle(name.trim());
             }}
-            placeholder="pick a name"
+            placeholder="Trainer name"
             maxLength={24}
             style={inputStyle}
             aria-label="Trainer name"
@@ -332,7 +332,7 @@ export function SolanaConnect({
               disabled={busy || !canClaim || status === "yours"}
               style={{ ...ghostBtn, color: ink, flexShrink: 0, opacity: busy || !canClaim ? 0.55 : 1 }}
             >
-              {savedFlash ? "locked" : status === "yours" ? "locked" : "claim"}
+              {savedFlash ? "saved" : status === "yours" ? "yours" : "save"}
             </button>
           ) : null}
         </div>
@@ -372,7 +372,7 @@ export function SolanaConnect({
           }}
         >
           <Wallet size={14} strokeWidth={2} />
-          {busy ? "Signing…" : name.trim().length >= 2 ? "Connect & claim" : "Connect to lock a name"}
+          {busy ? "Signing…" : name.trim().length >= 2 ? "Connect & keep name" : "Connect"}
         </button>
       )}
 

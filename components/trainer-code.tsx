@@ -51,7 +51,7 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
         TRAINER
       </div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 12px" }}>
-        Claim a unique name on your wallet, or keep the recovery code. Nothing here is required to play.
+        Your name and recovery. Nothing here is required to play.
       </p>
 
       <SolanaConnect onIdentity={onHandle} />
