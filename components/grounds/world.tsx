@@ -2823,6 +2823,8 @@ function Handler({
   const near = useRef<NearTarget>(null);
   const failCooldown = useRef(0);
   const circuitPrevZ = useRef<number | null>(null);
+  /** Left the launch pad this sector — next ground contact = fall fail (soul atom). */
+  const circuitAirborne = useRef(false);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
@@ -3235,6 +3237,7 @@ function Handler({
       jumps.current = FLY_TRIGGER + 1;
       jetBurst.current++;
       heading.current = 0;
+      circuitAirborne.current = false;
       if (inner.current) inner.current.rotation.set(0, 0, 0);
     }
     wasCircuitRunning.current = circuitRunning;
@@ -3639,14 +3642,19 @@ function Handler({
           onCircuitFail("gates");
         }
       }
-      // Fell off the track — one fall ends the run (no checkpoint respawn).
-      // Only while the sector is live: during ready the LaunchPad can still be
-      // mounting, and a y<-8 check would insta-fail before the Trainer jumps.
-      if (circuitRunning && t.y < -8) {
-        const now = performance.now();
-        if (onCircuitFail && now - failCooldown.current > 800) {
-          failCooldown.current = now;
-          onCircuitFail("fall");
+      // One fall ends the run (soul atom): leave the pad, then any ground hit
+      // (arrival deck, void safety net) or dropping into the void = fail. Ready
+      // stays safe — circuitRunning is false until the launch jump.
+      if (circuitRunning) {
+        if (!grounded && t.y > restY + 0.85) circuitAirborne.current = true;
+        const fellToVoid = t.y < -6;
+        const landedAfterFlight = circuitAirborne.current && grounded;
+        if ((fellToVoid || landedAfterFlight) && onCircuitFail) {
+          const now = performance.now();
+          if (now - failCooldown.current > 800) {
+            failCooldown.current = now;
+            onCircuitFail("fall");
+          }
         }
       }
     } else if (!matchActive && isHub) {
