@@ -273,7 +273,6 @@ export default function World({
   clanCeremony = false,
   clanShot = null,
   tier = 0,
-  featured = false,
   featuredWorld = null,
   guideWorld = null,
   guideUrgent = false,
@@ -319,7 +318,6 @@ export default function World({
   /** World-camera target for the clan swear shot (flag x/z). */
   clanShot?: { x: number; z: number } | null;
   tier?: number;
-  featured?: boolean;
   featuredWorld?: string | null;
   /** First-run guide: the gate to spotlight as "START HERE" (dims all others). */
   guideWorld?: string | null;
@@ -762,7 +760,7 @@ export default function World({
             <>
               <PlazaSurround biome={biome} />
               <NatureSpawnPath biome={biome} shape={shape} knoll={knoll} />
-              <RegionDistrict biome={biome} tier={tier} featured={featured} shape={shape} />
+              <RegionDistrict biome={biome} tier={tier} shape={shape} />
               <NatureRift biome={biome} shape={shape} colliders />
               <NaturePeaks biome={biome} shape={shape} colliders />
               {/* Scenic pockets (grove / ash thicket) — dressing only; keep-outs for

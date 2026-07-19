@@ -23,7 +23,6 @@ import {
   firstDuelStarters,
   isFirstDuelComplete,
   markFirstDuelComplete,
-  FIRST_DUEL_TAGLINE,
   FIRST_FIGHT_WORLD,
   previewRookieChampion,
 } from "@/lib/first-duel";
@@ -2028,7 +2027,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               clanCeremony={!!clanCeremony}
               clanShot={clanShotTarget}
               tier={growth?.tier ?? 0}
-              featured={growth?.featured ?? false}
               featuredWorld={isHub ? featuredWorld : null}
               guideWorld={guideWorld}
               guideUrgent={guideIdle}
@@ -2102,27 +2100,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           </div>
         )}
 
-        {!isMobile && overlay === "none" && !showMatch && !gRun && !worldUiBlocked && activeVenue !== "circuit" && (
-          <p className="grounds-hud__hint mono" style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 0", letterSpacing: 1, lineHeight: 1.45, pointerEvents: "none" }}>
-            {modesLocked && owned
-              ? FIRST_DUEL_TAGLINE
-              : owned
-              ? inVenue
-                ? isMobile
-                  ? `Inside ${VENUES[activeVenue!].shortLabel} · walk to the exit ring`
-                  : `INSIDE ${VENUES[activeVenue!].name.toUpperCase()} · WALK TO THE EXIT TO RETURN`
-                : isHub
-                  ? isMobile
-                    ? "Gates → regions"
-                    : "THE CONCORD · GATES → REGIONS"
-                  : isMobile
-                    ? "Walk to glowing spots · return arch → Concord"
-                    : scenario.id === "gauntlet"
-                      ? "WALK TO THE ARENA · RETURN ARCH → CONCORD · CIRCUIT TUNNEL"
-                      : "WASD · DOUBLE-JUMP TO FLY · RETURN ARCH → CONCORD · E NEAR NPCs"
-              : "Claim a champion to enter the world"}
-          </p>
-        )}
         {!isMobile && overlay === "none" && !showMatch && !inVenue && !worldUiBlocked && showChronicle && (
           <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
             <SeasonBanner compact onClose={dismissChronicle} />

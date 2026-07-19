@@ -11,7 +11,6 @@
 // Wastes basalt forges, the Void Garden crystalline spires.
 // ─────────────────────────────────────────────────────────────────────────────
 import { memo, useMemo } from "react";
-import { Html } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import type { BiomeConfig } from "./biomes";
@@ -110,12 +109,10 @@ function layoutLots(biome: BiomeConfig, shape: TerrainShape, count: number): Lot
 export const RegionDistrict = memo(function RegionDistrict({
   biome,
   tier,
-  featured = false,
   shape,
 }: {
   biome: BiomeConfig;
   tier: number;
-  featured?: boolean;
   shape: TerrainShape;
 }) {
   const knoll = useMemo(() => spawnKnollFor(biome), [biome]);
@@ -124,8 +121,7 @@ export const RegionDistrict = memo(function RegionDistrict({
   const lots = useMemo(() => layoutLots(biome, shape, count), [biome, shape, count]);
   if (count === 0) return null;
 
-  // the town centroid — anchor for the perimeter ring, a soft hearth light, and
-  // the season-spotlight banner when this is the featured region.
+  // the town centroid — anchor for the perimeter ring and a soft hearth light
   const cx = lots.reduce((s, l) => s + l.x, 0) / lots.length;
   const cz = lots.reduce((s, l) => s + l.z, 0) / lots.length;
   const cy = terrainHeight(cx, cz, shape, knoll);
@@ -146,15 +142,6 @@ export const RegionDistrict = memo(function RegionDistrict({
 
       {/* a single warm hearth light for a real town (kept to one to stay cheap) */}
       {tier >= 2 && <pointLight position={[cx, cy + 4, cz]} intensity={tier >= 3 ? 50 : 28} color={style.glow} distance={34} />}
-
-      {featured && (
-        <Html position={[cx, cy + 11, cz]} center distanceFactor={30} zIndexRange={[19, 0]} style={{ pointerEvents: "none" }}>
-          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, color: "#f5d020", fontWeight: 800 }}>▲ SEASON SPOTLIGHT</div>
-            <div style={{ fontSize: 8, letterSpacing: 1, color: "#fff", textShadow: "0 1px 6px #000" }}>this region is rising</div>
-          </div>
-        </Html>
-      )}
     </group>
   );
 });
