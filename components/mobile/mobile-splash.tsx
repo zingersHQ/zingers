@@ -71,7 +71,7 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
           Take flight.
         </h1>
         <p style={{ fontSize: 14.5, lineHeight: 1.5, color: "rgba(230,226,245,.78)", margin: "0 auto 26px", maxWidth: 300 }}>
-          One thumb, one soaring climb. Thread the rings, ride the jetpack, chase the sky — your champion flying right behind you.
+          Jetpack lit, a thinking champion flying at your side. Climb the sky, raise the mind — you both rise.
         </p>
 
         <button
