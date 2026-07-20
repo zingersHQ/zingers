@@ -104,6 +104,14 @@ function PhysBody({
   );
 }
 
+/** Deck top sits at y=0 so AscentReturnPortal feet (VENUE_EXIT.circuit y=0) plant flush. */
+const DECK_THICK = 0.38;
+const DECK_TOP_Y = 0;
+// Arch half-width is ~3.6 — deck must be wider than the portal so it doesn't float past the edges.
+const DECK_HALF_X = 4.5;
+const PORTAL_APRON_BEHIND = 3.2;
+const PORTAL_APRON_AHEAD = 2.4;
+
 /**
  * Walkable arrival deck — from the return portal up to the launch mark.
  * Desktop: Rapier floor so you can walk back through the portal. Mobile Climb
@@ -118,17 +126,17 @@ function ArrivalDeck({
   staticMode: boolean;
   accent: string;
 }) {
-  const [sx, sy, sz] = spawn;
-  const padY = sy - 1.35; // top near y≈0 when spawn.y≈1.1
+  const [sx, , sz] = spawn;
+  const padY = DECK_TOP_Y - DECK_THICK / 2;
 
   if (staticMode) {
     return (
       <group position={[sx, padY, sz]}>
         <mesh receiveShadow>
-          <boxGeometry args={[3.2, 0.35, 3.2]} />
+          <boxGeometry args={[3.2, DECK_THICK, 3.2]} />
           <meshStandardMaterial color="#2a2438" emissive={accent} emissiveIntensity={0.22} metalness={0.35} roughness={0.62} />
         </mesh>
-        <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, DECK_THICK / 2 + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.35, 1.55, 28]} />
           <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
         </mesh>
@@ -137,21 +145,22 @@ function ArrivalDeck({
   }
 
   const portalZ = VENUE_EXIT.circuit.pos[2];
-  // Deck runs from just past the portal plane to a short step beyond spawn so the
-  // launch mark sits on solid ground and you can walk back to exit.
-  const zBack = portalZ + 1.2;
+  // Deck includes an apron behind + under the arch so the portal is built into
+  // the platform, then runs forward past the launch mark.
+  const zBack = portalZ - PORTAL_APRON_BEHIND;
   const zFront = sz + 2.8;
   const zMid = (zBack + zFront) / 2;
   const zLen = Math.abs(zFront - zBack);
   const halfZ = zLen / 2;
-  const halfX = 2.35;
+  const halfX = DECK_HALF_X;
   const pos: [number, number, number] = [sx, padY, zMid];
+  const portalLocalZ = portalZ - zMid;
 
   return (
     <RigidBody type="fixed" colliders={false} position={pos}>
-      <CuboidCollider args={[halfX, 0.22, halfZ]} />
+      <CuboidCollider args={[halfX, DECK_THICK / 2 + 0.04, halfZ]} />
       <mesh receiveShadow castShadow>
-        <boxGeometry args={[halfX * 2, 0.35, zLen]} />
+        <boxGeometry args={[halfX * 2, DECK_THICK, zLen]} />
         <meshStandardMaterial
           color="#2a2438"
           emissive={accent}
@@ -160,23 +169,40 @@ function ArrivalDeck({
           roughness={0.62}
         />
       </mesh>
+      {/* Raised sill under the return arch — reads as threshold, not a hovering door. */}
+      <mesh position={[0, DECK_THICK / 2 + 0.12, portalLocalZ]} castShadow receiveShadow>
+        <boxGeometry args={[ARCH_SILL_W, 0.28, PORTAL_APRON_BEHIND + PORTAL_APRON_AHEAD]} />
+        <meshStandardMaterial
+          color="#1e1a2c"
+          emissive={accent}
+          emissiveIntensity={0.2}
+          metalness={0.4}
+          roughness={0.55}
+        />
+      </mesh>
+      <mesh position={[0, DECK_THICK / 2 + 0.27, portalLocalZ]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.6, 3.5, 40]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.4} depthWrite={false} />
+      </mesh>
       {/* launch mark under the spawn */}
-      <mesh position={[0, 0.2, sz - zMid]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, DECK_THICK / 2 + 0.02, sz - zMid]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.2, 1.45, 28]} />
         <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
       </mesh>
       {/* soft edge rails so the walk back to the portal reads as a path */}
-      <mesh position={[-halfX + 0.08, 0.28, 0]}>
-        <boxGeometry args={[0.12, 0.18, zLen * 0.98]} />
+      <mesh position={[-halfX + 0.1, DECK_THICK / 2 + 0.1, 0]}>
+        <boxGeometry args={[0.14, 0.2, zLen * 0.98]} />
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.35} metalness={0.5} roughness={0.4} />
       </mesh>
-      <mesh position={[halfX - 0.08, 0.28, 0]}>
-        <boxGeometry args={[0.12, 0.18, zLen * 0.98]} />
+      <mesh position={[halfX - 0.1, DECK_THICK / 2 + 0.1, 0]}>
+        <boxGeometry args={[0.14, 0.2, zLen * 0.98]} />
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.35} metalness={0.5} roughness={0.4} />
       </mesh>
     </RigidBody>
   );
 }
+
+const ARCH_SILL_W = 8.4; // wider than arch feet (±3.6) so the threshold frames the portal
 
 /** Void safety net — catches a fall (triggers run failure in the Handler).
  *  When Climb dressing paints the visible ground, hide the slab mesh but keep

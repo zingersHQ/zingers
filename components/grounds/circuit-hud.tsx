@@ -1,10 +1,11 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
-import { CIRCUIT_LIVES, formatCircuitMs } from "./circuit";
+import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
+import { rewardSfx } from "@/lib/sfx";
 
-export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed";
+export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue";
 export type CircuitFailReason = "fall" | "gates";
 
 export interface CircuitBoardEntry {
@@ -42,6 +43,85 @@ function LifePips({ lives, accent }: { lives: number; accent: string }) {
         );
       })}
     </div>
+  );
+}
+
+/**
+ * Sector-open title card — pairs with the arrive camera hold/sweep.
+ * Bold number, Reach line, then "Jump to start" as control returns (Wii Sports beat).
+ */
+function SectorIntro({
+  sectorN,
+  sectorTotal,
+  accent,
+  reachName,
+  lives,
+}: {
+  sectorN: number;
+  sectorTotal: number;
+  accent: string;
+  reachName?: string;
+  lives: number;
+}) {
+  const [showCard, setShowCard] = useState(true);
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  useEffect(() => {
+    setShowCard(true);
+    setShowPrompt(false);
+    rewardSfx("small");
+    const promptT = window.setTimeout(() => setShowPrompt(true), CIRCUIT_SECTOR_INTRO.promptMs);
+    const doneT = window.setTimeout(() => setShowCard(false), CIRCUIT_SECTOR_INTRO.cardMs);
+    return () => {
+      window.clearTimeout(promptT);
+      window.clearTimeout(doneT);
+    };
+  }, [sectorN]);
+
+  return (
+    <>
+      {showCard && (
+        <div className="circuit-sector-intro" aria-live="polite">
+          <div className="circuit-sector-intro__wash" style={{ ["--ac" as string]: accent }} />
+          <div className="circuit-sector-intro__card">
+            <div className="circuit-sector-intro__kicker mono" style={{ color: accent }}>
+              {reachName ? reachName.toUpperCase() : "THE ASCENT"}
+            </div>
+            <div className="circuit-sector-intro__rule" style={{ background: accent }} />
+            <div className="circuit-sector-intro__num">
+              {sectorN}
+              <span className="circuit-sector-intro__of"> / {sectorTotal}</span>
+            </div>
+            <div className="circuit-sector-intro__lives mono" style={{ color: accent }}>
+              {Array.from({ length: CIRCUIT_LIVES }, (_, i) => (
+                <span
+                  key={i}
+                  className="circuit-sector-intro__pip"
+                  style={{
+                    background: i < lives ? accent : "transparent",
+                    borderColor: accent,
+                    opacity: i < lives ? 1 : 0.35,
+                  }}
+                />
+              ))}
+              <span style={{ marginLeft: 8, letterSpacing: 1.6 }}>
+                {lives} {lives === 1 ? "LIFE" : "LIVES"}
+              </span>
+            </div>
+            {showPrompt && (
+              <div className="circuit-sector-intro__prompt mono" style={{ color: accent }}>
+                JUMP TO START
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {!showCard && (
+        <div className="circuit-sector-intro__hint mono" style={{ color: accent }}>
+          Jump to start
+        </div>
+      )}
+    </>
   );
 }
 
@@ -89,6 +169,7 @@ export function CircuitHud({
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
+  const introActive = phase === "ready";
 
   useEffect(() => {
     if (phase !== "sector" && phase !== "failed" && phase !== "done") return;
@@ -108,11 +189,13 @@ export function CircuitHud({
   const title =
     phase === "failed"
       ? "RUN OVER"
-      : phase === "done"
-        ? "CLEAR"
-        : reachName
-          ? reachName
-          : `Sector ${sectorN}`;
+      : phase === "continue"
+        ? "LIFE LOST"
+        : phase === "done"
+          ? "CLEAR"
+          : reachName
+            ? reachName
+            : `Sector ${sectorN}`;
 
   return (
     <>
@@ -154,6 +237,9 @@ export function CircuitHud({
           ["--ac" as string]: accent,
           borderColor: running ? accent : "var(--line)",
           textAlign: "center",
+          // Title card owns the open — keep the strip quiet until the beat ends.
+          opacity: introActive ? 0.22 : 1,
+          transition: "opacity 0.45s ease",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
@@ -163,14 +249,16 @@ export function CircuitHud({
           <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>
             {sectorN}/{sectorTotal}
           </span>
-          {(running || phase === "ready") && <LifePips lives={lives} accent={accent} />}
+          {(running || phase === "ready" || phase === "continue") && (
+            <LifePips lives={lives} accent={phase === "continue" ? "#ff5a5a" : accent} />
+          )}
           <Timer size={14} color={accent} strokeWidth={2.2} />
           <span
             style={{
               fontSize: 20,
               fontWeight: 700,
               fontVariantNumeric: "tabular-nums",
-              color: running || phase === "done" || phase === "failed" ? accent : "var(--muted)",
+              color: running || phase === "done" || phase === "failed" || phase === "continue" ? accent : "var(--muted)",
               lineHeight: 1,
             }}
           >
@@ -200,8 +288,65 @@ export function CircuitHud({
         )}
       </div>
 
-      {!compact && (
+      {!compact && !introActive && (
         <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
+      )}
+
+      {phase === "ready" && (
+        <SectorIntro
+          key={sectorIndex}
+          sectorN={sectorN}
+          sectorTotal={sectorTotal}
+          accent={accent}
+          reachName={reachName}
+          lives={lives}
+        />
+      )}
+
+      {phase === "continue" && (
+        <div
+          aria-live="assertive"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 115,
+            pointerEvents: "none",
+            display: "grid",
+            placeItems: "center",
+            background: "radial-gradient(ellipse at center, rgba(40,8,12,.42) 0%, rgba(6,5,11,.55) 70%)",
+            animation: "fadein 0.25s ease both",
+          }}
+        >
+          <div style={{ textAlign: "center", paddingBottom: "8vh" }}>
+            <div
+              className="mono"
+              style={{
+                fontSize: 12,
+                letterSpacing: 2.6,
+                fontWeight: 800,
+                color: "#ff5a5a",
+                textShadow: "0 0 28px rgba(255,90,90,.55)",
+                marginBottom: 10,
+              }}
+            >
+              LIFE LOST
+            </div>
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                color: "#f5f2e8",
+                textShadow: "0 4px 24px rgba(0,0,0,.5)",
+                marginBottom: 8,
+              }}
+            >
+              {failReason === "gates" ? "Missed a gate" : "You fell"}
+            </div>
+            <div className="mono" style={{ fontSize: 12, letterSpacing: 1.4, color: "rgba(255,255,255,.55)" }}>
+              {lives} {lives === 1 ? "life" : "lives"} left · same sector
+            </div>
+          </div>
+        </div>
       )}
 
       {phase === "sector" && (

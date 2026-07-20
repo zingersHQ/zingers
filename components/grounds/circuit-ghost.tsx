@@ -87,10 +87,10 @@ export function CircuitGhostLeave({
   const grp = useRef<THREE.Group>(null);
   const t = useRef(0);
   const done = useRef(false);
-  const duration = lite ? 1.05 : 1.55;
+  const duration = lite ? 1.55 : 2.35;
   const side = lite ? 0.55 : 0.85;
-  const lift = lite ? 2.4 : 3.6;
-  const drift = lite ? 1.1 : 1.8;
+  const lift = lite ? 2.8 : 4.2;
+  const drift = lite ? 1.35 : 2.2;
 
   useEffect(() => {
     const idle = built.actions.idle;

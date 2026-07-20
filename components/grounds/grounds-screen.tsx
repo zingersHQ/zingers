@@ -34,7 +34,7 @@ import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/compone
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS, FIRST_GUIDE_WORLD } from "@/components/grounds/worlds";
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
-import { VENUES, CONCORD_VENUE_SPOTS } from "@/components/grounds/venues";
+import { VENUES, CONCORD_VENUE_SPOTS, awayFromCircuitPortal } from "@/components/grounds/venues";
 import { AMPHI_SPAWN, AMPHI_SPAWN_HEADING } from "@/components/grounds/amphitheatre";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
@@ -69,7 +69,7 @@ import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
-import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx } from "@/lib/sfx";
+import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx, stopJet, jetFallSfx, badLuckSfx } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
 import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
@@ -374,6 +374,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   );
   const poseRef = useRef<Pose>({ x: 0, z: 34, heading: Math.PI });
   const travelRef = useRef<((x: number, z: number, faceHeading?: number) => void) | null>(null);
+  // Portals cross by walking through — latch so exit/resume can't instantly re-enter.
+  const portalAutoKey = useRef<string | null>(null);
 
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
@@ -389,9 +391,15 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [circuitGhost, setCircuitGhost] = useState<(CircuitGhostPose & { id: number }) | null>(null);
   const [circuitArriveNonce, setCircuitArriveNonce] = useState(0);
   const circuitGhostId = useRef(0);
+  const circuitContinueTimers = useRef<number[]>([]);
   const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
+
+  const clearCircuitContinueTimers = useCallback(() => {
+    for (const id of circuitContinueTimers.current) window.clearTimeout(id);
+    circuitContinueTimers.current = [];
+  }, []);
   const circuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
   const circuitReach = useMemo(() => reachTheme(circuitSectorIdx), [circuitSectorIdx]);
   // the same pure-time hazards the mobile Climb fields for this sector (empty in
@@ -472,6 +480,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   );
 
   const resetCircuitRun = useCallback(() => {
+    clearCircuitContinueTimers();
     circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
@@ -487,7 +496,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     const s = desktopCircuitSector(0).spawn;
     // face +Z down-track (heading 0) so you re-spawn looking at gate 1, not the exit
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, []);
+  }, [clearCircuitContinueTimers]);
 
   const travelToWorld = useCallback(
     (destId: string, restore = true) => {
@@ -515,10 +524,17 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         setModeLockToast("Finish your first duel to unlock this.");
         return;
       }
-      const pose = capturePose();
+      const raw = capturePose();
+      // Region Ascent: save a plaza-side resume so exit/reload isn't inside the
+      // auto-enter radius (would immediately re-open the Circuit).
+      const pose =
+        venue === "circuit"
+          ? awayFromCircuitPortal(worldId, raw)
+          : { x: raw.x, z: raw.z, y: raw.y ?? 0, heading: raw.heading };
       saveWorldPose(worldId, pose);
       setGameSession({ venue, hostWorldId: worldId, returnPose: pose });
       setWildResume(null);
+      clearCircuitContinueTimers();
       circuitCpNext.current = 1;
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
@@ -541,7 +557,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         setTimeout(() => travelRef.current?.(AMPHI_SPAWN[0], AMPHI_SPAWN[2], AMPHI_SPAWN_HEADING), 80);
       }
     },
-    [capturePose, worldId],
+    [capturePose, worldId, clearCircuitContinueTimers],
   );
 
   const exitVenue = useCallback(() => {
@@ -549,17 +565,22 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     const { returnPose, venue, hostWorldId: host } = gameSession;
     setGameSession(null);
     resetCircuitRun();
+    // Latch so a frame of still-overlapping venue-enter can't re-fire instantly.
+    if (venue === "circuit") portalAutoKey.current = "enter:circuit";
     // when the game was entered from the Concord, leave the same way you came:
     // step out of that game's venue portal into the plaza, facing the seal. When
-    // it was entered from a region, return to the Ascent portal you walked through.
+    // it was entered from a region, return just outside the Ascent portal.
     const door = host === "concord" ? concordDoorArrival({ venue }) : null;
     if (door) {
       setWildResume({ x: door.x, z: door.z, heading: door.heading });
       poseRef.current = { x: door.x, z: door.z, heading: door.heading };
       restorePose({ x: door.x, z: door.z, heading: door.heading });
     } else {
-      setWildResume({ x: returnPose.x, z: returnPose.z, heading: returnPose.heading });
-      restorePose(returnPose);
+      const safe = awayFromCircuitPortal(host, returnPose);
+      saveWorldPose(host, safe);
+      setWildResume({ x: safe.x, z: safe.z, heading: safe.heading });
+      poseRef.current = { x: safe.x, z: safe.z, heading: safe.heading };
+      restorePose(safe);
     }
   }, [gameSession, resetCircuitRun, restorePose]);
 
@@ -598,41 +619,67 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     }
     setCircuitSectorIdx(next);
     setCircuitPhase("ready");
+    setCircuitArriveNonce((n) => n + 1);
     const s = desktopCircuitSector(next).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
   }, [circuitSectorIdx, submitCircuitRun, store, owned]);
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
-      if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
+      if (
+        circuitPhase === "failed" ||
+        circuitPhase === "done" ||
+        circuitPhase === "sector" ||
+        circuitPhase === "continue"
+      ) {
+        return;
+      }
 
-      // Spend a life → same sector continue (ghost leave beside the pad Trainer).
+      // Spend a life → staged continue beat (SFX → pad + ghost → ready).
       if (circuitLivesRef.current > 1) {
+        clearCircuitContinueTimers();
+        stopJet();
+        if (reason === "fall") jetFallSfx();
+        else badLuckSfx();
+        duckAmbience(0.55, 900);
+
         circuitLivesRef.current -= 1;
         setCircuitLives(circuitLivesRef.current);
+        setCircuitFailReason(reason);
+        setCircuitPhase("continue");
+        circuitCpNext.current = 1;
+        setCircuitCpPassed(1);
+        setCircuitSectorMs(0);
+        circuitSectorStart.current = 0;
+
         const s = desktopCircuitSector(circuitSectorIdx).spawn;
-        // Ghost peels off the respawn body during the front-facing arrive hold —
-        // not at the distant fail point (camera is on the pad).
         const ghostPose: CircuitGhostPose = {
           x: s[0],
           y: s[1],
           z: s[2],
           heading: pose?.heading ?? 0,
         };
-        circuitGhostId.current += 1;
-        setCircuitGhost({ ...ghostPose, id: circuitGhostId.current });
-        circuitCpNext.current = 1;
-        setCircuitCpPassed(1);
-        setCircuitSectorMs(0);
-        circuitSectorStart.current = 0;
-        setCircuitFailReason(reason);
-        setCircuitPhase("ready");
-        setCircuitArriveNonce((n) => n + 1);
-        setTimeout(() => travelRef.current?.(s[0], s[2], 0), 40);
-        duckAmbience(0.45, 400);
+
+        // Let the fail sting land, then snap to pad for the ghost / arrive shot.
+        circuitContinueTimers.current.push(
+          window.setTimeout(() => {
+            circuitGhostId.current += 1;
+            setCircuitGhost({ ...ghostPose, id: circuitGhostId.current });
+            setCircuitArriveNonce((n) => n + 1);
+            travelRef.current?.(s[0], s[2], 0);
+          }, 420),
+        );
+        // Hold the LIFE LOST beat through ghost + arrive before jump unlocks.
+        circuitContinueTimers.current.push(
+          window.setTimeout(() => {
+            setCircuitPhase("ready");
+          }, 3200),
+        );
         return;
       }
 
+      clearCircuitContinueTimers();
+      stopJet();
       circuitLivesRef.current = 0;
       setCircuitLives(0);
       const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
@@ -643,7 +690,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       submitCircuitRun(sectors, total, false);
       outcomeSfx(false);
     },
-    [circuitPhase, circuitSectorIdx, submitCircuitRun],
+    [circuitPhase, circuitSectorIdx, submitCircuitRun, clearCircuitContinueTimers],
   );
 
   /** Jump on the launch pad starts the sector — wind / cruise / timers. */
@@ -693,7 +740,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   useEffect(() => {
     if (!owned || inVenue) return;
     const saved = loadWorldPose(worldId);
-    if (saved) setTimeout(() => restorePose(saved), 150);
+    if (!saved) return;
+    // Legacy saves may still sit inside the Ascent auto-enter volume.
+    const safe = awayFromCircuitPortal(worldId, saved);
+    if (safe.x !== saved.x || safe.z !== saved.z) saveWorldPose(worldId, safe);
+    setTimeout(() => restorePose(safe), 150);
   }, [worldId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -1287,7 +1338,6 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
   // Portals cross by walking through — no E. Latch the portal key so nulling
   // `near` mid-travel (or standing in the plane) doesn't re-fire the veil.
-  const portalAutoKey = useRef<string | null>(null);
   useEffect(() => {
     const n = near;
     let key: string | null = null;
@@ -2047,7 +2097,13 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               match={showMatch ? matchView : null}
               controlsEnabled={
                 controlsEnabled &&
-                (!activeVenue || activeVenue === "amphitheatre" || (activeVenue === "circuit" && circuitPhase !== "failed" && circuitPhase !== "done" && circuitPhase !== "sector"))
+                (!activeVenue ||
+                  activeVenue === "amphitheatre" ||
+                  (activeVenue === "circuit" &&
+                    circuitPhase !== "failed" &&
+                    circuitPhase !== "done" &&
+                    circuitPhase !== "sector" &&
+                    circuitPhase !== "continue"))
               }
               biome={biome}
               regionWorldId={worldId}

@@ -54,11 +54,44 @@ export function circuitSpotFor(worldId: string) {
   return REGION_CIRCUIT_SPOT[worldId] ?? REGION_CIRCUIT_SPOT.grounds!;
 }
 
+/** Metres from the Ascent portal plane — must clear the ~3.6 auto-enter radius. */
+const ASCENT_RETURN_CLEARANCE = 7;
+
+/**
+ * Nudge a pose off the Ascent portal toward the plaza so exit / reload doesn't
+ * immediately re-trigger venue-enter. Faces the portal. No-ops when already clear
+ * or when the world has no region Ascent spot (e.g. Concord).
+ */
+export function awayFromCircuitPortal(
+  worldId: string,
+  pose: { x: number; z: number; y?: number; heading?: number },
+  clearance = ASCENT_RETURN_CLEARANCE,
+): { x: number; z: number; y: number; heading: number } {
+  const y = pose.y ?? 0;
+  if (!REGION_CIRCUIT_SPOT[worldId]) {
+    return { x: pose.x, z: pose.z, y, heading: pose.heading ?? 0 };
+  }
+  const spot = circuitSpotFor(worldId);
+  const mx = Math.cos(spot.angle) * spot.dist;
+  const mz = Math.sin(spot.angle) * spot.dist;
+  const dh = Math.hypot(pose.x - mx, pose.z - mz);
+  if (dh >= clearance) {
+    return { x: pose.x, z: pose.z, y, heading: pose.heading ?? Math.atan2(mx - pose.x, mz - pose.z) };
+  }
+  const r = Math.hypot(mx, mz) || 1;
+  // Toward plaza (origin) from the mountain portal.
+  const x = mx - (mx / r) * clearance;
+  const z = mz - (mz / r) * clearance;
+  return { x, z, y, heading: Math.atan2(mx - x, mz - z) };
+}
+
 /** Where you walk to leave an active game scene (a few metres behind the entry). */
 export const VENUE_EXIT = {
-  // Further behind the spawn pad so the arrival deck reads as a walk back through
-  // the door you came from (camera intro frames portal → character → track).
-  circuit: { pos: [0, 1.2, -18] as [number, number, number], radius: 3.4 },
+  // Behind the spawn on the arrival deck (y=0 = deck top). Must sit BEHIND the
+  // chase camera (spawn ≈ z=-2.5, cam dist ≈ 8.6 → lens near z=-11): keep portal
+  // ≤ z=-18 so it never wedges between camera and Trainer. Arch feet plant on
+  // the pad — never float (arrive framing: portal → character → track).
+  circuit: { pos: [0, 0, -20] as [number, number, number], radius: 3.4 },
   amphitheatre: { pos: [0, 1.0, 17] as [number, number, number], radius: 3.6 },
 };
 

@@ -4,7 +4,7 @@
 // used to litter the HUD: trainer status, the season war, the saga thread, world
 // objectives, discovery, the collection/portfolio links, settings, theme, the
 // ambience toggle, controls, and the site nav. The always-visible trigger keeps
-// only the essentials (clan emblem · level · crowns); everything else lives one
+// only the essentials (robot mark · level · crowns); everything else lives one
 // tap away in a single slide-over so the world reads clean.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useState } from "react";
@@ -20,6 +20,7 @@ import { readerSaga, SAGA } from "@/lib/lore/saga";
 import { NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
+import { RobotMark } from "@/components/brand/robot-mark";
 import type { WorldGoal } from "./goals";
 import type { WarState } from "@/lib/types";
 
@@ -130,19 +131,20 @@ export function PlayerHub({
           .hub-trigger.is-catch { animation: none !important; }
         }
       `}</style>
-      {/* always-visible trigger: emblem · level · crowns */}
+      {/* always-visible trigger: robot mark · level · crowns */}
       <button
         type="button"
         onClick={openHub}
         className={`panel hub-trigger${hudDim ? " is-dim" : ""}${highlight ? " is-catch" : ""}`}
-        aria-label="Open your hub"
+        aria-label="Open your menu"
         aria-expanded={open}
+        title="Your menu"
         style={{
           ["--ac" as string]: fc,
           display: "inline-flex",
           alignItems: "center",
           gap: isMobile ? 7 : 9,
-          padding: isMobile ? "6px 10px" : "7px 12px",
+          padding: isMobile ? "6px 10px 6px 8px" : "7px 12px 7px 9px",
           cursor: "pointer",
           pointerEvents: "auto",
           borderColor: open || highlight ? (highlight ? "var(--gold)" : fc) : "var(--line)",
@@ -150,8 +152,21 @@ export function PlayerHub({
           animation: highlight ? "hubCatch 1.2s ease-in-out infinite" : undefined,
         }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: 6, background: `${fc}22`, color: fc, fontSize: 12, fontWeight: 800 }}>
-          {force ? EMBLEM[force] : <Shield size={12} strokeWidth={2.4} />}
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: isMobile ? 22 : 24,
+            height: isMobile ? 22 : 24,
+            borderRadius: 7,
+            background: "rgba(255,255,255,.07)",
+            color: "var(--ink)",
+            flexShrink: 0,
+          }}
+        >
+          <RobotMark size={isMobile ? 14 : 15} />
         </span>
         <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: fc }}>Lv {tl.level}</span>
         <span style={{ width: 1, height: 16, background: "var(--line2)" }} />

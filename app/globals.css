@@ -809,6 +809,152 @@ textarea::placeholder {
   animation: gameMenuRise 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
+/* Circuit sector-open cinematic — pairs with arrive cam hold + sweep. */
+@keyframes circuit-sector-intro-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes circuit-sector-intro-out {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+}
+@keyframes circuit-sector-wash-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes circuit-sector-prompt-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes circuit-sector-hint-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.circuit-sector-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  animation: circuit-sector-intro-in 0.45s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.circuit-sector-intro__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, color-mix(in srgb, var(--ac, #7ec8ff) 22%, transparent) 0%, transparent 62%),
+    radial-gradient(ellipse 100% 80% at 50% 50%, rgba(6, 5, 12, 0.22) 0%, rgba(6, 5, 12, 0.55) 100%);
+  animation: circuit-sector-wash-in 0.5s ease both;
+}
+.circuit-sector-intro__card {
+  position: relative;
+  text-align: center;
+  padding: 8px 28px 4px;
+  max-width: min(92vw, 420px);
+}
+.circuit-sector-intro__kicker {
+  font-size: 12px;
+  letter-spacing: 3.2px;
+  font-weight: 700;
+  text-shadow: 0 0 28px color-mix(in srgb, currentColor 70%, transparent);
+  margin-bottom: 10px;
+}
+.circuit-sector-intro__rule {
+  width: 48px;
+  height: 2px;
+  margin: 0 auto 14px;
+  border-radius: 2px;
+  opacity: 0.85;
+  box-shadow: 0 0 16px currentColor;
+}
+.circuit-sector-intro__num {
+  font-size: clamp(48px, 9vw, 72px);
+  font-weight: 800;
+  line-height: 1;
+  color: #f5f2e8;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  text-shadow: 0 6px 36px rgba(0, 0, 0, 0.55);
+}
+.circuit-sector-intro__of {
+  font-size: 0.42em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+.circuit-sector-intro__lives {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+.circuit-sector-intro__pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  box-sizing: border-box;
+}
+.circuit-sector-intro__prompt {
+  margin-top: 18px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-shadow: 0 0 20px color-mix(in srgb, currentColor 55%, transparent);
+  animation: circuit-sector-prompt-in 0.4s ease both;
+}
+.circuit-sector-intro__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  z-index: 105;
+  pointer-events: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.55);
+  animation: circuit-sector-hint-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-sector-intro,
+  .circuit-sector-intro__wash,
+  .circuit-sector-intro__prompt {
+    animation: fadein 0.2s ease both !important;
+  }
+  .circuit-sector-intro__hint {
+    animation: none !important;
+    opacity: 0.85;
+  }
+}
+
 @keyframes gameMenuFade {
   from { opacity: 0; }
   to { opacity: 1; }

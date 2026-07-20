@@ -4,6 +4,24 @@
 /** Ranked Climb/Circuit: one continue, then run over (ghost leave on spend). */
 export const CIRCUIT_LIVES = 2;
 
+/**
+ * Sector-open cinematic — one clock for title card + arrive camera (Wii Sports
+ * energy: short, bold, then hand control back). Keep these in sync across HUD
+ * and CameraController.
+ */
+export const CIRCUIT_SECTOR_INTRO = {
+  /** Face-on hold before the chase sweep (seconds). */
+  arriveHoldS: 1.55,
+  /** Q-sweep from face-on to chase (seconds). */
+  arriveSweepS: 1.15,
+  /** Life-continue face-on hold (seconds) — longer for the ghost leave. */
+  continueArriveHoldS: 2.05,
+  /** Title card on screen (ms) — covers hold + early sweep. */
+  cardMs: 2800,
+  /** When the "Jump to start" cue joins the card (ms). */
+  promptMs: 2000,
+} as const;
+
 export interface CircuitPlatform {
   pos: [number, number, number];
   size: [number, number, number];

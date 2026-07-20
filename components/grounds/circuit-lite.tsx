@@ -35,7 +35,7 @@ import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import type { BiomeConfig } from "./biomes";
-import { CIRCUIT_LIVES, circuitGatePlaneCross, formatCircuitMs } from "./circuit";
+import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import { CircuitGhostLeave, type CircuitGhostPose } from "./circuit-ghost";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
@@ -122,7 +122,7 @@ const READY_DOCK = companionDockSlot(0, 0, CHAMP_FACE);
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
-type Phase = "ready" | "running" | "failed" | "done" | "ceiling";
+type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue";
 type FailReason = "fall" | "gates";
 
 /** Reach II (sector index 10) needs one duel win — thin altitude key (flyover §3). */
@@ -512,6 +512,11 @@ export default function CircuitLite({
   const livesRef = useRef(CIRCUIT_LIVES);
   const [ghost, setGhost] = useState<(CircuitGhostPose & { id: number }) | null>(null);
   const ghostId = useRef(0);
+  const continueTimers = useRef<number[]>([]);
+  const clearContinueTimers = useCallback(() => {
+    for (const id of continueTimers.current) window.clearTimeout(id);
+    continueTimers.current = [];
+  }, []);
   const prefersReduced = usePrefersReducedMotion();
   const [targetIdx, setTargetIdx] = useState(1); // next gate to thread (for highlight + pips)
   // live ref for CircuitScene green-pass feedback (same path as desktop)
@@ -666,14 +671,29 @@ export default function CircuitLite({
     return () => clearInterval(id);
   }, []);
 
-  // ── Reach title card: flash "REACH n · NAME" for a beat whenever the Reach
-  // changes (including at the start of a run). Cheap storytelling of altitude. ──
+  // ── Sector-open card on ready (start / continue). Mid-ascent only flashes
+  // when the Reach band changes — flight stays continuous between sectors. ──
   const [reachCardOn, setReachCardOn] = useState(true);
+  const [startPromptOn, setStartPromptOn] = useState(false);
   useEffect(() => {
+    if (phase !== "ready") return;
     setReachCardOn(true);
-    const id = setTimeout(() => setReachCardOn(false), 2600);
-    return () => clearTimeout(id);
-  }, [theme.index]);
+    setStartPromptOn(false);
+    rewardSfx("small");
+    const promptT = window.setTimeout(() => setStartPromptOn(true), CIRCUIT_SECTOR_INTRO.promptMs);
+    const doneT = window.setTimeout(() => setReachCardOn(false), CIRCUIT_SECTOR_INTRO.cardMs);
+    return () => {
+      window.clearTimeout(promptT);
+      window.clearTimeout(doneT);
+    };
+  }, [phase, sector]);
+  useEffect(() => {
+    if (phase !== "running") return;
+    setReachCardOn(true);
+    setStartPromptOn(false);
+    const doneT = window.setTimeout(() => setReachCardOn(false), 2000);
+    return () => window.clearTimeout(doneT);
+  }, [theme.index]); // Reach-band only — intentionally omit phase
 
   // roll for a golden ring on each sector (a rationed surprise, §7b). Picks a
   // non-finish gate so the sector-clear flourish isn't the one that pays.
@@ -725,6 +745,7 @@ export default function CircuitLite({
   // bump runId — remounting the Canvas spins a fresh context and can push a
   // memory-tight phone into a loss loop). The Flyer remounts fresh on its own.
   const resetRun = useCallback(() => {
+    clearContinueTimers();
     setHold(false);
     setSector(0);
     setTargetIdx(1);
@@ -735,7 +756,7 @@ export default function CircuitLite({
     setLives(CIRCUIT_LIVES);
     setGhost(null);
     setPhase("ready");
-  }, [setHold]);
+  }, [setHold, clearContinueTimers]);
 
   // Space: hold-to-fly while live; confirm try/run again on outcome overlays
   useEffect(() => {
@@ -858,36 +879,47 @@ export default function CircuitLite({
       else badLuckSfx();
       setFailReason(r);
 
-      // One continue on the same sector — ghost peels off the pad body, then ready.
+      // One continue — staged beat so fail SFX + ghost aren't a blink.
       if (livesRef.current > 1) {
+        clearContinueTimers();
         livesRef.current -= 1;
         setLives(livesRef.current);
-        ghostId.current += 1;
-        setGhost({
-          id: ghostId.current,
-          x: track.spawn[0],
-          y: track.spawn[1] + CHAMP_Y,
-          z: track.spawn[2],
-          heading: CHAMP_FACE,
-        });
         setTargetIdx(1);
-        duckAmbience(0.4, 350);
-        setPhase("ready");
+        duckAmbience(0.55, 800);
+        setPhase("continue");
+        continueTimers.current.push(
+          window.setTimeout(() => {
+            ghostId.current += 1;
+            setGhost({
+              id: ghostId.current,
+              x: track.spawn[0],
+              y: track.spawn[1] + CHAMP_Y,
+              z: track.spawn[2],
+              heading: CHAMP_FACE,
+            });
+          }, 380),
+        );
+        continueTimers.current.push(
+          window.setTimeout(() => {
+            setPhase("ready");
+          }, 2800),
+        );
         return;
       }
 
+      clearContinueTimers();
       livesRef.current = 0;
       setLives(0);
       recordRun(sector, false);
       setPhase("failed");
     },
-    [setHold, sector, recordRun, track.spawn],
+    [setHold, sector, recordRun, track.spawn, clearContinueTimers],
   );
 
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
   const gatesCleared = Math.max(0, targetIdx - 1); // in the current sector
   const running = phase === "running";
-  const live = phase === "ready" || phase === "running";
+  const live = phase === "ready" || phase === "running"; // not during life-lost beat
   runIdRef.current = runId;
   // cumulative-ish altitude so the score always reads as a climb across sectors
   const shownAlt = Math.max(0, Math.round(sector * 28 + alt));
@@ -946,7 +978,7 @@ export default function CircuitLite({
           />
           <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector)} />
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
-          {phase === "ready" && (
+          {(phase === "ready" || phase === "continue") && (
             <ReadyPose track={track} champType={champType} champion={champion} ascentReaches={ascentReaches} accent={accent} />
           )}
           {running && (
@@ -1129,22 +1161,44 @@ export default function CircuitLite({
         </div>
       )}
 
-      {/* ── Reach title card — a brief altitude beat on every new Reach ── */}
+      {/* ── Sector-open cinematic — Reach + sector number, then tap cue ── */}
       {reachCardOn && (phase === "ready" || phase === "running") && (
-        <div style={{ position: "absolute", top: "26%", left: 0, right: 0, display: "grid", placeItems: "center", zIndex: 16, pointerEvents: "none" }}>
-          <div style={{ textAlign: "center", animation: "none" }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: 4, color: accent, textShadow: `0 0 18px ${accent}` }}>
-              REACH {theme.roman}
+        <div className="circuit-sector-intro" aria-live="polite" style={{ zIndex: 16 }}>
+          <div className="circuit-sector-intro__wash" style={{ ["--ac" as string]: accent }} />
+          <div className="circuit-sector-intro__card">
+            <div className="circuit-sector-intro__kicker mono" style={{ color: accent }}>
+              REACH {theme.roman} · {theme.name.toUpperCase()}
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: 0.5, marginTop: 3, textShadow: "0 2px 18px rgba(0,0,0,.6)" }}>
-              {theme.name}
+            <div className="circuit-sector-intro__rule" style={{ background: accent }} />
+            <div className="circuit-sector-intro__num">
+              {sector + 1}
+              <span className="circuit-sector-intro__of"> / {CLIMB_SECTOR_COUNT}</span>
             </div>
-            <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 5, maxWidth: 280, letterSpacing: 0.3 }}>
-              {theme.tagline}
-            </div>
+            {theme.tagline && (
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 8, letterSpacing: 0.3 }}>
+                {theme.tagline}
+              </div>
+            )}
             {modifier && (
-              <div className="mono" style={{ display: "inline-block", marginTop: 8, padding: "3px 10px", borderRadius: 999, border: `1px solid ${accent}`, color: accent, fontSize: 9.5, letterSpacing: 1.5, textShadow: "none" }}>
+              <div
+                className="mono"
+                style={{
+                  display: "inline-block",
+                  marginTop: 10,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  border: `1px solid ${accent}`,
+                  color: accent,
+                  fontSize: 9.5,
+                  letterSpacing: 1.5,
+                }}
+              >
                 {modifier.label}
+              </div>
+            )}
+            {startPromptOn && phase === "ready" && (
+              <div className="circuit-sector-intro__prompt mono" style={{ color: accent }}>
+                TAP &amp; HOLD TO FLY
               </div>
             )}
           </div>
@@ -1192,15 +1246,33 @@ export default function CircuitLite({
         );
       })()}
 
-      {/* ── ready gate: wait for the first press so you never die before reacting ── */}
-      {phase === "ready" && !reachCardOn && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", zIndex: 15, paddingBottom: embedded && !onExit ? 72 : 0 }}>
-          <div className="mono" style={{ textAlign: "center", color: "#fff", textShadow: `0 0 20px ${accent}` }}>
-            <div style={{ fontSize: embedded ? 17 : 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
-            <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 1 }}>
-              thread every ring · two lives · release to settle
+      {/* ── life-lost beat — hold the pad so fail SFX + ghost can land ── */}
+      {phase === "continue" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            pointerEvents: "none",
+            zIndex: 28,
+            background: "radial-gradient(ellipse at center, rgba(40,8,12,.5) 0%, rgba(6,5,11,.58) 75%)",
+          }}
+        >
+          <div className="mono" style={{ textAlign: "center", color: "#fff" }}>
+            <div style={{ fontSize: 12, letterSpacing: 2.4, fontWeight: 800, color: "#ff5a5a", marginBottom: 8 }}>LIFE LOST</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{failReason === "gates" ? "Missed a gate" : "You fell"}</div>
+            <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", letterSpacing: 1 }}>
+              {lives} {lives === 1 ? "life" : "lives"} left · same sector
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── ready hint after the title card — control is yours ── */}
+      {phase === "ready" && !reachCardOn && (
+        <div className="circuit-sector-intro__hint mono" style={{ color: accent, bottom: embedded && !onExit ? "22%" : "18%" }}>
+          Tap &amp; hold to fly
         </div>
       )}
 

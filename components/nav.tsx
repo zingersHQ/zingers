@@ -8,6 +8,7 @@ import { isOrgHost } from "@/lib/org/hosts";
 import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden, playEntryHref } from "@/lib/play-nav";
 import { useIsMobile } from "@/lib/use-device";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RobotMark } from "@/components/brand/robot-mark";
 
 export function Nav() {
   const path = usePathname();
@@ -32,12 +33,14 @@ export function Nav() {
             width: 22,
             height: 22,
             borderRadius: 6,
-            border: "2px solid var(--gold)",
+            border: "1.5px solid var(--line2)",
+            background: "rgba(255,255,255,.06)",
+            color: "var(--ink)",
             display: "grid",
             placeItems: "center",
           }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: 99, background: "var(--accent)" }} />
+          <RobotMark size={14} />
         </span>
         <span className="site-nav__name">{BRAND.nameUpper}</span>
         <span className="site-nav__tagline mono">{BRAND.tagline.toUpperCase()}</span>

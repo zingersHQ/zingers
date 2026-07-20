@@ -55,7 +55,7 @@ import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
-import { atCircuitFinishEarly, circuitGatePlaneCross } from "./circuit";
+import { atCircuitFinishEarly, circuitGatePlaneCross, CIRCUIT_SECTOR_INTRO } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
   VENUE_EXIT,
@@ -2776,7 +2776,7 @@ function Handler({
   circuitRunning?: boolean;
   /** Ready / running / sector / failed / done — drives start lock label + vanish. */
   circuitPhase?: CircuitPhase | null;
-  /** 0-based sector index for the ready-pad sector plaque. */
+  /** 0-based sector index — Reach sky / dressing / hazards. */
   circuitSectorIdx?: number;
   circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
@@ -3053,11 +3053,15 @@ function Handler({
     }
     if (!rb) return;
 
-    // Sector clear / fail / full clear — freeze mid-air and vanish (no gravity drop).
-    const circuitGone =
+    // Sector clear / fail / full clear / life-continue — freeze (no gravity drop).
+    // Trainer stays visible during "continue" so the ghost leave can read.
+    const circuitFrozen =
       circuitMode &&
-      (circuitPhase === "sector" || circuitPhase === "done" || circuitPhase === "failed");
-    if (circuitGone) {
+      (circuitPhase === "sector" ||
+        circuitPhase === "done" ||
+        circuitPhase === "failed" ||
+        circuitPhase === "continue");
+    if (circuitFrozen) {
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       rb.setAngvel({ x: 0, y: 0, z: 0 }, true);
       rb.setGravityScale(0, false);
@@ -3909,6 +3913,7 @@ function Handler({
               circuitMode &&
               (circuitPhase === "sector" || circuitPhase === "done" || circuitPhase === "failed")
             )
+            // "continue" keeps the body visible beside the departing ghost
           }
         >
           <group ref={inner} position={[0, -FOOT_OFF, 0]} scale={READER_SCALE}>
@@ -3931,50 +3936,7 @@ function Handler({
               <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} />
             </mesh>
           )}
-          {/* Ready plaque — sector number beside the Trainer until the chase cam unlocks. */}
-          {circuitMode && circuitPhase === "ready" && (
-            <Html
-              position={[1.65, 0.55, 0.15]}
-              center
-              distanceFactor={11}
-              zIndexRange={[40, 0]}
-              style={{ pointerEvents: "none" }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--font-grotesk), sans-serif",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: "rgba(8, 6, 16, 0.72)",
-                  border: "1px solid rgba(245, 208, 32, 0.45)",
-                  boxShadow: "0 0 18px rgba(245, 208, 32, 0.18)",
-                }}
-              >
-                <div
-                  className="mono"
-                  style={{ fontSize: 9, letterSpacing: 1.8, color: "rgba(245, 208, 32, 0.85)", fontWeight: 700 }}
-                >
-                  SECTOR
-                </div>
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: 800,
-                    lineHeight: 1.05,
-                    color: "#f5f2e8",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {circuitSectorIdx + 1}
-                </div>
-                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
-                  / 100
-                </div>
-              </div>
-            </Html>
-          )}
+          {/* Sector number lives on the screen title card (CircuitHud) during ready. */}
         </group>
       </RigidBody>
     </>
@@ -4019,9 +3981,10 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
 }
 
 const CIRCUIT_INTRO_HOLD_S = 1.5;
-/** Arrival: face the Trainer (portal at their back), then Q-sweep to chase. */
-const CIRCUIT_ARRIVE_HOLD_S = 1.35;
-const CIRCUIT_ARRIVE_SWEEP_S = 1.05;
+/** Arrival + title card share CIRCUIT_SECTOR_INTRO — face-on, then Q-sweep to chase. */
+const CIRCUIT_ARRIVE_HOLD_S = CIRCUIT_SECTOR_INTRO.arriveHoldS;
+const CIRCUIT_CONTINUE_ARRIVE_HOLD_S = CIRCUIT_SECTOR_INTRO.continueArriveHoldS;
+const CIRCUIT_ARRIVE_SWEEP_S = CIRCUIT_SECTOR_INTRO.arriveSweepS;
 
 function CircuitLifeGhost({
   pose,
@@ -4128,15 +4091,19 @@ function CameraController({
     // Arrival choreography: face the Trainer with the return portal behind them,
     // hold, then Q-sweep until the lens sits behind looking down the Circuit.
     // Also re-arms on life-continue (circuitArriveNonce bump) so the ghost beat
-    // plays in the same front-facing window.
+    // plays in the same front-facing window — held longer during "continue".
+    // Read phase via ref so flipping continue→ready does NOT re-arm arrive.
+    const hold =
+      circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
     const h = camCue.current?.heading ?? 0;
     yaw.current = h; // front of character
     pitch.current = PITCH_GROUND;
     distTarget.current = CAM_DIST_DEFAULT;
     recenter.current = 0; // arrive hold owns the lens — ignore spawn recenters
-    circuitArriveHold.current = CIRCUIT_ARRIVE_HOLD_S;
-    circuitInputLock.current = CIRCUIT_ARRIVE_HOLD_S + CIRCUIT_ARRIVE_SWEEP_S;
+    circuitArriveHold.current = hold;
+    circuitInputLock.current = hold + CIRCUIT_ARRIVE_SWEEP_S;
     if (camCue.current) camCue.current.inputLock = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only remount / nonce should re-arm
   }, [inCircuit, camCue, circuitArriveNonce]);
 
   useEffect(() => {
@@ -4334,12 +4301,21 @@ function CameraController({
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
     else prevCircuitPhase.current = null;
 
-    // Arrival: hold face-on (portal behind the Trainer), then Q-sweep to chase.
+    // Arrival: ease from a slight off-angle + wider frame into face-on (portal
+    // behind the Trainer), then Q-sweep to chase — not a locked still portrait.
     const circuitArriveActive = inCircuit && circuitArriveHold.current > 0;
     if (circuitArriveActive) {
       const holdBefore = circuitArriveHold.current;
       circuitArriveHold.current = Math.max(0, circuitArriveHold.current - dt);
-      if (cue) yaw.current = cue.heading; // stay face-on while holding
+      const holdSpan =
+        circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
+      const u = 1 - circuitArriveHold.current / holdSpan; // 0→1
+      if (cue) {
+        const drift = (1 - u) * 0.28; // ~16° → face-on
+        yaw.current = cue.heading + drift;
+      }
+      pitch.current = PITCH_GROUND - 0.06 * (1 - u);
+      distTarget.current = CAM_DIST_DEFAULT * (1.14 - 0.14 * u);
       if (holdBefore > 0 && circuitArriveHold.current === 0) {
         recenter.current = CIRCUIT_ARRIVE_SWEEP_S;
         recenterPitch.current = PITCH_GROUND;

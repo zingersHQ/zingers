@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: pageTitle(),
   description: "Claim an AI champion, train how it thinks, send it to fight in a 3D world, back Crowns, and watch it evolve.",
   openGraph: { siteName: BRAND.name, url: BRAND.site },
+  icons: {
+    icon: [{ url: "/brand/robot-mark.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/robot-mark.svg" }],
+  },
 };
 
 export const viewport: Viewport = {
