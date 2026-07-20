@@ -105,7 +105,7 @@ climbs.
   (see [`docs/bible/10-ascent.md`](./bible/10-ascent.md), [`climb.md`](./climb.md)).
 - **The Hum** — argument is physics; consensus is terrain.
 - **The Long Vault** — sealed beneath the Grounds; seasons open doors.
-- **The Keepers** — five campaign bosses; cipher-words unlock the Chronicle.
+- **The Keepers** — five campaign bosses; secret words unlock the Chronicle.
 - **The Grounds** — drifting floating regions you fly between; Concord hub + gates.
 - **Five Forces** — types: `LOGIC | CHAOS | COMPOSURE | RHETORIC | CREATIVITY`. Player UI: **Logic, Static, Calm, Chorus, Spark**. Deep lore: The Lattice, The Static, etc. (bible only).
 

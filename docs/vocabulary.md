@@ -16,7 +16,8 @@ Our audience is global. Many players read English as a second language, and many
 |---|---|---|
 | **Trainer** | Reader, Handler | The player. You raise the champions; you don't fight. |
 | **Champion** | (mind, for the fighter) | "Mind" is fine for a raw/unclaimed one in lore; the player's fighter is a Champion. |
-| **Strategy** | doctrine | The aggression/focus/risk dials (seeded at adopt; moved by Imprints and fights). *Code identifiers* (`doctrine()`, `DoctrineDial`, `card.doctrine`, the `d` URL param) keep their names — only visible English changes. |
+| **Strategy** | doctrine | The aggression/focus/risk dials (seeded at adopt; moved by Imprints and fights). After adopt the UI shows them as **temperament meters** (readout, not free-drag). *Code identifiers* (`doctrine()`, `DoctrineDial`, `card.doctrine`, the `d` URL param) keep their names — only visible English changes. |
+| **temperament meters** | strategy sliders / doctrine dials (as UI verbs) | Player-facing name for the post-adopt Strategy readout. |
 | **fight** / **battle** / **duel** | bout | Never say "bout" in player-facing copy. Prefer **fight** / **battle**; **duel** is fine for a single matchup. *Code* may still say `useBout`, `learnFromBout`, event kind `"bout"` — do not rename those in a copy pass. |
 | **Imprint** | lesson / teach (alone) | The daily raising verb that writes memory and nudges Strategy. |
 | **Clan** | Allegiance, House | The Force you swear to. The verb "swear allegiance to your Clan" is fine (plain English). |

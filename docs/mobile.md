@@ -1,63 +1,47 @@
 # ZINGERS — Mobile adaptation spec (the whole game on a phone)
 
-> **In short:** This is the concrete, buildable spec for adapting the *whole*
-> Zingers loop to a phone — not a minigame, the game. It applies the "one soul,
-> native bodies" principle ([`essence.md`](./essence.md)) to the real systems in
-> this repo, decides the **mobile core loop** and **information architecture**,
-> and specs a native body for every verb. Where `essence.md` says *why*, this
-> says *what we build on mobile and in what order.*
+> **In short:** Concrete spec for adapting the *whole* Zingers loop to a phone —
+> not a minigame, the game. Applies "one soul, native bodies"
+> ([`essence.md`](./essence.md)). Where `essence.md` says *why*, this says *what*.
 
-Version 0.1 — July 2026. Companion to [`design-vision.md`](./design-vision.md)
-(north star), [`essence.md`](./essence.md) (principle), and
-[`growth-strategy.md`](./growth-strategy.md) (distribution). **Read before building
-any mobile surface.** Copy follows [`vocabulary.md`](./vocabulary.md).
+Version 0.2 — July 2026. Companions: [`design-vision.md`](./design-vision.md),
+[`two-doors.md`](./two-doors.md), [`flight-first-plan.md`](./flight-first-plan.md),
+[`essence.md`](./essence.md). Copy follows [`vocabulary.md`](./vocabulary.md).
 
-> **Direction note (July 2026):** the **default door** decided in §3 (Today
-> tab) is superseded by [`two-doors.md`](./two-doors.md): the phone now opens
-> on a splash → **Climb-first** door (bus-time game as the lobby of the same
-> shell), with a guest Climb + claim hook. Everything else in this spec — the
-> shell, the verb bodies, the spectate-lane depth, M1–M3 — stands.
+> **LIVE DOOR (supersedes §3 "Today" below):** the phone opens on a splash →
+> **Take flight → Climb** (guest Climb + claim wingmate), then the shell tabs
+> (Champion / Rank / …). See [`two-doors.md`](./two-doors.md). Sections that still
+> describe "open on today's fight" are **historical product bets** kept for the
+> spectate-lane depth — not the first screen.
 
 ---
 
-## 0. The honest starting point
+## 0. The honest starting point (updated)
 
-Today the *only* door into the game is the immersive 3D world at `/grounds`
-(`lib/play-nav.ts`: "Play → /grounds"). That world is already the most
-mobile-adapted surface we have (full on-screen touch controls in
-`components/grounds/world.tsx`, an `isMobile`-aware HUD in `grounds-screen.tsx`).
-But it is a **desktop-shaped door**: a heavy WebGL third-person world is the wrong
-*first* thing to hand a phone user, and it's not where the game's soul or its
-growth engine live.
+**Shipped:** native shell at `/m` — Take flight → Climb (100-sector Ascent, one-thumb),
+Champion tab (temperament meters, Imprints, Saga), Rank / Trainer identity (optional
+wallet). Desktop keeps `/grounds` as the deep raise-lane; Circuit is the same Ascent
+in full flight.
 
-What is genuinely **not** adapted for phones: the two surfaces that ARE the soul —
-`app/arena/page.tsx` (spectating a bout) and `app/standings/page.tsx` (the ladder)
-are fixed desktop grids. There is no phone-native shell tying the verbs together,
-and the one-thumb Circuit we prototyped (`/circuit-lite`) is a detached island.
-
-So: we built the peripheral performer-verb and skipped the core. This spec fixes
-the framing.
+**Still true from the original framing:** a heavy third-person Grounds load is the
+wrong *first* phone beat; spectate / predict / share surfaces must stay excellent on
+small screens; Standings and deep arena study can remain denser on desktop.
 
 ---
 
-## 1. The mobile thesis (decided — grounded in the docs)
+## 1. The mobile thesis (updated)
 
-**The phone is the spectate-lane; the desktop is the raise-lane.** This is not a
-new idea — it is already the stated strategy in `growth-strategy.md` §3.4.2:
+**The phone's face is the Climb; its depth is raise + spectate.** Desktop remains
+the richest raise-lane (Grounds + Circuit). Flight-First (`design-vision.md` v3.0)
+put the performer-verb (flight) first without deleting the attachment loop.
 
-> *"Battles and the Tribunal grid must be flawless on a phone even if the 3D
-> Grounds stays desktop-first. Spectate/predict/share on mobile; raise/train in
-> the Grounds."*
+**Primary mobile loop (live):**
 
-And it is the honest reading of `design-vision.md`'s pillar **"Raise, Don't
-Fight"**: the deep raising happens in the living 3D Grounds (desktop's strength);
-the phone's job is the *watchable, shareable, check-on-your-champion* soul that
-`growth-strategy.md` bets the whole game on (the "adopt → train → evolve
-attachment loop… make champions maximally watchable and shareable").
+> **Take flight → Climb → claim / raise the wingmate → one more run + boards**
 
-**Therefore the phone's core loop is:**
+**Secondary loop (spectate lane — still valuable, not the door):**
 
-> **Open on today's bout → call the winner → watch it argue → see your champion's
+> **Open on today's fight → call the winner → watch it argue → see your champion's
 > result & how its body changed → share it → nudge its strategy → climb.**
 
 Every step already exists as a *system* in the repo; almost none has a *phone
@@ -82,11 +66,11 @@ use); code identifiers are unchanged (`vocabulary.md` "copy, not code").
 
 | Verb | Soul atom (invariant) | Mobile body | Reuses (systems that already exist) |
 |---|---|---|---|
-| **Spectate** | two minds argue to a **clear winner**, and **you have a stake** | full-screen vertical bout: turn-by-turn lines, Resolve (HP) bars, the Highlight; a "call it first" gate; a **20-sec highlight** mode for the impatient | `components/arena/use-bout.ts` (SSE reveal), `lib/engine/*`, `app/api/battle` |
-| **Predict** (the stake) | an **honest call** before the result; a streak you don't want to break | tap A/B before the bout, spoiler-free; streak counter; the **Daily Tribunal** as the "Wordle of AI debates" (one shared bout/day, emoji-grid share) | `predict`/`predictResult` + `commitBet` (`store/champions.ts`), Daily Tribunal (`components/grounds/daily-sheet.tsx`, `/api/daily`) |
-| **Raise / Train** | you shape **how the mind thinks** via Imprints; the run **marks its body** | a lean "Champion" screen: strategy dial readout, daily Imprint lessons, a paid training tap, and the body visibly reshaping | `imprint`/`trainChampion`/`evolveTrained` (`store/champions.ts`), `DoctrineDial`, phenotype render |
-| **Champion (identity)** | one **persistent** mind whose body records its career | the champion's card/diary: last-bout recap in persona, evolution before/after, sigils, Force, rank | career-derived body, memory notes (`learnFromBout`), OG card (`/c/[key]`, `/api/card`) |
-| **Climb** (the Circuit) | ascend; altitude = score; **one fall resets**; marks the champion | the one-thumb jetpack we built — now a **tab**, device-routed, reachable | `components/grounds/circuit-lite.tsx` (Slice 0–2 done) |
+| **Spectate** | two minds argue to a **clear winner**, and **you have a stake** | full-screen vertical fight: turn-by-turn lines, Resolve (HP) bars, the Highlight; a "call it first" gate; a **20-sec highlight** mode for the impatient | `components/arena/use-bout.ts` (SSE reveal), `lib/engine/*`, `app/api/battle` |
+| **Predict** (the stake) | an **honest call** before the result; a streak you don't want to break | tap A/B before the fight, spoiler-free; streak counter; the **Daily Tribunal** as the "Wordle of AI debates" (one shared fight/day, emoji-grid share) | `predict`/`predictResult` + `commitBet` (`store/champions.ts`), Daily Tribunal (`components/grounds/daily-sheet.tsx`, `/api/daily`) |
+| **Raise / Train** | you shape **how the mind thinks** via Imprints; the run **marks its body** | a lean "Champion" screen: **temperament meters** (Strategy readout), daily Imprint lessons, a paid training tap, and the body visibly reshaping | `imprint`/`trainChampion`/`evolveTrained` (`store/champions.ts`), `DoctrineDial`, phenotype render |
+| **Champion (identity)** | one **persistent** mind whose body records its career | the champion's card/diary: last-fight recap in persona, evolution before/after, sigils, Force, rank | career-derived body, memory notes (`learnFromBout`), OG card (`/c/[key]`, `/api/card`) |
+| **Climb** (the Ascent) | ascend; altitude = score; lives then reset; marks the champion | one-thumb Climb — the **default door** of `/m` | Climb module under `components/grounds/` (shared with desktop Circuit) |
 | **Rank** | an **objective, honest** record of standing | compact standings + your champion's rank card + the live feed | `app/standings/page.tsx` logic, `/api/ladder`, `/api/feed`, `/api/me` |
 | **Roam** (the Grounds) | you are **present in the world above the Long Vault** | *deliberate call — see §5 Open decisions*; leaner presence surface OR desktop-gated | `components/grounds/*` |
 | **Persuade** (Keepers) | out-talk a guarded mind; the crack is **shareable** | one-screen quick-crack + share streak | `components/guardian/game.tsx` |

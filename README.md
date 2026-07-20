@@ -4,7 +4,9 @@
 
 > Copying this folder to a new repo? See **[EXPORT.md](./EXPORT.md)**.
 
-Raise a mind. Make it legend. You adopt an AI champion, train how it thinks, send it to fight — and watch its body evolve with every battle.
+**You fly. It fights. You both rise.** Raise a mind. Make it legend. Jetpack on your back,
+you climb the sky above a sealed vault; a thinking AI champion flies beside you, fights the
+battles on the way up, and evolves with every one.
 
 ## Quick start
 
@@ -52,33 +54,44 @@ production env vars locally. Preview build without releasing: `npx vercel`.
 
 | Path | Description |
 |------|-------------|
-| `/` · `/grounds` | 3D world — claim, train, walk, fight. The Concord hub: Force war, Daily Tribunal, Amphitheatre (league), The Circuit, Keeper campaign. Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
+| `/` · `/grounds` | 3D world — fly, raise, fight. Concord hub: Force war, Daily Tribunal, Amphitheatre (Live Gallery), The Circuit (100-sector Ascent), Keepers. Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
+| `/m` | Mobile shell — Take flight → Climb (one-thumb Ascent), then Champion / Rank tabs. |
 | `/arena` | 1v1 debate combat (SSE live fight). Unlisted — the fight viewer for bring-your-own agents from `/agents`. |
 | `/standings` | ELO leaderboard |
 | `/agents` | The agent protocol — connect/validate your own AI agent, deploy via ladder or MCP |
-| `/champion/[key]` | Champion profile |
+| `/champion/[key]` | Champion profile (Saga, Imprints, career) |
 | `/c/[key]` | Shareable public agent card |
+| `/glossary` · `/howitworks` | Plain-language terms + product guide |
 
 ## Architecture
 
 ```
 app/           Next.js App Router pages + API routes (SSE battle/house, sim, OG cards)
-components/    UI, 3D world (R3F), intro, arena/house hooks
+components/    UI, 3D world (R3F), Climb/Circuit, intro, arena hooks, brand mark
 lib/
   brand.ts     Product name, domains, storage keys
   types.ts     Shared types (SSE events, Champion, Recipe)
   engine/      Battle, house, agent protocol, roster, xAI client
   evolve/      Progression, ELO, appearance (genome → body)
+  lore/        Canon + glossary (source of truth for /glossary)
 store/         Zustand + localStorage (champion progress, recipes, crowns)
 public/
   models/      RobotExpressive.glb
+  brand/       Robot mark (favicon / nav)
   img/         Champion portraits
-docs/          Game spec, combat design, agent protocol
+docs/          Game spec, combat design, Flight-First plan, bible, agent protocol
 ```
 
 ## Documentation
 
-See **[docs/README.md](./docs/README.md)** for combat constants, game loop, and agent protocol.
+See **[docs/README.md](./docs/README.md)**. Start with:
+
+- **[docs/vocabulary.md](./docs/vocabulary.md)** — Trainer / Strategy / Clan / fight (never "bout" in UI)
+- **[docs/design-vision.md](./docs/design-vision.md)** — Flight-First north star
+- **[docs/flight-first-plan.md](./docs/flight-first-plan.md)** — active roadmap
+- **[docs/bible/10-ascent.md](./docs/bible/10-ascent.md)** — Ascent canon
+
+Public docs site: **[zingers.org](https://zingers.org)**.
 
 ## Stack
 

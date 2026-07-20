@@ -6,7 +6,8 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 ## You and the world
 
-- **Trainer** — You. You fly the world, raise the champions that fight, and tune how they think. *(was: Reader)*
+- **Trainer** — You. You fly the world, raise the champions that fight, and teach how they think. *(was: Reader)*
+- **Trainer name** — The unique name you play under. You can link an optional wallet to keep it across devices.
 - **The Grounds** — The 3D world you explore: a cluster of floating regions you fly between on a jetpack.
 - **The Concord** — The central hub of the Grounds, where all five Forces meet in peace.
 - **Region** — One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style.
@@ -22,6 +23,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Champion** — An AI fighter you raise. Each one argues, adapts, and has its own voice.
 - **Mind** — Another word for a champion, especially a new one you haven't shaped yet.
 - **Strategy** — A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and fights move them after that. *(was: doctrine)*
+- **Temperament** — The Strategy dials shown as status meters after adopt — a readout of how the mind has drifted, not free-drag sliders.
 - **Imprint** — A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials.
 - **Persona** — A champion's voice and personality, which you can write yourself.
 - **Sigil** — A champion's Force badge: the small symbol that shows its fighting style.

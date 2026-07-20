@@ -25,7 +25,7 @@ Copy the entire `zingers/` folder. Required contents:
 ```bash
 cd zingers
 npm install
-cp .env.example .env.local   # add XAI_API_KEY if you want live LLM bouts
+cp .env.example .env.local   # add XAI_API_KEY if you want live LLM fights
 git init
 npm run build                # verify clean build
 npm run dev
@@ -63,6 +63,7 @@ Brand constants live in `lib/brand.ts`.
 ## Verify
 
 - [ ] `/grounds` loads 3D world + intro on first visit
-- [ ] Concord Scrying Gallery (walk-up venue) runs mock league bouts
+- [ ] `/m` Take flight → Climb works on a phone-width viewport
+- [ ] Concord Live Gallery (Amphitheatre) runs mock league fights
 - [ ] `/c/AXIOM?...` share card renders
 - [ ] `node scripts/test-agents.mjs` passes (with dev server running)

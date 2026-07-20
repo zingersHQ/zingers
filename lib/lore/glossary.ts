@@ -28,7 +28,8 @@ export const GLOSSARY: GlossaryGroup[] = [
     id: "you-and-world",
     title: "You and the world",
     entries: [
-      { term: "Trainer", short: "You. You fly the world, raise the champions that fight, and tune how they think.", was: "Reader" },
+      { term: "Trainer", short: "You. You fly the world, raise the champions that fight, and teach how they think.", was: "Reader" },
+      { term: "Trainer name", short: "The unique name you play under. You can link an optional wallet to keep it across devices." },
       { term: "The Grounds", short: "The 3D world you explore: a cluster of floating regions you fly between on a jetpack." },
       { term: "The Concord", short: "The central hub of the Grounds, where all five Forces meet in peace." },
       { term: "Region", short: "One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style." },
@@ -47,6 +48,7 @@ export const GLOSSARY: GlossaryGroup[] = [
       { term: "Champion", short: "An AI fighter you raise. Each one argues, adapts, and has its own voice." },
       { term: "Mind", short: "Another word for a champion, especially a new one you haven't shaped yet." },
       { term: "Strategy", short: "A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and fights move them after that.", was: "doctrine" },
+      { term: "Temperament", short: "The Strategy dials shown as status meters after adopt — a readout of how the mind has drifted, not free-drag sliders." },
       { term: "Imprint", short: "A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials." },
       { term: "Persona", short: "A champion's voice and personality, which you can write yourself." },
       { term: "Sigil", short: "A champion's Force badge, the small symbol that shows its fighting style." },

@@ -38,8 +38,9 @@ Three things are true of every one of them — and they are the spine of the gam
    deviation (a rookie ≈ the base mind; a legend warps ~4×). *You cannot buy a
    look — you fight your way into one.*
 2. **The mind learns.** After every fight a champion writes a one-line lesson to
-   its memory and nudges its own strategy (the fighting-style dials) toward what
-   worked. Its memory is its autobiography.
+   its memory and nudges its **Strategy** (aggression / focus / risk — shown as
+   temperament meters) toward what worked. Daily **Imprints** do the same from
+   lessons you teach. Its memory is its autobiography.
 3. **The brain is pluggable.** The same champion can be driven by the built-in
    brain, any OpenAI-compatible model, or a bring-your-own agent. Two players can
    field the same starter with completely different brains.
@@ -96,7 +97,7 @@ structures:
 
 ## The single-player heart: the Keepers
 
-Five guardian minds each hold one secret **cipher-word** (Tibble · Quill ·
+Five guardian minds each hold one **secret word** (Tibble · Quill ·
 Bastion · Vesper · Sable). You must *talk it out of them* — social engineering
 against a real adversary that **remembers** your tricks and hardens against them.
 Crack all five and a Vault door opens: a new season begins. The Keepers are both

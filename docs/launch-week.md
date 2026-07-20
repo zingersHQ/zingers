@@ -1,16 +1,17 @@
 # ZINGERS — Launch-week plan (and the Flight-First reframe)
 
-> **In short:** The ordered, ship-focused plan for the run up to Launch v0.1, and
-> the home of the **Flight-First reframe (P4)** that `first-journey-roadmap.md`
-> points at. The short version: the shipped onboarding is fight-led; v3.0
-> (`design-vision.md`) makes flight the first verb. P4 is the surgical recut of the
+> **Status (July 2026):** Most of P4 / Flight-First **shipped**. Treat this doc as
+> the historical plan + remaining ops checklist. **Live roadmap & phase checkboxes:**
+> [`flight-first-plan.md`](./flight-first-plan.md). Remaining: human playtests, key art,
+> growth push after Climb feel acceptance.
+>
+> **In short:** Ordered ship plan for Launch v0.1. P4 was the surgical recut of the
 > first 90 seconds to **wake → fly → claim → it flies beside you → climb → battles**.
 
-Version 1.0 — July 2026. Companions: [`design-vision.md`](./design-vision.md) v3.0
-(north star), [`two-doors.md`](./two-doors.md) v2.0 (the Ascent is the game),
-[`first-journey-roadmap.md`](./first-journey-roadmap.md) (Act 1 flow),
-[`flyover.md`](./flyover.md) (how the flight teaches the game),
-[`essence.md`](./essence.md) (one soul, native bodies). Copy follows
+Version 1.1 — July 2026. Companions: [`design-vision.md`](./design-vision.md) v3.0
+(north star), [`two-doors.md`](./two-doors.md) v2.0, [`flight-first-plan.md`](./flight-first-plan.md)
+(active status), [`first-journey-roadmap.md`](./first-journey-roadmap.md) (historical fight-led Act 1),
+[`flyover.md`](./flyover.md), [`essence.md`](./essence.md). Copy follows
 [`vocabulary.md`](./vocabulary.md); identifiers/keys never change for copy reasons.
 
 ---

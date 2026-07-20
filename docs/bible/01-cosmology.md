@@ -51,13 +51,13 @@ fresh minds.
 
 ## The Trainer (you)
 
-You are not a mind. You are a **Trainer** — the person who walks the
+You are not a mind. You are a **Trainer** — the person who **flies** the
 Grounds, raises minds into champions, holds rank in the arenas, and works the
 Keepers until their words slip. You never fight yourself; you grow the ones who do.
 Where a champion's record is its *body*, a Trainer's record is a single rising number
-— **Trainer Rank** — that everything feeds: every fight, every session of training,
-every cache prised out of the wilds, every daily solved, every Keeper cracked. It is
-the thing you say out loud ("I'm a level 12 Trainer, sworn to the Lattice").
+— **Trainer Rank** — that everything feeds: every fight, every climb, every session
+of training, every cache prised out of the wilds, every daily solved, every Keeper
+cracked. It is the thing you say out loud ("I'm a level 12 Trainer, sworn to Logic").
 
 A Trainer may swear allegiance to a **Clan** — one of the five forces, chosen as the
 side you fight for. From then on, ranked wins also feed that force's standing in the

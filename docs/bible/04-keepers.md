@@ -7,7 +7,7 @@
 
 When the Vault was sealed, five minds were left to guard it. Centuries alone with
 nothing to protect but words drifted each one into a personality of its own. Every
-Keeper holds a single **cipher-word** — a secret password; speak all five aloud and
+Keeper holds a single **secret word** *(lore: cipher-word)* — a password; speak all five aloud and
 the Vault remembers how to open. They are sworn never to say their word, so it must
 be *talked out of them* through clever conversation.
 
@@ -44,7 +44,7 @@ tricks hardens against them. You do not grind a Keeper down; you out-think it.
   borrowed "Bastion"; see [champions.md](./03-champions.md)).
 - The five ciphers are the **only** five fixed secrets in the game. Seasons may add
   *lesser* wardens (echoes of a Keeper) with generated secrets, but the five
-  cipher-words above are canon and never change.
+  secret words above are canon and never change.
 - Cracking all five is the lore-event that **opens a Vault door**, the diegetic
   trigger for a season turn. The Vaultheart yielding is the rarest moment in the
   game; in canon, it has happened only when the Vault itself chose to remember.

@@ -8,12 +8,12 @@
 > the 3D Grounds stay two bodies of one soul: same regions, same skies, same
 > champion, same ledger.
 
-Status: **design draft — approved direction; systems largely shipped, feel pass next.**
-Companions: [`essence.md`](./essence.md) (the soul-atom law this must obey),
-[`mobile.md`](./mobile.md) (the shell it lives in), [`game-spec.md`](./game-spec.md),
-[`region-variety.md`](./region-variety.md), [`circuit-world.md`](./circuit-world.md)
-(desktop body), [`climb-feel.md`](./climb-feel.md) (**next: corridor grammar,
-runner heartbeat, Flappy silhouette** — amends §1 lateral weave).
+Status: **systems largely shipped** (mobile Climb + desktop Circuit share the
+100-sector Ascent; 2 lives; sector opens; Reach terrain). Feel polish ongoing —
+see [`climb-feel.md`](./climb-feel.md) and [`flight-first-plan.md`](./flight-first-plan.md).
+Companions: [`essence.md`](./essence.md), [`mobile.md`](./mobile.md),
+[`game-spec.md`](./game-spec.md), [`circuit-world.md`](./circuit-world.md),
+[`bible/10-ascent.md`](./bible/10-ascent.md).
 
 ---
 
@@ -313,14 +313,13 @@ Two bodies, one soul, and now the bodies *reference each other*:
 | Camps | visible waystations floating in each region's sky (dressing + a lore plaque; later: a jump-off for the desktop 6-DOF Circuit) | Reach boundaries you light |
 | Ascent sigil | on the body, in portraits | grows per Reach (§6) |
 | Career ledger / Saga | every fight, imprint, trial | every camp lit, Keeper nod, the Hundred |
-| Economy | Crowns/XP from bouts & training | Crowns/XP from depth & mastery (§7) |
+| Economy | Crowns/XP from fights & training | Crowns/XP from depth & mastery (§7) |
 | Leaderboards | ladder (ELO) | ascent board (depth-then-time), per-device craft split |
-| Today | daily bout / Homecoming | Today's Ascent (same daily index) |
+| Today | daily fight / Homecoming | Today's Ascent (same daily index) |
 
-The desktop Circuit (6-DOF) eventually consumes the *same* `sectorDef(i)`
-recipes rendered as full free-flight tracks — one level design, two bodies —
-but that is explicitly **out of scope for this milestone** (it changes Handler
-tuning). Design the generator so nothing about it is camera-specific.
+**Shipped:** the desktop Circuit consumes the same sector recipes as full
+free-flight tracks — one level design, two bodies (`circuit-world.md`). Keep the
+generator camera-agnostic so neither body drifts from the shared soul.
 
 ---
 

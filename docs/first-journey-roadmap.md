@@ -1,41 +1,41 @@
 # First Journey Roadmap
 
-> **Direction note (July 2026):** The product has been recut to **Flight-First** —
-> [`design-vision.md`](./design-vision.md) is now v3.0 and [`two-doors.md`](./two-doors.md)
-> v2.0 (the Ascent is the game, battles are what you meet on the way up). Target
-> first-90s: wake → **fly** → **claim the mind on your wing** → raise it a touch →
-> **climb a Reach/Gate** → the battle reveals itself (now motivated) → arena.
-> The shipped flow below (fight-led) is the prior pass; the concrete recut plan is
-> [`launch-week.md`](./launch-week.md) **P4**, and how the flight teaches the whole
-> game is [`flyover.md`](./flyover.md). Canon: [`docs/bible/10-ascent.md`](./bible/10-ascent.md).
+> **HISTORICAL (fight-led Act 1).** The live product door is **Flight-First** —
+> see [`flight-first-plan.md`](./flight-first-plan.md), [`two-doors.md`](./two-doors.md),
+> [`design-vision.md`](./design-vision.md) v3.0, and [`flyover.md`](./flyover.md).
+> Canon: [`docs/bible/10-ascent.md`](./bible/10-ascent.md).
+>
+> **Live first minutes:** mobile = Take flight → Climb → claim wingmate; desktop =
+> short flight → champion pick → Grounds / Circuit. Do not treat the fight-led flow
+> below as the current onboarding.
 
-Production pass for Act 1 — from first visit through the Concord landing.
+Production notes from the prior Act 1 pass (kept for reference / archaeology).
 
-## Act 1 flow (shipped)
+## Act 1 flow (prior pass — superseded)
 
 ```
 FirstRun (cinematic) → First Duel: Adopt (5 Forces, weekly rotation, rookie preview)
-  → Adoption beat (Reader + champion) → Tune doctrine → adopt as rookie → Void fight
-  → Evolve card → Concord landing (Reader beat first) → Reader split coach at spawn
+  → Adoption beat (Trainer + champion) → seed Strategy → adopt as rookie → Void fight
+  → Evolve card → Concord landing (Trainer beat first) → Trainer split coach at spawn
   → Guided first arena (Grounds gate spotlit) → Free roam + coach
 ```
 
-## 60-second teaching contract
+## 60-second teaching contract (updated for Flight-First)
 
-Before leaving pick or first spawn, the player must know:
+Before leaving the first flight / pick, the player must know:
 
-- [ ] *You did not become this champion. You claimed it.* (`READER_COPY.claimLine`)
-- [ ] *You walk the Grounds. Your champion fights.* (`READER_COPY.walkFightLine`)
+- [ ] *You fly. It fights. You both rise.*
+- [ ] *You raise this champion — you are not the fighter.* (soft identity; no claim-lock hype)
 - [ ] Rookie body at adoption is day one of the arc, not a downgrade from pick preview
 
-Canonical copy: `lib/player-copy.ts` · Vision: `docs/design-vision.md`
+Canonical copy: `lib/player-copy.ts` · Vision: `docs/design-vision.md` · Vocabulary: `docs/vocabulary.md`
 
 ## P0 — Broken promises ✅
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Real doctrine dials in train step | ✅ | `DoctrineDial` shared component |
-| Player copy: duel not bout | ✅ | `lib/player-copy.ts` + first-journey UI |
+| Strategy / temperament readout (not free-drag sliders) | ✅ | `DoctrineDial` = meters; Imprints + fights move dials |
+| Player copy: duel/fight not bout | ✅ | `lib/player-copy.ts` + first-journey UI |
 | First fight in region arena | ✅ | `FIRST_FIGHT_WORLD = void` |
 | Wider fighter spacing + camera | ✅ | `MATCH_SPREAD = 4.5`, orbit 14 / height 6.2 |
 | Hub fights don't clip seal/flags | ✅ | Concord hidden during match; temp arena ring |
@@ -67,13 +67,13 @@ Canonical copy: `lib/player-copy.ts` · Vision: `docs/design-vision.md`
 | Item | Status | Notes |
 |------|--------|-------|
 | Gate/travel transitions | ✅ | `TravelVeil` — force-tinted wipe + name card for gate travel and venue enter/exit (`travelWhoosh` SFX) |
-| Reader's saga spine | ✅ | `lib/lore/saga.ts` — 8-chapter / 4-act arc keyed off Reader rank; `ReaderThread` hub marker |
+| Trainer's saga spine | ✅ | `lib/lore/saga.ts` — 8-chapter / 4-act arc keyed off Trainer rank; `ReaderThread` hub marker (code id unchanged) |
 | Season-turn cinematic | ✅ | `seasonTurnBeat()` — a Keeper performs the Chronicle when a new door opens (once per season) |
-| Rival system | ✅ | `lib/lore/rival.ts` — recurring named Reader, persistent head-to-head, taunts that escalate; `RivalCard` + pre/post-duel beats |
+| Rival system | ✅ | `lib/lore/rival.ts` — recurring named rival Trainer, persistent head-to-head, taunts that escalate; `RivalCard` + pre/post-duel beats |
 | Directed character beats | ✅ | `CharacterBeat` upgraded: letterbox, rising/floating live 3D portrait, per-line glow pulse, typewriter, parallax field (reduced-motion aware) |
 
 The saga (your story) and the Chronicle (the world's story) are deliberately
-distinct: the saga advances off the one Reader-rank number so it moves no matter
+distinct: the saga advances off the one Trainer-rank number so it moves no matter
 how a player plays, while the Chronicle turns on the season clock.
 
 ## Intentionally unchanged
@@ -104,11 +104,11 @@ Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbience
 ## Key files
 
 - `lib/first-duel.ts` — starters, rotation, arena world, Concord landing copy
-- `lib/lore/saga.ts` — the Reader's saga arc + season-turn beat
+- `lib/lore/saga.ts` — the Trainer's saga arc + season-turn beat
 - `lib/lore/rival.ts` — recurring rival identity, memory, taunts
 - `lib/lore/character-beats.ts` — champion + Keeper voice beats
 - `components/grounds/travel-veil.tsx` — scene-change transition
-- `components/grounds/reader-thread.tsx` — saga hub marker
+- `components/grounds/reader-thread.tsx` — saga hub marker (code id unchanged)
 - `components/grounds/rival-card.tsx` — rival hub presence
 - `components/grounds/character-beat.tsx` — directed narrative beat
 - `lib/ambience-scores.ts` — procedural soundtrack per place
@@ -117,7 +117,7 @@ Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbience
 - `lib/iconography.ts` — visual canon for UI
 - `components/intro/first-duel.tsx` — onboarding overlay
 - `components/intro/onboarding-audio.tsx` — floating mute control
-- `components/shared/doctrine-dial.tsx` — doctrine sliders
+- `components/shared/doctrine-dial.tsx` — temperament meters / Strategy readout
 - `components/grounds/grounds-screen.tsx` — sequencing + world travel + first-run guide (focus gate, idle escalation, walk-to nudge)
 - `components/grounds/world.tsx` — match staging + cinematic camera; threads `guideWorld`/`guideUrgent` to the Concord
 - `components/grounds/concord.tsx` — Concord scene; Vaultgate spotlight/dim treatment (`firstStop`/`dimmed`/`urgent`)

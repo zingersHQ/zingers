@@ -46,6 +46,18 @@ never drifts.
 | Characters (Minds, Keepers) | 4:5 | centered figure, ¾ pose, emblem behind |
 | Forces / icons | 1:1 | centered emblematic embodiment, tile-able |
 
+## Brand chrome (UI mark — not bible key art)
+
+The product chrome mark is a flat vector **robot head** (big eyes, thick antenna),
+not painterly bible art:
+
+- `app/icon.svg` — favicon / app icon (near-full-bleed silhouette)
+- `public/brand/robot-mark.svg` — same mark for nav / PlayerHub
+- `components/brand/robot-mark.tsx` — React wrapper
+
+Keep bible / share key art painterly (below). Do not put the robot mark into
+generated lore plates; do not put painterly faces into the favicon tile.
+
 ## Files & embedding
 
 - Save to `public/img/bible/<group>/<slug>.png`

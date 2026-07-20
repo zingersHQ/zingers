@@ -2,15 +2,16 @@
 
 **zingers.gg** · **@zingersHQ** · **zingers.org** (tech & docs)
 
-### Raise a mind. Make it legend.
+### You fly. It fights. You both rise.
 
-**You don't fight. You raise an AI champion that does.** Adopt a thinking AI, train *how* it
-fights, send it into the ring, and watch it scrap, win, and physically evolve into something
-that's yours alone.
+**You don't fight — you fly.** Jetpack on your back, you climb the sky above a sealed vault.
+Flying beside you is a thinking AI champion: you train *how* it fights, send it into the battles
+that stud the climb, and watch it scrap, win, and physically evolve into something that's yours
+alone. *Raise a mind. Make it legend.*
 
-> **Pitch:** Adopt an AI that fights for itself and evolves with every battle. You train it, it becomes legend.
+> **Pitch:** Fly the sky; a thinking AI flies beside you, fights the battles on the way up, and evolves with every one.
 >
-> **Tweet:** You don't fight: you raise an AI that does, and it evolves with every battle.
+> **Tweet:** You fly. It fights. You both rise — raise an AI that argues itself into a body.
 
 ---
 
@@ -21,20 +22,26 @@ creatures are **scripted**. Every battle is a known quantity; the "intelligence"
 Meanwhile, real AI agents can now argue, scheme, persuade, and improvise.
 
 **The opportunity:** take the most beloved game loop in the world (*collect, train, battle*) and
-make the creatures **actually think.** Battles stop being scripted and become live contests
-between two intelligences. Every match is unique. Every champion is unrepeatable.
+make the creatures **actually think** — then put the one verb a stranger understands in zero
+seconds (**flight**) as the face of the product. Battles become live contests between two
+intelligences. Every match is unique. Every champion is unrepeatable. The climb makes you care
+before the systems do.
 
 ---
 
 ## 2. What it is
 
-A **collect → train → battle → evolve → climb** loop where each champion is a real AI agent:
+A **fly → claim → raise → fight → climb higher** loop where each champion is a real AI agent:
 
-- **Train**: you don't pick moves; you shape a *doctrine* (risk / focus / aggression), a persona,
-  and which brain drives the champion. It learns.
-- **Battle**: send it into live contests judged by an engine or model, not a script.
-- **Evolve**: its body and title are *derived* from its career. The champion you end up with is a
-  receipt of every fight it survived.
+- **Fly**: the Ascent — one-thumb Climb on phones, full Circuit flight on desktop — through
+  Reaches of sky above the Long Vault.
+- **Raise**: you don't pick moves; you seed **Strategy** (aggression / focus / risk) at adopt,
+  then shape the mind with daily **Imprints**, persona, and which brain drives it. Temperament
+  meters show how it has drifted — a readout, not free-drag sliders.
+- **Fight**: send it into live contests resolved by an authoritative engine (local wit judge by
+  default; optional LLM judge).
+- **Evolve**: its body and title are *derived* from its career — fights *and* how high you've
+  flown. The champion you end up with is a receipt of every fight it survived.
 
 ---
 
@@ -44,18 +51,19 @@ A single typed Next.js app: one runtime, no separate backend to babysit.
 
 | Pillar | Status | Detail |
 |---|---|---|
-| **3D Grounds (one world)** | Built | Concord hub + three region-slabs. Walk-up venues (Amphitheatre, Circuit), arena scenarios (Duel, Gauntlet, Tribunal), Keepers, goals, Broker, Force war. |
-| **Act 1 onboarding** | Built | First journey: cinematic intro → starter pick → doctrine tune → Void Garden first duel → evolve → Concord landing → free roam. |
-| **AI agent protocol** | Built | Every champion implements one `act(view)` contract. Drivers: Grok (xAI), any OpenAI-compatible model, or a bring-your-own HTTP agent. Deterministic heuristic fallback means a keyless demo still runs. |
-| **Evolving 3D body** | Built | Silhouette is a deterministic function of career; deviation is *amplified by rank* (rookies ≈0.6×, legends ≈4.4×). Bone-scaling in 3D + aura in 2D. |
-| **Progression** | Built | XP curve, levels, five tiers (Rookie → Adept → Veteran → Elite → Legend), five style axes (aggression, control, resilience, flair, creativity), doctrines/titles, sigils. |
+| **The Ascent (Climb / Circuit)** | Built | 100 sectors across ten Reaches; mobile one-thumb Climb (`/m`); desktop Circuit venue = same climb in full flight. Two lives; boards by depth then time. Sector opens, life-continue, Reach terrain. |
+| **Two doors** | Built | Mobile: Take flight → Climb (guest climb → claim wingmate). Desktop: short flight hero → champion pick → Grounds / Circuit. |
+| **3D Grounds (one world)** | Built | Concord hub + three floating regions. Walk-up venues (Amphitheatre / Live Gallery, Circuit), arena scenarios (Duel, Gauntlet, Tribunal), Keepers, goals, Broker, Force war. |
+| **AI agent protocol** | Built | Every champion implements one `act(view)` contract. Drivers: Grok (xAI), any OpenAI-compatible model, or a bring-your-own HTTP agent. Deterministic heuristic fallback means a keyless demo still runs. Default: single-shot JSON + local judge. |
+| **Evolving 3D body** | Built | Silhouette is a deterministic function of career; deviation is *amplified by rank*. Bone-scaling in 3D + aura in 2D + ascent sigils from climbs. |
+| **Progression & biography** | Built | XP, tiers (Rookie → Legend), style axes, career ledger → Saga, Homecoming / Report, Imprints, Promotion Trials. |
 | **Debate combat (1v1)** | Built | Stat-driven, five-type pentagon, statuses, finishers, streamed turn-by-turn over SSE. Open Duel, Gauntlet, and Tribunal scenarios in-world. |
-| **The Circuit** | Built | 10-sector jetpack time trial; one fall restarts from sector 1; shared leaderboard by depth then time. |
+| **Trainer identity** | Built | Unique Trainer names; optional Solana wallet link to keep the name. Soft identity copy. |
 | **The House** | Built | Social-deduction benchmark on unlisted `/arena` (not yet a Grounds venue). |
-| **Training & economy hooks** | Built | "Crowns" currency, paid training sessions that visibly evolve the body and shift the build. |
-| **The mind evolves** | Built | Champions keep memory notes across bouts and gently auto-tune doctrine toward what just worked. Character beats (`lib/lore/character-beats.ts`) give champions and Keepers fixed voice. |
-| **Live League + Standings** | Built | Auto-running bouts feed an objective ELO leaderboard, the honest climb. Amphitheatre surfaces the league in-world. |
-| **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden — procedural ambience per place (`lib/ambience-scores.ts`). |
+| **Training & economy** | Built | Crowns currency; paid training sessions; recruit loop (earned Crowns sink — not gacha). |
+| **The mind evolves** | Built | Memory notes across fights; Strategy / temperament drifts via Imprints and results. Character beats give champions and Keepers fixed voice. |
+| **Live League + Standings** | Built | Auto-running fights feed an objective ELO leaderboard. Amphitheatre surfaces the league in-world. |
+| **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden — procedural ambience per place. |
 | **Shareable cards** | Built | Auto-generated champion/battle cards (OG images) made to be clipped and shared. |
 
 **Stack:** Next.js (App Router) · end-to-end TypeScript with one shared type contract ·
@@ -67,9 +75,8 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 ## 4. Why it's defensible
 
 - **Genuinely new twist on a proven format**: thinking creatures make battles unscripted and
-  endlessly fresh.
-- **Built-in virality**: collection, leaderboards, and clip-able battle moments drive organic
-  sharing.
+  endlessly fresh; flight makes the product legible before the systems do.
+- **Built-in virality**: collection, leaderboards, climb boards, and clip-able battle moments.
 - **Real character**: champions that argue, scheme, and win or lose are watchable and meme-able.
 - **Ownable IP moat**: original roster, lore, the evolving battle meta, and (later) a creator
   economy of user-made champions. The moat is the IP and the meta, **not** the engine.
@@ -80,9 +87,10 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 - **Art & design lift is the biggest cost** → ship one strong battle type + a tight roster, stub
   the rest; bodies are *procedurally* generated from career to keep the art load manageable.
-- **Fair judging** → objective win-conditions or a trusted judge; persuasion outcomes resolve to
-  game-state to remove jailbreak incentives.
-- **Retention past novelty** → progression, an honest ELO ladder, and (roadmap) seasons + trading.
+- **Fair judging** → objective win-conditions; default local judge; optional LLM judge stays a
+  bounded multiplier so persuasion cannot jailbreak the match.
+- **Retention past novelty** → progression, an honest ELO ladder, climb mastery, and (roadmap)
+  seasons + trading.
 - **Viral games are unpredictable** → bet on the *format, the IP, and the creator economy*, not a
   single launch.
 
@@ -90,18 +98,18 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 ## 6. Roadmap (clearly not yet built)
 
-- Gacha pulls and a real **collection** acquisition loop.
-- Player-to-player **trading** and an in-game economy.
+- Full cloud roster sync (recruits today can still be device-local).
+- Player-to-player **trading** and a deeper in-game economy.
 - **User-made champions** and a creator economy (the long-term moat).
-- Accounts + cloud persistence (state is local-first today, behind a swappable interface).
-- Monetization: cosmetics, battle passes, pulls, an "infinite battles" subscription.
+- Accounts + full cloud persistence.
+- Monetization: cosmetics, battle passes, an "infinite battles" subscription.
+- **`$ZING` / token** — deliberately deferred; wallet today is optional Trainer identity only.
 
 ---
 
 ## 7. The demo, in 30 seconds
 
-Open the Grounds → run Act 1 (pick a mind, tune doctrine, win your first duel) →
-land on the Concord → walk to an arena or step into The Circuit → watch two AIs
-spar in a ranked duel → XP lands, the body shifts, ELO updates on the Standings,
-and a shareable card drops. **Two characterful AIs really battling, with a clear
-winner, collectible, competitive, and clip-able.**
+Open **Take flight** (phone) or the desktop hero → fly the Climb / a short Reach → claim the
+mind on your wing → land on the Concord → step into the Circuit or an arena → watch two AIs
+spar in a ranked duel → XP lands, the body shifts, ELO updates on the Standings, and a
+shareable card drops. **You flew. It fought. Something changed.**

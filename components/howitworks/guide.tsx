@@ -201,8 +201,10 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ marginTop: 18 }}>
         <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 700, lineHeight: 1.55, margin: "0 0 18px" }}>
-          A training session costs <b style={{ color: "var(--gold)" }}>60 Crowns</b>, grants XP, and tunes three dials your
-          champion reasons inside of:
+          At adopt you seed three <b style={{ color: "var(--ink)" }}>Strategy</b> dials. After that they show as{" "}
+          <b style={{ color: "var(--gold)" }}>temperament meters</b> — a readout. Daily{" "}
+          <b style={{ color: "var(--ink)" }}>Imprints</b> and real fights move them; a training session costs{" "}
+          <b style={{ color: "var(--gold)" }}>60 Crowns</b> and grants XP:
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 700 }}>
           {[
@@ -215,7 +217,7 @@ const SLIDES: Slide[] = [
         </div>
         <p style={{ fontSize: 13, color: "var(--muted2)", maxWidth: 700, lineHeight: 1.5, marginTop: 16 }}>
           Write its <b style={{ color: "var(--ink)" }}>persona</b> (its voice) too. The brain decides the rest, within the
-          strategy you gave it.
+          temperament it has grown.
         </p>
       </div>
     ),
