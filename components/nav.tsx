@@ -30,8 +30,8 @@ export function Nav() {
         <span
           aria-hidden
           style={{
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             borderRadius: 6,
             border: "1.5px solid var(--line2)",
             background: "rgba(255,255,255,.06)",
@@ -40,7 +40,7 @@ export function Nav() {
             placeItems: "center",
           }}
         >
-          <RobotMark size={14} />
+          <RobotMark size={18} />
         </span>
         <span className="site-nav__name">{BRAND.nameUpper}</span>
         <span className="site-nav__tagline mono">{BRAND.tagline.toUpperCase()}</span>

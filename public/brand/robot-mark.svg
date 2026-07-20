@@ -1,13 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#0a0912"/>
-  <g transform="translate(4 4)">
-    <path d="M12 3.2V6.1" stroke="#e8e4d8" stroke-width="1.7" stroke-linecap="round"/>
-    <circle cx="12" cy="2.4" r="1.35" fill="#e8e4d8"/>
-    <rect x="4.75" y="6.1" width="14.5" height="13.4" rx="3.6" stroke="#e8e4d8" stroke-width="1.7"/>
-    <path d="M4.75 11.2H3.4c-.4 0-.7.3-.7.7v1.8c0 .4.3.7.7.7h1.35" stroke="#e8e4d8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M19.25 11.2h1.35c.4 0 .7.3.7.7v1.8c0 .4-.3.7-.7.7H19.25" stroke="#e8e4d8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="7.6" y="10.1" width="3.1" height="3.4" rx="0.85" fill="#e8e4d8"/>
-    <rect x="13.3" y="10.1" width="3.1" height="3.4" rx="0.85" fill="#e8e4d8"/>
-    <path d="M9.2 16.6h5.6" stroke="#e8e4d8" stroke-width="1.55" stroke-linecap="round"/>
-  </g>
+  <!-- Chunky filled mark — reads at 16px tab size. Almost edge-to-edge. -->
+  <rect width="32" height="32" rx="7" fill="#0a0912"/>
+  <!-- antenna -->
+  <circle cx="16" cy="3.5" r="2.8" fill="#e8e4d8"/>
+  <rect x="13.6" y="4" width="4.8" height="5" rx="2.2" fill="#e8e4d8"/>
+  <!-- head -->
+  <rect x="2.5" y="7.5" width="27" height="22" rx="6" fill="#e8e4d8"/>
+  <!-- eyes (cutouts) -->
+  <rect x="6.5" y="12.5" width="6.5" height="7.5" rx="2" fill="#0a0912"/>
+  <rect x="19" y="12.5" width="6.5" height="7.5" rx="2" fill="#0a0912"/>
+  <!-- mouth -->
+  <rect x="11" y="23" width="10" height="2.8" rx="1.4" fill="#0a0912"/>
 </svg>

@@ -158,15 +158,15 @@ export function PlayerHub({
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: isMobile ? 22 : 24,
-            height: isMobile ? 22 : 24,
+            width: isMobile ? 24 : 26,
+            height: isMobile ? 24 : 26,
             borderRadius: 7,
             background: "rgba(255,255,255,.07)",
             color: "var(--ink)",
             flexShrink: 0,
           }}
         >
-          <RobotMark size={isMobile ? 14 : 15} />
+          <RobotMark size={isMobile ? 17 : 18} />
         </span>
         <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: fc }}>Lv {tl.level}</span>
         <span style={{ width: 1, height: 16, background: "var(--line2)" }} />

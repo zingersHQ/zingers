@@ -1,4 +1,10 @@
-/** Monochrome Trainer robot head — favicon + hub menu affordance. */
+"use client";
+import { useId } from "react";
+
+/**
+ * Monochrome Trainer robot head — favicon twin for UI.
+ * Filled silhouette (not strokes) so it still reads at ~14–16px.
+ */
 export function RobotMark({
   size = 18,
   title,
@@ -9,6 +15,9 @@ export function RobotMark({
   title?: string;
   className?: string;
 }) {
+  const uid = useId().replace(/:/g, "");
+  const maskId = `robot-mark-${uid}`;
+
   return (
     <svg
       width={size}
@@ -21,48 +30,26 @@ export function RobotMark({
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
+      <defs>
+        <mask id={maskId} maskUnits="userSpaceOnUse">
+          <rect x="1.6" y="5.4" width="20.8" height="16.8" rx="4.6" fill="#fff" />
+          <rect x="5" y="9.2" width="5" height="5.6" rx="1.5" fill="#000" />
+          <rect x="14" y="9.2" width="5" height="5.6" rx="1.5" fill="#000" />
+          <rect x="8.2" y="17.2" width="7.6" height="2.1" rx="1.05" fill="#000" />
+        </mask>
+      </defs>
       {/* antenna */}
-      <path
-        d="M12 3.2V6.1"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="2.4" r="1.35" fill="currentColor" />
-      {/* head */}
+      <circle cx="12" cy="2.6" r="2.1" fill="currentColor" />
+      <rect x="10.2" y="3" width="3.6" height="3.6" rx="1.6" fill="currentColor" />
+      {/* head with eye/mouth cutouts */}
       <rect
-        x="4.75"
-        y="6.1"
-        width="14.5"
-        height="13.4"
-        rx="3.6"
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-      {/* ear nubs */}
-      <path
-        d="M4.75 11.2H3.4c-.4 0-.7.3-.7.7v1.8c0 .4.3.7.7.7h1.35"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M19.25 11.2h1.35c.4 0 .7.3.7.7v1.8c0 .4-.3.7-.7.7H19.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* eyes */}
-      <rect x="7.6" y="10.1" width="3.1" height="3.4" rx="0.85" fill="currentColor" />
-      <rect x="13.3" y="10.1" width="3.1" height="3.4" rx="0.85" fill="currentColor" />
-      {/* mouth slot */}
-      <path
-        d="M9.2 16.6h5.6"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
+        x="1.6"
+        y="5.4"
+        width="20.8"
+        height="16.8"
+        rx="4.6"
+        fill="currentColor"
+        mask={`url(#${maskId})`}
       />
     </svg>
   );
