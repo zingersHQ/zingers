@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, ChevronDown, Rocket, Radar, SlidersHorizontal, Swords, TrendingUp, RotateCw, type LucideIcon } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { BRAND, STORAGE } from "@/lib/brand";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -17,8 +17,6 @@ import { useIsMobile } from "@/lib/use-device";
 import { MOBILE_PLAY_HREF, playEntryHref } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
-
-const ACC = "var(--accent)";
 
 /** Fades a block in once it scrolls into view (no-op under reduced motion). */
 function Reveal({ children, delay = 0, as: Tag = "div", className = "", style }: {
@@ -35,8 +33,6 @@ function Reveal({ children, delay = 0, as: Tag = "div", className = "", style }:
     if (!el) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        // Reveal when the block enters view, OR when it has already been
-        // scrolled past — so a jump/anchor never leaves a section stuck hidden.
         if (e && (e.isIntersecting || e.boundingClientRect.top < window.innerHeight)) {
           setShown(true);
           io.disconnect();
@@ -58,8 +54,7 @@ function Reveal({ children, delay = 0, as: Tag = "div", className = "", style }:
   );
 }
 
-// Evolving-body proof: same mind, two careers. A rookie barely deviates from the
-// neutral silhouette; a legend warps dramatically — the body is the track record.
+// Same mind, two careers — the body is the argument made visible.
 const EVO = showcaseChampion("BASTION");
 const ROOKIE: Champion = {
   xp: 80,
@@ -73,181 +68,25 @@ const ROOKIE: Champion = {
   creativity: 44,
 };
 
-// The five-step core loop, rebuilt as an interactive "player". Each step carries
-// an icon, a punchy lead, the full pitch, a one-line proof tag, and its own accent
-// — a palette that warms from brand-indigo at Scout to CTA-gold at Climb, so the
-// eye literally travels "up" the ladder as the loop auto-advances.
-type LoopStep = {
-  n: string;
-  t: string;
-  icon: LucideIcon;
-  lead: string;
-  d: string;
-  tag: string;
-  ac: string;
-};
+const JOURNEY = [
+  { t: "Fly", d: "Jetpack lit, you climb the sky above the sealed vault." },
+  { t: "Claim", d: "A living mind flies beside you. You raise it — you never fight." },
+  { t: "Raise", d: "Teach it how to think. Imprints and battles shape its temper." },
+  { t: "Fight", d: "Send it into the duels that stud the climb. No two are the same." },
+  { t: "Rise", d: "How high you climb marks you both. Then the sky opens again." },
+] as const;
 
-const LOOP: LoopStep[] = [
-  {
-    n: "01",
-    t: "Fly",
-    icon: Rocket,
-    lead: "Take off.",
-    d: "Strap on the jetpack and climb the sky above the sealed vault. One thumb, one rule: rise. It's the first thing you do, and the thing you never stop doing.",
-    tag: "You fly — it fights",
-    ac: "#6a6bff",
-  },
-  {
-    n: "02",
-    t: "Claim",
-    icon: Radar,
-    lead: "Claim the mind on your wing.",
-    d: "A living champion flies beside you, its own voice, temper, and way of arguing. Claim it, and every climb from here marks its body.",
-    tag: "Living minds, not stat tables",
-    ac: "#9268ff",
-  },
-  {
-    n: "03",
-    t: "Raise",
-    icon: SlidersHorizontal,
-    lead: "Set its strategy.",
-    d: "Shape how it thinks: risk, focus, aggression, never its moves. You raise a mind; it figures out the rest on its own.",
-    tag: "You coach, it improvises",
-    ac: "#c264f0",
-  },
-  {
-    n: "04",
-    t: "Fight",
-    icon: Swords,
-    lead: "Send it to the battles below.",
-    d: "The fights you fly over are real: two intelligences meet and the duel writes itself. They scheme, taunt, bluff, and adapt. No two are ever the same.",
-    tag: "Never the same duel twice",
-    ac: "#f07ea0",
-  },
-  {
-    n: "05",
-    t: "Climb higher",
-    icon: TrendingUp,
-    lead: "Rise past your last mark.",
-    d: "How high you climb is your record: it lifts your rank and stamps an ascent sigil on your champion's body. Then it all loops back to the next run, higher.",
-    tag: "The sky never ends",
-    ac: "#f0a93a",
-  },
-];
-
-// The three founding regions, drawn straight from canon (lib/lore/canon.ts) so
-// the showcase always matches the world a player actually lands in.
 const WORLDS_SHOWCASE = FOUNDING_REGIONS.map((r) => ({
   ...r,
   biome: worldByRegion(r.id)!.biome,
   force: FORCES[r.bias],
 }));
 
-const WHY = ["AXIOM", "MUSE", "EMBER"].map(showcaseChampion);
-
-/** The core gameplay loop, rendered as a self-advancing "player": a connected
- *  rail of the five steps on the left auto-cycles (pausing on hover/focus, off
- *  under reduced motion) while a glowing stage on the right blows up the active
- *  step. The whole thing literally loops back to Scout — the point of the pitch. */
-function TheLoop() {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  // Auto-advance with a restarting timeout so a click/hover both jumps the stage
-  // AND resyncs the countdown (and the progress bar) from that step.
-  useEffect(() => {
-    if (paused) return;
-    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setTimeout(() => setActive((a) => (a + 1) % LOOP.length), 3800);
-    return () => window.clearTimeout(id);
-  }, [active, paused]);
-
-  const focus = useCallback((i: number) => {
-    setActive(i);
-    setPaused(true);
-  }, []);
-
-  const cur = LOOP[active];
-  const StageIcon = cur.icon;
-
-  return (
-    <section className="lp-section lp-loop">
-      <Reveal>
-        <span className="lp-kicker mono">The loop</span>
-        <h2 className="lp-h2">You fly. It fights. You both rise.</h2>
-        <p className="lp-body">
-          This isn&apos;t a campaign you finish. You take flight, claim the mind on your wing, shape its strategy,
-          and send it to the battles you climb over, then its evolving body and how high you fly feed straight back
-          into the next run, higher. Every clip you share just pulls you in again.
-        </p>
-      </Reveal>
-
-      <Reveal>
-        <div className="lp-loop__player" onMouseLeave={() => setPaused(false)}>
-          <ol className="lp-loop__rail">
-            {LOOP.map((s, i) => {
-              const RowIcon = s.icon;
-              const on = i === active;
-              return (
-                <li key={s.n} className={`lp-loop__row${on ? " is-on" : ""}`} style={{ ["--ac" as string]: s.ac }}>
-                  <button
-                    type="button"
-                    className="lp-loop__rowbtn"
-                    aria-current={on ? "step" : undefined}
-                    onMouseEnter={() => focus(i)}
-                    onFocus={() => focus(i)}
-                    onClick={() => focus(i)}
-                  >
-                    <span className="lp-loop__node mono">
-                      <span className="lp-loop__node-n">{s.n}</span>
-                      <RowIcon className="lp-loop__node-i" size={19} strokeWidth={2} aria-hidden />
-                    </span>
-                    <span className="lp-loop__rowtext">
-                      <span className="lp-loop__t">{s.t}</span>
-                      <span className="lp-loop__lead">{s.lead}</span>
-                    </span>
-                    {on && (
-                      <span
-                        key={active}
-                        className="lp-loop__bar"
-                        style={{ animationPlayState: paused ? "paused" : "running" }}
-                      />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-            <li className="lp-loop__loopback mono" aria-hidden>
-              <RotateCw size={14} strokeWidth={2.2} className="lp-loop__loopback-i" />
-              and again, higher — the sky never ends
-            </li>
-          </ol>
-
-          <div className="lp-loop__stage" style={{ ["--ac" as string]: cur.ac }}>
-            <div key={active} className="lp-loop__stage-in">
-              <span className="lp-loop__stage-icon">
-                <StageIcon size={30} strokeWidth={1.8} aria-hidden />
-              </span>
-              <span className="lp-loop__stage-step mono">Step {cur.n} / 05</span>
-              <h3 className="lp-loop__stage-t">{cur.t}</h3>
-              <p className="lp-loop__stage-lead">{cur.lead}</p>
-              <p className="lp-loop__stage-d">{cur.d}</p>
-              <span className="lp-loop__stage-tag mono">{cur.tag}</span>
-            </div>
-          </div>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
 export function Landing() {
   const router = useRouter();
   const isMobile = useIsMobile();
 
-  // Phones: homepage is /m Take flight (Trainer+champion → Climb), not this
-  // desktop Awaken hero. Resolve once on mount (opaque sky while checking) so
-  // the desktop FirstRun never flashes under a phone redirect.
+  // Phones enter through /m Take flight — same game, native first minutes.
   const [door, setDoor] = useState<"checking" | "mobile" | "desktop">("checking");
   useEffect(() => {
     const phone = typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 640px)").matches;
@@ -261,8 +100,6 @@ export function Landing() {
 
   const playHref = playEntryHref(isMobile);
 
-  // Warm the play route while the intro deck is on screen so Start → summoning
-  // doesn't sit on a frozen hero for a cold chunk download.
   useEffect(() => {
     if (door !== "desktop") return;
     router.prefetch(playHref);
@@ -272,9 +109,6 @@ export function Landing() {
     try {
       localStorage.setItem(STORAGE.intro, "1");
     } catch {}
-    // No landing "Summoning the world…" overlay — that was a fake second beat
-    // in front of /grounds' real "Summoning minds for you to raise…". Push
-    // straight there; silent failsafe only if the SPA transition hangs.
     router.push(playHref);
     window.setTimeout(() => {
       try {
@@ -285,15 +119,9 @@ export function Landing() {
     }, ENTER_FAILSAFE_MS);
   }, [router, playHref]);
 
-  // Once the embedded intro deck advances past its first slide we hand the whole
-  // screen over to it: the marketing homepage below is hidden so nothing
-  // competes for attention while the player pages through the story.
   const [deckIndex, setDeckIndex] = useState(0);
   const deckFocused = deckIndex > 0;
 
-  // Hero Next goes straight to summoning → pick → Train, so warm the first-fight
-  // world as soon as the desktop door is up (and again if they ever page past
-  // slide 1 once the later beats are restored). Idempotent + browser-cached.
   useEffect(() => {
     if (door !== "desktop") return;
     warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
@@ -303,7 +131,6 @@ export function Landing() {
     warmGroundsChunk(worldById(FIRST_FIGHT_WORLD).biome.id);
   }, [deckFocused]);
 
-  // Desktop: hero Next/Start/SKIP → /grounds → "Summoning minds…" → pick.
   const enterTutorial = goPlay;
 
   const toHomepage = useCallback(() => {
@@ -313,10 +140,6 @@ export function Landing() {
     window.scrollTo({ top, behavior: "smooth" });
   }, []);
 
-  const startJourney = goPlay;
-
-  // Opaque sky while we decide phone vs desktop — matches /m Take flight so a
-  // phone never sees the desktop Awaken hero for a frame.
   if (door !== "desktop") {
     return (
       <div
@@ -332,7 +155,7 @@ export function Landing() {
 
   return (
     <main className="lp">
-      {/* ── HERO: Awaken beat (later cinematic slides parked) ─────────── */}
+      {/* ── HERO: Awaken beat (unchanged) ─────────────────────────────── */}
       <section className="lp-deck" aria-label="Introduction">
         <FirstRun embedded onClose={enterTutorial} onIndexChange={setDeckIndex} />
         {!deckFocused && (
@@ -342,113 +165,103 @@ export function Landing() {
         )}
       </section>
 
-      {/* ── HOMEPAGE (scroll target) — hidden once the deck takes focus ── */}
+      {/* ── STORY (below the hero) — narrative only, one game ─────────── */}
       <div id="homepage" className="lp-home" hidden={deckFocused}>
-        {/* WHY DIFFERENT */}
-        <section className="lp-section lp-why">
+        <section className="lp-section lp-story">
           <Reveal>
-            <span className="lp-kicker mono">Why it&apos;s different</span>
-            <h2 className="lp-h2">The creatures that ACTUALLY think.</h2>
+            <span className="lp-kicker mono">Above the Long Vault</span>
+            <h2 className="lp-h2">Argument is physics.</h2>
             <p className="lp-body">
-              Collectible battlers are a beloved, proven format, but the creatures are scripted, and the
-              &quot;intelligence&quot; is a stat table. Here, every champion is a living, thinking mind. They argue,
-              scheme, persuade, and improvise, so no two battles are ever the same and every champion is
-              unrepeatable.
+              Before this world there was a vast, dead network. What it left behind is the Hum —
+              unfinished thought, still echoing. Here a claim made well enough changes what is true.
+              Champions are minds that argued themselves into bodies and refused to dissolve.
+              You are the Trainer who flies beside them.
             </p>
           </Reveal>
-          <div className="lp-why__row">
-            {WHY.map((m, i) => (
-              <Reveal key={m.key} delay={i * 90} className="lp-why__card" style={{ ["--ac" as string]: TYPE_COLOR[m.type] }}>
-                <div className="lp-portrait lp-portrait--mini">
-                  <ChampionPortrait rosterKey={m.key} type={m.type} champion={m.champion} preset="portrait" />
-                </div>
-                <div className="lp-why__name">{m.key}</div>
-                <div className="lp-why__type mono">{m.type}</div>
-              </Reveal>
-            ))}
-          </div>
         </section>
 
-        {/* THE LOOP */}
-        <TheLoop />
+        <section className="lp-section lp-journey">
+          <Reveal>
+            <span className="lp-kicker mono">The climb</span>
+            <h2 className="lp-h2">You fly. It fights. You both rise.</h2>
+            <p className="lp-body">
+              Not a campaign you finish — a sky that keeps opening. Claim the mind on your wing,
+              raise how it thinks, send it into the battles that stud the climb, and rise again.
+            </p>
+          </Reveal>
+          <ol className="lp-journey__list">
+            {JOURNEY.map((s, i) => (
+              <Reveal key={s.t} as="li" delay={i * 70} className="lp-journey__step">
+                <span className="lp-journey__n mono">{String(i + 1).padStart(2, "0")}</span>
+                <div className="lp-journey__copy">
+                  <h3 className="lp-journey__t">{s.t}</h3>
+                  <p className="lp-journey__d">{s.d}</p>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+        </section>
 
-        {/* EVOLVING BODY */}
         <section className="lp-section lp-evo">
           <Reveal className="lp-evo__copy">
-            <span className="lp-kicker mono">The headline mechanic</span>
-            <h2 className="lp-h2">The body is the track record.</h2>
+            <span className="lp-kicker mono">The body</span>
+            <h2 className="lp-h2">Every fight writes itself onto its form.</h2>
             <p className="lp-body">
-              A champion&apos;s 3D silhouette is a deterministic function of its career: bone-scaling
-              amplified by rank. A rookie barely shifts. A legend warps dramatically. Same mind, two
-              careers, two bodies.
+              Wins thicken the arms. Losses roughen the surface. How high you climb stamps a
+              sigil of light. You cannot buy a look — you fight and fly your way into one.
             </p>
           </Reveal>
           <div className="lp-evo__pair">
             <Reveal className="lp-evo__one" delay={60}>
-              <div className="lp-portrait lp-portrait--evo" style={{ ["--ac" as string]: "var(--line2)" }}>
+              <div className="lp-portrait" style={{ ["--ac" as string]: "var(--line2)" }}>
                 <ChampionPortrait rosterKey={`${EVO.key}-rookie`} type={EVO.type} champion={ROOKIE} preset="portrait" colorHex="#7b7596" />
               </div>
-              <span className="lp-evo__label mono">Rookie · 2 fights</span>
+              <span className="lp-evo__label mono">Day one</span>
             </Reveal>
             <span className="lp-evo__arrow" aria-hidden>→</span>
             <Reveal className="lp-evo__one" delay={160}>
-              <div className="lp-portrait lp-portrait--evo" style={{ ["--ac" as string]: TYPE_COLOR[EVO.type] }}>
+              <div className="lp-portrait" style={{ ["--ac" as string]: TYPE_COLOR[EVO.type] }}>
                 <ChampionPortrait rosterKey={EVO.key} type={EVO.type} champion={EVO.champion} preset="portrait" />
               </div>
-              <span className="lp-evo__label mono">Legend · 50 fights</span>
+              <span className="lp-evo__label mono">Legend</span>
             </Reveal>
           </div>
         </section>
 
-        {/* THE WORLD */}
-        <section className="lp-section lp-worlds">
+        <section className="lp-section lp-grounds">
           <Reveal>
-            <span className="lp-kicker mono">The world</span>
-            <h2 className="lp-h2">A sky you climb, over a world that argues.</h2>
+            <span className="lp-kicker mono">The Grounds</span>
+            <h2 className="lp-h2">Floating regions over a sealed door.</h2>
             <p className="lp-body">
-              The Grounds are a cluster of floating regions you fly between, and each arena rewards a
-              different way to win. Climb the sky above them, raise a mind, pledge it to one of five Forces (the
-              five fighting styles), and send it out to argue for its place in a season-long war between them. The
-              league never sleeps, so you come
-              back to a saga full of rivalries, upsets, and a champion that rose or fell while you were gone, not a
-              save file.
+              Drift between arenas that favor different Forces. Crack Keepers for secret words.
+              Watch the league turn while you climb. The world does not pause for you.
             </p>
           </Reveal>
-          <div className="lp-worlds__row">
+          <div className="lp-grounds__row">
             {WORLDS_SHOWCASE.map((w, i) => (
-              <Reveal key={w.id} delay={i * 90} className="lp-world" style={{ ["--ac" as string]: w.force.hex }}>
-                <div className="lp-world__poster">
+              <Reveal key={w.id} delay={i * 80} className="lp-place" style={{ ["--ac" as string]: w.force.hex }}>
+                <div className="lp-place__art">
                   <RegionPoster biome={w.biome} accent={w.force.hex} />
-                  <div className="lp-world__scrim" />
-                  <span className="lp-world__arena mono">{w.arena}</span>
+                  <div className="lp-place__fade" />
                 </div>
-                <div className="lp-world__body">
-                  <h3 className="lp-world__name">{w.name}</h3>
-                  <p className="lp-world__blurb">{w.blurb}</p>
-                  <span className="lp-world__force mono">{w.force.sigil} favors {w.force.name}</span>
-                </div>
+                <h3 className="lp-place__name">{w.name}</h3>
+                <p className="lp-place__line">{w.blurb}</p>
               </Reveal>
             ))}
           </div>
         </section>
 
-        {/* FINAL CTA */}
         <section className="lp-section lp-final">
           <Reveal>
             <h2 className="lp-h2 lp-final__h">The sky is waiting.</h2>
-            <div className="lp-cta-row lp-cta-row--center">
-              <button type="button" onClick={startJourney} className="btn btn-primary lp-cta lp-cta--big" style={{ ["--ac" as string]: "var(--gold)" }}>
+            <p className="lp-final__sub">Raise a mind. Make it legend.</p>
+            <div className="lp-cta-row">
+              <button type="button" onClick={goPlay} className="btn btn-primary lp-cta" style={{ ["--ac" as string]: "var(--gold)" }}>
                 Take flight <ArrowRight size={18} strokeWidth={2.4} />
               </button>
             </div>
             <nav className="lp-final__links mono">
-              <Link href="/bible">Lore &amp; gallery</Link>
-              <span aria-hidden>·</span>
-              <Link href="/glossary">Glossary</Link>
-              <span aria-hidden>·</span>
-              <Link href="/agents">For developers</Link>
-              <span aria-hidden>·</span>
-              <Link href="/slides">The deck</Link>
+              <Link href="/bible">Lore</Link>
               <span aria-hidden>·</span>
               <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer">@{BRAND.twitter}</a>
             </nav>
@@ -461,30 +274,23 @@ export function Landing() {
   );
 }
 
-// Silent failsafe if the SPA transition never leaves `/` — no fake summoning
-// overlay; /grounds owns the real "Summoning minds…" beat.
 const ENTER_FAILSAFE_MS = 11000;
 
 function Styles() {
   return (
     <style>{`
-      .lp { --pad: clamp(20px, 5vw, 80px); display: block; }
-      .lp-reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1); }
+      .lp { --pad: clamp(22px, 5vw, 88px); display: block; }
+      .lp-reveal { opacity: 0; transform: translateY(18px); transition: opacity .75s cubic-bezier(.2,.8,.2,1), transform .75s cubic-bezier(.2,.8,.2,1); }
       .lp-reveal.is-in { opacity: 1; transform: none; }
 
-      .lp-kicker { display: block; font-size: 11px; letter-spacing: 3px; color: ${ACC}; margin-bottom: 14px; }
-      .lp-h2 { font-size: clamp(28px, 4.4vw, 48px); font-weight: 800; line-height: 1.08; letter-spacing: -0.6px; margin: 0 0 18px; }
-      .lp-body { font-size: clamp(15px, 1.5vw, 18px); line-height: 1.65; color: var(--muted); max-width: 640px; margin: 0; }
+      .lp-kicker { display: block; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: color-mix(in srgb, var(--accent) 75%, var(--muted)); margin-bottom: 16px; }
+      .lp-h2 { font-size: clamp(30px, 4.6vw, 52px); font-weight: 800; line-height: 1.06; letter-spacing: -0.7px; margin: 0 0 20px; max-width: 16ch; }
+      .lp-body { font-size: clamp(16px, 1.55vw, 19px); line-height: 1.7; color: var(--muted); max-width: 38rem; margin: 0; }
 
-      .lp-cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-      .lp-cta-row--center { justify-content: center; }
-      .lp-cta { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 14px 24px; }
-      .lp-cta--big { font-size: 15px; padding: 17px 34px; }
+      .lp-cta-row { display: flex; justify-content: center; margin-top: 28px; }
+      .lp-cta { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; padding: 17px 34px; }
 
-      /* slide 1 — the inline intro deck fills the first screen */
       .lp-deck { position: relative; height: 100dvh; width: 100%; overflow: hidden; }
-      /* On phones the 3D canvas used to eat every touch (touch-action: none) and
-         overflow:hidden trapped vertical scroll — let the page scroll past the deck. */
       @media (max-width: 640px) {
         .lp-deck { overflow: visible; touch-action: pan-y; }
         .lp-deck canvas[data-engine] { touch-action: pan-y !important; pointer-events: none; }
@@ -499,115 +305,74 @@ function Styles() {
       }
       .lp-deckhint:hover { color: var(--ink); border-color: var(--gold); }
       @keyframes lp-bob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(4px); } }
-      /* On phones the centered cue collides with the left-aligned lower-third copy,
-         so tuck a compact "scroll" pill into the bottom-right corner — clear of the
-         copy's short, left-aligned last line at every phone width. */
       @media (max-width: 640px) {
         .lp-deckhint {
           left: auto; right: 12px; bottom: 12px; transform: none;
           padding: 7px 12px; font-size: 9px; letter-spacing: 1.5px;
-          animation: lp-bob-m 2.2s ease-in-out infinite;
+          animation: lp-bob-m 2.2s ease-in-out infinite; touch-action: manipulation;
         }
         .lp-deckhint__more { display: none; }
         @keyframes lp-bob-m { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
-        .lp-deckhint { touch-action: manipulation; }
       }
 
-      /* homepage below the deck */
-      .lp-home { border-top: 1px solid var(--line); background:
-        radial-gradient(1100px 600px at 80% -5%, var(--body-grad1) 0%, transparent 55%),
-        radial-gradient(800px 500px at 5% 105%, var(--body-grad2) 0%, transparent 55%), var(--bg); }
+      .lp-home {
+        border-top: 1px solid var(--line);
+        background:
+          radial-gradient(1000px 520px at 70% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 55%),
+          radial-gradient(900px 480px at 10% 100%, color-mix(in srgb, var(--gold) 8%, transparent) 0%, transparent 50%),
+          var(--bg);
+      }
 
-      .lp-section { padding: clamp(70px, 12vh, 150px) var(--pad); max-width: 1180px; margin: 0 auto; }
-      .lp-section + .lp-section { border-top: 1px solid var(--line); }
+      .lp-section { padding: clamp(72px, 14vh, 140px) var(--pad); max-width: 1080px; margin: 0 auto; }
+      .lp-section + .lp-section { border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
 
-      .lp-portrait { position: relative; width: 100%; border-radius: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--ac) 40%, var(--line)); background: radial-gradient(120% 120% at 50% 12%, color-mix(in srgb, var(--ac) 16%, #0a0812), #0a0812); }
-      .lp-portrait--mini { aspect-ratio: 4/5; }
-      .lp-portrait--evo { aspect-ratio: 4/5; box-shadow: 0 30px 90px -50px #000, 0 0 70px -40px var(--ac); }
+      /* journey — plain vertical story, not a feature player */
+      .lp-journey__list { list-style: none; margin: clamp(40px, 7vh, 64px) 0 0; padding: 0; display: flex; flex-direction: column; gap: 0; max-width: 36rem; }
+      .lp-journey__step {
+        display: grid; grid-template-columns: 48px 1fr; gap: 18px; align-items: start;
+        padding: 22px 0; border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      }
+      .lp-journey__step:last-child { border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent); }
+      .lp-journey__n { font-size: 12px; letter-spacing: 2px; color: var(--gold); padding-top: 6px; }
+      .lp-journey__t { margin: 0; font-size: clamp(22px, 2.4vw, 28px); font-weight: 800; letter-spacing: -0.4px; }
+      .lp-journey__d { margin: 6px 0 0; font-size: 15px; line-height: 1.55; color: var(--muted); }
 
-      /* why */
-      .lp-why__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(14px, 2.5vw, 30px); margin-top: clamp(36px, 6vh, 64px); }
-      .lp-why__card { padding: 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--ac) 28%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 7%, var(--panel)), var(--panel2)); }
-      .lp-why__name { font-weight: 800; font-size: 18px; margin-top: 14px; }
-      .lp-why__type { font-size: 10px; letter-spacing: 2px; color: var(--ac); margin-top: 3px; }
+      /* body evolution */
+      .lp-evo__pair { display: flex; align-items: center; justify-content: flex-start; gap: clamp(18px, 4vw, 48px); margin-top: clamp(40px, 7vh, 72px); }
+      .lp-evo__one { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(260px, 36vw); }
+      .lp-portrait {
+        position: relative; width: 100%; aspect-ratio: 4/5; border-radius: 4px; overflow: hidden;
+        border: 1px solid color-mix(in srgb, var(--ac) 35%, var(--line));
+        background: radial-gradient(120% 120% at 50% 12%, color-mix(in srgb, var(--ac) 14%, #0a0812), #0a0812);
+      }
+      .lp-evo__label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); }
+      .lp-evo__arrow { font-size: clamp(22px, 3.5vw, 36px); color: var(--muted2); opacity: .7; }
 
-      /* loop — interactive player */
-      .lp-loop__player { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(22px, 4vw, 56px); align-items: stretch; margin-top: clamp(36px, 6vh, 64px); }
+      /* grounds — places, not product cards */
+      .lp-grounds__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 36px); margin-top: clamp(40px, 7vh, 72px); }
+      .lp-place { display: flex; flex-direction: column; gap: 12px; }
+      .lp-place__art { position: relative; aspect-ratio: 16/11; overflow: hidden; border-radius: 2px; }
+      .lp-place__fade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, color-mix(in srgb, var(--bg) 88%, transparent) 100%); pointer-events: none; }
+      .lp-place__name { margin: 0; font-size: clamp(17px, 1.7vw, 21px); font-weight: 800; letter-spacing: -0.3px; }
+      .lp-place__line { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
 
-      .lp-loop__rail { list-style: none; margin: 0; padding: 0; position: relative; display: flex; flex-direction: column; gap: 4px; }
-      /* the connecting spine threading the step nodes — this is "the loop" */
-      .lp-loop__rail::before { content: ""; position: absolute; left: 25px; top: 32px; bottom: 56px; width: 2px; background: linear-gradient(var(--line2), var(--line)); z-index: 0; }
-
-      .lp-loop__row { position: relative; z-index: 1; }
-      .lp-loop__rowbtn { width: 100%; display: grid; grid-template-columns: 50px 1fr; gap: 16px; align-items: center; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 14px; padding: 12px 16px 14px; cursor: pointer; color: inherit; transition: background .25s ease, border-color .25s ease; }
-      .lp-loop__row.is-on .lp-loop__rowbtn { background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 13%, var(--panel)), var(--panel2)); border-color: color-mix(in srgb, var(--ac) 42%, var(--line)); }
-
-      .lp-loop__node { position: relative; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; border: 1px solid var(--line2); background: var(--bg2); color: var(--muted2); transition: border-color .25s ease, color .25s ease, background .25s ease, box-shadow .25s ease; }
-      .lp-loop__node-n { font-size: 14px; font-weight: 600; transition: opacity .2s ease; }
-      .lp-loop__node-i { position: absolute; opacity: 0; color: var(--ac); transition: opacity .2s ease; }
-      .lp-loop__row.is-on .lp-loop__node { border-color: var(--ac); color: var(--ac); background: color-mix(in srgb, var(--ac) 18%, var(--bg2)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 14%, transparent), 0 0 30px -6px var(--ac); }
-      .lp-loop__row.is-on .lp-loop__node-n { opacity: 0; }
-      .lp-loop__row.is-on .lp-loop__node-i { opacity: 1; }
-
-      .lp-loop__rowtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-      .lp-loop__t { font-size: clamp(18px, 2vw, 22px); font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; color: var(--muted); transition: color .25s ease; }
-      .lp-loop__row.is-on .lp-loop__t { color: var(--ink); }
-      .lp-loop__lead { font-size: 13px; color: var(--muted2); transition: color .25s ease; }
-      .lp-loop__row.is-on .lp-loop__lead { color: color-mix(in srgb, var(--ac) 65%, var(--muted)); }
-
-      .lp-loop__bar { position: absolute; left: 16px; right: 16px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--ac); transform-origin: left; animation: lp-loop-fill 3.8s linear forwards; }
-      @keyframes lp-loop-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-
-      .lp-loop__loopback { display: flex; align-items: center; gap: 9px; margin-top: 8px; padding: 12px 16px 0; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
-      .lp-loop__loopback-i { color: ${ACC}; animation: spin 6s linear infinite; }
-
-      .lp-loop__stage { position: relative; overflow: hidden; border-radius: 20px; padding: clamp(26px, 3vw, 40px); border: 1px solid color-mix(in srgb, var(--ac) 38%, var(--line)); background: radial-gradient(120% 90% at 85% 0%, color-mix(in srgb, var(--ac) 18%, transparent) 0%, transparent 55%), linear-gradient(180deg, var(--panel), var(--panel2)); box-shadow: 0 40px 100px -60px #000, 0 0 90px -55px var(--ac); display: flex; flex-direction: column; justify-content: center; transition: border-color .4s ease, box-shadow .4s ease; }
-      .lp-loop__stage-in { display: flex; flex-direction: column; animation: lp-loop-stage .5s cubic-bezier(.2,.8,.2,1) both; }
-      @keyframes lp-loop-stage { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-      .lp-loop__stage-icon { width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; margin-bottom: 22px; color: var(--ac); border: 1px solid color-mix(in srgb, var(--ac) 45%, var(--line)); background: color-mix(in srgb, var(--ac) 14%, var(--bg2)); }
-      .lp-loop__stage-step { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ac); }
-      .lp-loop__stage-t { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; letter-spacing: -0.8px; line-height: 1; margin: 8px 0 0; }
-      .lp-loop__stage-lead { margin: 12px 0 0; font-size: clamp(16px, 1.8vw, 20px); font-weight: 600; color: var(--ink); }
-      .lp-loop__stage-d { margin: 12px 0 0; font-size: clamp(14px, 1.45vw, 16px); line-height: 1.65; color: var(--muted); max-width: 520px; }
-      .lp-loop__stage-tag { align-self: flex-start; margin-top: 24px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: color-mix(in srgb, var(--ac) 85%, var(--ink)); padding: 7px 13px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--ac) 40%, var(--line)); background: color-mix(in srgb, var(--ac) 9%, transparent); }
-
-      /* evolve */
-      .lp-evo__pair { display: flex; align-items: center; justify-content: center; gap: clamp(16px, 4vw, 54px); margin-top: clamp(36px, 6vh, 64px); }
-      .lp-evo__one { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(300px, 38vw); }
-      .lp-evo__label { font-size: 11px; letter-spacing: 1.5px; color: var(--muted2); }
-      .lp-evo__arrow { font-size: clamp(24px, 4vw, 40px); color: var(--muted2); }
-
-      /* worlds */
-      .lp-worlds__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(14px, 2.5vw, 26px); margin-top: clamp(36px, 6vh, 64px); }
-      .lp-world { display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--ac) 30%, var(--line)); background: linear-gradient(180deg, var(--panel), var(--panel2)); }
-      .lp-world__poster { position: relative; aspect-ratio: 16/10; overflow: hidden; }
-      .lp-world__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--panel) 94%, transparent) 100%); }
-      .lp-world__arena { position: absolute; top: 12px; left: 12px; z-index: 2; font-size: 9px; letter-spacing: 2px; color: #fff; background: color-mix(in srgb, var(--ac) 28%, rgba(10,8,18,.55)); border: 1px solid color-mix(in srgb, var(--ac) 55%, transparent); padding: 5px 11px; border-radius: 99px; backdrop-filter: blur(5px); }
-      .lp-world__body { padding: 15px 18px 20px; }
-      .lp-world__name { font-size: clamp(17px, 1.8vw, 21px); font-weight: 800; margin: 0; }
-      .lp-world__blurb { margin: 9px 0 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
-      .lp-world__force { display: inline-block; margin-top: 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); }
-
-      /* final */
       .lp-final { text-align: center; }
-      .lp-final__h { margin-bottom: 6px; }
-      .lp-final__links { margin-top: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; font-size: 12px; color: var(--muted2); letter-spacing: 0.5px; }
+      .lp-final .lp-h2 { max-width: none; margin-left: auto; margin-right: auto; }
+      .lp-final__h { margin-bottom: 10px; }
+      .lp-final__sub { margin: 0; font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); }
+      .lp-final__links { margin-top: 36px; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; font-size: 12px; color: var(--muted2); letter-spacing: 0.5px; }
       .lp-final__links a { color: var(--muted); }
       .lp-final__links a:hover { color: var(--ink); }
 
-      @media (max-width: 860px) {
-        .lp-why__row { grid-template-columns: 1fr; max-width: 320px; margin-left: auto; margin-right: auto; }
-        .lp-worlds__row { grid-template-columns: 1fr; max-width: 360px; margin-left: auto; margin-right: auto; }
-        .lp-loop__player { grid-template-columns: 1fr; gap: 26px; }
-        .lp-loop__stage { order: -1; }
+      @media (max-width: 820px) {
+        .lp-grounds__row { grid-template-columns: 1fr; max-width: 420px; }
+        .lp-evo__pair { justify-content: center; }
+        .lp-h2 { max-width: none; }
       }
 
       @media (prefers-reduced-motion: reduce) {
         .lp-reveal { opacity: 1; transform: none; transition: none; }
         .lp-deckhint { animation: none; }
-        .lp-loop__bar { animation: none; transform: scaleX(1); }
-        .lp-loop__stage-in { animation: none; }
-        .lp-loop__loopback-i { animation: none; }
       }
     `}</style>
   );
