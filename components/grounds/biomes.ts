@@ -129,7 +129,9 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#ffcaa0", warm: "#ff7a2a", cool: "#a8431a", fill: "#5a1a0a" },
     bloom: 1.0,
     exposure: 1.1,
-    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 28, spread: 35, inner: 18, speed: 2.1 }, landmarks: { train: { angle: Math.PI * 1.18, dist: 32 }, spire: { angle: Math.PI * 1.68, dist: 32 } } },
+    // Spire at 1.5π (same as Grounds) so Keeper climbs sit ≥36° off the +z rift
+    // approach — Bastion used to sit on the spawn line and hide the Trainer.
+    scene: { towerAngle: Math.PI * 0.32, towerSteps: 120, obeliskCount: 26, platformCount: 4, crystalCount: 12, surround: "caldera", arena: "pit", pillar: "basalt", roam: { pattern: "scatter", radius: 28, spread: 35, inner: 18, speed: 2.1 }, landmarks: { train: { angle: Math.PI * 1.18, dist: 32 }, spire: { angle: Math.PI * 1.5, dist: 32 } } },
   },
   {
     id: "void",
@@ -149,7 +151,9 @@ export const BIOMES: BiomeConfig[] = [
     ibl: { key: "#aef0e0", warm: "#34ffd0", cool: "#1a7a8a", fill: "#0a4a5a" },
     bloom: 0.95,
     exposure: 1.18,
-    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 24, spread: 36, inner: 16, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 1.55, dist: 32 }, spire: { angle: Math.PI * 0.08, dist: 32 } } },
+    // Spire clear of the +z entrance; train swung off the Keeper ring so the
+    // colosseum gate approach stays an open corridor from the spawn knoll.
+    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "tiers", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 24, spread: 36, inner: 16, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 0.05, dist: 32 }, spire: { angle: Math.PI * 1.5, dist: 32 } } },
   },
   {
     // The Concord — the hub slab (lib/lore/canon.ts › CONCORD). Neutral ground:

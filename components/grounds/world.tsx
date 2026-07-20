@@ -2197,8 +2197,12 @@ function Platforms({ biome, shape, count }: { biome: BiomeConfig; shape: Terrain
   const items = useMemo(() => {
     const out: { pos: [number, number, number]; size: [number, number, number]; color: string }[] = [];
     // the bearing of the platform staircase tracks the world's seed so each
-    // world arranges them differently
-    const baseA = Math.PI * 0.25 + shape.seed * 0.013;
+    // world arranges them differently — but never on the rift/spawn approach
+    // (Ember's seed put the flight dead on +z and hid the Trainer behind it).
+    let baseA = Math.PI * 0.25 + shape.seed * 0.013;
+    const canyonA = shape.canyonAngle;
+    const offCanyon = Math.abs(Math.atan2(Math.sin(baseA - canyonA), Math.cos(baseA - canyonA)));
+    if (offCanyon < 0.55) baseA = canyonA + 0.95;
     for (let i = 0; i < count; i++) {
       const r = PLAZA_R + 5 + i * 3.4;
       const a = baseA + i * 0.16;
@@ -2493,7 +2497,7 @@ function MatchStage({ champions, match }: { champions: GroundChampion[]; match: 
 // WALK/RUN eased ~10% for the 2/3-scale Reader (READER_SCALE from champion-mesh)
 // so the smaller body doesn't read as skating across the plaza; jump/fly speeds
 // keep their world-tuned arcs — the Tower gaps depend on them.
-const WALK = 7.8, RUN = 13.6, SUPERRUN = RUN * 2, SUPERRUN_DELAY = 3, JUMP = 10.4, AIR_JUMP = 9.6;
+const WALK = 7.8, RUN = 13.6, SUPERRUN = RUN * 2, JUMP = 10.4, AIR_JUMP = 9.6;
 // ── Reader scale (the 2/3 resize) ────────────────────────────────────────────
 // Shared with Climb / Circuit via READER_SCALE + WORLD_AGENT_SCALE. Everything
 // that hangs off body height derives from FOOT_OFF so the capsule, feet sensor,
@@ -2589,7 +2593,7 @@ interface CamCue {
   reverse: boolean;    // moving back toward the camera — suppress auto-follow (else it spins)
   flying: boolean;     // jetpack hover — camera eases off sway / zoom dolly
   climb: number;       // vertical velocity while flying (+up / −down) → camera tilt
-  superrun: boolean;   // sustained sprint past SUPERRUN_DELAY — double speed + smoke trail
+  superrun: boolean;   // Shift/sprint held while moving — double speed + smoke trail
   headingSteer: boolean; // movement locked to body heading — suppress camera follow/sway
   recenter: boolean;   // one-shot request to swing the lens squarely behind the player
   touchActive: boolean; // on-screen stick is being held — freeze camera yaw auto-follow so
@@ -2868,9 +2872,7 @@ function Handler({
   const ringYBig = useRef(0);   // eased y offset from the ring's rest position
   const ringYSmall = useRef(0);
   const ringOscT = useRef(0);   // oscillation phase accumulator (s)
-  // superrun: sustained ground sprint past SUPERRUN_DELAY → double speed + smoke trail
-  const sprintTime = useRef(0);
-  const superrunArmed = useRef(false);
+  // superrun: Shift (or touch/pad sprint) while moving → double speed + smoke trail
   const superrun = useRef(false);
   const wasSuperrun = useRef(false);
   const wasHeadingSteer = useRef(false);
@@ -3204,18 +3206,10 @@ function Handler({
     // we launched), so a multi-jump isn't refunded mid-takeoff
     if (grounded && v.y <= 0.6) jumps.current = 0;
 
-    // sustained sprint on the ground → superrun (double speed + smoke trail).
-    // Once armed, superrun LATCHES until sprint/movement stops — brief ground-
-    // sensor flicker at high speed was resetting the timer and halving velocity.
+    // Shift is sprint-only — fire superrun the moment it's held with movement
+    // (no charge delay). Ends as soon as sprint or movement drops.
     const sprinting = sprint && len > 0 && !flyingMode;
-    if (sprinting) {
-      if (grounded) sprintTime.current += dt;
-      if (sprintTime.current >= SUPERRUN_DELAY) superrunArmed.current = true;
-    } else {
-      sprintTime.current = 0;
-      superrunArmed.current = false;
-    }
-    const superActive = superrunArmed.current && sprinting;
+    const superActive = sprinting;
     superrun.current = superActive;
     if (superActive) {
       runEmit.current += dt;

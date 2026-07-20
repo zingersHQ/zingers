@@ -34,7 +34,14 @@ import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/compone
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS, FIRST_GUIDE_WORLD } from "@/components/grounds/worlds";
 import { saveWorldPose, loadWorldPose, saveLastWorld, loadLastWorld } from "@/components/grounds/world-persist";
 import type { GameSession, VenueId } from "@/components/grounds/venues";
-import { VENUES, CONCORD_VENUE_SPOTS, awayFromCircuitPortal } from "@/components/grounds/venues";
+import {
+  VENUES,
+  CONCORD_VENUE_SPOTS,
+  awayFromCircuitPortal,
+  awayFromReturnPortal,
+  regionEntrancePose,
+  safeWildPose,
+} from "@/components/grounds/venues";
 import { AMPHI_SPAWN, AMPHI_SPAWN_HEADING } from "@/components/grounds/amphitheatre";
 import { worldGoals, type WorldGoal, type GoalKind } from "@/components/grounds/goals";
 import { regionGrowth } from "@/lib/lore/growth";
@@ -510,13 +517,30 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         setModeLockToast("Finish your first duel to unlock this.");
         return;
       }
-      if (!isHub) saveWorldPose(worldId, capturePose());
+      if (!isHub) {
+        // Leaving a region: never persist a pose stuck in a portal plane.
+        saveWorldPose(worldId, safeWildPose(worldId, capturePose()));
+      }
       saveLastWorld(destId);
       setGameSession(null);
       setWorldId(destId);
       if (restore) {
+        // Hub → region through a Vaultgate: always emerge at that region's
+        // Concord door (plaza-side), not mid-arena / outer portal face.
+        if (isHub) {
+          const entrance = regionEntrancePose(destId);
+          if (entrance) {
+            saveWorldPose(destId, entrance);
+            setTimeout(() => restorePose(entrance), 120);
+            return;
+          }
+        }
         const saved = loadWorldPose(destId);
-        if (saved) setTimeout(() => restorePose(saved), 120);
+        if (saved) {
+          const safe = safeWildPose(destId, saved);
+          if (safe.x !== saved.x || safe.z !== saved.z) saveWorldPose(destId, safe);
+          setTimeout(() => restorePose(safe), 120);
+        }
       }
     },
     [capturePose, restorePose, isHub, worldId],
@@ -747,8 +771,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     if (!owned || inVenue) return;
     const saved = loadWorldPose(worldId);
     if (!saved) return;
-    // Legacy saves may still sit inside the Ascent auto-enter volume.
-    const safe = awayFromCircuitPortal(worldId, saved);
+    // Legacy saves may still sit inside Ascent / Concord-return auto-enter volumes,
+    // or on the outer face of the region return arch.
+    const safe = safeWildPose(worldId, saved);
     if (safe.x !== saved.x || safe.z !== saved.z) saveWorldPose(worldId, safe);
     setTimeout(() => restorePose(safe), 150);
   }, [worldId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1324,7 +1349,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       const origin = worldId;
       const door = concordDoorArrival({ world: origin });
       playTravel(worldTravelCard("concord"), () => {
-        saveWorldPose(worldId, capturePose());
+        // Persist plaza-side of this arch so the next visit emerges from the door
+        // facing the plaza — not stranded on the outer wilds face.
+        saveWorldPose(worldId, awayFromReturnPortal(worldId, capturePose()));
         travelToWorld("concord", false);
         setTimeout(() => {
           if (door) travelRef.current?.(door.x, door.z, door.heading);
