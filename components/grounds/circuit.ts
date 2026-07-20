@@ -1,6 +1,9 @@
 // The Circuit — a dedicated solo time-trial track. Pure layout (no React/three)
 // so the scene, Handler proximity checks and HUD all agree on geometry.
 
+/** Ranked Climb/Circuit: one continue, then run over (ghost leave on spend). */
+export const CIRCUIT_LIVES = 2;
+
 export interface CircuitPlatform {
   pos: [number, number, number];
   size: [number, number, number];

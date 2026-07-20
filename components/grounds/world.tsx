@@ -48,6 +48,8 @@ import { useSettings } from "@/store/settings";
 import { useTheme } from "@/lib/theme";
 import { useGraphicsTier } from "@/lib/graphics-tier";
 import { CircuitScene } from "./circuit-scene";
+import { CircuitGhostLeave } from "./circuit-ghost";
+import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
@@ -293,6 +295,10 @@ export default function World({
   circuitHazards = [],
   onCircuitStumble,
   onCircuitStart,
+  circuitGhost = null,
+  onCircuitGhostDone,
+  circuitArriveNonce = 0,
+  circuitGhostForce = null,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
@@ -341,12 +347,18 @@ export default function World({
   circuitSectorIdx?: number;
   circuitPhase?: CircuitPhase | null;
   onCircuitPass?: (index: number) => void;
-  onCircuitFail?: (reason?: CircuitFailReason) => void;
+  onCircuitFail?: (reason?: CircuitFailReason, pose?: { x: number; y: number; z: number; heading: number }) => void;
   /** Jump / first thrust while ready — starts the Ascent sector (wind, timers). */
   onCircuitStart?: () => void;
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
+  /** Life-leave ghost pose (presentation); cleared via onCircuitGhostDone. */
+  circuitGhost?: ({ x: number; y: number; z: number; heading: number; id: number }) | null;
+  onCircuitGhostDone?: () => void;
+  /** Bumped on life-continue to re-arm the front-facing arrive cam. */
+  circuitArriveNonce?: number;
+  circuitGhostForce?: CreatureType | null;
   worldLife?: WorldLife;
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
@@ -753,6 +765,14 @@ export default function World({
                 accent={venueHostWorldId === "concord" ? "#f5d020" : biome.lights.arenaPoint}
                 theme={regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : venueHostWorldId === "concord" ? "concord" : "grounds"}
               />
+              {circuitGhost && (
+                <CircuitLifeGhost
+                  key={circuitGhost.id}
+                  pose={circuitGhost}
+                  force={circuitGhostForce}
+                  onDone={onCircuitGhostDone}
+                />
+              )}
             </>
           )}
 
@@ -919,7 +939,7 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} clanShot={clanShot} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} clanShot={clanShot} circuitArriveNonce={circuitArriveNonce} />
       )}
     </Canvas>
     {isTouch && !showcase && <TouchControls active={controlsEnabled && !match && !clanShot} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
@@ -2509,9 +2529,13 @@ const FLY_MAX_FALL = 20;       // terminal fall (sticky, never uncontrollable)
 // horizontal and not a stone drop. Idle (no forward) keeps full FLY_GRAVITY.
 const FLY_CRUISE_SINK = -2.8;  // target vy while cruising without thrust (u/s)
 const FLY_CRUISE_GLIDE = 7;    // ease rate toward cruise sink (frame-rate independent)
+// Circuit S/↓: keep the brake, add a soft nose-down so Surge high→low rings are
+// reachable (~6–8u drops) without cutting the pack. Milder than idle freefall.
+const FLY_DIVE_SINK = -7.6;
+const FLY_DIVE_GLIDE = 9;
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
 // Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
-// skill axis and forward is the heartbeat. W surges, S brakes lightly; A/D = light steer.
+// skill axis and forward is the heartbeat. W surges, S brakes + soft dive; A/D = light steer.
 const CIRCUIT_CRUISE = 14;
 const CIRCUIT_SURGE = 18;
 const CIRCUIT_BRAKE = 8;
@@ -2758,7 +2782,7 @@ function Handler({
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitPass?: (index: number) => void;
-  onCircuitFail?: (reason?: CircuitFailReason) => void;
+  onCircuitFail?: (reason?: CircuitFailReason, pose?: { x: number; y: number; z: number; heading: number }) => void;
   onCircuitStart?: () => void;
   onCircuitStumble?: () => void;
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
@@ -3231,8 +3255,8 @@ function Handler({
 
     // ── Circuit auto-forward runner (climb-feel §4) ──
     // Once the sector is live the pack pushes +Z at cruise. Altitude (jump hold)
-    // is the skill; W surges, S brakes, A/D is a light lateral nudge. Ignition on
-    // the ready→running edge deploys the jetpack so you don't have to double-tap.
+    // is the skill; W surges, S brakes + soft dive, A/D is a light lateral nudge.
+    // Ignition on the ready→running edge deploys the jetpack so you don't have to double-tap.
     if (circuitRunning && !wasCircuitRunning.current) {
       jumps.current = FLY_TRIGGER + 1;
       jetBurst.current++;
@@ -3356,11 +3380,18 @@ function Handler({
       const held = jumpHeld && !stumbleActive;
       // Circuit always auto-forwards; open world needs the front stick (az > 0).
       const cruising = !stumbleActive && (circuitRunning || az > 0.2);
+      // Circuit S/↓ (or open-world reverse stick): brake already slowed +Z; deepen
+      // the sink so high→low gates are reachable. Space still owns climb.
+      const diving = !held && !stumbleActive && az < -0.2 && (circuitRunning || cruising);
       let vy = cv.y;
       // instant kick on a NEW press (never during a stumble lock)
       if (jumpEdge && !stumbleActive) vy = Math.max(vy, 0) + FLY_PRESS_KICK;
       if (held) {
         vy = Math.max(-FLY_MAX_FALL, Math.min(FLY_MAX_RISE, vy + (FLY_THRUST_ACCEL - FLY_GRAVITY) * dt));
+      } else if (diving) {
+        const k = 1 - Math.exp(-FLY_DIVE_GLIDE * dt);
+        vy = vy + (FLY_DIVE_SINK - vy) * k;
+        vy = Math.max(-FLY_MAX_FALL, vy);
       } else if (cruising) {
         const k = 1 - Math.exp(-FLY_CRUISE_GLIDE * dt);
         vy = vy + (FLY_CRUISE_SINK - vy) * k;
@@ -3622,7 +3653,7 @@ function Handler({
           const now = performance.now();
           if (now - failCooldown.current > 800) {
             failCooldown.current = now;
-            onCircuitFail("gates");
+            onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
           }
         }
       }
@@ -3639,12 +3670,11 @@ function Handler({
         const now = performance.now();
         if (now - failCooldown.current > 800) {
           failCooldown.current = now;
-          onCircuitFail("gates");
+          onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
         }
       }
-      // One fall ends the run (soul atom): leave the pad, then any ground hit
-      // (arrival deck, void safety net) or dropping into the void = fail. Ready
-      // stays safe — circuitRunning is false until the launch jump.
+      // Fall / ground hit after leaving the pad — spends a life (continue) or ends the run.
+      // Ready stays safe — circuitRunning is false until the launch jump.
       if (circuitRunning) {
         if (!grounded && t.y > restY + 0.85) circuitAirborne.current = true;
         const fellToVoid = t.y < -6;
@@ -3653,7 +3683,7 @@ function Handler({
           const now = performance.now();
           if (now - failCooldown.current > 800) {
             failCooldown.current = now;
-            onCircuitFail("fall");
+            onCircuitFail("fall", { x: t.x, y: t.y, z: t.z, heading: heading.current });
           }
         }
       }
@@ -3993,6 +4023,27 @@ const CIRCUIT_INTRO_HOLD_S = 1.5;
 const CIRCUIT_ARRIVE_HOLD_S = 1.35;
 const CIRCUIT_ARRIVE_SWEEP_S = 1.05;
 
+function CircuitLifeGhost({
+  pose,
+  force,
+  onDone,
+}: {
+  pose: { x: number; y: number; z: number; heading: number };
+  force?: CreatureType | null;
+  onDone?: () => void;
+}) {
+  const prefersReduced = usePrefersReducedMotion();
+  const reduceMotion = useSettings((s) => s.reduceMotion);
+  return (
+    <CircuitGhostLeave
+      pose={pose}
+      force={force}
+      reducedMotion={prefersReduced || reduceMotion}
+      onDone={onDone}
+    />
+  );
+}
+
 function CameraController({
   match,
   handlerPos,
@@ -4004,6 +4055,7 @@ function CameraController({
   circuitPhase = null,
   matchWide = false,
   clanShot = null,
+  circuitArriveNonce = 0,
 }: {
   match: MatchView | null;
   handlerPos: React.RefObject<THREE.Vector3>;
@@ -4017,6 +4069,8 @@ function CameraController({
   matchWide?: boolean;
   /** Clan swear shot — frame Trainer + rising flag; free look disabled. */
   clanShot?: { x: number; z: number } | null;
+  /** Bumped on life-continue to re-arm the front-facing arrive hold. */
+  circuitArriveNonce?: number;
 }) {
   const { camera, gl } = useThree();
   // Circuit boots facing the Trainer (yaw = heading = 0 → lens in front, portal
@@ -4073,6 +4127,8 @@ function CameraController({
     }
     // Arrival choreography: face the Trainer with the return portal behind them,
     // hold, then Q-sweep until the lens sits behind looking down the Circuit.
+    // Also re-arms on life-continue (circuitArriveNonce bump) so the ghost beat
+    // plays in the same front-facing window.
     const h = camCue.current?.heading ?? 0;
     yaw.current = h; // front of character
     pitch.current = PITCH_GROUND;
@@ -4081,7 +4137,7 @@ function CameraController({
     circuitArriveHold.current = CIRCUIT_ARRIVE_HOLD_S;
     circuitInputLock.current = CIRCUIT_ARRIVE_HOLD_S + CIRCUIT_ARRIVE_SWEEP_S;
     if (camCue.current) camCue.current.inputLock = true;
-  }, [inCircuit, camCue]);
+  }, [inCircuit, camCue, circuitArriveNonce]);
 
   useEffect(() => {
     if (clanShot) {

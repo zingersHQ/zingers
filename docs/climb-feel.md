@@ -157,7 +157,7 @@ Target: **runner with optional steer**.
   bearing) at sector **par pace**.
 - Jump/hold = climb (existing thrust).
 - A/D or strafe = limited lateral authority (or none if layouts stay `x = 0`).
-- W = optional surge (Swift feel); S = brake (small).
+- W = optional surge (Swift feel); S = brake + soft dive (clears high→low Surge beats).
 - Fall / miss rules unchanged.
 
 **Alternative B — Thrust-vector jetpack** (only if A feels too rail-y): hold

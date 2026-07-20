@@ -96,6 +96,8 @@ import { CLAN_R, concordClanSpots } from "@/components/grounds/concord";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
+import { CIRCUIT_LIVES } from "@/components/grounds/circuit";
+import type { CircuitGhostPose } from "@/components/grounds/circuit-ghost";
 import {
   loadCircuitPersonalBest,
   saveCircuitPersonalBest,
@@ -382,6 +384,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [circuitPersonalBest, setCircuitPersonalBest] = useState<CircuitPersonalBest | null>(null);
   const [circuitBoard, setCircuitBoard] = useState<CircuitBoardEntry[]>([]);
   const [circuitBoardLoading, setCircuitBoardLoading] = useState(false);
+  const [circuitLives, setCircuitLives] = useState(CIRCUIT_LIVES);
+  const circuitLivesRef = useRef(CIRCUIT_LIVES);
+  const [circuitGhost, setCircuitGhost] = useState<(CircuitGhostPose & { id: number }) | null>(null);
+  const [circuitArriveNonce, setCircuitArriveNonce] = useState(0);
+  const circuitGhostId = useRef(0);
   const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
@@ -468,6 +475,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
+    circuitLivesRef.current = CIRCUIT_LIVES;
+    setCircuitLives(CIRCUIT_LIVES);
+    setCircuitGhost(null);
     setCircuitSectorIdx(0);
     setCircuitCpPassed(1);
     setCircuitRunMs(0);
@@ -512,6 +522,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       circuitCpNext.current = 1;
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
+      circuitLivesRef.current = CIRCUIT_LIVES;
+      setCircuitLives(CIRCUIT_LIVES);
+      setCircuitGhost(null);
       setCircuitSectorIdx(0);
       setCircuitCpPassed(1);
       setCircuitRunMs(0);
@@ -589,16 +602,49 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
   }, [circuitSectorIdx, submitCircuitRun, store, owned]);
 
-  const onCircuitFail = useCallback((reason: CircuitFailReason = "fall") => {
-    if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
-    const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
-    const sectors = circuitSectorIdx; // sectors fully cleared before this one
-    setCircuitRunMs(total);
-    setCircuitFailReason(reason);
-    setCircuitPhase("failed");
-    submitCircuitRun(sectors, total, false);
-    outcomeSfx(false);
-  }, [circuitPhase, circuitSectorIdx, submitCircuitRun]);
+  const onCircuitFail = useCallback(
+    (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
+      if (circuitPhase === "failed" || circuitPhase === "done" || circuitPhase === "sector") return;
+
+      // Spend a life → same sector continue (ghost leave beside the pad Trainer).
+      if (circuitLivesRef.current > 1) {
+        circuitLivesRef.current -= 1;
+        setCircuitLives(circuitLivesRef.current);
+        const s = desktopCircuitSector(circuitSectorIdx).spawn;
+        // Ghost peels off the respawn body during the front-facing arrive hold —
+        // not at the distant fail point (camera is on the pad).
+        const ghostPose: CircuitGhostPose = {
+          x: s[0],
+          y: s[1],
+          z: s[2],
+          heading: pose?.heading ?? 0,
+        };
+        circuitGhostId.current += 1;
+        setCircuitGhost({ ...ghostPose, id: circuitGhostId.current });
+        circuitCpNext.current = 1;
+        setCircuitCpPassed(1);
+        setCircuitSectorMs(0);
+        circuitSectorStart.current = 0;
+        setCircuitFailReason(reason);
+        setCircuitPhase("ready");
+        setCircuitArriveNonce((n) => n + 1);
+        setTimeout(() => travelRef.current?.(s[0], s[2], 0), 40);
+        duckAmbience(0.45, 400);
+        return;
+      }
+
+      circuitLivesRef.current = 0;
+      setCircuitLives(0);
+      const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
+      const sectors = circuitSectorIdx; // sectors fully cleared before this one
+      setCircuitRunMs(total);
+      setCircuitFailReason(reason);
+      setCircuitPhase("failed");
+      submitCircuitRun(sectors, total, false);
+      outcomeSfx(false);
+    },
+    [circuitPhase, circuitSectorIdx, submitCircuitRun],
+  );
 
   /** Jump on the launch pad starts the sector — wind / cruise / timers. */
   const onCircuitStart = useCallback(() => {
@@ -2016,6 +2062,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
               circuitHazards={activeVenue === "circuit" ? circuitHazards : []}
               onCircuitStumble={activeVenue === "circuit" ? onCircuitStumble : undefined}
+              circuitGhost={activeVenue === "circuit" ? circuitGhost : null}
+              onCircuitGhostDone={activeVenue === "circuit" ? () => setCircuitGhost(null) : undefined}
+              circuitArriveNonce={activeVenue === "circuit" ? circuitArriveNonce : 0}
+              circuitGhostForce={store.force}
               resumeSpawn={!activeVenue ? wildResume : null}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
@@ -2214,6 +2264,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           failReason={circuitFailReason}
           sectorTotal={DESKTOP_CIRCUIT_COUNT}
           reachName={circuitReach.name}
+          lives={circuitLives}
         />
       )}
 

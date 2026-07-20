@@ -20,15 +20,16 @@ runner heartbeat, Flappy silhouette** — amends §1 lateral weave).
 ## 1. Non-negotiables (inherited, not re-decided)
 
 From `essence.md` §2–3, the Climb's **soul atom**: *you ascend; altitude is the
-score; one fall returns you to zero; the run marks your champion.* Everything
+score; two lives then back to zero; the run marks your champion.* Everything
 below is body, and must never violate these:
 
 1. **One input.** Hold to rise, release to fall. **Amended (see
    [`climb-feel.md`](./climb-feel.md) §1c):** on mobile, rings share one lateral
    plane (`x = 0`) — no weave, no auto-X centering. Lateral skill stays out;
    height is the only skill axis. Any hazard that requires a second input is out.
-2. **One fall = run over, back to sector 1** for ranked runs. Camps (§6) give
-   practice starts, never ranked shortcuts.
+2. **Two lives = one continue on the same sector, then run over → sector 1** for
+   ranked runs. First fail spends a life (ghost leave + pad retry); second ends
+   the run. Camps (§6) give practice starts, never ranked shortcuts.
 3. **Depth is soul → cross-device** (Trainer XP, ascent sigil, Saga events).
    **Time/mastery is craft → per-device** (Crowns, split leaderboards).
 4. **Everything marks the champion.** New Reach reached → career-ledger event →

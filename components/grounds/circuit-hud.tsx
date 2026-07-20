@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { ChevronLeft, Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
-import { formatCircuitMs } from "./circuit";
+import { CIRCUIT_LIVES, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 
 export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed";
@@ -19,6 +19,30 @@ export interface CircuitBoardEntry {
 function rankLabel(e: CircuitBoardEntry): string | null {
   const h = e.handle?.trim();
   return h || null;
+}
+
+function LifePips({ lives, accent }: { lives: number; accent: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 5 }} aria-label={`${lives} ${lives === 1 ? "life" : "lives"} left`}>
+      {Array.from({ length: CIRCUIT_LIVES }, (_, i) => {
+        const on = i < lives;
+        return (
+          <span
+            key={i}
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: 7,
+              background: on ? accent : "transparent",
+              border: `1.5px solid ${on ? accent : "var(--line)"}`,
+              opacity: on ? 0.95 : 0.45,
+              boxShadow: on ? `0 0 8px ${accent}66` : "none",
+            }}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 export function CircuitHud({
@@ -39,6 +63,7 @@ export function CircuitHud({
   failReason,
   sectorTotal = 100,
   reachName,
+  lives = CIRCUIT_LIVES,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -59,6 +84,8 @@ export function CircuitHud({
   sectorTotal?: number;
   /** short Reach name only — no roman/tagline essay */
   reachName?: string;
+  /** Remaining lives in the current run (2 → 1 continue → 0 run over). */
+  lives?: number;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
@@ -136,6 +163,7 @@ export function CircuitHud({
           <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>
             {sectorN}/{sectorTotal}
           </span>
+          {(running || phase === "ready") && <LifePips lives={lives} accent={accent} />}
           <Timer size={14} color={accent} strokeWidth={2.2} />
           <span
             style={{
@@ -193,7 +221,13 @@ export function CircuitHud({
       )}
 
       {phase === "failed" && (
-        <CircuitModal accent="#ff5a5a" icon={<Skull size={28} color="#ff5a5a" />} kicker="RUN OVER" title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`} sub={failReason === "gates" ? "Missed a gate. Back to sector 1." : "One fall ends the run."}>
+        <CircuitModal
+          accent="#ff5a5a"
+          icon={<Skull size={28} color="#ff5a5a" />}
+          kicker="RUN OVER"
+          title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`}
+          sub={failReason === "gates" ? "Out of lives — missed a gate. Back to sector 1." : "Out of lives. Back to sector 1."}
+        >
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={16} strokeWidth={2.2} /> try again
           </button>

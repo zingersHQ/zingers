@@ -6,7 +6,7 @@
 // bodies" and docs/climb.md › "The Hundred-Sector Ascent"). It REUSES the shared
 // 3D scene (CircuitScene) but swaps the six-DOF Handler controller for a single-
 // input, auto-forward flyer under a trailing chase camera — the whole game
-// collapses to: HOLD to rise, release to fall, thread the gate, one fall resets.
+// collapses to: HOLD to rise, release to fall, thread the gate; two lives, then reset.
 //
 // Content is the 100-sector climb (components/grounds/climb/*): ten themed
 // Reaches (each a band of 10 sectors wearing an existing biome skin — the mirror
@@ -35,8 +35,10 @@ import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import type { BiomeConfig } from "./biomes";
-import { circuitGatePlaneCross, formatCircuitMs } from "./circuit";
+import { CIRCUIT_LIVES, circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
+import { CircuitGhostLeave, type CircuitGhostPose } from "./circuit-ghost";
+import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
@@ -74,10 +76,15 @@ const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable clim
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
 const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontrollable)
 const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
-// Auto-forward is always on in Climb — released thumb = cruise glide (slight
-// descent), not a stone drop. Matches desktop world/Circuit cruise feel.
-const CRUISE_SINK = -2.0;   // target vy while gliding forward without thrust
+// Auto-forward is always on in Climb — released thumb = cruise glide by default
+// (slight descent). When you're clearly ABOVE the next ring, deepen the sink so
+// Surge high→low beats are reachable without a second thumb input. Flat/vista
+// glides keep the gentle rate — enrich hard sectors, don't brick the easy ones.
+const CRUISE_SINK = -2.0;   // target vy while level with / below the next gate
 const CRUISE_GLIDE = 6;     // ease rate toward cruise sink
+const DIVE_SINK = -8.0;     // target vy when above the next gate (Surge drops)
+const DIVE_GLIDE = 8;       // snappier ease into the dive
+const DIVE_LEAD = 2.2;      // how far above next gate centre before dive engages
 const FLOOR_Y = -9;         // fall below this → run over
 // Soft ceiling: a full hold parks you INSIDE the next ring's opening so simply
 // holding threads the gate instead of overshooting into the void.
@@ -236,9 +243,9 @@ function Flyer({
 
     const cp = track.checkpoints[cpNext.current];
 
-    // vertical: thrust climbs; released thumb cruises forward with a slight sink
-    // (auto-+Z is always on). Stumble lock drops into a hard gravity fall so the
-    // shove still reads. Kick on each fresh press.
+    // vertical: thrust climbs; released thumb cruises with a slight sink, or a
+    // deeper dive when the next ring is clearly below (auto-+Z is always on).
+    // Stumble lock drops into a hard gravity fall so the shove still reads.
     if (held && !wasHeld.current) {
       vy.current = Math.max(vy.current, 0) + PRESS_KICK;
     }
@@ -252,8 +259,14 @@ function Flyer({
     } else if (controlLocked) {
       vy.current = THREE.MathUtils.clamp(vy.current - GRAVITY * dt, -MAX_FALL, MAX_RISE);
     } else {
-      const k = 1 - Math.exp(-CRUISE_GLIDE * dt);
-      vy.current = vy.current + (CRUISE_SINK - vy.current) * k;
+      let sink = CRUISE_SINK;
+      let glide = CRUISE_GLIDE;
+      if (cp && pos.current.y > cp.pos[1] + DIVE_LEAD) {
+        sink = DIVE_SINK;
+        glide = DIVE_GLIDE;
+      }
+      const k = 1 - Math.exp(-glide * dt);
+      vy.current = vy.current + (sink - vy.current) * k;
     }
     pos.current.y += vy.current * dt;
 
@@ -300,7 +313,7 @@ function Flyer({
 
     altRef.current = pos.current.y;
 
-    // fall = run over (the soul atom)
+  // fall = spend a life (or run over when out)
     if (pos.current.y < FLOOR_Y) {
       dead.current = true;
       onFail("fall");
@@ -495,6 +508,11 @@ export default function CircuitLite({
   const [sector, setSector] = useState(0);
   const [phase, setPhase] = useState<Phase>("ready");
   const [failReason, setFailReason] = useState<FailReason>("fall");
+  const [lives, setLives] = useState(CIRCUIT_LIVES);
+  const livesRef = useRef(CIRCUIT_LIVES);
+  const [ghost, setGhost] = useState<(CircuitGhostPose & { id: number }) | null>(null);
+  const ghostId = useRef(0);
+  const prefersReduced = usePrefersReducedMotion();
   const [targetIdx, setTargetIdx] = useState(1); // next gate to thread (for highlight + pips)
   // live ref for CircuitScene green-pass feedback (same path as desktop)
   const cpNextRef = useRef(1);
@@ -713,6 +731,9 @@ export default function CircuitLite({
     setNewBest(false);
     setReward(null);
     bonusCrowns.current = 0;
+    livesRef.current = CIRCUIT_LIVES;
+    setLives(CIRCUIT_LIVES);
+    setGhost(null);
     setPhase("ready");
   }, [setHold]);
 
@@ -835,11 +856,32 @@ export default function CircuitLite({
       stopJet();
       if (r === "fall") jetFallSfx();
       else badLuckSfx();
-      recordRun(sector, false);
       setFailReason(r);
+
+      // One continue on the same sector — ghost peels off the pad body, then ready.
+      if (livesRef.current > 1) {
+        livesRef.current -= 1;
+        setLives(livesRef.current);
+        ghostId.current += 1;
+        setGhost({
+          id: ghostId.current,
+          x: track.spawn[0],
+          y: track.spawn[1] + CHAMP_Y,
+          z: track.spawn[2],
+          heading: CHAMP_FACE,
+        });
+        setTargetIdx(1);
+        duckAmbience(0.4, 350);
+        setPhase("ready");
+        return;
+      }
+
+      livesRef.current = 0;
+      setLives(0);
+      recordRun(sector, false);
       setPhase("failed");
     },
-    [setHold, sector, recordRun],
+    [setHold, sector, recordRun, track.spawn],
   );
 
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
@@ -942,6 +984,16 @@ export default function CircuitLite({
               renderPriority={0}
             />
           )}
+          {ghost && (
+            <CircuitGhostLeave
+              key={ghost.id}
+              pose={ghost}
+              force={champType}
+              lite
+              reducedMotion={prefersReduced}
+              onDone={() => setGhost(null)}
+            />
+          )}
         </Canvas>
       )}
 
@@ -1024,6 +1076,27 @@ export default function CircuitLite({
             ))}
           </span>
         </div>
+        {(phase === "ready" || phase === "running") && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }} aria-label={`${lives} lives left`}>
+            <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>LIVES</span>
+            <span style={{ display: "flex", gap: 4 }}>
+              {Array.from({ length: CIRCUIT_LIVES }, (_, i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 7,
+                    background: i < lives ? accent : "transparent",
+                    border: `1.5px solid ${accent}`,
+                    opacity: i < lives ? 0.95 : 0.4,
+                    boxShadow: i < lives ? `0 0 8px ${accent}66` : "none",
+                  }}
+                />
+              ))}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── personal best — top-right, quiet ── */}
@@ -1125,7 +1198,7 @@ export default function CircuitLite({
           <div className="mono" style={{ textAlign: "center", color: "#fff", textShadow: `0 0 20px ${accent}` }}>
             <div style={{ fontSize: embedded ? 17 : 20, fontWeight: 800, letterSpacing: 1 }}>TAP &amp; HOLD TO FLY</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 1 }}>
-              thread every ring · miss or fall = restart
+              thread every ring · two lives · release to settle
             </div>
           </div>
         </div>
@@ -1172,8 +1245,8 @@ export default function CircuitLite({
               {phase === "done"
                 ? "you flew the whole climb"
                 : failReason === "gates"
-                  ? "missed a gate — every ring must be threaded · back to sector 1"
-                  : "one fall ends the run · back to sector 1"}
+                  ? "out of lives — missed a gate · back to sector 1"
+                  : "out of lives · back to sector 1"}
             </div>
             {newBest ? (
               <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, padding: "5px 12px", borderRadius: 999, background: accent, color: "#0a0a12", fontWeight: 800, fontSize: 11, letterSpacing: 1 }}>
