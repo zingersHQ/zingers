@@ -2761,6 +2761,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
             if (firstDuelPhase === "pick") setFlightKey(k);
             else if (!owned) setClaiming(k);
           }}
+          layout="stage"
         />
       )}
 
@@ -2796,6 +2797,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
             setImprintTease(false);
             setOverlay("train");
           }}
+          layout="stage"
         />
       )}
 

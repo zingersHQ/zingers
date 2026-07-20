@@ -35,23 +35,22 @@ export function championWakeLine(key: string): string {
   return WAKE[key] ?? "…finally. Someone on my side.";
 }
 
-/** Wake beat with a named kicker so the mind sticks before the next screen. */
+/** Wake beat — speaker name in the caption carries identity; no redundant kicker. */
 export function championWakeScript(key: string): BeatScript {
   const name = ROSTER[key]?.name ?? key;
   return {
-    kicker: `${name} WAKES`,
-    lines: [{ speaker: name, text: championWakeLine(key) }],
+    lines: [{ speaker: name, text: championWakeLine(key), anim: "standing" }],
   };
 }
 
-/** First Imprint ask — one line that opens the raise loop after Concord. */
+/** First Imprint beat — one line that opens the raise loop after Concord. */
 export function championImprintAsk(key: string): string {
   const lines: Record<string, string> = {
     AXIOM: "Before we climb — teach me one rule. Make it worth proving.",
     PARADOX: "Give me one lesson to question. I'll keep whatever survives.",
     GLITCH: "Wait wait — imprint me with something weird first. Please?",
     EMBER: "Don't just fly. Point the fire. Teach me something.",
-    BASTION: "…one lesson. I'll hold to it. Then we go.",
+    BASTION: "…one lesson before we climb. I'll hold to it.",
     VOX: "Feed me a line for the performance. Make it stick.",
     WIT: "One lesson. Sharp. Then we leave the Concord.",
     MUSE: "Reframe me once before we climb. Change how I think.",
@@ -61,9 +60,9 @@ export function championImprintAsk(key: string): string {
 
 export function championImprintAskScript(key: string): BeatScript {
   const name = ROSTER[key]?.name ?? key;
+  // No kicker — speaker name in the caption is enough; "ASKS" was wrong for most lines.
   return {
-    kicker: `${name} ASKS`,
-    lines: [{ speaker: name, text: championImprintAsk(key) }],
+    lines: [{ speaker: name, text: championImprintAsk(key), anim: "standing" }],
   };
 }
 
