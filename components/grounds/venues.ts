@@ -38,6 +38,13 @@ export const CONCORD_VENUE_SPOTS: { venue: VenueId; angle: number; dist: number 
 /** Walk-up return arch in each region — the only way out to the Concord. */
 export const REGION_RETURN_SPOT = { angle: Math.PI * 0.92, dist: 33 };
 
+/**
+ * Metres behind the spawn knoll for the Concord return portal.
+ * Chase cam sits ~8.6m behind the Trainer looking plaza-ward — keep the arch
+ * past that so it never wedges between lens and body on world start.
+ */
+export const REGION_RETURN_BEHIND = 14;
+
 /** The Circuit portal per region world — set FAR OUT IN THE WILDS beyond the
  *  plaza rim (PLAZA_R = 36), on its own bearing well away from the central arena,
  *  crowning a large terrained mountain (see AscentMountain in world.tsx) with
@@ -92,7 +99,9 @@ export const VENUE_EXIT = {
   // ≤ z=-18 so it never wedges between camera and Trainer. Arch feet plant on
   // the pad — never float (arrive framing: portal → character → track).
   circuit: { pos: [0, 0, -20] as [number, number, number], radius: 3.4 },
-  amphitheatre: { pos: [0, 1.0, 17] as [number, number, number], radius: 3.6 },
+  // Spawn ≈ z=12 facing −z; chase cam ~8.6m behind → lens near z≈20.5. Keep the
+  // exit arch past the lens (same wedge bug as region Concord returns).
+  amphitheatre: { pos: [0, 1.0, 24] as [number, number, number], radius: 3.6 },
 };
 
 export interface GameSession {

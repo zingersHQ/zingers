@@ -58,6 +58,7 @@ import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import { atCircuitFinishEarly, circuitGatePlaneCross, CIRCUIT_SECTOR_INTRO } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import {
+  REGION_RETURN_BEHIND,
   VENUE_EXIT,
   VENUES,
   circuitSpotFor,
@@ -520,12 +521,11 @@ export default function World({
   );
   const returnTarget = useMemo(() => {
     if (!inRegion) return null;
-    // The way home stands where you arrived — the spawn knoll — nudged a few
-    // metres outward so you emerge from it and it sits at your back, facing the
-    // plaza (docs: "back to the Concord should be at the point you start").
+    // Behind the spawn knoll, past the chase cam, facing the plaza — emerge from
+    // it on arrival without the arch sitting between lens and Trainer.
     const r = Math.hypot(knoll.x, knoll.z) || 1;
-    const x = knoll.x + (knoll.x / r) * 6;
-    const z = knoll.z + (knoll.z / r) * 6;
+    const x = knoll.x + (knoll.x / r) * REGION_RETURN_BEHIND;
+    const z = knoll.z + (knoll.z / r) * REGION_RETURN_BEHIND;
     return new THREE.Vector3(x, terrainHeight(x, z, shape, knoll) + 1, z);
   }, [inRegion, shape, knoll]);
   const circuitTunnelTarget = useMemo(() => {
