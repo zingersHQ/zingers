@@ -21,8 +21,10 @@ import {
   firstDuelStarterKeys,
   previewRookieChampion,
   FIRST_DUEL_HOOKS,
+  personaLine,
   markFirstDuelComplete,
 } from "@/lib/first-duel";
+import { READER_COPY } from "@/lib/player-copy";
 
 export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
   const adoptStarterRookie = useChampions((s) => s.adoptStarterRookie);
@@ -72,6 +74,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
   // this screen, so it shows the full body (no avatar chrome), as big as fits.
   const cols = starters.length <= 3 ? starters.length : starters.length === 4 ? 2 : 3;
   const pickedHook = picked ? (FIRST_DUEL_HOOKS[picked] ?? "A mind worth raising.") : null;
+  const pickedPersona = picked ? personaLine(picked) : null;
 
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "calc(18px + env(safe-area-inset-top, 0px)) 14px calc(20px + env(safe-area-inset-bottom, 0px))" }}>
@@ -80,8 +83,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
           <Sparkles size={24} strokeWidth={2} style={{ color: "var(--accent)" }} />
           <div style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 4px" }}>Choose your champion</div>
           <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
-            You raise the mind that fights. Pick one to begin — it starts green and
-            evolves as you train it and call fights.
+            {READER_COPY.claimLine} Pick one to begin — they start green and evolve as you train and call fights.
           </p>
         </div>
 
@@ -153,10 +155,17 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
           })}
         </div>
 
-        {/* the picked mind's hook — one supporting line, replaces the per-card copy */}
-        <p style={{ minHeight: 34, fontSize: 12.5, lineHeight: 1.4, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", textAlign: "center", margin: "12px auto 0", maxWidth: 340 }}>
-          {pickedHook ?? "Tap a champion to meet it."}
-        </p>
+        {/* the picked mind's hook + persona — name sticks before first flight */}
+        <div style={{ minHeight: 52, textAlign: "center", margin: "12px auto 0", maxWidth: 340 }}>
+          <p style={{ fontSize: 12.5, lineHeight: 1.4, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", margin: 0 }}>
+            {pickedHook ?? "Tap a champion to meet them."}
+          </p>
+          {pickedPersona && (
+            <p style={{ fontSize: 12, lineHeight: 1.4, color: "var(--muted, #9a96b8)", margin: "4px 0 0" }}>
+              {pickedPersona}
+            </p>
+          )}
+        </div>
 
         <button
           type="button"

@@ -360,10 +360,10 @@ function Awaken({
           <>
             You fly.
             <br />
-            It fights.
+            They fight.
           </>
         }
-        body="You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise it, tune it, and send it into the battles you climb over — you both rise."
+        body="You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise them, tune them, and send them into the battles you climb over — you both rise."
       >
         {onStart && (
           <button

@@ -12,9 +12,10 @@ import { ChampionPortraitScene } from "@/components/render/champion-portrait-sce
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { RenderBoundary } from "@/components/grounds/render-guard";
 import {
-  CONCORD_LANDING,
+  concordLanding,
   FIRST_DUEL_HOOKS,
   FIRST_DUEL_TAGLINE,
+  personaLine,
   previewRookieChampion,
   QUICK_START_STRAT,
 } from "@/lib/first-duel";
@@ -150,19 +151,21 @@ export function FirstDuelOverlay({
   }
 
   if (phase === "concord") {
-    const beat = CONCORD_LANDING[concordStep];
-    const last = concordStep >= CONCORD_LANDING.length - 1;
+    const champName = selected ? (starters.find((r) => r.key === selected)?.name ?? ROSTER[selected]?.name) : undefined;
+    const beats = concordLanding(champName);
+    const beat = beats[concordStep];
+    const last = concordStep >= beats.length - 1;
     return (
       <div style={shell}>
         <OnboardingAudio compact={isMobile} />
         <div className="panel pop" style={{ ["--ac" as string]: ACC, padding: isMobile ? 22 : 28, width: "min(560px, 96vw)", textAlign: "center", borderColor: ACC }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 8 }}>
-            {beat.kicker} · {concordStep + 1}/{CONCORD_LANDING.length}
+            {beat.kicker} · {concordStep + 1}/{beats.length}
           </div>
           <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, margin: "0 0 10px", lineHeight: 1.15 }}>{beat.title}</h2>
           <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.55, margin: "0 0 22px" }}>{beat.body}</p>
           <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 18 }}>
-            {CONCORD_LANDING.map((_, i) => (
+            {beats.map((_, i) => (
               <div
                 key={i}
                 style={{
@@ -232,7 +235,7 @@ function TrainPhase({
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-          Drag the three dials that set how <strong>your champion</strong> {FIGHT.fights} in the arena. You walk the Grounds; it fights for you. Training costs Crowns and nudges the body before the bell.
+          Drag the three dials that set how <strong>{entry.name}</strong> {FIGHT.fights} in the arena. You walk the Grounds; {entry.name} fights for you. Training costs Crowns and nudges the body before the bell.
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
@@ -304,6 +307,7 @@ function PickPhase({
   const prey = FORCE_LORE[nb.prey];
   const pred = FORCE_LORE[nb.predator];
   const hook = FIRST_DUEL_HOOKS[entry.key];
+  const persona = personaLine(entry.key);
   const motto = FORCE_MOTTO[entry.type];
 
   // The fighter "speaks" its vow as it steps forward — re-fires whenever the
@@ -416,6 +420,11 @@ function PickPhase({
               <div style={{ fontSize: isMobile ? 28 : 42, fontWeight: 800, lineHeight: 1.02, margin: "4px 0 0" }}>{entry.name}</div>
             </div>
             {hook && <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: 0 }}>{hook}</p>}
+            {persona && (
+              <p style={{ color: "var(--ink)", fontSize: 13, lineHeight: 1.45, margin: 0, opacity: 0.92 }}>
+                {persona}
+              </p>
+            )}
             <p style={{ color: col, fontStyle: "italic", fontSize: 14, margin: 0 }}>&ldquo;{motto}&rdquo;</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: isMobile ? "center" : "flex-start" }}>
               <span className="chip" style={{ borderColor: prey.hex, color: prey.hex, fontSize: 11 }}>beats {prey.sigil} {prey.name}</span>
@@ -423,7 +432,7 @@ function PickPhase({
             </div>
             <ReaderSplitBadge championName={entry.name} forceColor={col} compact={isMobile} />
             <span className="chip mono" style={{ borderColor: "var(--line2)", color: "var(--muted2)", fontSize: 10, alignSelf: isMobile ? "center" : "flex-start" }}>
-              {READER_COPY.walkFightChip}
+              {READER_COPY.walkFightChip(entry.name)}
             </span>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, lineHeight: 1.45 }}>
               {READER_COPY.legendAspiration}

@@ -81,9 +81,11 @@ import { TravelVeil, type TravelCard } from "@/components/grounds/travel-veil";
 import {
   championAfterFight,
   championGreeting,
+  championImprintAskScript,
   championRankedFinale,
   championTypeForKey,
-  championWakeLine,
+  championWakeScript,
+  firstFlightScript,
   keeperColor,
   keeperCrackBeat,
   keeperIntro,
@@ -196,6 +198,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [keeperLevel, setKeeperLevel] = useState<number | null>(null);
   const [keeperIntroPending, setKeeperIntroPending] = useState<{ level: number; name: string; title: string } | null>(null);
   const [wakeKey, setWakeKey] = useState<string | null>(null);
+  /** Desktop first-flight vignette after wake (mobile already has this in MobileAdopt). */
+  const [flightKey, setFlightKey] = useState<string | null>(null);
+  /** One-shot Imprint ask after first Concord → region land. */
+  const [imprintTease, setImprintTease] = useState(false);
   const [companionLine, setCompanionLine] = useState<string | null>(null);
   const [companionEmote, setCompanionEmote] = useState<string | null>(null);
   const [companionAct, setCompanionAct] = useState(0);
@@ -1907,7 +1913,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // — the compass sat at z-index 100 above CharacterBeat (92), breaking keeper
   // dialogues and other overlays.
   const cinematicOpen =
-    seasonBeat || !!rivalBeat || !!wakeKey || !!keeperIntroPending || !!companionBeat || !!trialNom || !!clanCeremony;
+    seasonBeat || !!rivalBeat || !!wakeKey || !!flightKey || imprintTease || !!keeperIntroPending || !!companionBeat || !!trialNom || !!clanCeremony;
   const worldUiBlocked =
     showMatch ||
     overlay !== "none" ||
@@ -1925,6 +1931,21 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const showCompass = showHud && !worldUiBlocked && owned && !isHub && !inVenue;
   // Reserve bottom space only when the compass is actually visible.
   const compassReserve = showCompass ? (isMobile ? 84 : 104) : 0;
+
+  // Empathy beat: after the Concord coach ends and they land in a region, their
+  // champion asks for one Imprint — opens Train when the beat finishes.
+  useEffect(() => {
+    if (!mounted || !owned || imprintTease) return;
+    if (isHub || inVenue || showMatch || overlay !== "none") return;
+    if (concordCoach || wakeKey || flightKey || travelCard) return;
+    try {
+      if (localStorage.getItem(STORAGE.imprintCoach) === "1") return;
+      if (localStorage.getItem(STORAGE.concordCoach) !== "1") return;
+      if (!isFirstDuelComplete()) return;
+      setImprintTease(true);
+    } catch {}
+  }, [mounted, owned, imprintTease, isHub, inVenue, showMatch, overlay, concordCoach, wakeKey, flightKey, travelCard]);
+
   const audioVolume = useSettings((s) => s.volume);
   const voiceOn = useSettings((s) => s.voice);
   const alwaysShowHud = useSettings((s) => s.alwaysShowHud);
@@ -2225,6 +2246,28 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       {/* Trainer hub — out of Circuit so the flight HUD owns top chrome. */}
       {showHud && !worldUiBlocked && activeVenue !== "circuit" && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
+        {owned && byKey[owned] && !showMatch && overlay === "none" && !gRun && (
+          <div
+            className="panel"
+            aria-label={READER_COPY.wingmateChip(byKey[owned].name)}
+            title={READER_COPY.wingmateChip(byKey[owned].name)}
+            style={{
+              ["--ac" as string]: TYPE_COLOR[byKey[owned].type],
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: isMobile ? "6px 9px" : "7px 11px",
+              maxWidth: isMobile ? 120 : 160,
+            }}
+          >
+            <span className="mono" style={{ fontSize: 8, letterSpacing: 0.8, color: "var(--muted2)", flexShrink: 0 }}>
+              {isMobile ? "◆" : "WINGMATE"}
+            </span>
+            <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 800, color: TYPE_COLOR[byKey[owned].type], overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {byKey[owned].name}
+            </span>
+          </div>
+        )}
         <PlayerHub
           isMobile={isMobile}
           crowns={crowns}
@@ -2396,9 +2439,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               </>
             ) : (
               <>
-                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>YOUR CHAMPION</div>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>
+                  {owned && byKey[owned] ? byKey[owned].name : "YOUR CHAMPION"}
+                </div>
                 <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
-                  {READER_COPY.walkFightLine} Take off and it lifts off with you. Fly out and explore, chase the <strong>tower</strong> on the horizon.
+                  {READER_COPY.walkFightLine(owned && byKey[owned] ? byKey[owned].name : undefined)} Take off together. Fly out and explore, chase the <strong>tower</strong> on the horizon.
                 </p>
                 <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "6px 12px" }} onClick={dismissReaderSplitCoach}>
                   Skip
@@ -2653,7 +2698,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               Summoning minds for you to raise…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              {READER_COPY.walkFightLine}
+              {READER_COPY.walkFightLine()}
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (
@@ -2677,12 +2722,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       {/* champion wakes — first time you bind to a mind */}
       {wakeKey && byKey[wakeKey] && (
         <CharacterBeat
-          script={{
-            kicker: "ADOPTION",
-            lines: [
-              { speaker: byKey[wakeKey].name, text: championWakeLine(wakeKey) },
-            ],
-          }}
+          script={championWakeScript(wakeKey)}
           accent={TYPE_COLOR[byKey[wakeKey].type]}
           voice="champion"
           championType={byKey[wakeKey].type}
@@ -2690,8 +2730,44 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           onComplete={() => {
             const k = wakeKey;
             setWakeKey(null);
-            if (firstDuelPhase === "pick") setFirstDuelPhase("train");
+            // Desktop first-journey: wake → first flight → train (mobile flight lives in MobileAdopt).
+            if (firstDuelPhase === "pick") setFlightKey(k);
             else if (!owned) setClaiming(k);
+          }}
+        />
+      )}
+
+      {/* first flight — named mind rises beside you before strategy tuning */}
+      {flightKey && byKey[flightKey] && (
+        <CharacterBeat
+          script={firstFlightScript(flightKey)}
+          accent={TYPE_COLOR[byKey[flightKey].type]}
+          voice="champion"
+          championType={byKey[flightKey].type}
+          portrait={{ key: flightKey, type: byKey[flightKey].type, champion: previewRookieChampion(flightKey), name: byKey[flightKey].name }}
+          onComplete={() => {
+            setFlightKey(null);
+            if (firstDuelPhase === "pick") setFirstDuelPhase("train");
+          }}
+          layout="stage"
+          sound
+        />
+      )}
+
+      {/* first Imprint ask — after Concord gate, open Train on the raise loop */}
+      {imprintTease && owned && byKey[owned] && !wakeKey && !flightKey && !showMatch && overlay === "none" && !inFirstDuelSetup && (
+        <CharacterBeat
+          script={championImprintAskScript(owned)}
+          accent={TYPE_COLOR[byKey[owned].type]}
+          voice="champion"
+          championType={byKey[owned].type}
+          portrait={{ key: owned, type: byKey[owned].type, champion: store.get(owned), name: byKey[owned].name }}
+          onComplete={() => {
+            try {
+              localStorage.setItem(STORAGE.imprintCoach, "1");
+            } catch {}
+            setImprintTease(false);
+            setOverlay("train");
           }}
         />
       )}
@@ -2965,7 +3041,7 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
         </div>
         <h2 style={{ fontSize: 26, fontWeight: 700, margin: "8px 0 4px" }}>Claim a champion to raise.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, margin: "0 0 14px" }}>
-          {READER_COPY.claimLine} {READER_COPY.walkFightChip}
+          {READER_COPY.claimLine} {READER_COPY.walkFightChip()}
         </p>
 
         {/* the one lesson that matters before you choose: each Force beats the next */}
@@ -3076,7 +3152,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         </div>
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 6px" }}>
-          TEMPERAMENT · how it thinks
+          TEMPERAMENT · how {entry.name} thinks
         </div>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
           Grown by lessons and fights — not dials you drag.
@@ -3086,10 +3162,10 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 6px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          LESSONS · shape it today
+          LESSONS · shape {entry.name} today
         </div>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 10px" }}>
-          Shared menu; your daily pick + the fights between make this mind diverge. One lesson sticks per day.
+          Shared menu; your daily pick + the fights between make {entry.name} diverge. One lesson sticks per day.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {IMPRINT_LESSONS.map((l) => {
@@ -3124,7 +3200,7 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
         )}
 
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
-          PERSONA · its voice (optional)
+          PERSONA · {entry.name}&apos;s voice (optional)
         </div>
         <textarea
           value={persona}

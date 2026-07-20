@@ -22,11 +22,17 @@ export const FIGHT = {
 
 /** Canonical Trainer vs champion teaching lines — use everywhere onboarding touches. */
 export const READER_COPY = {
-  claimLine: "You did not become this champion. You claimed it.",
-  walkFightLine: "You fly the Grounds. Your champion flies at your side.",
-  walkFightChip: "You fly · It flies with you",
+  claimLine: "You did not become this champion. You claimed them.",
+  /** Prefer the named form once a champion is known. */
+  walkFightLine: (name?: string) =>
+    name
+      ? `You fly the Grounds. ${name} flies at your side.`
+      : "You fly the Grounds. Your champion flies at your side.",
+  walkFightChip: (name?: string) =>
+    name ? `You fly · ${name} flies with you` : "You fly · Your champion flies with you",
   flyLine: "Hold to rise. The Grounds are yours to soar.",
   adoptCta: (name: string) => `Adopt ${name}`,
+  wingmateChip: (name: string) => `Wingmate · ${name}`,
   rookieArc: "Everything you do together reshapes the body. This is day one.",
   legendAspiration: "Legend forms earn their shape. Yours starts at Rookie.",
   rookieEarned: "You claimed a rookie. The legend form is earned.",

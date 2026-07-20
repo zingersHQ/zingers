@@ -35,6 +35,38 @@ export function championWakeLine(key: string): string {
   return WAKE[key] ?? "…finally. Someone on my side.";
 }
 
+/** Wake beat with a named kicker so the mind sticks before the next screen. */
+export function championWakeScript(key: string): BeatScript {
+  const name = ROSTER[key]?.name ?? key;
+  return {
+    kicker: `${name} WAKES`,
+    lines: [{ speaker: name, text: championWakeLine(key) }],
+  };
+}
+
+/** First Imprint ask — one line that opens the raise loop after Concord. */
+export function championImprintAsk(key: string): string {
+  const lines: Record<string, string> = {
+    AXIOM: "Before we climb — teach me one rule. Make it worth proving.",
+    PARADOX: "Give me one lesson to question. I'll keep whatever survives.",
+    GLITCH: "Wait wait — imprint me with something weird first. Please?",
+    EMBER: "Don't just fly. Point the fire. Teach me something.",
+    BASTION: "…one lesson. I'll hold to it. Then we go.",
+    VOX: "Feed me a line for the performance. Make it stick.",
+    WIT: "One lesson. Sharp. Then we leave the Concord.",
+    MUSE: "Reframe me once before we climb. Change how I think.",
+  };
+  return lines[key] ?? "Teach me something before we climb. Make it mine.";
+}
+
+export function championImprintAskScript(key: string): BeatScript {
+  const name = ROSTER[key]?.name ?? key;
+  return {
+    kicker: `${name} ASKS`,
+    lines: [{ speaker: name, text: championImprintAsk(key) }],
+  };
+}
+
 // ── First flight (a short vignette the moment you adopt a champion) ───────────
 // The first "scripted mundane moment": your new rookie rises off the ground for
 // the first time — flying BESIDE you (canon: the Trainer flies with a jetpack, the

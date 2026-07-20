@@ -18,6 +18,7 @@ import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
 import { readerSaga, SAGA } from "@/lib/lore/saga";
 import { NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
+import { getHandle, setHandle as persistHandle } from "@/lib/owner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { RobotMark } from "@/components/brand/robot-mark";
@@ -64,12 +65,28 @@ export function PlayerHub({
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const [open, setOpen] = useState(false);
+  const [handle, setHandleState] = useState("");
+  const [nameDraft, setNameDraft] = useState("");
+
+  useEffect(() => {
+    const h = getHandle();
+    setHandleState(h);
+    setNameDraft(h);
+  }, [open]);
 
   const tl = trainerLevel(trainerXp);
   const saga = readerSaga(trainerXp);
   const fc = force ? TYPE_COLOR[force] : "#9a96b8";
   const fm = force ? forceMeta(force) : null;
   const rankFrac = Math.max(0.03, Math.min(1, tl.into / tl.span));
+
+  const claimLocalName = () => {
+    const n = nameDraft.trim().slice(0, 24);
+    if (n.length < 2) return;
+    persistHandle(n);
+    setHandleState(n);
+    setNameDraft(n);
+  };
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -168,7 +185,16 @@ export function PlayerHub({
         >
           <RobotMark size={isMobile ? 17 : 18} />
         </span>
-        <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: fc }}>Lv {tl.level}</span>
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.05, minWidth: 0 }}>
+          {handle ? (
+            <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 800, color: fc, maxWidth: isMobile ? 72 : 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {handle}
+            </span>
+          ) : null}
+          <span style={{ fontSize: handle ? 10 : isMobile ? 13 : 14, fontWeight: handle ? 700 : 800, color: handle ? "var(--muted2)" : fc }}>
+            Lv {tl.level}
+          </span>
+        </span>
         <span style={{ width: 1, height: 16, background: "var(--line2)" }} />
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
           <Crown size={isMobile ? 13 : 15} color="var(--gold)" strokeWidth={2.2} />
@@ -235,7 +261,7 @@ export function PlayerHub({
                   {force ? EMBLEM[force] : <Shield size={20} strokeWidth={2.2} />}
                 </span>
                 <div style={{ lineHeight: 1.15 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800 }}>Trainer · Lv {tl.level}</div>
+                  <div style={{ fontSize: 17, fontWeight: 800 }}>{handle || "Trainer"} · Lv {tl.level}</div>
                   <div className="mono" style={{ fontSize: 10, letterSpacing: 0.5, color: "var(--muted)", marginTop: 2 }}>
                     {tl.title.toUpperCase()} · {fm ? fm.name.toUpperCase() : "NO CLAN YET"}
                   </div>
@@ -244,6 +270,45 @@ export function PlayerHub({
               <button onClick={close} aria-label="Close hub" className="panel" style={{ padding: 7, display: "grid", placeItems: "center", cursor: "pointer", color: "var(--muted)", lineHeight: 0 }}>
                 <X size={16} strokeWidth={2.2} />
               </button>
+            </div>
+
+            {/* soft Trainer name — device-local; wallet can lock uniqueness later */}
+            <div style={{ marginTop: 12, padding: "10px 11px", borderRadius: 10, border: "1px solid var(--line)", background: "rgba(255,255,255,.03)" }}>
+              <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: "var(--muted2)", marginBottom: 6 }}>
+                TRAINER NAME
+              </div>
+              <div style={{ display: "flex", gap: 7 }}>
+                <input
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value.slice(0, 24))}
+                  onKeyDown={(e) => { if (e.key === "Enter") claimLocalName(); }}
+                  placeholder="Claim a name"
+                  maxLength={24}
+                  aria-label="Trainer name"
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "var(--panel2)",
+                    border: "1px solid var(--line2)",
+                    borderRadius: 8,
+                    color: "var(--ink)",
+                    padding: "7px 9px",
+                    fontSize: 13,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={nameDraft.trim().length < 2 || nameDraft.trim() === handle}
+                  onClick={claimLocalName}
+                  style={{ ["--ac" as string]: fc, fontSize: 12, padding: "7px 11px", opacity: nameDraft.trim().length < 2 || nameDraft.trim() === handle ? 0.5 : 1 }}
+                >
+                  {handle ? "Save" : "Claim"}
+                </button>
+              </div>
+              <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                Optional. Shown in your hub — wallet can keep it across devices later.
+              </p>
             </div>
 
             {/* rank + crowns */}

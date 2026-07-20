@@ -3,9 +3,18 @@ import type { Champion, CreatureType, RosterEntry, Strat } from "@/lib/types";
 import { STORAGE } from "@/lib/brand";
 import { WHEEL, wheelNeighbors } from "@/lib/lore/canon";
 import { blank } from "@/lib/evolve/progression";
+import { ROSTER } from "@/lib/engine/roster";
 import { FIGHT } from "@/lib/player-copy";
 
-export const FIRST_DUEL_TAGLINE = "Train a champion. Watch it fight.";
+export const FIRST_DUEL_TAGLINE = "Raise a champion. Watch them fight.";
+
+/** Player-facing persona one-liner from roster (sentence-cased). */
+export function personaLine(key: string): string {
+  const p = ROSTER[key]?.persona?.trim();
+  if (!p) return "";
+  const capped = p.charAt(0).toUpperCase() + p.slice(1);
+  return capped.endsWith(".") ? capped : `${capped}.`;
+}
 
 /** Faint signature axis at origin adoption — mirrors adoptStarterRookie in store/champions.ts */
 const ORIGIN_AXIS: Partial<Record<string, keyof Champion>> = {
@@ -57,18 +66,21 @@ export const FIRST_DUEL_HERO_KEY = "GLITCH";
 export const QUICK_START_STRAT: Strat = { risk: 55, focus: 50, aggression: 52 };
 
 /** Copy beats for the post-win Concord landing (Act 1 coda). Trainer identity first. */
-export const CONCORD_LANDING = [
-  {
-    kicker: "YOU, THE TRAINER",
-    title: "Roam, duel, raise.",
-    body: `You're a Trainer now. You raise the minds that fight and climb the ranks. You walk the Grounds; your champion does the fighting. Tune its strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
-  },
-  {
-    kicker: "THE CONCORD & ITS GATES",
-    title: "Neutral ground. Gates to the regions.",
-    body: "You spawn on the approach to the Long Vault, a sealed golden seal the whole world is built around, where all five Forces keep an uneasy peace. The arches ringing the hub are gates: each opens onto a starting region (colosseum tribunals, ember gauntlets, void gardens) where your champion fights wherever you take it.",
-  },
-] as const;
+export function concordLanding(championName?: string) {
+  const who = championName?.trim() || "your champion";
+  return [
+    {
+      kicker: "YOU, THE TRAINER",
+      title: "Roam, duel, raise.",
+      body: `You're a Trainer now. ${who} fights for you and climbs with you. You walk the Grounds; ${who} does the fighting. Tune their strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
+    },
+    {
+      kicker: "THE CONCORD & ITS GATES",
+      title: "Neutral ground. Gates to the regions.",
+      body: `You spawn on the approach to the Long Vault, a sealed golden seal the whole world is built around, where all five Forces keep an uneasy peace. The arches ringing the hub are gates: each opens onto a starting region (colosseum tribunals, ember gauntlets, void gardens) where ${who} fights wherever you take them.`,
+    },
+  ] as const;
+}
 
 export function isFirstDuelComplete(): boolean {
   if (typeof window === "undefined") return true;

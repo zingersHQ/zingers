@@ -71,8 +71,8 @@ const ROOKIE: Champion = {
 const JOURNEY = [
   { t: "Fly", d: "Jetpack lit, you climb the sky above the sealed vault." },
   { t: "Claim", d: "A living mind flies beside you. You raise it — you never fight." },
-  { t: "Raise", d: "Teach it how to think. Imprints and battles shape its temper." },
-  { t: "Fight", d: "Send it into the duels that stud the climb. No two are the same." },
+  { t: "Raise", d: "Teach your champion how to think. Imprints and battles shape their temper." },
+  { t: "Fight", d: "Send them into the duels that stud the climb. No two are the same." },
   { t: "Rise", d: "How high you climb marks you both. Then the sky opens again." },
 ] as const;
 
