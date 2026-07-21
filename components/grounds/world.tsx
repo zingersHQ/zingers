@@ -2945,25 +2945,21 @@ function Handler({
     };
   }, [travelRef, shape, spawnKnoll, spawnPos, inAmphitheatre, circuitMode, ascentFoot]);
 
-  // Circuit → +z down-track; Amphitheatre → −z toward the throne; wild → plaza.
+  // Circuit / Amphitheatre / wild resume already seeded `handlerHeading` at World
+  // mount. Never force wild resume to 0 — that stares at the Concord return
+  // portal (Void Garden +z knoll) instead of the plaza with the portal at your back.
   useEffect(() => {
-    if (spawnPos) {
-      const face = inAmphitheatre ? AMPHI_SPAWN_HEADING : 0;
-      heading.current = face;
-      handlerHeading.current = face;
-      if (camCue.current) {
-        camCue.current.heading = face;
-        camCue.current.recenter = true;
-      }
-      if (inner.current) inner.current.rotation.set(0, face, 0);
-    } else {
-      const face = Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
-      heading.current = face;
-      handlerHeading.current = face;
-      if (camCue.current) camCue.current.heading = face;
-      if (inner.current) inner.current.rotation.set(0, face, 0);
+    const face = spawnPos
+      ? handlerHeading.current
+      : Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
+    heading.current = face;
+    handlerHeading.current = face;
+    if (camCue.current) {
+      camCue.current.heading = face;
+      if (spawnPos) camCue.current.recenter = true;
     }
-  }, [spawnPos, spawnKnoll, camCue, handlerHeading, inAmphitheatre]);
+    if (inner.current) inner.current.rotation.set(0, face, 0);
+  }, [spawnPos, spawnKnoll, camCue, handlerHeading]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
   // points at and fades in the new clip, so the `cur` ref can never desync from

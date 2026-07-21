@@ -130,13 +130,16 @@ export function awayFromReturnPortal(
   if (dh < clearance || poseAlong >= portalAlong - 0.5) {
     const x = portal.x - ox * clearance;
     const z = portal.z - oz * clearance;
-    return { x, z, y, heading: pose.heading ?? Math.atan2(-x, -z) };
+    // Always plaza-ward — never keep a saved heading that stares at the door.
+    return { x, z, y, heading: Math.atan2(-x, -z) };
   }
+  // Heal legacy saves near the door that kept heading 0 (portal-facing).
+  const nearDoor = dh < clearance + 10;
   return {
     x: pose.x,
     z: pose.z,
     y,
-    heading: pose.heading ?? Math.atan2(-pose.x, -pose.z),
+    heading: nearDoor ? Math.atan2(-pose.x, -pose.z) : (pose.heading ?? Math.atan2(-pose.x, -pose.z)),
   };
 }
 
