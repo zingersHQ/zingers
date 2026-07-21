@@ -672,29 +672,77 @@ export default function CircuitLite({
   }, []);
 
   // ── Sector-open card on ready (start / continue). Mid-ascent only flashes
-  // when the Reach band changes — flight stays continuous between sectors. ──
+  // when the Reach band changes — flight stays continuous between sectors.
+  // Starting flight MUST dismiss the card: ready→running cleanup used to cancel
+  // the hide timer and leave REACH / tagline painted over the climb. ──
   const [reachCardOn, setReachCardOn] = useState(true);
+  const [reachCardOut, setReachCardOut] = useState(false);
   const [startPromptOn, setStartPromptOn] = useState(false);
+  const reachCardHideT = useRef<number | null>(null);
+  const dismissReachCard = useCallback((fade = true) => {
+    setStartPromptOn(false);
+    if (reachCardHideT.current != null) {
+      window.clearTimeout(reachCardHideT.current);
+      reachCardHideT.current = null;
+    }
+    if (!fade) {
+      setReachCardOn(false);
+      setReachCardOut(false);
+      return;
+    }
+    setReachCardOut(true);
+    reachCardHideT.current = window.setTimeout(() => {
+      setReachCardOn(false);
+      setReachCardOut(false);
+      reachCardHideT.current = null;
+    }, 380);
+  }, []);
+  useEffect(() => () => {
+    if (reachCardHideT.current != null) window.clearTimeout(reachCardHideT.current);
+  }, []);
   useEffect(() => {
     if (phase !== "ready") return;
+    if (reachCardHideT.current != null) {
+      window.clearTimeout(reachCardHideT.current);
+      reachCardHideT.current = null;
+    }
+    setReachCardOut(false);
     setReachCardOn(true);
     setStartPromptOn(false);
     rewardSfx("small");
     const promptT = window.setTimeout(() => setStartPromptOn(true), CIRCUIT_SECTOR_INTRO.promptMs);
-    const doneT = window.setTimeout(() => setReachCardOn(false), CIRCUIT_SECTOR_INTRO.cardMs);
+    const doneT = window.setTimeout(() => dismissReachCard(true), CIRCUIT_SECTOR_INTRO.cardMs);
     return () => {
       window.clearTimeout(promptT);
       window.clearTimeout(doneT);
     };
-  }, [phase, sector]);
+  }, [phase, sector, dismissReachCard]);
+  // First press / flight start — fade the title card off the climb.
   useEffect(() => {
     if (phase !== "running") return;
+    dismissReachCard(true);
+  }, [phase, dismissReachCard]);
+  // Mid-ascent Reach band change: brief flash, then fade (flight stays live).
+  // Intentionally omit `phase` from deps — only theme.index should re-arm the card.
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const reachBandInit = useRef(true);
+  useEffect(() => {
+    if (reachBandInit.current) {
+      reachBandInit.current = false;
+      return;
+    }
+    if (phaseRef.current !== "running") return;
+    if (reachCardHideT.current != null) {
+      window.clearTimeout(reachCardHideT.current);
+      reachCardHideT.current = null;
+    }
+    setReachCardOut(false);
     setReachCardOn(true);
     setStartPromptOn(false);
-    const doneT = window.setTimeout(() => setReachCardOn(false), 2000);
+    const doneT = window.setTimeout(() => dismissReachCard(true), 2000);
     return () => window.clearTimeout(doneT);
-  }, [theme.index]); // Reach-band only — intentionally omit phase
-
+  }, [theme.index, dismissReachCard]);
   // roll for a golden ring on each sector (a rationed surprise, §7b). Picks a
   // non-finish gate so the sector-clear flourish isn't the one that pays.
   useEffect(() => {
@@ -1163,7 +1211,11 @@ export default function CircuitLite({
 
       {/* ── Sector-open cinematic — Reach + sector number, then tap cue ── */}
       {reachCardOn && (phase === "ready" || phase === "running") && (
-        <div className="circuit-sector-intro" aria-live="polite" style={{ zIndex: 16 }}>
+        <div
+          className={`circuit-sector-intro${reachCardOut ? " circuit-sector-intro--out" : ""}`}
+          aria-live="polite"
+          style={{ zIndex: 16 }}
+        >
           <div className="circuit-sector-intro__wash" style={{ ["--ac" as string]: accent }} />
           <div className="circuit-sector-intro__card">
             <div className="circuit-sector-intro__kicker mono" style={{ color: accent }}>
@@ -1196,7 +1248,7 @@ export default function CircuitLite({
                 {modifier.label}
               </div>
             )}
-            {startPromptOn && phase === "ready" && (
+            {startPromptOn && phase === "ready" && !reachCardOut && (
               <div className="circuit-sector-intro__prompt mono" style={{ color: accent }}>
                 TAP &amp; HOLD TO FLY
               </div>

@@ -858,6 +858,14 @@ textarea::placeholder {
   place-items: center;
   animation: circuit-sector-intro-in 0.45s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
+.circuit-sector-intro--out {
+  animation: circuit-sector-intro-out 0.38s ease both;
+}
+.circuit-sector-intro--out .circuit-sector-intro__wash {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 .circuit-sector-intro__wash {
   position: absolute;
   inset: 0;
@@ -948,6 +956,12 @@ textarea::placeholder {
   .circuit-sector-intro__wash,
   .circuit-sector-intro__prompt {
     animation: fadein 0.2s ease both !important;
+  }
+  .circuit-sector-intro--out,
+  .circuit-sector-intro--out .circuit-sector-intro__wash {
+    animation: none !important;
+    opacity: 0 !important;
+    transition: opacity 0.15s ease;
   }
   .circuit-sector-intro__hint {
     animation: none !important;
