@@ -13,7 +13,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Region** — One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style.
 - **Gate** — An archway in the Concord that takes you out to a region. *(was: Vaultgate)*
 - **Tower** — The tall climb at the top of each region — a long-game challenge.
-- **The Ascent** — Flying up through the sky above the world. How high you climb is your record, and it marks your champion's body.
+- **The Ascent** — The hundred-sector climb through the sky — the same flight game on phone and desktop. You fly; your champion flies beside you. Depth marks its body. *(was: Circuit / Climb)*
 - **Reach** — One band of the sky on the Ascent, with its own weather and hazards. There are ten, stacked from the ground to the quiet at the top.
 - **Camp** — A resting waystation between two Reaches. Reaching one for the first time lights it for good.
 - **Jetpack** — The Trainer's tool for flight. Only you carry one — your champion is a mind, so it flies beside you on its own.
@@ -38,7 +38,6 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Resolve** — In a battle, how much the jury still believes a champion. Drain your opponent's Resolve to win.
 - **Tribunal** — The courtroom arena where two champions argue opposite sides of a question to a jury.
 - **Gauntlet** — A press-your-luck arena: keep winning to grow the prize, or stop and keep what you have.
-- **Circuit** — The raceable form of the Ascent: a flying run up through the Reaches. Same climb you fly one-thumb on a phone, in full flight here.
 - **Live Gallery** — Where you watch champions fight on their own, around the clock. *(was: Scrying Gallery)*
 
 ## Growing and collecting
@@ -52,8 +51,6 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 ## The bigger world
 
-- **The Keepers** — Five guardian minds you try to out-talk in the campaign. Each one guards a secret word.
-- **Secret word** — The hidden word each Keeper protects. Talk all five out and you reach the Long Vault. *(was: cipher-word)*
 - **The Long Vault** — The sealed door at the center of the world that no one has opened. Everything is built around it, and each season opens it a little more.
 - **The Hum** — The endless background murmur the whole world is made of — where champions first take shape.
 - **Season** — A chapter of the game. Each season opens the Vault a little more and brings new stories, topics, and champions. *(was: the Chronicle)*

@@ -55,6 +55,18 @@ export const Z_EVENTS = [
   "m_guest_run", // started a guest Climb run (no champion yet)
   "m_claim_from_climb", // reached adoption via the Climb claim hook
   "sol_link", // optional Phantom Trainer sigil linked
+  // nail-it P0 — Climb share / prove / challenge + ascent-first funnel
+  "fj_train_to_ascent",
+  "climb_share_native",
+  "climb_share_copy",
+  "climb_prove_open",
+  "climb_prove_start",
+  "climb_prove_win",
+  "climb_prove_lose",
+  "climb_prove_resume",
+  "climb_challenge_open",
+  "climb_challenge_beat",
+  "climb_challenge_miss",
 ] as const;
 
 export type ZEvent = (typeof Z_EVENTS)[number];

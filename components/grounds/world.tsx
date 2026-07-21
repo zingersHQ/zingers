@@ -18,6 +18,7 @@ import { FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { Jetpack } from "./jetpack";
 import { keeperKindForName } from "./keeper-regalia";
+import { KEEPERS_PLAYABLE } from "@/lib/features";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
 import {
   NatureScatter,
@@ -51,12 +52,15 @@ import { CircuitScene } from "./circuit-scene";
 import { CircuitGhostLeave } from "./circuit-ghost";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
+import { ClimbGhostRacer } from "./climb/ghost-racer";
+import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import { atCircuitFinishEarly, circuitGatePlaneCross, CIRCUIT_SECTOR_INTRO } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
+import type { ClimbGhostSample } from "@/lib/climb-ghost";
 import {
   REGION_RETURN_BEHIND,
   VENUE_EXIT,
@@ -296,10 +300,13 @@ export default function World({
   circuitHazards = [],
   onCircuitStumble,
   onCircuitStart,
+  onCircuitSample,
   circuitGhost = null,
   onCircuitGhostDone,
   circuitArriveNonce = 0,
   circuitGhostForce = null,
+  circuitGhostPath = null,
+  circuitGhostRunStartMs = 0,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
@@ -351,6 +358,8 @@ export default function World({
   onCircuitFail?: (reason?: CircuitFailReason, pose?: { x: number; y: number; z: number; heading: number }) => void;
   /** Jump / first thrust while ready — starts the Ascent sector (wind, timers). */
   onCircuitStart?: () => void;
+  /** Sparse Y/Z samples while running (desktop world units; caller canonicalizes). */
+  onCircuitSample?: (y: number, z: number) => void;
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
@@ -360,6 +369,9 @@ export default function World({
   /** Bumped on life-continue to re-arm the front-facing arrive cam. */
   circuitArriveNonce?: number;
   circuitGhostForce?: CreatureType | null;
+  /** Challenger ghost path in Climb-canonical space (scaled for desktop rings). */
+  circuitGhostPath?: ClimbGhostSample[] | null;
+  circuitGhostRunStartMs?: number;
   worldLife?: WorldLife;
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
@@ -748,14 +760,16 @@ export default function World({
               {ownedKey &&
                 circuitPhase !== "sector" &&
                 circuitPhase !== "done" &&
-                circuitPhase !== "failed" && (
+                circuitPhase !== "failed" &&
+                circuitPhase !== "ceiling" &&
+                circuitPhase !== "prove" && (
                 <CircuitSpectator
                   champions={champions}
                   ownedKey={ownedKey}
                   pledged={pledged}
                   accent={biome.lights.arenaPoint}
                   phase={circuitPhase}
-                  padPos={[circuitTrack.spawn[0] - 1.9, circuitTrack.spawn[1] - 1.6, circuitTrack.spawn[2] + 0.6]}
+                  padPos={[circuitTrack.spawn[0] - 2.6, circuitTrack.spawn[1] - 1.35, circuitTrack.spawn[2] + 0.45]}
                   followPos={handlerPos}
                 />
               )}
@@ -771,6 +785,18 @@ export default function World({
                   pose={circuitGhost}
                   force={circuitGhostForce}
                   onDone={onCircuitGhostDone}
+                />
+              )}
+              {circuitGhostPath && circuitGhostPath.length >= 2 && (
+                <ClimbGhostRacer
+                  path={circuitGhostPath}
+                  running={circuitPhase === "running"}
+                  runStartMs={circuitGhostRunStartMs}
+                  type={circuitGhostForce || pledged || "LOGIC"}
+                  accent={biome.lights.arenaPoint}
+                  scaleY={DESKTOP_VERT_SCALE}
+                  scaleZ={DESKTOP_GAP_SCALE}
+                  sideX={2.2}
                 />
               )}
             </>
@@ -790,7 +816,7 @@ export default function World({
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
               {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
-              <KeeperGrounds shape={shape} baseAngle={sc.landmarks.spire.angle} />
+              {KEEPERS_PLAYABLE && <KeeperGrounds shape={shape} baseAngle={sc.landmarks.spire.angle} />}
 
               {/* wayfinding beams over the two open-ground districts (the Tower &
                   Spire carry their own bespoke beacons) */}
@@ -899,6 +925,7 @@ export default function World({
               onCircuitPass={onCircuitPass}
               onCircuitFail={onCircuitFail}
               onCircuitStart={onCircuitStart}
+              onCircuitSample={onCircuitSample}
               onCircuitStumble={onCircuitStumble}
               concordVenueTargets={concordVenueTargets}
               returnTarget={returnTarget}
@@ -1406,12 +1433,9 @@ function OwnedCompanion({
   );
 }
 
-// ── Circuit spectator pedestal ───────────────────────────────────────────────
-// Inside the Circuit the Trainer flies alone (canon: the Trainer flies, the
-// champion fights) — so rather than excluding the companion, it stands on a
-// pedestal beside the launch pad and *watches your climb*. It re-mounts each
-// sector (the venue re-keys per sector), cheering on a clear. Static, so it
-// skips the whole follow rig — no perf cost during flight.
+// ── Ascent companion pedestal ────────────────────────────────────────────────
+// Ready: waits on the launch pad. Running: flies from the pad to the Trainer's
+// wing slot (no teleport). Same mind on phone Ascent / desktop Ascent.
 function CircuitSpectator({
   champions,
   ownedKey,
@@ -1432,65 +1456,37 @@ function CircuitSpectator({
   followPos: React.RefObject<THREE.Vector3>;
 }) {
   const c = champions.find((x) => x.key === ownedKey);
-  const [act, setAct] = useState(0);
-  const prevPhase = useRef<CircuitPhase | null | undefined>(phase);
   const flying = phase === "running";
-  useEffect(() => {
-    if (phase !== prevPhase.current) {
-      if (phase === "sector" || phase === "done") setAct((n) => n + 1);
-      prevPhase.current = phase;
-    }
-  }, [phase]);
 
   if (!c) return null;
   const [px, py, pz] = padPos;
-  const top = py + 1.6;
+  const PED_H = 1.05;
+  const PED_R_TOP = 0.52;
+  const PED_R_BOT = 0.64;
+  const top = py + PED_H;
   return (
     <group>
-      {/* pedestal stays put — the champion lifts off it when the run starts */}
-      <mesh position={[px, py + 0.8, pz]} castShadow>
-        <cylinderGeometry args={[0.92, 1.12, 1.6, 24]} />
-        <meshStandardMaterial color="#141230" emissive={accent} emissiveIntensity={0.32} metalness={0.4} roughness={0.6} />
+      {/* pedestal stays put — champion launches from here toward the Trainer */}
+      <mesh position={[px, py + PED_H * 0.5, pz]} castShadow>
+        <cylinderGeometry args={[PED_R_TOP, PED_R_BOT, PED_H, 20]} />
+        <meshStandardMaterial color="#141230" emissive={accent} emissiveIntensity={0.28} metalness={0.4} roughness={0.6} />
       </mesh>
       <mesh position={[px, top + 0.02, pz]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.62, 0.94, 32]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+        <ringGeometry args={[PED_R_TOP * 0.62, PED_R_TOP * 0.98, 28]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
-      {flying ? (
-        // in flight: the champion trails the Handler on a wing slot, wearing the
-        // world's companion flight pose + jetpack (same behaviour as roaming).
-        <FlyingFollower
-          key={`fly-${c.key}`}
-          type={c.type}
-          champion={c.champion}
-          identityKey={c.key}
-          clan={pledged}
-          targetRef={followPos}
-          scale={WORLD_AGENT_SCALE}
-          renderPriority={0}
-        />
-      ) : (
-        // between runs: waiting on its pedestal beside the launch pad
-        <group position={[px, top, pz]}>
-          <ChampionMesh
-            key={c.key}
-            type={c.type}
-            champion={c.champion}
-            identityKey={c.key}
-            clan={pledged}
-            position={[0, 0, 0]}
-            rotation={0}
-            selected
-            restPose="standing"
-            breatheIntensity={0.42}
-            idlePhase={c.key.length * 0.7}
-            actSignal={act}
-            actName="wave"
-            sceneScale={WORLD_AGENT_SCALE}
-            companionRenderPriority={0}
-          />
-        </group>
-      )}
+      <FlyingFollower
+        key={`wing-${c.key}-${px.toFixed(1)}-${pz.toFixed(1)}`}
+        type={c.type}
+        champion={c.champion}
+        identityKey={c.key}
+        clan={pledged}
+        targetRef={followPos}
+        scale={WORLD_AGENT_SCALE}
+        renderPriority={0}
+        spawnFrom={[px, top, pz]}
+        chasing={flying}
+      />
     </group>
   );
 }
@@ -2734,6 +2730,7 @@ function Handler({
   onCircuitPass,
   onCircuitFail,
   onCircuitStart,
+  onCircuitSample,
   onCircuitStumble,
   concordVenueTargets = [],
   returnTarget = null,
@@ -2788,6 +2785,7 @@ function Handler({
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason, pose?: { x: number; y: number; z: number; heading: number }) => void;
   onCircuitStart?: () => void;
+  onCircuitSample?: (y: number, z: number) => void;
   onCircuitStumble?: () => void;
   concordVenueTargets?: { venue: VenueId; label: string; pos: THREE.Vector3 }[];
   returnTarget?: THREE.Vector3 | null;
@@ -3652,6 +3650,7 @@ function Handler({
         }
       }
       circuitPrevZ.current = t.z;
+      if (circuitRunning && onCircuitSample) onCircuitSample(t.y, t.z);
       if (
         circuitRunning &&
         onCircuitFail &&
@@ -3759,8 +3758,8 @@ function Handler({
         const db = Math.hypot(t.x - brokerPad[0], t.z - brokerPad[2]);
         if (db < 3.0 && Math.abs(t.y - brokerPad[1]) < 3.0) next = { kind: "broker" };
       }
-      // Keeper talk: must climb the spire and stand on the same landing as the Keeper.
-      if (!next) {
+      // Keeper talk: stripped from face when KEEPERS_PLAYABLE is false (nail-it P0).
+      if (KEEPERS_PLAYABLE && !next) {
         let bestK: { level: number; name: string; title: string } | null = null;
         let bestKd = 2.4;
         for (const kt of keeperTargets) {

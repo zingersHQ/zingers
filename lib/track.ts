@@ -20,7 +20,14 @@ export type ClientEvent =
   | "ttfe_u5" | "ttfe_u8" | "ttfe_over"
   // the mobile Climb-first door (docs/two-doors.md §3)
   | "m_splash" | "m_fly" | "m_guest_run" | "m_claim_from_climb"
-  | "sol_link";
+  | "sol_link"
+  // nail-it P0 — Climb share / prove / challenge + ascent-first funnel
+  | "fj_train_to_ascent"
+  | "climb_share_native" | "climb_share_copy"
+  | "climb_prove_open" | "climb_prove_start" | "climb_prove_win" | "climb_prove_lose" | "climb_prove_resume"
+  | "climb_challenge_open"
+  | "climb_challenge_beat"
+  | "climb_challenge_miss";
 
 function post(type: ClientEvent): void {
   if (typeof window === "undefined") return;

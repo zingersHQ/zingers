@@ -12,6 +12,8 @@ import { ChampionCardFrame, shareQuery } from "@/components/collection/card-fram
 import { StyleRadar } from "@/components/collection/style-radar";
 import { useIsMobile } from "@/lib/use-device";
 import type { CareerEvent, CareerEventKind } from "@/lib/types";
+import { getHandle } from "@/lib/owner";
+import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
 
 export default function ChampionPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = use(params);
@@ -37,7 +39,15 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
   const memory = recipe.memory || [];
   const prof = houseProfile(c);
   const app = appearanceOf(c);
-  const shareHref = `/c/${card.key}?${shareQuery(card, recipe.agent?.provider ? `${recipe.agent.provider}` : "House Grok")}`;
+  const ascentReaches = (() => {
+    const best = loadCircuitPersonalBest();
+    return best ? Math.min(10, Math.ceil(best.sectors / 10)) : 0;
+  })();
+  const shareHref = `/c/${card.key}?${shareQuery(
+    card,
+    recipe.agent?.provider ? `${recipe.agent.provider}` : "House Grok",
+    { nick: recipe.nick, ascentReaches, trainer: getHandle() || undefined },
+  )}`;
   const statRows = Object.entries(card.stats)
     .sort((a, b) => b[1] - a[1])
     .map(([label, value]) => ({ label, value }));

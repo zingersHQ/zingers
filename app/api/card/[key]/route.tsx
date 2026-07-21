@@ -23,6 +23,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const losses = q.get("l") || "0";
   const rarity = q.get("ra") || "Common";
   const brain = q.get("b") || "House · Grok";
+  const nick = (q.get("n") || "").trim().slice(0, 24);
+  const ascent = (q.get("ar") || "").trim();
+  const trainer = (q.get("by") || "").trim().slice(0, 24);
+  const display = nick || c.name;
   const col = TYPE_COLOR[c.type];
   const force = FORCES[c.type];
 
@@ -31,6 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     ["SKILLS", skills, col],
     ["RECORD", `${wins}W · ${losses}L`, "#36d39a"],
   ];
+  if (ascent) stats.push(["ASCENT", ascent, "#7cf6c8"]);
 
   return new ImageResponse(
     (
@@ -68,12 +73,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
             }}
           >
             <div style={{ display: "flex", fontSize: 168, color: col, lineHeight: 1, filter: "drop-shadow(0 0 26px " + col + "aa)" }}>{force.sigil}</div>
-            <div style={{ display: "flex", position: "absolute", bottom: 22, fontSize: 26, letterSpacing: 4, color: "#c9c3e8" }}>{c.name}</div>
+            <div style={{ display: "flex", position: "absolute", bottom: 22, fontSize: 26, letterSpacing: 4, color: "#c9c3e8" }}>{display}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 88, fontWeight: 800 }}>{c.name}</div>
+            <div style={{ display: "flex", fontSize: nick ? 72 : 88, fontWeight: 800 }}>{display}</div>
+            {nick ? (
+              <div style={{ display: "flex", fontSize: 22, color: "#8a82b8", marginTop: 4 }}>{c.name}</div>
+            ) : null}
             <div style={{ display: "flex", fontSize: 34, color: col, marginTop: 10 }}>{`${doctrine} · ${force.name}`}</div>
-            <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>{`SL ${sl} · ${tier} · brain: ${brain}`}</div>
+            <div style={{ display: "flex", fontSize: 26, color: "#8a82b8", marginTop: 8 }}>
+              {`SL ${sl} · ${tier}${trainer ? ` · by ${trainer}` : ` · ${brain}`}`}
+            </div>
+            {ascent ? (
+              <div style={{ display: "flex", fontSize: 22, color: "#7cf6c8", marginTop: 10, letterSpacing: 2 }}>
+                {`ASCENT SIGIL · ${ascent} REACH${ascent === "1" ? "" : "ES"}`}
+              </div>
+            ) : null}
             <div style={{ display: "flex", marginTop: 22 }}>
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: col, border: `2px solid ${col}`, borderRadius: 12, padding: "8px 14px", marginRight: 12 }}>
                 {`${force.sigil} ${force.name.toUpperCase()}`}

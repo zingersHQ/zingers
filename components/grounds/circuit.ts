@@ -50,7 +50,7 @@ export interface CircuitTrackDef {
 // + desktop-adapter (100 sectors). platforms stay empty (launch pad is scene-local).
 export const THE_CIRCUIT: CircuitTrackDef = {
   id: "circuit-v1",
-  name: "The Circuit",
+  name: "The Ascent",
   spawn: [0, 1.1, -2],
   platforms: [],
   checkpoints: [

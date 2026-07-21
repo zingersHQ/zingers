@@ -104,6 +104,10 @@ export function FlyingFollower({
   headingRef,
   scale = WORLD_AGENT_SCALE,
   renderPriority = 0,
+  /** Pedestal / home — boot here and return when not chasing. */
+  spawnFrom,
+  /** When true, chase the pilot from the current position (no teleport). */
+  chasing = true,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -116,6 +120,8 @@ export function FlyingFollower({
   /** Absolute body scale — use WORLD_AGENT_SCALE next to a READER_SCALE Trainer. */
   scale?: number;
   renderPriority?: number;
+  spawnFrom?: [number, number, number];
+  chasing?: boolean;
 }) {
   const rig = useRef<THREE.Group>(null);
   const pos = useRef(new THREE.Vector3());
@@ -125,6 +131,7 @@ export function FlyingFollower({
   const prevPilot = useRef(new THREE.Vector3());
   const smoothPilotVel = useRef(new THREE.Vector3());
   const followTarget = useRef(new THREE.Vector3());
+  const wasChasing = useRef(chasing);
 
   // companionDrive: pose flags read by ChampionMesh (flight pose + jetpack)
   const flyingRef = useRef(true);
@@ -147,11 +154,73 @@ export function FlyingFollower({
     const { wingDrop, catchK, catchMax, accel, velSmooth, slotSmooth, rigHeadingSmooth, minPathSpeed } =
       COMPANION_FOLLOW;
 
-    // Measure / smooth pilot path velocity (OwnedCompanion's smv).
+    // Boot at the pedestal (if given) so chase starts as a real takeoff, not a pop-in.
     if (!booted.current) {
+      if (spawnFrom) {
+        pos.current.set(spawnFrom[0], spawnFrom[1], spawnFrom[2]);
+        followTarget.current.copy(pos.current);
+        vel.current.set(0, 0, 0);
+        rigHeading.current = th;
+      } else {
+        const dock = companionDockSlot(tp.x, tp.z, th);
+        pos.current.set(dock.tx, tp.y - wingDrop, dock.tz);
+        followTarget.current.copy(pos.current);
+        vel.current.set(0, 0, 0);
+        rigHeading.current = th;
+      }
       prevPilot.current.copy(tp);
       smoothPilotVel.current.set(0, 0, 0);
+      booted.current = true;
+      wasChasing.current = chasing;
     }
+
+    // Rising edge of chase: keep pad position — fly toward the wing slot from here.
+    if (chasing && !wasChasing.current) {
+      prevPilot.current.copy(tp);
+      smoothPilotVel.current.set(0, 0, 0);
+      vel.current.set(0, 0.8, 0); // small lift so takeoff reads
+    }
+    // Falling edge (fail / continue / try again): snap home — no slow return flight.
+    if (!chasing && wasChasing.current && spawnFrom) {
+      pos.current.set(spawnFrom[0], spawnFrom[1], spawnFrom[2]);
+      followTarget.current.copy(pos.current);
+      vel.current.set(0, 0, 0);
+      smoothPilotVel.current.set(0, 0, 0);
+      prevPilot.current.copy(tp);
+      rigHeading.current = th;
+    }
+    wasChasing.current = chasing;
+
+    if (!chasing) {
+      let homeX: number;
+      let homeY: number;
+      let homeZ: number;
+      if (spawnFrom) {
+        homeX = spawnFrom[0];
+        homeY = spawnFrom[1];
+        homeZ = spawnFrom[2];
+      } else {
+        const dock = companionDockSlot(tp.x, tp.z, th);
+        homeX = dock.tx;
+        homeY = tp.y - wingDrop;
+        homeZ = dock.tz;
+      }
+      // Hold on the pedestal (already snapped on fail); tiny settle only if nudged.
+      pos.current.set(homeX, homeY, homeZ);
+      followTarget.current.set(homeX, homeY, homeZ);
+      vel.current.set(0, 0, 0);
+      speedRef.current = 0;
+      velRef.current.set(0, 0, 0);
+      movingRef.current = false;
+      flyingRef.current = false;
+      rigHeading.current = th;
+      headRef.current = th;
+      rg.position.copy(pos.current);
+      rg.rotation.y = rigHeading.current;
+      return;
+    }
+
+    // Measure / smooth pilot path velocity (OwnedCompanion's smv).
     const rawVx = dt > 0 ? (tp.x - prevPilot.current.x) / dt : 0;
     const rawVy = dt > 0 ? (tp.y - prevPilot.current.y) / dt : 0;
     const rawVz = dt > 0 ? (tp.z - prevPilot.current.z) / dt : 0;
@@ -168,18 +237,10 @@ export function FlyingFollower({
       smSpeed > minPathSpeed ? companionPathSlot(tp.x, tp.z, th) : companionDockSlot(tp.x, tp.z, th);
     const rawSy = tp.y - wingDrop;
     const ft = followTarget.current;
-    if (!booted.current) {
-      ft.set(raw.tx, rawSy, raw.tz);
-      pos.current.copy(ft);
-      vel.current.set(smv.x, smv.y, smv.z);
-      rigHeading.current = th;
-      booted.current = true;
-    } else {
-      const tK = 1 - Math.exp(-slotSmooth * dt);
-      ft.x += (raw.tx - ft.x) * tK;
-      ft.y += (rawSy - ft.y) * tK;
-      ft.z += (raw.tz - ft.z) * tK;
-    }
+    const tK = 1 - Math.exp(-slotSmooth * dt);
+    ft.x += (raw.tx - ft.x) * tK;
+    ft.y += (rawSy - ft.y) * tK;
+    ft.z += (raw.tz - ft.z) * tK;
 
     const ex = ft.x - pos.current.x;
     const ey = ft.y - pos.current.y;

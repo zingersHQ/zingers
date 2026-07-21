@@ -21,8 +21,10 @@ import {
 } from "@/lib/first-duel";
 import { FIGHT, READER_COPY } from "@/lib/player-copy";
 import { ReaderSplitBadge } from "@/components/intro/reader-split-badge";
-import { TRAIN_COST } from "@/store/champions";
+import { TRAIN_COST, useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
+import { getHandle } from "@/lib/owner";
+import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
 import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
 import { trackOnce, trackFirstEvolution } from "@/lib/track";
@@ -37,10 +39,8 @@ const AgentShowcase = dynamic(() => import("./agent-showcase"), {
   ),
 });
 
-// The cinematic intro deck (FirstRun) already delivers the elevator pitch, so the
-// funnel opens straight on champion select — no redundant in-game "pitch" slide.
-// Mobile Flight-First lives at /m (CircuitLite). Desktop uses this pick→train→duel
-// funnel; the native Circuit venue is the desktop flight body (not Climb-on-desktop).
+// Mobile Flight-First: /m splash → Climb. Desktop: pick a mind → native Circuit.
+// train / evolve / concord phases remain for legacy saves; new players leave at pick.
 export type FirstDuelPhase = "pick" | "train" | "evolve" | "concord";
 
 const ACC = ICON.accent;
@@ -342,9 +342,11 @@ function PickPhase({
       <div style={{ position: "absolute", inset: 0, background: ICON.void, display: "flex", flexDirection: "column" }}>
         {/* header */}
         <div style={{ padding: isMobile ? "16px 16px 4px" : "26px 32px 8px", textAlign: "center", flexShrink: 0 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 1 · ADOPT A MIND TO RAISE</div>
-          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a champion to raise.</h2>
-          <p style={{ color: "var(--muted)", fontSize: isMobile ? 12 : 13, margin: 0, lineHeight: 1.45 }}>{READER_COPY.claimLine}</p>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>PICK · THEN FLY</div>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a mind for the Ascent.</h2>
+          <p style={{ color: "var(--muted)", fontSize: isMobile ? 12 : 13, margin: 0, lineHeight: 1.45 }}>
+            One click — then you&apos;re in the sky.
+          </p>
         </div>
 
         {/* stage + dossier */}
@@ -442,10 +444,10 @@ function PickPhase({
               style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 4 }}
               onClick={() => onCommit(entry.key)}
             >
-              {READER_COPY.adoptCta(entry.name)}
+              Claim {entry.name} &amp; fly
             </button>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, textAlign: "center" }}>
-              One mind per Force this week · pledge a Clan later in the Concord
+              Strategy &amp; Clan can wait — first, fly
             </p>
           </div>
         </div>
@@ -556,6 +558,12 @@ function cardShareUrl(key: string, champion: Champion) {
     w: String(champion.wins),
     l: String(champion.losses),
   });
+  const best = loadCircuitPersonalBest();
+  if (best) p.set("ar", String(Math.min(10, Math.ceil(best.sectors / 10))));
+  const handle = getHandle();
+  if (handle) p.set("by", handle.slice(0, 24));
+  const nick = useChampions.getState().getRecipe(key).nick;
+  if (nick) p.set("n", nick.slice(0, 24));
   return `${window.location.origin}/c/${key}?${p.toString()}`;
 }
 
@@ -838,7 +846,7 @@ function EvolveStyles() {
   );
 }
 
-/** Persistent hub banner until the first duel is won. */
+/** Persistent hub banner until the first journey is finished (claim → Ascent). */
 export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onStart: () => void }) {
   return (
     <div
@@ -872,15 +880,15 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
           {FIRST_DUEL_TAGLINE}
         </p>
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-          Adopt a mind, tune its strategy, watch the {FIGHT.duel} play out.
+          Fly the Ascent now. Claim a mind when the run ends.
         </p>
         <button
           className="btn btn-primary"
           style={{ ["--ac" as string]: ACC, width: "100%", fontSize: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           onClick={onStart}
         >
-          <Swords size={16} strokeWidth={2.2} />
-          Start your {FIGHT.firstDuel}
+          <ArrowUpRight size={16} strokeWidth={2.2} />
+          Fly the Ascent
         </button>
       </div>
     </div>

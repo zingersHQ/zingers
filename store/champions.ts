@@ -222,6 +222,7 @@ interface ChampionStore {
   get: (key: string) => Champion;
   getRecipe: (key: string) => Recipe;
   setStrat: (key: string, strat: Strat) => void;
+  setNick: (key: string, nick: string) => void;
   setPersona: (key: string, persona: string) => void;
   setAgent: (key: string, agent: Recipe["agent"]) => void;
   learnFromBout: (args: { key: string; opponentName: string; won: boolean; axisLabel: string }) => void;
@@ -409,6 +410,12 @@ export const useChampions = create<ChampionStore>()(
 
       setStrat: (key, strat) =>
         set((s) => ({ recipes: { ...s.recipes, [key]: { ...(s.recipes[key] || {}), strat } } })),
+      setNick: (key, nick) =>
+        set((s) => {
+          const cur = s.recipes[key] || { strat: { ...DEFAULT_STRAT } };
+          const clean = nick.trim().slice(0, 24).replace(/[^\w\s\-'.]/g, "");
+          return { recipes: { ...s.recipes, [key]: { ...cur, nick: clean || undefined } } };
+        }),
       setPersona: (key, persona) =>
         set((s) => {
           const cur = s.recipes[key] || { strat: { ...DEFAULT_STRAT } };

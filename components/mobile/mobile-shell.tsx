@@ -24,10 +24,12 @@ import MobileRank from "@/components/mobile/mobile-rank";
 import MobileSplash from "@/components/mobile/mobile-splash";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
-import { firstDuelStarterKeys } from "@/lib/first-duel";
+import { guestLoanerKey } from "@/lib/first-duel";
 import { getOwnerToken } from "@/lib/owner";
 import { track as pingEvent } from "@/lib/track";
 import { STORAGE } from "@/lib/brand";
+import { readClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
+import { formatCircuitMs } from "@/components/grounds/circuit";
 
 type TabId = "today" | "watch" | "champion" | "climb" | "rank";
 
@@ -41,7 +43,7 @@ const TABS: TabDef[] = [
   { id: "today", label: "Today", icon: Home },
   { id: "watch", label: "Watch", icon: Eye },
   { id: "champion", label: "Champion", icon: Shield },
-  { id: "climb", label: "Climb", icon: Rocket },
+  { id: "climb", label: "Ascent", icon: Rocket },
   { id: "rank", label: "Rank", icon: Trophy },
 ];
 
@@ -51,6 +53,9 @@ export function MobileShell() {
   const [tab, setTab] = useState<TabId>("today");
   // where a "back/close" from an immersive context returns to (the last browse tab)
   const [prevTab, setPrevTab] = useState<TabId>("today");
+  /** Incoming async Climb challenge from ?climb= (ghost race ships later). */
+  const [challenge, setChallenge] = useState<ClimbChallenge | null>(null);
+  const [challengeDismissed, setChallengeDismissed] = useState(false);
 
   // Climb is the bus-time door (docs/two-doors.md §3): playable immediately, even
   // with no champion — a loaner "wild mind" flies with you (guest Climb), and the
@@ -58,19 +63,8 @@ export function MobileShell() {
   const owned = useChampions((s) => s.owned);
   const unowned = !owned || !ROSTER[owned];
 
-  // the loaner wild mind: a deterministic weekly starter, seeded off the device
-  // token so a returning guest keeps meeting the same mind (attachment before adoption).
-  const loanerKey = useMemo(() => {
-    const keys = firstDuelStarterKeys().filter((k) => ROSTER[k]);
-    if (!keys.length) return "AXIOM";
-    const tok = getOwnerToken() || "guest";
-    let h = 2166136261;
-    for (let i = 0; i < tok.length; i++) {
-      h ^= tok.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return keys[(h >>> 0) % keys.length]!;
-  }, []);
+  // Same loaner helper as desktop guest Ascent — weekly starter, device-stable.
+  const loanerKey = useMemo(() => guestLoanerKey(getOwnerToken() || "guest"), []);
 
   const selectTab = useCallback(
     (id: TabId) => {
@@ -111,6 +105,22 @@ export function MobileShell() {
   // poster for a frame.
   const [splashGate, setSplashGate] = useState<"checking" | "splash" | "shell">("checking");
   useEffect(() => {
+    // Challenge deep-links skip the splash and open Climb immediately.
+    if (typeof window !== "undefined") {
+      const c = readClimbChallengeFromSearch(window.location.search);
+      if (c) {
+        setChallenge(c);
+        pingEvent("climb_challenge_open");
+        setTab("climb");
+        setSplashGate("shell");
+        try {
+          localStorage.setItem(STORAGE.mSplash, String(Date.now()));
+        } catch {
+          /* best-effort */
+        }
+        return;
+      }
+    }
     try {
       setSplashGate(localStorage.getItem(STORAGE.mSplash) ? "shell" : "splash");
     } catch {
@@ -169,12 +179,67 @@ export function MobileShell() {
         {splashGate === "shell" && (
           <>
             {activeTab === "climb" ? (
-              <CircuitLite
-                embedded
-                onExit={exitImmersive}
-                guestKey={unowned ? loanerKey : undefined}
-                onClaim={unowned ? claimFromClimb : undefined}
-              />
+              <>
+                {challenge && !challengeDismissed && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(10px + env(safe-area-inset-top, 0px))",
+                      left: 12,
+                      right: 12,
+                      zIndex: 35,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: `1px solid ${ACCENT}`,
+                      background: "rgba(8,7,14,.88)",
+                      backdropFilter: "blur(8px)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: ACCENT }}>
+                        CHALLENGE
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginTop: 2 }}>
+                        Beat {challenge.name || "a Trainer"} · {challenge.sectors}/100
+                        {challenge.totalMs > 0 ? ` · ${formatCircuitMs(challenge.totalMs)}` : ""}
+                      </div>
+                      <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 2 }}>
+                        {challenge.path?.length
+                          ? "Ghost flies beside you — clear deeper or faster to win"
+                          : "Clear deeper (or same depth, faster) to claim the win"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Dismiss challenge"
+                      onClick={() => setChallengeDismissed(true)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        border: "1px solid rgba(255,255,255,.14)",
+                        background: "transparent",
+                        color: "#e6e2f5",
+                        cursor: "pointer",
+                        display: "grid",
+                        placeItems: "center",
+                      }}
+                    >
+                      <X size={14} strokeWidth={2.4} />
+                    </button>
+                  </div>
+                )}
+                <CircuitLite
+                  embedded
+                  onExit={exitImmersive}
+                  guestKey={unowned ? loanerKey : undefined}
+                  onClaim={unowned ? claimFromClimb : undefined}
+                  challenge={challenge}
+                />
+              </>
             ) : activeTab === "today" ? (
               <MobileToday onNavigate={(t) => selectTab(t as TabId)} />
             ) : activeTab === "watch" ? (

@@ -4,7 +4,11 @@ import type { Champion } from "@/lib/types";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
 export { FIRST_MIND_KEYS } from "@/lib/cards/assets";
 
-export function shareQuery(card: Card, brain = "House Grok") {
+export function shareQuery(
+  card: Card,
+  brain = "House Grok",
+  extras?: { nick?: string; ascentReaches?: number; trainer?: string },
+) {
   const p = new URLSearchParams();
   p.set("sl", String(card.skillLevel));
   p.set("sk", String(card.skills.length));
@@ -18,6 +22,10 @@ export function shareQuery(card: Card, brain = "House Grok") {
   // The one-line saga, career-derived — the closest thing today to a champion's
   // public provenance. Truncated to keep the share URL sane.
   if (card.saga) p.set("sg", card.saga.slice(0, 140));
+  // Nail-it P1 divergence: nickname, ascent sigil depth, Trainer stamp.
+  if (extras?.nick?.trim()) p.set("n", extras.nick.trim().slice(0, 24));
+  if (extras?.ascentReaches && extras.ascentReaches > 0) p.set("ar", String(Math.min(10, Math.floor(extras.ascentReaches))));
+  if (extras?.trainer?.trim()) p.set("by", extras.trainer.trim().slice(0, 24));
   return p.toString();
 }
 

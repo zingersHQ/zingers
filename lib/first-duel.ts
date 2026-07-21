@@ -6,7 +6,7 @@ import { blank } from "@/lib/evolve/progression";
 import { ROSTER } from "@/lib/engine/roster";
 import { FIGHT } from "@/lib/player-copy";
 
-export const FIRST_DUEL_TAGLINE = "Raise a champion. Watch them fight.";
+export const FIRST_DUEL_TAGLINE = "Claim a mind. Jump to fly.";
 
 /** Player-facing persona one-liner from roster (sentence-cased). */
 export function personaLine(key: string): string {
@@ -72,7 +72,7 @@ export function concordLanding(championName?: string) {
     {
       kicker: "YOU, THE TRAINER",
       title: "Roam, duel, raise.",
-      body: `You're a Trainer now. ${who} fights for you and climbs with you. You walk the Grounds; ${who} does the fighting. Tune their strategy anytime, step through a gate for a ${FIGHT.rankedDuel}, and climb a region's Tower when you're ready for the long game.`,
+      body: `You're a Trainer now. ${who} flies beside you on the Ascent and fights when the climb asks for a prove. Tune their strategy, fly higher, and take short battles as sparks between Reaches — not as the whole game.`,
     },
     {
       kicker: "THE CONCORD & ITS GATES",
@@ -104,6 +104,21 @@ export function firstDuelStarterKeys(at = Date.now()): string[] {
     const pool = STARTERS_BY_FORCE[type];
     return pool[week % pool.length]!;
   });
+}
+
+/**
+ * Deterministic "wild mind" for guest Ascent / Climb — same loaner across a
+ * device so attachment lands before adoption (mobile + desktop).
+ */
+export function guestLoanerKey(deviceToken = "guest"): string {
+  const keys = firstDuelStarterKeys().filter((k) => ROSTER[k]);
+  if (!keys.length) return "AXIOM";
+  let h = 2166136261;
+  for (let i = 0; i < deviceToken.length; i++) {
+    h ^= deviceToken.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return keys[(h >>> 0) % keys.length]!;
 }
 
 export function firstDuelStarters(roster: RosterEntry[]): RosterEntry[] {

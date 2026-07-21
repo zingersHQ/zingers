@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ChevronLeft, Flag, RotateCcw, Skull, Timer, Trophy } from "lucide-react";
+import { ChevronLeft, Flag, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { rewardSfx } from "@/lib/sfx";
 
-export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue";
+export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue" | "ceiling" | "prove";
 export type CircuitFailReason = "fall" | "gates";
 
 export interface CircuitBoardEntry {
@@ -138,6 +138,13 @@ export function CircuitHud({
   onContinue,
   onRestart,
   onExit,
+  onShareChallenge,
+  shareChallengeLabel,
+  onProve,
+  onClaim,
+  claimName,
+  challengeResult,
+  challengeLabel,
   accent,
   compact,
   failReason,
@@ -158,6 +165,17 @@ export function CircuitHud({
   onRestart: () => void;
   /** Leave the Circuit venue — jump on the pad starts the run, so walking out is awkward. */
   onExit?: () => void;
+  /** Share this run as an async Climb challenge (same levels as mobile). */
+  onShareChallenge?: () => void;
+  /** Desktop: "Copy challenge link"; mobile: native share wording. */
+  shareChallengeLabel?: string;
+  /** Open in-place altitude Prove (Reach II gate). */
+  onProve?: () => void;
+  /** Guest Ascent: claim the loaner mind from RUN OVER (mobile-like). */
+  onClaim?: () => void;
+  claimName?: string | null;
+  challengeResult?: "beat" | "miss" | null;
+  challengeLabel?: string | null;
   accent: string;
   compact?: boolean;
   failReason?: CircuitFailReason;
@@ -170,21 +188,28 @@ export function CircuitHud({
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
   const introActive = phase === "ready";
+  const guestClaim = !!onClaim && !!claimName;
 
   useEffect(() => {
+    // Sector clear: Enter/Space continues. RUN OVER / CLEAR: never Space — Space is
+    // jump in Circuit and was instantly restarting runs (felt like no game over).
     if (phase !== "sector" && phase !== "failed" && phase !== "done") return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Space" && e.key !== "Enter") return;
+      if (phase === "sector") {
+        if (e.code !== "Space" && e.key !== "Enter") return;
+      } else if (e.key !== "Enter") {
+        return;
+      }
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
       e.preventDefault();
       if (phase === "sector") onContinue();
-      else onRestart();
+      else if (!guestClaim) onRestart();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, onContinue, onRestart]);
+  }, [phase, onContinue, onRestart, guestClaim]);
 
   const title =
     phase === "failed"
@@ -203,14 +228,15 @@ export function CircuitHud({
         <button
           type="button"
           onClick={onExit}
-          aria-label="Exit the Circuit"
+          aria-label="Exit the Ascent"
           className="panel"
           style={{
             position: "absolute",
             top: 14,
             left: 16,
-            zIndex: 120,
-            pointerEvents: "auto",
+            zIndex: phase === "failed" || phase === "done" || phase === "ceiling" ? 50 : 120,
+            pointerEvents: phase === "failed" || phase === "done" || phase === "ceiling" ? "none" : "auto",
+            opacity: phase === "failed" || phase === "done" || phase === "ceiling" ? 0 : 1,
             display: "inline-flex",
             alignItems: "center",
             gap: 5,
@@ -221,7 +247,7 @@ export function CircuitHud({
             touchAction: "manipulation",
           }}
         >
-          <ChevronLeft size={15} strokeWidth={2.4} /> Exit
+          <ChevronLeft size={15} strokeWidth={2.4} /> Exit Ascent
         </button>
       )}
       <div
@@ -342,25 +368,58 @@ export function CircuitHud({
             >
               {failReason === "gates" ? "Missed a gate" : "You fell"}
             </div>
-            <div className="mono" style={{ fontSize: 12, letterSpacing: 1.4, color: "rgba(255,255,255,.55)" }}>
-              {lives} {lives === 1 ? "life" : "lives"} left · same sector
+            <div className="mono" style={{ fontSize: 13, letterSpacing: 1.6, color: "#ffb4b4", fontWeight: 800 }}>
+              LAST LIFE · same sector — not game over yet
             </div>
           </div>
         </div>
       )}
 
       {phase === "sector" && (
-        <CircuitModal accent={accent} kicker={`SECTOR ${sectorN}`} title="SECTOR CLEARED" sub={`${sectorTotal - sectorN} to go · ${formatCircuitMs(runMs)}s elapsed`}>
-          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%" }} onClick={onContinue}>
-            Continue
-          </button>
-        </CircuitModal>
+        <div
+          aria-live="polite"
+          className="mono"
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "38%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 55,
+            pointerEvents: "none",
+            textAlign: "center",
+            color: accent,
+            fontWeight: 800,
+            letterSpacing: 2,
+            fontSize: 13,
+            textShadow: "0 2px 18px rgba(0,0,0,.65)",
+          }}
+        >
+          SECTOR {sectorN} CLEAR
+          <div style={{ marginTop: 6, fontSize: 11, letterSpacing: 1.2, color: "rgba(255,255,255,.7)", fontWeight: 600 }}>
+            {sectorTotal - sectorN} to go
+          </div>
+        </div>
       )}
 
       {phase === "done" && (
         <CircuitModal accent={accent} icon={<Flag size={28} color={accent} />} kicker="FULL CLEAR" title={`All ${sectorTotal} sectors`} sub={`${formatCircuitMs(runMs)}s total`}>
-          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={16} strokeWidth={2.2} /> run again
+          {challengeResult && challengeLabel && (
+            <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
+              {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
+            </div>
+          )}
+          {guestClaim && onClaim && (
+            <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
+              <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+            </button>
+          )}
+          {onShareChallenge && (
+            <button type="button" className="btn" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onShareChallenge}>
+              <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
+            </button>
+          )}
+          <button type="button" className={guestClaim ? "btn" : "btn btn-primary"} style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
+            <RotateCcw size={16} strokeWidth={2.2} /> Run again
           </button>
         </CircuitModal>
       )}
@@ -371,10 +430,69 @@ export function CircuitHud({
           icon={<Skull size={28} color="#ff5a5a" />}
           kicker="RUN OVER"
           title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`}
-          sub={failReason === "gates" ? "Out of lives — missed a gate. Back to sector 1." : "Out of lives. Back to sector 1."}
+          sub={
+            guestClaim
+              ? "Out of lives. Claim the mind that flew with you — or try again as a guest."
+              : failReason === "gates"
+                ? "Out of lives — missed a gate. Choose below to start a new run from sector 1."
+                : "Out of lives. Choose below to start a new run from sector 1."
+          }
         >
-          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={16} strokeWidth={2.2} /> try again
+          {challengeResult && challengeLabel && (
+            <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
+              {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
+            </div>
+          )}
+          {guestClaim && onClaim && (
+            <>
+              <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
+                A wild mind flew with you. Claim it to keep this climb — XP, Crowns, and the board.
+              </div>
+              <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
+                <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+              </button>
+            </>
+          )}
+          {onShareChallenge && (
+            <button type="button" className="btn" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onShareChallenge}>
+              <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
+            </button>
+          )}
+          <button
+            type="button"
+            className={guestClaim ? "btn" : "btn btn-primary"}
+            style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            onClick={onRestart}
+          >
+            <RotateCcw size={16} strokeWidth={2.2} /> Try again
+          </button>
+        </CircuitModal>
+      )}
+
+      {phase === "ceiling" && (
+        <CircuitModal
+          accent={accent}
+          icon={<Sparkles size={28} color={accent} />}
+          kicker="ALTITUDE GATE"
+          title={guestClaim ? "Claim a mind to prove" : "Prove your mind for the higher sky"}
+          sub={
+            guestClaim
+              ? "Reach II needs a claimed champion. Keep this wild mind, then prove."
+              : "A short fight opens the next band of the Ascent."
+          }
+        >
+          {guestClaim && onClaim && (
+            <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
+              <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+            </button>
+          )}
+          {!guestClaim && onProve && (
+            <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onProve}>
+              <Swords size={15} strokeWidth={2.2} /> Prove now
+            </button>
+          )}
+          <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
+            <RotateCcw size={15} strokeWidth={2.2} /> Practice Reach I again
           </button>
         </CircuitModal>
       )}
@@ -398,8 +516,8 @@ function CircuitModal({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 55, padding: 16 }}>
-      <div className="panel pop" style={{ ["--ac" as string]: accent, padding: 24, width: "min(400px, 92vw)", textAlign: "center", borderColor: accent }}>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 160, padding: 16, pointerEvents: "auto" }}>
+      <div className="panel pop" style={{ ["--ac" as string]: accent, padding: 24, width: "min(400px, 92vw)", textAlign: "center", borderColor: accent, pointerEvents: "auto" }}>
         {icon && <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{icon}</div>}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>{kicker}</div>
         <div style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>{title}</div>

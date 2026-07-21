@@ -21,7 +21,7 @@ export interface NavGroup {
 
 // One legible menu, grouped by intent instead of a flat pile of modes:
 //   Play  → the single door into the world (everything you DO lives inside it:
-//           duels, gauntlet, tribunal, the Keeper campaign, training, the
+//           Climb/Circuit, duels, gauntlet, tribunal, training, the
 //           Broker, the Clan war, plus the in-world Daily Tribunal & League).
 //   You   → your own stuff and standing.
 //   Learn → how the game + protocol work.

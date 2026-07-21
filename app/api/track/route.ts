@@ -17,6 +17,12 @@ const CLIENT_EVENTS = new Set<ZEvent>([
   "fj_cinematic", "fj_pick", "fj_tune", "fj_duel", "fj_evolve", "fj_land",
   "ttfe_u5", "ttfe_u8", "ttfe_over",
   "m_splash", "m_fly", "m_guest_run", "m_claim_from_climb", "sol_link",
+  "fj_train_to_ascent",
+  "climb_share_native", "climb_share_copy",
+  "climb_prove_open", "climb_prove_start", "climb_prove_win", "climb_prove_lose", "climb_prove_resume",
+  "climb_challenge_open",
+  "climb_challenge_beat",
+  "climb_challenge_miss",
 ]);
 
 export async function POST(req: Request) {

@@ -38,6 +38,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const crowns = useChampions((s) => s.crowns);
   const fragments = useChampions((s) => s.fragments);
   const trainerXp = useChampions((s) => s.trainerXp);
+  const setNick = useChampions((s) => s.setNick);
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -53,6 +54,11 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
 
   const champ = useMemo(() => (owned ? progress[owned] ?? blank() : null), [owned, progress]);
   const strat: Strat = (owned && recipes[owned]?.strat) || DEFAULT_STRAT;
+  const nick = (owned && recipes[owned]?.nick) || "";
+  const [nickDraft, setNickDraft] = useState(nick);
+  useEffect(() => {
+    setNickDraft(nick);
+  }, [nick, owned]);
 
   const flash = useCallback((m: string) => {
     setToast(m);
@@ -135,7 +141,10 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <ChampionAvatar ckey={owned} type={type} champion={champ} size={76} />
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>{name}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>{nick || name}</div>
+              {nick ? (
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2 }}>{name}</div>
+              ) : null}
               <div className="mono" style={{ fontSize: 10, color: col, marginTop: 3 }}>
                 {forceName(type)} · L{dl.level} {dl.tier}
               </div>
@@ -158,10 +167,55 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
         </div>
 
+        {/* nickname — Trainer stamp; shows on share cards */}
+        <div className="panel" style={{ padding: 14, marginTop: 12 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
+            NICKNAME · YOUR NAME FOR THIS MIND
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={nickDraft}
+              onChange={(e) => setNickDraft(e.target.value.slice(0, 24))}
+              placeholder={name}
+              maxLength={24}
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--line2)",
+                background: "var(--panel2, #15131f)",
+                color: "var(--ink)",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!owned) return;
+                setNick(owned, nickDraft);
+                flash(nickDraft.trim() ? "Nickname locked in." : "Nickname cleared.");
+              }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "none",
+                background: col,
+                color: "#0a0a12",
+                fontWeight: 800,
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
         {/* temperament — status meters; Imprints + fights grow these (never drag) */}
         <div className="panel" style={{ padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
-            TEMPERAMENT · HOW {name.toUpperCase()} THINKS
+            TEMPERAMENT · HOW {(nick || name).toUpperCase()} THINKS
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
             Its fighting nature — grown by lessons you teach and fights it survives. Not sliders you set.

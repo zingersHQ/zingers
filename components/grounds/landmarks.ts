@@ -6,6 +6,7 @@
 //   2. bandAgents     — split the ladder population into ground roamers vs the climb
 //   3. discoveryNodes — deterministic loot caches scattered through the wilds
 import type { TowerAgent } from "@/lib/types";
+import { KEEPERS_PLAYABLE } from "@/lib/features";
 import type { BiomeConfig } from "./biomes";
 import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, spawnKnollFor, type TerrainShape } from "./terrain";
 
@@ -49,12 +50,16 @@ export function landmarksOf(biome: BiomeConfig): Landmark[] {
   const tcx = Math.cos(biome.scene.towerAngle) * (PLAZA_R + 9);
   const tcz = Math.sin(biome.scene.towerAngle) * (PLAZA_R + 9);
   const tower: [number, number, number] = [tcx, terrainHeight(tcx, tcz, shape, knoll), tcz];
-  return [
+  const marks: Landmark[] = [
     { kind: "arena", label: "The Arena", sub: "duels & gauntlet", color: biome.lights.arenaPoint, pos: [0, 0, 0] },
     { kind: "train", label: "Training Pad", sub: "raise your champion", color: biome.lights.trainPoint, pos: train },
-    { kind: "spire", label: "The Keepers", sub: "five climbs in the wilds", color: "#c77dff", pos: keeperEntry },
     { kind: "tower", label: "The Tower", sub: "ranked ladder climb", color: biome.platform.top, pos: tower },
   ];
+  // Keepers stripped from face (lib/features.ts) — compass must not advertise the climbs.
+  if (KEEPERS_PLAYABLE) {
+    marks.splice(2, 0, { kind: "spire", label: "The Keepers", sub: "five climbs in the wilds", color: "#c77dff", pos: keeperEntry });
+  }
+  return marks;
 }
 
 export function landmarkOf(biome: BiomeConfig, kind: LandmarkKind): Landmark {

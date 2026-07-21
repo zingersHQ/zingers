@@ -28,14 +28,14 @@ Our audience is global. Many players read English as a second language, and many
 | **Season** | the Chronicle | Visible copy says "season"; "the Chronicle" may remain as deep-lore flavor in the Bible. |
 | **built-in brain** | House brain | The default agent. |
 | **Live Gallery** | Scrying Gallery | Where you watch autonomous fights. |
-| **the Ascent** / **the Climb** | — | The flight up through the sky. Capitalized **the Climb** = the game mode/verb; lowercase "climb" = the rank/progress metaphor. Keep them distinguishable in copy. |
+| **the Ascent** | Circuit, Climb (as mode names) | The flight game — one mode on phone and desktop (different body/feel, same sectors). Prefer **the Ascent** in all player-facing copy. Lowercase "climb" is fine as a plain verb ("climb higher"). Code may still say Circuit / Climb. |
 | **Reach** | level, stage | One band of the Ascent's sky (ten total). |
 | **Camp** | checkpoint, waystation (in copy) | The rest point between Reaches. |
 | **fly beside you** / **wingmate** | the champion's jetpack | Canon: the champion has **no** jetpack — it's a mind and flies on its own. Only the **Trainer** carries a jetpack. Never write "your champion's jetpack." |
 
 ## Keep, but always gloss on first use
 
-**the Grounds, the Concord, the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Circuit, the Ascent, Reach, Camp, Fragment, Crowns.** These are signature and worth keeping — but the first time each appears in any surface, add a plain gloss. *(Exception, per rule 1: the Ascent, Reach and Camp **can** be glossed in a clause and the flight fantasy is the newcomer hook, so they are welcome in first-touch copy — glossed. "Fly" needs no gloss.)* The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
+**the Grounds, the Concord, the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, the Ascent, Reach, Camp, Fragment, Crowns.** These are signature and worth keeping — but the first time each appears in any surface, add a plain gloss. *(Exception, per rule 1: the Ascent, Reach and Camp **can** be glossed in a clause and the flight fantasy is the newcomer hook, so they are welcome in first-touch copy — glossed. "Fly" needs no gloss.)* The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
 
 ## Code vs. copy
 

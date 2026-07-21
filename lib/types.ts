@@ -418,6 +418,8 @@ export interface Recipe {
   persona?: string; // optional handler-authored persona override
   agent?: AgentConfig; // which brain drives it (defaults to house Grok)
   memory?: string[]; // learned notes that persist across bouts (P1)
+  /** Trainer-given nickname — share cards & divergence (nail-it P1). */
+  nick?: string;
 }
 
 export const DEFAULT_STRAT: Strat = { risk: 50, focus: 50, aggression: 50 };

@@ -264,7 +264,9 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
           // apiKey deliberately omitted — never stored server-side.
         }
       : undefined;
-    recipes[key] = { strat: r.strat, persona: r.persona, memory: r.memory, agent };
+    const nick =
+      typeof r.nick === "string" ? r.nick.trim().slice(0, 24).replace(/[^\w\s\-'.]/g, "") : undefined;
+    recipes[key] = { strat: r.strat, persona: r.persona, memory: r.memory, agent, nick: nick || undefined };
   }
 
   return {

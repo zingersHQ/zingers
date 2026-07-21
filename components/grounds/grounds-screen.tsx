@@ -18,14 +18,19 @@ import { FirstRun } from "@/components/intro/first-run";
 import { FirstDuelHubCta, FirstDuelOverlay, type FirstDuelPhase } from "@/components/intro/first-duel";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { STORAGE } from "@/lib/brand";
+import { KEEPERS_PLAYABLE } from "@/lib/features";
 import {
   firstDuelOpponent,
   firstDuelStarters,
+  guestLoanerKey,
   isFirstDuelComplete,
   markFirstDuelComplete,
   FIRST_FIGHT_WORLD,
   previewRookieChampion,
+  QUICK_START_STRAT,
 } from "@/lib/first-duel";
+import { noteGuestClimbDepth } from "@/lib/guest-climb";
+import { ROSTER } from "@/lib/engine/roster";
 import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { READER_COPY } from "@/lib/player-copy";
 import { getOwnerToken, getHandle } from "@/lib/owner";
@@ -105,7 +110,16 @@ import { CLAN_R, concordClanSpots } from "@/components/grounds/concord";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
-import { CIRCUIT_LIVES } from "@/components/grounds/circuit";
+import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
+import { climbChallengeUrl, readClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
+import type { ClimbGhostSample } from "@/lib/climb-ghost";
+import {
+  desktopCircuitSector,
+  DESKTOP_CIRCUIT_COUNT,
+  toClimbCanonical,
+  reachTheme,
+} from "@/components/grounds/climb/desktop-adapter";
+import { CIRCUIT_LIVES, formatCircuitMs } from "@/components/grounds/circuit";
 import type { CircuitGhostPose } from "@/components/grounds/circuit-ghost";
 import {
   loadCircuitPersonalBest,
@@ -113,11 +127,6 @@ import {
   isCircuitRunBetter,
   type CircuitPersonalBest,
 } from "@/components/grounds/circuit-tracks";
-import {
-  desktopCircuitSector,
-  DESKTOP_CIRCUIT_COUNT,
-  reachTheme,
-} from "@/components/grounds/climb/desktop-adapter";
 import { sectorHazards } from "@/components/grounds/climb/hazards";
 import { DOCK_H } from "@/lib/play-nav";
 
@@ -166,7 +175,8 @@ function concordDoorArrival(opts: { world?: string; venue?: VenueId }): { x: num
 
 // Minimum time the pre-picker "Summoning your champions…" beat stays on screen,
 // so it's always readable even when the roster is already cached.
-const MIN_SUMMON_MS = 2400;
+/** Brief hold so pick never flashes an empty roster — keep short (mobile-like). */
+const MIN_SUMMON_MS = 900;
 
 // Ladder agents reuse a roster creature key for moves/body — when you own that
 // same creature, match visuals need the agent's unique ladder id so both sides
@@ -261,9 +271,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const [gRun, setGRun] = useState<GauntletRun | null>(null);
   const [showIntro, setShowIntro] = useState(false);
   const [firstDuelPhase, setFirstDuelPhase] = useState<FirstDuelPhase | null>(null);
-  // Hold the "Summoning your champions…" beat on screen long enough to read.
+  /** Guest Ascent ready — skip pick; fly a loaner until RUN OVER claim. */
+  const [guestAscentReady, setGuestAscentReady] = useState(false);
+  const guestEnterArmed = useRef(false);
+  // Hold the "Summoning…" beat on screen long enough to read.
   // On a warm load the roster resolves almost instantly, so without a floor the
-  // banner only flashed for a frame before champion select took over.
+  // banner only flashed for a frame before the Ascent took over.
   const summonStartedAt = useRef<number | null>(null);
   const [firstDuelPick, setFirstDuelPick] = useState<string | null>(null);
   const [firstDuelEvolve, setFirstDuelEvolve] = useState<{
@@ -408,6 +421,15 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
+  /** Ghost-path samples in Climb-canonical space (interchangeable with mobile). */
+  const circuitSamplesRef = useRef<ClimbGhostSample[]>([]);
+  const circuitSampleLastT = useRef(0);
+  const [circuitChallenge, setCircuitChallenge] = useState<ClimbChallenge | null>(null);
+  const [circuitChallengeDismissed, setCircuitChallengeDismissed] = useState(false);
+  const [circuitChallengeResult, setCircuitChallengeResult] = useState<"beat" | "miss" | null>(null);
+  const [circuitShareMsg, setCircuitShareMsg] = useState<string | null>(null);
+  /** Wall clock when the current Circuit run went live (ghost replay sync). */
+  const [circuitGhostRunStartMs, setCircuitGhostRunStartMs] = useState(0);
 
   const clearCircuitContinueTimers = useCallback(() => {
     for (const id of circuitContinueTimers.current) window.clearTimeout(id);
@@ -473,6 +495,11 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
   const submitCircuitRun = useCallback(
     (sectors: number, totalMs: number, clearedAll: boolean) => {
+      // Guest Ascent: hold depth for claim XP — nothing on the ranked board yet.
+      if (!owned) {
+        noteGuestClimbDepth(sectors);
+        return;
+      }
       const tok = getOwnerToken();
       if (!tok) return;
       const run: CircuitPersonalBest = { sectors, totalMs, clearedAll };
@@ -489,7 +516,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         .then(() => loadCircuitBoard())
         .catch(() => {});
     },
-    [loadCircuitBoard],
+    [loadCircuitBoard, owned],
   );
 
   const resetCircuitRun = useCallback(() => {
@@ -497,9 +524,13 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
+    circuitSamplesRef.current = [];
+    circuitSampleLastT.current = 0;
     circuitLivesRef.current = CIRCUIT_LIVES;
     setCircuitLives(CIRCUIT_LIVES);
     setCircuitGhost(null);
+    setCircuitGhostRunStartMs(0);
+    setCircuitChallengeResult(null);
     setCircuitSectorIdx(0);
     setCircuitCpPassed(1);
     setCircuitRunMs(0);
@@ -632,18 +663,25 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       setCircuitRunMs(total);
       setCircuitPhase("done");
       submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
+      if (circuitChallenge) {
+        const beat =
+          DESKTOP_CIRCUIT_COUNT > circuitChallenge.sectors ||
+          (DESKTOP_CIRCUIT_COUNT === circuitChallenge.sectors &&
+            (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+        setCircuitChallengeResult(beat ? "beat" : "miss");
+        track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+      }
       store.awardTrainerXp(120);
       outcomeSfx(true);
       return;
     }
-    // Thin altitude key (flyover §3): Reach II needs one duel win.
+    // Thin altitude key — same Reach II gate as mobile Climb (in-place Prove).
     const mind = owned ? store.get(owned) : null;
     if (next >= 10 && (!mind || (mind.wins ?? 0) < 1)) {
       const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
       setCircuitRunMs(total);
       submitCircuitRun(next, total, true);
-      setModeLockToast("Altitude gate — win one duel so your mind can fly Reach II.");
-      setCircuitPhase("ready");
+      setCircuitPhase("ceiling");
       outcomeSfx(true);
       return;
     }
@@ -652,7 +690,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitArriveNonce((n) => n + 1);
     const s = desktopCircuitSector(next).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [circuitSectorIdx, submitCircuitRun, store, owned]);
+  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge]);
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
@@ -718,19 +756,78 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       setCircuitFailReason(reason);
       setCircuitPhase("failed");
       submitCircuitRun(sectors, total, false);
+      if (circuitChallenge) {
+        const beat =
+          sectors > circuitChallenge.sectors ||
+          (sectors === circuitChallenge.sectors && total > 0 && (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+        setCircuitChallengeResult(beat ? "beat" : "miss");
+        track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+      }
       outcomeSfx(false);
     },
-    [circuitPhase, circuitSectorIdx, submitCircuitRun, clearCircuitContinueTimers],
+    [circuitPhase, circuitSectorIdx, submitCircuitRun, clearCircuitContinueTimers, circuitChallenge],
   );
 
   /** Jump on the launch pad starts the sector — wind / cruise / timers. */
   const onCircuitStart = useCallback(() => {
     if (circuitPhase !== "ready") return;
     const now = performance.now();
-    if (circuitSectorIdx === 0 && !circuitRunStart.current) circuitRunStart.current = now;
+    if (circuitSectorIdx === 0 && !circuitRunStart.current) {
+      circuitRunStart.current = now;
+      circuitSamplesRef.current = [];
+      circuitSampleLastT.current = 0;
+      setCircuitGhostRunStartMs(now);
+      setCircuitChallengeResult(null);
+    }
     circuitSectorStart.current = now;
     setCircuitPhase("running");
   }, [circuitPhase, circuitSectorIdx]);
+
+  const onCircuitSample = useCallback((y: number, z: number) => {
+    const now = performance.now();
+    if (now - circuitSampleLastT.current < 400) return;
+    circuitSampleLastT.current = now;
+    const t0 = circuitRunStart.current || now;
+    const canon = toClimbCanonical(y, z);
+    circuitSamplesRef.current.push({ t: Math.max(0, now - t0), y: canon.y, z: canon.z });
+    if (circuitSamplesRef.current.length > 120) circuitSamplesRef.current.shift();
+  }, []);
+
+  const shareCircuitChallenge = useCallback(async () => {
+    const sectors = circuitPhase === "done" ? DESKTOP_CIRCUIT_COUNT : circuitSectorIdx;
+    const totalMs = circuitRunMs || Math.max(0, performance.now() - (circuitRunStart.current || performance.now()));
+    const url = climbChallengeUrl(
+      {
+        sectors,
+        totalMs,
+        name: getHandle() || undefined,
+        path: circuitSamplesRef.current.length >= 2 ? [...circuitSamplesRef.current] : undefined,
+        door: "flight",
+      },
+      undefined,
+      "flight",
+    );
+    const text = `Beat my Ascent: ${sectors}/${DESKTOP_CIRCUIT_COUNT} · ${formatCircuitMs(totalMs)}`;
+    // Native share is for phones; desktop Chromium/Safari expose share() too and it feels wrong.
+    if (isTouch && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: "Zingers Ascent", text, url });
+        track("climb_share_native");
+        return;
+      } catch {
+        /* fall through to clipboard */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setCircuitShareMsg("Challenge link copied");
+      track("climb_share_copy");
+      window.setTimeout(() => setCircuitShareMsg(null), 2200);
+    } catch {
+      setCircuitShareMsg("Copy failed — select and copy from the address bar after opening the link");
+      window.setTimeout(() => setCircuitShareMsg(null), 3200);
+    }
+  }, [circuitPhase, circuitSectorIdx, circuitRunMs, isTouch]);
 
   const onCircuitPass = useCallback(
     (index: number) => {
@@ -747,19 +844,49 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         setCircuitSectorMs(sectorElapsed);
         setCircuitRunMs(now - circuitRunStart.current);
         if (circuitSectorIdx + 1 >= DESKTOP_CIRCUIT_COUNT) {
+          const total = now - circuitRunStart.current;
           setCircuitPhase("done");
-          submitCircuitRun(DESKTOP_CIRCUIT_COUNT, now - circuitRunStart.current, true);
+          submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
+          if (circuitChallenge) {
+            const beat =
+              DESKTOP_CIRCUIT_COUNT > circuitChallenge.sectors ||
+              (DESKTOP_CIRCUIT_COUNT === circuitChallenge.sectors &&
+                (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+            setCircuitChallengeResult(beat ? "beat" : "miss");
+            track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+          }
           store.awardTrainerXp(120);
           outcomeSfx(true);
         } else {
+          // Park on "sector" so this frame stops cruise/fail checks; effect advances.
           setCircuitPhase("sector");
-          store.awardTrainerXp(15);
+          store.awardTrainerXp(owned ? 15 : 0);
           outcomeSfx(true);
         }
       }
     },
-    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store],
+    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned],
   );
+
+  // Auto-advance after a clear (mobile-like). Brief "sector" phase avoids a soft-lock
+  // and lets physics stop before the next track loads (World no longer remounts).
+  useEffect(() => {
+    if (activeVenue !== "circuit" || circuitPhase !== "sector") return;
+    const t = window.setTimeout(() => advanceCircuitSector(), 480);
+    return () => window.clearTimeout(t);
+  }, [activeVenue, circuitPhase, advanceCircuitSector]);
+
+  // Async challenge deep-link: /grounds?climb=…&gp=…&ascent=flight
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const c = readClimbChallengeFromSearch(window.location.search);
+    if (!c || c.door === "thumb") return;
+    setCircuitChallenge(c);
+    setCircuitChallengeDismissed(false);
+    track("climb_challenge_open");
+    if (!gameSession) enterVenue("circuit");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
+  }, []);
 
   useEffect(() => {
     if (activeVenue !== "circuit") return;
@@ -990,25 +1117,19 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     };
   }, [reloadKey, loadWar]);
 
-  // New players: open the guided funnel once roster is ready (after FirstRun if
-  // shown). The cinematic intro already pitches the game, so the funnel opens
-  // straight on champion select.
+  // New players: short summon → guest Circuit (claim postponed to RUN OVER).
   useEffect(() => {
-    // Outside the new-player funnel: reset the summon clock so it restarts fresh.
     if (!mounted || isFirstDuelComplete() || owned || showIntro) {
       summonStartedAt.current = null;
       return;
     }
-    // We're now showing the pre-picker "summoning" beat. Mark when it began so
-    // we can keep it up for at least MIN_SUMMON_MS even if the roster is cached.
+    if (guestAscentReady || firstDuelPhase !== null) return;
     if (summonStartedAt.current === null) summonStartedAt.current = Date.now();
-    if (roster.length === 0 || firstDuelPhase !== null) return;
+    if (roster.length === 0) return;
     const wait = Math.max(0, MIN_SUMMON_MS - (Date.now() - summonStartedAt.current));
-    // Desktop door: champion pick (native Circuit venue is unlocked for after —
-    // do NOT open CircuitLite here; that's the mobile Climb body).
-    const t = setTimeout(() => setFirstDuelPhase("pick"), wait);
+    const t = setTimeout(() => setGuestAscentReady(true), wait);
     return () => clearTimeout(t);
-  }, [mounted, owned, roster.length, firstDuelPhase, showIntro]);
+  }, [mounted, owned, roster.length, firstDuelPhase, showIntro, guestAscentReady]);
 
   // Warm the guided first-fight world (its ~23 nature glTFs + the world chunk) as
   // EARLY as possible — the moment a first-run player is detected, while the intro
@@ -1261,6 +1382,17 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setTravelCard(card);
   }, [travelCard]);
 
+  // Once guest Ascent is armed, drop into the Circuit (claim postponed to RUN OVER).
+  useEffect(() => {
+    if (!guestAscentReady || owned || activeVenue === "circuit" || guestEnterArmed.current) return;
+    guestEnterArmed.current = true;
+    track("m_guest_run");
+    playTravel(
+      { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start · claim later", color: VENUES.circuit.color },
+      () => enterVenue("circuit"),
+    );
+  }, [guestAscentReady, owned, activeVenue, playTravel, enterVenue]);
+
   const worldTravelCard = useCallback((destId: string): TravelCard => {
     const w = worldById(destId);
     return {
@@ -1277,21 +1409,25 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const interact = useCallback(async () => {
     if (overlay !== "none" || inMatch || result || gRun || travelCard) return;
     if (modesLocked) {
+      // Circuit stays open for guest Ascent; Amphitheatre / league / etc. wait on claim.
       const blocked =
         near?.kind === "keeper" ||
-        (near?.kind === "venue-enter" && (near.venue === "circuit" || near.venue === "amphitheatre")) ||
+        (near?.kind === "venue-enter" && near.venue === "amphitheatre") ||
         (near?.kind === "venue" && near.venue === "league") ||
         (near?.kind === "arena" && scenario.id === "gauntlet") ||
         near?.kind === "force";
       if (blocked) {
-        setModeLockToast("Finish your first duel to unlock this.");
+        setModeLockToast("Claim a mind from the Ascent to unlock this.");
         return;
       }
     }
     if (near?.kind === "train") setOverlay("train");
     else if (near?.kind === "broker") setOverlay("broker");
     else if (near?.kind === "keeper") {
-      setKeeperIntroPending({ level: near.level, name: near.name, title: near.title });
+      // Guardians stripped from face (lib/features.ts) — never open the duel.
+      if (KEEPERS_PLAYABLE) {
+        setKeeperIntroPending({ level: near.level, name: near.name, title: near.title });
+      }
     } else if (near?.kind === "arena") {
       setOpponent(null);
       setOpponentId(null);
@@ -1434,34 +1570,80 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     }));
   }, [bout.turn, bout.hpA, bout.hpB, opponent, opponentId, owned]);
 
-  const completeFirstDuel = useCallback(() => {
+  const loanerKey = useMemo(() => guestLoanerKey(getOwnerToken() || "guest"), []);
+  const circuitGuest = !owned;
+  const circuitActiveKey = owned ?? loanerKey;
+
+  /** Finish Act-1 latches after a guest (or pick) claim — stay in Circuit if already there. */
+  const sealFirstClaim = useCallback(() => {
     markFirstDuelComplete();
     setFirstDuelPhase(null);
     setFirstDuelEvolve(null);
     setFirstDuelPick(null);
+    setGuestAscentReady(true);
     evolveBeforeRef.current = null;
     firstFightWorldRef.current = null;
+    setWakeKey(null);
+    setFlightKey(null);
     bout.stop();
     setMatchView(null);
     setOpponent(null);
     setResult(null);
-    // Concord landing already taught Reader vs champion — skip the train-pad coach
-    // (no pad in the hub) and steer toward the spotlit Grounds gate.
     try {
       localStorage.setItem(STORAGE.readerSplitCoach, "1");
+      localStorage.setItem(STORAGE.concordCoach, "1");
     } catch {}
-    setConcordCoach(true);
-    if (worldId !== "concord") {
-      travelToWorld("concord", false);
-      // Land facing the spotlit Grounds gate: drop in at the Concord threshold,
-      // turn the champion toward its first arena, and let the camera settle behind
-      // them — so control is handed back already looking at the door to take.
-      setTimeout(() => {
-        const faceGate = Math.atan2(groundsGatePos[0] - CONCORD_SPAWN[0], groundsGatePos[2] - CONCORD_SPAWN[1]);
-        travelRef.current?.(CONCORD_SPAWN[0], CONCORD_SPAWN[1], faceGate);
-      }, 120);
+    setConcordCoach(false);
+    setReaderSplitStep(null);
+    outcomeSfx(true);
+    track("fj_train_to_ascent");
+  }, [bout]);
+
+  /** Claim the loaner from RUN OVER / ceiling — keep the Ascent session. */
+  const claimCircuitLoaner = useCallback(() => {
+    store.setStrat(loanerKey, QUICK_START_STRAT);
+    store.adoptStarterRookie(loanerKey);
+    sealFirstClaim();
+    track("m_claim_from_climb");
+    setCircuitShareMsg(`${ROSTER[loanerKey]?.name ?? "Mind"} claimed`);
+    window.setTimeout(() => setCircuitShareMsg(null), 2200);
+    // Resume from pad so they feel the claim stick, not a soft-lock on the modal.
+    resetCircuitRun();
+  }, [store, loanerKey, sealFirstClaim, resetCircuitRun]);
+
+  /** Legacy pick path (Choose another mind) → claim then ensure Circuit. */
+  const claimAndFlyAscent = useCallback(
+    (key: string, strat: { risk: number; focus: number; aggression: number } = QUICK_START_STRAT) => {
+      store.setStrat(key, strat);
+      store.adoptStarterRookie(key);
+      sealFirstClaim();
+      if (activeVenue !== "circuit") {
+        setTimeout(() => {
+          playTravel(
+            { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start", color: VENUES.circuit.color },
+            () => enterVenue("circuit"),
+          );
+        }, 120);
+      } else {
+        resetCircuitRun();
+      }
+    },
+    [store, sealFirstClaim, activeVenue, playTravel, enterVenue, resetCircuitRun],
+  );
+
+  const completeFirstDuel = useCallback(() => {
+    if (!owned && firstDuelPick) claimAndFlyAscent(firstDuelPick);
+    else if (activeVenue !== "circuit") {
+      sealFirstClaim();
+      playTravel(
+        { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start", color: VENUES.circuit.color },
+        () => enterVenue("circuit"),
+      );
+    } else {
+      sealFirstClaim();
+      resetCircuitRun();
     }
-  }, [bout, travelToWorld, worldId, groundsGatePos]);
+  }, [owned, firstDuelPick, claimAndFlyAscent, activeVenue, sealFirstClaim, playTravel, enterVenue, resetCircuitRun]);
 
   const stageFirstFightArena = useCallback(() => {
     if (worldId !== FIRST_FIGHT_WORLD) {
@@ -1479,48 +1661,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
 
   const finishFirstDuelTrain = useCallback(
     async (key: string, strat: { risk: number; focus: number; aggression: number }) => {
-      store.setStrat(key, strat);
-      // Reset to a true rookie BEFORE snapshotting "before" so the evolve card
-      // shows a green champion taking its first step — not a veteran nudged.
-      store.adoptStarterRookie(key);
-      evolveBeforeRef.current = { ...store.get(key) };
-      if (!(await store.trainChampion(key))) return;
-      setFirstDuelPick(key);
-      setFirstDuelPhase(null);
-      const opp = firstDuelOpponent(key, roster);
-      setOpponent(opp);
-      setOpponentId(null);
-      setDuelMeta(null);
-      inFirstDuelFight.current = true;
-      counters.current = { pa: 0, pb: 0, ha: 0, hb: 0 };
-      setResult(null);
-      stageFirstFightArena();
-      const bKey = matchOpponentKey(opp, null);
-      setMatchView({ aKey: key, bKey, hpA: 100, hpB: 100, actor: null, punchA: 0, punchB: 0, hitA: 0, hitB: 0, cinematic: true });
-      const ra = getRecipe(key);
-      const rb = getRecipe(opp);
-      const url = `/api/battle?a=${key}&b=${opp}&mock=1&seed=42&${sideParams("a", ra)}&${sideParams("b", rb)}`;
-      bout.begin(url, (end: BattleEnd) => {
-        inFirstDuelFight.current = false;
-        const styles: Record<string, Style> = { [key]: blankStyle(), [opp]: blankStyle() };
-        for (const turn of historyRef.current) accrue(turn.actor === key ? styles[key] : styles[opp], turn);
-        const winnerKey = end.winner;
-        const loserKey = winnerKey === key ? opp : key;
-        store.recordBattle(winnerKey, loserKey, styles);
-        const before = evolveBeforeRef.current ?? store.get(key);
-        const dom = dominant(store.get(key));
-        store.learnFromBout({ key, opponentName: byKey[opp]?.name || opp, won: winnerKey === key, axisLabel: dom.axis.label });
-        const after = store.get(key);
-        store.setBalance(useChampions.getState().crowns + GROUNDS_WIN_REWARD);
-        setFirstDuelEvolve({ before, after, key, type: byKey[key]?.type ?? "LOGIC" });
-        setMatchView(null);
-        setOpponent(null);
-        returnToConcordAfterFirstFight();
-        setFirstDuelPhase("evolve");
-        outcomeSfx(winnerKey === key);
-      });
+      claimAndFlyAscent(key, strat);
     },
-    [store, roster, getRecipe, bout, byKey, stageFirstFightArena, returnToConcordAfterFirstFight],
+    [claimAndFlyAscent],
   );
 
   const launchFirstDuelFight = useCallback(() => {
@@ -1909,7 +2052,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   }, [bout]);
 
   const showMatch = inMatch || overlay === "result";
-  const pickingChampion = mounted && !owned && roster.length > 0 && !inFirstDuelSetup;
+  // Guest Ascent flies before claim — do NOT treat that as "picking" or the
+  // Circuit HUD (RUN OVER / lives) never mounts and the second death soft-locks.
+  const pickingChampion =
+    mounted && !owned && roster.length > 0 && !inFirstDuelSetup && !guestAscentReady && isFirstDuelComplete();
   // A new player hasn't owned a champion or won their first duel yet. This also
   // covers the brief limbo after the intro closes but before the roster has
   // loaded and the picker mounts — without it, the empty hub world + season
@@ -1923,14 +2069,28 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   // It mounts during `train` — the last step before the bell — BEHIND the opaque
   // tuning modal, so it's warm (camera ref + assets ready) for the first fight,
   // where `owned` is set and the world is finally shown.
-  const worldOccluded = showIntro || firstDuelPhase === "pick" || (awaitingFirstDuel && firstDuelPhase === null);
+  // Guest Ascent: world mounts after summon so Circuit can load; pick stays deferred.
+  const worldOccluded =
+    showIntro ||
+    firstDuelPhase === "pick" ||
+    (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady);
   const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
-  const showDock = !showIntro && !showMatch && overlay === "none" && !gRun && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
+  const showDock =
+    !showIntro &&
+    !showMatch &&
+    overlay === "none" &&
+    !gRun &&
+    !pickingChampion &&
+    !inFirstDuelSetup &&
+    (!awaitingFirstDuel || guestAscentReady);
   const dockPad = showDock ? DOCK_H + 8 : 0;
-  // Keep the world HUD (season banner, music, crowns, altitude) tucked away
-  // until the first-run tutorial and champion claim are done — otherwise its
-  // zIndex pokes through on top of those higher-priority overlays.
-  const showHud = mounted && !showIntro && !pickingChampion && !inFirstDuelSetup && !awaitingFirstDuel;
+  // Guest Circuit still needs HUD; hide only during summon / pick overlays.
+  const showHud =
+    mounted &&
+    !showIntro &&
+    !pickingChampion &&
+    !inFirstDuelSetup &&
+    (!awaitingFirstDuel || guestAscentReady);
   const [hudDim, setHudDim] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1977,22 +2137,22 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const voiceOn = useSettings((s) => s.voice);
   const alwaysShowHud = useSettings((s) => s.alwaysShowHud);
 
-  // Auto-open the controls sheet ONCE, the first time a player reaches free roam
-  // with a champion (modes unlocked = Act 1 done). This is the moment they
-  // actually need the full move/fly/camera set; afterwards it's on the HUD "?".
+  // Auto-open controls ONCE on free roam — never over the Circuit. Ascent already
+  // teaches "Jump to start"; the full WASD/jet sheet is for the wilds after.
   useEffect(() => {
-    if (!showHud || showMatch || overlay !== "none" || gRun) return;
+    if (!showHud || showMatch || overlay !== "none" || gRun || inVenue) return;
     if (!owned || modesLocked || !isFirstDuelComplete()) return;
     if (concordCoach || readerSplitStep !== null) return; // don't stack on coaches
     if (typeof window === "undefined") return;
     if (localStorage.getItem(STORAGE.controlsSeen)) return;
     const t = setTimeout(() => {
       if (localStorage.getItem(STORAGE.controlsSeen)) return;
+      if (gameSession) return; // still in a venue
       localStorage.setItem(STORAGE.controlsSeen, "1");
       setControlsOpen(true);
     }, 700);
     return () => clearTimeout(t);
-  }, [showHud, showMatch, overlay, gRun, owned, modesLocked, concordCoach, readerSplitStep]);
+  }, [showHud, showMatch, overlay, gRun, owned, modesLocked, concordCoach, readerSplitStep, inVenue, gameSession]);
 
   // Celebrate a TIER-UP the moment the player is back in the world (level-ups are
   // already chipped on the duel result card; the tier crossing — which bolts a new
@@ -2138,9 +2298,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
             )}
           >
             <World
-              key={`${world.id}-${activeVenue ?? "wild"}-s${circuitSectorIdx}`}
+              key={`${world.id}-${activeVenue ?? "wild"}`}
               champions={showMatch ? matchChampions : champions}
-              ownedKey={owned}
+              ownedKey={activeVenue === "circuit" ? circuitActiveKey : owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
               controlsEnabled={
@@ -2151,7 +2311,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
                     circuitPhase !== "failed" &&
                     circuitPhase !== "done" &&
                     circuitPhase !== "sector" &&
-                    circuitPhase !== "continue"))
+                    circuitPhase !== "continue" &&
+                    circuitPhase !== "ceiling" &&
+                    circuitPhase !== "prove"))
               }
               biome={biome}
               regionWorldId={worldId}
@@ -2163,6 +2325,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               onCircuitPass={activeVenue === "circuit" ? onCircuitPass : undefined}
               onCircuitFail={activeVenue === "circuit" ? onCircuitFail : undefined}
               onCircuitStart={activeVenue === "circuit" ? onCircuitStart : undefined}
+              onCircuitSample={activeVenue === "circuit" ? onCircuitSample : undefined}
               circuitCpNextRef={activeVenue === "circuit" ? circuitCpNext : undefined}
               circuitHazards={activeVenue === "circuit" ? circuitHazards : []}
               onCircuitStumble={activeVenue === "circuit" ? onCircuitStumble : undefined}
@@ -2170,6 +2333,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               onCircuitGhostDone={activeVenue === "circuit" ? () => setCircuitGhost(null) : undefined}
               circuitArriveNonce={activeVenue === "circuit" ? circuitArriveNonce : 0}
               circuitGhostForce={store.force}
+              circuitGhostPath={
+                activeVenue === "circuit" && circuitChallenge?.path?.length ? circuitChallenge.path : null
+              }
+              circuitGhostRunStartMs={activeVenue === "circuit" ? circuitGhostRunStartMs : 0}
               resumeSpawn={!activeVenue ? wildResume : null}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
@@ -2371,7 +2538,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* one-time objectives coachmark */}
-      {showHud && activeVenue === "circuit" && owned && overlay === "none" && !showMatch && (
+      {activeVenue === "circuit" && overlay === "none" && !showMatch && circuitPhase !== "prove" && (showHud || circuitGuest) && (
         <CircuitHud
           phase={circuitPhase}
           sectorIndex={circuitSectorIdx}
@@ -2385,12 +2552,113 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           onContinue={advanceCircuitSector}
           onRestart={resetCircuitRun}
           onExit={exitVenue}
+          onShareChallenge={shareCircuitChallenge}
+          shareChallengeLabel={isTouch ? "Challenge a friend" : "Copy challenge link"}
+          onProve={
+            circuitGuest
+              ? undefined
+              : () => {
+                  track("climb_prove_open");
+                  setCircuitPhase("prove");
+                }
+          }
+          onClaim={circuitGuest ? claimCircuitLoaner : undefined}
+          claimName={circuitGuest ? ROSTER[loanerKey]?.name ?? "this mind" : null}
+          challengeResult={circuitChallengeResult}
+          challengeLabel={circuitChallenge?.name || (circuitChallenge ? "CHALLENGE" : null)}
           accent={circuitReach.accent}
           compact={isMobile}
           failReason={circuitFailReason}
           sectorTotal={DESKTOP_CIRCUIT_COUNT}
           reachName={circuitReach.name}
           lives={circuitLives}
+        />
+      )}
+
+      {activeVenue === "circuit" &&
+        circuitChallenge &&
+        !circuitChallengeDismissed &&
+        (circuitPhase === "ready" || circuitPhase === "running") && (
+        <div
+          style={{
+            position: "absolute",
+            top: 108,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 130,
+            width: "min(420px, calc(100vw - 120px))",
+            padding: "10px 12px",
+            borderRadius: 12,
+            border: `1px solid ${circuitReach.accent}`,
+            background: "rgba(8,7,14,.88)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            pointerEvents: "auto",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: circuitReach.accent }}>
+              CHALLENGE
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2 }}>
+              Beat {circuitChallenge.name || "a Trainer"} · {circuitChallenge.sectors}/{DESKTOP_CIRCUIT_COUNT}
+              {circuitChallenge.totalMs > 0 ? ` · ${formatCircuitMs(circuitChallenge.totalMs)}` : ""}
+            </div>
+            <div className="mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>
+              {circuitChallenge.path?.length
+                ? "Ghost flies beside you — clear deeper or faster to win"
+                : "Clear deeper (or same depth, faster) to claim the win"}
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss challenge"
+            className="panel"
+            onClick={() => setCircuitChallengeDismissed(true)}
+            style={{ width: 32, height: 32, padding: 0, display: "grid", placeItems: "center", cursor: "pointer" }}
+          >
+            <X size={14} strokeWidth={2.2} />
+          </button>
+        </div>
+      )}
+
+      {circuitShareMsg && (
+        <div
+          className="mono panel pop"
+          style={{
+            position: "absolute",
+            bottom: 96,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 140,
+            padding: "8px 14px",
+            fontSize: 12,
+            pointerEvents: "none",
+          }}
+        >
+          {circuitShareMsg}
+        </div>
+      )}
+
+      {activeVenue === "circuit" && circuitPhase === "prove" && owned && (
+        <ClimbProveGate
+          activeKey={owned}
+          accent={circuitReach.accent}
+          onClose={() => setCircuitPhase("ceiling")}
+          onWon={() => {
+            setCircuitSectorIdx(10);
+            circuitCpNext.current = 1;
+            setCircuitCpPassed(1);
+            setCircuitSectorMs(0);
+            circuitSectorStart.current = 0;
+            setCircuitPhase("ready");
+            setCircuitArriveNonce((n) => n + 1);
+            track("climb_prove_resume");
+            const s = desktopCircuitSector(10).spawn;
+            setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+          }}
         />
       )}
 
@@ -2570,8 +2838,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         <Onboarding roster={roster} get={store.get} onPick={setWakeKey} />
       )}
 
-      {/* guided first-duel funnel for new players (desktop: pick → train → duel;
-          Circuit is the native 6-DOF venue in-world — never CircuitLite here). */}
+      {/* guided first claim — pick a mind, then straight into the Ascent (mobile-like). */}
       {mounted && firstDuelPhase && duelStarters.length > 0 && (
         <FirstDuelOverlay
           phase={firstDuelPhase}
@@ -2582,17 +2849,25 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           evolve={firstDuelEvolve}
           isMobile={isMobile}
           onPick={(key) => {
-            setFirstDuelPick(key);
-            setWakeKey(key);
+            claimAndFlyAscent(key);
           }}
           onTrain={finishFirstDuelTrain}
-          onEvolveDone={() => setFirstDuelPhase("concord")}
+          onEvolveDone={completeFirstDuel}
           onConcordDone={completeFirstDuel}
         />
       )}
 
-      {modesLocked && owned && !inFirstDuelSetup && !inMatch && overlay === "none" && !gRun && !result && (
-        <FirstDuelHubCta isMobile={isMobile} onStart={launchFirstDuelFight} />
+      {modesLocked && !inVenue && !inFirstDuelSetup && !inMatch && overlay === "none" && !gRun && !result && guestAscentReady && (
+        <FirstDuelHubCta
+          isMobile={isMobile}
+          onStart={() => {
+            guestEnterArmed.current = false;
+            playTravel(
+              { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: owned ? "Jump to start" : "Jump to start · claim later", color: VENUES.circuit.color },
+              () => enterVenue("circuit"),
+            );
+          }}
+        />
       )}
 
       {modeLockToast && (
@@ -2705,7 +2980,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
           silent black gap (~15s on a cold load) and was the single biggest
           drop-off point. Hold a calm "summoning" beat here so the player always
           sees intent, never a dead screen, until champion select mounts. */}
-      {mounted && !showIntro && !rosterError && awaitingFirstDuel && firstDuelPhase === null && (
+      {mounted && !showIntro && !rosterError && awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady && (
         <div
           aria-live="polite"
           style={{
@@ -2720,12 +2995,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         >
           <style>{`@keyframes summonOrb { 0%,80%,100% { opacity:.25; transform: scale(.82);} 40% { opacity:1; transform: scale(1);} } @keyframes summonRise { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }`}</style>
           <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
-            <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE CONCORD</div>
+            <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE ASCENT</div>
             <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Summoning minds for you to raise…
+              Preparing the climb…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              {READER_COPY.walkFightLine()}
+              Fly first. Claim a mind when the run ends.
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (
@@ -2802,7 +3077,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* Keeper performance — staged intro before the duel of wits */}
-      {keeperIntroPending && (
+      {KEEPERS_PLAYABLE && keeperIntroPending && (
         <CharacterBeat
           script={keeperIntro(keeperIntroPending.level)}
           accent={keeperColor(keeperIntroPending.level)}
@@ -2912,8 +3187,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
         <TrainOverlay ckey={owned} entry={byKey[owned]} onClose={() => setOverlay("none")} />
       )}
 
-      {/* guardian duel overlay — opened from the Shrine in the world */}
-      {overlay === "guardian" && (
+      {/* guardian duel — stripped from face when KEEPERS_PLAYABLE is false */}
+      {KEEPERS_PLAYABLE && overlay === "guardian" && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 20 }}>
             <GuardianGame embedded startLevel={keeperLevel ?? undefined} onClose={() => { setOverlay("none"); setKeeperLevel(null); }} />

@@ -15,9 +15,12 @@ function str(sp: SP, k: string, d: string) {
 }
 
 function cardQuery(sp: SP): string {
-  const keys = ["sl", "sk", "r", "lv", "t", "d", "w", "l", "ra", "b", "sg"];
+  const keys = ["sl", "sk", "r", "lv", "t", "d", "w", "l", "ra", "b", "sg", "n", "ar", "by"];
   const p = new URLSearchParams();
-  for (const k of keys) p.set(k, str(sp, k, ""));
+  for (const k of keys) {
+    const v = str(sp, k, "");
+    if (v) p.set(k, v);
+  }
   return p.toString();
 }
 
@@ -29,8 +32,19 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   if (!c) return { title: BRAND.name };
   const img = `/api/card/${k}?${cardQuery(sp)}`;
   const saga = str(sp, "sg", "");
-  const desc = saga || `${str(sp, "d", "Unproven")} · Skill Level ${str(sp, "sl", str(sp, "lv", "1"))} · ${str(sp, "w", "0")}W/${str(sp, "l", "0")}L. Raise your own AI champion.`;
-  const title = pageTitle(c.name);
+  const nick = str(sp, "n", "");
+  const display = nick ? `${nick} (${c.name})` : c.name;
+  const ar = str(sp, "ar", "");
+  const by = str(sp, "by", "");
+  const bits = [
+    str(sp, "d", "Unproven"),
+    `Skill Level ${str(sp, "sl", str(sp, "lv", "1"))}`,
+    `${str(sp, "w", "0")}W/${str(sp, "l", "0")}L`,
+  ];
+  if (ar) bits.push(`Ascent ${ar} Reach${ar === "1" ? "" : "es"}`);
+  if (by) bits.push(`raised by ${by}`);
+  const desc = saga || `${bits.join(" · ")}. Raise your own AI champion.`;
+  const title = pageTitle(display);
   return {
     title,
     description: desc,
@@ -56,7 +70,11 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   const rarity = str(sp, "ra", "Common");
   const brain = str(sp, "b", "House · Grok");
   const saga = str(sp, "sg", "");
+  const nick = str(sp, "n", "");
+  const ascent = str(sp, "ar", "");
+  const trainer = str(sp, "by", "");
   const force = FORCES[c.type];
+  const displayName = nick || c.name;
 
   return (
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "40px 22px 80px" }}>
@@ -84,22 +102,34 @@ export default async function CardPage({ params, searchParams }: { params: Promi
               <div className="mono" style={{ position: "absolute", top: 12, right: 12, background: "var(--gold)", color: "#0a0812", borderRadius: 8, padding: "4px 8px", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>
                 {rarity.toUpperCase()}
               </div>
+              {ascent && (
+                <div className="mono" style={{ position: "absolute", bottom: 14, left: 12, right: 12, color: "#7cf6c8", fontSize: 11, letterSpacing: 1.2, fontWeight: 700 }}>
+                  ASCENT SIGIL · {ascent} REACH{ascent === "1" ? "" : "ES"}
+                </div>
+              )}
             </div>
             <div>
-              <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>{c.name}</div>
+              <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>{displayName}</div>
+              {nick ? (
+                <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>{c.name} · First Mind</div>
+              ) : null}
               <div style={{ fontSize: 18, color: col, marginTop: 6 }}>{doctrine} · {force.name}</div>
-              <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>SL {sl} · {tier} · brain: {brain}</div>
+              <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 4 }}>
+                SL {sl} · {tier} · brain: {brain}
+                {trainer ? ` · raised by ${trainer}` : ""}
+              </div>
               <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "18px 0 0" }}>
                 {saga || "A snapshot of a raised Zingers mind: its rank, rarity, strategy, and portrait are all derived from the champion's career."}
               </p>
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 26 }}>
+          <div style={{ display: "grid", gridTemplateColumns: ascent ? "repeat(4, 1fr)" : "repeat(3, 1fr)", gap: 12, marginTop: 26 }}>
             {[
               ["SKILL LEVEL", sl, "var(--gold)"],
               ["SKILLS", skills, col],
               ["RECORD", `${wins}W·${losses}L`, "var(--good)"],
+              ...(ascent ? [["ASCENT", ascent, "#7cf6c8"] as const] : []),
             ].map(([label, val, c2]) => (
               <div key={label} className="panel" style={{ padding: "14px 16px" }}>
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--muted2)" }}>{label}</div>

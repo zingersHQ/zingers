@@ -233,7 +233,7 @@ export function Landing() {
             <span className="lp-kicker mono">The Grounds</span>
             <h2 className="lp-h2">Floating regions over a sealed door.</h2>
             <p className="lp-body">
-              Drift between arenas that favor different Forces. Crack Keepers for secret words.
+              Drift between arenas that favor different Forces. Fly the Ascent.
               Watch the league turn while you climb. The world does not pause for you.
             </p>
           </Reveal>

@@ -18,15 +18,20 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles } from "lucide-react";
+import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { ChampionMesh, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
+import { ClimbProveGate } from "./climb/prove-gate";
+import { ClimbGhostRacer } from "./climb/ghost-racer";
+import { climbChallengeUrl, type ClimbChallenge } from "@/lib/climb-challenge";
+import type { ClimbGhostSample } from "@/lib/climb-ghost";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
+import { getHandle } from "@/lib/owner";
 import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { sectorDifficulty } from "./climb/difficulty";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
@@ -122,7 +127,7 @@ const READY_DOCK = companionDockSlot(0, 0, CHAMP_FACE);
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
-type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue";
+type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue" | "prove";
 type FailReason = "fall" | "gates";
 
 /** Reach II (sector index 10) needs one duel win — thin altitude key (flyover §3). */
@@ -185,6 +190,8 @@ function Flyer({
   flyerPosRef,
   flyerHeadingRef,
   pilotBurstRef,
+  samplesRef,
+  runStart,
   onGate,
   onSectorClear,
   onFail,
@@ -204,6 +211,9 @@ function Flyer({
   flyerHeadingRef: React.RefObject<number>;
   /** bump to emit a jetpack puff from the pilot */
   pilotBurstRef: React.RefObject<number>;
+  /** ghost-path samples for challenge share (nail-it P1) */
+  samplesRef: React.MutableRefObject<ClimbGhostSample[]>;
+  runStart: React.MutableRefObject<number>;
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
@@ -221,6 +231,7 @@ function Flyer({
   const dead = useRef(false);
   const lockUntil = useRef(0);   // control ignored until this clock time (stumble)
   const immuneUntil = useRef(0); // no new stumble until this clock time (grace)
+  const lastSampleT = useRef(0);
 
   // the pilot (robot) is always flying here; puff its jetpack while thrusting
   const flyingRef = useRef(true);
@@ -312,6 +323,19 @@ function Flyer({
     camera.lookAt(lookAt.current);
 
     altRef.current = pos.current.y;
+
+    // Sparse path samples for ghost challenge share (~2.5 Hz).
+    const wall = performance.now();
+    if (wall - lastSampleT.current >= 400) {
+      lastSampleT.current = wall;
+      const t0 = runStart.current || wall;
+      samplesRef.current.push({
+        t: Math.max(0, wall - t0),
+        y: pos.current.y,
+        z: pos.current.z,
+      });
+      if (samplesRef.current.length > 120) samplesRef.current.shift();
+    }
 
   // fall = spend a life (or run over when out)
     if (pos.current.y < FLOOR_Y) {
@@ -493,6 +517,7 @@ export default function CircuitLite({
   onExit,
   guestKey,
   onClaim,
+  challenge = null,
 }: {
   embedded?: boolean;
   onExit?: () => void;
@@ -500,6 +525,8 @@ export default function CircuitLite({
   guestKey?: string;
   /** the claim hook — reached from the fall card ("Claim this mind") */
   onClaim?: () => void;
+  /** Incoming async Climb challenge (depth + optional ghost path). */
+  challenge?: ClimbChallenge | null;
 } = {}) {
   const gfxTier = useGraphicsTier();
   const gfx = useMemo(() => climbCanvasGfx(gfxTier, embedded), [gfxTier, embedded]);
@@ -531,6 +558,11 @@ export default function CircuitLite({
   const [board, setBoard] = useState<BoardRow[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [reward, setReward] = useState<RunReward | null>(null);
+  /** Last finished run depth/time — for share + challenge links on the fall card. */
+  const [lastRun, setLastRun] = useState<{ sectors: number; totalMs: number } | null>(null);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const [challengeResult, setChallengeResult] = useState<"beat" | "miss" | null>(null);
+  const samplesRef = useRef<ClimbGhostSample[]>([]);
   // WebGL context loss handling — a phone GPU can evict our context under memory
   // pressure. preventDefault() asks for the same context back; a watchdog rebuilds
   // once if the browser never restores, capped so a starved device can't churn.
@@ -613,6 +645,15 @@ export default function CircuitLite({
     (sectorsCleared: number, clearedAll: boolean) => {
       // a guest run marks nothing on the board/career yet — but we hold the best
       // depth so claim can convert it into the first Trainer mark (two-doors §3.3).
+      const totalMs = Math.max(0, performance.now() - runStart.current);
+      setLastRun({ sectors: sectorsCleared, totalMs });
+      if (challenge) {
+        const beat =
+          sectorsCleared > challenge.sectors ||
+          (sectorsCleared === challenge.sectors && totalMs > 0 && (challenge.totalMs <= 0 || totalMs < challenge.totalMs));
+        setChallengeResult(beat ? "beat" : "miss");
+        pingEvent(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+      }
       if (guest) {
         noteGuestClimbDepth(sectorsCleared);
         setReward(null);
@@ -621,7 +662,7 @@ export default function CircuitLite({
       }
       const run: CircuitPersonalBest = {
         sectors: sectorsCleared,
-        totalMs: Math.max(0, performance.now() - runStart.current),
+        totalMs,
         clearedAll,
       };
       const prev = loadCircuitPersonalBest();
@@ -662,7 +703,7 @@ export default function CircuitLite({
           .catch(() => {});
       }
     },
-    [guest, awardTrainerXp, awardGauntlet, loadBoard],
+    [guest, awardTrainerXp, awardGauntlet, loadBoard, challenge],
   );
 
   // read the altitude ref at ~12fps so the number ticks without re-rendering
@@ -778,6 +819,8 @@ export default function CircuitLite({
     setPhase((p) => {
       if (p === "ready") {
         runStart.current = performance.now();
+        samplesRef.current = [];
+        setChallengeResult(null);
         if (guest && !guestPinged.current) {
           guestPinged.current = true;
           pingEvent("m_guest_run");
@@ -799,6 +842,8 @@ export default function CircuitLite({
     setTargetIdx(1);
     setNewBest(false);
     setReward(null);
+    setChallengeResult(null);
+    samplesRef.current = [];
     bonusCrowns.current = 0;
     livesRef.current = CIRCUIT_LIVES;
     setLives(CIRCUIT_LIVES);
@@ -964,6 +1009,36 @@ export default function CircuitLite({
     [setHold, sector, recordRun, track.spawn, clearContinueTimers],
   );
 
+  const shareChallenge = useCallback(async () => {
+    const sectors = lastRun?.sectors ?? sector;
+    const totalMs = lastRun?.totalMs ?? Math.max(0, performance.now() - runStart.current);
+    const url = climbChallengeUrl({
+      sectors,
+      totalMs,
+      name: getHandle() || undefined,
+      path: samplesRef.current.length >= 2 ? [...samplesRef.current] : undefined,
+    });
+    const text = `Beat my Ascent: ${sectors}/${CLIMB_SECTOR_COUNT} · ${formatCircuitMs(totalMs)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Zingers Ascent", text, url });
+        pingEvent("climb_share_native");
+        return;
+      }
+    } catch {
+      // fall through to clipboard
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setShareMsg("Challenge copied");
+      pingEvent("climb_share_copy");
+      window.setTimeout(() => setShareMsg(null), 2200);
+    } catch {
+      setShareMsg("Copy failed");
+      window.setTimeout(() => setShareMsg(null), 2200);
+    }
+  }, [lastRun, sector]);
+
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
   const gatesCleared = Math.max(0, targetIdx - 1); // in the current sector
   const running = phase === "running";
@@ -1043,10 +1118,21 @@ export default function CircuitLite({
               flyerPosRef={flyerPosRef}
               flyerHeadingRef={flyerHeadingRef}
               pilotBurstRef={pilotBurstRef}
+              samplesRef={samplesRef}
+              runStart={runStart}
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
               onStumble={onStumble}
+            />
+          )}
+          {running && challenge?.path && challenge.path.length >= 2 && (
+            <ClimbGhostRacer
+              path={challenge.path}
+              running={running}
+              runStartMs={runStart.current}
+              type={champType}
+              accent="#c8d0ff"
             />
           )}
           {running && (
@@ -1288,7 +1374,7 @@ export default function CircuitLite({
           boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
         };
         return onExit ? (
-          <button type="button" onClick={onExit} aria-label="Leave the Climb" style={{ ...backStyle, cursor: "pointer" }}>
+          <button type="button" onClick={onExit} aria-label="Leave the Ascent" style={{ ...backStyle, cursor: "pointer" }}>
             <ChevronLeft size={15} strokeWidth={2.4} /> Back
           </button>
         ) : (
@@ -1406,6 +1492,26 @@ export default function CircuitLite({
               </div>
             )}
 
+            {challengeResult && challenge && (
+              <div
+                className="mono"
+                style={{
+                  marginBottom: 14,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: `1px solid ${challengeResult === "beat" ? accent : "#ff5a5a88"}`,
+                  color: challengeResult === "beat" ? accent : "#ff8a8a",
+                  fontSize: 11,
+                  letterSpacing: 1,
+                  fontWeight: 800,
+                }}
+              >
+                {challengeResult === "beat"
+                  ? `YOU BEAT ${challenge.name || "THEM"} · ${challenge.sectors}/100`
+                  : `${challenge.name || "THEY"} HOLD · need ${challenge.sectors}+ sectors`}
+              </div>
+            )}
+
             {/* compact shared leaderboard (depth-then-time) */}
             <div style={{ marginBottom: 18, textAlign: "left", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, padding: "10px 12px", background: "rgba(255,255,255,.02)" }}>
               <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2, #6b6785)", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
@@ -1450,6 +1556,18 @@ export default function CircuitLite({
             )}
             <button
               type="button"
+              onClick={() => void shareChallenge()}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: `1px solid ${accent}88`, background: "rgba(255,255,255,.04)", color: accent, fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 10 }}
+            >
+              <Share2 size={15} strokeWidth={2.4} /> Challenge a friend
+            </button>
+            {shareMsg && (
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginBottom: 10 }}>
+                {shareMsg}
+              </div>
+            )}
+            <button
+              type="button"
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: guest && onClaim ? "1px solid rgba(255,255,255,.16)" : "none", background: guest && onClaim ? "transparent" : accent, color: guest && onClaim ? "#e6e2f5" : "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
             >
@@ -1459,7 +1577,7 @@ export default function CircuitLite({
         </div>
       )}
 
-      {/* Thin altitude key — Reach II needs a proven mind (one duel win). */}
+      {/* Thin altitude key — Reach II needs a short prove fight in-place. */}
       {phase === "ceiling" && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.68)", backdropFilter: "blur(5px)", zIndex: 30 }}>
           <div style={{ textAlign: "center", padding: 26, borderRadius: 18, border: `1px solid ${accent}`, background: "rgba(12,11,18,.92)", maxWidth: "88vw", width: 360 }}>
@@ -1470,11 +1588,23 @@ export default function CircuitLite({
               ALTITUDE GATE
             </div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: "8px 0 6px" }}>
-              Your mind isn’t strong enough for this sky yet
+              Prove your mind for the higher sky
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 18, lineHeight: 1.5 }}>
-              Win one duel to open Reach II. The climb asked for a stronger champion — go raise it, then return higher.
+              A short fight opens Reach II. Win here — then keep climbing.
             </div>
+            {!guest && (
+              <button
+                type="button"
+                onClick={() => {
+                  pingEvent("climb_prove_open");
+                  setPhase("prove");
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center", marginBottom: 8 }}
+              >
+                <Swords size={15} strokeWidth={2.4} /> Prove now
+              </button>
+            )}
             <button
               type="button"
               onClick={resetRun}
@@ -1482,17 +1612,34 @@ export default function CircuitLite({
             >
               <RotateCcw size={15} strokeWidth={2.4} /> Practice Reach I again
             </button>
-            {onExit && (
+            {guest && onClaim && (
               <button
                 type="button"
-                onClick={onExit}
+                onClick={onClaim}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
               >
-                Raise your mind
+                Claim a mind to prove
               </button>
             )}
           </div>
         </div>
+      )}
+
+      {phase === "prove" && !guest && (
+        <ClimbProveGate
+          activeKey={activeKey}
+          accent={accent}
+          onClose={() => {
+            setPhase("ceiling");
+          }}
+          onWon={() => {
+            // Win recorded on champion — resume past the altitude key into Reach II.
+            setSector(ALTITUDE_KEY_SECTOR);
+            setTargetIdx(1);
+            setPhase("ready");
+            pingEvent("climb_prove_resume");
+          }}
+        />
       )}
     </div>
   );
