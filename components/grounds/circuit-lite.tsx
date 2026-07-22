@@ -80,19 +80,16 @@ interface RunReward {
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
-// Wind push — match desktop Circuit (world.tsx CIRCUIT_CRUISE/SURGE + ACCEL_FLY).
-// Portrait reads slower than desktop, so cruise sits between cruise & surge.
-const FORWARD_SPOOL = 16;   // = ACCEL_FLY — snap into the wind
-const CIRCUIT_CRUISE = 17;  // desktop cruise 14 / surge 18 — phone needs the push
-const LAUNCH_FWD = 14;      // seed forward speed so the first frame already has wind
-const GRAVITY = 28;         // near FLY_GRAVITY — heavy robot
-const THRUST_ACCEL = 50;    // near FLY_THRUST_ACCEL
-const PRESS_KICK = 4.0;     // near FLY_PRESS_KICK
+// Wind push — hard +Z cruise (desktop Circuit feel). No soft float-from-zero.
+const CIRCUIT_CRUISE = 20;  // above desktop surge (18) — portrait under-reads speed
+const GRAVITY = 28;
+const THRUST_ACCEL = 50;
+const PRESS_KICK = 4.0;
 const MAX_FALL = 18;
 const MAX_RISE = 12;
-const CRUISE_SINK = -2.8;   // = FLY_CRUISE_SINK
+const CRUISE_SINK = -2.8;
 const CRUISE_GLIDE = 7;
-const DIVE_SINK = -7.6;     // = FLY_DIVE_SINK
+const DIVE_SINK = -7.6;
 const DIVE_GLIDE = 9;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
@@ -100,30 +97,30 @@ const FLOOR_Y = -9;
 // ── stumble (docs/climb.md §4) — a hazard hit is NOT a death; it shoves you and
 // briefly locks control, so it usually CASCADES into a miss or a fall without
 // adding a third fail state. Then a grace window so you're not chain-stunned. ──
-const STUMBLE_VY = -6;      // downward shove on a hit
-const STUMBLE_LOCK = 0.4;   // seconds control is ignored after a hit
-const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + grace)
-const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
+const STUMBLE_VY = -6;
+const STUMBLE_LOCK = 0.4;
+const STUMBLE_IMMUNE = 1.6;
+const GOLD_RING_ODDS = 0.125;
 const GOLD_RING_CROWNS = 25;
 
-// Chase camera — close enough that 17 u/s wind reads like desktop Circuit.
-const CAM_DIST = 9.2;
+// Chase camera — a touch farther so cast/rings match desktop scale in frame.
+const CAM_DIST = 11.2;
 const CAM_PITCH = 0.14;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
 const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
-const CAM_LEAD = 1.6;
+const CAM_LEAD = 2.4; // more down-track look = stronger forward rush
 const CAM_HEIGHT = 0.27;
-const CAM_LERP = 6;
-const CAM_FOV = 52;
+const CAM_LERP = 7;
+const CAM_FOV = 54; // slight widen + lead sells the wind
 
 // Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
 const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
 const CHAMP_FACE = 0;
-const CHAMP_Y = -0.72; // mesh drop so torso centres the gate-thread point
-// Desktop CircuitSpectator pedestal — on phone chase-cam (+Z look), +X = screen-right.
-const PED_OFF: [number, number, number] = [2.6, -1.35, 0.45];
+const CHAMP_Y = -0.72;
+// Looking +Z: screen-right is −X (same pedestal side as desktop CircuitSpectator).
+const PED_OFF: [number, number, number] = [-2.6, -1.35, 0.45];
 const PED_H = 1.05;
 const PED_R_TOP = 0.52;
 const PED_R_BOT = 0.64;
@@ -227,8 +224,8 @@ function Flyer({
 
   const pos = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2]));
   const vy = useRef(0);
-  // Seed wind immediately — desktop Circuit is already at cruise when you jump.
-  const fwd = useRef(Math.min(speed, LAUNCH_FWD));
+  // Hard wind from frame 0 — no spool (spool read as "hovering then drifting").
+  const fwd = useRef(speed);
   const wasHeld = useRef(false); // rising-edge detect for the tap-kick
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
   const prevZ = useRef(track.spawn[2]);
@@ -254,8 +251,8 @@ function Flyer({
     const controlLocked = tSec < lockUntil.current;
     const held = !controlLocked && !!holdRef.current;
 
-    // auto-forward, spooling up to this sector's cruise speed
-    fwd.current += (speed - fwd.current) * (1 - Math.exp(-FORWARD_SPOOL * dt));
+    // Hard wind — lock cruise every frame (desktop Circuit's constant +Z push).
+    fwd.current = speed;
     pos.current.z += fwd.current * dt;
 
     const cp = track.checkpoints[cpNext.current];
@@ -307,7 +304,8 @@ function Flyer({
     if (grp.current) {
       grp.current.position.copy(pos.current);
       grp.current.rotation.y = CHAMP_FACE;
-      const pitch = THREE.MathUtils.clamp(-vy.current * 0.035, -0.35, 0.42);
+      // Nose-down rush from wind + climb/sink attitude (reads as flying forward).
+      const pitch = THREE.MathUtils.clamp(0.14 - vy.current * 0.04, -0.2, 0.5);
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
@@ -391,7 +389,7 @@ function Flyer({
     <group ref={grp} position={track.spawn}>
       <group position={[0, CHAMP_Y, 0]}>
         <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
-          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} />
+          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0.28} />
         </Suspense>
       </group>
       <AscentSigil reaches={ascentReaches} accent={accent} />
@@ -980,7 +978,9 @@ export default function CircuitLite({
   );
 
   const onSectorClear = useCallback(() => {
+    // Back to the pad — next sector waits for HOLD (desktop sector-ready beat).
     setHold(false);
+    stopJet();
     setTargetIdx(1);
     setSector((s) => {
       if (samplesRef.current.length >= 2) {
@@ -991,7 +991,6 @@ export default function CircuitLite({
       const next = s + 1;
       if (next >= CLIMB_SECTOR_COUNT) {
         samplesRef.current = [];
-        stopJet();
         rewardSfx("epic");
         recordRun(CLIMB_SECTOR_COUNT, true);
         setPhase("done");
@@ -1001,20 +1000,16 @@ export default function CircuitLite({
       // board still records depth from this run; campaign height pauses here.
       if (next >= ALTITUDE_KEY_SECTOR && !guest && (champion.wins ?? 0) < 1) {
         samplesRef.current = [];
-        stopJet();
         rewardSfx("big");
         recordRun(next, true);
         setPhase("ceiling");
         return s;
       }
       rewardSfx("big");
-      // Keep phase=running — Flyer remounts on the next sector; restart ghost clock.
-      const now = performance.now();
-      sectorStart.current = now;
-      setGhostStartMs(now);
-      const sp = desktopCircuitSector(next).spawn;
-      const origin = toClimbCanonical(sp[1], sp[2]);
-      samplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
+      samplesRef.current = [];
+      setGhostStartMs(0);
+      sectorStart.current = 0;
+      setPhase("ready");
       return next;
     });
   }, [setHold, recordRun, guest, champion.wins]);
