@@ -1034,7 +1034,13 @@ export default function GroundsScreen({
     }
     try {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
-      if (!seen) setShowIntro(true);
+      // /ascent is fly-first — never park on the marketing deck (reads as a black stall on phones).
+      if (!seen && !ascentEntry) setShowIntro(true);
+      else if (!seen && ascentEntry) {
+        try {
+          localStorage.setItem(STORAGE.intro, "1");
+        } catch {}
+      }
     } catch {}
     try {
       setShowChronicle(localStorage.getItem(STORAGE.chronicleDismissed) !== "1");
@@ -1199,6 +1205,7 @@ export default function GroundsScreen({
   }, [reloadKey, loadWar]);
 
   // New players: short summon → guest Circuit (claim postponed to RUN OVER).
+  // On /ascent, arm as soon as the roster is up — no marketing intro, no long black gap.
   useEffect(() => {
     if (!mounted || isFirstDuelComplete() || owned || showIntro) {
       summonStartedAt.current = null;
@@ -1207,10 +1214,11 @@ export default function GroundsScreen({
     if (guestAscentReady || firstDuelPhase !== null) return;
     if (summonStartedAt.current === null) summonStartedAt.current = Date.now();
     if (roster.length === 0) return;
-    const wait = Math.max(0, MIN_SUMMON_MS - (Date.now() - summonStartedAt.current));
+    const floor = ascentEntry ? 0 : MIN_SUMMON_MS;
+    const wait = Math.max(0, floor - (Date.now() - summonStartedAt.current));
     const t = setTimeout(() => setGuestAscentReady(true), wait);
     return () => clearTimeout(t);
-  }, [mounted, owned, roster.length, firstDuelPhase, showIntro, guestAscentReady]);
+  }, [mounted, owned, roster.length, firstDuelPhase, showIntro, guestAscentReady, ascentEntry]);
 
   // Warm the guided first-fight world (its ~23 nature glTFs + the world chunk) as
   // EARLY as possible — the moment a first-run player is detected, while the intro
@@ -3314,7 +3322,9 @@ export default function GroundsScreen({
           silent black gap (~15s on a cold load) and was the single biggest
           drop-off point. Hold a calm "summoning" beat here so the player always
           sees intent, never a dead screen, until champion select mounts. */}
-      {mounted && !showIntro && !rosterError && awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady && (
+      {mounted && !showIntro && !rosterError && !showWorld && gpu?.ok && (
+        (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady) || ascentEntry
+      ) && (
         <div
           aria-live="polite"
           style={{
