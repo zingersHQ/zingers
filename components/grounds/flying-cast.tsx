@@ -31,16 +31,26 @@ import { COMPANION_FOLLOW, companionDockSlot, companionPathSlot } from "./compan
 const EXTRA_GRAV = 1.35;
 const VERT_SPRING = 8; // same Y spring OwnedCompanion uses while flying
 
+// Match Handler airborne polish (world.tsx FLY_* ) so Climb reads as real flight.
+const FLY_FOOT = 1.45;
+const FLY_LEG_HANG = 0.55;
+const FLY_KNEE_BEND = 0.75;
+
+function legBone(bones: Record<string, THREE.Bone>, part: "foot" | "upperleg" | "lowerleg", side: "l" | "r") {
+  return bones[`${part}.${side}`] ?? bones[`${part}${side}`];
+}
+
 // ── the Trainer's robot, flying with a jetpack (the pilot) ────────────────────
 // Builds the RobotExpressive rig with the Reader palette, plays the idle clip as a
 // hover pose, and wears the jetpack. `faceHeading` orients it down-track.
+// While flyingRef: forward lean + leg hang (same language as desktop Circuit).
 export function RobotPilot({
   force = null,
   flyingRef,
   burstRef,
   faceHeading = 0,
   scale = READER_SCALE,
-  lean = 0.16,
+  lean = 0.22,
 }: {
   force?: CreatureType | null;
   flyingRef: React.RefObject<boolean>;
@@ -56,6 +66,14 @@ export function RobotPilot({
     [scene, animations, pal],
   );
   const leanGrp = useRef<THREE.Group>(null);
+  const footTuck = useRef(0);
+  const legHang = useRef(0);
+  const footBind = useRef({ l: new THREE.Quaternion(), r: new THREE.Quaternion() });
+  const bindReady = useRef(false);
+  const eHang = useRef(new THREE.Euler());
+  const qFoot = useRef(new THREE.Quaternion());
+  const qThigh = useRef(new THREE.Quaternion());
+  const qKnee = useRef(new THREE.Quaternion());
 
   useEffect(() => {
     const idle = built.actions.idle;
@@ -64,6 +82,7 @@ export function RobotPilot({
       idle.fadeIn(0.2);
       idle.play();
     }
+    bindReady.current = false;
     return () => {
       idle?.stop();
     };
@@ -73,9 +92,61 @@ export function RobotPilot({
     const dt = Math.min(0.05, dtRaw);
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
-    // forward flight lean, eased in
+
+    const fl = legBone(built.bones, "foot", "l");
+    const fr = legBone(built.bones, "foot", "r");
+    if (!bindReady.current && fl && fr) {
+      footBind.current.l.copy(fl.quaternion);
+      footBind.current.r.copy(fr.quaternion);
+      bindReady.current = true;
+    }
+
+    const aloft = !!flyingRef.current;
+    footTuck.current += ((aloft ? FLY_FOOT : 0) - footTuck.current) * (1 - Math.exp(-12 * dt));
+    legHang.current += ((aloft ? 1 : 0) - legHang.current) * (1 - Math.exp(-10 * dt));
+
+    if (fl && fr && bindReady.current) {
+      if (footTuck.current > 0.001) {
+        eHang.current.set(-FLY_FOOT * footTuck.current, 0, 0);
+        qFoot.current.setFromEuler(eHang.current);
+        fl.quaternion.copy(footBind.current.l).multiply(qFoot.current);
+        fr.quaternion.copy(footBind.current.r).multiply(qFoot.current);
+      } else {
+        fl.quaternion.copy(footBind.current.l);
+        fr.quaternion.copy(footBind.current.r);
+      }
+    }
+    if (legHang.current > 0.001) {
+      const ul = legBone(built.bones, "upperleg", "l");
+      const ur = legBone(built.bones, "upperleg", "r");
+      const ll = legBone(built.bones, "lowerleg", "l");
+      const lr = legBone(built.bones, "lowerleg", "r");
+      const thigh = FLY_LEG_HANG * legHang.current;
+      const knee = FLY_KNEE_BEND * legHang.current;
+      if (ul) {
+        eHang.current.set(-thigh, 0, 0);
+        qThigh.current.setFromEuler(eHang.current);
+        ul.quaternion.multiply(qThigh.current);
+      }
+      if (ur) {
+        eHang.current.set(-thigh, 0, 0);
+        qThigh.current.setFromEuler(eHang.current);
+        ur.quaternion.multiply(qThigh.current);
+      }
+      if (ll) {
+        eHang.current.set(knee, 0, 0);
+        qKnee.current.setFromEuler(eHang.current);
+        ll.quaternion.multiply(qKnee.current);
+      }
+      if (lr) {
+        eHang.current.set(knee, 0, 0);
+        qKnee.current.setFromEuler(eHang.current);
+        lr.quaternion.multiply(qKnee.current);
+      }
+    }
+
     if (leanGrp.current) {
-      const want = flyingRef.current ? lean : 0;
+      const want = aloft ? lean : 0;
       leanGrp.current.rotation.x += (want - leanGrp.current.rotation.x) * (1 - Math.exp(-8 * dt));
     }
   });

@@ -20,9 +20,8 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
-import { ChampionMesh, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
+import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
-import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
 import { climbChallengeUrl, type ClimbChallenge } from "@/lib/climb-challenge";
@@ -81,26 +80,22 @@ interface RunReward {
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
-const FORWARD_SPOOL = 11;   // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
-// Same cruise as desktop Circuit (world.tsx CIRCUIT_CRUISE). Layout is already
-// desktop-scaled — difficulty-based speed was leaving early sectors too slow.
-const CIRCUIT_CRUISE = 14;
-const GRAVITY = 24;         // downward accel (u/s²) — hard fall when not cruising
-const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
-const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
-const MAX_FALL = 15;        // terminal fall speed (sticky, but never uncontrollable)
-const MAX_RISE = 10;        // climb clamp — a full hold rises, but you can still aim
-// Auto-forward is always on in Climb — released thumb = cruise glide by default
-// (slight descent). When you're clearly ABOVE the next ring, deepen the sink so
-// Surge high→low beats are reachable without a second thumb input. Flat/vista
-// glides keep the gentle rate — enrich hard sectors, don't brick the easy ones.
-const CRUISE_SINK = -2.0;   // target vy while level with / below the next gate
-const CRUISE_GLIDE = 6;     // ease rate toward cruise sink
-const DIVE_SINK = -8.0;     // target vy when above the next gate (Surge drops)
-const DIVE_GLIDE = 8;       // snappier ease into the dive
-const DIVE_LEAD = 2.2;      // how far above next gate centre before dive engages
-const FLOOR_Y = -9;         // fall below this → run over
-// No soft Y ceiling — you can climb past a ring to miss on purpose (desktop parity).
+// Wind push — match desktop Circuit (world.tsx CIRCUIT_CRUISE/SURGE + ACCEL_FLY).
+// Portrait reads slower than desktop, so cruise sits between cruise & surge.
+const FORWARD_SPOOL = 16;   // = ACCEL_FLY — snap into the wind
+const CIRCUIT_CRUISE = 17;  // desktop cruise 14 / surge 18 — phone needs the push
+const LAUNCH_FWD = 14;      // seed forward speed so the first frame already has wind
+const GRAVITY = 28;         // near FLY_GRAVITY — heavy robot
+const THRUST_ACCEL = 50;    // near FLY_THRUST_ACCEL
+const PRESS_KICK = 4.0;     // near FLY_PRESS_KICK
+const MAX_FALL = 18;
+const MAX_RISE = 12;
+const CRUISE_SINK = -2.8;   // = FLY_CRUISE_SINK
+const CRUISE_GLIDE = 7;
+const DIVE_SINK = -7.6;     // = FLY_DIVE_SINK
+const DIVE_GLIDE = 9;
+const DIVE_LEAD = 2.2;
+const FLOOR_Y = -9;
 
 // ── stumble (docs/climb.md §4) — a hazard hit is NOT a death; it shoves you and
 // briefly locks control, so it usually CASCADES into a miss or a fall without
@@ -111,28 +106,27 @@ const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + g
 const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
 const GOLD_RING_CROWNS = 25;
 
-// ── chase camera ── desktop Circuit base is 8.6, but in-flight it dollies back
-// with speed (~+3–5). Portrait Climb needs that pulled-back frame as the default
-// so the Trainer + rings read the same size as desktop.
-const CAM_DIST = 11.4;
+// Chase camera — close enough that 17 u/s wind reads like desktop Circuit.
+const CAM_DIST = 9.2;
 const CAM_PITCH = 0.14;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
 const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
-const CAM_LEAD = 1.6;     // small down-track look (desktop lead ≈ speed * 1.2)
-const CAM_HEIGHT = 0.27;  // chest pivot — same as desktop Handler look target
-const CAM_LERP = 6;       // matches desktop in-flight position damp
-const CAM_FOV = 52;       // desktop flying FOV (no speed swell on Climb)
+const CAM_LEAD = 1.6;
+const CAM_HEIGHT = 0.27;
+const CAM_LERP = 6;
+const CAM_FOV = 52;
 
-// ── the flying cast (canon: the Trainer flies, the champion flies beside) ──
-// Same absolute scales as the Grounds / desktop Circuit (world.tsx):
-// Trainer = READER_SCALE (2/3), champion = WORLD_AGENT_SCALE (2/9) → ~⅓.
+// Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
 const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
-const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
-const CHAMP_Y = -0.72;     // drop so the torso centres on the gate-thread point
-/** Ready-pose wing dock — same COMPANION_FOLLOW slot as Grounds OwnedCompanion. */
-const READY_DOCK = companionDockSlot(0, 0, CHAMP_FACE);
+const CHAMP_FACE = 0;
+const CHAMP_Y = -0.72; // mesh drop so torso centres the gate-thread point
+// Desktop CircuitSpectator pedestal — on phone chase-cam (+Z look), +X = screen-right.
+const PED_OFF: [number, number, number] = [2.6, -1.35, 0.45];
+const PED_H = 1.05;
+const PED_R_TOP = 0.52;
+const PED_R_BOT = 0.64;
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
@@ -233,7 +227,8 @@ function Flyer({
 
   const pos = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2]));
   const vy = useRef(0);
-  const fwd = useRef(0);         // forward speed, spools up to `speed` (launch feel)
+  // Seed wind immediately — desktop Circuit is already at cruise when you jump.
+  const fwd = useRef(Math.min(speed, LAUNCH_FWD));
   const wasHeld = useRef(false); // rising-edge detect for the tap-kick
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
   const prevZ = useRef(track.spawn[2]);
@@ -404,43 +399,54 @@ function Flyer({
   );
 }
 
-// ── ready pose: the OWNED champion waits on the start pad, idling ─────────────
+/** Pedestal top — same math as desktop CircuitSpectator (world.tsx). */
+function climbPedestalTop(spawn: [number, number, number]): [number, number, number] {
+  return [spawn[0] + PED_OFF[0], spawn[1] + PED_OFF[1] + PED_H, spawn[2] + PED_OFF[2]];
+}
+
+function ClimbPedestal({ spawn, accent }: { spawn: [number, number, number]; accent: string }) {
+  const px = spawn[0] + PED_OFF[0];
+  const py = spawn[1] + PED_OFF[1];
+  const pz = spawn[2] + PED_OFF[2];
+  const top = py + PED_H;
+  return (
+    <group>
+      <mesh position={[px, py + PED_H * 0.5, pz]} castShadow>
+        <cylinderGeometry args={[PED_R_TOP, PED_R_BOT, PED_H, 20]} />
+        <meshStandardMaterial color="#141230" emissive={accent} emissiveIntensity={0.28} metalness={0.4} roughness={0.6} />
+      </mesh>
+      <mesh position={[px, top + 0.02, pz]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[PED_R_TOP * 0.62, PED_R_TOP * 0.98, 28]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </group>
+  );
+}
+
+// ── ready: Trainer on the launch pad; champion waits on the pedestal (desktop parity) ──
 function ReadyPose({
   track,
   champType,
-  champion,
   ascentReaches,
   accent,
   flyerPosRef,
-  champPosRef,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
-  champion: Champion;
   ascentReaches: number;
   accent: string;
-  /** Publish Trainer world pose so challenge ghosts can snap onto you. */
   flyerPosRef: React.RefObject<THREE.Vector3>;
-  /** Publish champion world pose (ready dock) for the same overlap. */
-  champPosRef: React.RefObject<THREE.Vector3>;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  const grounded = useRef(false); // pilot is on the pad, jetpack stowed
+  const grounded = useRef(false); // jetpack stowed on the pad
   const noBurst = useRef(0);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const bob = Math.sin(t * 1.6) * 0.07;
+    const bob = Math.sin(t * 1.6) * 0.05;
     const py = track.spawn[1] + CHAMP_Y + bob;
     if (grp.current) grp.current.position.y = py;
-    // Live poses for challenge ghosts — same spot, same bob.
     flyerPosRef.current.set(track.spawn[0], py, track.spawn[2]);
-    champPosRef.current.set(
-      track.spawn[0] + READY_DOCK.tx,
-      py - COMPANION_FOLLOW.wingDrop * 0.35,
-      track.spawn[2] + READY_DOCK.tz,
-    );
-    // Same chase frame as a running sector (visual Trainer pivot + pulled-back dist).
     const sx = track.spawn[0];
     const sy = py + CAM_HEIGHT;
     const sz = track.spawn[2];
@@ -450,22 +456,7 @@ function ReadyPose({
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
       <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
-        {/* the Trainer's robot, ready on the pad */}
         <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0} />
-        {/* champion on the Grounds wing dock — same COMPANION_FOLLOW slot as the 3D world */}
-        <group position={[READY_DOCK.tx, -COMPANION_FOLLOW.wingDrop * 0.35, READY_DOCK.tz]}>
-          <ChampionMesh
-            type={champType}
-            champion={champion}
-            position={[0, 0, 0]}
-            rotation={CHAMP_FACE - 0.25}
-            showLabel={false}
-            hideFloaters
-            breatheIntensity={0.9}
-            restPose="standing"
-            sceneScale={FOLLOWER_SCALE}
-          />
-        </group>
       </Suspense>
       <AscentSigil reaches={ascentReaches} accent={accent} />
     </group>
@@ -634,11 +625,8 @@ export default function CircuitLite({
   useEffect(() => {
     const y = track.spawn[1] + CHAMP_Y;
     flyerPosRef.current.set(track.spawn[0], y, track.spawn[2]);
-    champPosRef.current.set(
-      track.spawn[0] + READY_DOCK.tx,
-      y - COMPANION_FOLLOW.wingDrop * 0.35,
-      track.spawn[2] + READY_DOCK.tz,
-    );
+    const ped = climbPedestalTop(track.spawn);
+    champPosRef.current.set(ped[0], ped[1], ped[2]);
   }, [track]);
   const theme: ReachTheme = reachTheme(sector);
   const biome = theme.biome;
@@ -1193,11 +1181,9 @@ export default function CircuitLite({
             <ReadyPose
               track={track}
               champType={champType}
-              champion={champion}
               ascentReaches={ascentReaches}
               accent={accent}
               flyerPosRef={flyerPosRef}
-              champPosRef={champPosRef}
             />
           )}
           {running && (
@@ -1222,6 +1208,25 @@ export default function CircuitLite({
               onStumble={onStumble}
             />
           )}
+          {/* Pedestal + champion — desktop CircuitSpectator staging (stand to the right). */}
+          {(phase === "ready" || phase === "continue" || running) && (
+            <>
+              <ClimbPedestal spawn={track.spawn} accent={accent} />
+              <FlyingFollower
+                key={`wing-${activeKey}-${sector}`}
+                type={champType}
+                champion={champion}
+                identityKey={activeKey}
+                targetRef={flyerPosRef}
+                headingRef={flyerHeadingRef}
+                scale={FOLLOWER_SCALE}
+                renderPriority={0}
+                spawnFrom={climbPedestalTop(track.spawn)}
+                chasing={running}
+                poseOut={champPosRef}
+              />
+            </>
+          )}
           {(phase === "ready" || running) && (() => {
             const ghostPath = ghostPathForSector(challenge?.path, sector);
             if (!ghostPath) return null;
@@ -1245,22 +1250,6 @@ export default function CircuitLite({
               />
             );
           })()}
-          {running && (
-            <FlyingFollower
-              key={`follow-${runId}`}
-              type={champType}
-              champion={champion}
-              identityKey={activeKey}
-              targetRef={flyerPosRef}
-              headingRef={flyerHeadingRef}
-              scale={FOLLOWER_SCALE}
-              // MUST stay 0 — priority > 0 steals the lite canvas render loop
-              // (no EffectComposer / manual gl.render). Flyer mounts first so
-              // same-priority order still leashes to this frame's pose.
-              renderPriority={0}
-              poseOut={champPosRef}
-            />
-          )}
           {ghost && (
             <CircuitGhostLeave
               key={ghost.id}
