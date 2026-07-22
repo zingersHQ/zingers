@@ -1,5 +1,8 @@
 // Compact Climb ghost-path codec for challenge URLs (nail-it P1).
-// Samples: (t ms, y, z) sparsely during a run → base64url blob on ?gp=
+// Samples: (t ms, y, z) per sector → base64url blob on ?gp=
+//
+// v1: single continuous path (legacy links)
+// v2: per-sector paths so each sector start restarts the race beside you
 
 export interface ClimbGhostSample {
   t: number;
@@ -7,65 +10,87 @@ export interface ClimbGhostSample {
   z: number;
 }
 
-const MAX_SAMPLES = 48;
-const VERSION = 1;
+/** Outer array = sector index; each sector's t is ms since that sector started. */
+export type ClimbGhostSectors = ClimbGhostSample[][];
 
-/** Keep URL under ~400 chars of path payload. */
-export function encodeGhostPath(samples: ClimbGhostSample[]): string | null {
-  if (!samples.length) return null;
-  const picked = thinSamples(samples, MAX_SAMPLES);
-  if (picked.length < 2) return null;
+const MAX_SECTORS = 12;
+const MAX_PER_SECTOR = 28;
+const VERSION_V1 = 1;
+const VERSION_V2 = 2;
 
-  const y0 = picked[0]!.y;
-  const z0 = picked[0]!.z;
-  const full = new Uint8Array(6 + picked.length * 5);
-  full[0] = VERSION;
-  full[1] = picked.length;
-  writeI16(full, 2, Math.round(y0 * 10));
-  writeU16(full, 4, Math.max(0, Math.round(z0)));
+/** Encode one or more sector paths. Prefer per-sector arrays (v2). */
+export function encodeGhostPath(sectors: ClimbGhostSectors | ClimbGhostSample[]): string | null {
+  const list = normalizeSectors(sectors);
+  if (!list.length) return null;
 
-  let prevT = 0;
-  for (let i = 0; i < picked.length; i++) {
-    const s = picked[i]!;
-    const dt = Math.min(255, Math.max(0, Math.round((s.t - prevT) / 20))); // 20ms units
-    prevT = s.t;
-    const yq = Math.min(255, Math.max(0, Math.round((s.y - y0 + 12) * (255 / 24))));
-    const dz = Math.min(65535, Math.max(0, Math.round((s.z - z0) * 10)));
-    const o = 6 + i * 5;
-    full[o] = dt;
-    full[o + 1] = yq;
-    writeU16(full, o + 2, dz);
-    full[o + 4] = 0;
+  if (list.length === 1) {
+    // Keep v1 for single-sector shares (shorter + legacy-compatible).
+    return encodeV1(list[0]!);
+  }
+
+  const thinned = list
+    .slice(0, MAX_SECTORS)
+    .map((s) => thinSamples(s, MAX_PER_SECTOR))
+    .filter((s) => s.length >= 2);
+  if (!thinned.length) return null;
+
+  let size = 2;
+  for (const s of thinned) size += 5 + s.length * 5;
+  const full = new Uint8Array(size);
+  full[0] = VERSION_V2;
+  full[1] = thinned.length;
+  let o = 2;
+  for (const s of thinned) {
+    o = writeSectorBlock(full, o, s);
   }
   return bytesToB64url(full);
 }
 
-export function decodeGhostPath(raw: string | null | undefined): ClimbGhostSample[] | null {
+/** Decode to per-sector paths. v1 becomes a single-sector array. */
+export function decodeGhostPath(raw: string | null | undefined): ClimbGhostSectors | null {
   if (!raw) return null;
   try {
     const buf = b64urlToBytes(raw);
-    if (buf.length < 11 || buf[0] !== VERSION) return null;
-    const n = buf[1]!;
-    if (n < 2 || n > MAX_SAMPLES) return null;
-    if (buf.length < 6 + n * 5) return null;
-    const y0 = readI16(buf, 2) / 10;
-    const z0 = readU16(buf, 4);
-    const out: ClimbGhostSample[] = [];
-    let t = 0;
-    for (let i = 0; i < n; i++) {
-      const o = 6 + i * 5;
-      t += buf[o]! * 20;
-      const y = y0 - 12 + (buf[o + 1]! / 255) * 24;
-      const dz = readU16(buf, o + 2);
-      out.push({ t, y, z: z0 + dz / 10 });
+    if (buf.length < 11) return null;
+    const ver = buf[0]!;
+    if (ver === VERSION_V1) {
+      const one = decodeV1Body(buf);
+      return one ? [one] : null;
     }
-    return out;
+    if (ver !== VERSION_V2) return null;
+    const nSec = buf[1]!;
+    if (nSec < 1 || nSec > MAX_SECTORS) return null;
+    const out: ClimbGhostSectors = [];
+    let o = 2;
+    for (let i = 0; i < nSec; i++) {
+      const block = readSectorBlock(buf, o);
+      if (!block) return null;
+      out.push(block.samples);
+      o = block.next;
+    }
+    return out.length ? out : null;
   } catch {
     return null;
   }
 }
 
-/** Sample Y/Z at time t (ms) along the path. */
+/** Path for the live sector — falls back to sector 0 so old links still race. */
+export function ghostPathForSector(
+  sectors: ClimbGhostSectors | null | undefined,
+  sectorIdx: number,
+): ClimbGhostSample[] | null {
+  if (!sectors?.length) return null;
+  const direct = sectors[sectorIdx];
+  if (direct && direct.length >= 2) return direct;
+  const fallback = sectors[0];
+  return fallback && fallback.length >= 2 ? fallback : null;
+}
+
+export function ghostPathHasSamples(sectors: ClimbGhostSectors | null | undefined): boolean {
+  return !!sectors?.some((s) => s.length >= 2);
+}
+
+/** Sample Y/Z at time t (ms) along a single sector path. */
 export function sampleGhostAt(path: ClimbGhostSample[], tMs: number): { y: number; z: number } | null {
   if (!path.length) return null;
   if (tMs <= path[0]!.t) return { y: path[0]!.y, z: path[0]!.z };
@@ -83,6 +108,87 @@ export function sampleGhostAt(path: ClimbGhostSample[], tMs: number): { y: numbe
     }
   }
   return { y: last.y, z: last.z };
+}
+
+function normalizeSectors(sectors: ClimbGhostSectors | ClimbGhostSample[]): ClimbGhostSectors {
+  if (!sectors.length) return [];
+  const first = sectors[0];
+  // ClimbGhostSample has numeric t; a sector array's [0] is a sample or empty.
+  if (first && typeof (first as ClimbGhostSample).t === "number") {
+    return [sectors as ClimbGhostSample[]];
+  }
+  return (sectors as ClimbGhostSectors).filter((s) => s.length >= 2);
+}
+
+function encodeV1(samples: ClimbGhostSample[]): string | null {
+  const picked = thinSamples(samples, MAX_PER_SECTOR);
+  if (picked.length < 2) return null;
+  const full = new Uint8Array(6 + picked.length * 5);
+  full[0] = VERSION_V1;
+  full[1] = picked.length;
+  writeSectorPayload(full, 2, picked);
+  return bytesToB64url(full);
+}
+
+function decodeV1Body(buf: Uint8Array): ClimbGhostSample[] | null {
+  const n = buf[1]!;
+  if (n < 2 || n > MAX_PER_SECTOR * 2) return null;
+  if (buf.length < 6 + n * 5) return null;
+  return readSamples(buf, 2, n);
+}
+
+function writeSectorBlock(buf: Uint8Array, o: number, samples: ClimbGhostSample[]): number {
+  buf[o] = samples.length;
+  writeSectorPayload(buf, o + 1, samples);
+  return o + 5 + samples.length * 5;
+}
+
+function readSectorBlock(
+  buf: Uint8Array,
+  o: number,
+): { samples: ClimbGhostSample[]; next: number } | null {
+  if (o + 5 > buf.length) return null;
+  const n = buf[o]!;
+  if (n < 2 || n > MAX_PER_SECTOR) return null;
+  if (buf.length < o + 5 + n * 5) return null;
+  const samples = readSamples(buf, o + 1, n);
+  if (!samples) return null;
+  return { samples, next: o + 5 + n * 5 };
+}
+
+function writeSectorPayload(buf: Uint8Array, o: number, samples: ClimbGhostSample[]) {
+  const y0 = samples[0]!.y;
+  const z0 = samples[0]!.z;
+  writeI16(buf, o, Math.round(y0 * 10));
+  writeU16(buf, o + 2, Math.max(0, Math.round(z0)));
+  let prevT = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i]!;
+    const dt = Math.min(255, Math.max(0, Math.round((s.t - prevT) / 20)));
+    prevT = s.t;
+    const yq = Math.min(255, Math.max(0, Math.round((s.y - y0 + 12) * (255 / 24))));
+    const dz = Math.min(65535, Math.max(0, Math.round((s.z - z0) * 10)));
+    const p = o + 4 + i * 5;
+    buf[p] = dt;
+    buf[p + 1] = yq;
+    writeU16(buf, p + 2, dz);
+    buf[p + 4] = 0;
+  }
+}
+
+function readSamples(buf: Uint8Array, o: number, n: number): ClimbGhostSample[] | null {
+  const y0 = readI16(buf, o) / 10;
+  const z0 = readU16(buf, o + 2);
+  const out: ClimbGhostSample[] = [];
+  let t = 0;
+  for (let i = 0; i < n; i++) {
+    const p = o + 4 + i * 5;
+    t += buf[p]! * 20;
+    const y = y0 - 12 + (buf[p + 1]! / 255) * 24;
+    const dz = readU16(buf, p + 2);
+    out.push({ t, y, z: z0 + dz / 10 });
+  }
+  return out;
 }
 
 function thinSamples(samples: ClimbGhostSample[], max: number): ClimbGhostSample[] {

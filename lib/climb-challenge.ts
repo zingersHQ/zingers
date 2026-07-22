@@ -5,7 +5,11 @@
 // Path samples are ALWAYS in Climb-canonical space (mobile units).
 
 import { BRAND } from "@/lib/brand";
-import { decodeGhostPath, encodeGhostPath, type ClimbGhostSample } from "@/lib/climb-ghost";
+import {
+  decodeGhostPath,
+  encodeGhostPath,
+  type ClimbGhostSectors,
+} from "@/lib/climb-ghost";
 
 /** Keep in sync with CLIMB_SECTOR_COUNT (components/grounds/climb/sectors). */
 const MAX_SECTORS = 100;
@@ -17,8 +21,8 @@ export interface ClimbChallenge {
   totalMs: number;
   /** Optional challenger display name (URL-safe). */
   name?: string;
-  /** Compact ghost path for side-by-side race (canonical Climb space). */
-  path?: ClimbGhostSample[];
+  /** Per-sector ghost paths (canonical Climb space). v1 links decode as one sector. */
+  path?: ClimbGhostSectors;
   /** Which body the challenge was shared from (boards stay split). */
   door?: ClimbDoor;
 }

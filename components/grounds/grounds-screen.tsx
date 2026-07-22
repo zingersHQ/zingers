@@ -112,7 +112,7 @@ import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
 import { climbChallengeUrl, readClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
-import type { ClimbGhostSample } from "@/lib/climb-ghost";
+import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
   DESKTOP_CIRCUIT_COUNT,
@@ -422,7 +422,9 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
   /** Ghost-path samples in Climb-canonical space (interchangeable with mobile). */
-  const circuitSamplesRef = useRef<ClimbGhostSample[]>([]);
+  /** Per-sector ghost samples (canonical Climb space); t = ms since sector start. */
+  const circuitSectorPathsRef = useRef<ClimbGhostSectors>([]);
+  const circuitSectorSamplesRef = useRef<ClimbGhostSample[]>([]);
   const circuitSampleLastT = useRef(0);
   const [circuitChallenge, setCircuitChallenge] = useState<ClimbChallenge | null>(null);
   const [circuitChallengeDismissed, setCircuitChallengeDismissed] = useState(false);
@@ -524,7 +526,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
-    circuitSamplesRef.current = [];
+    circuitSectorPathsRef.current = [];
+    circuitSectorSamplesRef.current = [];
     circuitSampleLastT.current = 0;
     circuitLivesRef.current = CIRCUIT_LIVES;
     setCircuitLives(CIRCUIT_LIVES);
@@ -652,12 +655,25 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     return () => window.clearTimeout(t);
   }, [wildResume, gameSession]);
 
+  const finalizeCircuitSectorPath = useCallback((idx: number) => {
+    const samples = circuitSectorSamplesRef.current;
+    if (samples.length >= 2) {
+      const paths = circuitSectorPathsRef.current.slice();
+      paths[idx] = [...samples];
+      circuitSectorPathsRef.current = paths;
+    }
+    circuitSectorSamplesRef.current = [];
+    circuitSampleLastT.current = 0;
+  }, []);
+
   const advanceCircuitSector = useCallback(() => {
+    finalizeCircuitSectorPath(circuitSectorIdx);
     const next = circuitSectorIdx + 1;
     circuitCpNext.current = 1;
     setCircuitCpPassed(1);
     setCircuitSectorMs(0);
     circuitSectorStart.current = 0;
+    setCircuitGhostRunStartMs(0);
     if (next >= DESKTOP_CIRCUIT_COUNT) {
       const total = performance.now() - circuitRunStart.current;
       setCircuitRunMs(total);
@@ -690,7 +706,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     setCircuitArriveNonce((n) => n + 1);
     const s = desktopCircuitSector(next).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge]);
+  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge, finalizeCircuitSectorPath]);
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
@@ -774,12 +790,13 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     const now = performance.now();
     if (circuitSectorIdx === 0 && !circuitRunStart.current) {
       circuitRunStart.current = now;
-      circuitSamplesRef.current = [];
-      circuitSampleLastT.current = 0;
-      setCircuitGhostRunStartMs(now);
+      circuitSectorPathsRef.current = [];
       setCircuitChallengeResult(null);
     }
+    circuitSectorSamplesRef.current = [];
+    circuitSampleLastT.current = 0;
     circuitSectorStart.current = now;
+    setCircuitGhostRunStartMs(now);
     setCircuitPhase("running");
   }, [circuitPhase, circuitSectorIdx]);
 
@@ -787,21 +804,27 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     const now = performance.now();
     if (now - circuitSampleLastT.current < 400) return;
     circuitSampleLastT.current = now;
-    const t0 = circuitRunStart.current || now;
+    const t0 = circuitSectorStart.current || now;
     const canon = toClimbCanonical(y, z);
-    circuitSamplesRef.current.push({ t: Math.max(0, now - t0), y: canon.y, z: canon.z });
-    if (circuitSamplesRef.current.length > 120) circuitSamplesRef.current.shift();
+    const bucket = circuitSectorSamplesRef.current;
+    bucket.push({ t: Math.max(0, now - t0), y: canon.y, z: canon.z });
+    if (bucket.length > 80) bucket.shift();
   }, []);
 
   const shareCircuitChallenge = useCallback(async () => {
     const sectors = circuitPhase === "done" ? DESKTOP_CIRCUIT_COUNT : circuitSectorIdx;
     const totalMs = circuitRunMs || Math.max(0, performance.now() - (circuitRunStart.current || performance.now()));
+    // Include the in-progress sector if we died mid-flight.
+    const paths: ClimbGhostSectors = circuitSectorPathsRef.current.map((s) => [...s]);
+    if (circuitSectorSamplesRef.current.length >= 2) {
+      paths[circuitSectorIdx] = [...circuitSectorSamplesRef.current];
+    }
     const url = climbChallengeUrl(
       {
         sectors,
         totalMs,
         name: getHandle() || undefined,
-        path: circuitSamplesRef.current.length >= 2 ? [...circuitSamplesRef.current] : undefined,
+        path: ghostPathHasSamples(paths) ? paths : undefined,
         door: "flight",
       },
       undefined,
@@ -819,7 +842,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       }
     }
     try {
-      await navigator.clipboard.writeText(`${text}\n${url}`);
+      // Copy button = the link only (share sheet keeps the Beat-my-Ascent blurb).
+      await navigator.clipboard.writeText(url);
       setCircuitShareMsg("Challenge link copied");
       track("climb_share_copy");
       window.setTimeout(() => setCircuitShareMsg(null), 2200);
@@ -1599,17 +1623,14 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     track("fj_train_to_ascent");
   }, [bout]);
 
-  /** Claim the loaner from RUN OVER / ceiling — keep the Ascent session. */
-  const claimCircuitLoaner = useCallback(() => {
-    store.setStrat(loanerKey, QUICK_START_STRAT);
-    store.adoptStarterRookie(loanerKey);
-    sealFirstClaim();
+  /** RUN OVER / ceiling claim → champion selection (may keep the loaner or pick another). */
+  const openCircuitClaimPicker = useCallback(() => {
     track("m_claim_from_climb");
-    setCircuitShareMsg(`${ROSTER[loanerKey]?.name ?? "Mind"} claimed`);
-    window.setTimeout(() => setCircuitShareMsg(null), 2200);
-    // Resume from pad so they feel the claim stick, not a soft-lock on the modal.
-    resetCircuitRun();
-  }, [store, loanerKey, sealFirstClaim, resetCircuitRun]);
+    setGuestAscentReady(false);
+    exitVenue();
+    setFirstDuelPhase("pick");
+    if (!firstDuelPick) setFirstDuelPick(loanerKey);
+  }, [exitVenue, firstDuelPick, loanerKey]);
 
   /** Legacy pick path (Choose another mind) → claim then ensure Circuit. */
   const claimAndFlyAscent = useCallback(
@@ -2334,9 +2355,12 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               circuitArriveNonce={activeVenue === "circuit" ? circuitArriveNonce : 0}
               circuitGhostForce={store.force}
               circuitGhostPath={
-                activeVenue === "circuit" && circuitChallenge?.path?.length ? circuitChallenge.path : null
+                activeVenue === "circuit"
+                  ? ghostPathForSector(circuitChallenge?.path, circuitSectorIdx)
+                  : null
               }
               circuitGhostRunStartMs={activeVenue === "circuit" ? circuitGhostRunStartMs : 0}
+              circuitGhostSectorKey={activeVenue === "circuit" ? circuitSectorIdx : 0}
               resumeSpawn={!activeVenue ? wildResume : null}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
@@ -2562,8 +2586,10 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
                   setCircuitPhase("prove");
                 }
           }
-          onClaim={circuitGuest ? claimCircuitLoaner : undefined}
+          onClaim={circuitGuest ? openCircuitClaimPicker : undefined}
           claimName={circuitGuest ? ROSTER[loanerKey]?.name ?? "this mind" : null}
+          onToHub={!circuitGuest ? exitVenue : undefined}
+          hubLabel={venueHostWorldId === "concord" ? "To the Concord" : "Leave the Ascent"}
           challengeResult={circuitChallengeResult}
           challengeLabel={circuitChallenge?.name || (circuitChallenge ? "CHALLENGE" : null)}
           accent={circuitReach.accent}
@@ -2607,8 +2633,8 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
               {circuitChallenge.totalMs > 0 ? ` · ${formatCircuitMs(circuitChallenge.totalMs)}` : ""}
             </div>
             <div className="mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>
-              {circuitChallenge.path?.length
-                ? "Ghost flies beside you — clear deeper or faster to win"
+              {ghostPathHasSamples(circuitChallenge.path)
+                  ? "Ghost flies beside you — clear deeper or faster to win"
                 : "Clear deeper (or same depth, faster) to claim the win"}
             </div>
           </div>

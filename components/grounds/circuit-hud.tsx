@@ -143,6 +143,8 @@ export function CircuitHud({
   onProve,
   onClaim,
   claimName,
+  onToHub,
+  hubLabel,
   challengeResult,
   challengeLabel,
   accent,
@@ -171,9 +173,12 @@ export function CircuitHud({
   shareChallengeLabel?: string;
   /** Open in-place altitude Prove (Reach II gate). */
   onProve?: () => void;
-  /** Guest Ascent: claim the loaner mind from RUN OVER (mobile-like). */
+  /** Guest Ascent: open champion selection to claim (not auto-claim the loaner). */
   onClaim?: () => void;
   claimName?: string | null;
+  /** Claimed Trainer: leave the Ascent (usually back to the Concord). */
+  onToHub?: () => void;
+  hubLabel?: string;
   challengeResult?: "beat" | "miss" | null;
   challengeLabel?: string | null;
   accent: string;
@@ -410,12 +415,17 @@ export function CircuitHud({
           )}
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-              <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+              <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
             </button>
           )}
           {onShareChallenge && (
             <button type="button" className="btn" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onShareChallenge}>
               <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
+            </button>
+          )}
+          {!guestClaim && onToHub && (
+            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
+              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Concord"}
             </button>
           )}
           <button type="button" className={guestClaim ? "btn" : "btn btn-primary"} style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
@@ -432,10 +442,10 @@ export function CircuitHud({
           title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`}
           sub={
             guestClaim
-              ? "Out of lives. Claim the mind that flew with you — or try again as a guest."
+              ? "Out of lives. Pick a mind to claim — or try again as a guest."
               : failReason === "gates"
-                ? "Out of lives — missed a gate. Choose below to start a new run from sector 1."
-                : "Out of lives. Choose below to start a new run from sector 1."
+                ? "Out of lives — missed a gate. Try again, share the run, or head back."
+                : "Out of lives. Try again, share the run, or head back."
           }
         >
           {challengeResult && challengeLabel && (
@@ -446,10 +456,12 @@ export function CircuitHud({
           {guestClaim && onClaim && (
             <>
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
-                A wild mind flew with you. Claim it to keep this climb — XP, Crowns, and the board.
+                {claimName
+                  ? `${claimName} flew with you — open the roster to claim it, or pick another mind.`
+                  : "Open the roster to claim a mind and keep this climb — XP, Crowns, and the board."}
               </div>
               <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-                <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+                <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
               </button>
             </>
           )}
@@ -458,10 +470,15 @@ export function CircuitHud({
               <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
             </button>
           )}
+          {!guestClaim && onToHub && (
+            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
+              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Concord"}
+            </button>
+          )}
           <button
             type="button"
-            className={guestClaim ? "btn" : "btn btn-primary"}
-            style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            className={guestClaim || onToHub ? "btn" : "btn btn-primary"}
+            style={{ ["--ac" as string]: guestClaim || onToHub ? "var(--line2)" : "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             onClick={onRestart}
           >
             <RotateCcw size={16} strokeWidth={2.2} /> Try again
@@ -483,7 +500,7 @@ export function CircuitHud({
         >
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-              <Sparkles size={15} strokeWidth={2.2} /> Claim {claimName}
+              <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
             </button>
           )}
           {!guestClaim && onProve && (

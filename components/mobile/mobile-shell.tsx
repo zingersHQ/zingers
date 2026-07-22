@@ -207,7 +207,7 @@ export function MobileShell() {
                         {challenge.totalMs > 0 ? ` · ${formatCircuitMs(challenge.totalMs)}` : ""}
                       </div>
                       <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 2 }}>
-                        {challenge.path?.length
+                        {challenge.path?.some((s) => s.length >= 2)
                           ? "Ghost flies beside you — clear deeper or faster to win"
                           : "Clear deeper (or same depth, faster) to claim the win"}
                       </div>

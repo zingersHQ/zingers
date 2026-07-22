@@ -26,7 +26,12 @@ import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
 import { climbChallengeUrl, type ClimbChallenge } from "@/lib/climb-challenge";
-import type { ClimbGhostSample } from "@/lib/climb-ghost";
+import {
+  ghostPathForSector,
+  ghostPathHasSamples,
+  type ClimbGhostSample,
+  type ClimbGhostSectors,
+} from "@/lib/climb-ghost";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
@@ -191,7 +196,7 @@ function Flyer({
   flyerHeadingRef,
   pilotBurstRef,
   samplesRef,
-  runStart,
+  sectorStart,
   onGate,
   onSectorClear,
   onFail,
@@ -211,9 +216,9 @@ function Flyer({
   flyerHeadingRef: React.RefObject<number>;
   /** bump to emit a jetpack puff from the pilot */
   pilotBurstRef: React.RefObject<number>;
-  /** ghost-path samples for challenge share (nail-it P1) */
+  /** ghost-path samples for THIS sector (t = ms since sector start) */
   samplesRef: React.MutableRefObject<ClimbGhostSample[]>;
-  runStart: React.MutableRefObject<number>;
+  sectorStart: React.MutableRefObject<number>;
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
   onFail: (r: FailReason) => void;
@@ -324,17 +329,17 @@ function Flyer({
 
     altRef.current = pos.current.y;
 
-    // Sparse path samples for ghost challenge share (~2.5 Hz).
+    // Sparse path samples for ghost challenge share (~2.5 Hz), sector-relative.
     const wall = performance.now();
     if (wall - lastSampleT.current >= 400) {
       lastSampleT.current = wall;
-      const t0 = runStart.current || wall;
+      const t0 = sectorStart.current || wall;
       samplesRef.current.push({
         t: Math.max(0, wall - t0),
         y: pos.current.y,
         z: pos.current.z,
       });
-      if (samplesRef.current.length > 120) samplesRef.current.shift();
+      if (samplesRef.current.length > 80) samplesRef.current.shift();
     }
 
   // fall = spend a life (or run over when out)
@@ -563,6 +568,8 @@ export default function CircuitLite({
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [challengeResult, setChallengeResult] = useState<"beat" | "miss" | null>(null);
   const samplesRef = useRef<ClimbGhostSample[]>([]);
+  const sectorPathsRef = useRef<ClimbGhostSectors>([]);
+  const [ghostStartMs, setGhostStartMs] = useState(0);
   // WebGL context loss handling — a phone GPU can evict our context under memory
   // pressure. preventDefault() asks for the same context back; a watchdog rebuilds
   // once if the browser never restores, capped so a starved device can't churn.
@@ -575,6 +582,7 @@ export default function CircuitLite({
   const holdRef = useRef(false);
   const altRef = useRef(0);
   const runStart = useRef(0); // performance.now() when the run went live
+  const sectorStart = useRef(0); // performance.now() when the live sector started
   // the pilot (robot) publishes its live world pose here; the champion follower trails it
   const flyerPosRef = useRef(new THREE.Vector3());
   const flyerHeadingRef = useRef(CHAMP_FACE);
@@ -818,9 +826,15 @@ export default function CircuitLite({
   const press = useCallback(() => {
     setPhase((p) => {
       if (p === "ready") {
-        runStart.current = performance.now();
+        const now = performance.now();
+        if (sector === 0 || !runStart.current) {
+          runStart.current = now;
+          sectorPathsRef.current = [];
+          setChallengeResult(null);
+        }
+        sectorStart.current = now;
+        setGhostStartMs(now);
         samplesRef.current = [];
-        setChallengeResult(null);
         if (guest && !guestPinged.current) {
           guestPinged.current = true;
           pingEvent("m_guest_run");
@@ -830,7 +844,7 @@ export default function CircuitLite({
       return p;
     });
     setHold(true);
-  }, [setHold, guest]);
+  }, [setHold, guest, sector]);
 
   // Ordinary restart: reset run state and REUSE the live WebGL context (never
   // bump runId — remounting the Canvas spins a fresh context and can push a
@@ -844,6 +858,10 @@ export default function CircuitLite({
     setReward(null);
     setChallengeResult(null);
     samplesRef.current = [];
+    sectorPathsRef.current = [];
+    setGhostStartMs(0);
+    sectorStart.current = 0;
+    runStart.current = 0;
     bonusCrowns.current = 0;
     livesRef.current = CIRCUIT_LIVES;
     setLives(CIRCUIT_LIVES);
@@ -942,6 +960,12 @@ export default function CircuitLite({
     setHold(false);
     setTargetIdx(1);
     setSector((s) => {
+      if (samplesRef.current.length >= 2) {
+        const paths = sectorPathsRef.current.slice();
+        paths[s] = [...samplesRef.current];
+        sectorPathsRef.current = paths;
+      }
+      samplesRef.current = [];
       const next = s + 1;
       if (next >= CLIMB_SECTOR_COUNT) {
         stopJet();
@@ -960,6 +984,10 @@ export default function CircuitLite({
         return s;
       }
       rewardSfx("big");
+      // Keep phase=running — Flyer remounts on the next sector; restart ghost clock.
+      const now = performance.now();
+      sectorStart.current = now;
+      setGhostStartMs(now);
       return next;
     });
   }, [setHold, recordRun, guest, champion.wins]);
@@ -1012,11 +1040,15 @@ export default function CircuitLite({
   const shareChallenge = useCallback(async () => {
     const sectors = lastRun?.sectors ?? sector;
     const totalMs = lastRun?.totalMs ?? Math.max(0, performance.now() - runStart.current);
+    const paths: ClimbGhostSectors = sectorPathsRef.current.map((s) => [...s]);
+    if (samplesRef.current.length >= 2) {
+      paths[sector] = [...samplesRef.current];
+    }
     const url = climbChallengeUrl({
       sectors,
       totalMs,
       name: getHandle() || undefined,
-      path: samplesRef.current.length >= 2 ? [...samplesRef.current] : undefined,
+      path: ghostPathHasSamples(paths) ? paths : undefined,
     });
     const text = `Beat my Ascent: ${sectors}/${CLIMB_SECTOR_COUNT} · ${formatCircuitMs(totalMs)}`;
     try {
@@ -1029,8 +1061,8 @@ export default function CircuitLite({
       // fall through to clipboard
     }
     try {
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      setShareMsg("Challenge copied");
+      await navigator.clipboard.writeText(url);
+      setShareMsg("Challenge link copied");
       pingEvent("climb_share_copy");
       window.setTimeout(() => setShareMsg(null), 2200);
     } catch {
@@ -1119,22 +1151,29 @@ export default function CircuitLite({
               flyerHeadingRef={flyerHeadingRef}
               pilotBurstRef={pilotBurstRef}
               samplesRef={samplesRef}
-              runStart={runStart}
+              sectorStart={sectorStart}
               onGate={onGate}
               onSectorClear={onSectorClear}
               onFail={onFail}
               onStumble={onStumble}
             />
           )}
-          {running && challenge?.path && challenge.path.length >= 2 && (
-            <ClimbGhostRacer
-              path={challenge.path}
-              running={running}
-              runStartMs={runStart.current}
-              type={champType}
-              accent="#c8d0ff"
-            />
-          )}
+          {(phase === "ready" || running) && (() => {
+            const ghostPath = ghostPathForSector(challenge?.path, sector);
+            if (!ghostPath) return null;
+            return (
+              <ClimbGhostRacer
+                key={`ghost-${sector}-${ghostStartMs}`}
+                path={ghostPath}
+                running={running}
+                runStartMs={ghostStartMs}
+                type={champType}
+                accent="#c8d0ff"
+                originX={track.spawn[0]}
+                sideX={1.35}
+              />
+            );
+          })()}
           {running && (
             <FlyingFollower
               key={`follow-${runId}`}

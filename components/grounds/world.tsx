@@ -307,6 +307,7 @@ export default function World({
   circuitGhostForce = null,
   circuitGhostPath = null,
   circuitGhostRunStartMs = 0,
+  circuitGhostSectorKey = 0,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
@@ -369,9 +370,12 @@ export default function World({
   /** Bumped on life-continue to re-arm the front-facing arrive cam. */
   circuitArriveNonce?: number;
   circuitGhostForce?: CreatureType | null;
-  /** Challenger ghost path in Climb-canonical space (scaled for desktop rings). */
+  /** Challenger ghost path for the live sector (Climb-canonical; scaled for desktop rings). */
   circuitGhostPath?: ClimbGhostSample[] | null;
+  /** performance.now() when the live sector started — ghost restarts each sector. */
   circuitGhostRunStartMs?: number;
+  /** Remount key so the ghost pair resets on sector change. */
+  circuitGhostSectorKey?: number;
   worldLife?: WorldLife;
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
@@ -789,6 +793,7 @@ export default function World({
               )}
               {circuitGhostPath && circuitGhostPath.length >= 2 && (
                 <ClimbGhostRacer
+                  key={`ascent-ghost-${circuitGhostSectorKey}`}
                   path={circuitGhostPath}
                   running={circuitPhase === "running"}
                   runStartMs={circuitGhostRunStartMs}
@@ -796,7 +801,8 @@ export default function World({
                   accent={biome.lights.arenaPoint}
                   scaleY={DESKTOP_VERT_SCALE}
                   scaleZ={DESKTOP_GAP_SCALE}
-                  sideX={2.2}
+                  originX={circuitTrack?.spawn[0] ?? 0}
+                  sideX={1.7}
                 />
               )}
             </>
