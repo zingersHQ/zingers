@@ -1287,10 +1287,12 @@ export function ChampionMesh({
 
           {/* aura sphere — faint, wide atmospheric glow; flagged so portrait
               auto-framing may let it bleed off-edge rather than shrinking the body */}
-          <mesh ref={auraRef} position={[0, app.h * 0.55, 0]} userData={{ fitIgnore: true }}>
-            <sphereGeometry args={[auraR, 16, 12]} />
-            <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
-          </mesh>
+          {!hideFloaters && (
+            <mesh ref={auraRef} position={[0, app.h * 0.55, 0]} userData={{ fitIgnore: true }}>
+              <sphereGeometry args={[auraR, 16, 12]} />
+              <meshBasicMaterial color={col} transparent opacity={auraOpacity} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} />
+            </mesh>
+          )}
         </BoneFollower>
 
         {/* legend crown — fused to the head bone so it rides the gaze instead of
@@ -1316,10 +1318,12 @@ export function ChampionMesh({
           lies flat on the floor; also excluded from the fit envelope. The owned
           companion detaches + sinks this toward the ground while flying (see the
           companion floor-ring block above). */}
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
-        <ringGeometry args={[0.78, 0.92, 48]} />
-        <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
-      </mesh>
+      {!hideFloaters && (
+        <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
+          <ringGeometry args={[0.78, 0.92, 48]} />
+          <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />
+        </mesh>
+      )}
 
       {hpFrac != null && (
         <Html position={[0, app.h + 0.7, 0]} center distanceFactor={9} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>

@@ -16,10 +16,10 @@ export const CIRCUIT_SECTOR_INTRO = {
   arriveSweepS: 1.15,
   /** Life-continue face-on hold (seconds) — longer for the ghost leave. */
   continueArriveHoldS: 2.05,
-  /** Title card on screen (ms) — covers hold + early sweep. */
+  /** Title card on screen (ms) — covers hold + early sweep. Jump cue follows. */
   cardMs: 2800,
-  /** When the "Jump to start" cue joins the card (ms). */
-  promptMs: 2000,
+  /** @deprecated Jump cue now appears only after the card leaves. */
+  promptMs: 2800,
 } as const;
 
 export interface CircuitPlatform {

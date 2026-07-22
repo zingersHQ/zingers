@@ -27,7 +27,7 @@ export const VENUES: Record<VenueId, VenueDef> = {
     id: "circuit",
     name: "The Ascent",
     shortLabel: "Ascent",
-    blurb: "Fly the sky climb · same run on phone or desktop",
+    blurb: "Fly the hundred-sector sky · same run on phone or desktop",
     color: "#39e0ff",
   },
 };

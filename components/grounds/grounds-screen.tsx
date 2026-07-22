@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
@@ -128,7 +129,7 @@ import {
   type CircuitPersonalBest,
 } from "@/components/grounds/circuit-tracks";
 import { sectorHazards } from "@/components/grounds/climb/hazards";
-import { DOCK_H } from "@/lib/play-nav";
+import { DOCK_H, PLAY_HREF } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
@@ -207,6 +208,7 @@ export default function GroundsScreen({
   gpuLite?: boolean;
   ascentEntry?: boolean;
 }) {
+  const router = useRouter();
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [towerAgents, setTowerAgents] = useState<TowerAgent[]>([]);
   const [altitude, setAltitude] = useState(0);
@@ -654,6 +656,16 @@ export default function GroundsScreen({
       restorePose(safe);
     }
   }, [gameSession, resetCircuitRun, restorePose]);
+
+  /** Leave the Ascent UI. On `/ascent`, exitVenue alone re-enters (owned auto-Circuit) — navigate to Grounds roam instead. */
+  const leaveAscent = useCallback(() => {
+    if (ascentEntry) {
+      // Guests aren't ready for Concord roam yet — send them home, not into another guest Ascent on /grounds.
+      router.replace(owned || isFirstDuelComplete() ? PLAY_HREF : "/");
+      return;
+    }
+    exitVenue();
+  }, [ascentEntry, owned, router, exitVenue]);
 
   // Drop the one-shot wilds resume once the Handler has had time to mount on it.
   useEffect(() => {
@@ -1422,15 +1434,20 @@ export default function GroundsScreen({
   }, [travelCard]);
 
   // Once guest Ascent is armed, drop into the Circuit (claim postponed to RUN OVER).
+  // On /ascent we're already at the door — skip the second TAKE FLIGHT veil.
   useEffect(() => {
     if (!guestAscentReady || owned || activeVenue === "circuit" || guestEnterArmed.current) return;
     guestEnterArmed.current = true;
     track("m_guest_run");
+    if (ascentEntry) {
+      enterVenue("circuit");
+      return;
+    }
     playTravel(
       { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start · claim later", color: VENUES.circuit.color },
       () => enterVenue("circuit"),
     );
-  }, [guestAscentReady, owned, activeVenue, playTravel, enterVenue]);
+  }, [guestAscentReady, owned, activeVenue, playTravel, enterVenue, ascentEntry]);
 
   const worldTravelCard = useCallback((destId: string): TravelCard => {
     const w = worldById(destId);
@@ -1540,9 +1557,13 @@ export default function GroundsScreen({
       playTravel({ kicker: "ENTERING", title: venue.name, sub: venue.blurb, color: venue.color }, () => enterVenue(v));
     } else if (near?.kind === "venue-exit") {
       setNear(null);
+      if (ascentEntry && activeVenue === "circuit") {
+        leaveAscent();
+        return;
+      }
       playTravel(worldTravelCard(venueHostWorldId), () => exitVenue());
     }
-  }, [near, overlay, inMatch, result, gRun, travelCard, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach, reactCompanion]);
+  }, [near, overlay, inMatch, result, gRun, travelCard, scenario.id, store, travelToWorld, capturePose, worldId, enterVenue, exitVenue, leaveAscent, ascentEntry, activeVenue, modesLocked, playTravel, worldTravelCard, venueHostWorldId, concordCoach, dismissConcordCoach, reactCompanion]);
 
   // Portals cross by walking through — no E. Latch the portal key so nulling
   // `near` mid-travel (or standing in the plane) doesn't re-fire the veil.
@@ -1647,39 +1668,73 @@ export default function GroundsScreen({
     if (!firstDuelPick) setFirstDuelPick(loanerKey);
   }, [exitVenue, firstDuelPick, loanerKey]);
 
-  /** Legacy pick path (Choose another mind) → claim then ensure Circuit. */
-  const claimAndFlyAscent = useCallback(
+  /** After the guest Ascent: claim a champion and land in the open Grounds — not another climb. */
+  const claimAndEnterGrounds = useCallback(
     (key: string, strat: { risk: number; focus: number; aggression: number } = QUICK_START_STRAT) => {
       store.setStrat(key, strat);
       store.adoptStarterRookie(key);
       sealFirstClaim();
-      if (activeVenue !== "circuit") {
-        setTimeout(() => {
-          playTravel(
-            { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start", color: VENUES.circuit.color },
-            () => enterVenue("circuit"),
-          );
-        }, 120);
-      } else {
-        resetCircuitRun();
+      // `/ascent` re-auto-enters Circuit whenever `owned` is set — leave the door entirely.
+      if (ascentEntry) {
+        router.replace(PLAY_HREF);
+        return;
+      }
+      // Already on /grounds: step out of the Circuit into Concord roam.
+      if (activeVenue === "circuit") {
+        playTravel(
+          {
+            kicker: "RETURNING",
+            title: "The Concord",
+            sub: "Your champion. Your Grounds.",
+            color: worldById("concord").biome.lights.arenaPoint,
+          },
+          () => exitVenue(),
+        );
+        return;
+      }
+      if (worldId !== "concord") {
+        playTravel(worldTravelCard("concord"), () => travelToWorld("concord", false));
       }
     },
-    [store, sealFirstClaim, activeVenue, playTravel, enterVenue, resetCircuitRun],
+    [store, sealFirstClaim, ascentEntry, router, activeVenue, playTravel, exitVenue, worldId, worldTravelCard, travelToWorld],
   );
 
   const completeFirstDuel = useCallback(() => {
-    if (!owned && firstDuelPick) claimAndFlyAscent(firstDuelPick);
-    else if (activeVenue !== "circuit") {
+    if (!owned && firstDuelPick) claimAndEnterGrounds(firstDuelPick);
+    else {
       sealFirstClaim();
-      playTravel(
-        { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: "Jump to start", color: VENUES.circuit.color },
-        () => enterVenue("circuit"),
-      );
-    } else {
-      sealFirstClaim();
-      resetCircuitRun();
+      if (ascentEntry) {
+        router.replace(PLAY_HREF);
+        return;
+      }
+      if (activeVenue === "circuit") {
+        playTravel(
+          {
+            kicker: "RETURNING",
+            title: "The Concord",
+            sub: "Your champion. Your Grounds.",
+            color: worldById("concord").biome.lights.arenaPoint,
+          },
+          () => exitVenue(),
+        );
+      } else if (worldId !== "concord") {
+        playTravel(worldTravelCard("concord"), () => travelToWorld("concord", false));
+      }
     }
-  }, [owned, firstDuelPick, claimAndFlyAscent, activeVenue, sealFirstClaim, playTravel, enterVenue, resetCircuitRun]);
+  }, [
+    owned,
+    firstDuelPick,
+    claimAndEnterGrounds,
+    sealFirstClaim,
+    ascentEntry,
+    router,
+    activeVenue,
+    playTravel,
+    exitVenue,
+    worldId,
+    worldTravelCard,
+    travelToWorld,
+  ]);
 
   const stageFirstFightArena = useCallback(() => {
     if (worldId !== FIRST_FIGHT_WORLD) {
@@ -1697,9 +1752,9 @@ export default function GroundsScreen({
 
   const finishFirstDuelTrain = useCallback(
     async (key: string, strat: { risk: number; focus: number; aggression: number }) => {
-      claimAndFlyAscent(key, strat);
+      claimAndEnterGrounds(key, strat);
     },
-    [claimAndFlyAscent],
+    [claimAndEnterGrounds],
   );
 
   const launchFirstDuelFight = useCallback(() => {
@@ -2597,7 +2652,7 @@ export default function GroundsScreen({
           boardLoading={circuitBoardLoading}
           onContinue={advanceCircuitSector}
           onRestart={resetCircuitRun}
-          onExit={exitVenue}
+          onExit={leaveAscent}
           onShareChallenge={shareCircuitChallenge}
           shareChallengeLabel={isTouch ? "Challenge a friend" : "Copy challenge link"}
           onProve={
@@ -2610,7 +2665,7 @@ export default function GroundsScreen({
           }
           onClaim={circuitGuest ? openCircuitClaimPicker : undefined}
           claimName={circuitGuest ? ROSTER[loanerKey]?.name ?? "this mind" : null}
-          onToHub={!circuitGuest ? exitVenue : undefined}
+          onToHub={!circuitGuest ? leaveAscent : undefined}
           hubLabel={venueHostWorldId === "concord" ? "To the Concord" : "Leave the Ascent"}
           challengeResult={circuitChallengeResult}
           challengeLabel={circuitChallenge?.name || (circuitChallenge ? "CHALLENGE" : null)}
@@ -2898,7 +2953,7 @@ export default function GroundsScreen({
           evolve={firstDuelEvolve}
           isMobile={isMobile}
           onPick={(key) => {
-            claimAndFlyAscent(key);
+            claimAndEnterGrounds(key);
           }}
           onTrain={finishFirstDuelTrain}
           onEvolveDone={completeFirstDuel}
@@ -3046,10 +3101,10 @@ export default function GroundsScreen({
           <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE ASCENT</div>
             <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Preparing the climb…
+              Preparing the Ascent…
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              Fly first. Claim a mind when the run ends.
+              Fly first. Claim a champion when the run ends.
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {[0, 1, 2, 3, 4].map((i) => (

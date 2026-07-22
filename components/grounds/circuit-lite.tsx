@@ -774,8 +774,9 @@ export default function CircuitLite({
     setReachCardOn(true);
     setStartPromptOn(false);
     rewardSfx("small");
-    const promptT = window.setTimeout(() => setStartPromptOn(true), CIRCUIT_SECTOR_INTRO.promptMs);
+    // Title card alone, then "Tap & hold" after it leaves (same beat as desktop).
     const doneT = window.setTimeout(() => dismissReachCard(true), CIRCUIT_SECTOR_INTRO.cardMs);
+    const promptT = window.setTimeout(() => setStartPromptOn(true), CIRCUIT_SECTOR_INTRO.cardMs + 40);
     return () => {
       window.clearTimeout(promptT);
       window.clearTimeout(doneT);
@@ -1245,7 +1246,7 @@ export default function CircuitLite({
           <div className="mono" style={{ textAlign: "center", color: "#fff", maxWidth: 320 }}>
             <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: 1, color: accent }}>GRAPHICS KEEP DROPPING</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginTop: 8, marginBottom: 18, letterSpacing: 0.5, lineHeight: 1.5 }}>
-              your device ran low on graphics memory. close other tabs, then reload the climb.
+              your device ran low on graphics memory. close other tabs, then reload the Ascent.
             </div>
             <button
               type="button"
@@ -1401,12 +1402,14 @@ export default function CircuitLite({
                 {modifier.label}
               </div>
             )}
-            {startPromptOn && phase === "ready" && !reachCardOut && (
-              <div className="circuit-sector-intro__prompt mono" style={{ color: accent }}>
-                TAP &amp; HOLD TO FLY
-              </div>
-            )}
           </div>
+        </div>
+      )}
+
+      {/* Cue only after the title card is gone — never stacked on 1/100. */}
+      {startPromptOn && phase === "ready" && !reachCardOn && (
+        <div className="circuit-sector-intro__hint mono" style={{ color: accent, zIndex: 17 }}>
+          Tap &amp; hold to fly
         </div>
       )}
 
@@ -1520,7 +1523,7 @@ export default function CircuitLite({
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 14 }}>
               {phase === "done"
-                ? "you flew the whole climb"
+                ? "you flew the whole Ascent"
                 : failReason === "gates"
                   ? "out of lives — missed a gate · back to sector 1"
                   : "out of lives · back to sector 1"}
@@ -1610,7 +1613,7 @@ export default function CircuitLite({
             {guest && onClaim && (
               <>
                 <div className="mono" style={{ fontSize: 10.5, color: "var(--muted, #9a96b8)", lineHeight: 1.5, marginBottom: 12, letterSpacing: 0.3 }}>
-                  A wild mind flew with you. Claim it to keep your climb — earn XP, Crowns, and a place on the board.
+                  A wild mind flew with you. Claim it to keep your Ascent — earn XP, Crowns, and a place on the board.
                 </div>
                 <button
                   type="button"
@@ -1685,7 +1688,7 @@ export default function CircuitLite({
                 onClick={onClaim}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
               >
-                Claim a mind to prove
+                Claim a champion to prove
               </button>
             )}
           </div>

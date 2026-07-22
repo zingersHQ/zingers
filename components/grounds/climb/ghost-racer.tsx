@@ -1,8 +1,7 @@
 "use client";
 // Async Ascent ghost — challenger's Trainer + champion, semi-transparent, racing
-// beside you. Materials match the proven life-leave ghost (solid ghost mats, not
-// cloned opacity) so bloom/post still reads them. Path is remapped onto the live
-// pad so the pair starts with you every sector.
+// beside you. Clean ghost mats (no beacon beams / aura spheres). Path remapped
+// onto the live pad so the pair starts with you every sector.
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
@@ -15,17 +14,18 @@ import { COMPANION_FOLLOW, companionPathSlot } from "../companion-follow";
 import type { CreatureType } from "@/lib/types";
 
 const SIDE_X = 1.85;
-const GHOST_OPACITY = 0.72;
-const GHOST_BODY = "#d4dcff";
-const GHOST_GLOW = "#8aa0ff";
+const GHOST_OPACITY = 0.62;
+/** Cool ghost tint — never biome gold (bloom was reading as a yellow beam). */
+const GHOST_BODY = "#c8d4ff";
+const GHOST_GLOW = "#7a92ff";
 
 const SHARED_RIG = "/models/RobotExpressive.glb";
 useGLTF.preload(SHARED_RIG);
 
 /** Same approach as CircuitGhostLeave — replace mats so the ghost always reads. */
-function ghostifySolid(root: THREE.Object3D, accent: string, opacity = GHOST_OPACITY) {
+function ghostifySolid(root: THREE.Object3D, opacity = GHOST_OPACITY) {
   const color = new THREE.Color(GHOST_BODY);
-  const emissive = new THREE.Color(accent || GHOST_GLOW);
+  const emissive = new THREE.Color(GHOST_GLOW);
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
@@ -36,66 +36,58 @@ function ghostifySolid(root: THREE.Object3D, accent: string, opacity = GHOST_OPA
     const mat = new THREE.MeshStandardMaterial({
       color,
       emissive,
-      emissiveIntensity: 0.85,
+      emissiveIntensity: 0.35,
       transparent: true,
       opacity,
       depthWrite: false,
-      roughness: 0.4,
-      metalness: 0.12,
+      roughness: 0.45,
+      metalness: 0.08,
     });
     mesh.material = mat;
   });
 }
 
-function GhostBeacon({ accent }: { accent: string }) {
-  const ring = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ring.current) return;
-    const m = ring.current.material as THREE.MeshBasicMaterial;
-    m.opacity = 0.35 + 0.2 * Math.sin(state.clock.elapsedTime * 3.2);
-    ring.current.rotation.z = state.clock.elapsedTime * 0.7;
-  });
-  return (
-    <group>
-      <mesh position={[0, 1.1, 0]} frustumCulled={false}>
-        <cylinderGeometry args={[0.07, 0.14, 2.2, 10]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.45} depthWrite={false} />
-      </mesh>
-      <mesh ref={ring} position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]} frustumCulled={false}>
-        <ringGeometry args={[0.55, 0.85, 28]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
-      </mesh>
-    </group>
-  );
-}
-
 function GhostTrainerBody({
   force = null,
-  accent = GHOST_GLOW,
   scale = READER_SCALE,
+  flying = false,
 }: {
   force?: CreatureType | null;
-  accent?: string;
   scale?: number;
+  flying?: boolean;
 }) {
   const { scene, animations } = useGLTF(SHARED_RIG);
   const pal = useMemo(() => readerPalette(force), [force]);
   const built = useMemo(() => {
     const b = buildCharacter(scene, animations, blank(), "#cfd2e8", undefined, 0, pal);
-    ghostifySolid(b.root, accent, GHOST_OPACITY);
+    ghostifySolid(b.root, GHOST_OPACITY);
     return b;
-  }, [scene, animations, pal, accent]);
+  }, [scene, animations, pal]);
   const leanGrp = useRef<THREE.Group>(null);
+  const flyingRef = useRef(flying);
+  flyingRef.current = flying;
 
   useEffect(() => {
     const idle = built.actions.idle;
+    const run = built.actions.run;
+    const walk = built.actions.walk;
+    const loco = run ?? walk ?? idle;
     if (idle) {
       idle.reset();
+      idle.setEffectiveWeight(flying ? 0 : 1);
       idle.fadeIn(0.15);
       idle.play();
     }
+    if (loco && loco !== idle) {
+      loco.reset();
+      loco.setEffectiveWeight(flying ? 1 : 0);
+      loco.setEffectiveTimeScale(0.85);
+      loco.fadeIn(0.15);
+      loco.play();
+    }
     return () => {
       idle?.stop();
+      loco?.stop();
     };
   }, [built]);
 
@@ -103,8 +95,19 @@ function GhostTrainerBody({
     const dt = Math.min(0.05, dtRaw);
     built.mixer.update(dt);
     applyBoneMorph(built.bones, built.boneBase, built.morph);
+    const idle = built.actions.idle;
+    const run = built.actions.run ?? built.actions.walk;
+    const fly = flyingRef.current;
+    if (idle && run && run !== idle) {
+      const wantRun = fly ? 1 : 0;
+      const cur = run.getEffectiveWeight();
+      const next = cur + (wantRun - cur) * (1 - Math.exp(-6 * dt));
+      run.setEffectiveWeight(next);
+      idle.setEffectiveWeight(1 - next);
+    }
     if (leanGrp.current) {
-      leanGrp.current.rotation.x += (0.14 - leanGrp.current.rotation.x) * (1 - Math.exp(-8 * dt));
+      const want = fly ? 0.18 : 0.06;
+      leanGrp.current.rotation.x += (want - leanGrp.current.rotation.x) * (1 - Math.exp(-8 * dt));
     }
   });
 
@@ -121,52 +124,55 @@ function GhostTrainerBody({
 
 function GhostChampionWing({
   type,
-  accent,
   scale = WORLD_AGENT_SCALE,
 }: {
   type: CreatureType;
-  accent: string;
   scale?: number;
 }) {
   const wrap = useRef<THREE.Group>(null);
   const champ = useMemo(() => blank(), []);
   const slot = useMemo(() => companionPathSlot(0, 0, 0), []);
   const ghosted = useRef(false);
+  const lean = useRef<THREE.Group>(null);
 
-  useFrame(() => {
+  useFrame((_, dtRaw) => {
     const g = wrap.current;
-    if (!g || ghosted.current) return;
-    let meshes = 0;
-    g.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh) meshes++;
-    });
-    if (meshes < 1) return;
-    ghostifySolid(g, accent, GHOST_OPACITY * 0.95);
-    ghosted.current = true;
+    if (g && !ghosted.current) {
+      let meshes = 0;
+      g.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) meshes++;
+      });
+      if (meshes >= 1) {
+        ghostifySolid(g, GHOST_OPACITY * 0.92);
+        ghosted.current = true;
+      }
+    }
+    // Soft flight lean — no jetpack (champions fly on their own).
+    if (lean.current) {
+      const dt = Math.min(0.05, dtRaw);
+      lean.current.rotation.x += (0.12 - lean.current.rotation.x) * (1 - Math.exp(-6 * dt));
+    }
   });
 
   return (
     <group ref={wrap} position={[slot.tx, -COMPANION_FOLLOW.wingDrop * 0.85, slot.tz]}>
-      <Suspense
-        fallback={
-          <mesh position={[0, 0.35, 0]} frustumCulled={false}>
-            <sphereGeometry args={[0.4, 14, 14]} />
-            <meshBasicMaterial color={accent} transparent opacity={0.65} depthWrite={false} />
-          </mesh>
-        }
-      >
-        <ChampionMesh
-          type={type}
-          champion={champ}
-          identityKey={`ascent-ghost-champ-${type}`}
-          position={[0, 0, 0]}
-          rotation={0}
-          baseColorOverride={accent}
-          showLabel={false}
-          hideFloaters
-          sceneScale={scale}
-        />
-      </Suspense>
+      <group ref={lean}>
+        <Suspense fallback={null}>
+          <ChampionMesh
+            type={type}
+            champion={champ}
+            identityKey={`ascent-ghost-champ-${type}`}
+            position={[0, 0, 0]}
+            rotation={0}
+            baseColorOverride={GHOST_GLOW}
+            showLabel={false}
+            hideFloaters
+            sceneScale={scale}
+            restPose="idle"
+            breatheIntensity={0.4}
+          />
+        </Suspense>
+      </group>
     </group>
   );
 }
@@ -174,15 +180,12 @@ function GhostChampionWing({
 export function ClimbGhostRacer({
   path,
   running,
-  /** Kept for callers; ghost arms on the frame `running` becomes true. */
   runStartMs: _runStartMs = 0,
   type = "LOGIC",
-  accent = GHOST_GLOW,
+  accent: _accent = GHOST_GLOW,
   scaleY = 1,
   scaleZ = 1,
-  /** Live pad spawn — ghost path is remapped so sample[0] sits here. */
   spawn = [0, 1.1, -2.5] as [number, number, number],
-  /** Optional: leash X to the live Trainer so the pair stays in frame. */
   followPos,
   sideX = SIDE_X,
   bodyScale = READER_SCALE,
@@ -204,7 +207,6 @@ export function ClimbGhostRacer({
   const grp = useRef<THREE.Group>(null);
   const startAt = useRef(0);
   const armed = useRef(false);
-  const ghostAccent = accent && accent !== "#000000" ? accent : GHOST_GLOW;
 
   const path0 = path[0];
   const spawnKey = `${spawn[0]},${spawn[1]},${spawn[2]}`;
@@ -233,13 +235,11 @@ export function ClimbGhostRacer({
 
     if (!armed.current) {
       armed.current = true;
-      // Always sync to "now" on arm — avoids jumping to end-of-path if runStartMs is stale.
       startAt.current = performance.now();
     }
 
     const tMs = Math.max(0, performance.now() - startAt.current);
     const s = sampleGhostAt(path, tMs) ?? path0;
-    // Remap onto the live pad so every sector starts beside you.
     const targetY = spawn[1] + (s.y - path0.y) * scaleY;
     const targetZ = spawn[2] + (s.z - path0.z) * scaleZ;
 
@@ -252,11 +252,10 @@ export function ClimbGhostRacer({
 
   return (
     <group ref={grp} position={[spawn[0] + sideX, spawn[1], spawn[2]]}>
-      <Suspense fallback={<GhostBeacon accent={ghostAccent} />}>
-        <GhostTrainerBody force={type} accent={ghostAccent} scale={bodyScale} />
-        <GhostChampionWing type={type} accent={ghostAccent} scale={champScale} />
+      <Suspense fallback={null}>
+        <GhostTrainerBody force={type} scale={bodyScale} flying={running} />
+        <GhostChampionWing type={type} scale={champScale} />
       </Suspense>
-      <GhostBeacon accent={ghostAccent} />
     </group>
   );
 }

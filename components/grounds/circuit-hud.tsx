@@ -48,7 +48,7 @@ function LifePips({ lives, accent }: { lives: number; accent: string }) {
 
 /**
  * Sector-open title card — pairs with the arrive camera hold/sweep.
- * Bold number, Reach line, then "Jump to start" as control returns (Wii Sports beat).
+ * Bold Reach + sector, then after it leaves: "Jump to start" alone.
  */
 function SectorIntro({
   sectorN,
@@ -64,18 +64,12 @@ function SectorIntro({
   lives: number;
 }) {
   const [showCard, setShowCard] = useState(true);
-  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     setShowCard(true);
-    setShowPrompt(false);
     rewardSfx("small");
-    const promptT = window.setTimeout(() => setShowPrompt(true), CIRCUIT_SECTOR_INTRO.promptMs);
     const doneT = window.setTimeout(() => setShowCard(false), CIRCUIT_SECTOR_INTRO.cardMs);
-    return () => {
-      window.clearTimeout(promptT);
-      window.clearTimeout(doneT);
-    };
+    return () => window.clearTimeout(doneT);
   }, [sectorN]);
 
   return (
@@ -108,11 +102,6 @@ function SectorIntro({
                 {lives} {lives === 1 ? "LIFE" : "LIVES"}
               </span>
             </div>
-            {showPrompt && (
-              <div className="circuit-sector-intro__prompt mono" style={{ color: accent }}>
-                JUMP TO START
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -459,7 +448,7 @@ export function CircuitHud({
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
                 {claimName
                   ? `${claimName} flew with you — claim it, or pick another champion.`
-                  : "Claim a champion to keep this climb — XP, Crowns, and the board."}
+                  : "Claim a champion to keep this Ascent — XP, Crowns, and the board."}
               </div>
               <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
                 <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
@@ -492,7 +481,7 @@ export function CircuitHud({
           accent={accent}
           icon={<Sparkles size={28} color={accent} />}
           kicker="ALTITUDE GATE"
-          title={guestClaim ? "Claim a mind to prove" : "Prove your mind for the higher sky"}
+          title={guestClaim ? "Claim a champion to prove" : "Prove your champion for the higher sky"}
           sub={
             guestClaim
               ? "Reach II needs a claimed champion. Keep this wild mind, then prove."

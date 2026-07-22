@@ -342,10 +342,10 @@ function PickPhase({
       <div style={{ position: "absolute", inset: 0, background: ICON.void, display: "flex", flexDirection: "column" }}>
         {/* header */}
         <div style={{ padding: isMobile ? "16px 16px 4px" : "26px 32px 8px", textAlign: "center", flexShrink: 0 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>PICK · THEN FLY</div>
-          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a mind for the Ascent.</h2>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>PICK · THEN ENTER</div>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a champion for the Grounds.</h2>
           <p style={{ color: "var(--muted)", fontSize: isMobile ? 12 : 13, margin: 0, lineHeight: 1.45 }}>
-            One click — then you&apos;re in the sky.
+            One click — then you&apos;re in the open world.
           </p>
         </div>
 
@@ -444,10 +444,10 @@ function PickPhase({
               style={{ ["--ac" as string]: col, width: "100%", fontSize: 15, padding: "14px 16px", marginTop: 4 }}
               onClick={() => onCommit(entry.key)}
             >
-              Claim {entry.name} &amp; fly
+              Claim {entry.name}
             </button>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, textAlign: "center" }}>
-              Strategy &amp; Clan can wait — first, fly
+              Strategy &amp; Clan can wait — first, the Grounds
             </p>
           </div>
         </div>
