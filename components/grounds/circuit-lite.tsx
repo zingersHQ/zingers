@@ -118,7 +118,10 @@ const CAM_FOV = 54; // slight widen + lead sells the wind
 const PILOT_SCALE = READER_SCALE;
 const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
 const CHAMP_FACE = 0;
+/** Flight only — drops the mesh so the torso centres the gate-thread point. */
 const CHAMP_Y = -0.72;
+/** Ready pad — circuit-scene deck top is y=0; RobotExpressive origin = soles. */
+const PAD_TOP_Y = 0;
 // Looking +Z: screen-right is −X (same pedestal side as desktop CircuitSpectator).
 const PED_OFF: [number, number, number] = [-2.6, -1.35, 0.45];
 const PED_H = 1.05;
@@ -441,18 +444,18 @@ function ReadyPose({
   const noBurst = useRef(0);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const bob = Math.sin(t * 1.6) * 0.05;
-    const py = track.spawn[1] + CHAMP_Y + bob;
+    // Tiny idle settle — stay planted on the deck (no hover float).
+    const py = PAD_TOP_Y + Math.sin(t * 1.6) * 0.02;
     if (grp.current) grp.current.position.y = py;
     flyerPosRef.current.set(track.spawn[0], py, track.spawn[2]);
     const sx = track.spawn[0];
-    const sy = py + CAM_HEIGHT;
+    const sy = py + CAM_HEIGHT + 0.55; // chest-ish while standing (no CHAMP_Y)
     const sz = track.spawn[2];
     camera.position.set(sx + CAM_SIDE, sy + CAM_UP, sz - CAM_BACK);
     camera.lookAt(sx, sy, sz + CAM_LEAD);
   });
   return (
-    <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
+    <group ref={grp} position={[track.spawn[0], PAD_TOP_Y, track.spawn[2]]}>
       <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
         <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0} />
       </Suspense>
@@ -621,8 +624,7 @@ export default function CircuitLite({
   const track = useMemo(() => desktopCircuitSector(sector), [sector]);
   // Seed overlap poses before the first ReadyPose frame (ghosts read these).
   useEffect(() => {
-    const y = track.spawn[1] + CHAMP_Y;
-    flyerPosRef.current.set(track.spawn[0], y, track.spawn[2]);
+    flyerPosRef.current.set(track.spawn[0], PAD_TOP_Y, track.spawn[2]);
     const ped = climbPedestalTop(track.spawn);
     champPosRef.current.set(ped[0], ped[1], ped[2]);
   }, [track]);
