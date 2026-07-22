@@ -298,6 +298,8 @@ export default function GroundsScreen({
   // banner only flashed for a frame before the Ascent took over.
   const summonStartedAt = useRef<number | null>(null);
   const [firstDuelPick, setFirstDuelPick] = useState<string | null>(null);
+  /** Weekly starter loaner — shared by guest Ascent flight + Exit→claim picker. */
+  const loanerKey = useMemo(() => guestLoanerKey(getOwnerToken() || "guest"), []);
   const [firstDuelEvolve, setFirstDuelEvolve] = useState<{
     before: Champion;
     after: Champion;
@@ -673,15 +675,24 @@ export default function GroundsScreen({
     }
   }, [gameSession, resetCircuitRun, restorePose]);
 
-  /** Leave the Ascent UI. On `/ascent`, exitVenue alone re-enters (owned auto-Circuit) — navigate to Grounds roam instead. */
+  /** Leave the Ascent UI. Never the marketing homepage — owned → Grounds; guests → claim (start the game). */
   const leaveAscent = useCallback(() => {
     if (ascentEntry) {
-      // Guests aren't ready for Concord roam yet — send them home, not into another guest Ascent on /grounds.
-      router.replace(owned || isFirstDuelComplete() ? PLAY_HREF : "/");
+      if (owned || isFirstDuelComplete()) {
+        // exitVenue alone re-enters Circuit while owned stays on `/ascent`.
+        router.replace(PLAY_HREF);
+        return;
+      }
+      // Guest Exit Ascent: same door as RUN OVER claim — pick a champion, then Concord.
+      track("m_claim_from_climb");
+      setGuestAscentReady(false);
+      exitVenue();
+      setFirstDuelPhase("pick");
+      if (!firstDuelPick) setFirstDuelPick(loanerKey);
       return;
     }
     exitVenue();
-  }, [ascentEntry, owned, router, exitVenue]);
+  }, [ascentEntry, owned, router, exitVenue, firstDuelPick, loanerKey]);
 
   // Drop the one-shot wilds resume once the Handler has had time to mount on it.
   useEffect(() => {
@@ -1672,7 +1683,6 @@ export default function GroundsScreen({
     }));
   }, [bout.turn, bout.hpA, bout.hpB, opponent, opponentId, owned]);
 
-  const loanerKey = useMemo(() => guestLoanerKey(getOwnerToken() || "guest"), []);
   const circuitGuest = !owned;
   const circuitActiveKey = owned ?? loanerKey;
 

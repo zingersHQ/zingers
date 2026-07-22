@@ -85,10 +85,18 @@ export function MobileShell() {
   const adopting = activeTab === "champion" && unowned;
   const immersive = activeTab === "climb" || adopting;
 
-  // Leave an immersive context back to the last browse tab (never back into
-  // another immersive one).
+  // Leave immersive chrome. Exit Ascent never dumps to Today (homepage) —
+  // Champion tab is claim (guest) or raise (owned), i.e. start / continue the game.
   const exitImmersive = useCallback(() => {
-    const safe = prevTab !== activeTab && prevTab !== "climb" && !(prevTab === "champion" && unowned) ? prevTab : "today";
+    if (activeTab === "climb") {
+      setPrevTab("climb");
+      setTab("champion");
+      return;
+    }
+    const safe =
+      prevTab !== activeTab && prevTab !== "climb" && !(prevTab === "champion" && unowned)
+        ? prevTab
+        : "today";
     setTab(safe);
   }, [prevTab, activeTab, unowned]);
 
