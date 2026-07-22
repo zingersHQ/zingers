@@ -869,11 +869,11 @@ export default function GroundsScreen({
       undefined,
       "flight",
     );
-    const text = `Beat my Ascent: ${sectors}/${DESKTOP_CIRCUIT_COUNT} · ${formatCircuitMs(totalMs)}`;
     // Native share is for phones; desktop Chromium/Safari expose share() too and it feels wrong.
     if (isTouch && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "Zingers Ascent", text, url });
+        // URL only — no blurb; share sheets concatenate text+url into one mess.
+        await navigator.share({ url });
         track("climb_share_native");
         return;
       } catch {
@@ -881,7 +881,6 @@ export default function GroundsScreen({
       }
     }
     try {
-      // Copy button = the link only (share sheet keeps the Beat-my-Ascent blurb).
       await navigator.clipboard.writeText(url);
       setCircuitShareMsg("Challenge link copied");
       track("climb_share_copy");

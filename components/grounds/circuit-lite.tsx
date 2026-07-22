@@ -38,7 +38,6 @@ import type { CircuitPersonalBest } from "./circuit-tracks";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { getHandle } from "@/lib/owner";
 import { CLIMB_SECTOR_COUNT } from "./climb/sectors";
-import { sectorDifficulty } from "./climb/difficulty";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
@@ -83,10 +82,9 @@ interface RunReward {
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
 // Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
 const FORWARD_SPOOL = 11;   // snappy launch into cruise (climb-feel §4 — infinite-runner heartbeat)
-// Forward push: mobile Climb multiplies per-sector difficulty speed. Desktop
-// Circuit cruises at ~14 (world.tsx CIRCUIT_CRUISE); raw difficulty is 8.2–12.5,
-// so we push harder so the one-thumb run feels like a runner, not a glide.
-const FORWARD_PUSH = 1.55;
+// Same cruise as desktop Circuit (world.tsx CIRCUIT_CRUISE). Layout is already
+// desktop-scaled — difficulty-based speed was leaving early sectors too slow.
+const CIRCUIT_CRUISE = 14;
 const GRAVITY = 24;         // downward accel (u/s²) — hard fall when not cruising
 const THRUST_ACCEL = 40;    // jetpack up accel while held → controllable climb
 const PRESS_KICK = 3.0;     // instant upward velocity pop on each new press (a flap)
@@ -646,7 +644,7 @@ export default function CircuitLite({
   const biome = theme.biome;
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
-  const speed = useMemo(() => sectorDifficulty(sector).speed * (modifier?.speedMult ?? 1) * FORWARD_PUSH, [sector, modifier]);
+  const speed = useMemo(() => CIRCUIT_CRUISE * (modifier?.speedMult ?? 1), [modifier]);
   const hazards = useMemo(() => sectorHazards(sector, track), [sector, track]);
   const moteColor = modifier?.moteColor ?? accent;
   const fogNear = 30 * (modifier?.fogNearMult ?? 1);
@@ -765,10 +763,8 @@ export default function CircuitLite({
   // the hide timer and leave REACH / tagline painted over the climb. ──
   const [reachCardOn, setReachCardOn] = useState(true);
   const [reachCardOut, setReachCardOut] = useState(false);
-  const [startPromptOn, setStartPromptOn] = useState(false);
   const reachCardHideT = useRef<number | null>(null);
   const dismissReachCard = useCallback((fade = true) => {
-    setStartPromptOn(false);
     if (reachCardHideT.current != null) {
       window.clearTimeout(reachCardHideT.current);
       reachCardHideT.current = null;
@@ -796,13 +792,10 @@ export default function CircuitLite({
     }
     setReachCardOut(false);
     setReachCardOn(true);
-    setStartPromptOn(false);
     rewardSfx("small");
-    // Title card alone, then "Tap & hold" after it leaves (same beat as desktop).
+    // Title card alone — HOLD button is the only fly cue.
     const doneT = window.setTimeout(() => dismissReachCard(true), CIRCUIT_SECTOR_INTRO.cardMs);
-    const promptT = window.setTimeout(() => setStartPromptOn(true), CIRCUIT_SECTOR_INTRO.cardMs + 40);
     return () => {
-      window.clearTimeout(promptT);
       window.clearTimeout(doneT);
     };
   }, [phase, sector, dismissReachCard]);
@@ -828,7 +821,6 @@ export default function CircuitLite({
     }
     setReachCardOut(false);
     setReachCardOn(true);
-    setStartPromptOn(false);
     const doneT = window.setTimeout(() => dismissReachCard(true), 2000);
     return () => window.clearTimeout(doneT);
   }, [theme.index, dismissReachCard]);
@@ -1098,10 +1090,10 @@ export default function CircuitLite({
       mind: activeKey || undefined,
       path: ghostPathHasSamples(paths) ? paths : undefined,
     });
-    const text = `Beat my Ascent: ${sectors}/${CLIMB_SECTOR_COUNT} · ${formatCircuitMs(totalMs)}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Zingers Ascent", text, url });
+        // URL only — no blurb; share sheets concatenate text+url into one mess.
+        await navigator.share({ url });
         pingEvent("climb_share_native");
         return;
       }
@@ -1178,7 +1170,14 @@ export default function CircuitLite({
         >
           <SkyShift bg={biome.bg} fogColor={biome.fog.color} fogNear={fogNear} fogFar={190} exposure={exposure} />
           <Lights biome={biome} lite={gfx.liteLights} shadowMapSize={gfx.shadowMapSize} />
-          <ClimbDressing key={`dress-${theme.index}-${biome.id}`} biome={biome} track={track} sector={sector} tier={gfxTier} />
+          <ClimbDressing
+            key={`dress-${theme.index}-${biome.id}`}
+            biome={biome}
+            track={track}
+            sector={sector}
+            tier={gfxTier}
+            densityScale={0.45}
+          />
           <CircuitScene
             track={track}
             biome={biome}
@@ -1188,7 +1187,7 @@ export default function CircuitLite({
             staticMode
             showFloor={false}
           />
-          <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector)} />
+          <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector) * 0.28} />
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {(phase === "ready" || phase === "continue") && (
             <ReadyPose
@@ -1427,11 +1426,6 @@ export default function CircuitLite({
               {sector + 1}
               <span className="circuit-sector-intro__of"> / {CLIMB_SECTOR_COUNT}</span>
             </div>
-            {theme.tagline && (
-              <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 8, letterSpacing: 0.3 }}>
-                {theme.tagline}
-              </div>
-            )}
             {modifier && (
               <div
                 className="mono"
@@ -1450,13 +1444,6 @@ export default function CircuitLite({
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Cue only after the title card is gone — never stacked on 1/100. */}
-      {startPromptOn && phase === "ready" && !reachCardOn && (
-        <div className="circuit-sector-intro__hint mono" style={{ color: accent, zIndex: 17 }}>
-          Tap &amp; hold to fly
         </div>
       )}
 
@@ -1521,13 +1508,6 @@ export default function CircuitLite({
               {lives} {lives === 1 ? "life" : "lives"} left · same sector
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── ready hint after the title card — control is yours ── */}
-      {phase === "ready" && !reachCardOn && (
-        <div className="circuit-sector-intro__hint mono" style={{ color: accent, bottom: embedded && !onExit ? "22%" : "18%" }}>
-          Tap &amp; hold to fly
         </div>
       )}
 

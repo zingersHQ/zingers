@@ -25,7 +25,7 @@ const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 // daylightBiome() transform (same world, lit like noon) so VI–IX read as the
 // climb breaking above the clouds into daylight.
 const RECIPE: Array<[string, boolean, string, string]> = [
-  ["concord", false, "The Launch", "leaving neutral ground — the gate-ring falls away below"],
+  ["concord", false, "The Launch", "the Concord falls away — first rings ahead"],
   ["colosseum", false, "Colosseum Rise", "the cosmic-violet nebula over the home grounds"],
   ["void", false, "Garden Drift", "bioluminescent spores drift up from the Void Garden"],
   ["ember", false, "Ember Thermals", "ash and heat rising off the Wastes"],
