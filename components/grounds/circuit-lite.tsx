@@ -37,13 +37,19 @@ import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } 
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { getHandle } from "@/lib/owner";
-import { CLIMB_SECTORS, CLIMB_SECTOR_COUNT } from "./climb/sectors";
+import { CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { sectorDifficulty } from "./climb/difficulty";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
+import {
+  desktopCircuitSector,
+  toClimbCanonical,
+  DESKTOP_GAP_SCALE,
+  DESKTOP_VERT_SCALE,
+} from "./climb/desktop-adapter";
 import type { BiomeConfig } from "./biomes";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, circuitGatePlaneCross, formatCircuitMs } from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
@@ -96,9 +102,7 @@ const DIVE_SINK = -8.0;     // target vy when above the next gate (Surge drops)
 const DIVE_GLIDE = 8;       // snappier ease into the dive
 const DIVE_LEAD = 2.2;      // how far above next gate centre before dive engages
 const FLOOR_Y = -9;         // fall below this → run over
-// Soft ceiling: a full hold parks you INSIDE the next ring's opening so simply
-// holding threads the gate instead of overshooting into the void.
-const CEIL_GATE_FRAC = 0.5;
+// No soft Y ceiling — you can climb past a ring to miss on purpose (desktop parity).
 
 // ── stumble (docs/climb.md §4) — a hazard hit is NOT a death; it shoves you and
 // briefly locks control, so it usually CASCADES into a miss or a fall without
@@ -109,10 +113,10 @@ const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + g
 const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
 const GOLD_RING_CROWNS = 25;
 
-// ── chase camera ── match desktop Circuit (world.tsx CameraController):
-// CAM_DIST_DEFAULT 8.6 + PITCH_FLY_HOVER 0.14, dead-astern, look on the chest.
-// Same distance/angle on phone and desktop so the Ascent reads as one mode.
-const CAM_DIST = 8.6;
+// ── chase camera ── desktop Circuit base is 8.6, but in-flight it dollies back
+// with speed (~+3–5). Portrait Climb needs that pulled-back frame as the default
+// so the Trainer + rings read the same size as desktop.
+const CAM_DIST = 11.4;
 const CAM_PITCH = 0.14;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
@@ -290,13 +294,6 @@ function Flyer({
     }
     pos.current.y += vy.current * dt;
 
-    // soft ceiling inside the next gate's opening — a hold threads it, not misses
-    const ceilY = cp ? cp.pos[1] + cp.radius * CEIL_GATE_FRAC : Infinity;
-    if (pos.current.y > ceilY) {
-      pos.current.y = ceilY;
-      if (vy.current > 0) vy.current = 0;
-    }
-
     // coplanar corridor (climb-feel §1c): rings sit at x=0 — pin the flyer to the
     // flight plane. No lateral ease toward a weaving next-gate (that rubber-band
     // was the "weird correction" players hated).
@@ -321,8 +318,8 @@ function Flyer({
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
-    // trailing chase camera — same spherical offset as desktop Circuit chase
-    const pivotY = pos.current.y + CAM_HEIGHT;
+    // Chase the visual Trainer (CHAMP_Y), not the gate-thread point above it.
+    const pivotY = pos.current.y + CHAMP_Y + CAM_HEIGHT;
     camWant.current.set(pos.current.x + CAM_SIDE, pivotY + CAM_UP, pos.current.z - CAM_BACK);
     const kc = 1 - Math.exp(-CAM_LERP * dt);
     camera.position.lerp(camWant.current, kc);
@@ -339,15 +336,16 @@ function Flyer({
 
     altRef.current = pos.current.y;
 
-    // Sparse path samples for ghost challenge share (~2.5 Hz), sector-relative.
+    // Sparse path samples in Climb-canonical space (same as desktop challenge URLs).
     const wall = performance.now();
     if (wall - lastSampleT.current >= 400) {
       lastSampleT.current = wall;
       const t0 = sectorStart.current || wall;
+      const canon = toClimbCanonical(pos.current.y, pos.current.z);
       samplesRef.current.push({
         t: Math.max(0, wall - t0),
-        y: pos.current.y,
-        z: pos.current.z,
+        y: canon.y,
+        z: canon.z,
       });
       if (samplesRef.current.length > 80) samplesRef.current.shift();
     }
@@ -444,9 +442,9 @@ function ReadyPose({
       py - COMPANION_FOLLOW.wingDrop * 0.35,
       track.spawn[2] + READY_DOCK.tz,
     );
-    // Park on the same chase frame as a running sector (desktop post-sweep).
+    // Same chase frame as a running sector (visual Trainer pivot + pulled-back dist).
     const sx = track.spawn[0];
-    const sy = track.spawn[1] + CAM_HEIGHT;
+    const sy = py + CAM_HEIGHT;
     const sz = track.spawn[2];
     camera.position.set(sx + CAM_SIDE, sy + CAM_UP, sz - CAM_BACK);
     camera.lookAt(sx, sy, sz + CAM_LEAD);
@@ -632,8 +630,8 @@ export default function CircuitLite({
   const champion = useMemo(() => getChampion(activeKey), [getChampion, activeKey]);
   const guestPinged = useRef(false);
 
-  // ── the current sector's theme + difficulty + modifier (the Reach it lives in) ──
-  const track = CLIMB_SECTORS[sector]!;
+  // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
+  const track = useMemo(() => desktopCircuitSector(sector), [sector]);
   // Seed overlap poses before the first ReadyPose frame (ghosts read these).
   useEffect(() => {
     const y = track.spawn[1] + CHAMP_Y;
@@ -876,9 +874,10 @@ export default function CircuitLite({
         }
         sectorStart.current = now;
         setGhostStartMs(now);
-        // Seed t=0 at the pad so shared ghosts remap from spawn, not first mid-air hit.
-        const sp = CLIMB_SECTORS[sector]?.spawn ?? [0, 1.1, -2.5];
-        samplesRef.current = [{ t: 0, y: sp[1], z: sp[2] }];
+        // Seed t=0 at the pad in Climb-canonical space (desktop challenge parity).
+        const sp = desktopCircuitSector(sector).spawn;
+        const origin = toClimbCanonical(sp[1], sp[2]);
+        samplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
         if (guest && !guestPinged.current) {
           guestPinged.current = true;
           pingEvent("m_guest_run");
@@ -1033,8 +1032,9 @@ export default function CircuitLite({
       const now = performance.now();
       sectorStart.current = now;
       setGhostStartMs(now);
-      const sp = CLIMB_SECTORS[next]?.spawn ?? [0, 1.1, -2.5];
-      samplesRef.current = [{ t: 0, y: sp[1], z: sp[2] }];
+      const sp = desktopCircuitSector(next).spawn;
+      const origin = toClimbCanonical(sp[1], sp[2]);
+      samplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
       return next;
     });
   }, [setHold, recordRun, guest, champion.wins]);
@@ -1237,6 +1237,8 @@ export default function CircuitLite({
                 type={ghostType as CreatureType}
                 mindKey={ghostMind || undefined}
                 accent="#8aa0ff"
+                scaleY={DESKTOP_VERT_SCALE}
+                scaleZ={DESKTOP_GAP_SCALE}
                 spawn={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}
                 followPos={flyerPosRef}
                 champFollowPos={champPosRef}

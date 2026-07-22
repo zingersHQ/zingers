@@ -130,13 +130,17 @@ function ArrivalDeck({
   const padY = DECK_TOP_Y - DECK_THICK / 2;
 
   if (staticMode) {
+    // Phone Climb pad — wide enough to read as a launch deck, not a postage stamp.
+    // Extends a little toward the first ring so the start gap doesn't feel cramped.
+    const padW = 7.2;
+    const padD = 6.4;
     return (
-      <group position={[sx, padY, sz]}>
+      <group position={[sx, padY, sz + 0.6]}>
         <mesh receiveShadow>
-          <boxGeometry args={[3.2, DECK_THICK, 3.2]} />
+          <boxGeometry args={[padW, DECK_THICK, padD]} />
           <meshStandardMaterial color="#2a2438" emissive={accent} emissiveIntensity={0.22} metalness={0.35} roughness={0.62} />
         </mesh>
-        <mesh position={[0, DECK_THICK / 2 + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, DECK_THICK / 2 + 0.02, -0.6]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.35, 1.55, 28]} />
           <meshBasicMaterial color={accent} transparent opacity={0.55} depthWrite={false} />
         </mesh>
