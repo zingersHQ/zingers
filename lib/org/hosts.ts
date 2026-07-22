@@ -27,6 +27,8 @@ export const GAME_PATH_PREFIXES = [
   "/standings",
   "/collection",
   "/grounds",
+  "/ascent",
+  "/m",
   "/champion",
   "/c",
   "/slides",

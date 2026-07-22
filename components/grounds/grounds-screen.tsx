@@ -199,7 +199,14 @@ function battleActorToMatchKey(actor: string, owned: string, creatureKey: string
   return actor === owned ? owned : matchOpponentKey(creatureKey, ladderId);
 }
 
-export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }) {
+export default function GroundsScreen({
+  gpuLite = false,
+  /** `/ascent` door — open the Circuit venue (desktop body of the Ascent). */
+  ascentEntry = false,
+}: {
+  gpuLite?: boolean;
+  ascentEntry?: boolean;
+}) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [towerAgents, setTowerAgents] = useState<TowerAgent[]>([]);
   const [altitude, setAltitude] = useState(0);
@@ -900,17 +907,25 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
     return () => window.clearTimeout(t);
   }, [activeVenue, circuitPhase, advanceCircuitSector]);
 
-  // Async challenge deep-link: /grounds?climb=…&gp=…&ascent=flight
+  // Async challenge deep-link: /ascent?climb=…&gp=… (legacy /grounds?…&ascent=flight too)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const c = readClimbChallengeFromSearch(window.location.search);
-    if (!c || c.door === "thumb") return;
+    // On /grounds roam, ignore old mobile-only door tags; /ascent accepts all.
+    if (!c || (!ascentEntry && c.door === "thumb")) return;
     setCircuitChallenge(c);
     setCircuitChallengeDismissed(false);
     track("climb_challenge_open");
     if (!gameSession) enterVenue("circuit");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
   }, []);
+
+  // /ascent with an owned mind — drop straight into the Circuit (guests still
+  // wait for the short summon → guestAscentReady enter below).
+  useEffect(() => {
+    if (!ascentEntry || !owned || gameSession || activeVenue === "circuit") return;
+    enterVenue("circuit");
+  }, [ascentEntry, owned, gameSession, activeVenue, enterVenue]);
 
   useEffect(() => {
     if (activeVenue !== "circuit") return;
@@ -2562,7 +2577,14 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {/* one-time objectives coachmark */}
-      {activeVenue === "circuit" && overlay === "none" && !showMatch && circuitPhase !== "prove" && (showHud || circuitGuest) && (
+      {/* Wait for TravelVeil to finish — otherwise SectorIntro 1/100 punches through
+          TAKE FLIGHT / Preparing the climb and stacks with the summon beat. */}
+      {activeVenue === "circuit" &&
+        !travelCard &&
+        overlay === "none" &&
+        !showMatch &&
+        circuitPhase !== "prove" &&
+        (showHud || circuitGuest) && (
         <CircuitHud
           phase={circuitPhase}
           sectorIndex={circuitSectorIdx}
@@ -2602,6 +2624,7 @@ export default function GroundsScreen({ gpuLite = false }: { gpuLite?: boolean }
       )}
 
       {activeVenue === "circuit" &&
+        !travelCard &&
         circuitChallenge &&
         !circuitChallengeDismissed &&
         (circuitPhase === "ready" || circuitPhase === "running") && (

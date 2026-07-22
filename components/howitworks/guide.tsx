@@ -271,7 +271,7 @@ const SLIDES: Slide[] = [
     body: (
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 740 }}>
         {[
-          { name: "The Climb", desc: "One-thumb flight on a phone; full Circuit on desktop. Altitude is the score.", color: "#39e0ff", href: "/m" },
+          { name: "The Ascent", desc: "One flight game — light on phone, full Circuit on desktop. Altitude is the score.", color: "#39e0ff", href: "/ascent" },
           { name: "The Grounds", desc: "A living 3D world to roam, raise, and duel.", color: "#b07bff", href: "/grounds" },
           { name: "Daily Tribunal", desc: "One shared fight a day. Call it before you watch.", color: "#36d39a", href: "/grounds" },
         ].map(({ name, desc, color, href }) => (
@@ -356,7 +356,7 @@ const SLIDES: Slide[] = [
         >
           Enter the Grounds →
         </Link>
-        <Link href="/m" className="btn" style={{ ["--ac" as string]: "#39e0ff", fontSize: 14, padding: "10px 18px" }}>
+        <Link href="/ascent" className="btn" style={{ ["--ac" as string]: "#39e0ff", fontSize: 14, padding: "10px 18px" }}>
           Or fly on your phone →
         </Link>
         <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", letterSpacing: 0.5 }}>

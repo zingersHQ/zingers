@@ -6,7 +6,7 @@ import { useIsMobile } from "@/lib/use-device";
 import GroundsScreen from "@/components/grounds/grounds-screen";
 
 /**
- * Phones default to the lightweight /m shell — the full 3D Grounds is
+ * Phones default to /ascent (light Climb body) — the full 3D Grounds is
  * desktop-first and melts mobile GPUs. Pass ?world=1 to opt in anyway.
  */
 export default function GroundsGate() {
@@ -16,8 +16,11 @@ export default function GroundsGate() {
   const forceWorld = sp.get("world") === "1";
 
   useEffect(() => {
-    if (isMobile && !forceWorld) router.replace("/m");
-  }, [isMobile, forceWorld, router]);
+    if (isMobile && !forceWorld) {
+      const q = sp.toString();
+      router.replace(q ? `/ascent?${q}` : "/ascent");
+    }
+  }, [isMobile, forceWorld, router, sp]);
 
   if (isMobile && !forceWorld) return null;
 

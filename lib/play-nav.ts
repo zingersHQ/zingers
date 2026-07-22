@@ -26,12 +26,21 @@ export interface NavGroup {
 //   You   → your own stuff and standing.
 //   Learn → how the game + protocol work.
 //   Build → the for-developers agent surface (not a game mode).
-/** Desktop door into the 3D world; phones use {@link MOBILE_PLAY_HREF}. */
+/** Desktop roam door into the 3D Grounds. */
 export const PLAY_HREF = "/grounds";
-export const MOBILE_PLAY_HREF = "/m";
+/** Shared Ascent door — phone and desktop; device picks Climb vs Circuit body. */
+export const ASCENT_HREF = "/ascent";
+/** @deprecated use {@link ASCENT_HREF} — kept so old imports keep working. */
+export const MOBILE_PLAY_HREF = ASCENT_HREF;
 
+/** Primary “Play / Take flight” entry — Ascent on phones, Grounds roam on desktop. */
 export function playEntryHref(isMobile: boolean): string {
-  return isMobile ? MOBILE_PLAY_HREF : PLAY_HREF;
+  return isMobile ? ASCENT_HREF : PLAY_HREF;
+}
+
+/** Always the Ascent (challenge shares, Take flight CTA). */
+export function ascentEntryHref(): string {
+  return ASCENT_HREF;
 }
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -78,7 +87,7 @@ export const DOCK_H = 0;
 // primary chrome and hide the top site header, since a web nav bar fights the
 // full-screen scene. Every other surface (including the `/` landing page) gets
 // the shared header.
-export const WORLD_ROUTES = ["/grounds"];
+export const WORLD_ROUTES = ["/grounds", "/ascent"];
 
 export function isWorldRoute(path: string): boolean {
   return WORLD_ROUTES.some((p) => path === p || path.startsWith(p + "/"));
@@ -88,8 +97,8 @@ export function isWorldRoute(path: string): boolean {
  *  Single source of truth so the header and the in-game menu agree on chrome. */
 export function siteNavHidden(path: string, onOrg: boolean): boolean {
   if (path.startsWith("/slides") || path.startsWith("/render")) return true;
-  // The mobile shell (/m) carries its own bottom-tab chrome (docs/mobile.md);
-  // the web header would only fight it.
+  // Ascent shell (and legacy /m) carries its own chrome — no site header.
+  if (path === "/ascent" || path.startsWith("/ascent/")) return true;
   if (path === "/m" || path.startsWith("/m/")) return true;
   // The Observatory is a full-screen, console-style 3D dashboard with its own
   // chrome (incl. a "Game" back button), so the web header would only fight it.

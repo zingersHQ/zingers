@@ -255,69 +255,70 @@ export function CircuitHud({
           <ChevronLeft size={15} strokeWidth={2.4} /> Exit Ascent
         </button>
       )}
-      <div
-        className="panel"
-        style={{
-          position: "absolute",
-          top: 56,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 100,
-          pointerEvents: "none",
-          padding: "8px 14px",
-          ["--ac" as string]: accent,
-          borderColor: running ? accent : "var(--line)",
-          textAlign: "center",
-          // Title card owns the open — keep the strip quiet until the beat ends.
-          opacity: introActive ? 0.22 : 1,
-          transition: "opacity 0.45s ease",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-          <span className="mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: accent }}>
-            {title}
-          </span>
-          <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>
-            {sectorN}/{sectorTotal}
-          </span>
-          {(running || phase === "ready" || phase === "continue") && (
-            <LifePips lives={lives} accent={phase === "continue" ? "#ff5a5a" : accent} />
-          )}
-          <Timer size={14} color={accent} strokeWidth={2.2} />
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              fontVariantNumeric: "tabular-nums",
-              color: running || phase === "done" || phase === "failed" || phase === "continue" ? accent : "var(--muted)",
-              lineHeight: 1,
-            }}
-          >
-            {phase === "ready" && !runMs ? "—" : formatCircuitMs(runMs || sectorMs)}
-          </span>
-        </div>
-        {(running || phase === "ready") && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 7 }}>
-            {Array.from({ length: cpTotal }, (_, i) => {
-              const hit = i < cpNext;
-              const next = i === cpNext && running;
-              return (
-                <span
-                  key={i}
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 6,
-                    background: hit ? accent : next ? "transparent" : "var(--line2)",
-                    border: `1.5px solid ${hit || next ? accent : "var(--line)"}`,
-                    opacity: 0.9,
-                  }}
-                />
-              );
-            })}
+      {/* SectorIntro owns the ready open (big 1/100) — keep this strip off so it
+          doesn't stack with Preparing / TAKE FLIGHT / the title card. */}
+      {!introActive && (
+        <div
+          className="panel"
+          style={{
+            position: "absolute",
+            top: 56,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            pointerEvents: "none",
+            padding: "8px 14px",
+            ["--ac" as string]: accent,
+            borderColor: running ? accent : "var(--line)",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <span className="mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: accent }}>
+              {title}
+            </span>
+            <span className="mono" style={{ fontSize: 10, color: "var(--muted2)" }}>
+              {sectorN}/{sectorTotal}
+            </span>
+            {(running || phase === "continue") && (
+              <LifePips lives={lives} accent={phase === "continue" ? "#ff5a5a" : accent} />
+            )}
+            <Timer size={14} color={accent} strokeWidth={2.2} />
+            <span
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                fontVariantNumeric: "tabular-nums",
+                color: running || phase === "done" || phase === "failed" || phase === "continue" ? accent : "var(--muted)",
+                lineHeight: 1,
+              }}
+            >
+              {formatCircuitMs(runMs || sectorMs)}
+            </span>
           </div>
-        )}
-      </div>
+          {running && (
+            <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 7 }}>
+              {Array.from({ length: cpTotal }, (_, i) => {
+                const hit = i < cpNext;
+                const next = i === cpNext;
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 6,
+                      background: hit ? accent : next ? "transparent" : "var(--line2)",
+                      border: `1.5px solid ${hit || next ? accent : "var(--line)"}`,
+                      opacity: 0.9,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {!compact && !introActive && (
         <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
@@ -415,7 +416,7 @@ export function CircuitHud({
           )}
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-              <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
+              <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
             </button>
           )}
           {onShareChallenge && (
@@ -442,7 +443,7 @@ export function CircuitHud({
           title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`}
           sub={
             guestClaim
-              ? "Out of lives. Pick a mind to claim — or try again as a guest."
+              ? "Out of lives. Claim a champion — or try again as a guest."
               : failReason === "gates"
                 ? "Out of lives — missed a gate. Try again, share the run, or head back."
                 : "Out of lives. Try again, share the run, or head back."
@@ -457,11 +458,11 @@ export function CircuitHud({
             <>
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
                 {claimName
-                  ? `${claimName} flew with you — open the roster to claim it, or pick another mind.`
-                  : "Open the roster to claim a mind and keep this climb — XP, Crowns, and the board."}
+                  ? `${claimName} flew with you — claim it, or pick another champion.`
+                  : "Claim a champion to keep this climb — XP, Crowns, and the board."}
               </div>
               <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-                <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
+                <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
               </button>
             </>
           )}
@@ -500,7 +501,7 @@ export function CircuitHud({
         >
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
-              <Sparkles size={15} strokeWidth={2.2} /> Choose a mind to claim
+              <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
             </button>
           )}
           {!guestClaim && onProve && (

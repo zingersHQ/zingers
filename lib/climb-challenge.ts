@@ -1,8 +1,9 @@
-// Climb challenge links — async rivalry (nail-it P0/P1).
-// Format:
-//   mobile:  /m?climb=<sectors>-<ms>-<name>&gp=<ghostPath>
-//   desktop: /grounds?climb=…&gp=…&ascent=flight
+// Ascent challenge links — async rivalry (nail-it P0/P1).
+// Canonical share URL (phone + desktop):
+//   /ascent?climb=<sectors>-<ms>-<name>&gp=<ghostPath>
+// Optional ascent=flight|thumb records which body shared (boards stay split).
 // Path samples are ALWAYS in Climb-canonical space (mobile units).
+// Legacy /m?… and /grounds?…&ascent=flight still decode.
 
 import { BRAND } from "@/lib/brand";
 import {
@@ -58,7 +59,7 @@ export function decodeClimbChallenge(raw: string | null | undefined): ClimbChall
   return { sectors: Math.floor(sectors), totalMs: Math.floor(totalMs), name };
 }
 
-/** Absolute URL for a Climb challenge. Default door = mobile thumb. */
+/** Absolute URL for an Ascent challenge — always `/ascent` (device picks the body). */
 export function climbChallengeUrl(
   c: ClimbChallenge,
   origin?: string,
@@ -71,11 +72,9 @@ export function climbChallengeUrl(
     const gp = encodeGhostPath(c.path);
     if (gp) q.set(PATH_PARAM, gp);
   }
-  if (door === "flight") {
-    q.set(DOOR_PARAM, "flight");
-    return `${base}/grounds?${q.toString()}`;
-  }
-  return `${base}/m?${q.toString()}`;
+  // Record share body for split boards; never forks the path.
+  if (door === "flight" || door === "thumb") q.set(DOOR_PARAM, door);
+  return `${base}/ascent?${q.toString()}`;
 }
 
 export function readClimbChallengeFromSearch(search: string): ClimbChallenge | null {

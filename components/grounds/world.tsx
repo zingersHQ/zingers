@@ -793,16 +793,17 @@ export default function World({
               )}
               {circuitGhostPath && circuitGhostPath.length >= 2 && (
                 <ClimbGhostRacer
-                  key={`ascent-ghost-${circuitGhostSectorKey}`}
+                  key={`ascent-ghost-${circuitGhostSectorKey}-${circuitGhostRunStartMs}`}
                   path={circuitGhostPath}
                   running={circuitPhase === "running"}
                   runStartMs={circuitGhostRunStartMs}
                   type={circuitGhostForce || pledged || "LOGIC"}
-                  accent={biome.lights.arenaPoint}
+                  accent={biome.lights.arenaPoint || "#8aa0ff"}
                   scaleY={DESKTOP_VERT_SCALE}
                   scaleZ={DESKTOP_GAP_SCALE}
-                  originX={circuitTrack?.spawn[0] ?? 0}
-                  sideX={1.7}
+                  spawn={circuitTrack?.spawn ?? [0, 1.1, -2.5]}
+                  followPos={handlerPos}
+                  sideX={1.85}
                 />
               )}
             </>

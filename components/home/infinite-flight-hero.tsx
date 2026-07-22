@@ -1,6 +1,6 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
-// Infinite flight hero — shared homepage face for desktop `/` and mobile `/m`.
+// Infinite flight hero — shared homepage face for desktop `/` and `/ascent` splash.
 // Front camera on the Trainer + champion in a continuous glide (layered soft
 // lift, no hard thrust beats) over scrolling Grounds-style rolling terrain.
 // No floating islands — hills and montículos they actually fly over.

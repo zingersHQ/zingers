@@ -13,8 +13,7 @@ import { FOUNDING_REGIONS, FORCES } from "@/lib/lore/canon";
 import { worldByRegion, worldById } from "@/components/grounds/worlds";
 import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { FIRST_FIGHT_WORLD } from "@/lib/first-duel";
-import { useIsMobile } from "@/lib/use-device";
-import { MOBILE_PLAY_HREF, playEntryHref } from "@/lib/play-nav";
+import { ASCENT_HREF } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
 import type { Champion } from "@/lib/types";
 
@@ -84,21 +83,21 @@ const WORLDS_SHOWCASE = FOUNDING_REGIONS.map((r) => ({
 
 export function Landing() {
   const router = useRouter();
-  const isMobile = useIsMobile();
 
-  // Phones enter through /m Take flight — same game, native first minutes.
+  // Phones enter through /ascent — same shareable door as desktop flight.
   const [door, setDoor] = useState<"checking" | "mobile" | "desktop">("checking");
   useEffect(() => {
     const phone = typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 640px)").matches;
     if (phone) {
       setDoor("mobile");
-      router.replace(MOBILE_PLAY_HREF);
+      router.replace(ASCENT_HREF);
       return;
     }
     setDoor("desktop");
   }, [router]);
 
-  const playHref = playEntryHref(isMobile);
+  // Take flight → Ascent on every device; desktop Play nav still opens Grounds roam.
+  const playHref = ASCENT_HREF;
 
   useEffect(() => {
     if (door !== "desktop") return;

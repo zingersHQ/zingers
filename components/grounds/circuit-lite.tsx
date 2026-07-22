@@ -109,20 +109,22 @@ const STUMBLE_IMMUNE = 1.6; // seconds before another hit can register (lock + g
 const GOLD_RING_ODDS = 0.125; // §7b — chance a sector hides a golden ring (+Crowns)
 const GOLD_RING_CROWNS = 25;
 
-// ── chase camera ── Flappy read (climb-feel §3): tiny flyer, big corridor,
-// 2–3 rings visible ahead. Character should occupy ≲15% of frame height.
-const CAM_SIDE = 2.4;     // slight +X so the body reads in 3/4, not dead-on
-const CAM_UP = 4.2;       // lift above the flyer
-const CAM_BACK = 16.0;    // trail well behind (travel is +Z)
-const CAM_LEAD = 14.0;    // look well down-track so upcoming rings are centred
-const CAM_HEIGHT = 0.6;   // look-at lift — keeps the hero low-centre of frame
-const CAM_LERP = 6;       // exp-damping rate for smooth follow (frame-rate indep.)
+// ── chase camera ── match desktop Circuit (world.tsx CameraController):
+// CAM_DIST_DEFAULT 8.6 + PITCH_FLY_HOVER 0.14, dead-astern, look on the chest.
+// Same distance/angle on phone and desktop so the Ascent reads as one mode.
+const CAM_DIST = 8.6;
+const CAM_PITCH = 0.14;
+const CAM_SIDE = 0;
+const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
+const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
+const CAM_LEAD = 1.6;     // small down-track look (desktop lead ≈ speed * 1.2)
+const CAM_HEIGHT = 0.27;  // chest pivot — same as desktop Handler look target
+const CAM_LERP = 6;       // matches desktop in-flight position damp
+const CAM_FOV = 52;       // desktop flying FOV (no speed swell on Climb)
 
 // ── the flying cast (canon: the Trainer flies, the champion flies beside) ──
 // Same absolute scales as the Grounds / desktop Circuit (world.tsx):
 // Trainer = READER_SCALE (2/3), champion = WORLD_AGENT_SCALE (2/9) → ~⅓.
-// Camera stay-back (CAM_*) keeps the Flappy "small bird, big sky" read — don't
-// invent a second proportion for the phone.
 const PILOT_SCALE = READER_SCALE;
 const FOLLOWER_SCALE = WORLD_AGENT_SCALE;
 const CHAMP_FACE = 0;      // Y-rotation so it faces the travel direction (+Z)
@@ -243,7 +245,9 @@ function Flyer({
   const jetEmit = useRef(0);
 
   const camWant = useRef(new THREE.Vector3());
-  const lookAt = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2] + CAM_LEAD));
+  const lookAt = useRef(
+    new THREE.Vector3(track.spawn[0], track.spawn[1] + CAM_HEIGHT, track.spawn[2] + CAM_LEAD),
+  );
 
   useFrame((state, dtRaw) => {
     if (dead.current) return;
@@ -317,15 +321,21 @@ function Flyer({
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
-    // trailing chase camera, exp-damped
-    camWant.current.set(pos.current.x + CAM_SIDE, pos.current.y + CAM_UP, pos.current.z - CAM_BACK);
+    // trailing chase camera — same spherical offset as desktop Circuit chase
+    const pivotY = pos.current.y + CAM_HEIGHT;
+    camWant.current.set(pos.current.x + CAM_SIDE, pivotY + CAM_UP, pos.current.z - CAM_BACK);
     const kc = 1 - Math.exp(-CAM_LERP * dt);
     camera.position.lerp(camWant.current, kc);
     lookAt.current.lerp(
-      { x: pos.current.x, y: pos.current.y + CAM_HEIGHT, z: pos.current.z + CAM_LEAD } as THREE.Vector3,
+      { x: pos.current.x, y: pivotY, z: pos.current.z + CAM_LEAD } as THREE.Vector3,
       kc,
     );
     camera.lookAt(lookAt.current);
+    const cam = camera as THREE.PerspectiveCamera;
+    if (Math.abs(cam.fov - CAM_FOV) > 0.05) {
+      cam.fov += (CAM_FOV - cam.fov) * (1 - Math.exp(-3 * dt));
+      cam.updateProjectionMatrix();
+    }
 
     altRef.current = pos.current.y;
 
@@ -419,7 +429,12 @@ function ReadyPose({
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     if (grp.current) grp.current.position.y = track.spawn[1] + CHAMP_Y + Math.sin(t * 1.6) * 0.07;
-    camera.lookAt(track.spawn[0], track.spawn[1] + 0.5, track.spawn[2] + 0.4);
+    // Park on the same chase frame as a running sector (desktop post-sweep).
+    const sx = track.spawn[0];
+    const sy = track.spawn[1] + CAM_HEIGHT;
+    const sz = track.spawn[2];
+    camera.position.set(sx + CAM_SIDE, sy + CAM_UP, sz - CAM_BACK);
+    camera.lookAt(sx, sy, sz + CAM_LEAD);
   });
   return (
     <group ref={grp} position={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}>
@@ -1094,7 +1109,16 @@ export default function CircuitLite({
           frameloop="always"
           shadows={gfx.shadows}
           dpr={gfx.dpr}
-          camera={{ position: [CAM_SIDE, track.spawn[1] + CAM_UP, track.spawn[2] - CAM_BACK], fov: 55, near: 0.1, far: gfx.far }}
+          camera={{
+            position: [
+              track.spawn[0] + CAM_SIDE,
+              track.spawn[1] + CAM_HEIGHT + CAM_UP,
+              track.spawn[2] - CAM_BACK,
+            ],
+            fov: CAM_FOV,
+            near: 0.1,
+            far: gfx.far,
+          }}
           gl={{ antialias: gfx.antialias, powerPreference: gfx.powerPreference }}
           style={{ pointerEvents: "none" }}
           onCreated={({ gl }) => {
@@ -1168,9 +1192,10 @@ export default function CircuitLite({
                 running={running}
                 runStartMs={ghostStartMs}
                 type={champType}
-                accent="#c8d0ff"
-                originX={track.spawn[0]}
-                sideX={1.35}
+                accent="#8aa0ff"
+                spawn={track.spawn}
+                followPos={flyerPosRef}
+                sideX={1.55}
               />
             );
           })()}
@@ -1233,7 +1258,8 @@ export default function CircuitLite({
         </div>
       )}
 
-      {/* ── ALTITUDE — the score. Top-left, big, the loudest thing on screen. ── */}
+      {/* ── ALTITUDE — the score. Hidden while the sector title card owns the open
+          so SECTOR 1/100 doesn't stack on the big intro number. ── */}
       <div
         style={{
           position: "absolute",
@@ -1250,6 +1276,8 @@ export default function CircuitLite({
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
           border: "1px solid rgba(255,255,255,.06)",
+          opacity: reachCardOn && !reachCardOut && phase === "ready" ? 0 : 1,
+          transition: "opacity 0.35s ease",
         }}
       >
         <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: accent, opacity: 0.9 }}>

@@ -81,7 +81,7 @@ export function Nav() {
                 href={href}
                 onClick={close}
                 className={`site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
-                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && isMobile && path.startsWith("/m")) ? " is-on" : ""
+                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m"))) ? " is-on" : ""
                 }`}
                 title={l.blurb}
               >

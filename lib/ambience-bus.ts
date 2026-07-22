@@ -67,5 +67,7 @@ export function ambienceFlourish(kind: "victory" | "defeat" = "victory") {
 
 /** Start the registered engine (call from a user gesture — e.g. onboarding CTA). */
 export function startAmbience() {
+  // Never kick the score while the tab is in the background.
+  if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
   engine?.start();
 }

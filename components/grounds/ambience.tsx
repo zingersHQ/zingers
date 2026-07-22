@@ -43,14 +43,17 @@ let engine: Ambience | null = null;
 let armed = false;
 let hosts = 0;
 let cleanupGesture: (() => void) | null = null;
+/** Score only plays while this tab is visible — background tabs stay silent. */
+let tabVisible = typeof document === "undefined" ? true : document.visibilityState === "visible";
 
 function applyEngine() {
-  setSfxEnabled(soundOn);
-  setCreatureVoiceEnabled(soundOn);
+  const live = soundOn && tabVisible;
+  setSfxEnabled(live);
+  setCreatureVoiceEnabled(live);
   if (hosts === 0) return;
   engine ??= new Ambience();
   registerAmbience(engine);
-  if (!soundOn) {
+  if (!live) {
     engine.stop();
     return;
   }
@@ -61,7 +64,7 @@ function applyEngine() {
   if (!cleanupGesture) {
     const go = () => {
       armed = true;
-      engine?.start();
+      if (soundOn && tabVisible) engine?.start();
       cleanupGesture?.();
       cleanupGesture = null;
     };
@@ -128,7 +131,16 @@ export function AmbienceEngine() {
   useAmbiencePref(); // ensures hydration
   useEffect(() => {
     addHost();
-    return () => removeHost();
+    const onVisibility = () => {
+      tabVisible = document.visibilityState === "visible";
+      applyEngine();
+    };
+    tabVisible = document.visibilityState === "visible";
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      removeHost();
+    };
   }, []);
   return null;
 }

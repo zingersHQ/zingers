@@ -48,6 +48,11 @@ export function middleware(request: NextRequest) {
   }
 
   // ── zingers.gg (and localhost / previews) — game surface ─────────────────
+  // Legacy mobile door → shared Ascent URL (query preserved for challenges).
+  if (pathname === "/m" || pathname.startsWith("/m/")) {
+    return NextResponse.redirect(new URL(`/ascent${search}`, request.url), 308);
+  }
+
   if (pathname === "/org" || pathname.startsWith("/org/")) {
     const rest = pathname === "/org" ? "" : pathname.slice("/org".length);
     // Keep /org on localhost for dev; redirect in production on the game domain

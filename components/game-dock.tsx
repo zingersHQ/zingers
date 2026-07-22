@@ -8,7 +8,7 @@ import { useIsMobile } from "@/lib/use-device";
 import { isOrgHost } from "@/lib/org/hosts";
 
 function MenuLink({ item, path, href, onPick }: { item: PlayLink; path: string; href: string; onPick: () => void }) {
-  const active = navIsActive(path, item.href) || (item.id === "play" && path.startsWith("/m"));
+  const active = navIsActive(path, item.href) || (item.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m")));
   return (
     <Link href={href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
       <span className="game-menu__item-label">{item.label}</span>
