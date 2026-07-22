@@ -564,6 +564,7 @@ export function ChampionMesh({
   speechEmote,
   clan = null,
   hideFloaters = false,
+  suppressJetpack = false,
   padLeash,
   companionDrive,
   companionRenderPriority,
@@ -616,6 +617,8 @@ export function ChampionMesh({
    *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
    *  close-up character-select showcase. */
   hideFloaters?: boolean;
+  /** Ghost / showcase: flight pose without the jetpack VFX. */
+  suppressJetpack?: boolean;
   /** owned companion: autonomous chase of the Handler wing slot (4 o'clock) */
   padLeash?: {
     handlerRef: RefObject<THREE.Vector3>;
@@ -1274,8 +1277,10 @@ export function ChampionMesh({
             anatomy instead of orbiting the figure or hanging in empty space. */}
         {!hideFloaters && <ArchetypeFeatures type={type} h={app.h} color={palette.cube} accent={palette.accent} dim={auraDim} seed={seed} bones={built.bones} anchors={built.partAnchors} />}
 
-        {padLeash && <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />}
-        {companionDrive && !padLeash && <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />}
+        {!suppressJetpack && padLeash && <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />}
+        {!suppressJetpack && companionDrive && !padLeash && (
+          <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />
+        )}
 
         {/* keeper regalia + aura ride the core bone so they track the body's live
             motion (sway, lunge, recoil) as one piece instead of hanging at the

@@ -52,7 +52,7 @@ import { CircuitScene } from "./circuit-scene";
 import { CircuitGhostLeave } from "./circuit-ghost";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
-import { ClimbGhostRacer } from "./climb/ghost-racer";
+import { ClimbGhostRacer, GHOST_CAPSULE_FOOT } from "./climb/ghost-racer";
 import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
@@ -305,6 +305,8 @@ export default function World({
   onCircuitGhostDone,
   circuitArriveNonce = 0,
   circuitGhostForce = null,
+  circuitGhostMind = null,
+  circuitGhostChampion = null,
   circuitGhostPath = null,
   circuitGhostRunStartMs = 0,
   circuitGhostSectorKey = 0,
@@ -370,6 +372,9 @@ export default function World({
   /** Bumped on life-continue to re-arm the front-facing arrive cam. */
   circuitArriveNonce?: number;
   circuitGhostForce?: CreatureType | null;
+  /** Challenger roster key (ghost shows this mind). */
+  circuitGhostMind?: string | null;
+  circuitGhostChampion?: Champion | null;
   /** Challenger ghost path for the live sector (Climb-canonical; scaled for desktop rings). */
   circuitGhostPath?: ClimbGhostSample[] | null;
   /** performance.now() when the live sector started — ghost restarts each sector. */
@@ -470,6 +475,14 @@ export default function World({
   }, [venueSpawn, earlyResume, resumeSpawn, inCircuit, inAmphitheatre, shape, knoll]);
   const handlerPos = useRef(
     new THREE.Vector3(initialSpawn ? initialSpawn[0] : knoll.x, initialSpawn ? initialSpawn[1] : 0, initialSpawn ? initialSpawn[2] : knoll.z),
+  );
+  /** Live Ascent champion world pose — challenge ghost snaps onto this. */
+  const circuitChampPos = useRef(
+    new THREE.Vector3(
+      (circuitTrack?.spawn?.[0] ?? 0) - 2.6,
+      (circuitTrack?.spawn?.[1] ?? 0) - 1.35 + 1.05,
+      (circuitTrack?.spawn?.[2] ?? 0) + 0.45,
+    ),
   );
   // Face the ring in the Amphitheatre, down-track in the Circuit, else resume / plaza-inward.
   const handlerHeading = useRef(
@@ -775,6 +788,7 @@ export default function World({
                   phase={circuitPhase}
                   padPos={[circuitTrack.spawn[0] - 2.6, circuitTrack.spawn[1] - 1.35, circuitTrack.spawn[2] + 0.45]}
                   followPos={handlerPos}
+                  poseOut={circuitChampPos}
                 />
               )}
               <AscentReturnPortal
@@ -793,17 +807,20 @@ export default function World({
               )}
               {circuitGhostPath && circuitGhostPath.length >= 2 && (
                 <ClimbGhostRacer
-                  key={`ascent-ghost-${circuitGhostSectorKey}-${circuitGhostRunStartMs}`}
+                  key={`ascent-ghost-${circuitGhostMind || circuitGhostForce}-${circuitGhostSectorKey}-${circuitGhostRunStartMs}`}
                   path={circuitGhostPath}
                   running={circuitPhase === "running"}
                   runStartMs={circuitGhostRunStartMs}
                   type={circuitGhostForce || pledged || "LOGIC"}
+                  mindKey={circuitGhostMind || undefined}
+                  champion={circuitGhostChampion || undefined}
                   accent={biome.lights.arenaPoint || "#8aa0ff"}
                   scaleY={DESKTOP_VERT_SCALE}
                   scaleZ={DESKTOP_GAP_SCALE}
                   spawn={circuitTrack?.spawn ?? [0, 1.1, -2.5]}
                   followPos={handlerPos}
-                  sideX={1.85}
+                  champFollowPos={circuitChampPos}
+                  feetBelow={GHOST_CAPSULE_FOOT}
                 />
               )}
             </>
@@ -1451,6 +1468,7 @@ function CircuitSpectator({
   phase,
   padPos,
   followPos,
+  poseOut,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -1461,6 +1479,8 @@ function CircuitSpectator({
   padPos: [number, number, number];
   /** Handler world position — soft-leash target while running (climb-feel §5) */
   followPos: React.RefObject<THREE.Vector3>;
+  /** Publish champion world pose for challenge-ghost overlap. */
+  poseOut?: React.RefObject<THREE.Vector3 | null>;
 }) {
   const c = champions.find((x) => x.key === ownedKey);
   const flying = phase === "running";
@@ -1493,6 +1513,7 @@ function CircuitSpectator({
         renderPriority={0}
         spawnFrom={[px, top, pz]}
         chasing={flying}
+        poseOut={poseOut}
       />
     </group>
   );

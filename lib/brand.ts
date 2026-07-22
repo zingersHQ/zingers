@@ -33,6 +33,8 @@ export const STORAGE = {
   solPubkey: "zingers_sol_pubkey_v1",
   /** Best guest Climb depth (sectors) awaiting claim conversion. */
   guestClimbBest: "zingers_guest_climb_best_v1",
+  /** sessionStorage: claim from /ascent → cover + Concord gate guide on /grounds remount. */
+  postClaimGuide: "zingers_post_claim_guide_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

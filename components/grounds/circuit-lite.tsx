@@ -415,12 +415,18 @@ function ReadyPose({
   champion,
   ascentReaches,
   accent,
+  flyerPosRef,
+  champPosRef,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
   champion: Champion;
   ascentReaches: number;
   accent: string;
+  /** Publish Trainer world pose so challenge ghosts can snap onto you. */
+  flyerPosRef: React.RefObject<THREE.Vector3>;
+  /** Publish champion world pose (ready dock) for the same overlap. */
+  champPosRef: React.RefObject<THREE.Vector3>;
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -428,7 +434,16 @@ function ReadyPose({
   const noBurst = useRef(0);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    if (grp.current) grp.current.position.y = track.spawn[1] + CHAMP_Y + Math.sin(t * 1.6) * 0.07;
+    const bob = Math.sin(t * 1.6) * 0.07;
+    const py = track.spawn[1] + CHAMP_Y + bob;
+    if (grp.current) grp.current.position.y = py;
+    // Live poses for challenge ghosts — same spot, same bob.
+    flyerPosRef.current.set(track.spawn[0], py, track.spawn[2]);
+    champPosRef.current.set(
+      track.spawn[0] + READY_DOCK.tx,
+      py - COMPANION_FOLLOW.wingDrop * 0.35,
+      track.spawn[2] + READY_DOCK.tz,
+    );
     // Park on the same chase frame as a running sector (desktop post-sweep).
     const sx = track.spawn[0];
     const sy = track.spawn[1] + CAM_HEIGHT;
@@ -600,6 +615,7 @@ export default function CircuitLite({
   const sectorStart = useRef(0); // performance.now() when the live sector started
   // the pilot (robot) publishes its live world pose here; the champion follower trails it
   const flyerPosRef = useRef(new THREE.Vector3());
+  const champPosRef = useRef(new THREE.Vector3());
   const flyerHeadingRef = useRef(CHAMP_FACE);
   const pilotBurstRef = useRef(0);
 
@@ -618,6 +634,16 @@ export default function CircuitLite({
 
   // ── the current sector's theme + difficulty + modifier (the Reach it lives in) ──
   const track = CLIMB_SECTORS[sector]!;
+  // Seed overlap poses before the first ReadyPose frame (ghosts read these).
+  useEffect(() => {
+    const y = track.spawn[1] + CHAMP_Y;
+    flyerPosRef.current.set(track.spawn[0], y, track.spawn[2]);
+    champPosRef.current.set(
+      track.spawn[0] + READY_DOCK.tx,
+      y - COMPANION_FOLLOW.wingDrop * 0.35,
+      track.spawn[2] + READY_DOCK.tz,
+    );
+  }, [track]);
   const theme: ReachTheme = reachTheme(sector);
   const biome = theme.biome;
   const accent = theme.accent;
@@ -850,7 +876,9 @@ export default function CircuitLite({
         }
         sectorStart.current = now;
         setGhostStartMs(now);
-        samplesRef.current = [];
+        // Seed t=0 at the pad so shared ghosts remap from spawn, not first mid-air hit.
+        const sp = CLIMB_SECTORS[sector]?.spawn ?? [0, 1.1, -2.5];
+        samplesRef.current = [{ t: 0, y: sp[1], z: sp[2] }];
         if (guest && !guestPinged.current) {
           guestPinged.current = true;
           pingEvent("m_guest_run");
@@ -981,9 +1009,9 @@ export default function CircuitLite({
         paths[s] = [...samplesRef.current];
         sectorPathsRef.current = paths;
       }
-      samplesRef.current = [];
       const next = s + 1;
       if (next >= CLIMB_SECTOR_COUNT) {
+        samplesRef.current = [];
         stopJet();
         rewardSfx("epic");
         recordRun(CLIMB_SECTOR_COUNT, true);
@@ -993,6 +1021,7 @@ export default function CircuitLite({
       // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
       // board still records depth from this run; campaign height pauses here.
       if (next >= ALTITUDE_KEY_SECTOR && !guest && (champion.wins ?? 0) < 1) {
+        samplesRef.current = [];
         stopJet();
         rewardSfx("big");
         recordRun(next, true);
@@ -1004,6 +1033,8 @@ export default function CircuitLite({
       const now = performance.now();
       sectorStart.current = now;
       setGhostStartMs(now);
+      const sp = CLIMB_SECTORS[next]?.spawn ?? [0, 1.1, -2.5];
+      samplesRef.current = [{ t: 0, y: sp[1], z: sp[2] }];
       return next;
     });
   }, [setHold, recordRun, guest, champion.wins]);
@@ -1064,6 +1095,7 @@ export default function CircuitLite({
       sectors,
       totalMs,
       name: getHandle() || undefined,
+      mind: activeKey || undefined,
       path: ghostPathHasSamples(paths) ? paths : undefined,
     });
     const text = `Beat my Ascent: ${sectors}/${CLIMB_SECTOR_COUNT} · ${formatCircuitMs(totalMs)}`;
@@ -1085,7 +1117,7 @@ export default function CircuitLite({
       setShareMsg("Copy failed");
       window.setTimeout(() => setShareMsg(null), 2200);
     }
-  }, [lastRun, sector]);
+  }, [lastRun, sector, activeKey]);
 
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
   const gatesCleared = Math.max(0, targetIdx - 1); // in the current sector
@@ -1159,7 +1191,15 @@ export default function CircuitLite({
           <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector)} />
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {(phase === "ready" || phase === "continue") && (
-            <ReadyPose track={track} champType={champType} champion={champion} ascentReaches={ascentReaches} accent={accent} />
+            <ReadyPose
+              track={track}
+              champType={champType}
+              champion={champion}
+              ascentReaches={ascentReaches}
+              accent={accent}
+              flyerPosRef={flyerPosRef}
+              champPosRef={champPosRef}
+            />
           )}
           {running && (
             <Flyer
@@ -1186,17 +1226,21 @@ export default function CircuitLite({
           {(phase === "ready" || running) && (() => {
             const ghostPath = ghostPathForSector(challenge?.path, sector);
             if (!ghostPath) return null;
+            const ghostMind = challenge?.mind;
+            const ghostType = (ghostMind && ROSTER[ghostMind]?.type) || champType;
             return (
               <ClimbGhostRacer
-                key={`ghost-${sector}-${ghostStartMs}`}
+                key={`ghost-${ghostMind || ghostType}-${sector}-${ghostStartMs}`}
                 path={ghostPath}
                 running={running}
                 runStartMs={ghostStartMs}
-                type={champType}
+                type={ghostType as CreatureType}
+                mindKey={ghostMind || undefined}
                 accent="#8aa0ff"
-                spawn={track.spawn}
+                spawn={[track.spawn[0], track.spawn[1] + CHAMP_Y, track.spawn[2]]}
                 followPos={flyerPosRef}
-                sideX={1.55}
+                champFollowPos={champPosRef}
+                faceHeading={CHAMP_FACE}
               />
             );
           })()}
@@ -1213,6 +1257,7 @@ export default function CircuitLite({
               // (no EffectComposer / manual gl.render). Flyer mounts first so
               // same-priority order still leashes to this frame's pose.
               renderPriority={0}
+              poseOut={champPosRef}
             />
           )}
           {ghost && (

@@ -22,6 +22,8 @@ export interface ClimbChallenge {
   totalMs: number;
   /** Optional challenger display name (URL-safe). */
   name?: string;
+  /** Challenger's champion key (e.g. AXIOM) — ghost shows this mind. */
+  mind?: string;
   /** Per-sector ghost paths (canonical Climb space). v1 links decode as one sector. */
   path?: ClimbGhostSectors;
   /** Which body the challenge was shared from (boards stay split). */
@@ -31,6 +33,7 @@ export interface ClimbChallenge {
 const PARAM = "climb";
 const PATH_PARAM = "gp";
 const DOOR_PARAM = "ascent";
+const MIND_PARAM = "mk";
 
 /** Encode a finished run into a shareable challenge query value. */
 export function encodeClimbChallenge(c: ClimbChallenge): string {
@@ -72,6 +75,8 @@ export function climbChallengeUrl(
     const gp = encodeGhostPath(c.path);
     if (gp) q.set(PATH_PARAM, gp);
   }
+  const mind = (c.mind || "").trim().toUpperCase().replace(/[^A-Z0-9_]/g, "").slice(0, 24);
+  if (mind) q.set(MIND_PARAM, mind);
   // Record share body for split boards; never forks the path.
   if (door === "flight" || door === "thumb") q.set(DOOR_PARAM, door);
   return `${base}/ascent?${q.toString()}`;
@@ -86,10 +91,17 @@ export function readClimbChallengeFromSearch(search: string): ClimbChallenge | n
     const doorRaw = q.get(DOOR_PARAM);
     const door: ClimbDoor | undefined =
       doorRaw === "flight" ? "flight" : doorRaw === "thumb" ? "thumb" : undefined;
-    return { ...base, path, door };
+    const mk = (q.get(MIND_PARAM) || "").trim().toUpperCase().replace(/[^A-Z0-9_]/g, "").slice(0, 24);
+    const mind = mk || undefined;
+    return { ...base, path, door, mind };
   } catch {
     return null;
   }
 }
 
-export { PARAM as CLIMB_CHALLENGE_PARAM, PATH_PARAM as CLIMB_GHOST_PARAM, DOOR_PARAM as CLIMB_DOOR_PARAM };
+export {
+  PARAM as CLIMB_CHALLENGE_PARAM,
+  PATH_PARAM as CLIMB_GHOST_PARAM,
+  DOOR_PARAM as CLIMB_DOOR_PARAM,
+  MIND_PARAM as CLIMB_MIND_PARAM,
+};

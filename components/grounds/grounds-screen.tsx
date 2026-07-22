@@ -254,7 +254,15 @@ export default function GroundsScreen({
     globalRating: number | null; // player's new ladder rating
     home: boolean; // win earned under your Clan's region (home advantage paid)
   } | null>(null);
-  const [worldId, setWorldId] = useState(() => loadLastWorld() ?? DEFAULT_WORLD.id);
+  // Post-claim from /ascent must NOT reopen a leftover region — Concord + Grounds-gate guide only.
+  const [worldId, setWorldId] = useState(() => {
+    try {
+      if (typeof window !== "undefined" && sessionStorage.getItem(STORAGE.postClaimGuide) === "1") {
+        return "concord";
+      }
+    } catch {}
+    return loadLastWorld() ?? DEFAULT_WORLD.id;
+  });
   const world = useMemo(() => worldById(worldId), [worldId]);
   const [gameSession, setGameSession] = useState<GameSession | null>(null);
   /** Mount Handler at this wilds pose after leaving a venue (Ascent portal exit). */
@@ -283,6 +291,8 @@ export default function GroundsScreen({
   /** Guest Ascent ready — skip pick; fly a loaner until RUN OVER claim. */
   const [guestAscentReady, setGuestAscentReady] = useState(false);
   const guestEnterArmed = useRef(false);
+  /** Claim on /ascent — block Circuit auto-enter for the frame before router.replace. */
+  const leaveAscentAfterClaim = useRef(false);
   // Hold the "Summoning…" beat on screen long enough to read.
   // On a warm load the roster resolves almost instantly, so without a floor the
   // banner only flashed for a frame before the Ascent took over.
@@ -315,6 +325,12 @@ export default function GroundsScreen({
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
   const [concordCoach, setConcordCoach] = useState(false);
+  /** Opaque cover across /ascent → /grounds remount so the empty world never flashes. */
+  const [claimArriveCover, setClaimArriveCover] = useState(false);
+  /** Soft nudge in the first region after Imprint — don't dump the full Train sheet. */
+  const [regionRaiseCoach, setRegionRaiseCoach] = useState(false);
+  /** After first Train session — point at the central Arena to fight. */
+  const [arenaFightCoach, setArenaFightCoach] = useState(false);
   /** 0 = Reader identity, 1 = walk to train pad — before gate coach. */
   const [readerSplitStep, setReaderSplitStep] = useState<number | null>(null);
   // The gate nudge popup is tracked apart from the spotlight: "Skip" should only
@@ -812,8 +828,11 @@ export default function GroundsScreen({
       circuitSectorPathsRef.current = [];
       setCircuitChallengeResult(null);
     }
-    circuitSectorSamplesRef.current = [];
-    circuitSampleLastT.current = 0;
+    // Seed t=0 at the pad so ghost remaps from spawn, not the first mid-air sample.
+    const spawn = desktopCircuitSector(circuitSectorIdx).spawn;
+    const origin = toClimbCanonical(spawn[1], spawn[2]);
+    circuitSectorSamplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
+    circuitSampleLastT.current = now;
     circuitSectorStart.current = now;
     setCircuitGhostRunStartMs(now);
     setCircuitPhase("running");
@@ -843,6 +862,7 @@ export default function GroundsScreen({
         sectors,
         totalMs,
         name: getHandle() || undefined,
+        mind: owned || undefined,
         path: ghostPathHasSamples(paths) ? paths : undefined,
         door: "flight",
       },
@@ -870,7 +890,7 @@ export default function GroundsScreen({
       setCircuitShareMsg("Copy failed — select and copy from the address bar after opening the link");
       window.setTimeout(() => setCircuitShareMsg(null), 3200);
     }
-  }, [circuitPhase, circuitSectorIdx, circuitRunMs, isTouch]);
+  }, [circuitPhase, circuitSectorIdx, circuitRunMs, isTouch, owned]);
 
   const onCircuitPass = useCallback(
     (index: number) => {
@@ -935,6 +955,7 @@ export default function GroundsScreen({
   // /ascent with an owned mind — drop straight into the Circuit (guests still
   // wait for the short summon → guestAscentReady enter below).
   useEffect(() => {
+    if (leaveAscentAfterClaim.current) return;
     if (!ascentEntry || !owned || gameSession || activeVenue === "circuit") return;
     enterVenue("circuit");
   }, [ascentEntry, owned, gameSession, activeVenue, enterVenue]);
@@ -1025,12 +1046,22 @@ export default function GroundsScreen({
       setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
     } catch {}
     try {
-      if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
-        if (localStorage.getItem(STORAGE.readerSplitCoach) === "1") {
-          setConcordCoach(true);
-        }
+      // Claim from /ascent: cover → Concord outer spawn facing the lit Grounds gate.
+      const postClaim = sessionStorage.getItem(STORAGE.postClaimGuide) === "1";
+      if (postClaim) {
+        sessionStorage.removeItem(STORAGE.postClaimGuide);
+        setWorldId("concord");
+        saveLastWorld("concord");
+        setGameSession(null);
+        setClaimArriveCover(true);
+        setConcordCoach(true);
+        setGuideNudge(true);
+      } else if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
+        setConcordCoach(true);
+        setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
+      } else {
+        setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
       }
-      setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
     } catch {}
     try {
       clanInviteSeen.current = localStorage.getItem(STORAGE.clanInvite) === "1";
@@ -1477,7 +1508,10 @@ export default function GroundsScreen({
         return;
       }
     }
-    if (near?.kind === "train") setOverlay("train");
+    if (near?.kind === "train") {
+      setRegionRaiseCoach(false);
+      setOverlay("train");
+    }
     else if (near?.kind === "broker") setOverlay("broker");
     else if (near?.kind === "keeper") {
       // Guardians stripped from face (lib/features.ts) — never open the duel.
@@ -1485,6 +1519,7 @@ export default function GroundsScreen({
         setKeeperIntroPending({ level: near.level, name: near.name, title: near.title });
       }
     } else if (near?.kind === "arena") {
+      setArenaFightCoach(false);
       setOpponent(null);
       setOpponentId(null);
       setDuelMeta(null);
@@ -1634,7 +1669,7 @@ export default function GroundsScreen({
   const circuitGuest = !owned;
   const circuitActiveKey = owned ?? loanerKey;
 
-  /** Finish Act-1 latches after a guest (or pick) claim — stay in Circuit if already there. */
+  /** Finish Act-1 latches after a guest (or pick) claim — Concord gate guide stays ON. */
   const sealFirstClaim = useCallback(() => {
     markFirstDuelComplete();
     setFirstDuelPhase(null);
@@ -1649,15 +1684,40 @@ export default function GroundsScreen({
     setMatchView(null);
     setOpponent(null);
     setResult(null);
+    // Skip the region train-pad split (no pad in the hub). Do NOT stamp concordCoach —
+    // first landing must spotlight the Grounds gate.
     try {
       localStorage.setItem(STORAGE.readerSplitCoach, "1");
-      localStorage.setItem(STORAGE.concordCoach, "1");
     } catch {}
-    setConcordCoach(false);
+    setConcordCoach(true);
+    setGuideNudge(true);
     setReaderSplitStep(null);
+    void store.syncWallet();
     outcomeSfx(true);
     track("fj_train_to_ascent");
-  }, [bout]);
+  }, [bout, store]);
+
+  /** Outer Concord threshold, facing the lit Grounds Vaultgate — the only first-claim landing. */
+  const landConcordFirstGuide = useCallback(() => {
+    setConcordCoach(true);
+    setGuideNudge(true);
+    setGameSession(null);
+    saveLastWorld("concord");
+    if (worldId !== "concord") travelToWorld("concord", false);
+    else setWorldId("concord");
+    const faceGate = Math.atan2(
+      groundsGatePos[0] - CONCORD_SPAWN[0],
+      groundsGatePos[2] - CONCORD_SPAWN[1],
+    );
+    const place = () => {
+      // Clear any region resume pose — always the outer gate-ring start.
+      setWildResume({ x: CONCORD_SPAWN[0], z: CONCORD_SPAWN[1], heading: faceGate });
+      travelRef.current?.(CONCORD_SPAWN[0], CONCORD_SPAWN[1], faceGate);
+    };
+    place();
+    window.setTimeout(place, 180);
+    window.setTimeout(place, 520);
+  }, [worldId, travelToWorld, groundsGatePos]);
 
   /** RUN OVER / ceiling claim → champion selection (may keep the loaner or pick another). */
   const openCircuitClaimPicker = useCallback(() => {
@@ -1668,40 +1728,72 @@ export default function GroundsScreen({
     if (!firstDuelPick) setFirstDuelPick(loanerKey);
   }, [exitVenue, firstDuelPick, loanerKey]);
 
-  /** After the guest Ascent: claim a champion and land in the open Grounds — not another climb. */
+  /** After the guest Ascent: claim a champion and land in guided Concord — not another climb. */
   const claimAndEnterGrounds = useCallback(
     (key: string, strat: { risk: number; focus: number; aggression: number } = QUICK_START_STRAT) => {
       store.setStrat(key, strat);
       store.adoptStarterRookie(key);
+      // `/ascent` re-auto-enters Circuit whenever `owned` is set — leave before seal paints.
+      if (ascentEntry) {
+        leaveAscentAfterClaim.current = true;
+        try {
+          sessionStorage.setItem(STORAGE.postClaimGuide, "1");
+        } catch {}
+      }
       sealFirstClaim();
-      // `/ascent` re-auto-enters Circuit whenever `owned` is set — leave the door entirely.
       if (ascentEntry) {
         router.replace(PLAY_HREF);
         return;
       }
-      // Already on /grounds: step out of the Circuit into Concord roam.
+      // Already on /grounds: step out of the Circuit into Concord roam at the outer spawn.
       if (activeVenue === "circuit") {
         playTravel(
           {
             kicker: "RETURNING",
             title: "The Concord",
-            sub: "Your champion. Your Grounds.",
+            sub: "Your champion. Fly the lit Grounds gate.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
-          () => exitVenue(),
+          () => {
+            exitVenue();
+            landConcordFirstGuide();
+          },
         );
         return;
       }
       if (worldId !== "concord") {
-        playTravel(worldTravelCard("concord"), () => travelToWorld("concord", false));
+        playTravel(worldTravelCard("concord"), () => {
+          travelToWorld("concord", false);
+          landConcordFirstGuide();
+        });
+      } else {
+        landConcordFirstGuide();
       }
     },
-    [store, sealFirstClaim, ascentEntry, router, activeVenue, playTravel, exitVenue, worldId, worldTravelCard, travelToWorld],
+    [
+      store,
+      sealFirstClaim,
+      ascentEntry,
+      router,
+      activeVenue,
+      playTravel,
+      exitVenue,
+      landConcordFirstGuide,
+      worldId,
+      worldTravelCard,
+      travelToWorld,
+    ],
   );
 
   const completeFirstDuel = useCallback(() => {
     if (!owned && firstDuelPick) claimAndEnterGrounds(firstDuelPick);
     else {
+      if (ascentEntry) {
+        leaveAscentAfterClaim.current = true;
+        try {
+          sessionStorage.setItem(STORAGE.postClaimGuide, "1");
+        } catch {}
+      }
       sealFirstClaim();
       if (ascentEntry) {
         router.replace(PLAY_HREF);
@@ -1712,13 +1804,21 @@ export default function GroundsScreen({
           {
             kicker: "RETURNING",
             title: "The Concord",
-            sub: "Your champion. Your Grounds.",
+            sub: "Your champion. Fly the lit Grounds gate.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
-          () => exitVenue(),
+          () => {
+            exitVenue();
+            landConcordFirstGuide();
+          },
         );
       } else if (worldId !== "concord") {
-        playTravel(worldTravelCard("concord"), () => travelToWorld("concord", false));
+        playTravel(worldTravelCard("concord"), () => {
+          travelToWorld("concord", false);
+          landConcordFirstGuide();
+        });
+      } else {
+        landConcordFirstGuide();
       }
     }
   }, [
@@ -1731,6 +1831,7 @@ export default function GroundsScreen({
     activeVenue,
     playTravel,
     exitVenue,
+    landConcordFirstGuide,
     worldId,
     worldTravelCard,
     travelToWorld,
@@ -2211,18 +2312,59 @@ export default function GroundsScreen({
   const compassReserve = showCompass ? (isMobile ? 84 : 104) : 0;
 
   // Empathy beat: after the Concord coach ends and they land in a region, their
-  // champion asks for one Imprint — opens Train when the beat finishes.
+  // champion asks for one Imprint — then a soft raise nudge (not the full Train sheet).
   useEffect(() => {
-    if (!mounted || !owned || imprintTease) return;
+    if (!mounted || !owned || imprintTease || regionRaiseCoach) return;
     if (isHub || inVenue || showMatch || overlay !== "none") return;
-    if (concordCoach || wakeKey || flightKey || travelCard) return;
+    if (concordCoach || wakeKey || flightKey || travelCard || claimArriveCover) return;
     try {
       if (localStorage.getItem(STORAGE.imprintCoach) === "1") return;
       if (localStorage.getItem(STORAGE.concordCoach) !== "1") return;
       if (!isFirstDuelComplete()) return;
       setImprintTease(true);
     } catch {}
-  }, [mounted, owned, imprintTease, isHub, inVenue, showMatch, overlay, concordCoach, wakeKey, flightKey, travelCard]);
+  }, [
+    mounted,
+    owned,
+    imprintTease,
+    regionRaiseCoach,
+    isHub,
+    inVenue,
+    showMatch,
+    overlay,
+    concordCoach,
+    wakeKey,
+    flightKey,
+    travelCard,
+    claimArriveCover,
+  ]);
+
+  // Post-claim remount: force Concord, pose at outer spawn facing Grounds gate, then lift cover.
+  useEffect(() => {
+    if (!claimArriveCover || !showWorld || !owned) return;
+    if (worldId !== "concord") {
+      saveLastWorld("concord");
+      setWorldId("concord");
+      return; // wait for Concord world to mount, then pose
+    }
+    const faceGate = Math.atan2(
+      groundsGatePos[0] - CONCORD_SPAWN[0],
+      groundsGatePos[2] - CONCORD_SPAWN[1],
+    );
+    setWildResume({ x: CONCORD_SPAWN[0], z: CONCORD_SPAWN[1], heading: faceGate });
+    let tries = 0;
+    const id = window.setInterval(() => {
+      tries += 1;
+      if (travelRef.current) {
+        travelRef.current(CONCORD_SPAWN[0], CONCORD_SPAWN[1], faceGate);
+      }
+      if ((travelRef.current && tries >= 8) || tries >= 40) {
+        window.clearInterval(id);
+        window.setTimeout(() => setClaimArriveCover(false), 320);
+      }
+    }, 50);
+    return () => window.clearInterval(id);
+  }, [claimArriveCover, showWorld, owned, worldId, groundsGatePos]);
 
   const audioVolume = useSettings((s) => s.volume);
   const voiceOn = useSettings((s) => s.voice);
@@ -2424,6 +2566,9 @@ export default function GroundsScreen({
               onCircuitGhostDone={activeVenue === "circuit" ? () => setCircuitGhost(null) : undefined}
               circuitArriveNonce={activeVenue === "circuit" ? circuitArriveNonce : 0}
               circuitGhostForce={store.force}
+              circuitGhostMind={
+                activeVenue === "circuit" ? circuitChallenge?.mind ?? null : null
+              }
               circuitGhostPath={
                 activeVenue === "circuit"
                   ? ghostPathForSector(circuitChallenge?.path, circuitSectorIdx)
@@ -2786,10 +2931,36 @@ export default function GroundsScreen({
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
       )}
 
+      {/* Post-claim remount cover — hides empty Concord while the world + pose settle. */}
+      {claimArriveCover && (
+        <div
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 120,
+            display: "grid",
+            placeItems: "center",
+            background: "radial-gradient(120% 90% at 50% 38%, #1a1428 0%, #0a0712 55%, #050309 100%)",
+            color: "#f2eefb",
+          }}
+        >
+          <div style={{ textAlign: "center", padding: 24 }}>
+            <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.9 }}>
+              RETURNING
+            </div>
+            <div style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 800, marginTop: 10 }}>The Concord</div>
+            <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8, maxWidth: 320, lineHeight: 1.45 }}>
+              Your champion. Fly the lit Grounds gate — your first region.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
           Hidden once they're standing on a gate (the big Enter prompt takes over),
           and escalates to gold once they idle near spawn. */}
-      {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && near?.kind !== "gate" && (
+      {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !claimArriveCover && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div
             className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
@@ -2849,6 +3020,66 @@ export default function GroundsScreen({
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* After Train — send them to the Arena (this region's fight pit), not another menu. */}
+      {arenaFightCoach && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--good)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--good)" }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--good)", marginBottom: 6 }}>NEXT · A REAL FIGHT</div>
+            <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 10px" }}>
+              Training&apos;s done. Walk into the glowing <strong>Arena</strong> in the middle of this region and press <span className="mono">E</span> — {owned && byKey[owned] ? byKey[owned].name : "your champion"} fights; you watch and earn Crowns.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ ["--ac" as string]: "var(--good)", fontSize: 12, flex: 1 }}
+                onClick={() => {
+                  setArenaFightCoach(false);
+                  travelRef.current?.(0, 12, Math.PI);
+                }}
+              >
+                To the Arena
+              </button>
+              <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 12 }} onClick={() => setArenaFightCoach(false)}>
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* First region: after Imprint beat — point at the train pad instead of dumping Train UI. */}
+      {regionRaiseCoach && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)" }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>RAISE YOUR CHAMPION</div>
+            <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 10px" }}>
+              Walk to the glowing <strong>train pad</strong> nearby and press <span className="mono">E</span>. A paid session costs{" "}
+              <strong>{TRAIN_COST}</strong> Crowns — you have <strong>{crowns}</strong>. Free daily lessons are inside too.
+            </p>
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 12px", lineHeight: 1.4 }}>
+              Or explore first: fly the wilds, challenge minds, clear goals. Training can wait.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ ["--ac" as string]: "var(--gold)", fontSize: 12, flex: 1 }}
+                onClick={() => {
+                  setRegionRaiseCoach(false);
+                  setOverlay("train");
+                }}
+              >
+                Open train now
+              </button>
+              <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 12 }} onClick={() => setRegionRaiseCoach(false)}>
+                I&apos;ll explore
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3174,7 +3405,8 @@ export default function GroundsScreen({
               localStorage.setItem(STORAGE.imprintCoach, "1");
             } catch {}
             setImprintTease(false);
-            setOverlay("train");
+            setRegionRaiseCoach(true);
+            void store.syncWallet();
           }}
           layout="stage"
         />
@@ -3288,7 +3520,18 @@ export default function GroundsScreen({
 
       {/* training overlay */}
       {overlay === "train" && owned && byKey[owned] && (
-        <TrainOverlay ckey={owned} entry={byKey[owned]} onClose={() => setOverlay("none")} />
+        <TrainOverlay
+          ckey={owned}
+          entry={byKey[owned]}
+          onClose={() => setOverlay("none")}
+          onContinueToFight={() => {
+            setOverlay("none");
+            setRegionRaiseCoach(false);
+            setArenaFightCoach(true);
+            // Soft drop near the central Arena (region origin), facing inward.
+            window.setTimeout(() => travelRef.current?.(0, 12, Math.PI), 80);
+          }}
+        />
       )}
 
       {/* guardian duel — stripped from face when KEEPERS_PLAYABLE is false */}
@@ -3486,7 +3729,18 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
   );
 }
 
-function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEntry; onClose: () => void }) {
+function TrainOverlay({
+  ckey,
+  entry,
+  onClose,
+  onContinueToFight,
+}: {
+  ckey: string;
+  entry: RosterEntry;
+  onClose: () => void;
+  /** After a paid/fragment session — close and steer toward the Arena. */
+  onContinueToFight?: () => void;
+}) {
   const store = useChampions();
   const champ = store.get(ckey);
   const recipe = store.getRecipe(ckey);
@@ -3501,7 +3755,15 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
   const [imprintMoved, setImprintMoved] = useState<string>("");
   const [litAxes, setLitAxes] = useState<Set<keyof Strat>>(() => new Set());
   const litTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [training, setTraining] = useState(false);
+  const [trainErr, setTrainErr] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [sessionDone, setSessionDone] = useState(false);
   const day = imprintDayIndex();
+
+  useEffect(() => {
+    void store.syncWallet();
+  }, [store]);
 
   const teach = async (lessonId: string) => {
     if (imprinting) return;
@@ -3527,19 +3789,40 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
     const beforeLevel = levelFor(before.xp).level;
     const afterLevel = levelFor(after.xp).level;
     setFlash({ xp: after.xp - before.xp, leveledTo: afterLevel > beforeLevel ? afterLevel : null });
+    setSessionDone(true);
     if (flashTimer.current) clearTimeout(flashTimer.current);
-    flashTimer.current = setTimeout(() => setFlash(null), 2400);
+    flashTimer.current = setTimeout(() => setFlash(null), 4800);
   };
 
   const doTrain = async () => {
-    const before = store.get(ckey);
-    if (!(await store.trainChampion(ckey))) return;
-    reflectTrain(before);
+    if (training) return;
+    setTrainErr(null);
+    setTraining(true);
+    try {
+      await store.syncWallet();
+      const before = store.get(ckey);
+      const ok = await store.trainChampion(ckey);
+      if (!ok) {
+        setTrainErr(
+          store.crowns < TRAIN_COST
+            ? `Need ${TRAIN_COST} Crowns (you have ${store.crowns}). Win a fight or clear a goal.`
+            : "Training failed — try again in a moment.",
+        );
+        return;
+      }
+      reflectTrain(before);
+    } finally {
+      setTraining(false);
+    }
   };
 
   const doTrainFragment = () => {
+    setTrainErr(null);
     const before = store.get(ckey);
-    if (!store.trainWithFragment(ckey)) return;
+    if (!store.trainWithFragment(ckey)) {
+      setTrainErr("No fragments left — find them in the wilds.");
+      return;
+    }
     reflectTrain(before);
   };
 
@@ -3548,10 +3831,13 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
       <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <ChampionAvatar ckey={ckey} type={entry.type} champion={champ} size={84} />
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700 }}>Train {entry.name}</div>
             <div className="mono" style={{ fontSize: 11, color: col }}>
               {entry.type} · L{lf.level} {tierFor(lf.level).name} · {doctrine(champ, lf.level)}
+            </div>
+            <div className="mono" style={{ fontSize: 11, color: "var(--gold)", marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Crown size={12} strokeWidth={2.2} /> {store.crowns} Crowns · session costs {TRAIN_COST}
             </div>
           </div>
           <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
@@ -3559,21 +3845,74 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           </button>
         </div>
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 6px" }}>
-          TEMPERAMENT · how {entry.name} thinks
-        </div>
-        <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
-          Grown by lessons and fights — not dials you drag.
+        <p style={{ fontSize: 13, lineHeight: 1.45, margin: "14px 0 0", color: "var(--ink)" }}>
+          Spend Crowns for a training session that grows {entry.name}&apos;s body &amp; XP — or pick one free daily lesson below to nudge how they think. Then take them to the Arena to fight.
         </p>
-        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
-        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />
-        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 6px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          LESSONS · shape {entry.name} today
+        <button
+          className="btn btn-primary"
+          style={{
+            ["--ac" as string]: "var(--good)",
+            width: "100%",
+            fontSize: 15,
+            marginTop: 14,
+            opacity: training || store.crowns < TRAIN_COST ? 0.55 : 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+          disabled={training || store.crowns < TRAIN_COST}
+          onClick={() => void doTrain()}
+        >
+          <ArrowUp size={16} strokeWidth={2.4} />
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            {training ? "Training…" : <>Train session · {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} /></>}
+          </span>
+        </button>
+        {store.fragments > 0 && (
+          <button
+            className="btn"
+            style={{ ["--ac" as string]: "#39e0ff", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            onClick={doTrainFragment}
+          >
+            <Gem size={15} strokeWidth={2.2} color="#39e0ff" />
+            Free session · 1 fragment ({store.fragments})
+          </button>
+        )}
+        {flash && (
+          <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 12 }}>
+            <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>✦ Trained · +{flash.xp} XP</span>
+            {flash.leveledTo && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{flash.leveledTo}</span>}
+          </div>
+        )}
+        {sessionDone && onContinueToFight && (
+          <div style={{ marginTop: 12, padding: 12, borderRadius: 10, border: "1px solid var(--good)", background: "color-mix(in srgb, var(--good) 10%, transparent)" }}>
+            <p style={{ fontSize: 13, lineHeight: 1.4, margin: "0 0 10px" }}>
+              <strong>Session done.</strong> Next: a real fight at this region&apos;s Arena — that&apos;s how you earn Crowns back.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ ["--ac" as string]: "var(--good)", width: "100%", fontSize: 14 }}
+              onClick={onContinueToFight}
+            >
+              Next · To the Arena
+            </button>
+          </div>
+        )}
+        {trainErr && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>{trainErr}</p>}
+        {store.crowns < TRAIN_COST && !trainErr && (
+          <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>
+            Not enough Crowns ({store.crowns}/{TRAIN_COST}). Win a fight in the Arena.
+          </p>
+        )}
+
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "20px 0 6px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          FREE LESSONS · one per day
         </div>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 10px" }}>
-          Shared menu; your daily pick + the fights between make {entry.name} diverge. One lesson sticks per day.
+          No Crowns. Shapes temperament — how {entry.name} fights later.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {IMPRINT_LESSONS.map((l) => {
@@ -3607,67 +3946,56 @@ function TrainOverlay({ ckey, entry, onClose }: { ckey: string; entry: RosterEnt
           </div>
         )}
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
-          PERSONA · {entry.name}&apos;s voice (optional)
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 6px" }}>
+          TEMPERAMENT · how {entry.name} thinks
         </div>
-        <textarea
-          value={persona}
-          onChange={(e) => setPersonaLocal(e.target.value)}
-          onBlur={() => store.setPersona(ckey, persona)}
-          placeholder={entry.persona}
-          rows={2}
-          style={{ width: "100%", background: "var(--panel2)", border: "1px solid var(--line2)", borderRadius: 10, color: "var(--ink)", padding: 10, fontFamily: "inherit", fontSize: 13, resize: "vertical" }}
-        />
-
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 8px" }}>
-          BRAIN · who controls it in the arena
-        </div>
-        <AgentPicker ckey={ckey} recipe={recipe} />
-
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, margin: "16px 0" }}>
-          <span>stature ×{(app.h / 1.7).toFixed(2)}</span>
-          <span>build ×{app.width.toFixed(2)}</span>
-          <span>head ×{app.headScale.toFixed(2)}</span>
-          <span>fists ×{app.handScale.toFixed(2)}</span>
-          <span>level {lf.level}</span>
-          <span>{champ.wins}W / {champ.losses}L</span>
-        </div>
+        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
+        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />
+        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
 
         <button
-          className="btn btn-primary"
-          style={{ ["--ac" as string]: "var(--good)", width: "100%", fontSize: 14, opacity: store.crowns < TRAIN_COST ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-          disabled={store.crowns < TRAIN_COST}
-          onClick={doTrain}
+          type="button"
+          className="btn"
+          style={{ ["--ac" as string]: "var(--line2)", width: "100%", fontSize: 12, marginTop: 16 }}
+          onClick={() => setShowAdvanced((v) => !v)}
         >
-          <ArrowUp size={16} strokeWidth={2.4} />
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            Train session: {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} />
-          </span>
+          {showAdvanced ? "Hide advanced" : "Advanced · brain, persona, body stats"}
         </button>
-        {store.fragments > 0 && (
-          <button
-            className="btn"
-            style={{ ["--ac" as string]: "#39e0ff", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            onClick={doTrainFragment}
-          >
-            <Gem size={15} strokeWidth={2.2} color="#39e0ff" />
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              Free session · spend 1 fragment ({store.fragments})
-            </span>
-          </button>
+        {showAdvanced && (
+          <div style={{ marginTop: 12 }}>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "0 0 8px" }}>
+              BRAIN · who thinks in the arena (default is fine)
+            </div>
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 8px" }}>
+              <strong>House · Grok</strong> is the built-in mind — zero setup. Only switch if you want your own model or agent.
+            </p>
+            <AgentPicker ckey={ckey} recipe={recipe} />
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "16px 0 8px" }}>
+              PERSONA · {entry.name}&apos;s voice (optional)
+            </div>
+            <textarea
+              value={persona}
+              onChange={(e) => setPersonaLocal(e.target.value)}
+              onBlur={() => store.setPersona(ckey, persona)}
+              placeholder={entry.persona}
+              rows={2}
+              style={{ width: "100%", background: "var(--panel2)", border: "1px solid var(--line2)", borderRadius: 10, color: "var(--ink)", padding: 10, fontFamily: "inherit", fontSize: 13, resize: "vertical" }}
+            />
+            <div className="mono" style={{ fontSize: 11, color: "var(--muted)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, margin: "16px 0 0" }}>
+              <span>stature ×{(app.h / 1.7).toFixed(2)}</span>
+              <span>build ×{app.width.toFixed(2)}</span>
+              <span>head ×{app.headScale.toFixed(2)}</span>
+              <span>fists ×{app.handScale.toFixed(2)}</span>
+              <span>level {lf.level}</span>
+              <span>{champ.wins}W / {champ.losses}L</span>
+            </div>
+          </div>
         )}
         {store.fragments === 0 && (
-          <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", textAlign: "center", marginTop: 8, letterSpacing: 0.5 }}>
+          <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", textAlign: "center", marginTop: 14, letterSpacing: 0.5 }}>
             Fragments fund free sessions — clear world goals &amp; caches in the wilds.
           </p>
         )}
-        {flash && (
-          <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
-            <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>✦ Trained · +{flash.xp} XP</span>
-            {flash.leveledTo && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{flash.leveledTo}</span>}
-          </div>
-        )}
-        {store.crowns < TRAIN_COST && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>Not enough Crowns. Win a fight in the Arena.</p>}
       </div>
     </div>
   );
@@ -3709,7 +4037,7 @@ function AgentPicker({ ckey, recipe }: { ckey: string; recipe: Recipe }) {
       </div>
       {cfg.provider === "grok" && (
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0 }}>
-          The built-in house brain. Zero config. It just fights.
+          Default. The house mind fights for you — no API keys, no setup.
         </p>
       )}
       {cfg.provider === "openai" && (

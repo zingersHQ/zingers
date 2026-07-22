@@ -108,6 +108,10 @@ export function FlyingFollower({
   spawnFrom,
   /** When true, chase the pilot from the current position (no teleport). */
   chasing = true,
+  /** Ghost / showcase: flight pose without jetpack VFX. */
+  suppressJetpack = false,
+  /** Publish live world pose each frame (challenge ghosts snap to this). */
+  poseOut,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -122,6 +126,8 @@ export function FlyingFollower({
   renderPriority?: number;
   spawnFrom?: [number, number, number];
   chasing?: boolean;
+  suppressJetpack?: boolean;
+  poseOut?: React.RefObject<THREE.Vector3 | null>;
 }) {
   const rig = useRef<THREE.Group>(null);
   const pos = useRef(new THREE.Vector3());
@@ -217,6 +223,7 @@ export function FlyingFollower({
       headRef.current = th;
       rg.position.copy(pos.current);
       rg.rotation.y = rigHeading.current;
+      if (poseOut?.current) poseOut.current.copy(pos.current);
       return;
     }
 
@@ -286,6 +293,7 @@ export function FlyingFollower({
 
     rg.position.copy(pos.current);
     rg.rotation.y = rigHeading.current;
+    if (poseOut?.current) poseOut.current.copy(pos.current);
   }, renderPriority);
 
   return (
@@ -301,6 +309,7 @@ export function FlyingFollower({
           selected
           showLabel={false}
           hideFloaters
+          suppressJetpack={suppressJetpack}
           restPose="standing"
           breatheIntensity={0.4}
           companionDrive={drive}
