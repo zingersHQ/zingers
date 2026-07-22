@@ -202,7 +202,7 @@ function FlightPair({ reduceMotion, animate }: { reduceMotion: boolean; animate:
       <JetPuff burstRef={burstRef} intensityRef={intensityRef} />
       {/* Face the camera (+Z): front-on flight over the world. */}
       <group position={[-0.55, 0, 0]}>
-        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.14} />
+        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.32} />
       </group>
       <group position={[0.95, -0.18, -0.35]} scale={CHAR_SCALE * CHAMPION_REL_TO_TRAINER}>
         <ChampionMesh

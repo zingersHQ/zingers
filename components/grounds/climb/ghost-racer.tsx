@@ -241,7 +241,7 @@ export function ClimbGhostRacer({
               burstRef={burstRef}
               faceHeading={faceHeading}
               scale={READER_SCALE}
-              lean={0.2}
+              lean={0.42}
             />
           </Suspense>
         </group>
