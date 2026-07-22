@@ -50,13 +50,14 @@ export function RobotPilot({
   burstRef,
   faceHeading = 0,
   scale = READER_SCALE,
-  lean = 0.22,
+  lean = 0.38,
 }: {
   force?: CreatureType | null;
   flyingRef: React.RefObject<boolean>;
   burstRef: React.RefObject<number>;
   faceHeading?: number;
   scale?: number;
+  /** Forward lean (rad) while flying — nose into travel. */
   lean?: number;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");

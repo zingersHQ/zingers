@@ -307,8 +307,8 @@ function Flyer({
     if (grp.current) {
       grp.current.position.copy(pos.current);
       grp.current.rotation.y = CHAMP_FACE;
-      // Nose-down rush from wind + climb/sink attitude (reads as flying forward).
-      const pitch = THREE.MathUtils.clamp(0.14 - vy.current * 0.04, -0.2, 0.5);
+      // Strong forward lean into the wind + climb/sink attitude.
+      const pitch = THREE.MathUtils.clamp(0.28 - vy.current * 0.045, -0.15, 0.62);
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
@@ -392,7 +392,7 @@ function Flyer({
     <group ref={grp} position={track.spawn}>
       <group position={[0, CHAMP_Y, 0]}>
         <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
-          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0.28} />
+          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0.42} />
         </Suspense>
       </group>
       <AscentSigil reaches={ascentReaches} accent={accent} />

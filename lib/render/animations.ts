@@ -207,13 +207,22 @@ export function bodyBobForMode(mode: CreatureAnimMode): number {
   return mode === "bounce" ? ANIM.portrait.bobAmp * 2.2 : 0;
 }
 
-/** Jetpack flight attitude: pitch + roll from planar velocity in body-local space. */
+/** Jetpack flight attitude: pitch + roll from planar velocity in body-local space.
+ *  Positive pitch = nose into travel (lean forward). Used by Grounds Handler,
+ *  Circuit/Climb companions, and any ChampionMesh companionDrive path. */
 export function flightAttitudePlanar(
   vx: number,
   vz: number,
   headingY: number,
   blend: number,
-  opts?: { pitchGain?: number; rollGain?: number; maxPitch?: number; maxRoll?: number },
+  opts?: {
+    pitchGain?: number;
+    rollGain?: number;
+    maxPitch?: number;
+    maxRoll?: number;
+    /** Extra forward lean once you're moving (reads as "committed to the wind"). */
+    basePitch?: number;
+  },
 ): { pitch: number; roll: number } {
   const b = Math.max(0, Math.min(1, blend));
   if (b < 0.001) return { pitch: 0, roll: 0 };
@@ -221,11 +230,15 @@ export function flightAttitudePlanar(
   const cosH = Math.cos(headingY);
   const vf = vx * sinH + vz * cosH;
   const vr = vx * cosH - vz * sinH;
-  const pitchGain = opts?.pitchGain ?? 0.042;
-  const rollGain = opts?.rollGain ?? 0.24;
-  const maxPitch = opts?.maxPitch ?? 0.48;
-  const maxRoll = opts?.maxRoll ?? 0.36;
-  const pitch = Math.max(-maxPitch * 0.35, Math.min(maxPitch, vf * pitchGain)) * b;
+  const pitchGain = opts?.pitchGain ?? 0.058;
+  const rollGain = opts?.rollGain ?? 0.26;
+  const maxPitch = opts?.maxPitch ?? 0.66;
+  const maxRoll = opts?.maxRoll ?? 0.4;
+  const basePitch = opts?.basePitch ?? 0.2;
+  // Commit lean once there's clear forward speed, then scale with velocity.
+  const commit = vf > 0.35 ? Math.min(1, (vf - 0.35) / 5) : 0;
+  const rawPitch = basePitch * commit + vf * pitchGain;
+  const pitch = Math.max(-maxPitch * 0.35, Math.min(maxPitch, rawPitch)) * b;
   const roll = Math.max(-maxRoll, Math.min(maxRoll, -vr * rollGain)) * b;
   return { pitch, roll };
 }
