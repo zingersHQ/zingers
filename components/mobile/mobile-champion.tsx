@@ -290,7 +290,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
           {!canTrain && (
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "10px 0 0" }}>
-              Earn Crowns by calling fights and running the Circuit.
+              Earn Crowns by calling fights and flying.
             </p>
           )}
         </div>

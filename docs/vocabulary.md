@@ -22,20 +22,30 @@ Our audience is global. Many players read English as a second language, and many
 | **Imprint** | lesson / teach (alone) | The daily raising verb that writes memory and nudges Strategy. |
 | **Clan** | Allegiance, House | The Force you swear to. The verb "swear allegiance to your Clan" is fine (plain English). |
 | **regions** / **floating regions** | region-slabs, slabs | Drop "slab". |
+| **the world** | the Grounds (in first-touch copy) | Say **"the world"** for the whole 3D place a newcomer flies around in. "the Grounds" is the world's **lore proper name** — fine in the Bible/`/glossary`, but never in first-touch, and **never as a region's name** (that was the core confusion). URL `/grounds` and the `grounds` id are unchanged. |
+| **the Hub** | the Concord (in first-touch copy) | Say **"the Hub"** for the central landing area with the gates. "the Concord" survives as its lore proper name only. Code id `concord` unchanged. |
+| **explore** / **fly around** | roam | **Kill "roam"** in all visible copy. The `roam` layer id in `lib/hub.ts` / `lib/play-nav.ts` stays as a code id. |
+| **Flight** | the Ascent, Circuit, Climb (as mode names) | The flight game — one game on phone and desktop. Say **"Flight"** / **"Take flight"** / plain "fly". **Never** show *the Ascent*, *Circuit*, or *Climb* as a mode label. Lowercase "climb" is fine as a plain verb ("climb higher"). Code may still say Circuit / Climb / Ascent. |
 | **floating / drifting** | adrift | Plainer synonyms. |
 | **Gate** | Vaultgate | The arch out to a region (in visible copy; component names may stay). |
 | **secret word** | cipher-word | The word each Keeper guards. |
 | **Season** | the Chronicle | Visible copy says "season"; "the Chronicle" may remain as deep-lore flavor in the Bible. |
 | **built-in brain** | House brain | The default agent. |
 | **Live Gallery** | Scrying Gallery | Where you watch autonomous fights. |
-| **the Ascent** | Circuit, Climb (as mode names) | The flight game — one mode on phone and desktop (different body/feel, same sectors). Prefer **the Ascent** in all player-facing copy. Lowercase "climb" is fine as a plain verb ("climb higher"). Code may still say Circuit / Climb. |
-| **Reach** | level, stage | One band of the Ascent's sky (ten total). |
-| **Camp** | checkpoint, waystation (in copy) | The rest point between Reaches. |
+| **Reach** | level, stage | One band of Flight's sky (ten total). Demoted: the HUD shows **plain sky progress** (sector N / total), not "Reach N". "Reach" survives as a flavor name in the Bible/`/glossary`. |
+| **Camp** | checkpoint, waystation (in copy) | The rest point between Reaches. Demoted to lore; not a taught noun in first-touch. |
 | **fly beside you** / **wingmate** | the champion's jetpack | Canon: the champion has **no** jetpack — it's a mind and flies on its own. Only the **Trainer** carries a jetpack. Never write "your champion's jetpack." |
 
-## Keep, but always gloss on first use
+## The first-touch concept budget (the six a newcomer meets)
 
-**the Grounds, the Concord, the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, the Ascent, Reach, Camp, Fragment, Crowns.** These are signature and worth keeping — but the first time each appears in any surface, add a plain gloss. *(Exception, per rule 1: the Ascent, Reach and Camp **can** be glossed in a clause and the flight fantasy is the newcomer hook, so they are welcome in first-touch copy — glossed. "Fly" needs no gloss.)* The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
+The intro → take-flight → first-duel → landing flow introduces **only these six
+nouns**, each with a plain gloss: **Trainer, Champion, Fly (Flight), Battle/duel,
+the Hub, Crowns.** (See `docs/simplification-plan.md` §2.) Everything else is
+revealed later, in context, the first time it's relevant — never dumped up front.
+
+## Keep, but always gloss on first use (the flavor layer)
+
+**the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Reach, Camp, Fragment.** These are signature and worth keeping — but they belong to the **flavor layer** (the Bible, `/glossary`, deep menus), not first-touch. Wherever one first appears, add a plain gloss. The lore proper names **the Grounds** (say "the world") and **the Concord** (say "the Hub") also live here — keep them out of first-touch entirely. The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
 
 ## Code vs. copy
 

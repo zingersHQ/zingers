@@ -139,11 +139,8 @@ import { DOCK_H, PLAY_HREF } from "@/lib/play-nav";
 
 const World = dynamic(() => import("@/components/grounds/world"), {
   ssr: false,
-  loading: () => (
-    <div className="mono" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--muted)" }}>
-      summoning the grounds…
-    </div>
-  ),
+  // No copy — chunk load should feel like the sky opening, not a status line.
+  loading: () => <div aria-hidden style={{ position: "absolute", inset: 0, background: "#08070f" }} />,
 });
 
 // Where a player drops into the Concord on their first landing — the outer
@@ -1526,7 +1523,7 @@ export default function GroundsScreen({
         (near?.kind === "arena" && scenario.id === "gauntlet") ||
         near?.kind === "force";
       if (blocked) {
-        setModeLockToast("Claim a mind from the Ascent to unlock this.");
+        setModeLockToast("Claim a champion in Flight to unlock this.");
         return;
       }
     }
@@ -1771,8 +1768,8 @@ export default function GroundsScreen({
         playTravel(
           {
             kicker: "RETURNING",
-            title: "The Concord",
-            sub: "Your champion. Fly the lit Grounds gate.",
+            title: "The Hub",
+            sub: "Your champion. Fly the lit gate to your first region.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
           () => {
@@ -1824,8 +1821,8 @@ export default function GroundsScreen({
         playTravel(
           {
             kicker: "RETURNING",
-            title: "The Concord",
-            sub: "Your champion. Fly the lit Grounds gate.",
+            title: "The Hub",
+            sub: "Your champion. Fly the lit gate to your first region.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
           () => {
@@ -2681,8 +2678,18 @@ export default function GroundsScreen({
           </div>
         )}
 
-        {!isMobile && overlay === "none" && !showMatch && !inVenue && !worldUiBlocked && showChronicle && (
-          <div style={{ marginTop: 12, width: 380, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
+        {/* Season waits until first-run coaches clear — one story at a time. */}
+        {!isMobile &&
+          overlay === "none" &&
+          !showMatch &&
+          !inVenue &&
+          !worldUiBlocked &&
+          showChronicle &&
+          !concordCoach &&
+          !claimArriveCover &&
+          !imprintTease &&
+          !regionRaiseCoach && (
+          <div style={{ marginTop: 12, width: 320, maxWidth: "calc(100vw - 32px)", pointerEvents: "auto" }}>
             <SeasonBanner compact onClose={dismissChronicle} />
           </div>
         )}
@@ -2700,28 +2707,6 @@ export default function GroundsScreen({
       {/* Trainer hub — out of Circuit so the flight HUD owns top chrome. */}
       {showHud && !worldUiBlocked && activeVenue !== "circuit" && (
       <div className={`grounds-hud${hudDim ? " is-dim" : ""}`} style={{ position: "absolute", top: 14, right: 16, display: "flex", alignItems: "center", gap: isMobile ? 5 : 8, zIndex: 100, pointerEvents: "auto" }}>
-        {owned && byKey[owned] && !showMatch && overlay === "none" && !gRun && (
-          <div
-            className="panel"
-            aria-label={READER_COPY.wingmateChip(byKey[owned].name)}
-            title={READER_COPY.wingmateChip(byKey[owned].name)}
-            style={{
-              ["--ac" as string]: TYPE_COLOR[byKey[owned].type],
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: isMobile ? "6px 9px" : "7px 11px",
-              maxWidth: isMobile ? 120 : 160,
-            }}
-          >
-            <span className="mono" style={{ fontSize: 8, letterSpacing: 0.8, color: "var(--muted2)", flexShrink: 0 }}>
-              {isMobile ? "◆" : "WINGMATE"}
-            </span>
-            <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 800, color: TYPE_COLOR[byKey[owned].type], overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {byKey[owned].name}
-            </span>
-          </div>
-        )}
         <PlayerHub
           isMobile={isMobile}
           crowns={crowns}
@@ -2818,7 +2803,8 @@ export default function GroundsScreen({
           boardLoading={circuitBoardLoading}
           onContinue={advanceCircuitSector}
           onRestart={resetCircuitRun}
-          onExit={leaveAscent}
+          // Guests get top-right "Claim a champion" (continue) — not Exit Ascent.
+          onExit={circuitGuest ? undefined : leaveAscent}
           onShareChallenge={shareCircuitChallenge}
           shareChallengeLabel={isTouch ? "Challenge a friend" : "Copy challenge link"}
           onProve={
@@ -2832,7 +2818,7 @@ export default function GroundsScreen({
           onClaim={circuitGuest ? openCircuitClaimPicker : undefined}
           claimName={circuitGuest ? ROSTER[loanerKey]?.name ?? "this mind" : null}
           onToHub={!circuitGuest ? leaveAscent : undefined}
-          hubLabel={venueHostWorldId === "concord" ? "To the Concord" : "Leave the Ascent"}
+          hubLabel={venueHostWorldId === "concord" ? "To the Hub" : "Leave Flight"}
           challengeResult={circuitChallengeResult}
           challengeLabel={circuitChallenge?.name || (circuitChallenge ? "CHALLENGE" : null)}
           accent={circuitReach.accent}
@@ -2970,9 +2956,9 @@ export default function GroundsScreen({
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.9 }}>
               RETURNING
             </div>
-            <div style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 800, marginTop: 10 }}>The Concord</div>
+            <div style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 800, marginTop: 10 }}>The Hub</div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8, maxWidth: 320, lineHeight: 1.45 }}>
-              Your champion. Fly the lit Grounds gate — your first region.
+              Your champion. Fly the lit gate to your first region.
             </div>
           </div>
         </div>
@@ -2991,11 +2977,11 @@ export default function GroundsScreen({
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
               {guideIdle ? (
                 <>
-                  <strong>This way.</strong> Fly to the glowing <strong>Grounds</strong> gate, your first region to explore. Step onto its ring and press <span className="mono">E</span>.
+                  <strong>This way.</strong> Fly to the glowing gate to your <strong>first region</strong>. Step onto its ring and press <span className="mono">E</span>.
                 </>
               ) : (
                 <>
-                  <strong>Welcome to the Concord.</strong> Fly out through the lit <strong>Grounds</strong> gate, your first region. The other gates can wait.
+                  <strong>Welcome to the Hub.</strong> Fly out through the lit gate to your <strong>first region</strong>. The other gates can wait.
                 </>
               )}
             </span>
@@ -3073,17 +3059,13 @@ export default function GroundsScreen({
         </div>
       )}
 
-      {/* First region: after Imprint beat — point at the train pad instead of dumping Train UI. */}
+      {/* First region: after Imprint — one soft raise nudge. No Crowns / pad essay. */}
       {regionRaiseCoach && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
-          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)" }}>
+          <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 420, width: "100%", padding: "14px 16px", borderColor: "var(--gold)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>RAISE YOUR CHAMPION</div>
-            <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 10px" }}>
-              Walk to the glowing <strong>train pad</strong> nearby and press <span className="mono">E</span>. A paid session costs{" "}
-              <strong>{TRAIN_COST}</strong> Crowns — you have <strong>{crowns}</strong>. Free daily lessons are inside too.
-            </p>
-            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 12px", lineHeight: 1.4 }}>
-              Or explore first: fly the wilds, challenge minds, clear goals. Training can wait.
+            <p style={{ fontSize: 13, lineHeight: 1.45, margin: "0 0 12px" }}>
+              Teach them one short lesson — or explore first. Either works.
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
@@ -3095,7 +3077,7 @@ export default function GroundsScreen({
                   setOverlay("train");
                 }}
               >
-                Open train now
+                Start training
               </button>
               <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 12 }} onClick={() => setRegionRaiseCoach(false)}>
                 I&apos;ll explore
@@ -3330,53 +3312,26 @@ export default function GroundsScreen({
       {/* first-run tutorial / elevator pitch */}
       {mounted && showIntro && <FirstRun onClose={closeIntro} />}
 
-      {/* ── pre-picker load beat ──
-          Closing the intro deck unmounts the heavy 3D world and fetches the
-          roster + the picker's own 3D showcase chunk. That window used to be a
-          silent black gap (~15s on a cold load) and was the single biggest
-          drop-off point. Hold a calm "summoning" beat here so the player always
-          sees intent, never a dead screen, until champion select mounts. */}
-      {mounted && !showIntro && !rosterError && !showWorld && gpu?.ok && (
-        (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady) || ascentEntry
-      ) && (
+      {/* Pre-picker beat only for /grounds guest paths — /ascent Take Flight skips
+          all "Preparing…" interstitials and opens straight into the Circuit sky. */}
+      {mounted &&
+        !ascentEntry &&
+        !showIntro &&
+        !rosterError &&
+        !showWorld &&
+        gpu?.ok &&
+        awaitingFirstDuel &&
+        firstDuelPhase === null &&
+        !guestAscentReady && (
         <div
-          aria-live="polite"
+          aria-hidden
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 80,
-            display: "grid",
-            placeItems: "center",
             background: "radial-gradient(120% 90% at 50% 38%, #15101f 0%, #0a0712 60%, #050309 100%)",
-            color: "#f2eefb",
           }}
-        >
-          <style>{`@keyframes summonOrb { 0%,80%,100% { opacity:.25; transform: scale(.82);} 40% { opacity:1; transform: scale(1);} } @keyframes summonRise { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }`}</style>
-          <div style={{ textAlign: "center", animation: "summonRise .6s ease both", padding: 24 }}>
-            <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.85 }}>THE ASCENT</div>
-            <div style={{ fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 800, marginTop: 12, letterSpacing: 0.3 }}>
-              Preparing the Ascent…
-            </div>
-            <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8 }}>
-              Fly first. Claim a champion when the run ends.
-            </div>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
-              {[0, 1, 2, 3, 4].map((i) => (
-                <span
-                  key={i}
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: "linear-gradient(180deg,#39e0ff,#7a5cff)",
-                    boxShadow: "0 0 14px rgba(57,224,255,.55)",
-                    animation: `summonOrb 1.4s ${i * 0.16}s ease-in-out infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        />
       )}
 
       {/* champion wakes — first time you bind to a mind */}

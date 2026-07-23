@@ -10,6 +10,9 @@ export interface PlayLink {
   short: string;
   href: string;
   blurb: string;
+  /** reference/doc links: shown in the site header, hidden from the in-world hubs
+   *  (the M-menu + player-hub panel) to keep first-run chrome uncluttered. */
+  secondary?: boolean;
 }
 
 export interface NavGroup {
@@ -48,7 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "play",
     label: "Play",
     items: [
-      { id: "play", label: "Play", short: "Play", href: PLAY_HREF, blurb: "Walk the Grounds: train, explore, fight, and run the world's games." },
+      { id: "play", label: "Play", short: "Play", href: PLAY_HREF, blurb: "Explore the world: train, fight, and play its games." },
     ],
   },
   {
@@ -65,9 +68,11 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "how", label: "How it works", short: "Guide", href: "/howitworks", blurb: "Start here if you're new." },
       { id: "bible", label: "Gallery", short: "Gallery", href: "/bible", blurb: "Visual canon: forces, minds, regions." },
-      { id: "catalogue", label: "Catalogue", short: "Cat", href: "/catalogue", blurb: "20 agents emulated from the real systems: every type, tier, and clan." },
-      { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs." },
-      { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc." },
+      // Reference/doc links: kept in the site header but hidden from the in-world
+      // hubs (secondary) so the M-menu / player-hub panel don't read as a doc dump.
+      { id: "catalogue", label: "Catalogue", short: "Cat", href: "/catalogue", blurb: "20 agents emulated from the real systems: every type, tier, and clan.", secondary: true },
+      { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs.", secondary: true },
+      { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc.", secondary: true },
     ],
   },
   {
@@ -78,6 +83,13 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+/** NAV_GROUPS for the immersive in-world hubs (the M-menu + player-hub panel):
+ *  reference/doc links (`secondary`) are dropped and any now-empty group removed,
+ *  so first-run chrome stays uncluttered. The site header still shows everything. */
+export const HUB_NAV_GROUPS: NavGroup[] = NAV_GROUPS
+  .map((g) => ({ ...g, items: g.items.filter((i) => !i.secondary) }))
+  .filter((g) => g.items.length > 0);
 
 /** no bottom bar anymore — the menu is a top-left button. Kept at 0 so callers
  *  that still add it to padding/insets don't reserve dead space. */

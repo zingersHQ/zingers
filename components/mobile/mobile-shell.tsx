@@ -43,7 +43,7 @@ const TABS: TabDef[] = [
   { id: "today", label: "Today", icon: Home },
   { id: "watch", label: "Watch", icon: Eye },
   { id: "champion", label: "Champion", icon: Shield },
-  { id: "climb", label: "Ascent", icon: Rocket },
+  { id: "climb", label: "Flight", icon: Rocket },
   { id: "rank", label: "Rank", icon: Trophy },
 ];
 

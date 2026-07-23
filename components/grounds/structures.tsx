@@ -208,8 +208,80 @@ function CalderaRim({ biome }: { biome: BiomeConfig }) {
   );
 }
 
+// ── Void Garden: a ring of luminous crystal spires (a grove, not a colonnade) ──
+// Same build idiom as ColosseumWall/CalderaRim — a deterministic, instanced ring
+// with the rift-bearing entrance left open — but the silhouette reads as an
+// overgrown crystal grove so the Garden never looks like the Colosseum.
+function GroveRing({ biome }: { biome: BiomeConfig }) {
+  const R = PLAZA_R + 2;
+  const crystal = biome.scatter.crystal;
+  const glow = biome.floatCrystal.emissive;
+  const trim = biome.lights.arenaPoint;
+  const rock = biome.terrain.mid;
+  const entrance = biome.terrain.canyonAngle ?? Math.PI / 2;
+  const { spires, cols } = useMemo(() => {
+    const r = mulberry(113);
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const mats: THREE.Matrix4[] = [];
+    const c: { x: number; z: number; radius: number; h: number }[] = [];
+    const N = 40;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * TWO_PI + (r() - 0.5) * 0.05;
+      // keep the rift-bearing approach clear (same filter the other surrounds use)
+      if (Math.abs(Math.atan2(Math.sin(a - entrance), Math.cos(a - entrance))) < 0.5) continue;
+      const rad = R + (r() - 0.4) * 2.0;
+      const h = 6 + r() * 9;
+      const w = 0.5 + r() * 0.7;
+      const lean = (r() - 0.5) * 0.16;
+      e.set(lean, r() * TWO_PI, lean);
+      q.setFromEuler(e);
+      mats.push(
+        new THREE.Matrix4().compose(
+          new THREE.Vector3(Math.cos(a) * rad, h / 2, Math.sin(a) * rad),
+          q,
+          new THREE.Vector3(w, h, w),
+        ),
+      );
+      c.push({ x: Math.cos(a) * rad, z: Math.sin(a) * rad, radius: w * 0.5, h });
+    }
+    return { spires: mats, cols: c };
+  }, [R, entrance]);
+  return (
+    <group>
+      {/* mossy base ring with a luminous inner seam */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.12, 0]} receiveShadow>
+        <ringGeometry args={[R - 1.0, R + 1.4, 96]} />
+        <meshStandardMaterial color={rock} roughness={0.85} metalness={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.16, 0]}>
+        <ringGeometry args={[R - 0.6, R - 0.25, 96]} />
+        <meshBasicMaterial color={trim} />
+      </mesh>
+      {/* crystal spires — one instanced draw */}
+      <instancedMesh
+        args={[undefined, undefined, Math.max(1, spires.length)]}
+        castShadow
+        ref={(im) => applyInstanceMatrices(im, spires)}
+      >
+        <coneGeometry args={[1, 1, 5]} />
+        <meshStandardMaterial color={crystal} emissive={glow} emissiveIntensity={1.3} roughness={0.35} metalness={0.35} flatShading />
+      </instancedMesh>
+      {/* the spires block like the colonnade — one fixed body, a cylinder each */}
+      <RigidBody type="fixed" colliders={false}>
+        {cols.map((t, i) => (
+          <CylinderCollider key={i} args={[t.h / 2, t.radius]} position={[t.x, t.h / 2, t.z]} />
+        ))}
+      </RigidBody>
+    </group>
+  );
+}
+
 export const PlazaSurround = memo(function PlazaSurround({ biome }: { biome: BiomeConfig }) {
-  return biome.scene.surround === "caldera" ? <CalderaRim biome={biome} /> : <ColosseumWall biome={biome} />;
+  const surround = biome.scene.surround;
+  if (surround === "caldera") return <CalderaRim biome={biome} />;
+  if (surround === "grove") return <GroveRing biome={biome} />;
+  return <ColosseumWall biome={biome} />;
 });
 
 // ── central arena: a lava pit instead of a gilded ring ───────────────────────

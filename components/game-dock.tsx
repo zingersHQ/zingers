@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
-import { NAV_GROUPS, navIsActive, siteNavHidden, playEntryHref, type PlayLink } from "@/lib/play-nav";
+import { HUB_NAV_GROUPS, navIsActive, siteNavHidden, playEntryHref, type PlayLink } from "@/lib/play-nav";
 import { useIsMobile } from "@/lib/use-device";
 import { isOrgHost } from "@/lib/org/hosts";
 
@@ -95,7 +95,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
             </div>
 
             <div className="game-menu__grid">
-              {NAV_GROUPS.map((group) => (
+              {HUB_NAV_GROUPS.map((group) => (
                 <div key={group.id} className="game-menu__section">
                   <span className="game-menu__section-label mono">{group.label}</span>
                   {group.items.map((item) => (

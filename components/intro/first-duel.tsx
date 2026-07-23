@@ -183,7 +183,7 @@ export function FirstDuelOverlay({
             style={{ ["--ac" as string]: ACC, width: "100%", fontSize: 15, padding: "14px 16px" }}
             onClick={() => (last ? onConcordDone() : setConcordStep((s) => s + 1))}
           >
-            {last ? "Enter the Concord" : "Continue"}
+            {last ? "Enter the Hub" : "Continue"}
           </button>
         </div>
       </div>
@@ -235,7 +235,7 @@ function TrainPhase({
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>STEP 2 · TUNE YOUR CHAMPION</div>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "8px 0 6px" }}>Set {entry.name}&apos;s strategy.</h2>
         <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
-          Drag the three dials that set how <strong>{entry.name}</strong> {FIGHT.fights} in the arena. You walk the Grounds; {entry.name} fights for you. Training costs Crowns and nudges the body before the bell.
+          Drag the three dials that set how <strong>{entry.name}</strong> {FIGHT.fights} in the arena. You explore the world; {entry.name} fights for you. Training costs Crowns and nudges the body before the bell.
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           <ChampionAvatar ckey={selected} type={entry.type} champion={previewRookieChampion(selected)} size={72} />
@@ -343,7 +343,7 @@ function PickPhase({
         {/* header */}
         <div style={{ padding: isMobile ? "16px 16px 4px" : "26px 32px 8px", textAlign: "center", flexShrink: 0 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)" }}>PICK · THEN ENTER</div>
-          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a champion for the Grounds.</h2>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: "6px 0 4px" }}>Claim a champion for the world.</h2>
           <p style={{ color: "var(--muted)", fontSize: isMobile ? 12 : 13, margin: 0, lineHeight: 1.45 }}>
             One click — then you&apos;re in the open world.
           </p>
@@ -447,7 +447,7 @@ function PickPhase({
               Claim {entry.name}
             </button>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: 0, textAlign: "center" }}>
-              Strategy &amp; Clan can wait — first, the Grounds
+              Strategy &amp; Clan can wait — first, the world
             </p>
           </div>
         </div>
@@ -704,7 +704,7 @@ function EvolveStep({
 
         <div className="evo2-foot">
           <button className="btn btn-primary evo2-cta" style={{ ["--ac" as string]: col }} onClick={onDone}>
-            Continue to the Concord
+            Continue to the Hub
           </button>
           <div className="evo2-share-wrap" ref={shareWrapRef}>
             <button
@@ -880,7 +880,7 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
           {FIRST_DUEL_TAGLINE}
         </p>
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-          Fly the Ascent now. Claim a mind when the run ends.
+          Take flight now. Claim a champion when the run ends.
         </p>
         <button
           className="btn btn-primary"
@@ -888,7 +888,7 @@ export function FirstDuelHubCta({ isMobile, onStart }: { isMobile: boolean; onSt
           onClick={onStart}
         >
           <ArrowUpRight size={16} strokeWidth={2.2} />
-          Fly the Ascent
+          Take flight
         </button>
       </div>
     </div>

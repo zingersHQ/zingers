@@ -185,7 +185,7 @@ export function ArrivalSequence({
           >
             <span style={{ fontSize: 20, color: accent, flexShrink: 0 }}>{force.sigil}</span>
             <span style={{ fontSize: 12.5, lineHeight: 1.4 }}>
-              <strong>Welcome to the Concord, {name}.</strong> Move with{" "}
+              <strong>Welcome to the Hub, {name}.</strong> Move with{" "}
               <span className="mono" style={{ color: "var(--fg)" }}>WASD</span> or drag. Walk to a glowing gate to fight, or open the menu to train.
             </span>
             <button onClick={onDone} className="btn" style={{ ["--ac" as string]: accent, fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>

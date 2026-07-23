@@ -685,7 +685,7 @@ function Legend({ mobile, embedded }: { mobile?: boolean; embedded?: boolean }) 
             Soar the deep.
           </>
         }
-        body="Chase towers, run the circuit, glide the drifting regions with your champion at your wing. The Grounds run on without you, and stretch far past the Concord, the neutral hub at their center."
+        body="Fly the drifting places with your champion at your wing. The world runs on without you, stretching far past the Hub at its center."
       />
     </div>
   );

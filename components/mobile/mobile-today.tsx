@@ -245,7 +245,7 @@ function Hub({
           {/* the two most-legible surfaces, one tap each */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
             <Tile
-              title="Climb"
+              title="Flight"
               sub="Hold to fly"
               icon={<Rocket size={20} strokeWidth={2.2} />}
               col="var(--accent)"

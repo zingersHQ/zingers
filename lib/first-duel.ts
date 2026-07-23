@@ -71,13 +71,13 @@ export function concordLanding(championName?: string) {
   return [
     {
       kicker: "YOU, THE TRAINER",
-      title: "Roam, duel, raise.",
-      body: `You're a Trainer now. ${who} flies beside you on the Ascent and fights when the climb asks for a prove. Tune their strategy, fly higher, and take short battles as sparks between Reaches — not as the whole game.`,
+      title: "You raise. It fights.",
+      body: `You're a Trainer now. ${who} flies beside you and fights for you. Fly higher, tune how it fights, and win battles to make it stronger.`,
     },
     {
-      kicker: "THE CONCORD & ITS GATES",
-      title: "Neutral ground. Gates to the regions.",
-      body: `You spawn on the approach to the Long Vault, a sealed golden seal the whole world is built around, where all five Forces keep an uneasy peace. The arches ringing the hub are gates: each opens onto a starting region (colosseum tribunals, ember gauntlets, void gardens) where ${who} fights wherever you take them.`,
+      kicker: "THE HUB",
+      title: "Fly through a gate to fight.",
+      body: `This is the Hub — where you land. The glowing arches around you are gates. Fly through one to reach a place where ${who} battles. Win to earn Crowns, then spend them to grow it.`,
     },
   ] as const;
 }

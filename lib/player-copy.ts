@@ -26,11 +26,11 @@ export const READER_COPY = {
   /** Prefer the named form once a champion is known. */
   walkFightLine: (name?: string) =>
     name
-      ? `You fly the Grounds. ${name} flies at your side.`
-      : "You fly the Grounds. Your champion flies at your side.",
+      ? `You fly the world. ${name} flies at your side.`
+      : "You fly the world. Your champion flies at your side.",
   walkFightChip: (name?: string) =>
     name ? `You fly · ${name} flies with you` : "You fly · Your champion flies with you",
-  flyLine: "Hold to rise. The Grounds are yours to soar.",
+  flyLine: "Hold to rise. The world is yours to soar.",
   adoptCta: (name: string) => `Adopt ${name}`,
   wingmateChip: (name: string) => `Wingmate · ${name}`,
   rookieArc: "Everything you do together reshapes the body. This is day one.",

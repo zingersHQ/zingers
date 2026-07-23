@@ -116,7 +116,7 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
             cursor: "pointer",
           }}
         >
-          Enter the Grounds <ChevronRight size={15} strokeWidth={2.4} />
+          Enter the world <ChevronRight size={15} strokeWidth={2.4} />
         </button>
       </div>
 

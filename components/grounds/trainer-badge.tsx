@@ -31,13 +31,13 @@ export function TrainerBadge({ isMobile, war, onOpenClan, compact = false }: { i
         <div
           className="panel"
           aria-label={`Trainer rank ${tl.level}, ${tl.title}, ${fm.name}`}
-          title={`Lv ${tl.level} · ${tl.title} · ${fm.name}`}
+          title={`Level ${tl.level} · ${tl.title} · ${fm.name}`}
           style={{ ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 6, padding: isMobile ? "7px 10px" : "8px 11px", width: "fit-content", pointerEvents: "auto" }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: 5, background: `${fc}22`, color: fc, fontSize: 11, fontWeight: 800 }}>
             {EMBLEM[force]}
           </span>
-          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: fc }}>Lv {tl.level}</span>
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: fc }}>Level {tl.level}</span>
         </div>
       );
     }
@@ -51,7 +51,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan, compact = false }: { i
           {EMBLEM[force]}
         </span>
         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
-          <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Level {tl.level} · {tl.title}</span>
           <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5, marginTop: 1 }}>{fm.name.toUpperCase()}</span>
         </span>
       </div>
@@ -72,7 +72,7 @@ export function TrainerBadge({ isMobile, war, onOpenClan, compact = false }: { i
         className="panel"
         aria-label="Trainer profile & allegiance"
         aria-expanded={open}
-        title={compact ? `Lv ${tl.level} · ${tl.title} · no clan yet` : undefined}
+        title={compact ? `Level ${tl.level} · ${tl.title} · no clan yet` : undefined}
         style={compact
           ? { ["--ac" as string]: fc, display: "inline-flex", alignItems: "center", gap: 6, padding: isMobile ? "7px 10px" : "8px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }
           : { ["--ac" as string]: fc, display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "7px 10px" : "7px 11px", cursor: "pointer", borderColor: open ? fc : "var(--line)", touchAction: "manipulation" }}
@@ -81,10 +81,10 @@ export function TrainerBadge({ isMobile, war, onOpenClan, compact = false }: { i
           <Shield size={compact ? 11 : 13} strokeWidth={2.2} />
         </span>
         {compact ? (
-          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>Lv {tl.level}</span>
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>Level {tl.level}</span>
         ) : (
           <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Lv {tl.level} · {tl.title}</span>
+            <span style={{ fontSize: 12, fontWeight: 700 }}>Level {tl.level} · {tl.title}</span>
             {!isMobile && <span className="mono" style={{ fontSize: 8, color: "var(--muted2)", letterSpacing: 0.5 }}>NO CLAN</span>}
           </span>
         )}

@@ -18,7 +18,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { RotateCcw, Flag, Skull, ChevronLeft, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords } from "lucide-react";
+import { RotateCcw, Flag, Skull, ChevronLeft, ChevronRight, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
@@ -1295,7 +1295,7 @@ export default function CircuitLite({
       <div
         style={{
           position: "absolute",
-          top: embedded && !onExit ? 12 : 54,
+          top: guest || (embedded && !onExit) ? 12 : 54,
           left: 12,
           zIndex: 18,
           pointerEvents: "none",
@@ -1437,10 +1437,37 @@ export default function CircuitLite({
         <div style={{ position: "absolute", inset: 0, zIndex: 22, pointerEvents: "none", boxShadow: "inset 0 0 90px 12px rgba(255,74,106,.55)", background: "radial-gradient(circle at center, transparent 55%, rgba(255,74,106,.18) 100%)" }} />
       )}
 
-      {/* ── back chrome — a rounded pill top-left. Standalone links to /grounds;
-           embedded (mobile shell) calls onExit to leave the immersive Climb and
-           return to the previous tab, so the shell can drop its bottom bar. ── */}
-      {(!embedded || onExit) && (() => {
+      {/* Guests: top-right claim (continue). Owned/standalone: leave chrome. */}
+      {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && (
+        <button
+          type="button"
+          onClick={onClaim}
+          aria-label="Claim a champion"
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 12,
+            zIndex: 20,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: accent,
+            background: "rgba(8,7,14,.55)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: `1px solid ${accent}`,
+            padding: "7px 12px",
+            borderRadius: 999,
+            cursor: "pointer",
+            boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
+          }}
+        >
+          Claim a champion <ChevronRight size={15} strokeWidth={2.4} />
+        </button>
+      )}
+      {!guest && (!embedded || onExit) && (() => {
         const backStyle = {
           position: "absolute" as const,
           top: 14,
@@ -1463,12 +1490,12 @@ export default function CircuitLite({
           boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
         };
         return onExit ? (
-          <button type="button" onClick={onExit} aria-label="Leave the Ascent" style={{ ...backStyle, cursor: "pointer" }}>
+          <button type="button" onClick={onExit} aria-label="Leave Flight" style={{ ...backStyle, cursor: "pointer" }}>
             <ChevronLeft size={15} strokeWidth={2.4} /> Back
           </button>
         ) : (
-          <Link href="/grounds" aria-label="Back to the Grounds" style={backStyle}>
-            <ChevronLeft size={15} strokeWidth={2.4} /> Grounds
+          <Link href="/grounds" aria-label="Back to the Hub" style={backStyle}>
+            <ChevronLeft size={15} strokeWidth={2.4} /> Hub
           </Link>
         );
       })()}

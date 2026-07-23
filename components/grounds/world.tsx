@@ -582,7 +582,7 @@ export default function World({
   const venueExitTarget = useMemo(() => {
     if (!inVenue || !activeVenue) return null;
     const ex = VENUE_EXIT[activeVenue];
-    return { label: `Exit · back to ${venueHostWorldId === "concord" ? "the Concord" : "the wilds"}`, pos: new THREE.Vector3(ex.pos[0], ex.pos[1], ex.pos[2]), radius: ex.radius };
+    return { label: `Exit · back to ${venueHostWorldId === "concord" ? "the Hub" : "the wilds"}`, pos: new THREE.Vector3(ex.pos[0], ex.pos[1], ex.pos[2]), radius: ex.radius };
   }, [inVenue, activeVenue, venueHostWorldId]);
   const trainPad = useMemo(() => landmarkPos(sc.landmarks.train), [sc.landmarks.train]);
   // the Broker stands on flat ground on a free bearing (offset from the Tower),
@@ -710,13 +710,7 @@ export default function World({
       <pointLight position={[ARENA[0], 7, ARENA[2]]} intensity={140} color={biome.lights.arenaPoint} distance={48} />
       {!inRegion && !inAmphitheatre && <pointLight position={[trainPad[0], 6, trainPad[2]]} intensity={80} color={biome.lights.trainPoint} distance={36} />}
 
-      <Suspense
-        fallback={
-          <Html center className="mono" style={{ color: "var(--muted)", fontSize: 12, whiteSpace: "nowrap" }}>
-            loading the grounds…
-          </Html>
-        }
-      >
+      <Suspense fallback={null}>
         {/* Circuit dressing is visual-only — outside Physics, own Suspense so a
             nature-kit suspend can never tear down the Handler / Rapier world. */}
         {inCircuit && !showcase && (
@@ -794,7 +788,7 @@ export default function World({
               )}
               <AscentReturnPortal
                 pos={VENUE_EXIT.circuit.pos}
-                label={venueHostWorldId === "concord" ? "The Concord" : "The Wilds"}
+                label={venueHostWorldId === "concord" ? "The Hub" : "The Wilds"}
                 accent={venueHostWorldId === "concord" ? "#f5d020" : biome.lights.arenaPoint}
                 theme={regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : venueHostWorldId === "concord" ? "concord" : "grounds"}
               />
@@ -858,7 +852,7 @@ export default function World({
               {returnTarget && (
                 <AscentReturnPortal
                   pos={[returnTarget.x, terrainHeight(returnTarget.x, returnTarget.z, shape, knoll), returnTarget.z]}
-                  label="The Concord"
+                  label="The Hub"
                   accent="#f5d020"
                   theme={(regionWorldId === "gauntlet" ? "gauntlet" : regionWorldId === "void" ? "void" : "grounds") as PortalTheme}
                   rotationY={Math.atan2(-returnTarget.x, -returnTarget.z)}

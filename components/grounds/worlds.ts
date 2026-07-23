@@ -23,16 +23,19 @@ export interface WorldDef {
 export const WORLDS: WorldDef[] = [
   {
     id: "concord",
-    name: "The Concord",
-    tagline: "neutral ground · the gate-ring",
+    name: "The Hub",
+    tagline: "where you land · gates to every region",
     biome: BIOMES[3], // The Concord (hub)
     scenario: SCENARIOS.duel, // unused in hub mode; kept for type/HUD compatibility
     kind: "hub",
   },
   {
+    // Display name is "The Colosseum" (never "The Grounds" — that word means the
+    // whole world, not this region). The `id`/URL stay "grounds" for save/share
+    // compatibility; only the player-facing name changed.
     id: "grounds",
-    name: "The Grounds",
-    tagline: "the tribunal · assigned-stance debate",
+    name: "The Colosseum",
+    tagline: "Tribunal — argue the side you're given",
     biome: BIOMES[0], // Obsidian Colosseum
     scenario: SCENARIOS.tribunal, // the Colosseum's canon arena (05-regions.md)
     kind: "region",
@@ -40,8 +43,8 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: "gauntlet",
-    name: "Ember Gauntlet",
-    tagline: "survival run · rising stakes",
+    name: "The Ember Wastes",
+    tagline: "Gauntlet — keep winning to grow the prize",
     biome: BIOMES[1], // Ember Wastes
     scenario: SCENARIOS.gauntlet,
     kind: "region",
@@ -49,8 +52,8 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: "void",
-    name: "Void Garden",
-    tagline: "open duels · bioluminescent deep space",
+    name: "The Void Garden",
+    tagline: "Duel — pick a fight, one on one",
     biome: BIOMES[2], // Void Garden
     scenario: SCENARIOS.duel,
     kind: "region",
@@ -61,8 +64,8 @@ export const WORLDS: WorldDef[] = [
 // The Concord spawns you in — the hub-first design (docs/bible/01-cosmology.md).
 export const DEFAULT_WORLD = WORLDS[0];
 
-// The region a first-time player is steered toward on their first Concord landing:
-// the Grounds (tribunal / Obsidian Colosseum), the canonical first arena. The
+// The region a first-time player is steered toward on their first hub landing:
+// the Colosseum (tribunal / Obsidian Colosseum), the canonical first arena. The
 // first-run guide spotlights this gate and dims the rest until the player leaves.
 export const FIRST_GUIDE_WORLD = "grounds";
 

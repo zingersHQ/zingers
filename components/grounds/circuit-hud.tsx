@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ChevronLeft, Flag, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { rewardSfx } from "@/lib/sfx";
@@ -79,7 +79,7 @@ function SectorIntro({
           <div className="circuit-sector-intro__wash" style={{ ["--ac" as string]: accent }} />
           <div className="circuit-sector-intro__card">
             <div className="circuit-sector-intro__kicker mono" style={{ color: accent }}>
-              {reachName ? reachName.toUpperCase() : "THE ASCENT"}
+              {reachName ? reachName.toUpperCase() : "FLIGHT"}
             </div>
             <div className="circuit-sector-intro__rule" style={{ background: accent }} />
             <div className="circuit-sector-intro__num">
@@ -183,6 +183,8 @@ export function CircuitHud({
   const sectorN = sectorIndex + 1;
   const introActive = phase === "ready";
   const guestClaim = !!onClaim && !!claimName;
+  /** End cards own the claim CTA — hide corner chrome so it doesn't stack. */
+  const hideCornerChrome = phase === "failed" || phase === "done" || phase === "ceiling";
 
   useEffect(() => {
     // Sector clear: Enter/Space continues. RUN OVER / CLEAR: never Space — Space is
@@ -218,19 +220,49 @@ export function CircuitHud({
 
   return (
     <>
-      {onExit && (
+      {/* Guests: continue into the game (claim) — not an exit. Owned: leave chrome. */}
+      {guestClaim && onClaim && (
+        <button
+          type="button"
+          onClick={onClaim}
+          aria-label="Claim a champion"
+          className="panel"
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 16,
+            zIndex: hideCornerChrome ? 50 : 120,
+            pointerEvents: hideCornerChrome ? "none" : "auto",
+            opacity: hideCornerChrome ? 0 : 1,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 12px",
+            cursor: "pointer",
+            fontSize: 12.5,
+            fontWeight: 600,
+            touchAction: "manipulation",
+            ["--ac" as string]: accent,
+            borderColor: accent,
+            color: accent,
+          }}
+        >
+          Claim a champion <ChevronRight size={15} strokeWidth={2.4} />
+        </button>
+      )}
+      {onExit && !guestClaim && (
         <button
           type="button"
           onClick={onExit}
-          aria-label="Exit the Ascent"
+          aria-label="Exit Flight"
           className="panel"
           style={{
             position: "absolute",
             top: 14,
             left: 16,
-            zIndex: phase === "failed" || phase === "done" || phase === "ceiling" ? 50 : 120,
-            pointerEvents: phase === "failed" || phase === "done" || phase === "ceiling" ? "none" : "auto",
-            opacity: phase === "failed" || phase === "done" || phase === "ceiling" ? 0 : 1,
+            zIndex: hideCornerChrome ? 50 : 120,
+            pointerEvents: hideCornerChrome ? "none" : "auto",
+            opacity: hideCornerChrome ? 0 : 1,
             display: "inline-flex",
             alignItems: "center",
             gap: 5,
@@ -415,7 +447,7 @@ export function CircuitHud({
           )}
           {!guestClaim && onToHub && (
             <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
-              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Concord"}
+              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
             </button>
           )}
           <button type="button" className={guestClaim ? "btn" : "btn btn-primary"} style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
@@ -448,7 +480,7 @@ export function CircuitHud({
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
                 {claimName
                   ? `${claimName} flew with you — claim it, or pick another champion.`
-                  : "Claim a champion to keep this Ascent — XP, Crowns, and the board."}
+                  : "Claim a champion to keep this run — XP, Crowns, and the board."}
               </div>
               <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
                 <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
@@ -462,7 +494,7 @@ export function CircuitHud({
           )}
           {!guestClaim && onToHub && (
             <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
-              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Concord"}
+              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
             </button>
           )}
           <button
@@ -484,8 +516,8 @@ export function CircuitHud({
           title={guestClaim ? "Claim a champion to prove" : "Prove your champion for the higher sky"}
           sub={
             guestClaim
-              ? "Reach II needs a claimed champion. Keep this wild mind, then prove."
-              : "A short fight opens the next band of the Ascent."
+              ? "The higher sky needs a claimed champion. Keep this wild mind, then prove."
+              : "A short fight opens the next stretch of sky."
           }
         >
           {guestClaim && onClaim && (
@@ -499,7 +531,7 @@ export function CircuitHud({
             </button>
           )}
           <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={15} strokeWidth={2.2} /> Practice Reach I again
+            <RotateCcw size={15} strokeWidth={2.2} /> Practice the first sky again
           </button>
         </CircuitModal>
       )}

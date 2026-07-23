@@ -11,7 +11,7 @@ const SKY =
 export function FlightHeroPoster({
   visible = true,
   priority = true,
-  alt = "Trainer and champion taking flight over the Grounds",
+  alt = "Trainer and champion taking flight over the world",
 }: {
   visible?: boolean;
   priority?: boolean;

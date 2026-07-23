@@ -43,7 +43,7 @@ export const LAYERS: Layer[] = [
     reference: "GTA: go around",
     home: "/",
     spokes: [
-      { id: "world", label: "Roam the Grounds", href: "/", blurb: "The 3D hub of the Grounds. Champions wander, the Tower looms." },
+      { id: "world", label: "Explore the world", href: "/", blurb: "The 3D world. Champions wander, the Tower looms." },
     ],
   },
   {

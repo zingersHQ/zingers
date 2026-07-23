@@ -92,23 +92,26 @@ export function SeasonBanner({ compact = false, onClose }: { compact?: boolean; 
           </div>
         </div>
       )}
-      <div style={{ position: "relative", minWidth: 0 }}>
+      <div style={{ position: "relative", minWidth: 0, paddingRight: onClose ? 28 : 0 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: force.hex, marginBottom: 8 }}>
-          LIVE SEASON {season.n}
+          SEASON {season.n}
         </div>
-        <h2 style={{ fontSize: compact ? 20 : 28, lineHeight: 1.05, margin: 0 }}>{season.arc.title}</h2>
-        <p style={{ color: "var(--muted)", fontSize: compact ? 12 : 14, lineHeight: 1.55, margin: "10px 0 0" }}>{season.arc.blurb}</p>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
-          <Chip color={force.hex}>{force.sigil} {force.name}</Chip>
-          <Chip color="var(--gold)">Featured: {season.featured.name}</Chip>
-          {preseason
-            ? <Chip color="var(--muted2)">No stakes · proving week</Chip>
-            : <Chip color="var(--muted2)">Soft reset: {sampleOld} → {sampleNew}</Chip>}
-        </div>
+        <h2 style={{ fontSize: compact ? 18 : 28, lineHeight: 1.05, margin: 0 }}>{season.arc.title}</h2>
+        <p style={{ color: "var(--muted)", fontSize: compact ? 12 : 14, lineHeight: 1.55, margin: "10px 0 0" }}>
+          {compact
+            ? `This season's story is live in ${season.region.name}.`
+            : season.arc.blurb}
+        </p>
 
         {!compact && (
           <>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
+              <Chip color={force.hex}>{force.sigil} {force.name}</Chip>
+              <Chip color="var(--gold)">Featured: {season.featured.name}</Chip>
+              {preseason
+                ? <Chip color="var(--muted2)">No stakes · proving week</Chip>
+                : <Chip color="var(--muted2)">Soft reset: {sampleOld} → {sampleNew}</Chip>}
+            </div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginTop: 16, marginBottom: 8 }}>
               SEASON TOPICS
             </div>

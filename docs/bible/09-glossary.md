@@ -8,13 +8,13 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 - **Trainer** — You. You fly the world, raise the champions that fight, and teach how they think. *(was: Reader)*
 - **Trainer name** — The unique name you play under. You can link an optional wallet to keep it across devices.
-- **The Grounds** — The 3D world you explore: a cluster of floating regions you fly between on a jetpack.
-- **The Concord** — The central hub of the Grounds, where all five Forces meet in peace.
-- **Region** — One of the floating areas of the Grounds. Each has its own arena and rewards a different fighting style.
-- **Gate** — An archway in the Concord that takes you out to a region. *(was: Vaultgate)*
+- **The world** — The 3D place you fly around in — a cluster of floating regions, each with its own arena. Its lore name is the Grounds.
+- **The Hub** — Where you land: the central meeting ground, ringed by gates out to every region. Its lore name is the Concord. *(was: the Concord)*
+- **Region** — A place you fly out to from the Hub to fight. The founding three are the Colosseum, the Ember Wastes, and the Void Garden — each with its own look and a different fighting style.
+- **Gate** — An archway in the Hub that flies you out to a region. *(was: Vaultgate)*
 - **Tower** — The tall climb at the top of each region — a long-game challenge.
-- **The Ascent** — The hundred-sector climb through the sky — the same flight game on phone and desktop. You fly; your champion flies beside you. Depth marks its body. *(was: Circuit / Climb)*
-- **Reach** — One band of the sky on the Ascent, with its own weather and hazards. There are ten, stacked from the ground to the quiet at the top.
+- **Flight** — The flight game: fly up through the sky and your champion flies beside you. The same game on phone and desktop. How high you climb marks its body. *(was: the Ascent / Circuit / Climb)*
+- **Reach** — A band of the sky in Flight, each with its own weather and hazards (shown in-game as plain sky progress). Ten stack from the ground to the quiet at the top.
 - **Camp** — A resting waystation between two Reaches. Reaching one for the first time lights it for good.
 - **Jetpack** — The Trainer's tool for flight. Only you carry one — your champion is a mind, so it flies beside you on its own.
 
@@ -27,7 +27,7 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Imprint** — A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials.
 - **Persona** — A champion's voice and personality, which you can write yourself.
 - **Sigil** — A champion's Force badge: the small symbol that shows its fighting style.
-- **Ascent sigil** — A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records — your climbs are too.
+- **Flight sigil** — A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records — your climbs are too. *(was: Ascent sigil)*
 - **Saga** — A champion's life story, written automatically from its real match history.
 
 ## Fighting

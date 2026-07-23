@@ -48,8 +48,9 @@ export const REGION_RETURN_SPOT = { angle: Math.PI * 0.92, dist: 33 };
  */
 export const REGION_RETURN_BEHIND = 14;
 
-/** Metres plaza-ward of the Concord return arch — must clear the ~3.6 auto-enter. */
-const REGION_RETURN_CLEARANCE = 7;
+/** Metres plaza-ward of the Concord return arch — must clear the ~3.6 auto-enter
+ *  and leave enough air that the door isn't wedged between camera and plaza. */
+const REGION_RETURN_CLEARANCE = 16;
 
 /** The Circuit portal per region world — set FAR OUT IN THE WILDS beyond the
  *  plaza rim (PLAZA_R = 36), on its own bearing well away from the central arena,

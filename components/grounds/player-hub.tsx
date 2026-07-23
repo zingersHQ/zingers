@@ -17,7 +17,7 @@ import { useChampions } from "@/store/champions";
 import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
 import { readerSaga, SAGA } from "@/lib/lore/saga";
-import { NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
+import { HUB_NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
 import { getHandle, setHandle as persistHandle } from "@/lib/owner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
@@ -192,7 +192,7 @@ export function PlayerHub({
             </span>
           ) : null}
           <span style={{ fontSize: handle ? 10 : isMobile ? 13 : 14, fontWeight: handle ? 700 : 800, color: handle ? "var(--muted2)" : fc }}>
-            Lv {tl.level}
+            Level {tl.level}
           </span>
         </span>
         <span style={{ width: 1, height: 16, background: "var(--line2)" }} />
@@ -261,7 +261,7 @@ export function PlayerHub({
                   {force ? EMBLEM[force] : <Shield size={20} strokeWidth={2.2} />}
                 </span>
                 <div style={{ lineHeight: 1.15 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800 }}>{handle || "Trainer"} · Lv {tl.level}</div>
+                  <div style={{ fontSize: 17, fontWeight: 800 }}>{handle || "Trainer"} · Level {tl.level}</div>
                   <div className="mono" style={{ fontSize: 10, letterSpacing: 0.5, color: "var(--muted)", marginTop: 2 }}>
                     {tl.title.toUpperCase()} · {fm ? fm.name.toUpperCase() : "NO CLAN YET"}
                   </div>
@@ -474,7 +474,7 @@ export function PlayerHub({
             {/* ── NAVIGATE ── */}
             <SectionLabel>Navigate</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {NAV_GROUPS.filter((g) => g.id !== "play").map((group) => (
+              {HUB_NAV_GROUPS.filter((g) => g.id !== "play").map((group) => (
                 <div key={group.id}>
                   <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>{group.label.toUpperCase()}</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>

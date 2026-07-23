@@ -272,7 +272,7 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, maxWidth: 740 }}>
         {[
           { name: "The Ascent", desc: "One flight game — light on phone, open sky on desktop. Altitude is the score.", color: "#39e0ff", href: "/ascent" },
-          { name: "The Grounds", desc: "A living 3D world to roam, raise, and duel.", color: "#b07bff", href: "/grounds" },
+          { name: "The Grounds", desc: "A living 3D world to explore, raise, and duel.", color: "#b07bff", href: "/grounds" },
           { name: "Daily Tribunal", desc: "One shared fight a day. Call it before you watch.", color: "#36d39a", href: "/grounds" },
         ].map(({ name, desc, color, href }) => (
           <Link
