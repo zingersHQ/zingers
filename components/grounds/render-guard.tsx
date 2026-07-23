@@ -2,16 +2,11 @@
 import { Component, type ReactNode, type CSSProperties } from "react";
 
 // --- WebGL capability probe -------------------------------------------------
-// Chromium (Chrome/Brave) silently falls back to a software renderer when
-// hardware acceleration is off or the GPU is blocklisted. That software path
-// often can't handle a heavy R3F scene (shadows + bloom + physics), so the
-// canvas comes up blank. We detect software GPUs up front for warnings.
-//
-// IMPORTANT: a failed getContext ("no-context") is often a FALSE POSITIVE —
-// leftover canvases from the previous route can exhaust the browser's context
-// limit. Never hard-block the world on that. Also never call loseContext() on
-// the probe — on some desktop GPUs that poisons the next real Canvas (blank
-// intro + blank Grounds).
+// IMPORTANT (2026-07): Creating a throwaway WebGL context here (and especially
+// calling loseContext / resizing the probe canvas to 0) blanked real R3F
+// Canvases on desktop — homepage hero, intro, Grounds, Flight. The probe is
+// now a no-op that always reports ok. Software-GPU messaging, if needed again,
+// must be done without touching the GL context pool before the real Canvas.
 
 export type GpuStatus = {
   ok: boolean;
@@ -19,41 +14,13 @@ export type GpuStatus = {
   software: boolean;
   renderer: string;
   reason?: string;
-  /**
-   * Probe couldn't open a context, but we should still mount the real Canvas.
-   * Typical cause: temporary context-slot exhaustion after route change.
-   */
+  /** @deprecated kept for call-site compat; always false now */
   tryAnyway?: boolean;
 };
 
 function probe(): GpuStatus {
-  if (typeof window === "undefined") return { ok: true, software: false, renderer: "" };
-  try {
-    const canvas = document.createElement("canvas");
-    // Keep the probe tiny and non-destructive — do NOT loseContext() afterward.
-    const gl = (canvas.getContext("webgl2") ||
-      canvas.getContext("webgl") ||
-      canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
-    if (!gl) {
-      return { ok: false, software: false, renderer: "", reason: "no-context", tryAnyway: true };
-    }
-
-    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-    const renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
-    const software = /swiftshader|software|llvmpipe|basic render|microsoft basic/i.test(renderer);
-    // Drop the canvas reference so GC can reclaim the probe slot; never force-lose.
-    canvas.width = 0;
-    canvas.height = 0;
-    return { ok: true, software, renderer };
-  } catch (e) {
-    return {
-      ok: false,
-      software: false,
-      renderer: "",
-      reason: e instanceof Error ? e.message : "probe-failed",
-      tryAnyway: true,
-    };
-  }
+  // Always allow mount. Never allocate a WebGL context from this module.
+  return { ok: true, software: false, renderer: "" };
 }
 
 let cached: GpuStatus | null = null;

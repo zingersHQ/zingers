@@ -621,6 +621,14 @@ export default function CircuitLite({
   const activeKey = owned ?? guestKey ?? "AXIOM";
   const champType = (ROSTER[activeKey]?.type ?? "LOGIC") as CreatureType;
   const champion = useMemo(() => getChampion(activeKey), [getChampion, activeKey]);
+  // Wins must be reactive — the altitude prove writes a win, and a stale memoized
+  // champion.wins would re-lock the gate every time you clear sector 11.
+  const champWins = useChampions((s) => s.progress[activeKey]?.wins ?? 0);
+  /** Session latch: once proved this run, never re-open the altitude gate. */
+  const altitudeProvedRef = useRef(false);
+  useEffect(() => {
+    if (!needsAltitudeProve(champWins)) altitudeProvedRef.current = true;
+  }, [champWins]);
   const guestPinged = useRef(false);
 
   // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
@@ -888,8 +896,9 @@ export default function CircuitLite({
     livesRef.current = CIRCUIT_LIVES;
     setLives(CIRCUIT_LIVES);
     setGhost(null);
+    altitudeProvedRef.current = !needsAltitudeProve(champWins);
     setPhase("ready");
-  }, [setHold, clearContinueTimers]);
+  }, [setHold, clearContinueTimers, champWins]);
 
   // Space: hold-to-fly while live; confirm try/run again on outcome overlays
   useEffect(() => {
@@ -999,7 +1008,12 @@ export default function CircuitLite({
       }
       // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
       // board still records depth from this run; campaign height pauses here.
-      if (next >= ALTITUDE_KEY_SECTOR && !guest && needsAltitudeProve(champion.wins)) {
+      if (
+        next >= ALTITUDE_KEY_SECTOR &&
+        !guest &&
+        !altitudeProvedRef.current &&
+        needsAltitudeProve(champWins)
+      ) {
         samplesRef.current = [];
         rewardSfx("big");
         recordRun(next, true);
@@ -1013,7 +1027,7 @@ export default function CircuitLite({
       setPhase("ready");
       return next;
     });
-  }, [setHold, recordRun, guest, champion.wins]);
+  }, [setHold, recordRun, guest, champWins]);
 
   const onFail = useCallback(
     (r: FailReason) => {
@@ -1742,7 +1756,8 @@ export default function CircuitLite({
             setPhase("ceiling");
           }}
           onWon={() => {
-            // Win recorded on champion — resume past the altitude key into Reach II.
+            // Win recorded on champion — latch + resume past the altitude key.
+            altitudeProvedRef.current = true;
             setSector(ALTITUDE_KEY_SECTOR);
             setTargetIdx(1);
             setPhase("ready");

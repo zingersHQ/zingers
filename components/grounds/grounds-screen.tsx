@@ -1120,30 +1120,12 @@ export default function GroundsScreen({
     };
   }, []);
 
-  // Probe WebGL only after the intro cinematic — never race its Canvas.
-  // Also never call loseContext on the probe (that blanked desktop intro+world).
+  // GPU probe is a no-op (always ok) — never allocate a WebGL context before the
+  // real Canvas. Kept as a state flag so existing mount gates stay simple.
   useEffect(() => {
-    if (!mounted || showIntro) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    // Optimistic so we never flash a blank frame while probing.
-    setGpu((g) => g ?? { ok: true, software: false, renderer: "", tryAnyway: true });
-    const runProbe = (attempt: number) => {
-      const status = gpuStatus({ refresh: attempt > 0 });
-      if (cancelled) return;
-      if (status.ok || attempt >= 4) {
-        setGpu(status);
-        return;
-      }
-      if (status.tryAnyway) setGpu(status);
-      timer = setTimeout(() => runProbe(attempt + 1), 120 * (attempt + 1));
-    };
-    runProbe(0);
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [mounted, showIntro]);
+    if (!mounted) return;
+    setGpu(gpuStatus());
+  }, [mounted]);
 
   const dismissSeasonBeat = useCallback(() => {
     try {
@@ -2313,9 +2295,7 @@ export default function GroundsScreen({
     showIntro ||
     firstDuelPhase === "pick" ||
     (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady);
-  // Mount when probe is ok, OR when it only failed with a transient no-context
-  // (tryAnyway) — never leave a working laptop behind a false "no WebGL" wall.
-  const showWorld = mounted && !!gpu && (gpu.ok || !!gpu.tryAnyway) && !rosterError && roster.length > 0 && !worldOccluded;
+  const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock =
     !showIntro &&
     !showMatch &&

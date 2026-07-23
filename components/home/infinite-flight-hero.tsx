@@ -539,7 +539,10 @@ export default function InfiniteFlightHero({
             pointerEvents: "none",
             width: "100%",
             height: "100%",
-            opacity: castReady || !showPoster ? 1 : 0,
+            // Never paint an empty canvas over the poster. When showPoster is
+            // false the parent owns the still — keeping opacity 1 here made a
+            // black full-bleed slab if WebGL was slow or failed to start.
+            opacity: castReady ? 1 : 0,
             transition: "opacity 0.55s ease",
           }}
           onCreated={({ camera }) => {
