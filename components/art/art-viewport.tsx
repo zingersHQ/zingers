@@ -623,7 +623,7 @@ export function ArtViewport({
           key={canvasKey}
           dpr={[1, 2]}
           camera={{ position: [0, 1.55, wide ? 7.2 : 7.5], fov: wide ? 32 : 30 }}
-          gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
+          gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
           style={{ width: "100%", height: "100%", display: "block" }}
         >
           <color attach="background" args={[bg]} />

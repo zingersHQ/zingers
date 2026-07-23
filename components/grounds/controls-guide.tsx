@@ -407,7 +407,7 @@ export function ControlsGuide({
         onPointerDown={(e) => e.stopPropagation()}
         eventSource={typeof document !== "undefined" ? document.body : undefined}
         dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : [1, 2]}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
         style={{ position: "fixed", inset: 0, zIndex: 131, pointerEvents: "none" }}
       >
         <View.Port />

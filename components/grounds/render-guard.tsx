@@ -1,5 +1,37 @@
 "use client";
-import { Component, type ReactNode, type CSSProperties } from "react";
+import { Component, useEffect, type ReactNode, type CSSProperties } from "react";
+
+// Prefer "default" over "high-performance". On dual-GPU laptops, forcing the
+// discrete GPU after a GPU-process crash commonly throws
+// "Error creating WebGL context" and leaves every R3F Canvas black.
+export const WEBGL_POWER: WebGLPowerPreference = "default";
+
+export function isWebGlCreateError(reason: unknown): boolean {
+  const msg = reason instanceof Error ? reason.message : String(reason ?? "");
+  return /creating webgl context|could not create webgl|webgl.*not supported/i.test(msg);
+}
+
+/** Surfaces R3F/Three context-create failures (promise rejections error boundaries miss). */
+export function useWebGlCreateFailure(onFail: () => void) {
+  useEffect(() => {
+    const fail = (reason: unknown) => {
+      if (!isWebGlCreateError(reason)) return;
+      onFail();
+    };
+    const onRej = (e: PromiseRejectionEvent) => {
+      if (!isWebGlCreateError(e.reason)) return;
+      e.preventDefault();
+      fail(e.reason);
+    };
+    const onErr = (e: ErrorEvent) => fail(e.error ?? e.message);
+    window.addEventListener("unhandledrejection", onRej);
+    window.addEventListener("error", onErr);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRej);
+      window.removeEventListener("error", onErr);
+    };
+  }, [onFail]);
+}
 
 // --- WebGL capability probe -------------------------------------------------
 // IMPORTANT (2026-07): Creating a throwaway WebGL context here (and especially

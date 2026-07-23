@@ -43,7 +43,7 @@ import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import { worldById, type GateDef } from "./worlds";
 import { natureGroundPalette } from "@/lib/render/nature-kit";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
-import { RenderBoundary } from "./render-guard";
+import { RenderBoundary, WEBGL_POWER } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
 import { useSettings } from "@/store/settings";
@@ -315,6 +315,7 @@ export default function World({
   trainerXp = 0,
   gpuLite = false,
   resumeSpawn = null,
+  onGlReady,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -388,6 +389,8 @@ export default function World({
   gpuLite?: boolean;
   /** After leaving a venue, mount the Handler at this wilds pose (Ascent portal exit). */
   resumeSpawn?: { x: number; z: number; heading?: number } | null;
+  /** Fired once the WebGL renderer exists (parent can clear failure UI). */
+  onGlReady?: () => void;
 }) {
   const inVenue = !!activeVenue;
   const inCircuit = activeVenue === "circuit";
@@ -658,15 +661,22 @@ export default function World({
       shadows={gpuLite ? false : { type: THREE.PCFSoftShadowMap }}
       camera={{ position: spawnCam, fov: 52, near: 0.1, far: gpuLite ? 320 : 600 }}
       dpr={gpuLite ? [0.75, 1] : [1, 1.5]}
-      gl={{ antialias: !gpuLite, powerPreference: "high-performance" }}
+      gl={{ antialias: !gpuLite, powerPreference: WEBGL_POWER, failIfMajorPerformanceCaveat: false }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = biome.exposure;
+        onGlReady?.();
         const canvas = gl.domElement;
         // calling preventDefault() is what tells the browser we want the context
         // back — without it the loss is permanent and the canvas stays blank.
-        canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); setGlLost(true); });
-        canvas.addEventListener("webglcontextrestored", () => { setGlLost(false); });
+        canvas.addEventListener("webglcontextlost", (e) => {
+          e.preventDefault();
+          setGlLost(true);
+        });
+        canvas.addEventListener("webglcontextrestored", () => {
+          setGlLost(false);
+          onGlReady?.();
+        });
       }}
     >
       <ExposureSync exposure={biome.exposure} />

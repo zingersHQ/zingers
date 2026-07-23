@@ -12,7 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { RobotPilot } from "@/components/grounds/flying-cast";
 import { ChampionMesh, CHAMPION_REL_TO_TRAINER, READER_SCALE } from "@/components/grounds/champion-mesh";
 import { NatureSurfaceDressing } from "@/components/grounds/nature";
-import { RenderBoundary } from "@/components/grounds/render-guard";
+import { RenderBoundary, WEBGL_POWER, useWebGlCreateFailure } from "@/components/grounds/render-guard";
 import { biomeById, daylightBiome, type BiomeConfig } from "@/components/grounds/biomes";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -511,8 +511,17 @@ export default function InfiniteFlightHero({
   const reduceMotion = usePrefersReducedMotion();
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
   const [castReady, setCastReady] = useState(false);
+  const [glFailed, setGlFailed] = useState(false);
+  // Defer Canvas one frame so the poster paints first (and so a wedged GPU
+  // isn't asked for a context in the same tick as hydration).
+  const [allowCanvas, setAllowCanvas] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAllowCanvas(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  useWebGlCreateFailure(() => setGlFailed(true));
   // Animate only after the cast has painted — poster crossfades off at the same beat.
-  const animate = castReady && !freeze && !reduceMotion;
+  const animate = castReady && !freeze && !reduceMotion && !glFailed;
 
   const markReady = () => {
     setCastReady(true);
@@ -520,43 +529,44 @@ export default function InfiniteFlightHero({
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0 }} data-flight-hero-ready={castReady ? "1" : "0"}>
-      {showPoster && <FlightHeroPoster visible={!castReady} priority />}
-      <RenderBoundary fallback={null}>
-        <Canvas
-          dpr={dpr}
-          shadows={false}
-          frameloop="always"
-          gl={{
-            antialias: variant === "desktop",
-            powerPreference: variant === "mobile" ? "default" : "high-performance",
-            // Needed so still capture can read the real first frame off the canvas.
-            preserveDrawingBuffer: true,
-          }}
-          // Front camera looking at the pair (they face +Z toward the lens).
-          camera={{ position: [0.12, 4.55, 8.1], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
-          style={{
-            pointerEvents: "none",
-            width: "100%",
-            height: "100%",
-            // Never paint an empty canvas over the poster. When showPoster is
-            // false the parent owns the still — keeping opacity 1 here made a
-            // black full-bleed slab if WebGL was slow or failed to start.
-            opacity: castReady ? 1 : 0,
-            transition: "opacity 0.55s ease",
-          }}
-          onCreated={({ camera }) => {
-            camera.lookAt(0, CRUISE_Y - 0.15, 0.25);
-          }}
-        >
-          <FlightWorld
-            variant={variant}
-            reduceMotion={reduceMotion || freeze}
-            animate={animate}
-            onCastReady={markReady}
-          />
-        </Canvas>
-      </RenderBoundary>
+    <div style={{ position: "absolute", inset: 0 }} data-flight-hero-ready={castReady ? "1" : "0"} data-flight-hero-gl={glFailed ? "fail" : castReady ? "ok" : "pending"}>
+      {(showPoster || !castReady || glFailed) && <FlightHeroPoster visible={!castReady || glFailed} priority />}
+      {!glFailed && allowCanvas && (
+        <RenderBoundary fallback={null} onError={() => setGlFailed(true)}>
+          <Canvas
+            dpr={dpr}
+            shadows={false}
+            frameloop="always"
+            gl={{
+              antialias: variant === "desktop",
+              powerPreference: WEBGL_POWER,
+              failIfMajorPerformanceCaveat: false,
+              // Needed so still capture can read the real first frame off the canvas.
+              preserveDrawingBuffer: true,
+            }}
+            // Front camera looking at the pair (they face +Z toward the lens).
+            camera={{ position: [0.12, 4.55, 8.1], fov: variant === "mobile" ? 42 : 38, near: 0.1, far: 140 }}
+            style={{
+              pointerEvents: "none",
+              width: "100%",
+              height: "100%",
+              // Never paint an empty canvas over the poster.
+              opacity: castReady ? 1 : 0,
+              transition: "opacity 0.55s ease",
+            }}
+            onCreated={({ camera }) => {
+              camera.lookAt(0, CRUISE_Y - 0.15, 0.25);
+            }}
+          >
+            <FlightWorld
+              variant={variant}
+              reduceMotion={reduceMotion || freeze}
+              animate={animate}
+              onCastReady={markReady}
+            />
+          </Canvas>
+        </RenderBoundary>
+      )}
     </div>
   );
 }

@@ -77,7 +77,7 @@ import { ObjectiveToasts } from "@/components/grounds/objective-toasts";
 import { roundReward, gauntletQueue, tribunalDraw } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/tribunal";
-import { RenderBoundary, RenderNotice, clearGpuStatusCache, gpuStatus } from "@/components/grounds/render-guard";
+import { RenderBoundary, RenderNotice, clearGpuStatusCache, gpuStatus, useWebGlCreateFailure } from "@/components/grounds/render-guard";
 import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
@@ -350,8 +350,14 @@ export default function GroundsScreen({
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
   const [gpu, setGpu] = useState<ReturnType<typeof gpuStatus> | null>(null);
+  const [glCreateFailed, setGlCreateFailed] = useState(false);
+  const [glFailDetail, setGlFailDetail] = useState<string | null>(null);
   const [rosterError, setRosterError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  useWebGlCreateFailure(() => {
+    setGlCreateFailed(true);
+    setGlFailDetail("Error creating WebGL context");
+  });
   const [war, setWar] = useState<WarState | null>(null);
   const warLeader = war?.leader ?? null;
 
@@ -2295,7 +2301,8 @@ export default function GroundsScreen({
     showIntro ||
     firstDuelPhase === "pick" ||
     (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady);
-  const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
+  const showWorld =
+    mounted && !!gpu?.ok && !glCreateFailed && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock =
     !showIntro &&
     !showMatch &&
@@ -2535,6 +2542,27 @@ export default function GroundsScreen({
         />
       )}
 
+      {mounted && glCreateFailed && (
+        <RenderNotice
+          title="3D couldn’t start"
+          body={
+            <>
+              Your browser refused a WebGL context (often a wedged GPU process after the tab ran hot).
+              Fully quit Chrome/Brave (Cmd+Q), reopen, then retry. Also confirm{" "}
+              <b>Settings → System → Use graphics acceleration</b> is on.
+            </>
+          }
+          detail={glFailDetail ?? undefined}
+          onRetry={() => {
+            setGlCreateFailed(false);
+            setGlFailDetail(null);
+            clearGpuStatusCache();
+            setGpu(gpuStatus({ refresh: true }));
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
+
       {mounted && gpu?.ok && rosterError && (
         <RenderNotice
           title="Couldn’t load the roster"
@@ -2565,11 +2593,15 @@ export default function GroundsScreen({
             )}
           >
             <World
-              key={`${world.id}-${activeVenue ?? "wild"}`}
+              key={`${world.id}-${activeVenue ?? "wild"}-${reloadKey}`}
               champions={showMatch ? matchChampions : champions}
               ownedKey={activeVenue === "circuit" ? circuitActiveKey : owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
+              onGlReady={() => {
+                setGlCreateFailed(false);
+                setGlFailDetail(null);
+              }}
               controlsEnabled={
                 controlsEnabled &&
                 (!activeVenue ||

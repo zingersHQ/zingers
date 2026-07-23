@@ -306,7 +306,7 @@ export function ChampionPortraitScene({
       shadows="percentage"
       dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : [1, 2]}
       camera={{ position: p.camera.position, fov: p.camera.fov }}
-      gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
       style={{ width: "100%", height: "100%", display: "block" }}
     >
       <color attach="background" args={[stage ? "#06050e" : p.bg]} />

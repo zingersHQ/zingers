@@ -67,7 +67,9 @@ export function climbCanvasGfx(tier: GraphicsTier, embedded: boolean): ClimbCanv
       shadows: true,
       dpr: [1, 1.5],
       antialias: true,
-      powerPreference: "high-performance",
+      // "default" — "high-performance" fails on many dual-GPU laptops after a
+      // GPU-process crash ("Error creating WebGL context").
+      powerPreference: "default",
       liteLights: false,
       far: 600,
       shadowMapSize: 1024,
@@ -79,7 +81,7 @@ export function climbCanvasGfx(tier: GraphicsTier, embedded: boolean): ClimbCanv
         shadows: true,
         dpr: [1, 2],
         antialias: true,
-        powerPreference: "high-performance",
+        powerPreference: "default",
         liteLights: false,
         far: 480,
         shadowMapSize: 1024,
@@ -89,7 +91,7 @@ export function climbCanvasGfx(tier: GraphicsTier, embedded: boolean): ClimbCanv
         shadows: false,
         dpr: [1, 1.5],
         antialias: true,
-        powerPreference: "high-performance",
+        powerPreference: "default",
         liteLights: true,
         far: 360,
         shadowMapSize: 512,
