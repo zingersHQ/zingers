@@ -273,7 +273,7 @@ export function CircuitHud({
             touchAction: "manipulation",
           }}
         >
-          <ChevronLeft size={15} strokeWidth={2.4} /> Exit Ascent
+          <ChevronLeft size={15} strokeWidth={2.4} /> Exit Flight
         </button>
       )}
       {/* SectorIntro owns the ready open (big 1/100) — keep this strip off so it
