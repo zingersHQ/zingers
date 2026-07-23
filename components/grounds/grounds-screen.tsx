@@ -77,7 +77,7 @@ import { ObjectiveToasts } from "@/components/grounds/objective-toasts";
 import { roundReward, gauntletQueue, tribunalDraw } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/tribunal";
-import { RenderBoundary, RenderNotice, gpuStatus } from "@/components/grounds/render-guard";
+import { RenderBoundary, RenderNotice, clearGpuStatusCache, gpuStatus } from "@/components/grounds/render-guard";
 import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
@@ -1030,7 +1030,24 @@ export default function GroundsScreen({
 
   useEffect(() => {
     setMounted(true);
-    setGpu(gpuStatus());
+    // Probe WebGL, but never hard-block on a transient "no-context" (leftover
+    // canvases from the landing hero often exhaust the browser's context slots
+    // for a beat after route change). Retry a few times, then try mounting anyway.
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const runProbe = (attempt: number) => {
+      const status = gpuStatus({ refresh: attempt > 0 });
+      if (cancelled) return;
+      // Prefer a clean ok. Transient no-context (tryAnyway) — mount immediately
+      // so we never flash the false wall, and keep retrying for a clean probe.
+      if (status.ok || attempt >= 4) {
+        setGpu(status);
+        return;
+      }
+      if (status.tryAnyway) setGpu(status);
+      timer = setTimeout(() => runProbe(attempt + 1), 120 * (attempt + 1));
+    };
+    runProbe(0);
     // Warm the world's JS chunk while onboarding plays (cheap parse, no render),
     // so when it finally mounts behind the picker it skips the chunk fetch/parse.
     void import("@/components/grounds/world");
@@ -1038,11 +1055,13 @@ export default function GroundsScreen({
     if (typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0)) {
       setIsTouch(true);
     }
+    let mq: MediaQueryList | undefined;
+    let syncMobile: (() => void) | undefined;
     if (typeof window !== "undefined" && window.matchMedia) {
-      const mq = window.matchMedia("(max-width: 640px)");
-      const sync = () => setIsMobile(mq.matches);
-      sync();
-      mq.addEventListener("change", sync);
+      mq = window.matchMedia("(max-width: 640px)");
+      syncMobile = () => setIsMobile(mq!.matches);
+      syncMobile();
+      mq.addEventListener("change", syncMobile);
     }
     try {
       const seen = localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy);
@@ -1114,6 +1133,11 @@ export default function GroundsScreen({
         localStorage.setItem(STORAGE.seasonSeen, String(now));
       }
     } catch {}
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (mq && syncMobile) mq.removeEventListener("change", syncMobile);
+    };
   }, []);
 
   const dismissSeasonBeat = useCallback(() => {
@@ -2284,7 +2308,9 @@ export default function GroundsScreen({
     showIntro ||
     firstDuelPhase === "pick" ||
     (awaitingFirstDuel && firstDuelPhase === null && !guestAscentReady);
-  const showWorld = mounted && !!gpu?.ok && !rosterError && roster.length > 0 && !worldOccluded;
+  // Mount when probe is ok, OR when it only failed with a transient no-context
+  // (tryAnyway) — never leave a working laptop behind a false "no WebGL" wall.
+  const showWorld = mounted && !!gpu && (gpu.ok || !!gpu.tryAnyway) && !rosterError && roster.length > 0 && !worldOccluded;
   const showDock =
     !showIntro &&
     !showMatch &&
@@ -2505,17 +2531,22 @@ export default function GroundsScreen({
 
   return (
     <main className="fill-shell fill-shell--immersive" style={{ position: "relative", overflow: "hidden", background: "var(--bg)" }}>
-      {mounted && gpu && !gpu.ok && (
+      {mounted && gpu && !gpu.ok && !gpu.tryAnyway && (
         <RenderNotice
-          title="3D isn't available in this browser"
+          title="3D isn’t available in this browser"
           body={
             <>
-              The Grounds needs WebGL, which your browser couldn&apos;t start. In Chrome or Brave, open{" "}
+              Flight needs WebGL, which your browser couldn&apos;t start. In Chrome or Brave, open{" "}
               <b>Settings → System</b> and turn on <b>&ldquo;Use graphics acceleration when available&rdquo;</b>, then restart the
               browser. If it&apos;s already on, check <span className="mono">chrome://gpu</span>.
             </>
           }
           detail={gpu.reason ? `webgl: ${gpu.reason}` : undefined}
+          onRetry={() => {
+            clearGpuStatusCache();
+            setGpu(gpuStatus({ refresh: true }));
+            setReloadKey((k) => k + 1);
+          }}
         />
       )}
 
