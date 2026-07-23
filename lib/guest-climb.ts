@@ -1,6 +1,7 @@
 // Guest Climb depth held until claim (docs/two-doors.md §3.3 / flight-first-plan).
 // While guest, runs mark nothing on the board; the best depth converts once on adopt.
 import { STORAGE } from "@/lib/brand";
+import { ascentDepthXp } from "@/lib/ascent-rules";
 
 export function noteGuestClimbDepth(sectors: number): void {
   if (typeof window === "undefined") return;
@@ -37,7 +38,5 @@ export function takeGuestClimbDepth(): number {
 
 /** Trainer XP from a converted guest ascent (same soul math as a deeper Climb). */
 export function guestDepthXp(sectors: number): number {
-  if (sectors <= 0) return 0;
-  const reaches = Math.ceil(sectors / 10);
-  return sectors * 20 + reaches * 12;
+  return ascentDepthXp(sectors, false);
 }

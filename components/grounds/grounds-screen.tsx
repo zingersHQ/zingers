@@ -112,7 +112,13 @@ import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
-import { climbChallengeUrl, readClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
+import {
+  climbChallengeUrl,
+  isClimbChallengeBeat,
+  readClimbChallengeFromSearch,
+  type ClimbChallenge,
+} from "@/lib/climb-challenge";
+import { ALTITUDE_KEY_SECTOR, needsAltitudeProve } from "@/lib/ascent-rules";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -532,9 +538,9 @@ export default function GroundsScreen({
       const tok = getOwnerToken();
       if (!tok) return;
       const run: CircuitPersonalBest = { sectors, totalMs, clearedAll };
-      const prev = loadCircuitPersonalBest();
+      const prev = loadCircuitPersonalBest("flight");
       if (isCircuitRunBetter(run, prev)) {
-        saveCircuitPersonalBest(run);
+        saveCircuitPersonalBest(run, "flight");
         setCircuitPersonalBest(run);
       }
       fetch("/api/circuit", {
@@ -726,10 +732,10 @@ export default function GroundsScreen({
       setCircuitPhase("done");
       submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
       if (circuitChallenge) {
-        const beat =
-          DESKTOP_CIRCUIT_COUNT > circuitChallenge.sectors ||
-          (DESKTOP_CIRCUIT_COUNT === circuitChallenge.sectors &&
-            (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+        const beat = isClimbChallengeBeat(
+          { sectors: DESKTOP_CIRCUIT_COUNT, totalMs: total },
+          circuitChallenge,
+        );
         setCircuitChallengeResult(beat ? "beat" : "miss");
         track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
       }
@@ -739,7 +745,7 @@ export default function GroundsScreen({
     }
     // Thin altitude key — same Reach II gate as mobile Climb (in-place Prove).
     const mind = owned ? store.get(owned) : null;
-    if (next >= 10 && (!mind || (mind.wins ?? 0) < 1)) {
+    if (next >= ALTITUDE_KEY_SECTOR && (!mind || needsAltitudeProve(mind.wins))) {
       const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
       setCircuitRunMs(total);
       submitCircuitRun(next, total, true);
@@ -819,9 +825,7 @@ export default function GroundsScreen({
       setCircuitPhase("failed");
       submitCircuitRun(sectors, total, false);
       if (circuitChallenge) {
-        const beat =
-          sectors > circuitChallenge.sectors ||
-          (sectors === circuitChallenge.sectors && total > 0 && (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+        const beat = isClimbChallengeBeat({ sectors, totalMs: total }, circuitChallenge);
         setCircuitChallengeResult(beat ? "beat" : "miss");
         track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
       }
@@ -921,10 +925,10 @@ export default function GroundsScreen({
           setCircuitPhase("done");
           submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
           if (circuitChallenge) {
-            const beat =
-              DESKTOP_CIRCUIT_COUNT > circuitChallenge.sectors ||
-              (DESKTOP_CIRCUIT_COUNT === circuitChallenge.sectors &&
-                (circuitChallenge.totalMs <= 0 || total < circuitChallenge.totalMs));
+            const beat = isClimbChallengeBeat(
+              { sectors: DESKTOP_CIRCUIT_COUNT, totalMs: total },
+              circuitChallenge,
+            );
             setCircuitChallengeResult(beat ? "beat" : "miss");
             track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
           }
@@ -972,7 +976,7 @@ export default function GroundsScreen({
 
   useEffect(() => {
     if (activeVenue !== "circuit") return;
-    setCircuitPersonalBest(loadCircuitPersonalBest());
+    setCircuitPersonalBest(loadCircuitPersonalBest("flight"));
     loadCircuitBoard();
   }, [activeVenue, venueHostWorldId, loadCircuitBoard]);
 

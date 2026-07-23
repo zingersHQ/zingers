@@ -18,12 +18,23 @@ type WalletProvider = {
 
 type NameStatus = "free" | "yours" | "taken" | "invalid" | "checking" | null;
 
+const PHANTOM_DOWNLOAD = "https://phantom.app/download";
+
 function getWallet(): WalletProvider | null {
   if (typeof window === "undefined") return null;
   const w = window as Window & { solana?: WalletProvider & { isPhantom?: boolean }; phantom?: { solana?: WalletProvider } };
   if (w.solana && typeof w.solana.signMessage === "function") return w.solana;
   if (w.phantom?.solana && typeof w.phantom.solana.signMessage === "function") return w.phantom.solana;
   return null;
+}
+
+function noWalletHint(): string {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const mobile = /iPhone|iPad|iPod|Android/i.test(ua);
+  if (mobile) {
+    return "No wallet in this browser. Open zingers.gg inside a Solana wallet app, or connect on desktop. Name only — recovery code still moves champions & Crowns.";
+  }
+  return "No wallet found. Install a Solana wallet extension, then reload. Name only — recovery code still moves champions & Crowns.";
 }
 
 const ink = "var(--ink)";
@@ -123,7 +134,8 @@ export function SolanaConnect({
     setErr(null);
     const wallet = getWallet();
     if (!wallet) {
-      setErr("No wallet found in this browser.");
+      setErr(noWalletHint());
+      pingEvent("sol_link_no_wallet");
       return;
     }
     const token = getOwnerToken();
@@ -306,7 +318,8 @@ export function SolanaConnect({
           YOUR NAME
         </div>
         <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: "0 0 8px" }}>
-          Optional. Connect once to keep a unique name across devices. Boards show a short address until then.
+          Optional. Connect proves a wallet so you can keep a unique Trainer name on the boards. It does not move
+          champions or Crowns — use your recovery code for that.
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <input
@@ -377,9 +390,22 @@ export function SolanaConnect({
       )}
 
       {err && (
-        <p className="mono" style={{ fontSize: 9, color: "var(--bad, #ff8a9a)", margin: 0, lineHeight: 1.4 }}>
-          {err}
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <p className="mono" style={{ fontSize: 9, color: "var(--bad, #ff8a9a)", margin: 0, lineHeight: 1.4 }}>
+            {err}
+          </p>
+          {!pubkey && err.includes("No wallet") && (
+            <a
+              href={PHANTOM_DOWNLOAD}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mono"
+              style={{ fontSize: 10, color: "var(--accent, #7c5cff)", textDecoration: "underline" }}
+            >
+              Get a Solana wallet →
+            </a>
+          )}
+        </div>
       )}
     </div>
   );

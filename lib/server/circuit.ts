@@ -11,6 +11,7 @@
 // short token). Client-supplied handles are ignored on submit.
 import "server-only";
 import { Redis } from "@upstash/redis";
+import { CLIMB_SECTOR_COUNT } from "@/lib/ascent-rules";
 import { resolveTrainerLabel } from "@/lib/server/solana-link";
 
 export type CircuitBody = "thumb" | "flight";
@@ -18,12 +19,12 @@ export type CircuitBody = "thumb" | "flight";
 export interface CircuitEntry {
   token: string;
   handle: string;
-  sectors: number; // 0..100
+  sectors: number; // 0..CLIMB_SECTOR_COUNT
   totalMs: number;
   clearedAll: boolean;
   at: number;
   body: CircuitBody;
-  reach: number; // server-derived: 0 if sectors===0 else ceil(sectors/10)
+  reach: number; // server-derived: 0 if sectors===0 else ceil(sectors/REACH_SIZE)
 }
 
 /** Public board row — no owner token leaked. */
@@ -59,7 +60,7 @@ const BOARD_CAP = 50;
 // 90-min ceiling: a desktop 6-DOF full clear is aspirationally 60–90 min. Still
 // < 10M so "one more sector always outranks any time" holds in the packing.
 const MAX_MS = 90 * 60 * 1000;
-export const MAX_SECTORS = 100;
+export const MAX_SECTORS = CLIMB_SECTOR_COUNT;
 
 function reachOf(sectors: number): number {
   return sectors <= 0 ? 0 : Math.ceil(sectors / 10);

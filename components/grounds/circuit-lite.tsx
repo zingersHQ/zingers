@@ -24,19 +24,27 @@ import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
-import { climbChallengeUrl, type ClimbChallenge } from "@/lib/climb-challenge";
+import { climbChallengeUrl, isClimbChallengeBeat, type ClimbChallenge } from "@/lib/climb-challenge";
 import {
   ghostPathForSector,
   ghostPathHasSamples,
   type ClimbGhostSample,
   type ClimbGhostSectors,
 } from "@/lib/climb-ghost";
+import {
+  ALTITUDE_KEY_SECTOR,
+  ASCENT_GLIDE,
+  ASCENT_STUMBLE,
+  ascentCraftCrowns,
+  ascentDepthXp,
+  CLIMB_SECTOR_COUNT,
+  needsAltitudeProve,
+} from "@/lib/ascent-rules";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { getHandle } from "@/lib/owner";
-import { CLIMB_SECTOR_COUNT } from "./climb/sectors";
 import { reachTheme, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
@@ -87,19 +95,17 @@ const THRUST_ACCEL = 50;
 const PRESS_KICK = 4.0;
 const MAX_FALL = 18;
 const MAX_RISE = 12;
-const CRUISE_SINK = -2.8;
-const CRUISE_GLIDE = 7;
-const DIVE_SINK = -7.6;
-const DIVE_GLIDE = 9;
+const CRUISE_SINK = ASCENT_GLIDE.cruiseSink;
+const CRUISE_GLIDE = ASCENT_GLIDE.cruiseGlide;
+const DIVE_SINK = ASCENT_GLIDE.diveSink;
+const DIVE_GLIDE = ASCENT_GLIDE.diveGlide;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
 
-// ── stumble (docs/climb.md §4) — a hazard hit is NOT a death; it shoves you and
-// briefly locks control, so it usually CASCADES into a miss or a fall without
-// adding a third fail state. Then a grace window so you're not chain-stunned. ──
-const STUMBLE_VY = -6;
-const STUMBLE_LOCK = 0.4;
-const STUMBLE_IMMUNE = 1.6;
+// ── stumble (docs/climb.md §4) — shared ASCENT_STUMBLE; not a death. ──
+const STUMBLE_VY = ASCENT_STUMBLE.vy;
+const STUMBLE_LOCK = ASCENT_STUMBLE.lockS;
+const STUMBLE_IMMUNE = ASCENT_STUMBLE.immuneS;
 const GOLD_RING_ODDS = 0.125;
 const GOLD_RING_CROWNS = 25;
 
@@ -132,9 +138,6 @@ const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
 type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue" | "prove";
 type FailReason = "fall" | "gates";
-
-/** Reach II (sector index 10) needs one duel win — thin altitude key (flyover §3). */
-const ALTITUDE_KEY_SECTOR = 10;
 
 // prototype fallback body while the champion GLTF resolves (also our old mech)
 function MechBody({ accent }: { accent: string }) {
@@ -276,8 +279,8 @@ function Flyer({
     } else if (controlLocked) {
       vy.current = THREE.MathUtils.clamp(vy.current - GRAVITY * dt, -MAX_FALL, MAX_RISE);
     } else {
-      let sink = CRUISE_SINK;
-      let glide = CRUISE_GLIDE;
+      let sink: number = CRUISE_SINK;
+      let glide: number = CRUISE_GLIDE;
       if (cp && pos.current.y > cp.pos[1] + DIVE_LEAD) {
         sink = DIVE_SINK;
         glide = DIVE_GLIDE;
@@ -664,7 +667,7 @@ export default function CircuitLite({
 
   useEffect(() => {
     setMounted(true);
-    setBest(loadCircuitPersonalBest());
+    setBest(loadCircuitPersonalBest("thumb"));
     loadBoard();
   }, [loadBoard]);
 
@@ -681,9 +684,7 @@ export default function CircuitLite({
       const totalMs = Math.max(0, performance.now() - runStart.current);
       setLastRun({ sectors: sectorsCleared, totalMs });
       if (challenge) {
-        const beat =
-          sectorsCleared > challenge.sectors ||
-          (sectorsCleared === challenge.sectors && totalMs > 0 && (challenge.totalMs <= 0 || totalMs < challenge.totalMs));
+        const beat = isClimbChallengeBeat({ sectors: sectorsCleared, totalMs }, challenge);
         setChallengeResult(beat ? "beat" : "miss");
         pingEvent(beat ? "climb_challenge_beat" : "climb_challenge_miss");
       }
@@ -698,27 +699,25 @@ export default function CircuitLite({
         totalMs,
         clearedAll,
       };
-      const prev = loadCircuitPersonalBest();
+      const prev = loadCircuitPersonalBest("thumb");
       const better = isCircuitRunBetter(run, prev);
       const deeper = run.sectors > (prev?.sectors ?? -1);
 
       let xp = 0;
       let crowns = 0;
       if (deeper) {
-        const reaches = Math.ceil(run.sectors / 10);
-        xp = run.sectors * 20 + reaches * 12 + (clearedAll ? 100 : 0); // depth → XP (soul)
+        xp = ascentDepthXp(run.sectors, clearedAll); // depth → XP (soul)
         if (xp > 0) awardTrainerXp(xp);
       }
       if (better) {
-        const reaches = Math.ceil(run.sectors / 10);
-        crowns = Math.round(run.sectors * 3 + reaches * 15 + (clearedAll ? 50 : 0)); // craft → Crowns
+        crowns = ascentCraftCrowns(run.sectors, clearedAll); // craft → Crowns
       }
       crowns += bonusCrowns.current; // golden-ring surprise pays regardless (§7b)
       if (crowns > 0) void awardGauntlet(crowns);
       setReward(xp > 0 || crowns > 0 ? { xp, crowns, deeper } : null);
 
       if (better) {
-        saveCircuitPersonalBest(run);
+        saveCircuitPersonalBest(run, "thumb");
         setBest(run);
         setNewBest(true);
       } else {
@@ -1000,7 +999,7 @@ export default function CircuitLite({
       }
       // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
       // board still records depth from this run; campaign height pauses here.
-      if (next >= ALTITUDE_KEY_SECTOR && !guest && (champion.wins ?? 0) < 1) {
+      if (next >= ALTITUDE_KEY_SECTOR && !guest && needsAltitudeProve(champion.wins)) {
         samplesRef.current = [];
         rewardSfx("big");
         recordRun(next, true);

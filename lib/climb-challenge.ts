@@ -6,14 +6,16 @@
 // Legacy /m?… and /grounds?…&ascent=flight still decode.
 
 import { BRAND } from "@/lib/brand";
+import { CLIMB_SECTOR_COUNT, isClimbChallengeBeat } from "@/lib/ascent-rules";
 import {
   decodeGhostPath,
   encodeGhostPath,
   type ClimbGhostSectors,
 } from "@/lib/climb-ghost";
 
-/** Keep in sync with CLIMB_SECTOR_COUNT (components/grounds/climb/sectors). */
-const MAX_SECTORS = 100;
+const MAX_SECTORS = CLIMB_SECTOR_COUNT;
+
+export { isClimbChallengeBeat, CLIMB_SECTOR_COUNT };
 
 export type ClimbDoor = "thumb" | "flight";
 

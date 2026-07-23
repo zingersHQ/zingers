@@ -51,7 +51,7 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
         TRAINER
       </div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 12px" }}>
-        Your name and recovery. Nothing here is required to play.
+        Optional name (wallet) and recovery code (this device&apos;s career). Nothing here is required to play.
       </p>
 
       <SolanaConnect onIdentity={onHandle} />
@@ -61,6 +61,9 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
       <div className="mono" style={{ fontSize: 10, letterSpacing: 1.6, color: "var(--muted)", marginBottom: 6 }}>
         RECOVERY CODE
       </div>
+      <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 6px" }}>
+        This moves champions, Crowns, and cloud save across devices. Wallet connect does not.
+      </p>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <code style={{ ...inputStyle, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {reveal ? token || "········" : masked}

@@ -115,7 +115,9 @@ export function sectorBounds(track: CircuitTrackDef): { maxY: number; maxZ: numb
   return { maxY: maxY + 8, maxZ: maxZ + 12 };
 }
 
-// ── Local bests ──────────────────────────────────────────────────────────────
+// ── Local bests (craft — split by body; boards already are) ───────────────────
+
+export type CircuitPbBody = "thumb" | "flight";
 
 export interface CircuitPersonalBest {
   sectors: number;
@@ -123,11 +125,15 @@ export interface CircuitPersonalBest {
   clearedAll: boolean;
 }
 
-export function loadCircuitPersonalBest(): CircuitPersonalBest | null {
-  if (typeof window === "undefined") return null;
+const PB_LEGACY = "zingers_circuit_best_v2";
+
+function pbKey(body: CircuitPbBody): string {
+  return `${PB_LEGACY}:${body}`;
+}
+
+function parsePb(raw: string | null): CircuitPersonalBest | null {
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem("zingers_circuit_best_v2");
-    if (!raw) return null;
     const j = JSON.parse(raw) as CircuitPersonalBest;
     if (!Number.isFinite(j.sectors) || !Number.isFinite(j.totalMs)) return null;
     return { sectors: j.sectors, totalMs: j.totalMs, clearedAll: !!j.clearedAll };
@@ -136,10 +142,30 @@ export function loadCircuitPersonalBest(): CircuitPersonalBest | null {
   }
 }
 
-export function saveCircuitPersonalBest(best: CircuitPersonalBest): void {
+/** Body-specific PB. Falls back to pre-split legacy key so nothing is lost. */
+export function loadCircuitPersonalBest(body?: CircuitPbBody): CircuitPersonalBest | null {
+  if (typeof window === "undefined") return null;
+  try {
+    if (body) {
+      return parsePb(localStorage.getItem(pbKey(body))) || parsePb(localStorage.getItem(PB_LEGACY));
+    }
+    // Display / share cards: deepest (then fastest) across both bodies + legacy.
+    const candidates = [
+      parsePb(localStorage.getItem(pbKey("thumb"))),
+      parsePb(localStorage.getItem(pbKey("flight"))),
+      parsePb(localStorage.getItem(PB_LEGACY)),
+    ].filter(Boolean) as CircuitPersonalBest[];
+    if (!candidates.length) return null;
+    return candidates.reduce((best, cur) => (isCircuitRunBetter(cur, best) ? cur : best));
+  } catch {
+    return null;
+  }
+}
+
+export function saveCircuitPersonalBest(best: CircuitPersonalBest, body: CircuitPbBody): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("zingers_circuit_best_v2", JSON.stringify(best));
+    localStorage.setItem(pbKey(body), JSON.stringify(best));
   } catch {
     /* ignore */
   }

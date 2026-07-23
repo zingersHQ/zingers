@@ -12,6 +12,7 @@ import { blank, skillLevel, TYPE_COLOR } from "@/lib/evolve/progression";
 import { trainerLevel } from "@/lib/evolve/trainer";
 import { readerPalette, GOLD } from "@/lib/render/palette";
 import { flightAttitudePlanar } from "@/lib/render/animations";
+import { ASCENT_GLIDE, ASCENT_STUMBLE } from "@/lib/ascent-rules";
 import { ReaderBackSigil, ReaderRankEmblem } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
 import { FlyingFollower } from "./flying-cast";
@@ -2555,12 +2556,12 @@ const FLY_MAX_FALL = 20;       // terminal fall (sticky, never uncontrollable)
 // Cruise glide: powered forward without thrusting — ease toward a gentle sink so
 // W / Circuit cruise reads as "flying forward with a slight descent", not flat
 // horizontal and not a stone drop. Idle (no forward) keeps full FLY_GRAVITY.
-const FLY_CRUISE_SINK = -2.8;  // target vy while cruising without thrust (u/s)
-const FLY_CRUISE_GLIDE = 7;    // ease rate toward cruise sink (frame-rate independent)
+const FLY_CRUISE_SINK = ASCENT_GLIDE.cruiseSink; // shared with Climb
+const FLY_CRUISE_GLIDE = ASCENT_GLIDE.cruiseGlide;
 // Circuit S/↓: keep the brake, add a soft nose-down so Surge high→low rings are
 // reachable (~6–8u drops) without cutting the pack. Milder than idle freefall.
-const FLY_DIVE_SINK = -7.6;
-const FLY_DIVE_GLIDE = 9;
+const FLY_DIVE_SINK = ASCENT_GLIDE.diveSink;
+const FLY_DIVE_GLIDE = ASCENT_GLIDE.diveGlide;
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
 // Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
 // skill axis and forward is the heartbeat. W surges, S brakes + soft dive; A/D = light steer.
@@ -3356,8 +3357,8 @@ function Handler({
       const tt = state.clock.elapsedTime;
       for (const h of circuitHazards) {
         if (hazardHits(h, tt, t.x, t.y, t.z)) {
-          stumbleLock.current = tt + 0.4;
-          stumbleGrace.current = tt + 1.6;
+          stumbleLock.current = tt + ASCENT_STUMBLE.lockS;
+          stumbleGrace.current = tt + ASCENT_STUMBLE.immuneS;
           stumbleActive = true;
           justStumbled = true;
           thrust.current = 0;
@@ -3451,7 +3452,7 @@ function Handler({
     // frame: kill any upward climb, punch downward, and bleed horizontal drive
     if (justStumbled) {
       const lv = rb.linvel();
-      rb.setLinvel({ x: lv.x * 0.5, y: -6, z: lv.z * 0.5 }, true);
+      rb.setLinvel({ x: lv.x * 0.5, y: ASCENT_STUMBLE.vy, z: lv.z * 0.5 }, true);
       if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.5);
     }
     // touchdown absorb — squash on the frame we regain the ground with downward speed

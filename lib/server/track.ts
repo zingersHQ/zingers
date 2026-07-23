@@ -55,6 +55,7 @@ export const Z_EVENTS = [
   "m_guest_run", // started a guest Climb run (no champion yet)
   "m_claim_from_climb", // reached adoption via the Climb claim hook
   "sol_link", // optional Phantom Trainer sigil linked
+  "sol_link_no_wallet", // connect tapped with no injected wallet
   // nail-it P0 — Climb share / prove / challenge + ascent-first funnel
   "fj_train_to_ascent",
   "climb_share_native",
