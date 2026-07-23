@@ -1,5 +1,5 @@
 "use client";
-import { Component, useEffect, type ReactNode, type CSSProperties } from "react";
+import { Component, useEffect, useState, type ReactNode, type CSSProperties } from "react";
 
 // Prefer "default" over "high-performance". On dual-GPU laptops, forcing the
 // discrete GPU after a GPU-process crash commonly throws
@@ -11,11 +11,49 @@ export function isWebGlCreateError(reason: unknown): boolean {
   return /creating webgl context|could not create webgl|webgl.*not supported/i.test(msg);
 }
 
+// --- Global "GPU is disabled" latch -----------------------------------------
+// When the browser refuses a WebGL context (GPU process crashed / hardware
+// acceleration off — "GL_RENDERER = Disabled"), EVERY subsequent getContext
+// will also fail. Retrying just re-hammers the dead GPU process (and Chrome
+// counts crashes, keeping it disabled longer). So the first create failure
+// latches this flag once, we stop mounting every Canvas at once, and show a
+// single honest fallback with recovery steps — no error storm.
+let webglHardFailed = false;
+const hardFailSubs = new Set<() => void>();
+
+export function isWebglHardFailed() {
+  return webglHardFailed;
+}
+export function markWebglHardFailed() {
+  if (webglHardFailed) return;
+  webglHardFailed = true;
+  hardFailSubs.forEach((f) => f());
+}
+export function resetWebglHardFailed() {
+  if (!webglHardFailed) return;
+  webglHardFailed = false;
+  hardFailSubs.forEach((f) => f());
+}
+/** Subscribe to the global GPU-disabled latch (re-renders on change). */
+export function useWebglHardFailed(): boolean {
+  const [failed, setFailed] = useState(webglHardFailed);
+  useEffect(() => {
+    const sub = () => setFailed(webglHardFailed);
+    hardFailSubs.add(sub);
+    sub();
+    return () => {
+      hardFailSubs.delete(sub);
+    };
+  }, []);
+  return failed;
+}
+
 /** Surfaces R3F/Three context-create failures (promise rejections error boundaries miss). */
 export function useWebGlCreateFailure(onFail: () => void) {
   useEffect(() => {
     const fail = (reason: unknown) => {
       if (!isWebGlCreateError(reason)) return;
+      markWebglHardFailed();
       onFail();
     };
     const onRej = (e: PromiseRejectionEvent) => {

@@ -4,6 +4,7 @@ import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { RENDER_PRESETS, type RenderPresetId } from "@/lib/render/presets";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
+import { useWebglHardFailed } from "@/components/grounds/render-guard";
 import type { KeeperKind } from "@/components/grounds/keeper-regalia";
 
 /** Live 3D portrait — the model idles in-frame; mounts only when scrolled near. */
@@ -33,6 +34,9 @@ export function ChampionPortrait({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(eager);
+  // If the browser has disabled its GPU, never mount a live scene — it would
+  // just add to the failed-context storm. Fall through to the static gradient.
+  const glDisabled = useWebglHardFailed();
   const aspect = RENDER_PRESETS[preset].aspect;
   const accent = colorHex ?? TYPE_COLOR[type];
 
@@ -75,7 +79,7 @@ export function ChampionPortrait({
       }}
       aria-label={`${rosterKey} living portrait`}
     >
-      {live ? (
+      {live && !glDisabled ? (
         <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} identityKey={rosterKey} keeper={keeper} />
       ) : (
         <div

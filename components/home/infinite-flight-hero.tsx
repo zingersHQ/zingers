@@ -12,7 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { RobotPilot } from "@/components/grounds/flying-cast";
 import { ChampionMesh, CHAMPION_REL_TO_TRAINER, READER_SCALE } from "@/components/grounds/champion-mesh";
 import { NatureSurfaceDressing } from "@/components/grounds/nature";
-import { RenderBoundary, WEBGL_POWER, useWebGlCreateFailure } from "@/components/grounds/render-guard";
+import { RenderBoundary, WEBGL_POWER, markWebglHardFailed, useWebglHardFailed } from "@/components/grounds/render-guard";
 import { biomeById, daylightBiome, type BiomeConfig } from "@/components/grounds/biomes";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -511,20 +511,10 @@ export default function InfiniteFlightHero({
   const reduceMotion = usePrefersReducedMotion();
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
   const [castReady, setCastReady] = useState(false);
-  const [glFailed, setGlFailed] = useState(false);
-  // A failed getContext is usually a transient slot exhaustion (a previous
-  // view's canvas hasn't been reclaimed yet). Remount a few times before we
-  // give up and just leave the poster in place — never a scary wall on the hero.
-  const [glAttempt, setGlAttempt] = useState(0);
-  const handleGlFail = useCallback(() => {
-    setGlAttempt((a) => {
-      if (a >= 3) {
-        setGlFailed(true);
-        return a;
-      }
-      return a + 1;
-    });
-  }, []);
+  // If the browser's GPU is disabled, one canvas failing latches this globally
+  // so we stop trying (no retry storm) and just hold the poster.
+  const glFailed = useWebglHardFailed();
+  const handleGlFail = useCallback(() => markWebglHardFailed(), []);
   // Defer Canvas one frame so the poster paints first (and so a wedged GPU
   // isn't asked for a context in the same tick as hydration).
   const [allowCanvas, setAllowCanvas] = useState(false);
@@ -532,7 +522,6 @@ export default function InfiniteFlightHero({
     const id = requestAnimationFrame(() => setAllowCanvas(true));
     return () => cancelAnimationFrame(id);
   }, []);
-  useWebGlCreateFailure(handleGlFail);
   // Animate only after the cast has painted — poster crossfades off at the same beat.
   const animate = castReady && !freeze && !reduceMotion && !glFailed;
 
@@ -545,9 +534,8 @@ export default function InfiniteFlightHero({
     <div style={{ position: "absolute", inset: 0 }} data-flight-hero-ready={castReady ? "1" : "0"} data-flight-hero-gl={glFailed ? "fail" : castReady ? "ok" : "pending"}>
       {(showPoster || !castReady || glFailed) && <FlightHeroPoster visible={!castReady || glFailed} priority />}
       {!glFailed && allowCanvas && (
-        <RenderBoundary key={glAttempt} fallback={null} onError={handleGlFail}>
+        <RenderBoundary fallback={null} onError={handleGlFail}>
           <Canvas
-            key={glAttempt}
             dpr={dpr}
             shadows={false}
             frameloop="always"

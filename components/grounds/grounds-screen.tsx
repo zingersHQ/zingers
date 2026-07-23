@@ -77,7 +77,7 @@ import { ObjectiveToasts } from "@/components/grounds/objective-toasts";
 import { roundReward, gauntletQueue, tribunalDraw } from "@/lib/scenarios/registry";
 import { GauntletBriefing, GauntletInterstitial, GauntletResult, type GauntletRun } from "@/components/grounds/gauntlet";
 import { TribunalBriefing, TribunalMatchBanner } from "@/components/grounds/tribunal";
-import { RenderBoundary, RenderNotice, clearGpuStatusCache, gpuStatus, useWebGlCreateFailure } from "@/components/grounds/render-guard";
+import { RenderBoundary, RenderNotice, clearGpuStatusCache, gpuStatus, resetWebglHardFailed, useWebglHardFailed } from "@/components/grounds/render-guard";
 import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
@@ -350,23 +350,9 @@ export default function GroundsScreen({
   const [isMobile, setIsMobile] = useState(false);
   const [worldMenu, setWorldMenu] = useState(false);
   const [gpu, setGpu] = useState<ReturnType<typeof gpuStatus> | null>(null);
-  const [glCreateFailed, setGlCreateFailed] = useState(false);
-  const [glFailDetail, setGlFailDetail] = useState<string | null>(null);
+  const glCreateFailed = useWebglHardFailed();
   const [rosterError, setRosterError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  // A failed getContext is usually transient (a canvas from the previous view
-  // hasn't freed its slot yet). Auto-remount the world a few times before ever
-  // showing a wall — remounting after the stale context is reclaimed succeeds.
-  const glRetries = useRef(0);
-  useWebGlCreateFailure(() => {
-    if (glRetries.current < 3) {
-      glRetries.current += 1;
-      window.setTimeout(() => setReloadKey((k) => k + 1), 350 * glRetries.current);
-      return;
-    }
-    setGlCreateFailed(true);
-    setGlFailDetail("Error creating WebGL context");
-  });
   const [war, setWar] = useState<WarState | null>(null);
   const warLeader = war?.leader ?? null;
 
@@ -2553,19 +2539,24 @@ export default function GroundsScreen({
 
       {mounted && glCreateFailed && (
         <RenderNotice
-          title="3D couldn’t start"
+          title="Your browser turned off its GPU"
           body={
             <>
-              Your browser refused a WebGL context (often a wedged GPU process after the tab ran hot).
-              Fully quit Chrome/Brave (Cmd+Q), reopen, then retry. Also confirm{" "}
-              <b>Settings → System → Use graphics acceleration</b> is on.
+              Chrome/Brave disabled hardware acceleration for this session (the console shows{" "}
+              <span className="mono">GL_RENDERER = Disabled</span>), so no site can start WebGL. To fix it:
+              <br />
+              <b>1.</b> Open <span className="mono">chrome://settings/system</span> and turn ON{" "}
+              <b>“Use graphics acceleration when available.”</b>
+              <br />
+              <b>2.</b> Fully quit the browser (Cmd+Q — not just the window) and reopen.
+              <br />
+              <b>3.</b> If it’s still off, check <span className="mono">chrome://gpu</span> — “WebGL” should say
+              <i> Hardware accelerated</i>.
             </>
           }
-          detail={glFailDetail ?? undefined}
+          detail="GL_RENDERER = Disabled · BindToCurrentSequence failed"
           onRetry={() => {
-            glRetries.current = 0;
-            setGlCreateFailed(false);
-            setGlFailDetail(null);
+            resetWebglHardFailed();
             clearGpuStatusCache();
             setGpu(gpuStatus({ refresh: true }));
             setReloadKey((k) => k + 1);
@@ -2608,11 +2599,7 @@ export default function GroundsScreen({
               ownedKey={activeVenue === "circuit" ? circuitActiveKey : owned}
               onNear={setNear}
               match={showMatch ? matchView : null}
-              onGlReady={() => {
-                glRetries.current = 0;
-                setGlCreateFailed(false);
-                setGlFailDetail(null);
-              }}
+              onGlReady={() => resetWebglHardFailed()}
               controlsEnabled={
                 controlsEnabled &&
                 (!activeVenue ||
