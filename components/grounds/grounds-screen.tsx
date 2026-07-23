@@ -354,7 +354,16 @@ export default function GroundsScreen({
   const [glFailDetail, setGlFailDetail] = useState<string | null>(null);
   const [rosterError, setRosterError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // A failed getContext is usually transient (a canvas from the previous view
+  // hasn't freed its slot yet). Auto-remount the world a few times before ever
+  // showing a wall — remounting after the stale context is reclaimed succeeds.
+  const glRetries = useRef(0);
   useWebGlCreateFailure(() => {
+    if (glRetries.current < 3) {
+      glRetries.current += 1;
+      window.setTimeout(() => setReloadKey((k) => k + 1), 350 * glRetries.current);
+      return;
+    }
     setGlCreateFailed(true);
     setGlFailDetail("Error creating WebGL context");
   });
@@ -2554,6 +2563,7 @@ export default function GroundsScreen({
           }
           detail={glFailDetail ?? undefined}
           onRetry={() => {
+            glRetries.current = 0;
             setGlCreateFailed(false);
             setGlFailDetail(null);
             clearGpuStatusCache();
@@ -2599,6 +2609,7 @@ export default function GroundsScreen({
               onNear={setNear}
               match={showMatch ? matchView : null}
               onGlReady={() => {
+                glRetries.current = 0;
                 setGlCreateFailed(false);
                 setGlFailDetail(null);
               }}

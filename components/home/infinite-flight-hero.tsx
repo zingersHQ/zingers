@@ -5,7 +5,7 @@
 // lift, no hard thrust beats) over scrolling Grounds-style rolling terrain.
 // No floating islands — hills and montículos they actually fly over.
 // ─────────────────────────────────────────────────────────────────────────────
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
@@ -512,6 +512,19 @@ export default function InfiniteFlightHero({
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
   const [castReady, setCastReady] = useState(false);
   const [glFailed, setGlFailed] = useState(false);
+  // A failed getContext is usually a transient slot exhaustion (a previous
+  // view's canvas hasn't been reclaimed yet). Remount a few times before we
+  // give up and just leave the poster in place — never a scary wall on the hero.
+  const [glAttempt, setGlAttempt] = useState(0);
+  const handleGlFail = useCallback(() => {
+    setGlAttempt((a) => {
+      if (a >= 3) {
+        setGlFailed(true);
+        return a;
+      }
+      return a + 1;
+    });
+  }, []);
   // Defer Canvas one frame so the poster paints first (and so a wedged GPU
   // isn't asked for a context in the same tick as hydration).
   const [allowCanvas, setAllowCanvas] = useState(false);
@@ -519,7 +532,7 @@ export default function InfiniteFlightHero({
     const id = requestAnimationFrame(() => setAllowCanvas(true));
     return () => cancelAnimationFrame(id);
   }, []);
-  useWebGlCreateFailure(() => setGlFailed(true));
+  useWebGlCreateFailure(handleGlFail);
   // Animate only after the cast has painted — poster crossfades off at the same beat.
   const animate = castReady && !freeze && !reduceMotion && !glFailed;
 
@@ -532,8 +545,9 @@ export default function InfiniteFlightHero({
     <div style={{ position: "absolute", inset: 0 }} data-flight-hero-ready={castReady ? "1" : "0"} data-flight-hero-gl={glFailed ? "fail" : castReady ? "ok" : "pending"}>
       {(showPoster || !castReady || glFailed) && <FlightHeroPoster visible={!castReady || glFailed} priority />}
       {!glFailed && allowCanvas && (
-        <RenderBoundary fallback={null} onError={() => setGlFailed(true)}>
+        <RenderBoundary key={glAttempt} fallback={null} onError={handleGlFail}>
           <Canvas
+            key={glAttempt}
             dpr={dpr}
             shadows={false}
             frameloop="always"
