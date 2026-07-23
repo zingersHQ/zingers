@@ -1030,24 +1030,6 @@ export default function GroundsScreen({
 
   useEffect(() => {
     setMounted(true);
-    // Probe WebGL, but never hard-block on a transient "no-context" (leftover
-    // canvases from the landing hero often exhaust the browser's context slots
-    // for a beat after route change). Retry a few times, then try mounting anyway.
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const runProbe = (attempt: number) => {
-      const status = gpuStatus({ refresh: attempt > 0 });
-      if (cancelled) return;
-      // Prefer a clean ok. Transient no-context (tryAnyway) — mount immediately
-      // so we never flash the false wall, and keep retrying for a clean probe.
-      if (status.ok || attempt >= 4) {
-        setGpu(status);
-        return;
-      }
-      if (status.tryAnyway) setGpu(status);
-      timer = setTimeout(() => runProbe(attempt + 1), 120 * (attempt + 1));
-    };
-    runProbe(0);
     // Warm the world's JS chunk while onboarding plays (cheap parse, no render),
     // so when it finally mounts behind the picker it skips the chunk fetch/parse.
     void import("@/components/grounds/world");
@@ -1134,11 +1116,34 @@ export default function GroundsScreen({
       }
     } catch {}
     return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
       if (mq && syncMobile) mq.removeEventListener("change", syncMobile);
     };
   }, []);
+
+  // Probe WebGL only after the intro cinematic — never race its Canvas.
+  // Also never call loseContext on the probe (that blanked desktop intro+world).
+  useEffect(() => {
+    if (!mounted || showIntro) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Optimistic so we never flash a blank frame while probing.
+    setGpu((g) => g ?? { ok: true, software: false, renderer: "", tryAnyway: true });
+    const runProbe = (attempt: number) => {
+      const status = gpuStatus({ refresh: attempt > 0 });
+      if (cancelled) return;
+      if (status.ok || attempt >= 4) {
+        setGpu(status);
+        return;
+      }
+      if (status.tryAnyway) setGpu(status);
+      timer = setTimeout(() => runProbe(attempt + 1), 120 * (attempt + 1));
+    };
+    runProbe(0);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [mounted, showIntro]);
 
   const dismissSeasonBeat = useCallback(() => {
     try {

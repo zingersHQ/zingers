@@ -5,14 +5,13 @@ import { Component, type ReactNode, type CSSProperties } from "react";
 // Chromium (Chrome/Brave) silently falls back to a software renderer when
 // hardware acceleration is off or the GPU is blocklisted. That software path
 // often can't handle a heavy R3F scene (shadows + bloom + physics), so the
-// canvas comes up blank. We detect "no real GPU" up front and surface it.
+// canvas comes up blank. We detect software GPUs up front for warnings.
 //
 // IMPORTANT: a failed getContext ("no-context") is often a FALSE POSITIVE —
-// leftover canvases from the previous route (landing hero, etc.) can exhaust
-// the browser's ~8–16 WebGL context limit, so a probe canvas can't start even
-// though the machine has been running the game fine. Never hard-block the
-// world on that alone; release probe contexts, allow refresh, and let the
-// real Canvas try.
+// leftover canvases from the previous route can exhaust the browser's context
+// limit. Never hard-block the world on that. Also never call loseContext() on
+// the probe — on some desktop GPUs that poisons the next real Canvas (blank
+// intro + blank Grounds).
 
 export type GpuStatus = {
   ok: boolean;
@@ -27,32 +26,24 @@ export type GpuStatus = {
   tryAnyway?: boolean;
 };
 
-function releaseGl(gl: WebGLRenderingContext | WebGL2RenderingContext | null) {
-  if (!gl) return;
-  try {
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
-  } catch {
-    /* ignore */
-  }
-}
-
 function probe(): GpuStatus {
   if (typeof window === "undefined") return { ok: true, software: false, renderer: "" };
   try {
     const canvas = document.createElement("canvas");
-    const gl = (canvas.getContext("webgl2", { failIfMajorPerformanceCaveat: false }) ||
-      canvas.getContext("webgl", { failIfMajorPerformanceCaveat: false }) ||
+    // Keep the probe tiny and non-destructive — do NOT loseContext() afterward.
+    const gl = (canvas.getContext("webgl2") ||
+      canvas.getContext("webgl") ||
       canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
     if (!gl) {
-      // Don't treat this as a dead GPU — usually a transient context-slot issue.
       return { ok: false, software: false, renderer: "", reason: "no-context", tryAnyway: true };
     }
 
     const dbg = gl.getExtension("WEBGL_debug_renderer_info");
     const renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
     const software = /swiftshader|software|llvmpipe|basic render|microsoft basic/i.test(renderer);
-    // Free the probe slot so the real Canvas can claim one.
-    releaseGl(gl);
+    // Drop the canvas reference so GC can reclaim the probe slot; never force-lose.
+    canvas.width = 0;
+    canvas.height = 0;
     return { ok: true, software, renderer };
   } catch (e) {
     return {
