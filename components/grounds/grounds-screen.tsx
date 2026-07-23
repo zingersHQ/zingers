@@ -2542,19 +2542,23 @@ export default function GroundsScreen({
           title="Your browser turned off its GPU"
           body={
             <>
-              Chrome/Brave disabled hardware acceleration for this session (the console shows{" "}
-              <span className="mono">GL_RENDERER = Disabled</span>), so no site can start WebGL. To fix it:
+              Chrome/Brave disabled WebGL for this session. The settings toggle can still be ON — if{" "}
+              <span className="mono">chrome://gpu</span> says{" "}
+              <i>GPU access is disabled due to frequent crashes</i>, the GPU process crashed and Chrome locked it
+              out. To recover:
               <br />
-              <b>1.</b> Open <span className="mono">chrome://settings/system</span> and turn ON{" "}
-              <b>“Use graphics acceleration when available.”</b>
+              <b>1.</b> Close other GPU-heavy apps (local AI / Metal servers, other WebGL tabs).
               <br />
               <b>2.</b> Fully quit the browser (Cmd+Q — not just the window) and reopen.
               <br />
-              <b>3.</b> If it’s still off, check <span className="mono">chrome://gpu</span> — “WebGL” should say
-              <i> Hardware accelerated</i>.
+              <b>3.</b> Confirm <span className="mono">chrome://settings/system</span> has{" "}
+              <b>“Use graphics acceleration when available”</b> ON.
+              <br />
+              <b>4.</b> Check <span className="mono">chrome://gpu</span> — “WebGL” should say{" "}
+              <i>Hardware accelerated</i> (not Disabled).
             </>
           }
-          detail="GL_RENDERER = Disabled · BindToCurrentSequence failed"
+          detail="GL_RENDERER = Disabled · often: GPU process crash lockout"
           onRetry={() => {
             resetWebglHardFailed();
             clearGpuStatusCache();
