@@ -40,12 +40,19 @@ import {
   CLIMB_SECTOR_COUNT,
   needsAltitudeProve,
 } from "@/lib/ascent-rules";
+import {
+  firstLightChestCrowns,
+  HUNDRED_CHEST_CROWNS,
+  SCOUT_CROWN_MULT,
+  SCOUT_XP_MULT,
+  scoutStartSector,
+} from "@/lib/climb-campaign";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
 import { loadCircuitPersonalBest, saveCircuitPersonalBest, isCircuitRunBetter } from "./circuit-tracks";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { getHandle } from "@/lib/owner";
-import { reachTheme, type ReachTheme } from "./climb/reaches";
+import { reachTheme, reachThemeByIndex, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
@@ -138,6 +145,7 @@ const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
 type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue" | "prove";
 type FailReason = "fall" | "gates";
+type RunMode = "ranked" | "scout";
 
 // prototype fallback body while the champion GLTF resolves (also our old mech)
 function MechBody({ accent }: { accent: string }) {
@@ -191,6 +199,7 @@ function Flyer({
   champType,
   ascentReaches,
   accent,
+  sigilAccent,
   holdRef,
   altRef,
   flyerPosRef,
@@ -209,6 +218,7 @@ function Flyer({
   champType: CreatureType;
   ascentReaches: number;
   accent: string;
+  sigilAccent: string;
   holdRef: React.RefObject<boolean>;
   altRef: React.RefObject<number>;
   /** the pilot's live world position — the FlyingFollower champion trails it */
@@ -398,7 +408,7 @@ function Flyer({
           <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0.42} />
         </Suspense>
       </group>
-      <AscentSigil reaches={ascentReaches} accent={accent} />
+      <AscentSigil reaches={ascentReaches} accent={sigilAccent} />
     </group>
   );
 }
@@ -433,12 +443,14 @@ function ReadyPose({
   champType,
   ascentReaches,
   accent,
+  sigilAccent,
   flyerPosRef,
 }: {
   track: CircuitTrackDef;
   champType: CreatureType;
   ascentReaches: number;
   accent: string;
+  sigilAccent: string;
   flyerPosRef: React.RefObject<THREE.Vector3>;
 }) {
   const grp = useRef<THREE.Group>(null);
@@ -462,7 +474,7 @@ function ReadyPose({
       <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
         <RobotPilot force={champType} flyingRef={grounded} burstRef={noBurst} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0} />
       </Suspense>
-      <AscentSigil reaches={ascentReaches} accent={accent} />
+      <AscentSigil reaches={ascentReaches} accent={sigilAccent} />
     </group>
   );
 }
@@ -615,6 +627,12 @@ export default function CircuitLite({
   const getChampion = useChampions((s) => s.get);
   const awardTrainerXp = useChampions((s) => s.awardTrainerXp);
   const awardGauntlet = useChampions((s) => s.awardGauntlet);
+  const lightCamp = useChampions((s) => s.lightCamp);
+  const pushEvent = useChampions((s) => s.pushEvent);
+  const scoutCrownsRemaining = useChampions((s) => s.scoutCrownsRemaining);
+  const noteScoutCrowns = useChampions((s) => s.noteScoutCrowns);
+  const campsLit = useChampions((s) => s.climb.campsLit);
+  const climbHundred = useChampions((s) => s.climb.hundred);
   // guest Climb (docs/two-doors.md §3): with no owned champion, a loaner "wild
   // mind" flies with you. Guest runs mark nothing — claim it to keep your climb.
   const guest = !owned;
@@ -631,8 +649,29 @@ export default function CircuitLite({
   }, [champWins]);
   const guestPinged = useRef(false);
 
+  // Golden ring (§7b): rare, pays Crowns, and sits off the racing line so greed
+  // costs altitude commitment — not a free recolor of a straight-through gate.
+  const [goldGate, setGoldGate] = useState(-1);
+  const [goldGeom, setGoldGeom] = useState<{ idx: number; dy: number } | null>(null);
+  const bonusCrowns = useRef(0);
+
   // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
-  const track = useMemo(() => desktopCircuitSector(sector), [sector]);
+  const baseTrack = useMemo(() => desktopCircuitSector(sector), [sector]);
+  // Greedy gold detour baked into the live track (geometry stays after payout so
+  // the ring doesn't snap mid-sector).
+  const track = useMemo(() => {
+    if (!goldGeom) return baseTrack;
+    return {
+      ...baseTrack,
+      checkpoints: baseTrack.checkpoints.map((cp) => {
+        if (cp.index !== goldGeom.idx) return cp;
+        return {
+          ...cp,
+          pos: [cp.pos[0], cp.pos[1] + goldGeom.dy, cp.pos[2]] as [number, number, number],
+        };
+      }),
+    };
+  }, [baseTrack, goldGeom]);
   // Seed overlap poses before the first ReadyPose frame (ghosts read these).
   useEffect(() => {
     flyerPosRef.current.set(track.spawn[0], PAD_TOP_Y, track.spawn[2]);
@@ -648,16 +687,20 @@ export default function CircuitLite({
   const moteColor = modifier?.moteColor ?? accent;
   const fogNear = 30 * (modifier?.fogNearMult ?? 1);
   const exposure = biome.exposure * (modifier?.warm ? 1.08 : 1);
-
-  // a golden ring hides in some sectors (§7b surprise): threading it pays Crowns
-  const [goldGate, setGoldGate] = useState(-1);
-  const bonusCrowns = useRef(0);
   const [stumbleFlash, setStumbleFlash] = useState(false);
   const stumbleTimer = useRef<number | null>(null);
 
-  // depth is soul: your best depth marks the champion with an ascent sigil whose
-  // glyph count is the number of Reaches you've reached (§6).
-  const ascentReaches = best ? Math.min(10, Math.ceil(best.sectors / 10)) : 0;
+  // Sigil = cross-device camps lit (climb-p2), not the local board PB.
+  const ascentReaches = Math.min(10, Math.max(0, campsLit));
+  const sigilAccent = ascentReaches > 0 ? reachThemeByIndex(ascentReaches - 1).accent : accent;
+
+  // Ranked from sector 1, or scout practice from a lit camp (unranked).
+  const [runMode, setRunMode] = useState<RunMode>("ranked");
+  const [scoutCamp, setScoutCamp] = useState(1);
+  const runModeRef = useRef<RunMode>("ranked");
+  const startSectorRef = useRef(0);
+  runModeRef.current = runMode;
+  startSectorRef.current = runMode === "scout" ? scoutStartSector(scoutCamp) : 0;
 
   // pull the shared leaderboard (depth-then-time). `you` flags your own row.
   const loadBoard = useCallback(() => {
@@ -677,31 +720,67 @@ export default function CircuitLite({
     setMounted(true);
     setBest(loadCircuitPersonalBest("thumb"));
     loadBoard();
-  }, [loadBoard]);
+    // Seed camps from local board depth (silent — no chest dump for veterans).
+    try {
+      const thumb = loadCircuitPersonalBest("thumb");
+      const flight = loadCircuitPersonalBest("flight");
+      const deepest = Math.max(thumb?.sectors ?? 0, flight?.sectors ?? 0);
+      const cleared = !!(thumb?.clearedAll || flight?.clearedAll);
+      if (deepest > 0) lightCamp(deepest, cleared, { silent: true });
+    } catch {
+      /* ignore */
+    }
+  }, [loadBoard, lightCamp]);
+
+  useEffect(() => {
+    if (campsLit < 1) {
+      setRunMode("ranked");
+      return;
+    }
+    setScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
+  }, [campsLit]);
 
   // stop the jetpack roar if we leave the page mid-run
   useEffect(() => () => stopJet(), []);
 
-  // A finished run is scored against your personal best AND pays out per essence §3:
-  //   depth is SOUL → Trainer XP + the ascent sigil; time/mastery is CRAFT → Crowns.
-  // Reward is gated on genuine improvement so sector 1 can't be farmed.
+  // Ranked: depth→XP / time→Crowns / board / camps. Scout: fractional, no board.
   const recordRun = useCallback(
     (sectorsCleared: number, clearedAll: boolean) => {
-      // a guest run marks nothing on the board/career yet — but we hold the best
-      // depth so claim can convert it into the first Trainer mark (two-doors §3.3).
       const totalMs = Math.max(0, performance.now() - runStart.current);
+      const mode = runModeRef.current;
+      const startAt = startSectorRef.current;
       setLastRun({ sectors: sectorsCleared, totalMs });
-      if (challenge) {
+      if (challenge && mode === "ranked") {
         const beat = isClimbChallengeBeat({ sectors: sectorsCleared, totalMs }, challenge);
         setChallengeResult(beat ? "beat" : "miss");
         pingEvent(beat ? "climb_challenge_beat" : "climb_challenge_miss");
       }
       if (guest) {
-        noteGuestClimbDepth(sectorsCleared);
+        if (mode === "ranked") noteGuestClimbDepth(sectorsCleared);
         setReward(null);
         setNewBest(false);
         return;
       }
+
+      // Scout: pay only for sectors advanced this run (never farm start depth).
+      if (mode === "scout") {
+        const advanced = Math.max(0, sectorsCleared - startAt);
+        let xp = Math.round(ascentDepthXp(advanced, false) * SCOUT_XP_MULT);
+        let crowns = Math.round(ascentCraftCrowns(advanced, false) * SCOUT_CROWN_MULT);
+        const room = scoutCrownsRemaining();
+        crowns = Math.min(crowns, room);
+        const bonus = bonusCrowns.current;
+        if (xp > 0) awardTrainerXp(xp);
+        if (crowns > 0) {
+          void awardGauntlet(crowns);
+          noteScoutCrowns(crowns);
+        }
+        if (bonus > 0) void awardGauntlet(bonus);
+        setReward(xp > 0 || crowns + bonus > 0 ? { xp, crowns: crowns + bonus, deeper: false } : null);
+        setNewBest(false);
+        return;
+      }
+
       const run: CircuitPersonalBest = {
         sectors: sectorsCleared,
         totalMs,
@@ -713,15 +792,46 @@ export default function CircuitLite({
 
       let xp = 0;
       if (deeper) {
-        xp = ascentDepthXp(run.sectors, clearedAll); // depth → XP (soul)
+        xp = ascentDepthXp(run.sectors, clearedAll);
         if (xp > 0) awardTrainerXp(xp);
       }
-      // Craft Crowns are server-paid on a real board PB (/api/circuit). Golden-ring
-      // surprise stays a soft gauntlet claim (small, capped).
       const bonus = bonusCrowns.current;
       if (bonus > 0) void awardGauntlet(bonus);
       const expectCraft = better ? ascentCraftCrowns(run.sectors, clearedAll) : 0;
-      setReward(xp > 0 || expectCraft + bonus > 0 ? { xp, crowns: expectCraft + bonus, deeper } : null);
+
+      // Camps + first-light chests + Hundred (climb-p2).
+      const lit = lightCamp(run.sectors, clearedAll);
+      let chestCrowns = 0;
+      for (const n of lit.newlyLit) {
+        const pay = firstLightChestCrowns(n);
+        chestCrowns += pay;
+        void awardGauntlet(pay);
+        const theme = reachThemeByIndex(n - 1);
+        if (activeKey) {
+          pushEvent(activeKey, {
+            kind: "ascent",
+            title: `First light at Camp ${theme.roman}`,
+            detail: theme.name,
+          });
+        }
+      }
+      if (lit.hundredJustCleared) {
+        chestCrowns += HUNDRED_CHEST_CROWNS;
+        void awardGauntlet(HUNDRED_CHEST_CROWNS);
+        if (activeKey) {
+          pushEvent(activeKey, {
+            kind: "ascent",
+            title: "Cleared the Hundred",
+            detail: "hundred",
+          });
+        }
+      }
+
+      setReward(
+        xp > 0 || expectCraft + bonus + chestCrowns > 0
+          ? { xp, crowns: expectCraft + bonus + chestCrowns, deeper }
+          : null,
+      );
 
       if (better) {
         saveCircuitPersonalBest(run, "thumb");
@@ -736,7 +846,14 @@ export default function CircuitLite({
         fetch("/api/circuit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: tok, sectors: run.sectors, totalMs: run.totalMs, clearedAll, body: "thumb" }),
+          body: JSON.stringify({
+            token: tok,
+            sectors: run.sectors,
+            totalMs: run.totalMs,
+            clearedAll,
+            body: "thumb",
+            campsLit: lit.climb.campsLit,
+          }),
         })
           .then(async (r) => {
             try {
@@ -750,7 +867,18 @@ export default function CircuitLite({
           .catch(() => {});
       }
     },
-    [guest, awardTrainerXp, awardGauntlet, loadBoard, challenge],
+    [
+      guest,
+      awardTrainerXp,
+      awardGauntlet,
+      loadBoard,
+      challenge,
+      lightCamp,
+      pushEvent,
+      activeKey,
+      scoutCrownsRemaining,
+      noteScoutCrowns,
+    ],
   );
 
   // read the altitude ref at ~12fps so the number ticks without re-rendering
@@ -826,13 +954,22 @@ export default function CircuitLite({
     const doneT = window.setTimeout(() => dismissReachCard(true), 2000);
     return () => window.clearTimeout(doneT);
   }, [theme.index, dismissReachCard]);
-  // roll for a golden ring on each sector (a rationed surprise, §7b). Picks a
-  // non-finish gate so the sector-clear flourish isn't the one that pays.
+  // Roll a golden ring per sector (§7b). Non-finish mid gate, pulled off the
+  // glide line so threading it is a deliberate climb/dive.
   useEffect(() => {
-    const gc = track.checkpoints.length - 1; // gates incl. finish
-    if (gc >= 3 && Math.random() < GOLD_RING_ODDS) setGoldGate(1 + Math.floor(Math.random() * (gc - 1)));
-    else setGoldGate(-1);
-  }, [track, runId]);
+    const cps = baseTrack.checkpoints;
+    const gc = cps.length - 1; // gates incl. finish
+    if (gc >= 3 && Math.random() < GOLD_RING_ODDS) {
+      const idx = 1 + Math.floor(Math.random() * (gc - 1));
+      const r = cps[idx]?.radius ?? 3;
+      const dy = (Math.random() < 0.5 ? 1 : -1) * (r * 1.55 + 0.9);
+      setGoldGeom({ idx, dy });
+      setGoldGate(idx);
+    } else {
+      setGoldGeom(null);
+      setGoldGate(-1);
+    }
+  }, [baseTrack, runId]);
 
   // music intensity per sector — Silent Sky drops it to a bare drone (§5)
   useEffect(() => {
@@ -889,7 +1026,8 @@ export default function CircuitLite({
   const resetRun = useCallback(() => {
     clearContinueTimers();
     setHold(false);
-    setSector(0);
+    const start = runModeRef.current === "scout" ? startSectorRef.current : 0;
+    setSector(start);
     setTargetIdx(1);
     setNewBest(false);
     setReward(null);
@@ -906,6 +1044,20 @@ export default function CircuitLite({
     altitudeProvedRef.current = !needsAltitudeProve(champWins);
     setPhase("ready");
   }, [setHold, clearContinueTimers, champWins]);
+
+  const pickRanked = useCallback(() => {
+    setRunMode("ranked");
+    setSector(0);
+    setTargetIdx(1);
+  }, []);
+
+  const pickScout = useCallback((camp: number) => {
+    const n = Math.max(1, Math.min(campsLit, camp));
+    setRunMode("scout");
+    setScoutCamp(n);
+    setSector(scoutStartSector(n));
+    setTargetIdx(1);
+  }, [campsLit]);
 
   // Space: hold-to-fly while live; confirm try/run again on outcome overlays
   useEffect(() => {
@@ -1014,8 +1166,9 @@ export default function CircuitLite({
         return s;
       }
       // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
-      // board still records depth from this run; campaign height pauses here.
+      // only — scout practice skips the campaign door.
       if (
+        runModeRef.current === "ranked" &&
         next >= ALTITUDE_KEY_SECTOR &&
         !guest &&
         !altitudeProvedRef.current &&
@@ -1201,6 +1354,7 @@ export default function CircuitLite({
               champType={champType}
               ascentReaches={ascentReaches}
               accent={accent}
+              sigilAccent={sigilAccent}
               flyerPosRef={flyerPosRef}
             />
           )}
@@ -1213,6 +1367,7 @@ export default function CircuitLite({
               champType={champType}
               ascentReaches={ascentReaches}
               accent={accent}
+              sigilAccent={sigilAccent}
               holdRef={holdRef}
               altRef={altRef}
               flyerPosRef={flyerPosRef}
@@ -1545,9 +1700,87 @@ export default function CircuitLite({
         </div>
       )}
 
-      {/* ── the HOLD affordance (the whole screen is also a hold surface) ── */}
+      {/* ── Camp picker (ready only, at run start) + HOLD affordance ── */}
       {live && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: embedded ? 88 : 34, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: embedded ? 88 : 34,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 10,
+            pointerEvents: "none",
+            padding: "0 16px",
+          }}
+        >
+          {phase === "ready" && !guest && lives === CIRCUIT_LIVES && sector === startSectorRef.current && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: 6,
+                maxWidth: 420,
+                pointerEvents: "auto",
+              }}
+            >
+              <button
+                type="button"
+                onClick={pickRanked}
+                className="mono"
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
+                  background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
+                  color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.8,
+                  cursor: "pointer",
+                }}
+              >
+                RANKED · SECTOR 1
+              </button>
+              {campsLit >= 1 &&
+                Array.from({ length: campsLit }, (_, i) => {
+                  const camp = i + 1;
+                  const on = runMode === "scout" && scoutCamp === camp;
+                  const theme = reachThemeByIndex(camp - 1);
+                  return (
+                    <button
+                      key={camp}
+                      type="button"
+                      onClick={() => pickScout(camp)}
+                      className="mono"
+                      title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
+                        background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
+                        color: on ? theme.accent : "rgba(242,238,251,.75)",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: 0.6,
+                        cursor: "pointer",
+                      }}
+                    >
+                      SCOUT · CAMP {theme.roman}
+                    </button>
+                  );
+                })}
+            </div>
+          )}
+          {phase === "ready" && runMode === "scout" && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
+              PRACTICE · no board · half XP · quarter Crowns
+              {climbHundred ? " · ★ Hundred" : ""}
+            </div>
+          )}
           <div
             style={{
               display: "inline-flex",

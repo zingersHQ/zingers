@@ -440,7 +440,8 @@ export type CareerEventKind =
   | "imprint" // a lesson the handler taught it
   | "keeper" // a Keeper was cracked while it was the active champion
   | "season" // survived a season turn (a Vault door opened)
-  | "sealed"; // its record was sealed in the Long Vault (Legend honour)
+  | "sealed" // its record was sealed in the Long Vault (Legend honour)
+  | "ascent"; // Flight milestone — camp lit / the Hundred (docs/climb-p2.md)
 
 export interface CareerEvent {
   id: string; // stable id (ts + kind + salt) — de-dupes across sync
@@ -524,7 +525,17 @@ export interface PlayerSave {
   // ms epoch of the last time the player opened the game — powers the mobile
   // "while you were away" Report window. Absent on pre-v5 saves.
   lastVisit?: number;
+  // Flight campaign spine (v6+): deepest ranked depth, camps lit, first-light
+  // stamps. Cross-device soul fact for the ascent sigil (docs/climb-p2.md).
+  climb?: {
+    bestSectors: number;
+    campsLit: number;
+    hundred?: boolean;
+    firstLit?: Record<number, number>;
+    scoutDay?: number;
+    scoutCrownsToday?: number;
+  };
   updatedAt: number; // ms epoch of the last write — drives last-write-wins sync
 }
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;

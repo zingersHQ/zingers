@@ -22,6 +22,14 @@ import { championImprintAck } from "@/lib/lore/character-beats";
 import { lessonById, clampDial, imprintDayIndex } from "@/lib/imprints";
 import { TRIALS } from "@/lib/flags";
 import { guestDepthXp, takeGuestClimbDepth } from "@/lib/guest-climb";
+import {
+  EMPTY_CLIMB,
+  lightCamp as applyLightCamp,
+  sanitizeClimb,
+  SCOUT_CROWNS_DAY_CAP,
+  type ClimbProgress,
+  type LightCampResult,
+} from "@/lib/climb-campaign";
 
 const nameOf = (key: string): string => ROSTER[key]?.name ?? key;
 
@@ -118,11 +126,17 @@ const TIER_UNLOCK: Record<string, string> = {
 const EVENT_CAP = 60;
 const PINNED_EVENTS: Set<CareerEventKind> = new Set(["claimed", "tierup", "trial", "keeper", "sealed", "season"]);
 
+/** Camp lights age out; clearing the Hundred stays pinned (climb-p2 §P2.5). */
+function eventPinned(e: CareerEvent): boolean {
+  if (PINNED_EVENTS.has(e.kind)) return true;
+  return e.kind === "ascent" && e.detail === "hundred";
+}
+
 function appendCapped(list: CareerEvent[] | undefined, ev: CareerEvent): CareerEvent[] {
   const next = [...(list || []), ev];
   if (next.length <= EVENT_CAP) return next;
-  const pinned = next.filter((e) => PINNED_EVENTS.has(e.kind));
-  const loose = next.filter((e) => !PINNED_EVENTS.has(e.kind));
+  const pinned = next.filter(eventPinned);
+  const loose = next.filter((e) => !eventPinned(e));
   const room = Math.max(0, EVENT_CAP - pinned.length);
   const keptLoose = room >= loose.length ? loose : loose.slice(loose.length - room);
   return [...pinned, ...keptLoose].sort((a, b) => a.ts - b.ts);
@@ -233,6 +247,14 @@ interface ChampionStore {
   // A lesson can be internalised once per champion per day so it's a real daily
   // decision, not a spam button. Resets with the daily loop (imprintDayIndex()).
   imprintDays: Record<string, Record<string, number>>;
+  // Flight campaign (v6) — camps lit, best depth, scout day cap (climb-p2).
+  climb: ClimbProgress;
+  /** Ranked depth → light camps; returns newly lit + hundred flag. */
+  lightCamp: (sectors: number, clearedAll?: boolean, opts?: { silent?: boolean }) => LightCampResult;
+  /** Remaining scout Crowns allowance today (0 when capped). */
+  scoutCrownsRemaining: () => number;
+  /** Record scout Crowns paid today (after clamp). */
+  noteScoutCrowns: (amount: number) => void;
   // Whether a given lesson can be taught to a champion right now (off cooldown).
   canImprint: (key: string, lessonId: string) => boolean;
   // The full Imprint flow: POST /api/imprint (capped house LLM, template
@@ -300,6 +322,7 @@ export const useChampions = create<ChampionStore>()(
       events: {},
       snapshots: {},
       imprintDays: {},
+      climb: { ...EMPTY_CLIMB, firstLit: {} },
       lastVisit: 0,
       owned: null,
       roster: [],
@@ -332,6 +355,7 @@ export const useChampions = create<ChampionStore>()(
             forcePoints: save.forcePoints || { season: currentSeasonNumber(), points: 0 },
             events: save.events && typeof save.events === "object" ? save.events : s.events,
             snapshots: save.snapshots && typeof save.snapshots === "object" ? save.snapshots : s.snapshots,
+            climb: save.climb != null ? sanitizeClimb(save.climb) : s.climb,
             lastVisit: typeof save.lastVisit === "number" && Number.isFinite(save.lastVisit) ? save.lastVisit : s.lastVisit,
             lastServerSync: save.updatedAt,
           };
@@ -361,8 +385,39 @@ export const useChampions = create<ChampionStore>()(
           events: s.events,
           snapshots: s.snapshots,
           lastVisit: s.lastVisit,
+          climb: sanitizeClimb(s.climb),
           updatedAt: Date.now(),
         };
+      },
+
+      lightCamp: (sectors, clearedAll = false, opts) => {
+        const result = applyLightCamp(get().climb, sectors, clearedAll, Date.now(), opts);
+        set({ climb: result.climb });
+        return result;
+      },
+
+      scoutCrownsRemaining: () => {
+        const day = imprintDayIndex();
+        const c = get().climb;
+        if (c.scoutDay !== day) return SCOUT_CROWNS_DAY_CAP;
+        return Math.max(0, SCOUT_CROWNS_DAY_CAP - (c.scoutCrownsToday ?? 0));
+      },
+
+      noteScoutCrowns: (amount) => {
+        const pay = Math.max(0, Math.floor(amount));
+        if (pay <= 0) return;
+        const day = imprintDayIndex();
+        set((s) => {
+          const same = s.climb.scoutDay === day;
+          const used = same ? (s.climb.scoutCrownsToday ?? 0) : 0;
+          return {
+            climb: {
+              ...s.climb,
+              scoutDay: day,
+              scoutCrownsToday: Math.min(SCOUT_CROWNS_DAY_CAP, used + pay),
+            },
+          };
+        });
       },
 
       get: (key) => get().progress[key] || blank(),
@@ -893,6 +948,7 @@ export const useChampions = create<ChampionStore>()(
           events: p.events && typeof p.events === "object" ? p.events : {},
           snapshots: p.snapshots && typeof p.snapshots === "object" ? p.snapshots : {},
           imprintDays: p.imprintDays && typeof p.imprintDays === "object" ? p.imprintDays : {},
+          climb: p.climb != null ? sanitizeClimb(p.climb) : { ...EMPTY_CLIMB, firstLit: {} },
           lastVisit: typeof p.lastVisit === "number" ? p.lastVisit : 0,
           lastEvolution: null,
         } as ChampionStore;

@@ -10,7 +10,7 @@
 // the store all agree on where a goal is and what it's worth.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { BiomeConfig } from "./biomes";
-import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, spawnKnollFor, riftDepthEnd, type TerrainShape, type SpawnKnoll } from "./terrain";
+import { PLAZA_R, ISLAND_PLAY_R, terrainHeight, shapeOf, spawnKnollFor, riftDepthEnd, type TerrainShape, type SpawnKnoll } from "./terrain";
 import { hash01 } from "./landmarks";
 
 const TWO_PI = Math.PI * 2;
@@ -45,7 +45,7 @@ function extreme(shape: TerrainShape, want: "high" | "low", knoll: SpawnKnoll): 
   let best: [number, number, number] = [0, 0, 0];
   const ANGLES = 36;
   const rMin = PLAZA_R + 8;
-  const rMax = TERRAIN_HALF - 12;
+  const rMax = ISLAND_PLAY_R - 10;
   for (let ai = 0; ai < ANGLES; ai++) {
     const a = (ai / ANGLES) * TWO_PI;
     for (let r = rMin; r <= rMax; r += 3) {

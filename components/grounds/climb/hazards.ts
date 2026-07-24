@@ -70,20 +70,31 @@ export function sectorHazards(sector: number, track: CircuitTrackDef): Hazard[] 
   const gates = track.checkpoints; // [start, gate1..finish]
   const out: Hazard[] = [];
 
-  // candidate gaps: between gate g and g+1 for g >= 1 (skip the launch approach)
+  // candidate gaps: between gate g and g+1 for g >= 1 (skip the launch approach).
+  // One hazard per gap max — sparse sectors must not stack three threats mid-line.
   const gapStart = Math.min(1, gates.length - 2);
   const gaps: number[] = [];
   for (let g = gapStart; g < gates.length - 1; g++) gaps.push(g);
   if (gaps.length === 0) return [];
+  // Fisher–Yates on a copy so placement stays deterministic per sector seed.
+  for (let i = gaps.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const tmp = gaps[i]!;
+    gaps[i] = gaps[j]!;
+    gaps[j] = tmp;
+  }
+  const spend = Math.min(d.hazardBudget, gaps.length);
 
-  for (let n = 0; n < d.hazardBudget; n++) {
-    const g = gaps[Math.floor(rnd() * gaps.length)]!;
+  for (let n = 0; n < spend; n++) {
+    const g = gaps[n]!;
     const a = gates[g]!;
     const b = gates[g + 1]!;
     const kind = kinds[Math.floor(rnd() * kinds.length)]!;
     const tt = 0.38 + rnd() * 0.24; // sit mid-gap so the ring lines stay clean
     const z = a.pos[2] + (b.pos[2] - a.pos[2]) * tt;
-    const yLine = a.pos[1] + (b.pos[1] - a.pos[1]) * tt;
+    // Bias slightly off the straight glide so altitude choice matters.
+    const yBias = (rnd() < 0.5 ? -1 : 1) * (0.35 + rnd() * 0.55) * Math.max(a.radius, b.radius);
+    const yLine = a.pos[1] + (b.pos[1] - a.pos[1]) * tt + yBias;
     const xLine = a.pos[0] + (b.pos[0] - a.pos[0]) * tt;
     const phase = rnd();
     const id = n;

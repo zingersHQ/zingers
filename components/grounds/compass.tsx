@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import { Navigation, Gem, Check, ChevronUp, ChevronDown, Sparkles, Swords, Dumbbell, Crown, ChevronsUp, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Landmark, LandmarkKind } from "./landmarks";
+import type { DiscoveryNode, Landmark, LandmarkKind } from "./landmarks";
 import type { WorldGoal } from "./goals";
 
 export interface Pose {
@@ -46,7 +46,7 @@ function norm(a: number): number {
 
 interface Marker {
   id: string;
-  group: "goal" | "place";
+  group: "goal" | "place" | "cache";
   rel: number; // bearing relative to facing, [-π, π]
   dist: number;
   color: string;
@@ -64,6 +64,7 @@ export function Compass({
   landmarks,
   goals = [],
   goalsDone = [],
+  caches = [],
   poseRef,
   onTravel,
   fragments,
@@ -73,6 +74,8 @@ export function Compass({
   landmarks: Landmark[];
   goals?: WorldGoal[];
   goalsDone?: string[];
+  /** Unclaimed daily caches — only the nearest rides the tape (thin beacon). */
+  caches?: DiscoveryNode[];
   poseRef: React.RefObject<Pose>;
   onTravel: (pos: [number, number, number]) => void;
   fragments: number;
@@ -140,6 +143,32 @@ export function Compass({
       travelable: known && !here,
       onPick: known && !here ? () => onTravel(l.pos) : undefined,
     });
+  }
+  // One nearest cache — aim without carpeting the tape with all nine.
+  if (caches.length > 0) {
+    let best: DiscoveryNode | null = null;
+    let bestDist = Infinity;
+    for (const n of caches) {
+      const dist = Math.hypot(n.pos[0] - p.x, n.pos[2] - p.z);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = n;
+      }
+    }
+    if (best) {
+      const fragment = best.kind === "fragment";
+      markers.push({
+        id: best.id,
+        group: "cache",
+        rel: norm(Math.atan2(best.pos[0] - p.x, best.pos[2] - p.z) - p.heading),
+        dist: bestDist,
+        color: fragment ? "#39e0ff" : "#f0a93a",
+        label: fragment ? "Fragment" : "Cache",
+        hint: best.flight ? "fly high" : "on the ground",
+        Icon: Gem,
+        here: bestDist < 4,
+      });
+    }
   }
   // draw far targets first so nearer ones layer on top at the centre
   markers.sort((a, b) => b.dist - a.dist);
@@ -237,6 +266,7 @@ export function Compass({
           const badge = m.group === "goal" ? (isMobile ? 26 : 32) : isMobile ? 20 : 26;
           const iconSize = m.group === "goal" ? (isMobile ? 15 : 18) : isMobile ? 12 : 14;
           const ring = centered || m.here || m.travelable ? m.color : `${m.color}77`;
+          const showName = centered && !m.done && (m.group === "goal" || m.group === "cache");
           return (
             <div
               key={`${m.group}:${m.id}`}
@@ -256,7 +286,7 @@ export function Compass({
                 gap: 1,
                 pointerEvents: m.travelable ? "auto" : "none",
                 cursor: m.travelable ? "pointer" : "default",
-                zIndex: m.group === "goal" ? 3 : 2,
+                zIndex: m.group === "goal" ? 3 : m.group === "cache" ? 2 : 1,
               }}
             >
               <div
@@ -287,6 +317,11 @@ export function Compass({
                   </span>
                 )}
               </div>
+              {showName && (
+                <span className="mono" style={{ fontSize: isMobile ? 8 : 9, letterSpacing: 0.4, color: m.color, fontWeight: 800, whiteSpace: "nowrap", textTransform: "uppercase" }}>
+                  {m.label}
+                </span>
+              )}
               <span className="mono" style={{ fontSize: centered ? 9.5 : 7.5, letterSpacing: 0.3, color: m.here || centered ? m.color : "var(--muted2)", fontWeight: 700, whiteSpace: "nowrap" }}>
                 {m.here ? "HERE" : `${Math.round(m.dist)}m`}
               </span>

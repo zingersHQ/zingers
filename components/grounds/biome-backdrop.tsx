@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { shapeOf, spawnKnollFor, terrainHeight, TERRAIN_HALF, PLAZA_R } from "./terrain";
+import { shapeOf, spawnKnollFor, terrainHeight, islandLip, TERRAIN_HALF, PLAZA_R } from "./terrain";
 import { NatureGround, NatureScatter, NaturePeaks, NatureFraming } from "./nature";
 import { biomeById, type BiomeConfig } from "./biomes";
 import { natureTerrainPalette, natureGroundPalette } from "@/lib/render/nature-kit";
@@ -42,6 +42,7 @@ function BackdropTerrain({ biome }: { biome: BiomeConfig }) {
     const low = new THREE.Color(earth.low);
     const mid = new THREE.Color(earth.mid);
     const high = new THREE.Color(earth.high);
+    const cliff = new THREE.Color(earth.low).multiplyScalar(0.35);
     const band = biome.terrain.colorBand;
     const g = new THREE.PlaneGeometry(TERRAIN_HALF * 2, TERRAIN_HALF * 2, SEG, SEG);
     g.rotateX(-Math.PI / 2);
@@ -49,11 +50,15 @@ function BackdropTerrain({ biome }: { biome: BiomeConfig }) {
     const colors = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
-      const h = terrainHeight(pos.getX(i), pos.getZ(i), shape, knoll);
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const h = terrainHeight(x, z, shape, knoll);
       pos.setY(i, h);
       const t = Math.max(0, Math.min(1, h / band));
       if (t < 0.5) c.lerpColors(low, mid, t / 0.5);
       else c.lerpColors(mid, high, (t - 0.5) / 0.5);
+      const lip = 1 - islandLip(Math.hypot(x, z));
+      if (lip > 0.05) c.lerp(cliff, Math.min(1, lip * 1.15));
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;

@@ -136,6 +136,7 @@ export function PlayerHub({
   const warMax = Math.max(1, ...Object.values(warPts));
 
   const goalsLeft = goals.filter((g) => !goalsDone.includes(g.id));
+  const huntOpen = inRegion && (goalsLeft.length > 0 || nodesLeft > 0);
 
   return (
     <>
@@ -148,14 +149,14 @@ export function PlayerHub({
           .hub-trigger.is-catch { animation: none !important; }
         }
       `}</style>
-      {/* always-visible trigger: robot mark · level · crowns */}
+      {/* always-visible trigger: robot mark · level · crowns · wilds hunt badge */}
       <button
         type="button"
         onClick={openHub}
         className={`panel hub-trigger${hudDim ? " is-dim" : ""}${highlight ? " is-catch" : ""}`}
-        aria-label="Open your menu"
+        aria-label={huntOpen ? `Open your menu · ${goalsLeft.length} goals · ${nodesLeft} caches` : "Open your menu"}
         aria-expanded={open}
-        title="Your menu"
+        title={huntOpen ? `Menu · ${goalsLeft.length}/${goals.length || 3} goals · ${nodesLeft} caches` : "Your menu"}
         style={{
           ["--ac" as string]: fc,
           display: "inline-flex",
@@ -200,22 +201,30 @@ export function PlayerHub({
           <Crown size={isMobile ? 13 : 15} color="var(--gold)" strokeWidth={2.2} />
           <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: "var(--gold)" }}>{crowns}</span>
         </span>
-        {highlight && (
+        {(highlight || huntOpen) && (
           <span
-            title="World objectives"
+            title="World objectives & caches"
             style={{
               display: "inline-flex",
               alignItems: "center",
+              gap: 4,
+              marginLeft: 2,
+              padding: huntOpen && !highlight ? "2px 6px" : 0,
+              width: highlight && !huntOpen ? 18 : undefined,
+              height: highlight && !huntOpen ? 18 : undefined,
               justifyContent: "center",
-              width: 18,
-              height: 18,
               borderRadius: 5,
               background: "color-mix(in srgb, var(--gold) 22%, transparent)",
               color: "var(--gold)",
-              marginLeft: 2,
             }}
           >
             <Target size={11} strokeWidth={2.4} />
+            {huntOpen && (
+              <span className="mono" style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, letterSpacing: 0.3, lineHeight: 1 }}>
+                {goals.length > 0 ? `${goals.length - goalsLeft.length}/${goals.length}` : "—"}
+                {nodesLeft > 0 ? ` · ${nodesLeft}` : ""}
+              </span>
+            )}
           </span>
         )}
       </button>
@@ -394,9 +403,14 @@ export function PlayerHub({
                     <Sparkles size={14} color={inRegion ? "#39e0ff" : "var(--muted2)"} strokeWidth={2.2} />
                     <span style={{ fontSize: 17, fontWeight: 800, color: inRegion ? "var(--ink)" : "var(--muted2)" }}>{inRegion ? nodesLeft : "—"}</span>
                   </div>
-                  <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>CACHES NEARBY</div>
+                  <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>CACHES LEFT TODAY</div>
                 </div>
               </div>
+              <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", margin: "8px 0 0", lineHeight: 1.4 }}>
+                {inRegion
+                  ? "Nearest cache rides your compass · refresh at UTC midnight"
+                  : "Gate into a region — Peak, Depth, Secret, and today’s caches wait past the plaza"}
+              </p>
             </Card>
 
             {/* ── SEASON WAR ── */}

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical, Sparkles } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
@@ -119,12 +119,14 @@ import {
   type ClimbChallenge,
 } from "@/lib/climb-challenge";
 import { ALTITUDE_KEY_SECTOR, needsAltitudeProve } from "@/lib/ascent-rules";
+import { firstLightChestCrowns, HUNDRED_CHEST_CROWNS } from "@/lib/climb-campaign";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
   DESKTOP_CIRCUIT_COUNT,
   toClimbCanonical,
   reachTheme,
+  reachThemeByIndex,
 } from "@/components/grounds/climb/desktop-adapter";
 import { CIRCUIT_LIVES, formatCircuitMs } from "@/components/grounds/circuit";
 import type { CircuitGhostPose } from "@/components/grounds/circuit-ghost";
@@ -329,6 +331,8 @@ export default function GroundsScreen({
   const [claiming, setClaiming] = useState<string | null>(null);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
+  /** One-shot: point past the plaza at season goals + daily caches. */
+  const [wildsCue, setWildsCue] = useState(false);
   const [concordCoach, setConcordCoach] = useState(false);
   /** Opaque cover across /ascent → /grounds remount so the empty world never flashes. */
   const [claimArriveCover, setClaimArriveCover] = useState(false);
@@ -543,10 +547,28 @@ export default function GroundsScreen({
         saveCircuitPersonalBest(run, "flight");
         setCircuitPersonalBest(run);
       }
+      // Camps + first-light (shared soul spine with mobile Climb).
+      const lit = store.lightCamp(sectors, clearedAll);
+      for (const n of lit.newlyLit) {
+        void store.awardGauntlet(firstLightChestCrowns(n));
+        const theme = reachThemeByIndex(n - 1);
+        store.pushEvent(owned, { kind: "ascent", title: `First light at Camp ${theme.roman}`, detail: theme.name });
+      }
+      if (lit.hundredJustCleared) {
+        void store.awardGauntlet(HUNDRED_CHEST_CROWNS);
+        store.pushEvent(owned, { kind: "ascent", title: "Cleared the Hundred", detail: "hundred" });
+      }
       fetch("/api/circuit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: tok, sectors, totalMs, clearedAll, body: "flight" }),
+        body: JSON.stringify({
+          token: tok,
+          sectors,
+          totalMs,
+          clearedAll,
+          body: "flight",
+          campsLit: lit.climb.campsLit,
+        }),
       })
         .then(async (r) => {
           try {
@@ -1104,6 +1126,9 @@ export default function GroundsScreen({
       setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
     } catch {}
     try {
+      setWildsCue(localStorage.getItem(STORAGE.wildsCue) !== "1");
+    } catch {}
+    try {
       // Claim from /ascent: cover → Concord outer spawn facing the lit Grounds gate.
       const postClaim = sessionStorage.getItem(STORAGE.postClaimGuide) === "1";
       if (postClaim) {
@@ -1194,6 +1219,13 @@ export default function GroundsScreen({
       localStorage.setItem(STORAGE.goalCoach, "1");
     } catch {}
     setGoalCoach(false);
+  }, []);
+
+  const dismissWildsCue = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.wildsCue, "1");
+    } catch {}
+    setWildsCue(false);
   }, []);
 
   const dismissReaderSplitCoach = useCallback(() => {
@@ -2857,7 +2889,17 @@ export default function GroundsScreen({
           className={`grounds-hud${hudDim ? " is-dim" : ""}`}
           style={{ position: "absolute", left: 0, right: 0, bottom: isMobile ? 12 : 16, display: "flex", justifyContent: "center", padding: isMobile ? "0 12px" : "0 16px", zIndex: 44, pointerEvents: "none" }}
         >
-          <Compass landmarks={landmarks} goals={allGoals} goalsDone={doneGoals} poseRef={poseRef} onTravel={fastTravel} fragments={fragments} nodesLeft={liveNodes.length} isMobile={isMobile} />
+          <Compass
+            landmarks={landmarks}
+            goals={allGoals}
+            goalsDone={doneGoals}
+            caches={liveNodes}
+            poseRef={poseRef}
+            onTravel={fastTravel}
+            fragments={fragments}
+            nodesLeft={liveNodes.length}
+            isMobile={isMobile}
+          />
         </div>
       )}
 
@@ -3028,6 +3070,25 @@ export default function GroundsScreen({
 
       {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && (
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
+      )}
+
+      {/* Quiet wilds verb — after the one-shot goal toast, remind them the plaza rim isn't the end. */}
+      {wildsCue && !goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && readerSplitStep === null && !regionRaiseCoach && !arenaFightCoach && (liveGoals.length > 0 || liveNodes.length > 0) && (
+        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 58, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
+          <div
+            className="panel pop"
+            style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 520, borderColor: "color-mix(in srgb, var(--gold) 55%, var(--line2))" }}
+          >
+            <Sparkles size={16} color="var(--gold)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12, lineHeight: 1.35, flex: 1 }}>
+              Past the plaza: <strong>Peak · Depth · Secret</strong> on your compass
+              {liveNodes.length > 0 ? <> · nearest <strong>cache</strong> too</> : null}.
+            </span>
+            <button type="button" onClick={dismissWildsCue} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>
+              Got it
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Post-claim remount cover — hides empty Concord while the world + pose settle. */}

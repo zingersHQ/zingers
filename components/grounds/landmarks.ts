@@ -8,7 +8,7 @@
 import type { TowerAgent } from "@/lib/types";
 import { KEEPERS_PLAYABLE } from "@/lib/features";
 import type { BiomeConfig } from "./biomes";
-import { PLAZA_R, TERRAIN_HALF, terrainHeight, shapeOf, spawnKnollFor, type TerrainShape } from "./terrain";
+import { PLAZA_R, ISLAND_PLAY_R, terrainHeight, shapeOf, spawnKnollFor, type TerrainShape } from "./terrain";
 
 const TWO_PI = Math.PI * 2;
 
@@ -115,7 +115,7 @@ export function discoveryNodes(biome: BiomeConfig, day: number): DiscoveryNode[]
     const id = `${biome.id}-${day}-${i}`;
     const a = hash01(`${id}:a`) * TWO_PI;
     const rr = hash01(`${id}:r`);
-    const r = PLAZA_R + 8 + rr * (TERRAIN_HALF - PLAZA_R - 30); // out in the wilds, spread to the far rim
+    const r = PLAZA_R + 8 + rr * (ISLAND_PLAY_R - PLAZA_R - 28); // wilds disk — stay inside the cliff lip
     const x = Math.cos(a) * r;
     const z = Math.sin(a) * r;
     const flight = hash01(`${id}:f`) < 0.4; // ~40% perched high — flight-gated

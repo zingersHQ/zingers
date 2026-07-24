@@ -9,7 +9,7 @@ import { CylinderCollider, RigidBody } from "@react-three/rapier";
 import type { BiomeConfig } from "./biomes";
 import {
   PLAZA_R,
-  TERRAIN_HALF,
+  ISLAND_PLAY_R,
   terrainHeight,
   spawnKnollFor,
   riftDir,
@@ -381,9 +381,10 @@ export const NatureGround = memo(function NatureGround({ biome, shape, richness 
     const rng = mulberry(biome.terrain.seed + 66001);
     const knoll = spawnKnollFor(biome);
     const inst: PropPlacement[] = [];
-    const edge = TERRAIN_HALF - 14;
+    const edge = ISLAND_PLAY_R - 6;
     const seed = biome.terrain.seed;
-    const base = biome.id === "ember" ? 420 : biome.id === "concord" ? 520 : 780;
+    // Slightly denser carpet so the round wilds read filled (still dressing only).
+    const base = biome.id === "ember" ? 460 : biome.id === "concord" ? 560 : 860;
     const target = Math.round(base * Math.min(richness, 1.6));
     const grid = new SpawnGrid(3.2, biome.id === "ember" ? 2.4 : 1.85);
     const meadowCut = biome.id === "ember" ? 0.52 : 0.38;
@@ -452,7 +453,7 @@ export const NatureScatter = memo(function NatureScatter({ biome, shape, richnes
     const knoll = spawnKnollFor(biome);
     const inst: PropPlacement[] = [];
     const pr: PropPlacement[] = [];
-    const edge = TERRAIN_HALF - 12;
+    const edge = ISLAND_PLAY_R - 4;
     const seed = biome.terrain.seed;
     const rockGrid = new SpawnGrid(5.5, 4.5);
     const plantGrid = new SpawnGrid(7, 6.5);
@@ -708,7 +709,7 @@ export const NatureRift = memo(function NatureRift({ biome, shape, colliders = f
     const col = biome.id === "ember" ? "#ff4d14" : biome.id === "void" ? "#34ffd0" : "#8a5cff";
     const { dirx, dirz } = riftDir(shape);
     const start = PLAZA_R + 6;
-    const end = TERRAIN_HALF - 16;
+    const end = ISLAND_PLAY_R - 12;
     const N = 18;
     const segs: { r: number; y: number; w: number }[] = [];
     const paths: PropPlacement[] = [];

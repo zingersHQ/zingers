@@ -3,8 +3,11 @@
 //
 // Feel-pass law: rings share ONE lateral plane (x = 0). Challenge is altitude
 // timing + gap rhythm + hazards — never sideways rubber-banding. Layouts follow
-// role archetypes (staircase / sine rhythm / pressure bite / vista glide) so
-// Arrival ≠ Gauntlet by shape, not only sky tint.
+// role archetypes so Arrival ≠ Gauntlet by shape.
+//
+// Hard law (2026-07): never a ring ladder. Enforce a minimum |ΔY| between
+// consecutive gates and break near-collinear YZ runs so "five rings inline"
+// cannot happen even when a role wants a staircase (staircases stay short).
 
 import type { CircuitCheckpoint, CircuitTrackDef } from "../circuit";
 import { hash01 } from "../landmarks";
@@ -44,27 +47,30 @@ function makeRng(i: number): () => number {
   return () => ((s = (s * 16807) % 2147483647), s / 2147483647);
 }
 
-/** Role → how consecutive gate heights relate (docs/climb-feel.md §1b). */
+/** Role → raw height delta before anti-ladder enforcement. */
 function gateHeightDelta(role: Role, g: number, d: ReturnType<typeof sectorDifficulty>, rnd: () => number): number {
-  const amp = Math.max(d.gateRadius * 1.35, d.vertStep * 1.6); // real flap room
+  const amp = Math.max(d.gateRadius * 1.45, d.vertStep * 1.7);
   switch (role) {
     case "arrival":
+      // short rising staircase — 3 rings, clear steps (not a long ladder)
+      return d.vertStep * (1.15 + rnd() * 0.3);
     case "teach":
-      return d.vertStep * (1.05 + rnd() * 0.25);
+      // mostly up, one early dip so flap timing lands before hazards
+      return g === 1 ? -amp * 0.55 : d.vertStep * (1.1 + rnd() * 0.3);
     case "rhythm":
-      return Math.sin(g * Math.PI) * amp * (0.85 + rnd() * 0.2);
+      return Math.sin((g + 1) * Math.PI) * amp * (0.95 + rnd() * 0.15);
     case "combine":
     case "twist":
-      return (g % 2 === 0 ? 1 : -0.55) * amp * (0.7 + rnd() * 0.35);
+      return (g % 2 === 0 ? 1 : -0.75) * amp * (0.8 + rnd() * 0.3);
     case "pressure":
     case "pressure2":
-      return (g % 3 === 1 ? -1 : 1) * amp * (0.95 + rnd() * 0.35);
+      return (g % 3 === 1 ? -1.15 : 1) * amp * (1.0 + rnd() * 0.3);
     case "vista":
-      return d.vertStep * (0.45 + rnd() * 0.25);
+      return (g % 2 === 0 ? 0.55 : -0.35) * d.vertStep * (0.9 + rnd() * 0.25);
     case "gauntlet":
-      return Math.sin(g * 1.7 + 0.4) * amp * (1.05 + rnd() * 0.25);
+      return Math.sin(g * 1.7 + 0.4) * amp * (1.15 + rnd() * 0.2);
     case "trial":
-      return (g % 2 === 0 ? 0.9 : -0.7) * amp * (1.0 + rnd() * 0.2);
+      return (g % 2 === 0 ? 1.0 : -0.85) * amp * (1.05 + rnd() * 0.2);
   }
 }
 
@@ -81,28 +87,79 @@ function gapFor(role: Role, g: number, gapMin: number, gapMax: number, rnd: () =
   return gapMin + (gapMax - gapMin) * rnd();
 }
 
+/**
+ * Kill flat / same-direction ladders. Consecutive gates must swing by at least
+ * `minSwing`; after two steps the same way, force a reverse so YZ never reads
+ * as a straight diagonal of rings. Amplifying a small delta PRESERVES its sign
+ * (don't turn a rising staircase into a bounce).
+ */
+function enforceSwing(
+  raw: number,
+  minSwing: number,
+  sameDirStreak: number,
+  lastSign: number,
+  allowMono: boolean,
+): { dy: number; sign: number; streak: number } {
+  let dy = raw;
+  let sign = dy === 0 ? lastSign || 1 : Math.sign(dy);
+
+  if (Math.abs(dy) < minSwing) {
+    if (dy !== 0) sign = Math.sign(dy);
+    else if (allowMono && lastSign !== 0) sign = lastSign;
+    else sign = lastSign <= 0 ? 1 : -1;
+    dy = sign * minSwing;
+  }
+
+  if (!allowMono && sameDirStreak >= 2 && sign === lastSign) {
+    sign = -sign;
+    dy = sign * Math.max(minSwing, Math.abs(dy));
+  }
+
+  const streak = sign === lastSign ? sameDirStreak + 1 : 1;
+  return { dy, sign, streak };
+}
+
 function buildClimbSector(i: number): CircuitTrackDef {
   const d = sectorDifficulty(i);
   const role = roleOf(i);
   const rnd = makeRng(i);
   const [gapMin, gapMax] = d.gapSec;
+  // Arrival's 3-ring staircase may rise twice. Everything else reverses by the
+  // third same-direction step so long diagonals can't form.
+  const allowMono = role === "arrival";
+  const minSwing = d.gateRadius * 1.2;
 
-  // Jetpack-only: rings + hazards, no stepping-stone platforms. Desktop keeps an
-  // invisible launch pad at spawn (circuit-scene); mobile is fully kinematic.
   const gatePos: { x: number; y: number; z: number }[] = [];
 
   let z = 0;
   let y = 2.8;
   const yFloor = 1.6;
-  const yCeil = 2.8 + d.gates * Math.max(d.vertStep, d.gateRadius * 0.9) + 4;
+  // Wide band so enforceSwing isn't crushed into a flat ceiling line.
+  const yCeil = 2.8 + d.gates * Math.max(d.vertStep * 1.35, d.gateRadius * 1.5) + 8;
+
+  let lastSign = 0;
+  let sameDirStreak = 0;
 
   for (let g = 0; g < d.gates; g++) {
     const gap = gapFor(role, g, gapMin, gapMax, rnd, d.gates);
     z += d.speed * gap + (g === 0 ? 4 : 0);
-    y += gateHeightDelta(role, g, d, rnd);
+
+    const raw = gateHeightDelta(role, g, d, rnd);
+    const swung = enforceSwing(raw, minSwing, sameDirStreak, lastSign, allowMono);
+    lastSign = swung.sign;
+    sameDirStreak = swung.streak;
+    y += swung.dy;
     y = Math.max(yFloor, Math.min(yCeil, y));
 
-    // coplanar corridor — x always 0 (climb-feel §1c)
+    // If clamp flattened us against a neighbor, nudge off the wall.
+    if (gatePos.length > 0) {
+      const prevY = gatePos[gatePos.length - 1]!.y;
+      if (Math.abs(y - prevY) < minSwing * 0.85) {
+        const nudge = (y >= prevY ? 1 : -1) * minSwing;
+        y = Math.max(yFloor, Math.min(yCeil, prevY + nudge));
+      }
+    }
+
     gatePos.push({ x: 0, y, z });
   }
 

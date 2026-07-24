@@ -6,6 +6,7 @@
 import "server-only";
 import { Redis } from "@upstash/redis";
 import type { AxisSnapshot, CareerEvent, CareerEventKind, CreatureType, ForcePoints, PlayerSave, Recipe, Style } from "@/lib/types";
+import { sanitizeClimb } from "@/lib/climb-campaign";
 import { STARTING_CROWNS } from "@/lib/economy";
 
 const FORCES: readonly CreatureType[] = ["LOGIC", "CHAOS", "COMPOSURE", "RHETORIC", "CREATIVITY"];
@@ -32,7 +33,7 @@ function cleanForcePoints(raw: unknown): ForcePoints {
 // The saga is the player's own biography of their champion; it never gates rank
 // or economy, so we only bound it (sizes + string lengths) to keep the save blob
 // small and safe — not to arbitrate truth.
-const EVENT_KINDS: readonly CareerEventKind[] = ["claimed", "bout", "levelup", "tierup", "trial", "train", "imprint", "keeper", "season", "sealed"];
+const EVENT_KINDS: readonly CareerEventKind[] = ["claimed", "bout", "levelup", "tierup", "trial", "train", "imprint", "keeper", "season", "sealed", "ascent"];
 const MAX_EVENTS_PER_CHAMPION = 80;
 const MAX_SNAPSHOTS_PER_CHAMPION = 60;
 const AXIS_KEYS: readonly (keyof Style)[] = ["aggression", "control", "resilience", "flair", "creativity"];
@@ -294,6 +295,7 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
     events: cleanEvents(s.events),
     snapshots: cleanSnapshots(s.snapshots),
     lastVisit: typeof s.lastVisit === "number" && Number.isFinite(s.lastVisit) ? Math.floor(s.lastVisit) : undefined,
+    climb: s.climb != null ? sanitizeClimb(s.climb) : undefined,
     updatedAt: Date.now(),
   };
 }

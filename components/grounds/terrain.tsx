@@ -8,8 +8,16 @@ import { natureTerrainPalette } from "@/lib/render/nature-kit";
 
 // flat central plaza (arena + champions live here); procedural wilds beyond
 export const PLAZA_R = 36; // flat central plaza radius (+50% layout)
-export const TERRAIN_HALF = 165; // terrain spans 330 x 330 (+50% layout)
+export const TERRAIN_HALF = 165; // mesh still spans 330×330 (+50% layout)
 export const RAMP = 27; // transition band width from plaza into the hills (+50%)
+
+// Round floating-island silhouette (Flight-First polish — not a bigger open world).
+// Height falls off in a circular lip so the square mesh reads as a disk in the void.
+export const ISLAND_R = TERRAIN_HALF - 5; // ~160 — inscribed playable disk
+export const ISLAND_FALL = 14; // metres of soft→hard cliff at the rim
+export const ISLAND_DROP = 72; // how far the lip sinks into the void
+/** Solid wilds before the cliff lip — prefer this for prop / cache / goal max range. */
+export const ISLAND_PLAY_R = ISLAND_R - ISLAND_FALL;
 
 // ── the spawn knoll ─────────────────────────────────────────────────────────
 // The Reader spawns at the outer extreme of the rift (+z for flat regions),
@@ -25,8 +33,9 @@ export interface SpawnKnoll {
 export const SPAWN_KNOLL: SpawnKnoll = { x: 0, z: 52, radius: 16, peak: 6 };
 
 // The rift's outer lip — furthest from the plaza, where the Depth approach begins.
+// Kept inside ISLAND_PLAY_R so the spawn knoll never sits on the cliff.
 export const RIFT_OUTER_MARGIN = 22;
-export const RIFT_OUTER_ALONG = TERRAIN_HALF - RIFT_OUTER_MARGIN;
+export const RIFT_OUTER_ALONG = Math.min(TERRAIN_HALF - RIFT_OUTER_MARGIN, ISLAND_PLAY_R - 4);
 
 export function hasRift(t: TerrainShape): boolean {
   return t.canyonDepth > 0;
@@ -52,7 +61,7 @@ export function riftDepthEnd(t: TerrainShape, knoll: SpawnKnoll = SPAWN_KNOLL): 
   let bestY = Infinity;
   let best: [number, number, number] = [0, 0, 0];
   const start = PLAZA_R + 16;
-  const end = TERRAIN_HALF - 24;
+  const end = ISLAND_PLAY_R - 10;
   for (let along = start; along <= end; along += 2) {
     const x = dirx * along;
     const z = dirz * along;
@@ -147,10 +156,20 @@ export function shapeOf(biome: BiomeConfig): TerrainShape {
   };
 }
 
+/** 1 on the solid disk → 0 at / past the island rim (smoothstep lip). */
+export function islandLip(d: number): number {
+  if (d <= ISLAND_PLAY_R) return 1;
+  if (d >= ISLAND_R) return 0;
+  const u = (d - ISLAND_PLAY_R) / ISLAND_FALL;
+  return 1 - u * u * (3 - 2 * u);
+}
+
 /** World-space terrain height at (x,z). Flat (0) inside the plaza, rising hills beyond. */
 export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: SpawnKnoll = SPAWN_KNOLL): number {
   const kh = knollHeight(x, z, knoll);
   const d = Math.hypot(x, z);
+  // Past the island rim — void. Physics + flyers share this drop.
+  if (d >= ISLAND_R) return -ISLAND_DROP;
   // flat plaza, save for the spawn knoll riding on its outer rim
   if (d <= PLAZA_R) return kh;
   const e = Math.min(1, (d - PLAZA_R) / RAMP);
@@ -167,7 +186,7 @@ export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: Spaw
 
   // Carve the great rift: a single-sided chasm running outward from the plaza.
   // Smootherstep walls, faded in from the plaza edge (so there's no cliff at the
-  // boundary) and tapered before the far rim. The floor drops below datum.
+  // boundary) and tapered before the island lip.
   if (t.canyonDepth > 0) {
     const dirx = Math.cos(t.canyonAngle), dirz = Math.sin(t.canyonAngle);
     const along = x * dirx + z * dirz; // projection along the rift
@@ -175,13 +194,17 @@ export function terrainHeight(x: number, z: number, t: TerrainShape, knoll: Spaw
     if (along > 0 && perp < t.canyonHalfWidth) {
       const wp = 1 - perp / t.canyonHalfWidth; // 1 at centre → 0 at the walls
       const wall = wp * wp * (3 - 2 * wp);
-      const endFade = Math.max(0, Math.min(1, (TERRAIN_HALF - 6 - along) / 24));
+      const endFade = Math.max(0, Math.min(1, (ISLAND_PLAY_R - 4 - along) / 24));
       h -= t.canyonDepth * wall * ease * endFade;
     }
   }
   // the knoll rises proud of whatever the wilds do here, so the spawn mound reads
   // as a clean hill in every biome (it tapers to 0 by the plaza rim anyway)
-  return Math.max(h, kh);
+  h = Math.max(h, kh);
+  // Circular cliff lip — square mesh → floating island silhouette.
+  const lip = islandLip(d);
+  if (lip >= 1) return h;
+  return h * lip - ISLAND_DROP * (1 - lip);
 }
 
 export const Terrain = memo(function Terrain({ biome, nature }: { biome: BiomeConfig; nature?: boolean }) {
@@ -193,6 +216,7 @@ export const Terrain = memo(function Terrain({ biome, nature }: { biome: BiomeCo
     const low = new THREE.Color(earth.low);
     const mid = new THREE.Color(earth.mid);
     const high = new THREE.Color(earth.high);
+    const cliff = new THREE.Color(earth.low).multiplyScalar(0.35);
     const band = biome.terrain.colorBand;
     const g = new THREE.PlaneGeometry(TERRAIN_HALF * 2, TERRAIN_HALF * 2, SEG, SEG);
     g.rotateX(-Math.PI / 2);
@@ -207,6 +231,9 @@ export const Terrain = memo(function Terrain({ biome, nature }: { biome: BiomeCo
       const t = Math.max(0, Math.min(1, h / band));
       if (t < 0.5) c.lerpColors(low, mid, t / 0.5);
       else c.lerpColors(mid, high, (t - 0.5) / 0.5);
+      // Darken the cliff lip so the round silhouette reads from the air.
+      const lip = 1 - islandLip(Math.hypot(x, z));
+      if (lip > 0.05) c.lerp(cliff, Math.min(1, lip * 1.15));
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
@@ -217,19 +244,42 @@ export const Terrain = memo(function Terrain({ biome, nature }: { biome: BiomeCo
   }, [biome, nature]);
 
   return (
-    <RigidBody type="fixed" colliders="trimesh">
-      <mesh geometry={geo} receiveShadow>
-        <meshStandardMaterial
-          vertexColors
-          metalness={nature ? 0.04 : biome.terrain.metalness}
-          roughness={nature ? 0.96 : biome.terrain.roughness}
-          envMapIntensity={biome.daylight ? 0.04 : nature ? 0.15 : 0.5}
-          flatShading={!nature}
-        />
-      </mesh>
-    </RigidBody>
+    <>
+      <RigidBody type="fixed" colliders="trimesh">
+        <mesh geometry={geo} receiveShadow>
+          <meshStandardMaterial
+            vertexColors
+            metalness={nature ? 0.04 : biome.terrain.metalness}
+            roughness={nature ? 0.96 : biome.terrain.roughness}
+            envMapIntensity={biome.daylight ? 0.04 : nature ? 0.15 : 0.5}
+            flatShading={!nature}
+          />
+        </mesh>
+      </RigidBody>
+      {/* Soft mist under the rim — wilds presence without new collectibles. */}
+      <IslandRimMist accent={biome.lights.arenaPoint} />
+    </>
   );
 });
+
+/** Thin haze ring under the cliff lip — reads “edge of the world” from the plaza. */
+function IslandRimMist({ accent }: { accent: string }) {
+  const col = useMemo(() => new THREE.Color(accent), [accent]);
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.5, 0]} frustumCulled={false}>
+      <ringGeometry args={[ISLAND_PLAY_R - 2, ISLAND_R + 6, 96]} />
+      <meshBasicMaterial
+        color={col}
+        transparent
+        opacity={0.07}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        side={THREE.DoubleSide}
+        fog={false}
+      />
+    </mesh>
+  );
+}
 
 /** Instanced decorative scatter (rocks + crystals) placed on the hills via height sampling. */
 export function Scatter({ biome }: { biome: BiomeConfig }) {
@@ -248,11 +298,11 @@ export function Scatter({ biome }: { biome: BiomeConfig }) {
     while (placed < biome.scatter.count && guard < 5000) {
       guard++;
       const a = Math.random() * Math.PI * 2;
-      const r = PLAZA_R + 4 + Math.random() * (TERRAIN_HALF - PLAZA_R - 10);
+      const r = PLAZA_R + 4 + Math.random() * (ISLAND_PLAY_R - PLAZA_R - 12);
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
       const y = terrainHeight(x, z, shape, knoll);
-      if (y < 1.2) continue; // keep scatter on the risen hills
+      if (y < 1.2) continue; // keep scatter on the risen hills (skip cliff lip)
       const isCrystal = Math.random() < biome.scatter.crystalRatio;
       e.set(0, Math.random() * Math.PI * 2, isCrystal ? 0 : Math.random() * 0.4);
       q.setFromEuler(e);

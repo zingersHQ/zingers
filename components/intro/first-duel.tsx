@@ -559,7 +559,12 @@ function cardShareUrl(key: string, champion: Champion) {
     l: String(champion.losses),
   });
   const best = loadCircuitPersonalBest();
-  if (best) p.set("ar", String(Math.min(10, Math.ceil(best.sectors / 10))));
+  {
+    const camps = useChampions.getState().climb?.campsLit ?? 0;
+    const fromBest = best ? Math.min(10, Math.ceil(best.sectors / 10)) : 0;
+    const ar = Math.max(camps, fromBest);
+    if (ar > 0) p.set("ar", String(ar));
+  }
   const handle = getHandle();
   if (handle) p.set("by", handle.slice(0, 24));
   const nick = useChampions.getState().getRecipe(key).nick;

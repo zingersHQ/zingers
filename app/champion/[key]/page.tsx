@@ -1,7 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock } from "lucide-react";
+import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock, Mountain } from "lucide-react";
 import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
 import { houseProfile } from "@/lib/evolve/elo";
 import { appearanceOf } from "@/lib/evolve/appearance";
@@ -258,6 +258,7 @@ const EVENT_META: Record<CareerEventKind, { Icon: typeof Sparkles; tone: "milest
   keeper: { Icon: KeyRound, tone: "milestone" },
   season: { Icon: DoorOpen, tone: "milestone" },
   sealed: { Icon: Lock, tone: "milestone" },
+  ascent: { Icon: Mountain, tone: "milestone" },
 };
 
 function relTime(ts: number): string {

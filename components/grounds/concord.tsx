@@ -428,12 +428,18 @@ function Vaultgate({
       <pointLight position={[0, H * 0.6, 0.4]} intensity={36 * dim * lift} color={col} distance={18} />
       <Html position={[0, H + 1.2, 0]} center distanceFactor={15} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: dimmed ? 0.5 : 1 }}>
-          <div style={{ fontSize: 8, letterSpacing: 2, color: col, fontWeight: 700 }}>VAULTGATE</div>
+          <div style={{ fontSize: 8, letterSpacing: 2, color: col, fontWeight: 700 }}>GATE</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 2px 8px #000" }}>{gate.label}</div>
           {firstStop ? (
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 800 }}>▶ START HERE · YOUR FIRST ARENA</div>
           ) : (
             rising && <div style={{ fontSize: 8, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>▲ SEASON SPOTLIGHT</div>
+          )}
+          {/* Thin wilds verb — Peak/Depth/Secret + daily caches already exist past the plaza. */}
+          {!dimmed && (
+            <div style={{ fontSize: 8, letterSpacing: 1.2, color: "rgba(242,238,251,.72)", fontWeight: 600, marginTop: 3 }}>
+              Peak · Depth · Secret · daily caches
+            </div>
           )}
         </div>
       </Html>
