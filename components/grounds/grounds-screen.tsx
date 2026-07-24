@@ -452,6 +452,8 @@ export default function GroundsScreen({
   const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
+  /** Accumulated flying time only — excludes ready / continue / load gaps. */
+  const circuitRunMsRef = useRef(0);
   /** Ghost-path samples in Climb-canonical space (interchangeable with mobile). */
   /** Per-sector ghost samples (canonical Climb space); t = ms since sector start. */
   const circuitSectorPathsRef = useRef<ClimbGhostSectors>([]);
@@ -565,6 +567,7 @@ export default function GroundsScreen({
     circuitCpNext.current = 1;
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
+    circuitRunMsRef.current = 0;
     circuitSectorPathsRef.current = [];
     circuitSectorSamplesRef.current = [];
     circuitSampleLastT.current = 0;
@@ -641,6 +644,7 @@ export default function GroundsScreen({
       circuitCpNext.current = 1;
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
+      circuitRunMsRef.current = 0;
       circuitLivesRef.current = CIRCUIT_LIVES;
       setCircuitLives(CIRCUIT_LIVES);
       setCircuitGhost(null);
@@ -733,7 +737,8 @@ export default function GroundsScreen({
     circuitSectorStart.current = 0;
     setCircuitGhostRunStartMs(0);
     if (next >= DESKTOP_CIRCUIT_COUNT) {
-      const total = performance.now() - circuitRunStart.current;
+      // Frozen at sector clear — do not re-read wall clock (includes load gap).
+      const total = circuitRunMsRef.current;
       setCircuitRunMs(total);
       setCircuitPhase("done");
       submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
@@ -752,7 +757,7 @@ export default function GroundsScreen({
     // Thin altitude key — same Reach II gate as mobile Climb (in-place Prove).
     const mind = owned ? store.get(owned) : null;
     if (next >= ALTITUDE_KEY_SECTOR && (!mind || needsAltitudeProve(mind.wins))) {
-      const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
+      const total = circuitRunMsRef.current;
       setCircuitRunMs(total);
       submitCircuitRun(next, total, true);
       setCircuitPhase("ceiling");
@@ -788,6 +793,12 @@ export default function GroundsScreen({
         circuitLivesRef.current -= 1;
         setCircuitLives(circuitLivesRef.current);
         setCircuitFailReason(reason);
+        // Freeze flying time before continue / ready downtime.
+        if (circuitRunStart.current) {
+          const flown = performance.now() - circuitRunStart.current;
+          circuitRunMsRef.current = flown;
+          setCircuitRunMs(flown);
+        }
         setCircuitPhase("continue");
         circuitCpNext.current = 1;
         setCircuitCpPassed(1);
@@ -824,8 +835,11 @@ export default function GroundsScreen({
       stopJet();
       circuitLivesRef.current = 0;
       setCircuitLives(0);
-      const total = circuitRunStart.current ? performance.now() - circuitRunStart.current : 0;
+      const total = circuitRunStart.current
+        ? performance.now() - circuitRunStart.current
+        : circuitRunMsRef.current;
       const sectors = circuitSectorIdx; // sectors fully cleared before this one
+      circuitRunMsRef.current = total;
       setCircuitRunMs(total);
       setCircuitFailReason(reason);
       setCircuitPhase("failed");
@@ -844,11 +858,13 @@ export default function GroundsScreen({
   const onCircuitStart = useCallback(() => {
     if (circuitPhase !== "ready") return;
     const now = performance.now();
-    if (circuitSectorIdx === 0 && !circuitRunStart.current) {
-      circuitRunStart.current = now;
+    // Fresh run only — retries after a life keep prior flying time.
+    if (circuitSectorIdx === 0 && circuitRunMsRef.current === 0) {
       circuitSectorPathsRef.current = [];
       setCircuitChallengeResult(null);
     }
+    // Resume from frozen flying time so ready / continue / load gaps don't count.
+    circuitRunStart.current = now - circuitRunMsRef.current;
     // Seed t=0 at the pad so ghost remaps from spawn, not the first mid-air sample.
     const spawn = desktopCircuitSector(circuitSectorIdx).spawn;
     const origin = toClimbCanonical(spawn[1], spawn[2]);
@@ -872,7 +888,10 @@ export default function GroundsScreen({
 
   const shareCircuitChallenge = useCallback(async () => {
     const sectors = circuitPhase === "done" ? DESKTOP_CIRCUIT_COUNT : circuitSectorIdx;
-    const totalMs = circuitRunMs || Math.max(0, performance.now() - (circuitRunStart.current || performance.now()));
+    const totalMs =
+      circuitPhase === "running" && circuitRunStart.current
+        ? performance.now() - circuitRunStart.current
+        : circuitRunMsRef.current || circuitRunMs;
     // Include the in-progress sector if we died mid-flight.
     const paths: ClimbGhostSectors = circuitSectorPathsRef.current.map((s) => [...s]);
     if (circuitSectorSamplesRef.current.length >= 2) {
@@ -924,10 +943,12 @@ export default function GroundsScreen({
 
       if (cp.finish) {
         const sectorElapsed = now - circuitSectorStart.current;
+        const runElapsed = now - circuitRunStart.current;
         setCircuitSectorMs(sectorElapsed);
-        setCircuitRunMs(now - circuitRunStart.current);
+        circuitRunMsRef.current = runElapsed;
+        setCircuitRunMs(runElapsed);
         if (circuitSectorIdx + 1 >= DESKTOP_CIRCUIT_COUNT) {
-          const total = now - circuitRunStart.current;
+          const total = runElapsed;
           setCircuitPhase("done");
           submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
           if (circuitChallenge) {
@@ -1008,7 +1029,11 @@ export default function GroundsScreen({
     if (circuitPhase !== "running") return;
     let raf = 0;
     const tick = () => {
-      if (circuitRunStart.current) setCircuitRunMs(performance.now() - circuitRunStart.current);
+      if (circuitRunStart.current) {
+        const ms = performance.now() - circuitRunStart.current;
+        circuitRunMsRef.current = ms;
+        setCircuitRunMs(ms);
+      }
       if (circuitSectorStart.current) setCircuitSectorMs(performance.now() - circuitSectorStart.current);
       raf = requestAnimationFrame(tick);
     };
@@ -1017,7 +1042,6 @@ export default function GroundsScreen({
   }, [circuitPhase]);
 
   const lastMoveRef = useRef<number>(Date.now());
-  const [guideIdle, setGuideIdle] = useState(false);
   const onPose = useCallback((x: number, z: number, heading: number) => {
     const p = poseRef.current;
     if (Math.hypot(x - p.x, z - p.z) > 0.4) lastMoveRef.current = Date.now();
@@ -1199,27 +1223,15 @@ export default function GroundsScreen({
     setGuideNudge(false);
   }, []);
 
-  // ── First-run guide ─────────────────────────────────────────────────────────
-  // After the first duel the player lands in the Concord with `concordCoach` set.
-  // While it's live we spotlight the Grounds gate (the canonical first arena), dim
-  // the rest, and steer the player toward it — escalating once they idle near spawn.
+  // ── First-run guide (quiet Hub land) ───────────────────────────────────────
+  // One coach line + lit Colosseum gate. No RETURNING theater, no idle escalate,
+  // no clan-join Html until they walk to a flag.
   const firstRunGuide = concordCoach && !!owned && isHub && !inVenue;
   const guideWorld = firstRunGuide ? FIRST_GUIDE_WORLD : null;
   const groundsGatePos = useMemo<[number, number, number]>(() => {
     const g = CONCORD_GATES.find((x) => x.world === FIRST_GUIDE_WORLD) ?? CONCORD_GATES[0];
     return [Math.cos(g.angle) * g.dist, 0, Math.sin(g.angle) * g.dist];
   }, []);
-  useEffect(() => {
-    if (!firstRunGuide) {
-      setGuideIdle(false);
-      return;
-    }
-    lastMoveRef.current = Date.now();
-    setGuideIdle(false);
-    const t = setInterval(() => setGuideIdle(Date.now() - lastMoveRef.current > 14000), 1000);
-    return () => clearInterval(t);
-  }, [firstRunGuide]);
-
   useEffect(() => {
     let live = true;
     setRosterError(null);
@@ -1794,9 +1806,9 @@ export default function GroundsScreen({
       if (activeVenue === "circuit") {
         playTravel(
           {
-            kicker: "RETURNING",
+            kicker: "ARRIVING",
             title: "The Hub",
-            sub: "Your champion. Fly the lit gate to your first region.",
+            sub: "Fly the lit gate to your first region.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
           () => {
@@ -1807,10 +1819,18 @@ export default function GroundsScreen({
         return;
       }
       if (worldId !== "concord") {
-        playTravel(worldTravelCard("concord"), () => {
-          travelToWorld("concord", false);
-          landConcordFirstGuide();
-        });
+        playTravel(
+          {
+            kicker: "ARRIVING",
+            title: "The Hub",
+            sub: "Fly the lit gate to your first region.",
+            color: worldById("concord").biome.lights.arenaPoint,
+          },
+          () => {
+            travelToWorld("concord", false);
+            landConcordFirstGuide();
+          },
+        );
       } else {
         landConcordFirstGuide();
       }
@@ -1825,7 +1845,6 @@ export default function GroundsScreen({
       exitVenue,
       landConcordFirstGuide,
       worldId,
-      worldTravelCard,
       travelToWorld,
     ],
   );
@@ -1847,9 +1866,9 @@ export default function GroundsScreen({
       if (activeVenue === "circuit") {
         playTravel(
           {
-            kicker: "RETURNING",
+            kicker: "ARRIVING",
             title: "The Hub",
-            sub: "Your champion. Fly the lit gate to your first region.",
+            sub: "Fly the lit gate to your first region.",
             color: worldById("concord").biome.lights.arenaPoint,
           },
           () => {
@@ -1858,10 +1877,18 @@ export default function GroundsScreen({
           },
         );
       } else if (worldId !== "concord") {
-        playTravel(worldTravelCard("concord"), () => {
-          travelToWorld("concord", false);
-          landConcordFirstGuide();
-        });
+        playTravel(
+          {
+            kicker: "ARRIVING",
+            title: "The Hub",
+            sub: "Fly the lit gate to your first region.",
+            color: worldById("concord").biome.lights.arenaPoint,
+          },
+          () => {
+            travelToWorld("concord", false);
+            landConcordFirstGuide();
+          },
+        );
       } else {
         landConcordFirstGuide();
       }
@@ -1878,7 +1905,6 @@ export default function GroundsScreen({
     exitVenue,
     landConcordFirstGuide,
     worldId,
-    worldTravelCard,
     travelToWorld,
   ]);
 
@@ -2672,7 +2698,8 @@ export default function GroundsScreen({
               tier={growth?.tier ?? 0}
               featuredWorld={isHub ? featuredWorld : null}
               guideWorld={guideWorld}
-              guideUrgent={guideIdle}
+              guideUrgent={false}
+              muteClanInvite={firstRunGuide}
               onAltitude={onAltitude}
               onPose={onPose}
               travelRef={travelRef}
@@ -3019,43 +3046,29 @@ export default function GroundsScreen({
         >
           <div style={{ textAlign: "center", padding: 24 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 3, color: "#f0a93a", opacity: 0.9 }}>
-              RETURNING
+              ARRIVING
             </div>
             <div style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 800, marginTop: 10 }}>The Hub</div>
             <div className="mono" style={{ fontSize: 12, color: "var(--muted2)", marginTop: 8, maxWidth: 320, lineHeight: 1.45 }}>
-              Your champion. Fly the lit gate to your first region.
+              Fly the lit gate to your first region.
             </div>
           </div>
         </div>
       )}
 
-      {/* first-run guide nudge — steers a new player to the spotlit Grounds gate.
-          Hidden once they're standing on a gate (the big Enter prompt takes over),
-          and escalates to gold once they idle near spawn. */}
+      {/* Quiet first-land coach — one line, lit gate in the world does the rest. */}
       {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !claimArriveCover && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div
-            className={`panel pop${guideIdle ? " guide-pulse" : ""}`}
-            style={{ ["--ac" as string]: guideIdle ? "var(--gold)" : "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 540, borderColor: guideIdle ? "var(--gold)" : "#cdb8ff" }}
+            className="panel pop"
+            style={{ ["--ac" as string]: "#cdb8ff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#cdb8ff" }}
           >
-            <span style={{ fontSize: 16, color: guideIdle ? "var(--gold)" : "#cdb8ff", flexShrink: 0 }}>{guideIdle ? "▶" : "◎"}</span>
+            <span style={{ fontSize: 16, color: "#cdb8ff", flexShrink: 0 }}>◎</span>
             <span style={{ fontSize: 12, lineHeight: 1.35 }}>
-              {guideIdle ? (
-                <>
-                  <strong>This way.</strong> Fly to the glowing gate to your <strong>first region</strong>. Step onto its ring and press <span className="mono">E</span>.
-                </>
-              ) : (
-                <>
-                  <strong>Welcome to the Hub.</strong> Fly out through the lit gate to your <strong>first region</strong>. The other gates can wait.
-                </>
-              )}
+              Fly the lit gate to your <strong>first region</strong>.
             </span>
             <button
-              onClick={() => {
-                lastMoveRef.current = Date.now();
-                setGuideIdle(false);
-                fastTravel(groundsGatePos);
-              }}
+              onClick={() => fastTravel(groundsGatePos)}
               className="btn btn-primary"
               style={{ ["--ac" as string]: "var(--gold)", fontSize: 11, padding: "4px 10px", flexShrink: 0, whiteSpace: "nowrap" }}
             >

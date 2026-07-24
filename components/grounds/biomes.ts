@@ -68,7 +68,7 @@ export interface BiomeConfig {
     // bespoke built environment — each world is a different BUILDING, not a
     // recoloured copy of the same plaza.
     surround: "tiers" | "caldera" | "grove"; // what rings the arena floor
-    arena: "ring" | "pit"; // the form of the central combat space
+    arena: "ring" | "pit" | "platforms"; // central combat silhouette
     pillar: "obelisk" | "basalt"; // the ambient standing structures in the wilds
     // how the resident agents are deployed + how they roam — so the population
     // is arranged and behaves differently per world, not parked in one ring.
@@ -153,7 +153,7 @@ export const BIOMES: BiomeConfig[] = [
     exposure: 1.18,
     // Spire clear of the +z entrance; train swung off the Keeper ring so the
     // colosseum gate approach stays an open corridor from the spawn knoll.
-    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "grove", arena: "ring", pillar: "obelisk", roam: { pattern: "arc", radius: 24, spread: 36, inner: 16, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 0.05, dist: 32 }, spire: { angle: Math.PI * 1.5, dist: 32 } } },
+    scene: { towerAngle: Math.PI * 0.7, towerSteps: 150, obeliskCount: 22, platformCount: 8, crystalCount: 34, surround: "grove", arena: "platforms", pillar: "obelisk", roam: { pattern: "arc", radius: 24, spread: 36, inner: 16, speed: 3.6 }, landmarks: { train: { angle: Math.PI * 0.05, dist: 32 }, spire: { angle: Math.PI * 1.5, dist: 32 } } },
   },
   {
     // The Concord — the hub slab (lib/lore/canon.ts › CONCORD). Neutral ground:

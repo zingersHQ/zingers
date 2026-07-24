@@ -270,8 +270,9 @@ isolated fix shipped:
 - Result at a glance: Colosseum = violet stone colonnade + ring; Ember Wastes =
   molten caldera + pit; Void Garden = teal crystal grove + ring. Three distinct
   silhouettes, three palettes.
-- Deferred (bigger, riskier): a bespoke non-ring **platforms** arena centre for
-  the Garden and a grandstand-less pit tuning for the Wastes — a future pass.
+- Follow-up (shipped): Void `arena: "platforms"` (floating atelier discs; grove
+  surround kept) + Ember `PitArena` retuned as an open caldera floor (sparse
+  shards, no stadium teeth).
 - **Risk taken:** low — additive, scoped to Void's surround only.
 
 ### Phase 0b — HUD & menu declutter (§5b)
@@ -325,9 +326,8 @@ isolated fix shipped:
   Docs / Whitepaper are `secondary` (site header only). Implemented.
 
 **Resolved (implemented):**
-- **D4 — Region silhouettes:** shipped the isolated `grove` surround for the Void
-  Garden so it no longer duplicates the Colosseum. Deeper per-region arena reworks
-  (platforms centre, grandstand-less Wastes pit) deferred as a future pass.
+- **D4 — Region silhouettes:** grove surround for Void; later platforms centre +
+  Wastes pit tune shipped (see Phase 2 follow-up).
 - **D5 — Sky progress:** the HUD shows plain sector progress (N / total) and the
   band's flavor name; the taught noun "Reach" is out of first-touch (kept in lore).
 

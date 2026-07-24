@@ -34,6 +34,7 @@ export const ConcordScene = memo(function ConcordScene({
   featuredWorld = null,
   guideWorld = null,
   guideUrgent = false,
+  muteClanInvite = false,
   daylight = false,
   choosing = false,
   clanPreview = null,
@@ -48,6 +49,8 @@ export const ConcordScene = memo(function ConcordScene({
   guideWorld?: string | null;
   // The player has idled — escalate the focus gate (brighter beam, faster pulse).
   guideUrgent?: boolean;
+  /** Quiet first land — hide "walk up · join" until they approach a flag. */
+  muteClanInvite?: boolean;
   daylight?: boolean;
   // While the Clan sheet is open every flag drops to the ground except the one
   // you're hovering on in the picker; after pledging, only your Clan stays up.
@@ -60,7 +63,13 @@ export const ConcordScene = memo(function ConcordScene({
   return (
     <group>
       <Seal daylight={daylight} dimmed={guiding} />
-      <ClanFlags pledged={pledged} choosing={choosing} preview={clanPreview} ceremony={clanCeremony} />
+      <ClanFlags
+        pledged={pledged}
+        choosing={choosing}
+        preview={clanPreview}
+        ceremony={clanCeremony}
+        muteInvite={muteClanInvite}
+      />
       {gates.map((g) => {
         const focused = guiding ? g.world === guideWorld : g.world === featuredWorld;
         const dimmed = guiding && g.world !== guideWorld;
@@ -152,11 +161,13 @@ function ClanFlags({
   choosing = false,
   preview = null,
   ceremony = false,
+  muteInvite = false,
 }: {
   pledged: CreatureType | null;
   choosing?: boolean;
   preview?: CreatureType | null;
   ceremony?: boolean;
+  muteInvite?: boolean;
 }) {
   const clans = useMemo(() => concordClanSpots(), []);
   const pickMode = choosing || pledged != null || ceremony;
@@ -180,6 +191,7 @@ function ClanFlags({
             raised={raised}
             pickMode={pickMode}
             ceremony={ceremony}
+            muteInvite={muteInvite}
           />
         );
       })}
@@ -196,6 +208,7 @@ function ClanFlag({
   raised,
   pickMode,
   ceremony = false,
+  muteInvite = false,
 }: {
   type: CreatureType;
   x: number;
@@ -205,6 +218,7 @@ function ClanFlag({
   raised: boolean;
   pickMode: boolean;
   ceremony?: boolean;
+  muteInvite?: boolean;
 }) {
   const lore = FORCES[type];
   const col = lore.hex;
@@ -300,7 +314,8 @@ function ClanFlag({
             </Html>
           </>
         ) : (
-          !pickMode && (
+          !pickMode &&
+          !muteInvite && (
             <Html position={[0, 1.0, 0]} center distanceFactor={15} zIndexRange={[17, 0]} style={{ pointerEvents: "none" }}>
               <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
                 <div style={{ fontSize: 8, letterSpacing: 1.5, color: col, fontWeight: 700, opacity: 0.85 }}>{lore.name.toUpperCase()}</div>

@@ -284,53 +284,113 @@ export const PlazaSurround = memo(function PlazaSurround({ biome }: { biome: Bio
   return <ColosseumWall biome={biome} />;
 });
 
-// ── central arena: a lava pit instead of a gilded ring ───────────────────────
-// radius of the central combat space — kept in sync with world.tsx ARENA_R so
-// the pit and the ring platform read at the same (larger) coliseum scale.
+// ── central arena footprints ─────────────────────────────────────────────────
+// radius kept in sync with world.tsx ARENA_R so proximity / roam keep-outs match.
 const ARENA_R = 8.6;
 
+/** Ember Wastes — open sunken pit (no stadium teeth / continuous grandstand rim). */
 export const PitArena = memo(function PitArena({ biome }: { biome: BiomeConfig }) {
   const lava = biome.lights.arenaPoint;
   const rock = biome.obelisk.color;
   const tex = useMemo(() => crackTexture(lava, "#fff2cc"), [lava]);
-  const teeth = useMemo(() => {
+  // Sparse irregular basalt shards — reads as a caldera floor, not a mini-colosseum.
+  const shards = useMemo(() => {
     const q = new THREE.Quaternion();
     const e = new THREE.Euler();
-    return Array.from({ length: 28 }, (_, i) => {
-      const a = (i / 28) * TWO_PI;
-      const h = 1.5 + (i % 3) * 0.4;
-      e.set(0, a, 0);
+    const r = mulberry(211);
+    return Array.from({ length: 11 }, (_, i) => {
+      const a = (i / 11) * TWO_PI + (r() - 0.5) * 0.35;
+      const rad = ARENA_R - 0.35 + r() * 0.9;
+      const h = 0.55 + r() * 0.85;
+      const lean = (r() - 0.5) * 0.4;
+      e.set(lean, a, 0);
       q.setFromEuler(e);
-      // unit cone scaled to (1, h, 1) — heights preserved, one instanced draw
       return new THREE.Matrix4().compose(
-        new THREE.Vector3(Math.cos(a) * (ARENA_R + 0.1), 0.55, Math.sin(a) * (ARENA_R + 0.1)),
+        new THREE.Vector3(Math.cos(a) * rad, 0.15 + h * 0.15, Math.sin(a) * rad),
         q,
-        new THREE.Vector3(1, h, 1),
+        new THREE.Vector3(0.7 + r() * 0.5, h, 0.7 + r() * 0.4),
       );
     });
   }, []);
   const R = ARENA_R;
   return (
     <group>
-      {/* sunken molten basin */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.35, 0]} receiveShadow>
+      {/* deeper molten basin */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.55, 0]} receiveShadow>
         <circleGeometry args={[R, 96]} />
-        <meshStandardMaterial color="#1a0a06" emissive={lava} emissiveMap={tex} emissiveIntensity={1.8} roughness={0.5} metalness={0.3} />
+        <meshStandardMaterial color="#1a0a06" emissive={lava} emissiveMap={tex} emissiveIntensity={2.1} roughness={0.55} metalness={0.25} />
       </mesh>
-      {/* glowing rim */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <torusGeometry args={[R + 0.1, 0.26, 16, 180]} />
-        <meshStandardMaterial color={lava} emissive={lava} emissiveIntensity={2.8} metalness={0.3} roughness={0.4} />
+      {/* cracked shelf just above the lava — broken lip, not a torus stadium */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, 0]} receiveShadow>
+        <ringGeometry args={[R - 1.4, R + 0.15, 64]} />
+        <meshStandardMaterial color={rock} emissive={lava} emissiveIntensity={0.55} roughness={0.92} flatShading />
       </mesh>
-      {/* basalt teeth ringing the pit — one instanced draw */}
+      {/* sparse outer shards */}
       <instancedMesh
-        args={[undefined, undefined, teeth.length]}
+        args={[undefined, undefined, shards.length]}
         castShadow
-        ref={(im) => applyInstanceMatrices(im, teeth)}
+        ref={(im) => applyInstanceMatrices(im, shards)}
       >
-        <coneGeometry args={[0.34, 1, 4]} />
-        <meshStandardMaterial color={rock} emissive={lava} emissiveIntensity={0.2} roughness={0.95} flatShading />
+        <coneGeometry args={[0.4, 1, 5]} />
+        <meshStandardMaterial color={rock} emissive={lava} emissiveIntensity={0.35} roughness={0.95} flatShading />
       </instancedMesh>
+      <pointLight position={[0, 1.2, 0]} intensity={38} color={lava} distance={22} />
+    </group>
+  );
+});
+
+/**
+ * Void Garden — floating atelier discs (no gold ring / posts).
+ * Own mulberry seed so GroveRing / Nature RNG order stays untouched.
+ */
+export const PlatformsArena = memo(function PlatformsArena({ biome }: { biome: BiomeConfig }) {
+  const accent = biome.lights.arenaPoint;
+  const top = biome.platform.top;
+  const a = biome.platform.a;
+  const pads = useMemo(() => {
+    const r = mulberry(227);
+    const out: { x: number; z: number; y: number; rad: number; rot: number }[] = [
+      { x: 0, z: 0, y: 0.12, rad: 3.4, rot: 0 },
+    ];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * TWO_PI + 0.22;
+      const dist = 4.2 + r() * 1.6;
+      out.push({
+        x: Math.cos(ang) * dist,
+        z: Math.sin(ang) * dist,
+        y: 0.35 + r() * 0.85,
+        rad: 1.15 + r() * 0.7,
+        rot: r() * Math.PI,
+      });
+    }
+    return out;
+  }, []);
+  return (
+    <group>
+      {/* soft underglow where the old ring would sit — no solid stadium lip */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[ARENA_R - 0.9, ARENA_R + 0.05, 72]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.14} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      {pads.map((p, i) => (
+        <group key={i} position={[p.x, p.y, p.z]} rotation={[0, p.rot, 0]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
+            <circleGeometry args={[p.rad, 28]} />
+            <meshStandardMaterial
+              color={i === 0 ? top : a}
+              emissive={accent}
+              emissiveIntensity={i === 0 ? 0.55 : 0.85}
+              metalness={0.35}
+              roughness={0.4}
+            />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, 0]}>
+            <ringGeometry args={[p.rad * 0.72, p.rad, 28]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} />
+          </mesh>
+        </group>
+      ))}
+      <pointLight position={[0, 3.2, 0]} intensity={28} color={accent} distance={20} />
     </group>
   );
 });

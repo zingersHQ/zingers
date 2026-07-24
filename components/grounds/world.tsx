@@ -31,7 +31,7 @@ import {
   NatureIslandDressing,
   NatureGround,
 } from "./nature";
-import { PlazaSurround, PitArena } from "./structures";
+import { PlazaSurround, PitArena, PlatformsArena } from "./structures";
 import { daylightBiome, type BiomeConfig } from "./biomes";
 import { ConcordScene, concordClanSpots, type ConcordVenueId } from "./concord";
 import { type GalleryFocus } from "./gallery";
@@ -72,6 +72,10 @@ import {
 import { VenueExitPortal, AscentPortal, AscentReturnPortal, PORTAL_OPEN_Y, type PortalTheme } from "./venue-portals";
 import { reachThemeByIndex } from "./climb/reaches";
 import { preloadNatureBiome } from "@/lib/render/preload-grounds";
+
+// Warm the Trainer rig before Physics mounts so Handler's useGLTF doesn't suspend
+// the outer Suspense and tear down ArrivalDeck / SafetyFloor mid-load.
+useGLTF.preload("/models/RobotExpressive.glb");
 
 export interface WorldLife {
   /** what your champion is saying in-world */
@@ -284,6 +288,7 @@ export default function World({
   featuredWorld = null,
   guideWorld = null,
   guideUrgent = false,
+  muteClanInvite = false,
   onAltitude,
   onPose,
   travelRef,
@@ -342,6 +347,8 @@ export default function World({
   guideWorld?: string | null;
   /** Escalate the focus gate once the player has idled near spawn. */
   guideUrgent?: boolean;
+  /** Quiet first Hub land — hide clan-join Html until they walk to a flag. */
+  muteClanInvite?: boolean;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
   travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number) => void) | null>;
@@ -405,7 +412,7 @@ export default function World({
     return theme === "light" ? daylightBiome(skin) : skin;
   }, [inCircuit, venueHostWorldId, theme, biome]);
   const circuitDressTier = gpuLite ? "low" : gfxTier === "low" ? "mid" : gfxTier;
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false });
+  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false, bodyReady: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -752,7 +759,18 @@ export default function World({
           {!inVenue && <Crystals biome={biome} shape={shape} count={sc.crystalCount} />}
 
           {isHub && !inVenue && !match && (
-            <ConcordScene gates={hubGates} pledged={pledged} featuredWorld={featuredWorld} guideWorld={guideWorld} guideUrgent={guideUrgent} daylight={!!biome.daylight} choosing={choosingClan} clanPreview={clanPreview} clanCeremony={clanCeremony} />
+            <ConcordScene
+              gates={hubGates}
+              pledged={pledged}
+              featuredWorld={featuredWorld}
+              guideWorld={guideWorld}
+              guideUrgent={guideUrgent}
+              muteClanInvite={muteClanInvite}
+              daylight={!!biome.daylight}
+              choosing={choosingClan}
+              clanPreview={clanPreview}
+              clanCeremony={clanCeremony}
+            />
           )}
 
           {isHub && !inVenue && match && (
@@ -785,16 +803,19 @@ export default function World({
                 circuitPhase !== "failed" &&
                 circuitPhase !== "ceiling" &&
                 circuitPhase !== "prove" && (
-                <CircuitSpectator
-                  champions={champions}
-                  ownedKey={ownedKey}
-                  pledged={pledged}
-                  accent={biome.lights.arenaPoint}
-                  phase={circuitPhase}
-                  padPos={[circuitTrack.spawn[0] - 2.6, circuitTrack.spawn[1] - 1.35, circuitTrack.spawn[2] + 0.45]}
-                  followPos={handlerPos}
-                  poseOut={circuitChampPos}
-                />
+                // Own Suspense: champion GLTF must not tear down ArrivalDeck / Handler.
+                <Suspense fallback={null}>
+                  <CircuitSpectator
+                    champions={champions}
+                    ownedKey={ownedKey}
+                    pledged={pledged}
+                    accent={biome.lights.arenaPoint}
+                    phase={circuitPhase}
+                    padPos={[circuitTrack.spawn[0] - 2.6, circuitTrack.spawn[1] - 1.35, circuitTrack.spawn[2] + 0.45]}
+                    followPos={handlerPos}
+                    poseOut={circuitChampPos}
+                  />
+                </Suspense>
               )}
               <AscentReturnPortal
                 pos={VENUE_EXIT.circuit.pos}
@@ -844,7 +865,13 @@ export default function World({
               {biome.id === "void" && <FloatingIslands biome={biome} shape={shape} />}
               <Platforms biome={biome} shape={shape} count={sc.platformCount} />
               <Tower biome={biome} nodes={towerNodes} />
-              {sc.arena === "pit" ? <PitArena biome={biome} /> : <ArenaPlatform />}
+              {sc.arena === "pit" ? (
+                <PitArena biome={biome} />
+              ) : sc.arena === "platforms" ? (
+                <PlatformsArena biome={biome} />
+              ) : (
+                <ArenaPlatform />
+              )}
               {KEEPERS_PLAYABLE && <KeeperGrounds shape={shape} baseAngle={sc.landmarks.spire.angle} />}
 
               {/* wayfinding beams over the two open-ground districts (the Tower &
@@ -929,56 +956,61 @@ export default function World({
           )}
 
           {!showcase && (
-            <Handler
-              controlsEnabled={controlsEnabled && !match}
-              onNear={onNear}
-              ownedKey={ownedKey}
-              matchActive={!!match}
-              handlerPos={handlerPos}
-              handlerHeading={handlerHeading}
-              camCue={camCue}
-              touchMove={touchMove}
-              touchBtn={touchBtn}
-              isHub={isHub}
-              trainerXp={trainerXp}
-              force={pledged}
-              inVenue={inVenue}
-              inAmphitheatre={inAmphitheatre}
-              circuitMode={inCircuit}
-              circuitRunning={circuitPhase === "running"}
-              circuitPhase={circuitPhase}
-              circuitSectorIdx={circuitSectorIdx}
-              circuitCheckpoints={circuitCheckpoints}
-              circuitCpNextRef={circuitCpNextRef}
-              circuitHazards={circuitPhase === "running" ? circuitHazards : []}
-              onCircuitPass={onCircuitPass}
-              onCircuitFail={onCircuitFail}
-              onCircuitStart={onCircuitStart}
-              onCircuitSample={onCircuitSample}
-              onCircuitStumble={onCircuitStumble}
-              concordVenueTargets={concordVenueTargets}
-              returnTarget={returnTarget}
-              circuitTunnelTarget={circuitTunnelTarget}
-              ascentFoot={ascentFoot}
-              venueExitTarget={venueExitTarget}
-              spawnPos={bodySpawn ?? undefined}
-              trainPad={trainPad}
-              challengeTargets={challengeTargets}
-              groundTargets={groundTargets}
-              nodeTargets={nodeTargets}
-              goalTargets={goalTargets}
-              brokerPad={brokerPad}
-              keeperTargets={keeperTargets}
-              gateTargets={gateTargets}
-              forceTargets={forceTargets}
-              venueTargets={venueTargets}
-              shape={shape}
-              spawnKnoll={knoll}
-              onAltitude={onAltitude}
-              onPose={onPose}
-              travelRef={travelRef}
-              padBeacon={worldLife?.padBeacon}
-            />
+            // Nested Suspense: Handler's RobotExpressive useGLTF must never fall
+            // through to the outer boundary and unmount Physics / the Circuit pad
+            // (click-during-load used to free-fall the remounted capsule into void).
+            <Suspense fallback={null}>
+              <Handler
+                controlsEnabled={controlsEnabled && !match}
+                onNear={onNear}
+                ownedKey={ownedKey}
+                matchActive={!!match}
+                handlerPos={handlerPos}
+                handlerHeading={handlerHeading}
+                camCue={camCue}
+                touchMove={touchMove}
+                touchBtn={touchBtn}
+                isHub={isHub}
+                trainerXp={trainerXp}
+                force={pledged}
+                inVenue={inVenue}
+                inAmphitheatre={inAmphitheatre}
+                circuitMode={inCircuit}
+                circuitRunning={circuitPhase === "running"}
+                circuitPhase={circuitPhase}
+                circuitSectorIdx={circuitSectorIdx}
+                circuitCheckpoints={circuitCheckpoints}
+                circuitCpNextRef={circuitCpNextRef}
+                circuitHazards={circuitPhase === "running" ? circuitHazards : []}
+                onCircuitPass={onCircuitPass}
+                onCircuitFail={onCircuitFail}
+                onCircuitStart={onCircuitStart}
+                onCircuitSample={onCircuitSample}
+                onCircuitStumble={onCircuitStumble}
+                concordVenueTargets={concordVenueTargets}
+                returnTarget={returnTarget}
+                circuitTunnelTarget={circuitTunnelTarget}
+                ascentFoot={ascentFoot}
+                venueExitTarget={venueExitTarget}
+                spawnPos={bodySpawn ?? undefined}
+                trainPad={trainPad}
+                challengeTargets={challengeTargets}
+                groundTargets={groundTargets}
+                nodeTargets={nodeTargets}
+                goalTargets={goalTargets}
+                brokerPad={brokerPad}
+                keeperTargets={keeperTargets}
+                gateTargets={gateTargets}
+                forceTargets={forceTargets}
+                venueTargets={venueTargets}
+                shape={shape}
+                spawnKnoll={knoll}
+                onAltitude={onAltitude}
+                onPose={onPose}
+                travelRef={travelRef}
+                padBeacon={worldLife?.padBeacon}
+              />
+            </Suspense>
           )}
         </Physics>
 
@@ -2629,6 +2661,8 @@ interface CamCue {
                         // the camera-relative steer basis stays fixed (no walk/fly-in-circles)
   /** Circuit: true while the chase cam is settling — Handler ignores move/jump. */
   inputLock: boolean;
+  /** Handler capsule has settled on a collider — camera look gated until then. */
+  bodyReady: boolean;
 }
 
 // on-screen touch control channels (mobile)
@@ -2878,6 +2912,14 @@ function Handler({
   // it free-fall and flash "under the ground" on refresh).
   const settled = useRef(false);
   const spawnAt = useRef(0);
+  // Camera look / arrive countdown wait on bodyReady — clear on mount & unmount so
+  // a remount never inherits a stale "ready" from a torn-down Handler.
+  useEffect(() => {
+    if (camCue.current) camCue.current.bodyReady = false;
+    return () => {
+      if (camCue.current) camCue.current.bodyReady = false;
+    };
+  }, [camCue]);
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
   const failCooldown = useRef(0);
@@ -3178,13 +3220,26 @@ function Handler({
       if (spawnAt.current === 0) spawnAt.current = performance.now();
       if (sensorGround) {
         settled.current = true;
+        if (camCue.current) camCue.current.bodyReady = true;
       } else if (performance.now() - spawnAt.current < 1200) {
         rb.setTranslation({ x: t.x, y: restY, z: t.z }, true);
         rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
         return;
       } else {
         settled.current = true;
+        if (camCue.current) camCue.current.bodyReady = true;
       }
+    } else if (camCue.current && !camCue.current.bodyReady) {
+      camCue.current.bodyReady = true;
+    }
+
+    // Circuit ready: keep soles on the pad until Jump-to-start. Does not early-
+    // return — jump edge still needs to reach onCircuitStart below.
+    if (circuitMode && circuitPhase === "ready" && t.y < restY - 0.2) {
+      const sx = spawnPos ? spawnPos[0] : t.x;
+      const sz = spawnPos ? spawnPos[2] : t.z;
+      rb.setTranslation({ x: sx, y: restY, z: sz }, true);
+      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
     }
     // ── jetpack cut-out ──
     // Three ways to drop out of flight back into a plain gravity fall (identical
@@ -4140,10 +4195,20 @@ function CameraController({
 
   useEffect(() => {
     const el = gl.domElement;
-    const onDown = (e: PointerEvent) => { dragging.current = true; last.current = { x: e.clientX, y: e.clientY }; };
+    const onDown = (e: PointerEvent) => {
+      // Ignore look input until the Trainer capsule has settled — clicks during
+      // the GLB/blank window were pitching the lens into the floor/void.
+      if (camCue.current && !camCue.current.bodyReady) return;
+      dragging.current = true;
+      last.current = { x: e.clientX, y: e.clientY };
+    };
     const onUp = () => { dragging.current = false; };
     const onMove = (e: PointerEvent) => {
       if (!dragging.current) return;
+      if (camCue.current && !camCue.current.bodyReady) {
+        dragging.current = false;
+        return;
+      }
       const st = useSettings.getState();
       const sens = st.camSensitivity;
       yaw.current -= (e.clientX - last.current.x) * 0.005 * sens;
@@ -4152,7 +4217,12 @@ function CameraController({
       last.current = { x: e.clientX, y: e.clientY };
       lastInput.current = performance.now();
     };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); distTarget.current = Math.min(120, Math.max(6, distTarget.current + e.deltaY * 0.012)); lastInput.current = performance.now(); };
+    const onWheel = (e: WheelEvent) => {
+      if (camCue.current && !camCue.current.bodyReady) return;
+      e.preventDefault();
+      distTarget.current = Math.min(120, Math.max(6, distTarget.current + e.deltaY * 0.012));
+      lastInput.current = performance.now();
+    };
     // Q — snap the camera back behind the character (classic third-person
     // recenter). Reuses the takeoff/landing sweep so it eases in cleanly: swings
     // the lens directly behind the player, resets to the over-the-shoulder pitch
@@ -4226,21 +4296,27 @@ function CameraController({
     }
 
     const st = useSettings.getState();
+    const cueEarly = camCue.current;
+    const bodyReady = cueEarly?.bodyReady ?? false;
     // drain touch orbit / pinch deltas accumulated by the on-screen look pad
     const drag = camDrag.current;
     if (drag && (drag.dx || drag.dy || drag.pinch)) {
-      const sens = st.camSensitivity;
-      yaw.current -= drag.dx * 0.005 * sens;
-      const pdy = drag.dy * 0.004 * sens * (st.invertY ? -1 : 1);
-      pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - pdy));
-      if (drag.pinch) distTarget.current = Math.min(120, Math.max(6, distTarget.current - drag.pinch * 0.02));
-      drag.dx = 0; drag.dy = 0; drag.pinch = 0;
-      lastInput.current = performance.now();
+      if (!bodyReady) {
+        drag.dx = 0; drag.dy = 0; drag.pinch = 0;
+      } else {
+        const sens = st.camSensitivity;
+        yaw.current -= drag.dx * 0.005 * sens;
+        const pdy = drag.dy * 0.004 * sens * (st.invertY ? -1 : 1);
+        pitch.current = Math.min(PITCH_MAX, Math.max(PITCH_MIN, pitch.current - pdy));
+        if (drag.pinch) distTarget.current = Math.min(120, Math.max(6, distTarget.current - drag.pinch * 0.02));
+        drag.dx = 0; drag.dy = 0; drag.pinch = 0;
+        lastInput.current = performance.now();
+      }
     }
 
     // gamepad right stick — free look (rate-based, scaled by sensitivity)
     const pad = getPad();
-    if (pad.connected && (pad.rx || pad.ry)) {
+    if (bodyReady && pad.connected && (pad.rx || pad.ry)) {
       const sens = st.camSensitivity;
       yaw.current -= pad.rx * 2.6 * sens * dt;
       const pdy = pad.ry * 1.8 * sens * dt * (st.invertY ? -1 : 1);
@@ -4325,24 +4401,31 @@ function CameraController({
 
     // Arrival: ease from a slight off-angle + wider frame into face-on (portal
     // behind the Trainer), then Q-sweep to chase — not a locked still portrait.
+    // Pause the countdown until the capsule exists — otherwise the hold burns
+    // during the blank GLB window and free-look is live the moment they appear.
     const circuitArriveActive = inCircuit && circuitArriveHold.current > 0;
     if (circuitArriveActive) {
-      const holdBefore = circuitArriveHold.current;
-      circuitArriveHold.current = Math.max(0, circuitArriveHold.current - dt);
-      const holdSpan =
-        circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
-      const u = 1 - circuitArriveHold.current / holdSpan; // 0→1
-      if (cue) {
-        const drift = (1 - u) * 0.28; // ~16° → face-on
-        yaw.current = cue.heading + drift;
-      }
-      pitch.current = PITCH_GROUND - 0.06 * (1 - u);
-      distTarget.current = CAM_DIST_DEFAULT * (1.14 - 0.14 * u);
-      if (holdBefore > 0 && circuitArriveHold.current === 0) {
-        recenter.current = CIRCUIT_ARRIVE_SWEEP_S;
-        recenterPitch.current = PITCH_GROUND;
-        distTarget.current = CAM_DIST_DEFAULT;
-        if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.35);
+      if (!bodyReady) {
+        pitch.current = PITCH_GROUND;
+        dragging.current = false;
+      } else {
+        const holdBefore = circuitArriveHold.current;
+        circuitArriveHold.current = Math.max(0, circuitArriveHold.current - dt);
+        const holdSpan =
+          circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
+        const u = 1 - circuitArriveHold.current / holdSpan; // 0→1
+        if (cue) {
+          const drift = (1 - u) * 0.28; // ~16° → face-on
+          yaw.current = cue.heading + drift;
+        }
+        pitch.current = PITCH_GROUND - 0.06 * (1 - u);
+        distTarget.current = CAM_DIST_DEFAULT * (1.14 - 0.14 * u);
+        if (holdBefore > 0 && circuitArriveHold.current === 0) {
+          recenter.current = CIRCUIT_ARRIVE_SWEEP_S;
+          recenterPitch.current = PITCH_GROUND;
+          distTarget.current = CAM_DIST_DEFAULT;
+          if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.35);
+        }
       }
     }
 
@@ -4359,7 +4442,13 @@ function CameraController({
 
     const recentering = recenter.current > 0 && !dragging.current && !circuitArriveActive;
     if (recenter.current > 0) recenter.current = Math.max(0, recenter.current - dt);
-    if (circuitInputLock.current > 0) circuitInputLock.current = Math.max(0, circuitInputLock.current - dt);
+    // Keep input locked while the body isn't ready so Jump-to-start can't fire
+    // into a half-loaded pad, and don't burn the settle timer during the blank.
+    if (!bodyReady && inCircuit) {
+      circuitInputLock.current = Math.max(circuitInputLock.current, 0.05);
+    } else if (circuitInputLock.current > 0) {
+      circuitInputLock.current = Math.max(0, circuitInputLock.current - dt);
+    }
 
     // Freeze move/jump only during Circuit enter/intro settle — not mid-run takeoff recenters.
     if (cue) cue.inputLock = circuitInputLock.current > 0;
