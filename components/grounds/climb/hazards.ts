@@ -54,19 +54,20 @@ const REACH_KINDS: HazardKind[][] = [
   ["wardenWisp", "cinderArc", "ringRotor"],
 ];
 
-function makeRng(sector: number): () => number {
-  let s = Math.floor(hash01(`climb:haz:${sector}`) * 2147483646) + 1;
+function makeRng(sector: number, seed = ""): () => number {
+  const key = seed ? `climb:haz:${seed}:${sector}` : `climb:haz:${sector}`;
+  let s = Math.floor(hash01(key) * 2147483646) + 1;
   return () => ((s = (s * 16807) % 2147483647), s / 2147483647);
 }
 
 /** Deterministic hazard layout for a sector, placed in the gaps between rings. */
-export function sectorHazards(sector: number, track: CircuitTrackDef): Hazard[] {
+export function sectorHazards(sector: number, track: CircuitTrackDef, seed = ""): Hazard[] {
   const d = sectorDifficulty(sector);
   if (d.hazardBudget <= 0) return [];
   const kinds = REACH_KINDS[reachIndex(sector)] ?? [];
   if (kinds.length === 0) return [];
 
-  const rnd = makeRng(sector);
+  const rnd = makeRng(sector, seed);
   const gates = track.checkpoints; // [start, gate1..finish]
   const out: Hazard[] = [];
 

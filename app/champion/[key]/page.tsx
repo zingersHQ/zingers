@@ -1,6 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock, Mountain } from "lucide-react";
 import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
 import { houseProfile } from "@/lib/evolve/elo";
@@ -14,13 +15,17 @@ import { useIsMobile } from "@/lib/use-device";
 import type { CareerEvent, CareerEventKind } from "@/lib/types";
 import { getHandle } from "@/lib/owner";
 import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
+import { canRetire, readCareer } from "@/lib/career-friction";
+import { isRetired } from "@/lib/legacy";
 
 export default function ChampionPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = use(params);
   const ckey = key.toUpperCase();
   const [mounted, setMounted] = useState(false);
+  const [retireNote, setRetireNote] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const { get, getRecipe, owned, events, snapshots } = useChampions();
+  const router = useRouter();
+  const { get, getRecipe, owned, events, snapshots, retireOwned } = useChampions();
 
   useEffect(() => {
     setMounted(true);
@@ -35,6 +40,8 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
   const card = cardOf(ckey, c || blank(), { memory: recipe.memory });
   const col = card.force.hex;
   const saga = [...(events[ckey] || [])].sort((a, b) => b.ts - a.ts);
+  const career = readCareer(c || blank(), events[ckey]);
+  const retireOk = owned === ckey && canRetire(c || blank()) && !isRetired(ckey);
   const earliest = snapshots[ckey]?.[0]?.axes ?? null;
   const memory = recipe.memory || [];
   const prof = houseProfile(c);
@@ -91,6 +98,69 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
         <Stat n={card.skillLevel} l="SKILL LEVEL" c="var(--gold)" />
         <Stat n={card.skills.length} l="SKILLS" c={col} />
         <Stat n={card.battles} l="BATTLES" c="var(--muted)" />
+      </div>
+
+      <div className="panel" style={{ ["--ac" as string]: col, padding: isMobile ? 18 : 22 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 10 }}>
+          CAREER · FORM · FATIGUE · SCARS
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "baseline" }}>
+          <strong style={{ fontSize: 20 }}>{career.formLabel}</strong>
+          <span className="mono" style={{ fontSize: 12, color: "var(--muted2)" }}>
+            {career.fatigueLabel}
+          </span>
+        </div>
+        {career.scars.length > 0 ? (
+          <ul style={{ margin: "12px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
+            {career.scars.map((scar) => (
+              <li key={scar.id} style={{ fontSize: 13, lineHeight: 1.45, color: "var(--muted)" }}>
+                <strong style={{ color: "var(--ink)" }}>{scar.name}</strong> — {scar.gloss}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ color: "var(--muted)", fontSize: 13, margin: "10px 0 0" }}>
+            No scars yet. Losing streaks and a long career leave marks that change how you fly.
+          </p>
+        )}
+        {owned === ckey && (
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+            {isRetired(ckey) ? (
+              <p className="mono" style={{ fontSize: 12, color: "var(--muted2)", margin: 0 }}>
+                Sealed in the Long Vault.
+              </p>
+            ) : retireOk ? (
+              <>
+                <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 10px", lineHeight: 1.5 }}>
+                  Seal them in the Long Vault. They leave an heirloom wing for the next mind you claim.
+                </p>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ ["--ac" as string]: col }}
+                  onClick={() => {
+                    const out = retireOwned();
+                    if (out.ok) {
+                      setRetireNote(out.detail ?? "Sealed.");
+                      router.push("/collection");
+                    } else {
+                      setRetireNote(out.detail ?? "Not yet.");
+                    }
+                  }}
+                >
+                  Retire to the House
+                </button>
+              </>
+            ) : (
+              <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0, letterSpacing: 0.4 }}>
+                RETIRE · rank 8, 12 wins, or 20 battles
+              </p>
+            )}
+            {retireNote && (
+              <p style={{ fontSize: 12, color: col, margin: "10px 0 0" }}>{retireNote}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {saga.length > 0 && (

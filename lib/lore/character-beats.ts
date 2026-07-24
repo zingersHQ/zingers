@@ -3,6 +3,16 @@
 import type { CreatureType } from "@/lib/types";
 import type { CreatureAnimMode } from "@/lib/render/animations";
 import { ROSTER } from "@/lib/engine/roster";
+import {
+  BAKED_AFTER_FIGHT,
+  BAKED_FLIGHT_REACT,
+  BAKED_GREETING,
+  BAKED_HOMECOMING,
+  BAKED_IMPRINT_ACK,
+  BAKED_IMPRINT_ASK,
+  BAKED_RANKED_FINALE,
+  BAKED_WAKE,
+} from "@/lib/minds/baked";
 
 export interface BeatLine {
   speaker: string;
@@ -29,6 +39,7 @@ const WAKE: Record<string, string> = {
   VOX: "Ladies, gentlemen — my Trainer has arrived. Try to look impressed.",
   WIT: "Took you long enough. I had a riposte ready and everything.",
   MUSE: "What if… you and I changed what this whole place is even about?",
+  ...BAKED_WAKE,
 };
 
 export function championWakeLine(key: string): string {
@@ -54,6 +65,7 @@ export function championImprintAsk(key: string): string {
     VOX: "Feed me a line for the performance. Make it stick.",
     WIT: "One lesson. Sharp. Then we leave the Concord.",
     MUSE: "Reframe me once before we climb. Change how I think.",
+    ...BAKED_IMPRINT_ASK,
   };
   return lines[key] ?? "Teach me something before we climb. Make it mine.";
 }
@@ -83,6 +95,7 @@ const FLIGHT_REACT: Record<string, [string, string]> = {
   VOX: ["Every legend needs a takeoff. Give me the room.", "…and the crowd looks UP. Perfect."],
   WIT: ["Betting I fumble the landing? Watch the timing.", "Nailed it. Obviously."],
   MUSE: ["What if the floor was only ever a suggestion?", "…oh. It let go. So did I."],
+  ...BAKED_FLIGHT_REACT,
 };
 
 export function firstFlightScript(key: string): BeatScript {
@@ -145,6 +158,7 @@ export function championGreeting(key: string, ctx: "train" | "return" | "arena")
       return: "Every return is a chance to reframe everything.",
       arena: "Pick a fight that isn't the fight they expect.",
     },
+    ...BAKED_GREETING,
   };
   return byCtx[key]?.[ctx] ?? `${name} is ready when you are.`;
 }
@@ -196,6 +210,7 @@ const HOMECOMING: Record<string, Partial<Record<HomecomingMood, string>>> = {
     hot: "We keep changing what the fight is about. It keeps working.",
     cold: "They held the old question and I let them. New question next time.",
   },
+  ...BAKED_HOMECOMING,
 };
 
 export function championHomecoming(key: string, mood: HomecomingMood): string {
@@ -236,6 +251,11 @@ export function championAfterFight(
     WIT: `${opponentName} landed first. I'll land last next time.`,
     MUSE: `${opponentName} kept the old question. I need a new one.`,
   };
+  const baked = BAKED_AFTER_FIGHT[key];
+  if (baked) {
+    const tpl = won ? baked.win : baked.loss;
+    return tpl.replaceAll("{opp}", opponentName);
+  }
   return (won ? win[key] : loss[key]) ?? (won ? `We took ${opponentName}.` : `${opponentName} got us this time.`);
 }
 
@@ -252,6 +272,7 @@ export function championImprintAck(key: string): string {
     PARADOX: "I'll question it until it holds — then I'll keep it.",
     WIT: "Filed, sharpened, ready. Watch me use it.",
     MUSE: "That reframes everything. I like it. Keeping it.",
+    ...BAKED_IMPRINT_ACK,
   };
   return lines[key] ?? "Got it. I'll carry that in.";
 }
@@ -268,6 +289,7 @@ export function championRankedFinale(key: string): string {
     PARADOX: "The ranking assumes certainty. We proved otherwise.",
     WIT: "Clean. Ranked. No wasted syllables.",
     MUSE: "We didn't just win — we changed what winning meant.",
+    ...BAKED_RANKED_FINALE,
   };
   return lines[key] ?? "That ranked win was real. I felt it.";
 }

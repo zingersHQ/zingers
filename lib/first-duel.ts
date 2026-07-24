@@ -5,6 +5,11 @@ import { WHEEL, wheelNeighbors } from "@/lib/lore/canon";
 import { blank } from "@/lib/evolve/progression";
 import { ROSTER } from "@/lib/engine/roster";
 import { FIGHT } from "@/lib/player-copy";
+import {
+  BAKED_FIRST_DUEL_HOOKS,
+  BAKED_ORIGIN_AXIS,
+  BAKED_STARTERS_BY_FORCE,
+} from "@/lib/minds/baked";
 
 export const FIRST_DUEL_TAGLINE = "Claim a mind. Jump to fly.";
 
@@ -26,6 +31,7 @@ const ORIGIN_AXIS: Partial<Record<string, keyof Champion>> = {
   EMBER: "aggression",
   PARADOX: "control",
   WIT: "flair",
+  ...BAKED_ORIGIN_AXIS,
 };
 
 /** Rookie body shown during character select — matches post-adoption career. */
@@ -49,15 +55,16 @@ export const FIRST_DUEL_HOOKS: Record<string, string> = {
   VOX: "Grand oratory. Plays to the crowd.",
   WIT: "Surgical timing. Needle and riposte.",
   MUSE: "Lateral leaps. Reframes the fight.",
+  ...BAKED_FIRST_DUEL_HOOKS,
 };
 
 /** Champions eligible per Force — weekly rotation picks one per spoke. */
 export const STARTERS_BY_FORCE: Record<CreatureType, readonly string[]> = {
   LOGIC: ["AXIOM", "PARADOX"],
   CHAOS: ["GLITCH", "EMBER"],
-  COMPOSURE: ["BASTION"],
+  COMPOSURE: ["BASTION", ...(BAKED_STARTERS_BY_FORCE.COMPOSURE ?? [])],
   RHETORIC: ["VOX", "WIT"],
-  CREATIVITY: ["MUSE"],
+  CREATIVITY: ["MUSE", ...(BAKED_STARTERS_BY_FORCE.CREATIVITY ?? [])],
 };
 
 /** Onboarding hero — visually loud, legend-tier silhouette. */

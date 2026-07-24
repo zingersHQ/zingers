@@ -10,6 +10,7 @@
 // moved behind the hub instead of being the landing screen.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles, ArrowUpCircle, ChevronsUp, Dumbbell, KeyRound, DoorOpen, Award } from "lucide-react";
 import type { BattleEnd, BattleTurn, CareerEvent, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
@@ -19,6 +20,7 @@ import { championHomecoming, type HomecomingMood } from "@/lib/lore/character-be
 import { useChampions } from "@/store/champions";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
+import { NextCard } from "@/components/director/next-card";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { MobileBoutStage } from "@/components/mobile/mobile-bout";
 
@@ -201,6 +203,7 @@ function Hub({
   onOpenDaily: () => void;
   onNavigate?: (tab: string) => void;
 }) {
+  const router = useRouter();
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 22 }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -234,6 +237,18 @@ function Hub({
         )}
 
         <div style={{ padding: "12px 14px 0" }}>
+          {/* the Director — the one next thing, so the hub is never "you're free" */}
+          <NextCard
+            hideAlso={["daily"]}
+            onGo={(target) => {
+              if (target === "daily") onOpenDaily();
+              else if (target === "flight") onNavigate?.("climb");
+              else if (target === "collection") router.push("/collection");
+              else if (target === "hub") router.push("/grounds");
+              else onNavigate?.("champion");
+            }}
+          />
+
           {/* the Report — what happened to your champion while you were away */}
           {mounted && owned && ROSTER[owned] && homecoming && (
             <ReportCard owned={owned} homecoming={homecoming} onNavigate={onNavigate} />

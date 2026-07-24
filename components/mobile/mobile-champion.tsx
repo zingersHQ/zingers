@@ -20,6 +20,7 @@ import { useChampions } from "@/store/champions";
 import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { MobileAdopt } from "@/components/mobile/mobile-adopt";
+import { canRetire, readCareer } from "@/lib/career-friction";
 
 const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
   { key: "aggression", label: "Aggression", hints: ["Patient", "Relentless"] },
@@ -39,6 +40,8 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const fragments = useChampions((s) => s.fragments);
   const trainerXp = useChampions((s) => s.trainerXp);
   const setNick = useChampions((s) => s.setNick);
+  const events = useChampions((s) => (s.owned ? s.events[s.owned] : undefined));
+  const retireOwned = useChampions((s) => s.retireOwned);
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -131,6 +134,8 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const battles = champ.wins + champ.losses;
   const wr = battles ? Math.round((champ.wins / battles) * 100) : 0;
   const canTrain = crowns >= TRAIN_COST;
+  const career = readCareer(champ, events);
+  const retireOk = canRetire(champ);
 
   return (
     <div style={{ position: "relative", height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 14px 24px" }}>
@@ -239,6 +244,53 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
               Locked in — shows on this champion&apos;s profile.
             </p>
           ) : null}
+        </div>
+
+        {/* career friction — form / fatigue / scars + retire (Stage 4) */}
+        <div className="panel" style={{ ["--ac" as string]: col, padding: 16, marginTop: 12 }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 8 }}>
+            CAREER · FORM · FATIGUE
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "baseline" }}>
+            <strong style={{ fontSize: 18 }}>{career.formLabel}</strong>
+            <span className="mono" style={{ fontSize: 11, color: "var(--muted2)" }}>{career.fatigueLabel}</span>
+          </div>
+          {career.scars.length > 0 && (
+            <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+              {career.scars.map((scar) => (
+                <li key={scar.id} style={{ fontSize: 12, lineHeight: 1.4, color: "var(--muted)" }}>
+                  <strong style={{ color: "var(--ink)" }}>{scar.name}</strong> — {scar.gloss}
+                </li>
+              ))}
+            </ul>
+          )}
+          {retireOk ? (
+            <button
+              type="button"
+              onClick={() => {
+                const out = retireOwned();
+                flash(out.ok ? (out.detail ?? "Sealed in the Long Vault.") : (out.detail ?? "Not yet."));
+              }}
+              style={{
+                marginTop: 12,
+                width: "100%",
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: `1px solid ${col}`,
+                background: "transparent",
+                color: col,
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              Retire to the House
+            </button>
+          ) : (
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "10px 0 0", letterSpacing: 0.3 }}>
+              RETIRE · rank 8, 12 wins, or 20 battles
+            </p>
+          )}
         </div>
 
         {/* temperament — status meters; Imprints + fights grow these (never drag) */}

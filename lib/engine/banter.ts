@@ -6,6 +6,7 @@
 import "server-only";
 import type { Rng } from "./xai";
 import type { CreatureType } from "@/lib/types";
+import { BAKED_BANTER } from "@/lib/minds/baked";
 
 export interface BanterCtx {
   moveId: string;
@@ -147,6 +148,7 @@ const MOVE_BARS: Record<string, string[]> = {
     "Tilt plus fire equals {opp} explaining this loss forever.",
     "Final answer, {opp}: everything, on fire.",
   ],
+  ...BAKED_BANTER,
 };
 
 const TYPE_BARS: Record<CreatureType, string[]> = {

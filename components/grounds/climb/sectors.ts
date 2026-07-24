@@ -42,8 +42,10 @@ function sectorName(i: number): string {
   return `${theme.name} · ${ROLE_WORD[roleIndex(i)] ?? "Climb"}`;
 }
 
-function makeRng(i: number): () => number {
-  let s = Math.floor(hash01(`climb:sector:${i}`) * 2147483646) + 1;
+/** Campaign seed "" keeps the Hundred frozen; Expeditions pass a week seed. */
+function makeRng(i: number, seed = ""): () => number {
+  const key = seed ? `climb:sector:${seed}:${i}` : `climb:sector:${i}`;
+  let s = Math.floor(hash01(key) * 2147483646) + 1;
   return () => ((s = (s * 16807) % 2147483647), s / 2147483647);
 }
 
@@ -119,10 +121,10 @@ function enforceSwing(
   return { dy, sign, streak };
 }
 
-function buildClimbSector(i: number): CircuitTrackDef {
+export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   const d = sectorDifficulty(i);
   const role = roleOf(i);
-  const rnd = makeRng(i);
+  const rnd = makeRng(i, seed);
   const [gapMin, gapMax] = d.gapSec;
   // Arrival's 3-ring staircase may rise twice. Everything else reverses by the
   // third same-direction step so long diagonals can't form.
@@ -178,7 +180,7 @@ function buildClimbSector(i: number): CircuitTrackDef {
   ];
 
   return {
-    id: `climb:s${i + 1}`,
+    id: seed ? `climb:${seed}:s${i + 1}` : `climb:s${i + 1}`,
     name: sectorName(i),
     spawn: [0, 1.1, -2.5],
     platforms: [],
@@ -190,8 +192,18 @@ export const CLIMB_SECTORS: CircuitTrackDef[] = Array.from({ length: CLIMB_SECTO
   buildClimbSector(i),
 );
 
-export function climbSector(index: number): CircuitTrackDef {
-  return CLIMB_SECTORS[Math.max(0, Math.min(CLIMB_SECTOR_COUNT - 1, index))]!;
+const seededCache = new Map<string, CircuitTrackDef>();
+
+export function climbSector(index: number, seed = ""): CircuitTrackDef {
+  const i = Math.max(0, Math.min(CLIMB_SECTOR_COUNT - 1, index));
+  if (!seed) return CLIMB_SECTORS[i]!;
+  const key = `${seed}:${i}`;
+  let t = seededCache.get(key);
+  if (!t) {
+    t = buildClimbSector(i, seed);
+    seededCache.set(key, t);
+  }
+  return t;
 }
 
 export { CLIMB_SECTOR_COUNT } from "./difficulty";

@@ -5,7 +5,10 @@ import type { AxisSnapshot, CareerEvent, CareerEventKind, Champion, CreatureType
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
 import { applyResult, blank, blankStyle, levelFor, tierIndex, TIERS } from "@/lib/evolve/progression";
 import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
-import { TRAINER_XP } from "@/lib/evolve/trainer";
+import { TRAINER_XP, trainerLevel } from "@/lib/evolve/trainer";
+import { recruitSlotsOpen } from "@/lib/unlock-ladder";
+import { consumePendingHeirloom, retireChampion as retireToLegacy } from "@/lib/legacy";
+import { canRetire } from "@/lib/career-friction";
 import { currentSeasonNumber } from "@/lib/lore/season";
 import { STORAGE } from "@/lib/brand";
 import {
@@ -263,6 +266,11 @@ interface ChampionStore {
   imprint: (key: string, lessonId: string) => Promise<{ reply: string; live: boolean; applied: boolean; dial: Partial<Strat> }>;
   setOwned: (key: string) => void;
   adoptStarterRookie: (key: string) => void;
+  /**
+   * Retire the active champion into House memory + leave an heirloom wing for
+   * the next claim (docs/long-game.md Stage 4). Clears `owned`.
+   */
+  retireOwned: () => { ok: boolean; detail?: string };
   // Whether a mind is in the player's roster (recruited, or the adopted champion).
   isRecruited: (key: string) => boolean;
   // Recruit a new mind for RECRUIT_COST Crowns (server-authoritative spend). A
@@ -575,6 +583,8 @@ export const useChampions = create<ChampionStore>()(
       setOwned: (key) =>
         set((s) => {
           const guestXp = !s.owned ? guestDepthXp(takeGuestClimbDepth()) : 0;
+          // Switching active mind can inherit a retirement heirloom wing.
+          if (typeof window !== "undefined") consumePendingHeirloom();
           return {
             owned: key,
             roster: s.roster.includes(key) ? s.roster : [...s.roster, key],
@@ -595,6 +605,7 @@ export const useChampions = create<ChampionStore>()(
       // Guest Climb depth (if any) converts into the first Trainer mark here.
       adoptStarterRookie: (key) =>
         set((s) => {
+          if (typeof window !== "undefined") consumePendingHeirloom();
           if (s.owned) return { owned: key, roster: s.roster.includes(key) ? s.roster : [...s.roster, key], events: ensureClaimed(s.events, key) };
           const guestXp = guestDepthXp(takeGuestClimbDepth());
           const rookie = blank();
@@ -609,6 +620,35 @@ export const useChampions = create<ChampionStore>()(
           };
         }),
 
+      retireOwned: () => {
+        const s = get();
+        const key = s.owned;
+        if (!key) return { ok: false, detail: "No active champion." };
+        const champ = s.progress[key] || blank();
+        if (!canRetire(champ)) {
+          return { ok: false, detail: "Raise them further — rank 8, 12 wins, or 20 battles." };
+        }
+        const name = ROSTER[key]?.name ?? key;
+        const result = retireToLegacy(key, champ, name);
+        if (!result) return { ok: false, detail: "Already sealed in the House." };
+        const now = Date.now();
+        const sealed: CareerEvent = {
+          id: `${now}-sealed-${key}`,
+          ts: now,
+          kind: "sealed",
+          title: "Sealed in the Long Vault",
+          detail: result.heirloom.gloss,
+        };
+        set((st) => ({
+          owned: null,
+          events: {
+            ...st.events,
+            [key]: [sealed, ...(st.events[key] || [])].slice(0, 80),
+          },
+        }));
+        return { ok: true, detail: result.heirloom.gloss };
+      },
+
       isRecruited: (key) => {
         const s = get();
         return s.owned === key || s.roster.includes(key);
@@ -616,6 +656,10 @@ export const useChampions = create<ChampionStore>()(
       recruit: async (key) => {
         const s = get();
         if (s.owned === key || s.roster.includes(key)) return false; // already yours
+        // Unlock Ladder — roster slots drip with Trainer rank.
+        const slots = recruitSlotsOpen(trainerLevel(s.trainerXp).level);
+        const count = new Set([...(s.owned ? [s.owned] : []), ...s.roster]).size;
+        if (count >= slots) return false;
         const res = await walletEvent("recruit");
         if (res) {
           if (!res.ok) return false; // server: can't afford

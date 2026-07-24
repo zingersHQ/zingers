@@ -57,3 +57,43 @@ export function ascentCraftCrowns(sectors: number, clearedAll = false): number {
   const reaches = Math.ceil(sectors / REACH_SIZE);
   return Math.round(sectors * 3 + reaches * 15 + (clearedAll ? 50 : 0));
 }
+
+// ── Session wing mods (Stage 2) ──────────────────────────────────────────────
+// Set once at run start by both bodies; Flyer / Handler read each frame so we
+// don't thread props through the whole R3F tree. Cleared when leaving Flight.
+
+export interface AscentSessionMods {
+  cruiseSink: number;
+  cruiseGlide: number;
+  diveSink: number;
+  diveGlide: number;
+  stumbleVy: number;
+  stumbleLockS: number;
+  stumbleImmuneS: number;
+  cruiseSpeedMult: number;
+}
+
+const DEFAULT_SESSION: AscentSessionMods = {
+  cruiseSink: ASCENT_GLIDE.cruiseSink,
+  cruiseGlide: ASCENT_GLIDE.cruiseGlide,
+  diveSink: ASCENT_GLIDE.diveSink,
+  diveGlide: ASCENT_GLIDE.diveGlide,
+  stumbleVy: ASCENT_STUMBLE.vy,
+  stumbleLockS: ASCENT_STUMBLE.lockS,
+  stumbleImmuneS: ASCENT_STUMBLE.immuneS,
+  cruiseSpeedMult: 1,
+};
+
+let sessionMods: AscentSessionMods = { ...DEFAULT_SESSION };
+
+export function setAscentSessionMods(partial: Partial<AscentSessionMods>): void {
+  sessionMods = { ...DEFAULT_SESSION, ...partial };
+}
+
+export function clearAscentSessionMods(): void {
+  sessionMods = { ...DEFAULT_SESSION };
+}
+
+export function ascentSessionMods(): AscentSessionMods {
+  return sessionMods;
+}

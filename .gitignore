@@ -43,6 +43,9 @@ yarn-error.log*
 # Living Agency ledger (local ops state — never commit)
 .agency/state.json
 
+# Stage 6 mind drafts (review before moving to content/minds/reviewed/)
+content/minds/draft/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

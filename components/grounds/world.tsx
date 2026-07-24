@@ -12,7 +12,7 @@ import { blank, skillLevel, TYPE_COLOR } from "@/lib/evolve/progression";
 import { trainerLevel } from "@/lib/evolve/trainer";
 import { readerPalette, GOLD } from "@/lib/render/palette";
 import { flightAttitudePlanar } from "@/lib/render/animations";
-import { ASCENT_GLIDE, ASCENT_STUMBLE } from "@/lib/ascent-rules";
+import { ASCENT_GLIDE, ascentSessionMods } from "@/lib/ascent-rules";
 import { ReaderBackSigil, ReaderRankEmblem } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
 import { FlyingFollower } from "./flying-cast";
@@ -812,6 +812,7 @@ export default function World({
                 circuitPhase !== "done" &&
                 circuitPhase !== "failed" &&
                 circuitPhase !== "ceiling" &&
+                circuitPhase !== "ranklock" &&
                 circuitPhase !== "prove" && (
                 // Own Suspense: champion GLTF must not tear down ArrivalDeck / Handler.
                 <Suspense fallback={null}>
@@ -2625,10 +2626,9 @@ const FLY_MAX_FALL = 20;       // terminal fall (sticky, never uncontrollable)
 // Cruise glide: powered forward without thrusting — ease toward a gentle sink so
 // W / Circuit cruise reads as "flying forward with a slight descent", not flat
 // horizontal and not a stone drop. Idle (no forward) keeps full FLY_GRAVITY.
+// Baseline glide — runtime wing traits override via ascentSessionMods().
 const FLY_CRUISE_SINK = ASCENT_GLIDE.cruiseSink; // shared with Climb
 const FLY_CRUISE_GLIDE = ASCENT_GLIDE.cruiseGlide;
-// Circuit S/↓: keep the brake, add a soft nose-down so Surge high→low rings are
-// reachable (~6–8u drops) without cutting the pack. Milder than idle freefall.
 const FLY_DIVE_SINK = ASCENT_GLIDE.diveSink;
 const FLY_DIVE_GLIDE = ASCENT_GLIDE.diveGlide;
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
@@ -3380,7 +3380,8 @@ function Handler({
     wasCircuitRunning.current = circuitRunning;
 
     if (circuitRunning) {
-      const cruise = az > 0.2 ? CIRCUIT_SURGE : az < -0.2 ? CIRCUIT_BRAKE : CIRCUIT_CRUISE;
+      const speedMult = ascentSessionMods().cruiseSpeedMult;
+      const cruise = (az > 0.2 ? CIRCUIT_SURGE : az < -0.2 ? CIRCUIT_BRAKE : CIRCUIT_CRUISE) * speedMult;
       // light lateral steer only (layouts are coplanar). Steer along the CAMERA's
       // right axis, not world +X: the Circuit lens looks down-track (+Z), so a raw
       // +X nudge read as screen-LEFT — D/→ moved left and A/← moved right. right.x
@@ -3447,10 +3448,11 @@ function Handler({
     let justStumbled = false;
     if (circuitMode && circuitHazards.length > 0 && controlsEnabled && state.clock.elapsedTime >= stumbleGrace.current) {
       const tt = state.clock.elapsedTime;
+      const ses = ascentSessionMods();
       for (const h of circuitHazards) {
         if (hazardHits(h, tt, t.x, t.y, t.z)) {
-          stumbleLock.current = tt + ASCENT_STUMBLE.lockS;
-          stumbleGrace.current = tt + ASCENT_STUMBLE.immuneS;
+          stumbleLock.current = tt + ses.stumbleLockS;
+          stumbleGrace.current = tt + ses.stumbleImmuneS;
           stumbleActive = true;
           justStumbled = true;
           thrust.current = 0;
@@ -3502,12 +3504,14 @@ function Handler({
       if (held) {
         vy = Math.max(-FLY_MAX_FALL, Math.min(FLY_MAX_RISE, vy + (FLY_THRUST_ACCEL - FLY_GRAVITY) * dt));
       } else if (diving) {
-        const k = 1 - Math.exp(-FLY_DIVE_GLIDE * dt);
-        vy = vy + (FLY_DIVE_SINK - vy) * k;
+        const ses = ascentSessionMods();
+        const k = 1 - Math.exp(-(ses.diveGlide || FLY_DIVE_GLIDE) * dt);
+        vy = vy + ((ses.diveSink || FLY_DIVE_SINK) - vy) * k;
         vy = Math.max(-FLY_MAX_FALL, vy);
       } else if (cruising) {
-        const k = 1 - Math.exp(-FLY_CRUISE_GLIDE * dt);
-        vy = vy + (FLY_CRUISE_SINK - vy) * k;
+        const ses = ascentSessionMods();
+        const k = 1 - Math.exp(-(ses.cruiseGlide || FLY_CRUISE_GLIDE) * dt);
+        vy = vy + ((ses.cruiseSink || FLY_CRUISE_SINK) - vy) * k;
       } else {
         vy = Math.max(-FLY_MAX_FALL, vy - FLY_GRAVITY * dt);
       }
@@ -3544,7 +3548,7 @@ function Handler({
     // frame: kill any upward climb, punch downward, and bleed horizontal drive
     if (justStumbled) {
       const lv = rb.linvel();
-      rb.setLinvel({ x: lv.x * 0.5, y: ASCENT_STUMBLE.vy, z: lv.z * 0.5 }, true);
+      rb.setLinvel({ x: lv.x * 0.5, y: ascentSessionMods().stumbleVy, z: lv.z * 0.5 }, true);
       if (camCue.current) camCue.current.zoom = Math.min(1, camCue.current.zoom + 0.5);
     }
     // touchdown absorb — squash on the frame we regain the ground with downward speed

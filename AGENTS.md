@@ -12,6 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Game-feel conventions (added 2026-07)
 
+- **Flight parity (mobile + desktop)**: Flight is one soul, two bodies (`docs/essence.md`). Any change to rings/gates, hazards, camps, scout, gold rings, Flight sigil, rewards, or Prove must land on **both** `circuit-lite.tsx` (mobile) and desktop Circuit (`grounds-screen` / `world` / `circuit-hud`), preferably via shared `components/grounds/climb/*` helpers. Input/camera/perf may differ; missing features may not. Follow the **`flight-parity`** skill (`.cursor/skills/flight-parity/SKILL.md`).
 - **Frame-rate independence**: all per-frame smoothing in R3F code uses exponential damping (`1 - Math.exp(-lambda * dt)` or rad/s × dt), never raw per-frame lerp constants. Follow this for any new `useFrame` easing.
 - **Reduced motion**: visual juice (screen shake, FOV kicks, camera lead, bursts) must be gated — CSS via `@media (prefers-reduced-motion: reduce)`, JS via `usePrefersReducedMotion` (`components/arena/juice.tsx`) or the existing `reduceMotion` setting in world code.
 - **Arena juice**: presentation-only effects live in `components/arena/juice.tsx` + the "arena battle juice" section of `app/globals.css`. They layer on top of SSE events; never alter SSE semantics for presentation.

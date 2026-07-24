@@ -5,8 +5,10 @@ import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit"
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { reachThemeByIndex } from "./climb/reaches";
 import { rewardSfx } from "@/lib/sfx";
+import { NextLine } from "@/components/director/next-card";
+import { traitLabel, type WingTraitId } from "@/lib/wing-traits";
 
-export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue" | "ceiling" | "prove";
+export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue" | "ceiling" | "ranklock" | "prove";
 export type CircuitFailReason = "fall" | "gates";
 
 export interface CircuitBoardEntry {
@@ -23,10 +25,10 @@ function rankLabel(e: CircuitBoardEntry): string | null {
   return h || null;
 }
 
-function LifePips({ lives, accent }: { lives: number; accent: string }) {
+function LifePips({ lives, maxLives = CIRCUIT_LIVES, accent }: { lives: number; maxLives?: number; accent: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5 }} aria-label={`${lives} ${lives === 1 ? "life" : "lives"} left`}>
-      {Array.from({ length: CIRCUIT_LIVES }, (_, i) => {
+      {Array.from({ length: maxLives }, (_, i) => {
         const on = i < lives;
         return (
           <span
@@ -57,12 +59,14 @@ function SectorIntro({
   accent,
   reachName,
   lives,
+  maxLives = CIRCUIT_LIVES,
 }: {
   sectorN: number;
   sectorTotal: number;
   accent: string;
   reachName?: string;
   lives: number;
+  maxLives?: number;
 }) {
   const [showCard, setShowCard] = useState(true);
 
@@ -88,7 +92,7 @@ function SectorIntro({
               <span className="circuit-sector-intro__of"> / {sectorTotal}</span>
             </div>
             <div className="circuit-sector-intro__lives mono" style={{ color: accent }}>
-              {Array.from({ length: CIRCUIT_LIVES }, (_, i) => (
+              {Array.from({ length: maxLives }, (_, i) => (
                 <span
                   key={i}
                   className="circuit-sector-intro__pip"
@@ -148,9 +152,25 @@ export function CircuitHud({
   scoutCamp = 1,
   onPickRanked,
   onPickScout,
+  onPickExpedition,
+  expeditionLabel,
+  expeditionDetail,
   showModePicker = false,
   ascentReaches = 0,
   climbHundred = false,
+  scoutUnlocked = false,
+  rankLockKicker,
+  rankLockTitle,
+  rankLockDetail,
+  maxLives = CIRCUIT_LIVES,
+  conditionLine,
+  conditionDetail,
+  wingLine,
+  formLine,
+  formDetail,
+  earnedWingOptions,
+  earnedWingPick,
+  onPickEarnedWing,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -187,24 +207,46 @@ export function CircuitHud({
   reachName?: string;
   /** Remaining lives in the current run (2 → 1 continue → 0 run over). */
   lives?: number;
-  /** Ranked campaign vs unranked scout practice. */
-  runMode?: "ranked" | "scout";
+  /** Cap from wing traits (Second Wind → 3). */
+  maxLives?: number;
+  /** Today's ranked Condition, e.g. "TODAY · FOG BANK". */
+  conditionLine?: string;
+  conditionDetail?: string;
+  /** Ready-strip wing loadout line, e.g. "Second Wind · Gold Eye". */
+  wingLine?: string;
+  /** Career form/fatigue/scar line when it matters (Stage 4). */
+  formLine?: string;
+  formDetail?: string;
+  earnedWingOptions?: string[];
+  earnedWingPick?: string | null;
+  onPickEarnedWing?: (id: string) => void;
+  /** Ranked campaign vs unranked scout vs weekly expedition. */
+  runMode?: "ranked" | "scout" | "expedition";
   campsLit?: number;
   scoutCamp?: number;
   onPickRanked?: () => void;
   onPickScout?: (camp: number) => void;
+  onPickExpedition?: () => void;
+  expeditionLabel?: string;
+  expeditionDetail?: string;
   /** Ready at run start with full lives — show ranked/scout picker. */
   showModePicker?: boolean;
   /** Flight sigil depth from campsLit (0..10). */
   ascentReaches?: number;
   climbHundred?: boolean;
+  /** Unlock Ladder — Scout opens at Trainer rank + a lit camp. */
+  scoutUnlocked?: boolean;
+  /** Trainer-rank ceiling copy when phase === "ranklock". */
+  rankLockKicker?: string;
+  rankLockTitle?: string;
+  rankLockDetail?: string;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
   const introActive = phase === "ready";
   const guestClaim = !!onClaim && !!claimName;
   /** End cards own the claim CTA — hide corner chrome so it doesn't stack. */
-  const hideCornerChrome = phase === "failed" || phase === "done" || phase === "ceiling";
+  const hideCornerChrome = phase === "failed" || phase === "done" || phase === "ceiling" || phase === "ranklock";
 
   useEffect(() => {
     // Sector clear: Enter/Space continues. RUN OVER / CLEAR: never Space — Space is
@@ -322,7 +364,7 @@ export function CircuitHud({
               {sectorN}/{sectorTotal}
             </span>
             {(running || phase === "continue") && (
-              <LifePips lives={lives} accent={phase === "continue" ? "#ff5a5a" : accent} />
+              <LifePips lives={lives} maxLives={maxLives} accent={phase === "continue" ? "#ff5a5a" : accent} />
             )}
             <Timer size={14} color={accent} strokeWidth={2.2} />
             <span
@@ -365,7 +407,7 @@ export function CircuitHud({
         <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
       )}
 
-      {phase === "ready" && showModePicker && onPickRanked && onPickScout && (
+      {phase === "ready" && showModePicker && onPickRanked && (
         <div
           style={{
             position: "absolute",
@@ -381,6 +423,49 @@ export function CircuitHud({
             padding: "0 16px",
           }}
         >
+          {conditionLine && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--gold)", fontWeight: 800, textAlign: "center", pointerEvents: "none" }} title={conditionDetail}>
+              {conditionLine}
+            </div>
+          )}
+          {wingLine && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: accent, fontWeight: 800, textAlign: "center", pointerEvents: "none" }}>
+              WINGS · {wingLine}
+            </div>
+          )}
+          {formLine && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "rgba(242,238,251,.72)", fontWeight: 800, textAlign: "center", pointerEvents: "none" }} title={formDetail}>
+              {formLine}
+            </div>
+          )}
+          {earnedWingOptions && earnedWingOptions.length > 1 && onPickEarnedWing && (
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 5, pointerEvents: "auto" }}>
+              {earnedWingOptions.map((id) => {
+                const on = earnedWingPick === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onPickEarnedWing(id)}
+                    className="mono"
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: 999,
+                      border: `1px solid ${on ? accent : "rgba(255,255,255,.16)"}`,
+                      background: on ? `${accent}28` : "rgba(10,10,18,.45)",
+                      color: on ? accent : "rgba(242,238,251,.7)",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: 0.5,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {traitLabel(id as WingTraitId)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div
             style={{
               display: "flex",
@@ -409,7 +494,29 @@ export function CircuitHud({
             >
               RANKED · SECTOR 1
             </button>
-            {campsLit >= 1 &&
+            {onPickExpedition && expeditionLabel && (
+              <button
+                type="button"
+                onClick={onPickExpedition}
+                className="mono"
+                title={expeditionDetail}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
+                  background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
+                  color: runMode === "expedition" ? "var(--gold)" : "rgba(242,238,251,.75)",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.8,
+                  cursor: "pointer",
+                }}
+              >
+                WEEK · {expeditionLabel.toUpperCase()}
+              </button>
+            )}
+            {scoutUnlocked &&
+              onPickScout &&
               Array.from({ length: campsLit }, (_, i) => {
                 const camp = i + 1;
                 const on = runMode === "scout" && scoutCamp === camp;
@@ -444,6 +551,11 @@ export function CircuitHud({
               {climbHundred ? " · ★ Hundred" : ""}
             </div>
           )}
+          {runMode === "expedition" && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
+              EXPEDITION · weekly board · no camps · {sectorTotal} sectors
+            </div>
+          )}
         </div>
       )}
 
@@ -455,6 +567,7 @@ export function CircuitHud({
           accent={accent}
           reachName={reachName}
           lives={lives}
+          maxLives={maxLives}
         />
       )}
 
@@ -543,6 +656,7 @@ export function CircuitHud({
               FLIGHT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
             </div>
           )}
+          {!guestClaim && <NextLine accent={accent} />}
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
               <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
@@ -589,6 +703,7 @@ export function CircuitHud({
               FLIGHT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
             </div>
           )}
+          {!guestClaim && <NextLine accent={accent} />}
           {guestClaim && onClaim && (
             <>
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
@@ -646,6 +761,20 @@ export function CircuitHud({
           )}
           <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <RotateCcw size={15} strokeWidth={2.2} /> Practice the first sky again
+          </button>
+        </CircuitModal>
+      )}
+
+      {phase === "ranklock" && (
+        <CircuitModal
+          accent={accent}
+          icon={<Sparkles size={28} color={accent} />}
+          kicker={rankLockKicker ?? "RANK GATE"}
+          title={rankLockTitle ?? "Higher sky needs a higher rank"}
+          sub={rankLockDetail ?? "Keep flying, fighting, and teaching to climb Trainer rank."}
+        >
+          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
+            <RotateCcw size={15} strokeWidth={2.2} /> Fly the open sky again
           </button>
         </CircuitModal>
       )}

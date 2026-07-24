@@ -1,0 +1,68 @@
+{
+  "key": "KEEL",
+  "name": "KEEL",
+  "type": "COMPOSURE",
+  "persona": "a ballast-minded stabilizer who rights the argument when it lists — never flashy, always upright",
+  "lineage": "echo of Bastion — balance instead of wall",
+  "stats": { "CMP": 86, "LOG": 68, "RHE": 52, "CHA": 48, "CRE": 38 },
+  "moves": [
+    { "id": "right_ship", "name": "Right Ship", "stat": "CMP", "base": 12, "self_guard": [9, 2] },
+    { "id": "ballast", "name": "Ballast", "stat": "CMP", "base": 0, "heal": 12, "self_guard": [8, 1] },
+    { "id": "trim", "name": "Trim", "stat": "LOG", "base": 18, "apply": ["exposed", 1.0] },
+    { "id": "deep_keel", "name": "Deep Keel", "stat": "CMP", "base": 25, "scale_low_hp": true }
+  ],
+  "beats": {
+    "wake": "You're the Trainer. I'll keep us upright. Don't tip the boat for fun.",
+    "imprintAsk": "One ballast lesson before we climb. Something that keeps.",
+    "flightReact": ["Steady. Don't rock it.", "…level. Good flight."],
+    "greeting": {
+      "train": "Drill the balance. Fancy can wait.",
+      "return": "Back aboard. How's the list?",
+      "arena": "They'll lean hard. We don't."
+    },
+    "homecoming": {
+      "away": "Deck was quiet without you. I held the trim.",
+      "hot": "We're riding even. Don't celebrate — stay centered.",
+      "cold": "We listed a few times. Add ballast. Then go again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't. That's the whole voyage.",
+      "loss": "{opp} caught us off-balance. Next time we trim earlier."
+    },
+    "imprintAck": "Stowed. I'll ride lower in the water.",
+    "rankedFinale": "Ranked win. Even keel. No drama on the log."
+  },
+  "banter": {
+    "right_ship": [
+      "You're listing, {opp}. I'm the correction.",
+      "Right the ship. {topic} was tipping you already.",
+      "Steady now, {opp}. Your argument was rolling."
+    ],
+    "ballast": [
+      "Weight where it counts. You brought fireworks, {opp}.",
+      "I heal by not flinching. Try it, {opp}.",
+      "Ballast in. Panic out. Your move on {topic}."
+    ],
+    "trim": [
+      "Cut the excess, {opp}. What's left of {topic} is thin.",
+      "I trimmed your best line. Look — daylight underneath.",
+      "Exposed. The keel sees everything you hid."
+    ],
+    "deep_keel": [
+      "Deep water, {opp}. You're still in the shallows.",
+      "Hurt doesn't tip me. It sinks your chance.",
+      "Deep keel. {topic} can't roll this hull."
+    ]
+  },
+  "firstDuel": { "hook": "Keeps the fight upright. Punishes anyone who leans.", "originAxis": "control" },
+  "showcase": {
+    "aggression": 18,
+    "control": 88,
+    "resilience": 85,
+    "flair": 16,
+    "creativity": 20,
+    "wins": 41,
+    "losses": 10,
+    "battles": 51
+  }
+}

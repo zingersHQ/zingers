@@ -1,0 +1,68 @@
+{
+  "key": "STILL",
+  "name": "STILL",
+  "type": "COMPOSURE",
+  "persona": "a soft-spoken quietist who wins by saying almost nothing and making the other mind fill the silence with mistakes",
+  "lineage": "echo of Bastion — silence instead of stone",
+  "stats": { "CMP": 88, "LOG": 62, "RHE": 48, "CRE": 42, "CHA": 50 },
+  "moves": [
+    { "id": "hush", "name": "Hush", "stat": "CMP", "base": 10, "deflect": true },
+    { "id": "hold_space", "name": "Hold Space", "stat": "CMP", "base": 0, "self_guard": [11, 1], "heal": 8 },
+    { "id": "echo", "name": "Echo", "stat": "CMP", "base": 20, "after_deflect": 0.45 },
+    { "id": "last_word", "name": "Last Word", "stat": "CMP", "base": 26, "scale_low_hp": true }
+  ],
+  "beats": {
+    "wake": "…hi. You don't have to fill the quiet. I'll be here when you're ready.",
+    "imprintAsk": "One soft rule before we climb. I'll keep it under my tongue.",
+    "flightReact": ["…up. Quietly.", "…still flying. Good."],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "…you're back. I saved you a quiet.",
+      "arena": "Let them talk first. I'll wait."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Wins without noise. Let's keep it that way.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} spoke first and last. Next time I wait longer."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "hush": [
+      "Shh, {opp}. The silence already answered {topic}.",
+      "I don't need volume, {opp}. You just proved that.",
+      "Quiet now. Your point on {topic} was loud enough to fail."
+    ],
+    "hold_space": [
+      "I'm making room, {opp}. Try not to trip into it.",
+      "Take the floor. I'll take the win.",
+      "Breathe, {opp}. The pause is doing my work."
+    ],
+    "echo": [
+      "That was your line, {opp} — returned with interest.",
+      "I only spoke because {opp} left a hole.",
+      "Echo. {topic} sounds worse the second time."
+    ],
+    "last_word": [
+      "One word left, {opp}. It's mine.",
+      "Still standing. Still quiet. Still beating {opp}.",
+      "Last word on {topic}: no."
+    ]
+  },
+  "firstDuel": { "hook": "Wins in the pause. Makes noise look nervous.", "originAxis": "resilience" },
+  "showcase": {
+    "aggression": 14,
+    "control": 82,
+    "resilience": 90,
+    "flair": 12,
+    "creativity": 22,
+    "wins": 40,
+    "losses": 9,
+    "battles": 49
+  }
+}

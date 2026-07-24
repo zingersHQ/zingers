@@ -27,6 +27,8 @@ export interface RivalMemory {
   wins: number; // YOUR wins against them
   losses: number; // YOUR losses to them
   met: boolean; // have you faced them at least once
+  /** Escalation chapter — bumps after a grudge arc; new face, same feud. */
+  chapter: number;
 }
 
 const KEY = "zingers_rival_v1";
@@ -44,9 +46,9 @@ function rngFrom(seed: number) {
   };
 }
 
-/** Compose the Rival deterministically from a seed. Stable for a given seed. */
-export function rivalFrom(seed: number): Rival {
-  const r = rngFrom((seed || 1) * 2654435761);
+/** Compose the Rival deterministically from a seed (+ optional chapter). */
+export function rivalFrom(seed: number, chapter = 0): Rival {
+  const r = rngFrom(((seed || 1) + chapter * 97_663) * 2654435761);
   const name = NAMES[Math.floor(r() * NAMES.length)];
   const epithet = EPITHETS[Math.floor(r() * EPITHETS.length)];
   const force = FIRST_MINDS[Math.floor(r() * FIRST_MINDS.length)].force;
@@ -59,11 +61,21 @@ export function rivalFrom(seed: number): Rival {
 // ── Persistent memory (localStorage; never touches the server save) ───────────
 function blank(): RivalMemory {
   const seed = Math.floor(Math.random() * 1e9) || 7;
-  return { seed, wins: 0, losses: 0, met: false };
+  return { seed, wins: 0, losses: 0, met: false, chapter: 0 };
+}
+
+function sanitize(m: Partial<RivalMemory>): RivalMemory {
+  return {
+    seed: typeof m.seed === "number" ? m.seed : 7,
+    wins: (m.wins as number) | 0,
+    losses: (m.losses as number) | 0,
+    met: !!m.met,
+    chapter: Math.max(0, (m.chapter as number) | 0),
+  };
 }
 
 export function loadRivalMemory(): RivalMemory {
-  if (typeof window === "undefined") return { seed: 7, wins: 0, losses: 0, met: false };
+  if (typeof window === "undefined") return { seed: 7, wins: 0, losses: 0, met: false, chapter: 0 };
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) {
@@ -73,19 +85,51 @@ export function loadRivalMemory(): RivalMemory {
     }
     const m = JSON.parse(raw) as RivalMemory;
     if (typeof m.seed !== "number") return blank();
-    return { seed: m.seed, wins: m.wins | 0, losses: m.losses | 0, met: !!m.met };
+    return sanitize(m);
   } catch {
     return blank();
   }
 }
 
+function persist(m: RivalMemory): RivalMemory {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(m));
+  } catch {}
+  return m;
+}
+
 export function recordRivalDuel(won: boolean): RivalMemory {
   const m = loadRivalMemory();
-  const next: RivalMemory = { ...m, met: true, wins: m.wins + (won ? 1 : 0), losses: m.losses + (won ? 0 : 1) };
-  try {
-    localStorage.setItem(KEY, JSON.stringify(next));
-  } catch {}
-  return next;
+  const next: RivalMemory = {
+    ...m,
+    met: true,
+    wins: m.wins + (won ? 1 : 0),
+    losses: m.losses + (won ? 0 : 1),
+  };
+  return persist(next);
+}
+
+/**
+ * After a long grudge arc (6+ fights this chapter), escalate: new chapter, reset
+ * the head-to-head, keep the feud seed. Call when the Trainer opens Face again
+ * while stance is already grudge and fights ≥ 6.
+ */
+export function maybeEscalateRival(m: RivalMemory = loadRivalMemory()): RivalMemory {
+  const fights = m.wins + m.losses;
+  if (!m.met || fights < 6) return m;
+  const next: RivalMemory = {
+    seed: m.seed,
+    wins: 0,
+    losses: 0,
+    met: true,
+    chapter: m.chapter + 1,
+  };
+  return persist(next);
+}
+
+/** Rival identity for the current chapter. */
+export function currentRival(m: RivalMemory = loadRivalMemory()): Rival {
+  return rivalFrom(m.seed, m.chapter);
 }
 
 // ── Taunts — escalate with the head-to-head ──────────────────────────────────
@@ -112,8 +156,9 @@ export function rivalChallengeBeat(rival: Rival, m: RivalMemory): BeatScript {
     behind: [`Down again? I almost feel bad. Almost.`, `Come on. Make it interesting this time.`],
     grudge: [`Every season, the same two Trainers. You and me.`, `One of us opens that door. It won't be you.`],
   };
+  const chapterTag = m.chapter > 0 ? ` · CH.${m.chapter + 1}` : "";
   return {
-    kicker: m.met ? `RIVAL · ${m.wins}–${m.losses}` : "A RIVAL APPEARS",
+    kicker: m.met ? `RIVAL · ${m.wins}–${m.losses}${chapterTag}` : "A RIVAL APPEARS",
     lines: lines[stance].map((text) => ({ speaker: rival.name, role: rival.epithet, text })),
   };
 }

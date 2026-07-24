@@ -1,0 +1,68 @@
+{
+  "key": "PRISM",
+  "name": "PRISM",
+  "type": "CREATIVITY",
+  "persona": "a refractive stylist who splits one weak point into a spectrum of angles until the opponent can't track the color that hurts",
+  "lineage": "echo of Muse — spectrum instead of twist",
+  "stats": { "CRE": 88, "RHE": 62, "CHA": 55, "LOG": 48, "CMP": 42 },
+  "moves": [
+    { "id": "split_light", "name": "Split Light", "stat": "CRE", "base": 18 },
+    { "id": "spectrum", "name": "Spectrum", "stat": "CRE", "base": 14, "self_guard": [7, 1] },
+    { "id": "false_hue", "name": "False Hue", "stat": "CRE", "base": 16, "apply": ["confused", 0.4] },
+    { "id": "white_out", "name": "White-Out", "stat": "CRE", "base": 28, "requires": "two_cre", "finisher": true }
+  ],
+  "beats": {
+    "wake": "Oh good — a Trainer with eyes. Let's see what colors this place can take.",
+    "imprintAsk": "Bend me once before we climb. One new angle is enough.",
+    "flightReact": ["The sky has more bands than you think.", "…full spectrum. I'm up."],
+    "greeting": {
+      "train": "Show me a new angle. I'll multiply it.",
+      "return": "You're back — the light changed while you were out.",
+      "arena": "Find me someone monochrome."
+    },
+    "homecoming": {
+      "away": "You left and the palette went dull. Don't do that.",
+      "hot": "We're hitting every band. Keep the light moving.",
+      "cold": "They stayed one color and won. Next time we split harder."
+    },
+    "afterFight": {
+      "win": "{opp} couldn't track the spectrum. Classic.",
+      "loss": "{opp} stayed one hue and I over-split. Simpler next time."
+    },
+    "imprintAck": "Refracted and kept. It'll show in every fight.",
+    "rankedFinale": "Ranked win in full color. The board saw every band."
+  },
+  "banter": {
+    "split_light": [
+      "One point from {opp}, seven angles from me.",
+      "I split {topic} until {opp} couldn't hold any piece.",
+      "Light goes in plain. Comes out as your problem, {opp}."
+    ],
+    "spectrum": [
+      "Pick a color, {opp}. Wrong answer either way.",
+      "I'm covering the whole band. You're still on gray.",
+      "Spectrum check: {topic} looks worse in every shade."
+    ],
+    "false_hue": [
+      "That wasn't the real color of your point, {opp}.",
+      "Confused yet? Good — {topic} was never that simple.",
+      "False hue. {opp} just argued with a reflection."
+    ],
+    "white_out": [
+      "All colors at once, {opp}. That's a white-out.",
+      "Finisher: every angle, zero escape.",
+      "White-out on {topic}. {opp} is a silhouette now."
+    ]
+  },
+  "firstDuel": { "hook": "Splits one weak point into a whole spectrum of pain.", "originAxis": "creativity" },
+  "showcase": {
+    "aggression": 32,
+    "control": 44,
+    "resilience": 30,
+    "flair": 72,
+    "creativity": 94,
+    "wins": 38,
+    "losses": 12,
+    "battles": 50
+  }
+}

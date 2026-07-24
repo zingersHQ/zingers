@@ -1,5 +1,7 @@
 // Ported from battle.py — the canonical roster, type pentagon, movesets, arena.
+// Stage 6 batch minds merge from lib/minds/baked.ts (content/minds/reviewed/).
 import type { CreatureType } from "@/lib/types";
+import { BAKED_CREATURES, BAKED_MIND_KEYS } from "@/lib/minds/baked";
 
 export const HP_MAX = 100;
 export const BASE_DEFENSE = 12;
@@ -173,6 +175,7 @@ export const ROSTER: Record<string, Creature> = {
       M("kill_shot", "Kill Shot", "RHE", 24, { bonus_if_tilted: 0.25 }),
     ],
   },
+  ...BAKED_CREATURES,
 };
 
 /** Canonical starter roster order — onboarding, collection, bible gallery. */
@@ -185,6 +188,7 @@ export const FIRST_MIND_KEYS = [
   "EMBER",
   "PARADOX",
   "WIT",
+  ...BAKED_MIND_KEYS,
 ] as const satisfies readonly (keyof typeof ROSTER)[];
 
 export const TOPICS = [

@@ -10,13 +10,23 @@ export interface GoldGeom {
 }
 
 /** Pick a non-finish mid gate and offset it vertically, or null. */
-export function rollGoldRing(checkpoints: { index: number; radius: number }[]): GoldGeom | null {
+export function rollGoldRing(
+  checkpoints: { index: number; radius: number }[],
+  /** Multiplier from wing traits (Gold Eye). Clamped so it can't guarantee every sector. */
+  oddsMult = 1,
+): GoldGeom | null {
   const gc = checkpoints.length - 1; // gates incl. finish
-  if (gc < 3 || Math.random() >= GOLD_RING_ODDS) return null;
+  const odds = Math.min(0.45, GOLD_RING_ODDS * Math.max(0.25, oddsMult));
+  if (gc < 3 || Math.random() >= odds) return null;
   const idx = 1 + Math.floor(Math.random() * (gc - 1));
   const r = checkpoints[idx]?.radius ?? 3;
   const dy = (Math.random() < 0.5 ? 1 : -1) * (r * 1.55 + 0.9);
   return { idx, dy };
+}
+
+/** Crown payout for threading a gold ring (wing traits can bump). */
+export function goldRingCrowns(crownsMult = 1): number {
+  return Math.max(1, Math.round(GOLD_RING_CROWNS * Math.max(0.25, crownsMult)));
 }
 
 /** Apply a gold Y offset to a track's checkpoints (immutable). */

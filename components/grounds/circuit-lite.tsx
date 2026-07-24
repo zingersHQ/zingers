@@ -33,13 +33,49 @@ import {
 } from "@/lib/climb-ghost";
 import {
   ALTITUDE_KEY_SECTOR,
-  ASCENT_GLIDE,
-  ASCENT_STUMBLE,
   ascentCraftCrowns,
   ascentDepthXp,
+  ascentSessionMods,
+  clearAscentSessionMods,
   CLIMB_SECTOR_COUNT,
   needsAltitudeProve,
+  setAscentSessionMods,
 } from "@/lib/ascent-rules";
+import {
+  evaluateLadder,
+  hitsRankLock,
+  isScoutOpen,
+  reachLockCopy,
+} from "@/lib/unlock-ladder";
+import { trainerLevel } from "@/lib/evolve/trainer";
+import {
+  earnedTraitsAvailable,
+  loadoutLine,
+  resolveFlightModifiers,
+  resolveLoadout,
+  traitGloss,
+  traitLabel,
+  wingInputFrom,
+  type FlightModifiers,
+  type WingTraitId,
+} from "@/lib/wing-traits";
+import {
+  CLEAR_SKY,
+  dailyFlightCondition,
+  mergeRunMods,
+  type RunMods,
+} from "@/lib/conditions";
+import { applyCareerToMods, readCareer } from "@/lib/career-friction";
+import {
+  EXPEDITION_CROWN_MULT,
+  EXPEDITION_XP_MULT,
+  isExpeditionOpen,
+  isExpeditionRunBetter,
+  loadExpeditionPersonalBest,
+  saveExpeditionPersonalBest,
+  thisWeekExpedition,
+} from "@/lib/expeditions";
+import { goldRingCrowns, rollGoldRing, withGoldDetour } from "./climb/gold-ring";
 import {
   firstLightChestCrowns,
   HUNDRED_CHEST_CROWNS,
@@ -58,7 +94,6 @@ import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { AscentSigil } from "./climb/ascent-sigil";
-import { GOLD_RING_CROWNS, rollGoldRing, withGoldDetour } from "./climb/gold-ring";
 import {
   desktopCircuitSector,
   toClimbCanonical,
@@ -70,6 +105,7 @@ import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, circuitGatePlaneCross, formatCircu
 import type { CircuitTrackDef } from "./circuit";
 import { CircuitGhostLeave, type CircuitGhostPose } from "./circuit-ghost";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
+import { NextLine } from "@/components/director/next-card";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
@@ -104,17 +140,8 @@ const THRUST_ACCEL = 50;
 const PRESS_KICK = 4.0;
 const MAX_FALL = 18;
 const MAX_RISE = 12;
-const CRUISE_SINK = ASCENT_GLIDE.cruiseSink;
-const CRUISE_GLIDE = ASCENT_GLIDE.cruiseGlide;
-const DIVE_SINK = ASCENT_GLIDE.diveSink;
-const DIVE_GLIDE = ASCENT_GLIDE.diveGlide;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
-
-// ── stumble (docs/climb.md §4) — shared ASCENT_STUMBLE; not a death. ──
-const STUMBLE_VY = ASCENT_STUMBLE.vy;
-const STUMBLE_LOCK = ASCENT_STUMBLE.lockS;
-const STUMBLE_IMMUNE = ASCENT_STUMBLE.immuneS;
 // Chase camera — a touch farther so cast/rings match desktop scale in frame.
 const CAM_DIST = 11.2;
 const CAM_PITCH = 0.14;
@@ -142,9 +169,9 @@ const PED_R_BOT = 0.64;
 
 const CROWN = "#f5d020"; // fixed Crowns colour, independent of the Reach accent
 
-type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "continue" | "prove";
+type Phase = "ready" | "running" | "failed" | "done" | "ceiling" | "ranklock" | "continue" | "prove";
 type FailReason = "fall" | "gates";
-type RunMode = "ranked" | "scout";
+type RunMode = "ranked" | "scout" | "expedition";
 
 // prototype fallback body while the champion GLTF resolves (also our old mech)
 function MechBody({ accent }: { accent: string }) {
@@ -239,7 +266,8 @@ function Flyer({
     const held = !controlLocked && !!holdRef.current;
 
     // Hard wind — lock cruise every frame (desktop Circuit's constant +Z push).
-    fwd.current = speed;
+    // Wing Tailwind multiplies via session mods.
+    fwd.current = speed * ascentSessionMods().cruiseSpeedMult;
     pos.current.z += fwd.current * dt;
 
     const cp = track.checkpoints[cpNext.current];
@@ -260,11 +288,12 @@ function Flyer({
     } else if (controlLocked) {
       vy.current = THREE.MathUtils.clamp(vy.current - GRAVITY * dt, -MAX_FALL, MAX_RISE);
     } else {
-      let sink: number = CRUISE_SINK;
-      let glide: number = CRUISE_GLIDE;
+      const ses = ascentSessionMods();
+      let sink: number = ses.cruiseSink;
+      let glide: number = ses.cruiseGlide;
       if (cp && pos.current.y > cp.pos[1] + DIVE_LEAD) {
-        sink = DIVE_SINK;
-        glide = DIVE_GLIDE;
+        sink = ses.diveSink;
+        glide = ses.diveGlide;
       }
       const k = 1 - Math.exp(-glide * dt);
       vy.current = vy.current + (sink - vy.current) * k;
@@ -343,9 +372,10 @@ function Flyer({
       const pz = pos.current.z;
       for (let hi = 0; hi < hazards.length; hi++) {
         if (hazardHits(hazards[hi]!, tSec, px, py, pz)) {
-          vy.current = STUMBLE_VY;
-          lockUntil.current = tSec + STUMBLE_LOCK;
-          immuneUntil.current = tSec + STUMBLE_IMMUNE;
+          const ses = ascentSessionMods();
+          vy.current = ses.stumbleVy;
+          lockUntil.current = tSec + ses.stumbleLockS;
+          immuneUntil.current = tSec + ses.stumbleImmuneS;
           onStumble();
           break;
         }
@@ -603,7 +633,11 @@ export default function CircuitLite({
   const scoutCrownsRemaining = useChampions((s) => s.scoutCrownsRemaining);
   const noteScoutCrowns = useChampions((s) => s.noteScoutCrowns);
   const campsLit = useChampions((s) => s.climb.campsLit);
+  const bestSectors = useChampions((s) => s.climb.bestSectors);
   const climbHundred = useChampions((s) => s.climb.hundred);
+  const trainerXp = useChampions((s) => s.trainerXp);
+  const trainerLvl = trainerLevel(trainerXp).level;
+  const scoutRankOpen = isScoutOpen(trainerLvl, campsLit);
   // guest Climb (docs/two-doors.md §3): with no owned champion, a loaner "wild
   // mind" flies with you. Guest runs mark nothing — claim it to keep your climb.
   const guest = !owned;
@@ -613,6 +647,97 @@ export default function CircuitLite({
   // Wins must be reactive — the altitude prove writes a win, and a stale memoized
   // champion.wins would re-lock the gate every time you clear sector 11.
   const champWins = useChampions((s) => s.progress[activeKey]?.wins ?? 0);
+  const recipe = useChampions((s) => (owned ? s.recipes[owned] : undefined));
+  const sagaEvents = useChampions((s) => (owned ? s.events[owned] : undefined));
+  const ladder = useMemo(
+    () =>
+      evaluateLadder({
+        trainerXp,
+        wins: champWins,
+        bestSectors,
+        campsLit,
+        rosterCount: owned ? 1 : 0,
+        firstDuelDone: true,
+      }),
+    [trainerXp, champWins, bestSectors, campsLit, owned],
+  );
+  const rankLock = reachLockCopy(ladder.maxReaches, ladder.next);
+
+  // Ranked vs scout — declared early so Conditions can gate on it.
+  const [runMode, setRunMode] = useState<RunMode>("ranked");
+  const [scoutCamp, setScoutCamp] = useState(1);
+  const runModeRef = useRef<RunMode>("ranked");
+  const startSectorRef = useRef(0);
+  runModeRef.current = runMode;
+  startSectorRef.current = runMode === "scout" ? scoutStartSector(scoutCamp) : 0;
+
+  // ── Wing traits (Stage 2) + Conditions (Stage 3) + career (Stage 4) ──────
+  const [earnedPick, setEarnedPick] = useState<WingTraitId | null>(null);
+  const wingInput = useMemo(() => {
+    if (guest) return null;
+    return wingInputFrom(activeKey, champion, recipe?.strat, campsLit);
+  }, [guest, activeKey, champion, recipe, campsLit]);
+  const earnedOptions = useMemo(
+    () => (wingInput ? earnedTraitsAvailable(wingInput) : []),
+    [wingInput],
+  );
+  const loadout = useMemo(
+    () => (wingInput ? resolveLoadout(wingInput, earnedPick) : []),
+    [wingInput, earnedPick],
+  );
+  const wingMods = useMemo(
+    () => (loadout.length ? resolveFlightModifiers(loadout) : resolveFlightModifiers([])),
+    [loadout],
+  );
+  const [dayCondition] = useState(() => dailyFlightCondition());
+  const [expedition] = useState(() => thisWeekExpedition());
+  const expeditionOpen = isExpeditionOpen(bestSectors, campsLit);
+  const layoutSeed = runMode === "expedition" ? expedition.seed : "";
+  const routeCap = runMode === "expedition" ? expedition.sectors : CLIMB_SECTOR_COUNT;
+  const activeCondition =
+    runMode === "expedition" && !guest
+      ? expedition.condition
+      : runMode === "ranked" && !guest
+        ? dayCondition
+        : CLEAR_SKY;
+  const career = useMemo(
+    () => (!guest && owned ? readCareer(champion, sagaEvents) : null),
+    [guest, owned, champion, sagaEvents],
+  );
+  const runMods = useMemo(() => {
+    const base = mergeRunMods(wingMods, activeCondition);
+    return career ? applyCareerToMods(base, career) : base;
+  }, [wingMods, activeCondition, career]);
+  const runModsRef = useRef<RunMods>(runMods);
+  runModsRef.current = runMods;
+  const scoutUnlocked = scoutRankOpen && !runMods.banScout;
+
+  const wingLivesCap = useRef(CIRCUIT_LIVES);
+  const applyWingSession = useCallback((mods: FlightModifiers, refillLives: boolean) => {
+    setAscentSessionMods({
+      cruiseSink: mods.cruiseSink,
+      cruiseGlide: mods.cruiseGlide,
+      diveSink: mods.diveSink,
+      diveGlide: mods.diveGlide,
+      stumbleVy: mods.stumbleVy,
+      stumbleLockS: mods.stumbleLockS,
+      stumbleImmuneS: mods.stumbleImmuneS,
+      cruiseSpeedMult: mods.cruiseSpeedMult,
+    });
+    if (refillLives) {
+      livesRef.current = mods.lives;
+      setLives(mods.lives);
+    }
+    wingLivesCap.current = mods.lives;
+  }, []);
+
+  // Physics track wings + Condition; lives refill only on fresh ready / full lives.
+  useEffect(() => {
+    const atFull = livesRef.current >= wingLivesCap.current;
+    applyWingSession(runMods, phase === "ready" && atFull);
+  }, [runMods, phase, applyWingSession]);
+
+  useEffect(() => () => clearAscentSessionMods(), []);
   /** Session latch: once proved this run, never re-open the altitude gate. */
   const altitudeProvedRef = useRef(false);
   useEffect(() => {
@@ -627,7 +752,8 @@ export default function CircuitLite({
   const bonusCrowns = useRef(0);
 
   // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
-  const baseTrack = useMemo(() => desktopCircuitSector(sector), [sector]);
+  // Expedition passes a weekly seed so the route differs from the Hundred.
+  const baseTrack = useMemo(() => desktopCircuitSector(sector, layoutSeed), [sector, layoutSeed]);
   // Greedy gold detour baked into the live track (geometry stays after payout so
   // the ring doesn't snap mid-sector).
   const track = useMemo(() => withGoldDetour(baseTrack, goldGeom), [baseTrack, goldGeom]);
@@ -642,10 +768,10 @@ export default function CircuitLite({
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
   const speed = useMemo(() => CIRCUIT_CRUISE * (modifier?.speedMult ?? 1), [modifier]);
-  const hazards = useMemo(() => sectorHazards(sector, track), [sector, track]);
-  const moteColor = modifier?.moteColor ?? accent;
-  const fogNear = 30 * (modifier?.fogNearMult ?? 1);
-  const exposure = biome.exposure * (modifier?.warm ? 1.08 : 1);
+  const hazards = useMemo(() => sectorHazards(sector, track, layoutSeed), [sector, track, layoutSeed]);
+  const moteColor = runMods.moteColor ?? modifier?.moteColor ?? accent;
+  const fogNear = 30 * (modifier?.fogNearMult ?? 1) * runMods.fogNearMult;
+  const exposure = biome.exposure * ((modifier?.warm || runMods.warm) ? 1.08 : 1);
   const [stumbleFlash, setStumbleFlash] = useState(false);
   const stumbleTimer = useRef<number | null>(null);
 
@@ -653,18 +779,22 @@ export default function CircuitLite({
   const ascentReaches = Math.min(10, Math.max(0, campsLit));
   const sigilAccent = ascentReaches > 0 ? reachThemeByIndex(ascentReaches - 1).accent : accent;
 
-  // Ranked from sector 1, or scout practice from a lit camp (unranked).
-  const [runMode, setRunMode] = useState<RunMode>("ranked");
-  const [scoutCamp, setScoutCamp] = useState(1);
-  const runModeRef = useRef<RunMode>("ranked");
-  const startSectorRef = useRef(0);
-  runModeRef.current = runMode;
-  startSectorRef.current = runMode === "scout" ? scoutStartSector(scoutCamp) : 0;
-
-  // pull the shared leaderboard (depth-then-time). `you` flags your own row.
+  // Shared boards — ranked Hundred vs this week's Expedition.
   const loadBoard = useCallback(() => {
     const tok = getOwnerToken();
     setBoardLoading(true);
+    if (runModeRef.current === "expedition") {
+      fetch(
+        `/api/expedition?body=thumb&week=${encodeURIComponent(expedition.weekId)}&limit=8${tok ? `&token=${encodeURIComponent(tok)}` : ""}`,
+      )
+        .then((r) => r.json())
+        .then((d: { entries?: BoardRow[] }) => {
+          setBoard((d.entries ?? []).map((e) => ({ ...e, you: !!e.you })));
+        })
+        .catch(() => {})
+        .finally(() => setBoardLoading(false));
+      return;
+    }
     fetch(`/api/circuit?body=thumb&limit=8${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
       .then((d: { entries?: BoardRow[]; mine?: CircuitPersonalBest | null }) => {
@@ -673,7 +803,7 @@ export default function CircuitLite({
       })
       .catch(() => {})
       .finally(() => setBoardLoading(false));
-  }, []);
+  }, [expedition.weekId]);
 
   useEffect(() => {
     setMounted(true);
@@ -692,12 +822,17 @@ export default function CircuitLite({
   }, [loadBoard, lightCamp]);
 
   useEffect(() => {
-    if (campsLit < 1) {
-      setRunMode("ranked");
-      return;
-    }
-    setScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
-  }, [campsLit]);
+    if (!scoutUnlocked && runMode === "scout") setRunMode("ranked");
+    else setScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
+  }, [campsLit, scoutUnlocked, runMode]);
+
+  useEffect(() => {
+    if (!expeditionOpen && runMode === "expedition") setRunMode("ranked");
+  }, [expeditionOpen, runMode]);
+
+  useEffect(() => {
+    loadBoard();
+  }, [runMode, loadBoard]);
 
   // stop the jetpack roar if we leave the page mid-run
   useEffect(() => () => stopJet(), []);
@@ -737,6 +872,60 @@ export default function CircuitLite({
         if (bonus > 0) void awardGauntlet(bonus);
         setReward(xp > 0 || crowns + bonus > 0 ? { xp, crowns: crowns + bonus, deeper: false } : null);
         setNewBest(false);
+        return;
+      }
+
+      // Expedition: weekly seeded route — own board, no camps, fractional payout.
+      if (mode === "expedition") {
+        const capped = Math.min(sectorsCleared, expedition.sectors);
+        const clearedRoute = capped >= expedition.sectors || clearedAll;
+        const run = {
+          weekId: expedition.weekId,
+          sectors: capped,
+          totalMs,
+          clearedAll: clearedRoute,
+        };
+        const prev = loadExpeditionPersonalBest("thumb", expedition.weekId);
+        const better = isExpeditionRunBetter(run, prev);
+        const deeper = run.sectors > (prev?.sectors ?? -1);
+        let xp = 0;
+        if (deeper) {
+          xp = Math.round(ascentDepthXp(run.sectors, clearedRoute) * EXPEDITION_XP_MULT);
+          if (xp > 0) awardTrainerXp(xp);
+        }
+        const bonus = bonusCrowns.current;
+        const expectCraft = better
+          ? Math.round(ascentCraftCrowns(run.sectors, clearedRoute) * EXPEDITION_CROWN_MULT)
+          : 0;
+        if (expectCraft > 0) void awardGauntlet(expectCraft);
+        if (bonus > 0) void awardGauntlet(bonus);
+        setReward(
+          xp > 0 || expectCraft + bonus > 0
+            ? { xp, crowns: expectCraft + bonus, deeper }
+            : null,
+        );
+        if (better) {
+          saveExpeditionPersonalBest(run, "thumb");
+          setNewBest(true);
+        } else {
+          setNewBest(false);
+        }
+        const tok = getOwnerToken();
+        if (tok) {
+          fetch("/api/expedition", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: tok,
+              weekId: expedition.weekId,
+              sectors: run.sectors,
+              totalMs: run.totalMs,
+              body: "thumb",
+            }),
+          })
+            .then(() => loadBoard())
+            .catch(() => {});
+        }
         return;
       }
 
@@ -916,7 +1105,7 @@ export default function CircuitLite({
   // Roll a golden ring per sector (§7b). Non-finish mid gate, pulled off the
   // glide line so threading it is a deliberate climb/dive.
   useEffect(() => {
-    const g = rollGoldRing(baseTrack.checkpoints);
+    const g = rollGoldRing(baseTrack.checkpoints, runModsRef.current.goldOddsMult);
     if (g) {
       setGoldGeom(g);
       setGoldGate(g.idx);
@@ -928,8 +1117,8 @@ export default function CircuitLite({
 
   // music intensity per sector — Silent Sky drops it to a bare drone (§5)
   useEffect(() => {
-    setAmbienceIntensity(modifier?.ambience ?? 0.32);
-  }, [sector, modifier]);
+    setAmbienceIntensity(runMods.ambience ?? modifier?.ambience ?? 0.32);
+  }, [sector, modifier, runMods.ambience]);
 
   // a hazard hit: flash the screen edges + duck the score under the thud
   const onStumble = useCallback(() => {
@@ -961,7 +1150,8 @@ export default function CircuitLite({
         sectorStart.current = now;
         setGhostStartMs(now);
         // Seed t=0 at the pad in Climb-canonical space (desktop challenge parity).
-        const sp = desktopCircuitSector(sector).spawn;
+        const seed = runModeRef.current === "expedition" ? expedition.seed : "";
+        const sp = desktopCircuitSector(sector, seed).spawn;
         const origin = toClimbCanonical(sp[1], sp[2]);
         samplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
         if (guest && !guestPinged.current) {
@@ -973,7 +1163,7 @@ export default function CircuitLite({
       return p;
     });
     setHold(true);
-  }, [setHold, guest, sector]);
+  }, [setHold, guest, sector, expedition.seed]);
 
   // Ordinary restart: reset run state and REUSE the live WebGL context (never
   // bump runId — remounting the Canvas spins a fresh context and can push a
@@ -993,12 +1183,11 @@ export default function CircuitLite({
     sectorStart.current = 0;
     runStart.current = 0;
     bonusCrowns.current = 0;
-    livesRef.current = CIRCUIT_LIVES;
-    setLives(CIRCUIT_LIVES);
+    applyWingSession(runModsRef.current, true);
     setGhost(null);
     altitudeProvedRef.current = !needsAltitudeProve(champWins);
     setPhase("ready");
-  }, [setHold, clearContinueTimers, champWins]);
+  }, [setHold, clearContinueTimers, champWins, applyWingSession]);
 
   const pickRanked = useCallback(() => {
     setRunMode("ranked");
@@ -1007,19 +1196,26 @@ export default function CircuitLite({
   }, []);
 
   const pickScout = useCallback((camp: number) => {
-    const n = Math.max(1, Math.min(campsLit, camp));
+    const bonus = runModsRef.current.scoutCampBonus;
+    const n = Math.max(1, Math.min(campsLit, camp + bonus));
     setRunMode("scout");
     setScoutCamp(n);
     setSector(scoutStartSector(n));
     setTargetIdx(1);
   }, [campsLit]);
 
+  const pickExpedition = useCallback(() => {
+    setRunMode("expedition");
+    setSector(0);
+    setTargetIdx(1);
+  }, []);
+
   // Space: hold-to-fly while live; confirm try/run again on outcome overlays
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.code !== "Space" && e.key !== "Enter") return;
       e.preventDefault();
-      if (phase === "failed" || phase === "done" || phase === "ceiling") {
+      if (phase === "failed" || phase === "done" || phase === "ceiling" || phase === "ranklock") {
         resetRun();
         return;
       }
@@ -1091,7 +1287,7 @@ export default function CircuitLite({
       setTargetIdx(nextIdx);
       // the ring just threaded is nextIdx-1 — if it was the golden ring, pay out
       if (nextIdx - 1 === goldGate) {
-        bonusCrowns.current += GOLD_RING_CROWNS;
+        bonusCrowns.current += goldRingCrowns(runModsRef.current.goldCrownsMult);
         setGoldGate(-1);
         rewardSfx("big");
       } else {
@@ -1113,15 +1309,16 @@ export default function CircuitLite({
         sectorPathsRef.current = paths;
       }
       const next = s + 1;
-      if (next >= CLIMB_SECTOR_COUNT) {
+      const cap = runModeRef.current === "expedition" ? expedition.sectors : CLIMB_SECTOR_COUNT;
+      if (next >= cap) {
         samplesRef.current = [];
         rewardSfx("epic");
-        recordRun(CLIMB_SECTOR_COUNT, true);
+        recordRun(cap, true);
         setPhase("done");
         return s;
       }
       // Thin altitude key: Reach II+ asks for a proven mind (one win). Ranked
-      // only — scout practice skips the campaign door.
+      // only — scout / expedition skip the campaign door.
       if (
         runModeRef.current === "ranked" &&
         next >= ALTITUDE_KEY_SECTOR &&
@@ -1135,6 +1332,18 @@ export default function CircuitLite({
         setPhase("ceiling");
         return s;
       }
+      // Trainer-rank ceiling — higher Reaches drip via the Unlock Ladder.
+      if (
+        runModeRef.current === "ranked" &&
+        !guest &&
+        hitsRankLock(next, trainerLvl, champWins, bestSectors)
+      ) {
+        samplesRef.current = [];
+        rewardSfx("big");
+        recordRun(next, true);
+        setPhase("ranklock");
+        return s;
+      }
       rewardSfx("big");
       samplesRef.current = [];
       setGhostStartMs(0);
@@ -1142,7 +1351,7 @@ export default function CircuitLite({
       setPhase("ready");
       return next;
     });
-  }, [setHold, recordRun, guest, champWins]);
+  }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors]);
 
   const onFail = useCallback(
     (r: FailReason) => {
@@ -1477,7 +1686,7 @@ export default function CircuitLite({
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }} aria-label={`${lives} lives left`}>
             <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>LIVES</span>
             <span style={{ display: "flex", gap: 4 }}>
-              {Array.from({ length: CIRCUIT_LIVES }, (_, i) => (
+              {Array.from({ length: runMods.lives }, (_, i) => (
                 <span
                   key={i}
                   style={{
@@ -1570,7 +1779,7 @@ export default function CircuitLite({
       )}
 
       {/* Guests: top-right claim (continue). Owned/standalone: leave chrome. */}
-      {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && (
+      {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && phase !== "ranklock" && (
         <button
           type="button"
           onClick={onClaim}
@@ -1671,69 +1880,152 @@ export default function CircuitLite({
             padding: "0 16px",
           }}
         >
-          {phase === "ready" && !guest && lives === CIRCUIT_LIVES && sector === startSectorRef.current && (
+          {phase === "ready" && !guest && lives === runMods.lives && sector === startSectorRef.current && (
             <div
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                gap: 6,
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
                 maxWidth: 420,
                 pointerEvents: "auto",
               }}
             >
-              <button
-                type="button"
-                onClick={pickRanked}
-                className="mono"
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 999,
-                  border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
-                  background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
-                  color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 0.8,
-                  cursor: "pointer",
-                }}
-              >
-                RANKED · SECTOR 1
-              </button>
-              {campsLit >= 1 &&
-                Array.from({ length: campsLit }, (_, i) => {
-                  const camp = i + 1;
-                  const on = runMode === "scout" && scoutCamp === camp;
-                  const theme = reachThemeByIndex(camp - 1);
-                  return (
-                    <button
-                      key={camp}
-                      type="button"
-                      onClick={() => pickScout(camp)}
-                      className="mono"
-                      title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
-                        background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
-                        color: on ? theme.accent : "rgba(242,238,251,.75)",
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: 0.6,
-                        cursor: "pointer",
-                      }}
-                    >
-                      SCOUT · CAMP {theme.roman}
-                    </button>
-                  );
-                })}
+              {runMode === "expedition" && (
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--gold)", fontWeight: 800, textAlign: "center" }} title={expedition.gloss}>
+                  WEEK · {expedition.name.toUpperCase()} · {expedition.condition.name.toUpperCase()}
+                </div>
+              )}
+              {runMode === "ranked" && activeCondition.id !== "clear" && (
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--gold)", fontWeight: 800, textAlign: "center" }} title={activeCondition.gloss}>
+                  TODAY · {activeCondition.name.toUpperCase()}
+                </div>
+              )}
+              {loadout.length > 0 && (
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: accent, fontWeight: 800, textAlign: "center" }} title={loadout.map(traitGloss).join(" · ")}>
+                  WINGS · {loadoutLine(loadout)}
+                </div>
+              )}
+              {career && (career.form !== "steady" || career.fatigue > 0 || career.scars.length > 0) && (
+                <div
+                  className="mono"
+                  style={{ fontSize: 9, letterSpacing: 1.2, color: "rgba(242,238,251,.72)", fontWeight: 800, textAlign: "center" }}
+                  title={career.scars.map((s) => s.gloss).join(" · ") || undefined}
+                >
+                  FORM · {career.formLabel.toUpperCase()}
+                  {career.fatigue > 0 ? ` · ${career.fatigueLabel.toUpperCase()}` : ""}
+                  {career.scars[0] ? ` · ${career.scars[0].name.toUpperCase()}` : ""}
+                </div>
+              )}
+              {earnedOptions.length > 1 && (
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 5 }}>
+                  {earnedOptions.map((id) => {
+                    const on = loadout[1] === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={traitGloss(id)}
+                        onClick={() => setEarnedPick(id)}
+                        className="mono"
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: 999,
+                          border: `1px solid ${on ? accent : "rgba(255,255,255,.16)"}`,
+                          background: on ? `${accent}28` : "rgba(10,10,18,.45)",
+                          color: on ? accent : "rgba(242,238,251,.7)",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {traitLabel(id)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={pickRanked}
+                  className="mono"
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
+                    background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
+                    color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: 0.8,
+                    cursor: "pointer",
+                  }}
+                >
+                  RANKED · SECTOR 1
+                </button>
+                {expeditionOpen && !guest && (
+                  <button
+                    type="button"
+                    onClick={pickExpedition}
+                    className="mono"
+                    title={expedition.gloss}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 999,
+                      border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
+                      background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
+                      color: runMode === "expedition" ? "var(--gold)" : "rgba(242,238,251,.75)",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 0.8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    WEEK · {expedition.name.toUpperCase()}
+                  </button>
+                )}
+                {scoutUnlocked &&
+                  Array.from({ length: campsLit }, (_, i) => {
+                    const camp = i + 1;
+                    const on = runMode === "scout" && scoutCamp === camp;
+                    const theme = reachThemeByIndex(camp - 1);
+                    return (
+                      <button
+                        key={camp}
+                        type="button"
+                        onClick={() => pickScout(camp)}
+                        className="mono"
+                        title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: 999,
+                          border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
+                          background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
+                          color: on ? theme.accent : "rgba(242,238,251,.75)",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: 0.6,
+                          cursor: "pointer",
+                        }}
+                      >
+                        SCOUT · CAMP {theme.roman}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
           )}
           {phase === "ready" && runMode === "scout" && (
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
               PRACTICE · no board · half XP · quarter Crowns
               {climbHundred ? " · ★ Hundred" : ""}
+            </div>
+          )}
+          {phase === "ready" && runMode === "expedition" && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
+              EXPEDITION · {routeCap} sectors · weekly board · no camps
             </div>
           )}
           <div
@@ -1810,6 +2102,8 @@ export default function CircuitLite({
                 ASCENT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
               </div>
             )}
+
+            {!guest && <NextLine accent={accent} />}
 
             {challengeResult && challenge && (
               <div
@@ -1940,6 +2234,33 @@ export default function CircuitLite({
                 Claim a champion to prove
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Trainer-rank ceiling — Unlock Ladder rations higher Reaches. */}
+      {phase === "ranklock" && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.68)", backdropFilter: "blur(5px)", zIndex: 30 }}>
+          <div style={{ textAlign: "center", padding: 26, borderRadius: 18, border: `1px solid ${accent}`, background: "rgba(12,11,18,.92)", maxWidth: "88vw", width: 360 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: accent }}>
+              <Sparkles size={30} strokeWidth={2.2} />
+            </div>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>
+              {rankLock.kicker}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: "8px 0 6px" }}>
+              {rankLock.title}
+            </div>
+            <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 18, lineHeight: 1.5 }}>
+              {rankLock.detail}
+            </div>
+            <button
+              type="button"
+              onClick={resetRun}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center", marginBottom: 8 }}
+            >
+              <RotateCcw size={15} strokeWidth={2.4} /> Fly the open sky again
+            </button>
           </div>
         </div>
       )}

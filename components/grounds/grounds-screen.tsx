@@ -58,8 +58,9 @@ import { PlayerHub } from "@/components/grounds/player-hub";
 import { AmbienceEngine } from "@/components/grounds/ambience";
 import { RivalCard } from "@/components/grounds/rival-card";
 import {
-  rivalFrom,
+  currentRival,
   loadRivalMemory,
+  maybeEscalateRival,
   recordRivalDuel,
   rivalChallengeBeat,
   rivalResultBeat,
@@ -85,7 +86,7 @@ import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
 import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx, stopJet, jetFallSfx, badLuckSfx, rewardSfx } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
-import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
+import { setMood, resolveAmbienceMood, setAmbienceVolume, setAmbienceIntensity, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
@@ -119,7 +120,48 @@ import {
   resolveClimbChallengeFromLocation,
   type ClimbChallenge,
 } from "@/lib/climb-challenge";
-import { ALTITUDE_KEY_SECTOR, ascentCraftCrowns, ascentDepthXp, needsAltitudeProve } from "@/lib/ascent-rules";
+import {
+  ALTITUDE_KEY_SECTOR,
+  ascentCraftCrowns,
+  ascentDepthXp,
+  clearAscentSessionMods,
+  needsAltitudeProve,
+  setAscentSessionMods,
+} from "@/lib/ascent-rules";
+import {
+  evaluateLadder,
+  hitsRankLock,
+  isBrokerOpen,
+  isScoutOpen,
+  isWorldOpen,
+  reachLockCopy,
+} from "@/lib/unlock-ladder";
+import {
+  earnedTraitsAvailable,
+  loadoutLine,
+  resolveFlightModifiers,
+  resolveLoadout,
+  wingInputFrom,
+  type FlightModifiers,
+  type WingTraitId,
+} from "@/lib/wing-traits";
+import {
+  CLEAR_SKY,
+  dailyFlightCondition,
+  mergeRunMods,
+  type RunMods,
+} from "@/lib/conditions";
+import { applyCareerToMods, readCareer } from "@/lib/career-friction";
+import {
+  EXPEDITION_CROWN_MULT,
+  EXPEDITION_XP_MULT,
+  isExpeditionOpen,
+  isExpeditionRunBetter,
+  loadExpeditionPersonalBest,
+  saveExpeditionPersonalBest,
+  thisWeekExpedition,
+} from "@/lib/expeditions";
+import { NextCard } from "@/components/director/next-card";
 import {
   firstLightChestCrowns,
   HUNDRED_CHEST_CROWNS,
@@ -127,7 +169,7 @@ import {
   SCOUT_XP_MULT,
   scoutStartSector,
 } from "@/lib/climb-campaign";
-import { GOLD_RING_CROWNS, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
+import { goldRingCrowns, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -484,31 +526,118 @@ export default function GroundsScreen({
     circuitContinueTimers.current = [];
   }, []);
 
-  // Ranked campaign vs unranked scout (parity with mobile Climb).
-  type CircuitRunMode = "ranked" | "scout";
+  // Ranked / scout / weekly expedition (parity with mobile Climb).
+  type CircuitRunMode = "ranked" | "scout" | "expedition";
   const [circuitRunMode, setCircuitRunMode] = useState<CircuitRunMode>("ranked");
   const [circuitScoutCamp, setCircuitScoutCamp] = useState(1);
+  const [expedition] = useState(() => thisWeekExpedition());
   const circuitRunModeRef = useRef<CircuitRunMode>("ranked");
   const circuitStartSectorRef = useRef(0);
   circuitRunModeRef.current = circuitRunMode;
   circuitStartSectorRef.current = circuitRunMode === "scout" ? scoutStartSector(circuitScoutCamp) : 0;
+  const circuitLayoutSeed = circuitRunMode === "expedition" ? expedition.seed : "";
+  const circuitLayoutSeedRef = useRef(circuitLayoutSeed);
+  circuitLayoutSeedRef.current = circuitLayoutSeed;
+  const circuitRouteCap = circuitRunMode === "expedition" ? expedition.sectors : DESKTOP_CIRCUIT_COUNT;
 
   const campsLit = store.climb?.campsLit ?? 0;
+  const bestSectors = store.climb?.bestSectors ?? 0;
+  const expeditionOpen = isExpeditionOpen(bestSectors, campsLit);
   const climbHundred = !!store.climb?.hundred;
   const ascentReaches = Math.min(10, Math.max(0, campsLit));
   const ascentSigilAccent = ascentReaches > 0 ? reachThemeByIndex(ascentReaches - 1).accent : undefined;
+  const trainerLvl = trainerLevel(store.trainerXp).level;
+  const scoutRankOpen = isScoutOpen(trainerLvl, campsLit);
+  const ownedWins = owned ? (store.get(owned).wins ?? 0) : 0;
+  const ladder = evaluateLadder({
+    trainerXp: store.trainerXp,
+    wins: ownedWins,
+    bestSectors,
+    campsLit,
+    rosterCount: store.roster?.length ? new Set([...(owned ? [owned] : []), ...store.roster]).size : owned ? 1 : 0,
+    firstDuelDone: mounted ? isFirstDuelComplete() : true,
+  });
+  const rankLock = reachLockCopy(ladder.maxReaches, ladder.next);
+
+  // Wing traits (Stage 2) + Conditions (Stage 3) — same resolve path as Climb.
+  const [earnedPick, setEarnedPick] = useState<WingTraitId | null>(null);
+  const [dayCondition] = useState(() => dailyFlightCondition());
+  const wingInput = useMemo(() => {
+    if (!owned) return null;
+    return wingInputFrom(owned, store.get(owned), store.getRecipe(owned)?.strat, campsLit);
+  }, [owned, store, campsLit, ownedWins]);
+  const earnedOptions = useMemo(
+    () => (wingInput ? earnedTraitsAvailable(wingInput) : []),
+    [wingInput],
+  );
+  const wingLoadout = useMemo(
+    () => (wingInput ? resolveLoadout(wingInput, earnedPick) : []),
+    [wingInput, earnedPick],
+  );
+  const wingMods = useMemo(
+    () => resolveFlightModifiers(wingLoadout),
+    [wingLoadout],
+  );
+  const activeCondition =
+    circuitRunMode === "expedition" && owned
+      ? expedition.condition
+      : circuitRunMode === "ranked" && owned
+        ? dayCondition
+        : CLEAR_SKY;
+  const sagaEvents = owned ? store.events[owned] : undefined;
+  const career = useMemo(
+    () => (owned ? readCareer(store.get(owned), sagaEvents) : null),
+    [owned, store, sagaEvents, ownedWins],
+  );
+  const runMods = useMemo(() => {
+    const base = mergeRunMods(wingMods, activeCondition);
+    return career ? applyCareerToMods(base, career) : base;
+  }, [wingMods, activeCondition, career]);
+  const runModsRef = useRef<RunMods>(runMods);
+  runModsRef.current = runMods;
+  const scoutUnlocked = scoutRankOpen && !runMods.banScout;
+  const wingLivesCap = useRef(CIRCUIT_LIVES);
+
+  const applyWingSession = useCallback((mods: FlightModifiers, refillLives: boolean) => {
+    setAscentSessionMods({
+      cruiseSink: mods.cruiseSink,
+      cruiseGlide: mods.cruiseGlide,
+      diveSink: mods.diveSink,
+      diveGlide: mods.diveGlide,
+      stumbleVy: mods.stumbleVy,
+      stumbleLockS: mods.stumbleLockS,
+      stumbleImmuneS: mods.stumbleImmuneS,
+      cruiseSpeedMult: mods.cruiseSpeedMult,
+    });
+    if (refillLives) {
+      circuitLivesRef.current = mods.lives;
+      setCircuitLives(mods.lives);
+    }
+    wingLivesCap.current = mods.lives;
+  }, []);
+
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    const atFull = circuitLivesRef.current >= wingLivesCap.current;
+    applyWingSession(runMods, circuitPhase === "ready" && atFull);
+  }, [runMods, circuitPhase, activeVenue, applyWingSession]);
+
+  useEffect(() => () => clearAscentSessionMods(), []);
 
   // Golden ring altitude detour (shared with Climb).
   const [goldGate, setGoldGate] = useState(-1);
   const [goldGeom, setGoldGeom] = useState<GoldGeom | null>(null);
   const bonusCrowns = useRef(0);
 
-  const baseCircuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
+  const baseCircuitTrack = useMemo(
+    () => desktopCircuitSector(circuitSectorIdx, circuitLayoutSeed),
+    [circuitSectorIdx, circuitLayoutSeed],
+  );
   const circuitTrack = useMemo(() => withGoldDetour(baseCircuitTrack, goldGeom), [baseCircuitTrack, goldGeom]);
   const circuitReach = useMemo(() => reachTheme(circuitSectorIdx), [circuitSectorIdx]);
 
   useEffect(() => {
-    const g = rollGoldRing(baseCircuitTrack.checkpoints);
+    const g = rollGoldRing(baseCircuitTrack.checkpoints, runModsRef.current.goldOddsMult);
     if (g) {
       setGoldGeom(g);
       setGoldGate(g.idx);
@@ -519,18 +648,29 @@ export default function GroundsScreen({
   }, [baseCircuitTrack]);
 
   useEffect(() => {
-    if (campsLit < 1 && circuitRunMode === "scout") {
+    if (!scoutUnlocked && circuitRunMode === "scout") {
       setCircuitRunMode("ranked");
       setCircuitScoutCamp(1);
-    } else if (campsLit >= 1) {
+    } else if (scoutUnlocked) {
       setCircuitScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
     }
-  }, [campsLit, circuitRunMode]);
+  }, [campsLit, circuitRunMode, scoutUnlocked]);
+
+  useEffect(() => {
+    if (!expeditionOpen && circuitRunMode === "expedition") setCircuitRunMode("ranked");
+  }, [expeditionOpen, circuitRunMode]);
+
+  // Condition ambience (Silent run) — parity with Climb's setAmbienceIntensity.
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    setAmbienceIntensity(runMods.ambience ?? 0.32);
+  }, [activeVenue, runMods.ambience]);
   // the same pure-time hazards the mobile Climb fields for this sector (empty in
   // the early Reaches / breather beats) — rendered + collided against on desktop
   const circuitHazards = useMemo(
-    () => (activeVenue === "circuit" ? sectorHazards(circuitSectorIdx, circuitTrack) : []),
-    [activeVenue, circuitSectorIdx, circuitTrack],
+    () =>
+      activeVenue === "circuit" ? sectorHazards(circuitSectorIdx, circuitTrack, circuitLayoutSeed) : [],
+    [activeVenue, circuitSectorIdx, circuitTrack, circuitLayoutSeed],
   );
   const [circuitStumble, setCircuitStumble] = useState(false);
   const circuitStumbleTimer = useRef<number | null>(null);
@@ -564,6 +704,26 @@ export default function GroundsScreen({
   const loadCircuitBoard = useCallback(() => {
     const tok = getOwnerToken();
     setCircuitBoardLoading(true);
+    if (circuitRunModeRef.current === "expedition") {
+      fetch(
+        `/api/expedition?body=flight&week=${encodeURIComponent(expedition.weekId)}&limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`,
+      )
+        .then((r) => r.json())
+        .then((d: { entries?: CircuitBoardEntry[] }) => {
+          setCircuitBoard(
+            (d.entries ?? []).map((e) => ({
+              handle: e.handle,
+              sectors: e.sectors,
+              totalMs: e.totalMs,
+              clearedAll: e.clearedAll,
+              you: e.you,
+            })),
+          );
+        })
+        .catch(() => {})
+        .finally(() => setCircuitBoardLoading(false));
+      return;
+    }
     fetch(`/api/circuit?body=flight&limit=12${tok ? `&token=${encodeURIComponent(tok)}` : ""}`)
       .then((r) => r.json())
       .then((d: { entries?: CircuitBoardEntry[]; mine?: CircuitPersonalBest | null }) => {
@@ -580,7 +740,11 @@ export default function GroundsScreen({
       })
       .catch(() => {})
       .finally(() => setCircuitBoardLoading(false));
-  }, []);
+  }, [expedition.weekId]);
+
+  useEffect(() => {
+    if (activeVenue === "circuit") loadCircuitBoard();
+  }, [circuitRunMode, activeVenue, loadCircuitBoard]);
 
   const submitCircuitRun = useCallback(
     (sectors: number, totalMs: number, clearedAll: boolean) => {
@@ -606,6 +770,48 @@ export default function GroundsScreen({
           store.noteScoutCrowns(crowns);
         }
         if (bonus > 0) void store.awardGauntlet(bonus);
+        return;
+      }
+
+      // Weekly Expedition — seeded route board, no camp progress.
+      if (circuitRunModeRef.current === "expedition") {
+        const capped = Math.min(sectors, expedition.sectors);
+        const clearedRoute = capped >= expedition.sectors || clearedAll;
+        const run = {
+          weekId: expedition.weekId,
+          sectors: capped,
+          totalMs,
+          clearedAll: clearedRoute,
+        };
+        const prev = loadExpeditionPersonalBest("flight", expedition.weekId);
+        const better = isExpeditionRunBetter(run, prev);
+        const deeper = run.sectors > (prev?.sectors ?? -1);
+        if (deeper) {
+          const xp = Math.round(ascentDepthXp(run.sectors, clearedRoute) * EXPEDITION_XP_MULT);
+          if (xp > 0) store.awardTrainerXp(xp);
+        }
+        if (better) {
+          const crowns = Math.round(ascentCraftCrowns(run.sectors, clearedRoute) * EXPEDITION_CROWN_MULT);
+          if (crowns > 0) void store.awardGauntlet(crowns);
+          saveExpeditionPersonalBest(run, "flight");
+        }
+        if (bonus > 0) void store.awardGauntlet(bonus);
+        const expTok = getOwnerToken();
+        if (expTok) {
+          fetch("/api/expedition", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: expTok,
+              weekId: expedition.weekId,
+              sectors: run.sectors,
+              totalMs: run.totalMs,
+              body: "flight",
+            }),
+          })
+            .then(() => loadCircuitBoard())
+            .catch(() => {});
+        }
         return;
       }
 
@@ -652,7 +858,7 @@ export default function GroundsScreen({
         })
         .catch(() => {});
     },
-    [loadCircuitBoard, owned, store],
+    [loadCircuitBoard, owned, store, expedition.weekId, expedition.sectors],
   );
 
   const resetCircuitRun = useCallback(() => {
@@ -664,8 +870,7 @@ export default function GroundsScreen({
     circuitSectorPathsRef.current = [];
     circuitSectorSamplesRef.current = [];
     circuitSampleLastT.current = 0;
-    circuitLivesRef.current = CIRCUIT_LIVES;
-    setCircuitLives(CIRCUIT_LIVES);
+    applyWingSession(runModsRef.current, true);
     setCircuitGhost(null);
     setCircuitGhostRunStartMs(0);
     setCircuitChallengeResult(null);
@@ -677,10 +882,11 @@ export default function GroundsScreen({
     setCircuitSectorMs(0);
     setCircuitPhase("ready");
     setCircuitFailReason("fall");
-    const s = desktopCircuitSector(start).spawn;
+    const seed = circuitLayoutSeedRef.current;
+    const s = desktopCircuitSector(start, seed).spawn;
     // face +Z down-track (heading 0) so you re-spawn looking at gate 1, not the exit
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [clearCircuitContinueTimers]);
+  }, [clearCircuitContinueTimers, applyWingSession]);
 
   const pickCircuitRanked = useCallback(() => {
     setCircuitRunMode("ranked");
@@ -693,7 +899,8 @@ export default function GroundsScreen({
   }, []);
 
   const pickCircuitScout = useCallback((camp: number) => {
-    const n = Math.max(1, Math.min(campsLit, camp));
+    const bonus = runModsRef.current.scoutCampBonus;
+    const n = Math.max(1, Math.min(campsLit, camp + bonus));
     setCircuitRunMode("scout");
     setCircuitScoutCamp(n);
     const start = scoutStartSector(n);
@@ -705,11 +912,26 @@ export default function GroundsScreen({
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
   }, [campsLit]);
 
+  const pickCircuitExpedition = useCallback(() => {
+    setCircuitRunMode("expedition");
+    setCircuitSectorIdx(0);
+    circuitCpNext.current = 1;
+    setCircuitCpPassed(1);
+    setCircuitPhase("ready");
+    const s = desktopCircuitSector(0, expedition.seed).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+  }, [expedition.seed]);
+
   const travelToWorld = useCallback(
     (destId: string, restore = true) => {
-      if (!isFirstDuelComplete() && destId === "gauntlet") {
-        setModeLockToast("Finish your first duel to unlock this.");
-        return;
+      const lvl = trainerLevel(store.trainerXp).level;
+      const duelDone = isFirstDuelComplete();
+      if (!isWorldOpen(destId, lvl, duelDone)) {
+        if (destId === "gauntlet") {
+          if (!duelDone) setModeLockToast("Finish your first duel to unlock this.");
+          else setModeLockToast("Trainer rank 5 opens the Gauntlet.");
+          return;
+        }
       }
       if (!isHub) {
         // Leaving a region: never persist a pose stuck in a portal plane.
@@ -737,7 +959,7 @@ export default function GroundsScreen({
         }
       }
     },
-    [capturePose, restorePose, isHub, worldId],
+    [capturePose, restorePose, isHub, worldId, store.trainerXp],
   );
 
   const enterVenue = useCallback(
@@ -763,8 +985,7 @@ export default function GroundsScreen({
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
       circuitRunMsRef.current = 0;
-      circuitLivesRef.current = CIRCUIT_LIVES;
-      setCircuitLives(CIRCUIT_LIVES);
+      applyWingSession(runModsRef.current, true);
       setCircuitGhost(null);
       setCircuitSectorIdx(0);
       setCircuitCpPassed(1);
@@ -785,7 +1006,7 @@ export default function GroundsScreen({
         setTimeout(() => travelRef.current?.(AMPHI_SPAWN[0], AMPHI_SPAWN[2], AMPHI_SPAWN_HEADING), 80);
       }
     },
-    [capturePose, worldId, clearCircuitContinueTimers],
+    [capturePose, worldId, clearCircuitContinueTimers, applyWingSession],
   );
 
   const exitVenue = useCallback(() => {
@@ -857,21 +1078,23 @@ export default function GroundsScreen({
     setCircuitSectorMs(0);
     circuitSectorStart.current = 0;
     setCircuitGhostRunStartMs(0);
-    if (next >= DESKTOP_CIRCUIT_COUNT) {
+    const cap =
+      circuitRunModeRef.current === "expedition" ? expedition.sectors : DESKTOP_CIRCUIT_COUNT;
+    if (next >= cap) {
       // Frozen at sector clear — do not re-read wall clock (includes load gap).
       const total = circuitRunMsRef.current;
       setCircuitRunMs(total);
       setCircuitPhase("done");
-      submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
-      if (circuitChallenge) {
+      submitCircuitRun(cap, total, true);
+      if (circuitChallenge && circuitRunModeRef.current === "ranked") {
         const beat = isClimbChallengeBeat(
-          { sectors: DESKTOP_CIRCUIT_COUNT, totalMs: total },
+          { sectors: cap, totalMs: total },
           circuitChallenge,
         );
         setCircuitChallengeResult(beat ? "beat" : "miss");
         track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
       }
-      store.awardTrainerXp(120);
+      if (circuitRunModeRef.current === "ranked") store.awardTrainerXp(120);
       outcomeSfx(true);
       return;
     }
@@ -890,12 +1113,25 @@ export default function GroundsScreen({
       outcomeSfx(true);
       return;
     }
+    // Trainer-rank ceiling — Unlock Ladder rations higher Reaches (parity with Climb).
+    if (
+      circuitRunModeRef.current === "ranked" &&
+      mind &&
+      hitsRankLock(next, trainerLevel(store.trainerXp).level, mind.wins, store.climb?.bestSectors ?? 0)
+    ) {
+      const total = circuitRunMsRef.current;
+      setCircuitRunMs(total);
+      submitCircuitRun(next, total, true);
+      setCircuitPhase("ranklock");
+      outcomeSfx(true);
+      return;
+    }
     setCircuitSectorIdx(next);
     setCircuitPhase("ready");
     setCircuitArriveNonce((n) => n + 1);
-    const s = desktopCircuitSector(next).spawn;
+    const s = desktopCircuitSector(next, circuitLayoutSeedRef.current).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge, finalizeCircuitSectorPath]);
+  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge, finalizeCircuitSectorPath, expedition.sectors]);
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
@@ -931,7 +1167,7 @@ export default function GroundsScreen({
         setCircuitSectorMs(0);
         circuitSectorStart.current = 0;
 
-        const s = desktopCircuitSector(circuitSectorIdx).spawn;
+        const s = desktopCircuitSector(circuitSectorIdx, circuitLayoutSeedRef.current).spawn;
         const ghostPose: CircuitGhostPose = {
           x: s[0],
           y: s[1],
@@ -992,7 +1228,7 @@ export default function GroundsScreen({
     // Resume from frozen flying time so ready / continue / load gaps don't count.
     circuitRunStart.current = now - circuitRunMsRef.current;
     // Seed t=0 at the pad so ghost remaps from spawn, not the first mid-air sample.
-    const spawn = desktopCircuitSector(circuitSectorIdx).spawn;
+    const spawn = desktopCircuitSector(circuitSectorIdx, circuitLayoutSeedRef.current).spawn;
     const origin = toClimbCanonical(spawn[1], spawn[2]);
     circuitSectorSamplesRef.current = [{ t: 0, y: origin.y, z: origin.z }];
     circuitSampleLastT.current = now;
@@ -1065,7 +1301,7 @@ export default function GroundsScreen({
       setCircuitCpPassed(index + 1);
       // Golden ring — pay Crowns, clear gold color (geom offset stays).
       if (!cp.finish && index === goldGate) {
-        bonusCrowns.current += GOLD_RING_CROWNS;
+        bonusCrowns.current += goldRingCrowns(runModsRef.current.goldCrownsMult);
         setGoldGate(-1);
         rewardSfx("big");
       } else if (!cp.finish) {
@@ -1079,24 +1315,26 @@ export default function GroundsScreen({
         setCircuitSectorMs(sectorElapsed);
         circuitRunMsRef.current = runElapsed;
         setCircuitRunMs(runElapsed);
-        if (circuitSectorIdx + 1 >= DESKTOP_CIRCUIT_COUNT) {
+        const cap =
+          circuitRunModeRef.current === "expedition" ? expedition.sectors : DESKTOP_CIRCUIT_COUNT;
+        if (circuitSectorIdx + 1 >= cap) {
           const total = runElapsed;
           setCircuitPhase("done");
-          submitCircuitRun(DESKTOP_CIRCUIT_COUNT, total, true);
-          if (circuitChallenge) {
+          submitCircuitRun(cap, total, true);
+          if (circuitChallenge && circuitRunModeRef.current === "ranked") {
             const beat = isClimbChallengeBeat(
-              { sectors: DESKTOP_CIRCUIT_COUNT, totalMs: total },
+              { sectors: cap, totalMs: total },
               circuitChallenge,
             );
             setCircuitChallengeResult(beat ? "beat" : "miss");
             track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
           }
-          store.awardTrainerXp(120);
+          if (circuitRunModeRef.current === "ranked") store.awardTrainerXp(120);
           outcomeSfx(true);
         } else {
           // Park on "sector" so this frame stops cruise/fail checks; effect advances.
           setCircuitPhase("sector");
-          store.awardTrainerXp(owned ? 15 : 0);
+          store.awardTrainerXp(owned && circuitRunModeRef.current === "ranked" ? 15 : 0);
           outcomeSfx(true);
         }
       }
@@ -1256,7 +1494,7 @@ export default function GroundsScreen({
     try {
       const mem = loadRivalMemory();
       setRivalMemory(mem);
-      setRival(rivalFrom(mem.seed));
+      setRival(currentRival(mem));
     } catch {}
     // Season-turn beat — perform the Chronicle as a Keeper cinematic when the
     // door rolls over. Brand-new players just record the season (no beat); the
@@ -1724,7 +1962,13 @@ export default function GroundsScreen({
       setRegionRaiseCoach(false);
       setOverlay("train");
     }
-    else if (near?.kind === "broker") setOverlay("broker");
+    else if (near?.kind === "broker") {
+      if (!isBrokerOpen(trainerLevel(store.trainerXp).level)) {
+        setModeLockToast("Trainer rank 4 opens the Broker.");
+        return;
+      }
+      setOverlay("broker");
+    }
     else if (near?.kind === "keeper") {
       // Guardians stripped from face (lib/features.ts) — never open the duel.
       if (KEEPERS_PLAYABLE) {
@@ -1770,11 +2014,17 @@ export default function GroundsScreen({
       // is watched in-world — the league fights on its dais — so nothing to open.
       if (near.venue === "daily") setOverlay("daily");
     } else if (near?.kind === "gate") {
-      if (modesLocked && near.world === "gauntlet") {
-        setModeLockToast("Finish your first duel to unlock this.");
+      const dest = near.world;
+      if (!isWorldOpen(dest, trainerLevel(store.trainerXp).level, isFirstDuelComplete())) {
+        if (dest === "gauntlet") {
+          setModeLockToast(
+            isFirstDuelComplete() ? "Trainer rank 5 opens the Gauntlet." : "Finish your first duel to unlock this.",
+          );
+        } else {
+          setModeLockToast("This gate is still closed.");
+        }
         return;
       }
-      const dest = near.world;
       // taking any gate ends the first-run guide — the player understood "leave
       // the hub for a region," which is the whole point of the spotlight.
       if (concordCoach) dismissConcordCoach();
@@ -2809,6 +3059,7 @@ export default function GroundsScreen({
                     circuitPhase !== "sector" &&
                     circuitPhase !== "continue" &&
                     circuitPhase !== "ceiling" &&
+                    circuitPhase !== "ranklock" &&
                     circuitPhase !== "prove"))
               }
               biome={biome}
@@ -2995,7 +3246,12 @@ export default function GroundsScreen({
             <RivalCard
               rival={rival}
               memory={rivalMemory}
-              onFace={() => setRivalBeat({ phase: "before" })}
+              onFace={() => {
+                const mem = maybeEscalateRival(loadRivalMemory());
+                setRivalMemory(mem);
+                setRival(currentRival(mem));
+                setRivalBeat({ phase: "before" });
+              }}
             />
           </div>
         )}
@@ -3030,6 +3286,42 @@ export default function GroundsScreen({
           }}
         />
       </div>
+      )}
+
+      {/* Director — Hub idle: one next thing so the plaza never reads as "you're done". */}
+      {showHud &&
+        !worldUiBlocked &&
+        isHub &&
+        !inVenue &&
+        owned &&
+        overlay === "none" &&
+        !showMatch &&
+        !gRun &&
+        !concordCoach &&
+        !travelCard && (
+        <div
+          className="grounds-hud"
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: isMobile ? 88 : 28,
+            transform: "translateX(-50%)",
+            zIndex: 95,
+            width: "min(420px, calc(100vw - 32px))",
+            pointerEvents: "auto",
+          }}
+        >
+          <NextCard
+            hideAlso={["daily"]}
+            onGo={(target) => {
+              if (target === "flight" || target === "claim") goFlight();
+              else if (target === "daily") setOverlay("daily");
+              else if (target === "collection") router.push("/collection");
+              else if (target === "champion" && owned) router.push(`/champion/${owned}`);
+              // hub — already here; region unlocks are a walk to a gate
+            }}
+          />
+        </div>
       )}
 
       {/* altitude / tower HUD — on mobile we keep only the altitude readout */}
@@ -3132,22 +3424,50 @@ export default function GroundsScreen({
           accent={circuitReach.accent}
           compact={isMobile}
           failReason={circuitFailReason}
-          sectorTotal={DESKTOP_CIRCUIT_COUNT}
+          sectorTotal={circuitRouteCap}
           reachName={circuitReach.name}
           lives={circuitLives}
+          maxLives={runMods.lives}
           runMode={circuitRunMode}
           campsLit={campsLit}
           scoutCamp={circuitScoutCamp}
           onPickRanked={!circuitGuest ? pickCircuitRanked : undefined}
           onPickScout={!circuitGuest ? pickCircuitScout : undefined}
+          onPickExpedition={!circuitGuest && expeditionOpen ? pickCircuitExpedition : undefined}
+          expeditionLabel={expedition.name}
+          expeditionDetail={expedition.gloss}
           showModePicker={
             !circuitGuest &&
             circuitPhase === "ready" &&
-            circuitLives === CIRCUIT_LIVES &&
+            circuitLives === runMods.lives &&
             circuitSectorIdx === circuitStartSectorRef.current
           }
           ascentReaches={ascentReaches}
           climbHundred={climbHundred}
+          scoutUnlocked={scoutUnlocked}
+          rankLockKicker={rankLock.kicker}
+          rankLockTitle={rankLock.title}
+          rankLockDetail={rankLock.detail}
+          conditionLine={
+            !circuitGuest && circuitRunMode === "expedition"
+              ? `WEEK · ${expedition.name.toUpperCase()} · ${expedition.condition.name.toUpperCase()}`
+              : !circuitGuest && circuitRunMode === "ranked" && activeCondition.id !== "clear"
+                ? `TODAY · ${activeCondition.name.toUpperCase()}`
+                : undefined
+          }
+          conditionDetail={activeCondition.gloss}
+          wingLine={!circuitGuest && wingLoadout.length ? loadoutLine(wingLoadout) : undefined}
+          formLine={
+            career && (career.form !== "steady" || career.fatigue > 0 || career.scars.length > 0)
+              ? `FORM · ${career.formLabel.toUpperCase()}${career.fatigue > 0 ? ` · ${career.fatigueLabel.toUpperCase()}` : ""}${career.scars[0] ? ` · ${career.scars[0].name.toUpperCase()}` : ""}`
+              : undefined
+          }
+          formDetail={career?.scars.map((s) => s.gloss).join(" · ") || undefined}
+          earnedWingOptions={!circuitGuest ? earnedOptions : undefined}
+          earnedWingPick={wingLoadout[1] ?? null}
+          onPickEarnedWing={
+            !circuitGuest ? (id) => setEarnedPick(id as WingTraitId) : undefined
+          }
         />
       )}
 

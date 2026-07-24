@@ -32,10 +32,13 @@ export function RivalCard({ rival, memory, onFace }: { rival: Rival; memory: Riv
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div className="mono" style={{ fontSize: 8, letterSpacing: 1.4, color: col }}>
-          RIVAL TRAINER {memory.met ? `· ${memory.wins}–${memory.losses}` : ""}
+          RIVAL TRAINER
+          {memory.met ? ` · ${memory.wins}–${memory.losses}` : ""}
+          {memory.chapter > 0 ? ` · CH.${memory.chapter + 1}` : ""}
         </div>
         <div style={{ fontSize: 14, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {rival.name}
+          <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 11 }}> · {rival.epithet}</span>
         </div>
         <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", lineHeight: 1.35, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           &ldquo;{JAB[stance]}&rdquo;

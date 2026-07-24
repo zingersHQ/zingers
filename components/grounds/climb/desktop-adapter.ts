@@ -44,10 +44,10 @@ function scaleCheckpoint(cp: CircuitCheckpoint): CircuitCheckpoint {
   };
 }
 
-function buildDesktopSector(i: number): CircuitTrackDef {
-  const src = climbSector(i);
+function buildDesktopSector(i: number, seed = ""): CircuitTrackDef {
+  const src = climbSector(i, seed);
   return {
-    id: `circuit-flight:s${i + 1}`,
+    id: seed ? `circuit-flight:${seed}:s${i + 1}` : `circuit-flight:s${i + 1}`,
     name: src.name,
     spawn: src.spawn, // keep near the Return Portal (unscaled — invisible launch pad)
     platforms: [], // jetpack-only — no stepping stones
@@ -56,10 +56,19 @@ function buildDesktopSector(i: number): CircuitTrackDef {
 }
 
 const DESKTOP_SECTORS: CircuitTrackDef[] = Array.from({ length: DESKTOP_CIRCUIT_COUNT }, (_, i) => buildDesktopSector(i));
+const seededDesktopCache = new Map<string, CircuitTrackDef>();
 
 /** The desktop 6-DOF sector `index` (0..99), scaled from the shared Climb layout. */
-export function desktopCircuitSector(index: number): CircuitTrackDef {
-  return DESKTOP_SECTORS[Math.max(0, Math.min(DESKTOP_CIRCUIT_COUNT - 1, index))]!;
+export function desktopCircuitSector(index: number, seed = ""): CircuitTrackDef {
+  const i = Math.max(0, Math.min(DESKTOP_CIRCUIT_COUNT - 1, index));
+  if (!seed) return DESKTOP_SECTORS[i]!;
+  const key = `${seed}:${i}`;
+  let t = seededDesktopCache.get(key);
+  if (!t) {
+    t = buildDesktopSector(i, seed);
+    seededDesktopCache.set(key, t);
+  }
+  return t;
 }
 
 export { reachTheme, reachThemeByIndex, sectorDifficulty };
