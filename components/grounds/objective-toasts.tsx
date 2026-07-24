@@ -132,7 +132,7 @@ export function ObjectiveToasts({
         }}
       >
         <span className="obj-arrow" style={{ animation: "objArrow 1.1s ease-in-out infinite", color: "var(--gold)" }}>↗</span>
-        REVIEW IN YOUR HUB · M
+        FOLLOW ON YOUR COMPASS · HUB · M
       </div>
     </div>
   );

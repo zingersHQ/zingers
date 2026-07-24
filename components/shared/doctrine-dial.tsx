@@ -18,6 +18,7 @@ export function DoctrineDial({
   color,
   hints,
   highlight = false,
+  compact = false,
 }: {
   label: string;
   value: number;
@@ -25,6 +26,8 @@ export function DoctrineDial({
   color: string;
   hints: [string, string];
   highlight?: boolean;
+  /** Compact readout for dense sheets (Train) — still not interactive. */
+  compact?: boolean;
 }) {
   const editable = typeof onChange === "function";
   const v = Math.max(0, Math.min(100, Math.round(value)));
@@ -51,6 +54,47 @@ export function DoctrineDial({
           <span>{hints[0]}</span>
           <span>{hints[1]}</span>
         </div>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div
+        className={highlight ? "doctrine-meter is-lit" : "doctrine-meter"}
+        role="meter"
+        aria-label={`${label}: ${lean}, ${v} of 100`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={v}
+        aria-valuetext={`${lean} · ${v}`}
+        style={{
+          padding: "8px 10px",
+          borderRadius: 10,
+          border: `1px solid ${highlight ? color : "var(--line)"}`,
+          background: highlight
+            ? `color-mix(in srgb, ${color} 14%, var(--panel2, #15131f))`
+            : "color-mix(in srgb, var(--panel2, #15131f) 55%, transparent)",
+          ["--meter" as string]: color,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6, marginBottom: 5 }}>
+          <span style={{ fontSize: 11, fontWeight: 700 }}>{label}</span>
+          <span className="mono" style={{ fontSize: 13, fontWeight: 800, color, fontVariantNumeric: "tabular-nums" }}>{v}</span>
+        </div>
+        <div style={{ height: 5, borderRadius: 999, background: "color-mix(in srgb, var(--line2) 85%, #000)", overflow: "hidden" }}>
+          <div
+            className="doctrine-meter__fill"
+            style={{
+              height: "100%",
+              width: `${v}%`,
+              borderRadius: 999,
+              background: color,
+              transition: "width .55s cubic-bezier(.2,.8,.2,1)",
+            }}
+          />
+        </div>
+        <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>{lean}</div>
       </div>
     );
   }

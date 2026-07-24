@@ -14,7 +14,7 @@ import type { Champion, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { tribunalDraw, type Stance, type TribunalDraw } from "@/lib/scenarios/registry";
 import type { TribunalConfig } from "@/lib/scenarios/types";
-import { ChampionAvatar } from "@/components/champion-avatar";
+import { ChampionPortrait } from "@/components/render/champion-portrait";
 
 const GOLD = "#f0a93a";
 
@@ -36,19 +36,51 @@ function StanceTag({ stance }: { stance: Stance }) {
 }
 
 // The case card — the proposition + (once a respondent is chosen) the two sides.
-// Reused by the briefing; kept presentational so the in-bout banner can share it.
 export function TribunalCase({ proposition, myStance }: { proposition: string; myStance: Stance | null }) {
   return (
     <div className="panel" style={{ ["--ac" as string]: GOLD, borderColor: GOLD, padding: "12px 14px", background: "rgba(240,169,58,.06)" }}>
       <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: GOLD, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-        <Scale size={12} strokeWidth={2.2} /> THE CASE
+        <Scale size={12} strokeWidth={2.2} /> TODAY&apos;S CASE
       </div>
       <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.35, fontStyle: "italic" }}>&ldquo;{proposition}&rdquo;</div>
       {myStance && (
-        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
-          you argue <StanceTag stance={myStance} /> — hold your side; switching or going off-topic loses the jury.
+        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          Your champion must argue <StanceTag stance={myStance} /> — stay on that side; going off-topic loses the jury.
         </div>
       )}
+    </div>
+  );
+}
+
+function MatchupCard({
+  entry,
+  champion,
+  stance,
+  color,
+}: {
+  entry: RosterEntry;
+  champion: Champion;
+  stance: Stance;
+  color: string;
+}) {
+  return (
+    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div
+        style={{
+          width: "100%",
+          borderRadius: 12,
+          overflow: "hidden",
+          border: `1px solid color-mix(in srgb, ${color} 45%, var(--line2))`,
+        }}
+      >
+        <ChampionPortrait rosterKey={entry.key} type={entry.type} champion={champion} preset="portrait" colorHex={color} eager />
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</div>
+        <div style={{ marginTop: 4, display: "flex", justifyContent: "center" }}>
+          <StanceTag stance={stance} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -80,13 +112,16 @@ export function TribunalBriefing(props: {
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 52, padding: 16 }}>
-      <div className="panel pop" style={{ ["--ac" as string]: GOLD, position: "relative", width: "min(600px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: GOLD }}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div>
+      <div className="panel pop" style={{ ["--ac" as string]: GOLD, position: "relative", width: "min(640px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 22, borderColor: GOLD }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div className="mono" style={{ fontSize: 11, letterSpacing: 2, color: GOLD }}>THE TRIBUNAL</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>Argue your assigned side</div>
+            <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25, marginTop: 4 }}>Your champion argues the side they&apos;re given</div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.4, margin: "6px 0 0" }}>
+              Pick who they face. The case and sides are assigned — you watch and earn Crowns.
+            </p>
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, flexShrink: 0 }}>
             <X size={20} strokeWidth={2} />
           </button>
         </div>
@@ -95,34 +130,31 @@ export function TribunalBriefing(props: {
           <TribunalCase proposition={draw.proposition} myStance={opponent ? draw.myStance : null} />
         </div>
 
-        {/* matchup, once a respondent is chosen — the sides are assigned, not chosen */}
         {oppEntry && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center", margin: "4px 0 16px" }}>
-            <div style={{ textAlign: "center" }}>
-              <ChampionAvatar ckey={ownedEntry.key} type={ownedEntry.type} champion={get(ownedEntry.key)} size={56} />
-              <div style={{ fontWeight: 700, marginTop: 6, fontSize: 13 }}>{ownedEntry.name}</div>
-              <div style={{ marginTop: 4 }}><StanceTag stance={draw.myStance} /></div>
-            </div>
-            <div className="mono" style={{ fontSize: 14, color: "var(--muted2)", fontWeight: 700 }}>VS</div>
-            <div style={{ textAlign: "center" }}>
-              <ChampionAvatar ckey={oppEntry.key} type={oppEntry.type} champion={get(oppEntry.key)} size={56} />
-              <div style={{ fontWeight: 700, marginTop: 6, fontSize: 13 }}>{oppEntry.name}</div>
-              <div style={{ marginTop: 4 }}><StanceTag stance={draw.oppStance} /></div>
-            </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              gap: 12,
+              alignItems: "start",
+              margin: "4px 0 16px",
+            }}
+          >
+            <MatchupCard entry={ownedEntry} champion={get(ownedEntry.key)} stance={draw.myStance} color={TYPE_COLOR[ownedEntry.type]} />
+            <div className="mono" style={{ fontSize: 13, color: "var(--muted2)", fontWeight: 800, paddingTop: 48 }}>VS</div>
+            <MatchupCard entry={oppEntry} champion={get(oppEntry.key)} stance={draw.oppStance} color={TYPE_COLOR[oppEntry.type]} />
           </div>
         )}
 
-        {/* the room's character — the canon force-bias of the arena */}
         <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginBottom: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ letterSpacing: 1.5 }}>THE ROOM</span>
-          <span style={{ color: TYPE_COLOR[cfg.favored] }}>rewards {cfg.favored.toLowerCase()}</span>
+          <span style={{ letterSpacing: 1.5 }}>THIS ROOM</span>
+          <span style={{ color: TYPE_COLOR[cfg.favored] }}>favors {cfg.favored.toLowerCase()}</span>
           <span style={{ color: "var(--muted2)" }}>·</span>
-          <span style={{ color: TYPE_COLOR[cfg.punished] }}>punishes {cfg.punished.toLowerCase()} (pure noise)</span>
+          <span style={{ color: TYPE_COLOR[cfg.punished] }}>harsh on {cfg.punished.toLowerCase()}</span>
         </div>
 
-        {/* choose your respondent */}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-          CHOOSE A RESPONDENT
+          CHOOSE WHO THEY FACE
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
           {opps.map((r) => {
@@ -136,7 +168,9 @@ export function TribunalBriefing(props: {
                 className="panel"
                 style={{ ["--ac" as string]: col, padding: "8px 12px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", borderColor: on ? col : "var(--line)", textAlign: "left", width: "100%" }}
               >
-                <ChampionAvatar ckey={r.key} type={r.type} champion={c} size={38} />
+                <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", flexShrink: 0, border: `1px solid ${on ? col : "var(--line2)"}` }}>
+                  <ChampionPortrait rosterKey={r.key} type={r.type} champion={c} preset="portrait" colorHex={col} eager={on} />
+                </div>
                 <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                 <div className="mono" style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", gap: 12, fontSize: 11, flexShrink: 0 }}>
                   <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, color: col, fontWeight: 700 }}>
@@ -150,40 +184,57 @@ export function TribunalBriefing(props: {
           })}
         </div>
 
-        {/* betting — identical mechanic to a duel: back a side, win 2× the stake */}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-          BACK A SIDE (optional) · win 2× your stake
+          BACK A SIDE (optional) · win 2×
         </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-          <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
-            back {ownedEntry.name}
+        <div style={{ display: "flex", gap: 8, marginBottom: 10, width: "100%" }}>
+          <button
+            className={betSide === "me" ? "btn btn-primary" : "btn"}
+            style={{ ["--ac" as string]: "var(--good)", flex: 1, minWidth: 0 }}
+            onClick={() => setBetSide(betSide === "me" ? null : "me")}
+          >
+            Back {ownedEntry.name}
           </button>
-          <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--bad)" }} disabled={!oppEntry} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
-            back {oppEntry?.name ?? "respondent"}
+          <button
+            className={betSide === "opp" ? "btn btn-primary" : "btn"}
+            style={{ ["--ac" as string]: "var(--bad)", flex: 1, minWidth: 0, opacity: oppEntry ? 1 : 0.45 }}
+            disabled={!oppEntry}
+            onClick={() => setBetSide(betSide === "opp" ? null : "opp")}
+          >
+            Back {oppEntry?.name ?? "opponent"}
           </button>
-          {betSide && (
-            <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-              {[25, 50, 100].map((n) => (
-                <button key={n} className={betAmt === n ? "btn btn-primary" : "btn"} style={{ ["--ac" as string]: "var(--gold)", opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 3 }} disabled={crowns < n} onClick={() => setBetAmt(n)}>
-                  {n} <Cr />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
+        {betSide && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 14, width: "100%" }}>
+            {[25, 50, 100].map((n) => (
+              <button
+                key={n}
+                className={betAmt === n ? "btn btn-primary" : "btn"}
+                style={{ ["--ac" as string]: "var(--gold)", flex: 1, minWidth: 0, opacity: crowns < n ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 3 }}
+                disabled={crowns < n}
+                onClick={() => setBetAmt(n)}
+              >
+                {n} <Cr />
+              </button>
+            ))}
+          </div>
+        )}
 
         <button className="btn btn-primary" style={{ ["--ac" as string]: GOLD, width: "100%", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} disabled={!opponent} onClick={onFight}>
           <FightIcon size={18} strokeWidth={2.2} />
-          {opponent ? "Open the case" : "pick a respondent"}
-          {betSide && <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>(staking {betAmt} <Cr s={13} />)</span>}
+          {opponent ? "Open the case" : "Pick who they face"}
+          {betSide && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+              (staking {betAmt} <Cr s={13} />)
+            </span>
+          )}
         </button>
       </div>
     </div>
   );
 }
 
-// In-bout strip: keeps the case + your stance on screen while the argument runs,
-// so a Tribunal bout reads as a hearing, not a generic spar.
+// In-bout strip: keeps the case + your stance on screen while the argument runs.
 export function TribunalMatchBanner({ proposition, myStance, isMobile }: { proposition: string; myStance: Stance; isMobile: boolean }) {
   return (
     <div
@@ -204,7 +255,9 @@ export function TribunalMatchBanner({ proposition, myStance, isMobile }: { propo
             &ldquo;{proposition}&rdquo;
           </div>
         </div>
-        <div style={{ marginLeft: "auto", flexShrink: 0 }}><StanceTag stance={myStance} /></div>
+        <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+          <StanceTag stance={myStance} />
+        </div>
       </div>
     </div>
   );

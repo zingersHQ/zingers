@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   X, Crown, Gem, BookOpen, Target, Compass as CompassIcon, Layers,
-  Settings as SettingsIcon, HelpCircle, Shield, ChevronRight, Sparkles,
+  Settings as SettingsIcon, HelpCircle, Shield, ChevronRight, Sparkles, Rocket,
 } from "lucide-react";
 import { useChampions } from "@/store/champions";
 import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
@@ -40,6 +40,7 @@ export function PlayerHub({
   hudDim,
   highlight,
   onHighlightOpen,
+  onTakeFlight,
   onOpenControls,
   onOpenSettings,
   onOpenClan,
@@ -58,6 +59,8 @@ export function PlayerHub({
   highlight?: boolean;
   /** Fired when the trainer opens the hub during the objectives coach. */
   onHighlightOpen?: () => void;
+  /** Jump straight into Flight for the current world (no mountain hunt). */
+  onTakeFlight?: () => void;
   onOpenControls: () => void;
   onOpenSettings: () => void;
   onOpenClan: () => void;
@@ -280,6 +283,30 @@ export function PlayerHub({
                 <X size={16} strokeWidth={2.2} />
               </button>
             </div>
+
+            {onTakeFlight && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  close();
+                  onTakeFlight();
+                }}
+                style={{
+                  ["--ac" as string]: "#39e0ff",
+                  width: "100%",
+                  marginTop: 14,
+                  fontSize: 14,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                <Rocket size={16} strokeWidth={2.2} />
+                Take flight{inRegion ? ` · ${regionName}` : ""}
+              </button>
+            )}
 
             {/* soft Trainer name — device-local; wallet can lock uniqueness later */}
             <div style={{ marginTop: 12, padding: "10px 11px", borderRadius: 10, border: "1px solid var(--line)", background: "rgba(255,255,255,.03)" }}>

@@ -57,6 +57,8 @@ import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
 import { sectorModifier, type Modifier } from "./climb/modifiers";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
+import { AscentSigil } from "./climb/ascent-sigil";
+import { GOLD_RING_CROWNS, rollGoldRing, withGoldDetour } from "./climb/gold-ring";
 import {
   desktopCircuitSector,
   toClimbCanonical,
@@ -113,9 +115,6 @@ const FLOOR_Y = -9;
 const STUMBLE_VY = ASCENT_STUMBLE.vy;
 const STUMBLE_LOCK = ASCENT_STUMBLE.lockS;
 const STUMBLE_IMMUNE = ASCENT_STUMBLE.immuneS;
-const GOLD_RING_ODDS = 0.125;
-const GOLD_RING_CROWNS = 25;
-
 // Chase camera — a touch farther so cast/rings match desktop scale in frame.
 const CAM_DIST = 11.2;
 const CAM_PITCH = 0.14;
@@ -160,34 +159,6 @@ function MechBody({ accent }: { accent: string }) {
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
     </>
-  );
-}
-
-// ascent sigil: a slowly-rotating halo of glyphs above the flyer. Glyph count =
-// your best depth in Reaches (essence §3 "an ascent sigil baked onto the body").
-function AscentSigil({ reaches, accent }: { reaches: number; accent: string }) {
-  const grp = useRef<THREE.Group>(null);
-  const n = Math.min(10, Math.max(0, reaches));
-  useFrame((_, dt) => {
-    if (grp.current) grp.current.rotation.y += dt * 0.8;
-  });
-  if (n <= 0) return null;
-  return (
-    <group ref={grp} position={[0, 1.55, 0]}>
-      {Array.from({ length: n }, (_, i) => {
-        const a = (i / n) * Math.PI * 2;
-        return (
-          <mesh key={i} position={[Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62]} rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.08, 0.026, 8, 20]} />
-            <meshBasicMaterial color={accent} transparent opacity={0.95} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-        );
-      })}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.62, 0.012, 8, 48]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-      </mesh>
-    </group>
   );
 }
 
@@ -659,19 +630,7 @@ export default function CircuitLite({
   const baseTrack = useMemo(() => desktopCircuitSector(sector), [sector]);
   // Greedy gold detour baked into the live track (geometry stays after payout so
   // the ring doesn't snap mid-sector).
-  const track = useMemo(() => {
-    if (!goldGeom) return baseTrack;
-    return {
-      ...baseTrack,
-      checkpoints: baseTrack.checkpoints.map((cp) => {
-        if (cp.index !== goldGeom.idx) return cp;
-        return {
-          ...cp,
-          pos: [cp.pos[0], cp.pos[1] + goldGeom.dy, cp.pos[2]] as [number, number, number],
-        };
-      }),
-    };
-  }, [baseTrack, goldGeom]);
+  const track = useMemo(() => withGoldDetour(baseTrack, goldGeom), [baseTrack, goldGeom]);
   // Seed overlap poses before the first ReadyPose frame (ghosts read these).
   useEffect(() => {
     flyerPosRef.current.set(track.spawn[0], PAD_TOP_Y, track.spawn[2]);
@@ -957,14 +916,10 @@ export default function CircuitLite({
   // Roll a golden ring per sector (§7b). Non-finish mid gate, pulled off the
   // glide line so threading it is a deliberate climb/dive.
   useEffect(() => {
-    const cps = baseTrack.checkpoints;
-    const gc = cps.length - 1; // gates incl. finish
-    if (gc >= 3 && Math.random() < GOLD_RING_ODDS) {
-      const idx = 1 + Math.floor(Math.random() * (gc - 1));
-      const r = cps[idx]?.radius ?? 3;
-      const dy = (Math.random() < 0.5 ? 1 : -1) * (r * 1.55 + 0.9);
-      setGoldGeom({ idx, dy });
-      setGoldGate(idx);
+    const g = rollGoldRing(baseTrack.checkpoints);
+    if (g) {
+      setGoldGeom(g);
+      setGoldGate(g.idx);
     } else {
       setGoldGeom(null);
       setGoldGate(-1);

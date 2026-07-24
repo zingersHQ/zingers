@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical, Sparkles } from "lucide-react";
+import { Crown, Globe, Mountain, Swords, Moon, Ban, X, Swords as FightIcon, ArrowUpRight, ArrowUp, Check, Gem, Flame, Scale, FastForward, FlaskConical, Rocket } from "lucide-react";
 import type { AgentConfig, BattleEnd, Champion, CreatureType, Recipe, RosterEntry, Style, TowerAgent, WarState } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor, doctrine, blankStyle, accrue, dominant, skillLevel, skillCount, blank } from "@/lib/evolve/progression";
 import { ratingOf } from "@/lib/evolve/elo";
@@ -10,11 +10,12 @@ import { sideParams } from "@/lib/recipe-params";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions, TRAIN_COST, FRAGMENT_BUY, FRAGMENT_SELL, type EvolutionFlash } from "@/store/champions";
 import { GROUNDS_WIN_REWARD, HOME_WIN_BONUS } from "@/lib/economy";
-import { IMPRINT_LESSONS, describeDial, imprintDayIndex } from "@/lib/imprints";
+import { describeDial, imprintDayIndex, lessonsForSession } from "@/lib/imprints";
 import type { Strat } from "@/lib/types";
 import { TRIALS } from "@/lib/flags";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar } from "@/components/champion-avatar";
+import { ChampionPortrait } from "@/components/render/champion-portrait";
 import { FirstRun } from "@/components/intro/first-run";
 import { FirstDuelHubCta, FirstDuelOverlay, type FirstDuelPhase } from "@/components/intro/first-duel";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
@@ -82,7 +83,7 @@ import { ControlsGuide } from "@/components/grounds/controls-guide";
 import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 import { useSettings } from "@/store/settings";
 import { startGamepad, getPad } from "@/lib/gamepad";
-import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx, stopJet, jetFallSfx, badLuckSfx } from "@/lib/sfx";
+import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx, stopJet, jetFallSfx, badLuckSfx, rewardSfx } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
 import { setMood, resolveAmbienceMood, setAmbienceVolume, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
 import { GuardianGame } from "@/components/guardian/game";
@@ -118,8 +119,15 @@ import {
   resolveClimbChallengeFromLocation,
   type ClimbChallenge,
 } from "@/lib/climb-challenge";
-import { ALTITUDE_KEY_SECTOR, needsAltitudeProve } from "@/lib/ascent-rules";
-import { firstLightChestCrowns, HUNDRED_CHEST_CROWNS } from "@/lib/climb-campaign";
+import { ALTITUDE_KEY_SECTOR, ascentCraftCrowns, ascentDepthXp, needsAltitudeProve } from "@/lib/ascent-rules";
+import {
+  firstLightChestCrowns,
+  HUNDRED_CHEST_CROWNS,
+  SCOUT_CROWN_MULT,
+  SCOUT_XP_MULT,
+  scoutStartSector,
+} from "@/lib/climb-campaign";
+import { GOLD_RING_CROWNS, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -331,8 +339,9 @@ export default function GroundsScreen({
   const [claiming, setClaiming] = useState<string | null>(null);
   const [showChronicle, setShowChronicle] = useState(false);
   const [goalCoach, setGoalCoach] = useState(false);
-  /** One-shot: point past the plaza at season goals + daily caches. */
-  const [wildsCue, setWildsCue] = useState(false);
+  /** Hub → region (or first land): replay Peak/Depth/Secret toasts if any left. */
+  const arrivedFromHubRef = useRef(true);
+  const regionGoalIntroducedRef = useRef<Set<string>>(new Set());
   const [concordCoach, setConcordCoach] = useState(false);
   /** Opaque cover across /ascent → /grounds remount so the empty world never flashes. */
   const [claimArriveCover, setClaimArriveCover] = useState(false);
@@ -474,8 +483,49 @@ export default function GroundsScreen({
     for (const id of circuitContinueTimers.current) window.clearTimeout(id);
     circuitContinueTimers.current = [];
   }, []);
-  const circuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
+
+  // Ranked campaign vs unranked scout (parity with mobile Climb).
+  type CircuitRunMode = "ranked" | "scout";
+  const [circuitRunMode, setCircuitRunMode] = useState<CircuitRunMode>("ranked");
+  const [circuitScoutCamp, setCircuitScoutCamp] = useState(1);
+  const circuitRunModeRef = useRef<CircuitRunMode>("ranked");
+  const circuitStartSectorRef = useRef(0);
+  circuitRunModeRef.current = circuitRunMode;
+  circuitStartSectorRef.current = circuitRunMode === "scout" ? scoutStartSector(circuitScoutCamp) : 0;
+
+  const campsLit = store.climb?.campsLit ?? 0;
+  const climbHundred = !!store.climb?.hundred;
+  const ascentReaches = Math.min(10, Math.max(0, campsLit));
+  const ascentSigilAccent = ascentReaches > 0 ? reachThemeByIndex(ascentReaches - 1).accent : undefined;
+
+  // Golden ring altitude detour (shared with Climb).
+  const [goldGate, setGoldGate] = useState(-1);
+  const [goldGeom, setGoldGeom] = useState<GoldGeom | null>(null);
+  const bonusCrowns = useRef(0);
+
+  const baseCircuitTrack = useMemo(() => desktopCircuitSector(circuitSectorIdx), [circuitSectorIdx]);
+  const circuitTrack = useMemo(() => withGoldDetour(baseCircuitTrack, goldGeom), [baseCircuitTrack, goldGeom]);
   const circuitReach = useMemo(() => reachTheme(circuitSectorIdx), [circuitSectorIdx]);
+
+  useEffect(() => {
+    const g = rollGoldRing(baseCircuitTrack.checkpoints);
+    if (g) {
+      setGoldGeom(g);
+      setGoldGate(g.idx);
+    } else {
+      setGoldGeom(null);
+      setGoldGate(-1);
+    }
+  }, [baseCircuitTrack]);
+
+  useEffect(() => {
+    if (campsLit < 1 && circuitRunMode === "scout") {
+      setCircuitRunMode("ranked");
+      setCircuitScoutCamp(1);
+    } else if (campsLit >= 1) {
+      setCircuitScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
+    }
+  }, [campsLit, circuitRunMode]);
   // the same pure-time hazards the mobile Climb fields for this sector (empty in
   // the early Reaches / breather beats) — rendered + collided against on desktop
   const circuitHazards = useMemo(
@@ -536,9 +586,29 @@ export default function GroundsScreen({
     (sectors: number, totalMs: number, clearedAll: boolean) => {
       // Guest Ascent: hold depth for claim XP — nothing on the ranked board yet.
       if (!owned) {
-        noteGuestClimbDepth(sectors);
+        if (circuitRunModeRef.current === "ranked") noteGuestClimbDepth(sectors);
         return;
       }
+      const bonus = bonusCrowns.current;
+      bonusCrowns.current = 0;
+
+      // Scout: pay only for sectors advanced this run — no board, no camp light.
+      if (circuitRunModeRef.current === "scout") {
+        const startAt = circuitStartSectorRef.current;
+        const advanced = Math.max(0, sectors - startAt);
+        let xp = Math.round(ascentDepthXp(advanced, false) * SCOUT_XP_MULT);
+        let crowns = Math.round(ascentCraftCrowns(advanced, false) * SCOUT_CROWN_MULT);
+        const room = store.scoutCrownsRemaining();
+        crowns = Math.min(crowns, room);
+        if (xp > 0) store.awardTrainerXp(xp);
+        if (crowns > 0) {
+          void store.awardGauntlet(crowns);
+          store.noteScoutCrowns(crowns);
+        }
+        if (bonus > 0) void store.awardGauntlet(bonus);
+        return;
+      }
+
       const tok = getOwnerToken();
       if (!tok) return;
       const run: CircuitPersonalBest = { sectors, totalMs, clearedAll };
@@ -547,6 +617,7 @@ export default function GroundsScreen({
         saveCircuitPersonalBest(run, "flight");
         setCircuitPersonalBest(run);
       }
+      if (bonus > 0) void store.awardGauntlet(bonus);
       // Camps + first-light (shared soul spine with mobile Climb).
       const lit = store.lightCamp(sectors, clearedAll);
       for (const n of lit.newlyLit) {
@@ -598,16 +669,41 @@ export default function GroundsScreen({
     setCircuitGhost(null);
     setCircuitGhostRunStartMs(0);
     setCircuitChallengeResult(null);
-    setCircuitSectorIdx(0);
+    bonusCrowns.current = 0;
+    const start = circuitRunModeRef.current === "scout" ? circuitStartSectorRef.current : 0;
+    setCircuitSectorIdx(start);
     setCircuitCpPassed(1);
     setCircuitRunMs(0);
     setCircuitSectorMs(0);
     setCircuitPhase("ready");
     setCircuitFailReason("fall");
-    const s = desktopCircuitSector(0).spawn;
+    const s = desktopCircuitSector(start).spawn;
     // face +Z down-track (heading 0) so you re-spawn looking at gate 1, not the exit
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
   }, [clearCircuitContinueTimers]);
+
+  const pickCircuitRanked = useCallback(() => {
+    setCircuitRunMode("ranked");
+    setCircuitSectorIdx(0);
+    circuitCpNext.current = 1;
+    setCircuitCpPassed(1);
+    setCircuitPhase("ready");
+    const s = desktopCircuitSector(0).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+  }, []);
+
+  const pickCircuitScout = useCallback((camp: number) => {
+    const n = Math.max(1, Math.min(campsLit, camp));
+    setCircuitRunMode("scout");
+    setCircuitScoutCamp(n);
+    const start = scoutStartSector(n);
+    setCircuitSectorIdx(start);
+    circuitCpNext.current = 1;
+    setCircuitCpPassed(1);
+    setCircuitPhase("ready");
+    const s = desktopCircuitSector(start).spawn;
+    setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
+  }, [campsLit]);
 
   const travelToWorld = useCallback(
     (destId: string, restore = true) => {
@@ -676,6 +772,9 @@ export default function GroundsScreen({
       setCircuitSectorMs(0);
       setCircuitPhase("ready");
       setCircuitFailReason("fall");
+      setCircuitRunMode("ranked");
+      setCircuitScoutCamp(1);
+      bonusCrowns.current = 0;
       if (venue === "circuit") {
         const s = desktopCircuitSector(0).spawn;
         setTimeout(() => travelRef.current?.(s[0], s[2], 0), 80);
@@ -777,8 +876,13 @@ export default function GroundsScreen({
       return;
     }
     // Thin altitude key — same Reach II gate as mobile Climb (in-place Prove).
+    // Scout practice skips the campaign door.
     const mind = owned ? store.get(owned) : null;
-    if (next >= ALTITUDE_KEY_SECTOR && (!mind || needsAltitudeProve(mind.wins))) {
+    if (
+      circuitRunModeRef.current === "ranked" &&
+      next >= ALTITUDE_KEY_SECTOR &&
+      (!mind || needsAltitudeProve(mind.wins))
+    ) {
       const total = circuitRunMsRef.current;
       setCircuitRunMs(total);
       submitCircuitRun(next, total, true);
@@ -881,7 +985,7 @@ export default function GroundsScreen({
     if (circuitPhase !== "ready") return;
     const now = performance.now();
     // Fresh run only — retries after a life keep prior flying time.
-    if (circuitSectorIdx === 0 && circuitRunMsRef.current === 0) {
+    if (circuitSectorIdx === circuitStartSectorRef.current && circuitRunMsRef.current === 0) {
       circuitSectorPathsRef.current = [];
       setCircuitChallengeResult(null);
     }
@@ -959,9 +1063,15 @@ export default function GroundsScreen({
       if (!cp || circuitPhase !== "running") return;
       const now = performance.now();
       setCircuitCpPassed(index + 1);
-      // a rising tick each time you thread a ring (the finish keeps its fanfare),
-      // so crossing a gate has audible confirmation to match the green flash
-      if (!cp.finish) jumpBeep(Math.min(4, index));
+      // Golden ring — pay Crowns, clear gold color (geom offset stays).
+      if (!cp.finish && index === goldGate) {
+        bonusCrowns.current += GOLD_RING_CROWNS;
+        setGoldGate(-1);
+        rewardSfx("big");
+      } else if (!cp.finish) {
+        // a rising tick each time you thread a ring (the finish keeps its fanfare)
+        jumpBeep(Math.min(4, index));
+      }
 
       if (cp.finish) {
         const sectorElapsed = now - circuitSectorStart.current;
@@ -991,7 +1101,7 @@ export default function GroundsScreen({
         }
       }
     },
-    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned],
+    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, goldGate],
   );
 
   // Auto-advance after a clear (mobile-like). Brief "sector" phase avoids a soft-lock
@@ -1123,12 +1233,6 @@ export default function GroundsScreen({
       setShowChronicle(true);
     }
     try {
-      setGoalCoach(localStorage.getItem(STORAGE.goalCoach) !== "1");
-    } catch {}
-    try {
-      setWildsCue(localStorage.getItem(STORAGE.wildsCue) !== "1");
-    } catch {}
-    try {
       // Claim from /ascent: cover → Concord outer spawn facing the lit Grounds gate.
       const postClaim = sessionStorage.getItem(STORAGE.postClaimGuide) === "1";
       if (postClaim) {
@@ -1215,18 +1319,26 @@ export default function GroundsScreen({
   }, []);
 
   const dismissGoalCoach = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE.goalCoach, "1");
-    } catch {}
     setGoalCoach(false);
   }, []);
 
-  const dismissWildsCue = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE.wildsCue, "1");
-    } catch {}
-    setWildsCue(false);
-  }, []);
+  // Peak / Depth / Secret toasts: first land in a region, or any Hub → region
+  // return while goals remain. No jargon strip — the cards teach themselves.
+  useEffect(() => {
+    if (isHub) {
+      arrivedFromHubRef.current = true;
+      setGoalCoach(false);
+      return;
+    }
+    if (!owned || claiming || inVenue || liveGoals.length === 0) return;
+    const firstVisit = !regionGoalIntroducedRef.current.has(world.id);
+    const fromHub = arrivedFromHubRef.current;
+    if (firstVisit || fromHub) {
+      regionGoalIntroducedRef.current.add(world.id);
+      arrivedFromHubRef.current = false;
+      setGoalCoach(true);
+    }
+  }, [world.id, isHub, inVenue, owned, claiming, liveGoals.length]);
 
   const dismissReaderSplitCoach = useCallback(() => {
     try {
@@ -1553,6 +1665,16 @@ export default function GroundsScreen({
     travelSwap.current = swap;
     setTravelCard(card);
   }, [travelCard]);
+
+  /** HUD / hub shortcut — don't require finding the mountain portal. */
+  const goFlight = useCallback(() => {
+    if (travelCard || inVenue || inMatch || overlay !== "none" || gRun) return;
+    setWorldMenu(false);
+    playTravel(
+      { kicker: "TAKE FLIGHT", title: VENUES.circuit.name, sub: VENUES.circuit.blurb, color: VENUES.circuit.color },
+      () => enterVenue("circuit"),
+    );
+  }, [travelCard, inVenue, inMatch, overlay, gRun, playTravel, enterVenue]);
 
   // Once guest Ascent is armed, drop into the Circuit (claim postponed to RUN OVER).
   // On /ascent we're already at the door — skip the second TAKE FLIGHT veil.
@@ -2717,6 +2839,9 @@ export default function GroundsScreen({
               }
               circuitGhostRunStartMs={activeVenue === "circuit" ? circuitGhostRunStartMs : 0}
               circuitGhostSectorKey={activeVenue === "circuit" ? circuitSectorIdx : 0}
+              circuitGoldIndex={activeVenue === "circuit" && goldGate >= 0 ? goldGate : undefined}
+              ascentReaches={activeVenue === "circuit" ? ascentReaches : 0}
+              ascentSigilAccent={activeVenue === "circuit" ? ascentSigilAccent : undefined}
               resumeSpawn={!activeVenue ? wildResume : null}
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
@@ -2750,7 +2875,7 @@ export default function GroundsScreen({
         {!showMatch && overlay === "none" && owned && !gRun && !inVenue && !worldUiBlocked && (
           <div style={{ pointerEvents: "auto", position: "relative", marginBottom: isMobile ? 6 : 10 }}>
             {worldMenu && (
-              <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 240, maxWidth: "calc(100vw - 32px)", zIndex: 2 }}>
+              <div className="panel pop" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, padding: 8, display: "flex", flexDirection: "column", gap: 6, width: 260, maxWidth: "calc(100vw - 32px)", zIndex: 2 }}>
                 <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)", padding: "0 2px" }}>CHOOSE A WORLD</span>
                 {NAV_WORLDS.map((w) => {
                   const ac = w.biome.lights.arenaPoint;
@@ -2758,7 +2883,11 @@ export default function GroundsScreen({
                   return (
                     <button
                       key={w.id}
-                      onClick={() => { setWorldId(w.id); setWorldMenu(false); }}
+                      onClick={() => {
+                        if (w.id !== worldId) arrivedFromHubRef.current = true;
+                        setWorldId(w.id);
+                        setWorldMenu(false);
+                      }}
                       className="panel"
                       style={{ ["--ac" as string]: ac, textAlign: "left", padding: "6px 10px", cursor: "pointer", borderColor: on ? ac : "var(--line)", background: on ? "rgba(255,255,255,.04)" : "transparent" }}
                     >
@@ -2771,34 +2900,78 @@ export default function GroundsScreen({
                     </button>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={goFlight}
+                  className="btn btn-primary"
+                  style={{
+                    ["--ac" as string]: VENUES.circuit.color,
+                    width: "100%",
+                    fontSize: 12,
+                    marginTop: 2,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 7,
+                  }}
+                >
+                  <Rocket size={14} strokeWidth={2.2} />
+                  Take flight · {world.name}
+                </button>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => setWorldMenu((v) => !v)}
-              className="panel"
-              aria-label="Choose a world"
-              aria-expanded={worldMenu}
-              style={{
-                ["--ac" as string]: world.biome.lights.arenaPoint,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: isMobile ? "8px 11px" : "8px 12px",
-                cursor: "pointer",
-                borderColor: worldMenu ? world.biome.lights.arenaPoint : "var(--line)",
-                touchAction: "manipulation",
-                width: "fit-content",
-                maxWidth: "100%",
-              }}
-            >
-              <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
-              {!isMobile && (
-                <span style={{ fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {world.name}
+            <div style={{ display: "flex", alignItems: "stretch", gap: 6, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setWorldMenu((v) => !v)}
+                className="panel"
+                aria-label="Choose a world"
+                aria-expanded={worldMenu}
+                style={{
+                  ["--ac" as string]: world.biome.lights.arenaPoint,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: isMobile ? "8px 11px" : "8px 12px",
+                  cursor: "pointer",
+                  borderColor: worldMenu ? world.biome.lights.arenaPoint : "var(--line)",
+                  touchAction: "manipulation",
+                  width: "fit-content",
+                  maxWidth: "100%",
+                }}
+              >
+                <Globe size={16} color={world.biome.lights.arenaPoint} strokeWidth={2} />
+                {!isMobile && (
+                  <span style={{ fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {world.name}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={goFlight}
+                className="panel"
+                aria-label="Take flight"
+                title="Take flight — rings in the sky"
+                style={{
+                  ["--ac" as string]: VENUES.circuit.color,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: isMobile ? "8px 11px" : "8px 12px",
+                  cursor: "pointer",
+                  borderColor: VENUES.circuit.color,
+                  background: "color-mix(in srgb, #39e0ff 12%, transparent)",
+                  touchAction: "manipulation",
+                  color: "var(--ink)",
+                }}
+              >
+                <Rocket size={16} color={VENUES.circuit.color} strokeWidth={2.2} />
+                <span style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+                  {isMobile ? "Flight" : "Take flight"}
                 </span>
-              )}
-            </button>
+              </button>
+            </div>
           </div>
         )}
 
@@ -2844,6 +3017,7 @@ export default function GroundsScreen({
           hudDim={hudDim}
           highlight={goalCoach && !isHub && !inVenue && liveGoals.length > 0}
           onHighlightOpen={dismissGoalCoach}
+          onTakeFlight={!inVenue ? goFlight : undefined}
           onOpenControls={() => setControlsOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenClan={() => {
@@ -2961,6 +3135,19 @@ export default function GroundsScreen({
           sectorTotal={DESKTOP_CIRCUIT_COUNT}
           reachName={circuitReach.name}
           lives={circuitLives}
+          runMode={circuitRunMode}
+          campsLit={campsLit}
+          scoutCamp={circuitScoutCamp}
+          onPickRanked={!circuitGuest ? pickCircuitRanked : undefined}
+          onPickScout={!circuitGuest ? pickCircuitScout : undefined}
+          showModePicker={
+            !circuitGuest &&
+            circuitPhase === "ready" &&
+            circuitLives === CIRCUIT_LIVES &&
+            circuitSectorIdx === circuitStartSectorRef.current
+          }
+          ascentReaches={ascentReaches}
+          climbHundred={climbHundred}
         />
       )}
 
@@ -3068,27 +3255,8 @@ export default function GroundsScreen({
         />
       )}
 
-      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && (
+      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && readerSplitStep === null && (
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
-      )}
-
-      {/* Quiet wilds verb — after the one-shot goal toast, remind them the plaza rim isn't the end. */}
-      {wildsCue && !goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && readerSplitStep === null && !regionRaiseCoach && !arenaFightCoach && (liveGoals.length > 0 || liveNodes.length > 0) && (
-        <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 58, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
-          <div
-            className="panel pop"
-            style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 520, borderColor: "color-mix(in srgb, var(--gold) 55%, var(--line2))" }}
-          >
-            <Sparkles size={16} color="var(--gold)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 12, lineHeight: 1.35, flex: 1 }}>
-              Past the plaza: <strong>Peak · Depth · Secret</strong> on your compass
-              {liveNodes.length > 0 ? <> · nearest <strong>cache</strong> too</> : null}.
-            </span>
-            <button type="button" onClick={dismissWildsCue} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, padding: "4px 10px", flexShrink: 0 }}>
-              Got it
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Post-claim remount cover — hides empty Concord while the world + pose settle. */}
@@ -3877,6 +4045,10 @@ function TrainOverlay({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const day = imprintDayIndex();
+  const sessionLessons = useMemo(
+    () => lessonsForSession({ ckey, type: entry.type, level: lf.level, strat: recipe.strat, day }),
+    [ckey, entry.type, lf.level, recipe.strat, day],
+  );
 
   useEffect(() => {
     void store.syncWallet();
@@ -3944,61 +4116,75 @@ function TrainOverlay({
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
-      <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(560px, 95vw)", maxHeight: "90vh", overflow: "auto", padding: 24, borderColor: col }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <ChampionAvatar ckey={ckey} type={entry.type} champion={champ} size={84} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>Train {entry.name}</div>
-            <div className="mono" style={{ fontSize: 11, color: col }}>
-              {entry.type} · L{lf.level} {tierFor(lf.level).name} · {doctrine(champ, lf.level)}
-            </div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--gold)", marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Crown size={12} strokeWidth={2.2} /> {store.crowns} Crowns · session costs {TRAIN_COST}
-            </div>
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 12 }}>
+      <div className="panel pop" style={{ ["--ac" as string]: col, width: "min(720px, 96vw)", maxHeight: "92vh", overflow: "auto", padding: "20px 22px", borderColor: col }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+          <div style={{ width: 96, flexShrink: 0, borderRadius: 12, overflow: "hidden", border: `1px solid color-mix(in srgb, ${col} 45%, var(--line2))` }}>
+            <ChampionPortrait rosterKey={ckey} type={entry.type} champion={champ} preset="portrait" colorHex={col} eager />
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>Train {entry.name}</div>
+            <div className="mono" style={{ fontSize: 11, color: col, marginTop: 4 }}>
+              {entry.type} · L{lf.level} {tierFor(lf.level).name}
+            </div>
+            <p style={{ fontSize: 12.5, lineHeight: 1.4, margin: "8px 0 0", color: "var(--muted)" }}>
+              Teach a free lesson to shape how they think — or spend Crowns to grow body &amp; XP.
+            </p>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, flexShrink: 0 }}>
             <X size={20} strokeWidth={2} />
           </button>
         </div>
 
-        <p style={{ fontSize: 13, lineHeight: 1.45, margin: "14px 0 0", color: "var(--ink)" }}>
-          Spend Crowns for a training session that grows {entry.name}&apos;s body &amp; XP — or pick one free daily lesson below to nudge how they think. Then take them to the Arena to fight.
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "18px 0 6px" }}>
+          TODAY&apos;S LESSONS · each once per day
+        </div>
+        <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.4, margin: "0 0 10px" }}>
+          Free. Picked for {entry.name}&apos;s Force &amp; temperament — new set tomorrow. Teaching one doesn&apos;t lock the others.
         </p>
-
-        <button
-          className="btn btn-primary"
-          style={{
-            ["--ac" as string]: "var(--good)",
-            width: "100%",
-            fontSize: 15,
-            marginTop: 14,
-            opacity: training || store.crowns < TRAIN_COST ? 0.55 : 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-          }}
-          disabled={training || store.crowns < TRAIN_COST}
-          onClick={() => void doTrain()}
-        >
-          <ArrowUp size={16} strokeWidth={2.4} />
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            {training ? "Training…" : <>Train session · {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} /></>}
-          </span>
-        </button>
-        {store.fragments > 0 && (
-          <button
-            className="btn"
-            style={{ ["--ac" as string]: "#39e0ff", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            onClick={doTrainFragment}
-          >
-            <Gem size={15} strokeWidth={2.2} color="#39e0ff" />
-            Free session · 1 fragment ({store.fragments})
-          </button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {sessionLessons.map((l) => {
+            const learned = store.imprintDays[ckey]?.[l.id] === day;
+            const dim = learned || (!!imprinting && imprinting !== l.id);
+            const nudge = describeDial(l.dial);
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => teach(l.id)}
+                disabled={!!imprinting || learned}
+                className="mono"
+                style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: learned ? "default" : imprinting ? "wait" : "pointer", opacity: dim ? 0.5 : 1, minWidth: 0 }}
+              >
+                <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}{learned ? " ✓" : ""}</span>
+                <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>
+                  {imprinting === l.id ? "teaching…" : learned ? "taught today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {imprintReply && (
+          <div style={{ marginTop: 10, padding: 11, borderRadius: 10, background: "var(--panel2)", border: `1px solid ${col}` }}>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 3, display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <span>{entry.name.toUpperCase()}</span>
+              {imprintMoved && <span style={{ color: "var(--muted2)" }}>{imprintMoved}</span>}
+            </div>
+            <div style={{ fontSize: 13, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{imprintReply}&rdquo;</div>
+          </div>
         )}
+
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "16px 0 8px" }}>
+          TEMPERAMENT · readout (lessons &amp; fights move these)
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <DoctrineDial compact label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
+          <DoctrineDial compact label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />
+          <DoctrineDial compact label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
+        </div>
+
         {flash && (
-          <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 12 }}>
+          <div className="pop" style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginTop: 14 }}>
             <span className="chip" style={{ borderColor: "var(--good)", color: "var(--good)" }}>✦ Trained · +{flash.xp} XP</span>
             {flash.leveledTo && <span className="chip" style={{ borderColor: "var(--gold)", color: "var(--gold)" }}>★ LEVEL UP → L{flash.leveledTo}</span>}
           </div>
@@ -4019,61 +4205,55 @@ function TrainOverlay({
           </div>
         )}
         {trainErr && <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>{trainErr}</p>}
-        {store.crowns < TRAIN_COST && !trainErr && (
-          <p style={{ color: "var(--bad)", fontSize: 12, textAlign: "center", marginTop: 8 }}>
-            Not enough Crowns ({store.crowns}/{TRAIN_COST}). Win a fight in the Arena.
-          </p>
-        )}
 
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, margin: "20px 0 6px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          FREE LESSONS · one per day
-        </div>
-        <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 10px" }}>
-          No Crowns. Shapes temperament — how {entry.name} fights later.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {IMPRINT_LESSONS.map((l) => {
-            const learned = store.imprintDays[ckey]?.[l.id] === day;
-            const dim = learned || (!!imprinting && imprinting !== l.id);
-            const nudge = describeDial(l.dial);
-            return (
-              <button
-                key={l.id}
-                type="button"
-                onClick={() => teach(l.id)}
-                disabled={!!imprinting || learned}
-                className="mono"
-                style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "9px 11px", borderRadius: 10, border: `1px solid ${imprinting === l.id ? col : "var(--line2)"}`, background: imprinting === l.id ? `color-mix(in srgb, ${col} 14%, transparent)` : "transparent", color: "var(--ink)", textAlign: "left", cursor: learned ? "default" : imprinting ? "wait" : "pointer", opacity: dim ? 0.5 : 1 }}
-              >
-                <span style={{ fontSize: 12.5, fontWeight: 700 }}>{l.label}{learned ? " ✓" : ""}</span>
-                <span style={{ fontSize: 9.5, color: "var(--muted2)" }}>
-                  {imprinting === l.id ? "teaching…" : learned ? "learned today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {imprintReply && (
-          <div style={{ marginTop: 10, padding: 11, borderRadius: 10, background: "var(--panel2)", border: `1px solid ${col}` }}>
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 3, display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <span>{entry.name.toUpperCase()}</span>
-              {imprintMoved && <span style={{ color: "var(--muted2)" }}>{imprintMoved}</span>}
-            </div>
-            <div style={{ fontSize: 13, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{imprintReply}&rdquo;</div>
+        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <span>BODY SESSION</span>
+            <span style={{ color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Crown size={11} strokeWidth={2.2} /> {store.crowns}
+            </span>
           </div>
-        )}
-
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 6px" }}>
-          TEMPERAMENT · how {entry.name} thinks
+          <button
+            className="btn btn-primary"
+            style={{
+              ["--ac" as string]: "var(--good)",
+              width: "100%",
+              fontSize: 15,
+              opacity: training || store.crowns < TRAIN_COST ? 0.55 : 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+            disabled={training || store.crowns < TRAIN_COST}
+            onClick={() => void doTrain()}
+          >
+            <ArrowUp size={16} strokeWidth={2.4} />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              {training ? "Training…" : <>Train session · {TRAIN_COST} <Crown size={14} color="var(--gold)" strokeWidth={2} /></>}
+            </span>
+          </button>
+          {store.fragments > 0 && (
+            <button
+              className="btn"
+              style={{ ["--ac" as string]: "#39e0ff", width: "100%", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              onClick={doTrainFragment}
+            >
+              <Gem size={15} strokeWidth={2.2} color="#39e0ff" />
+              Free session · 1 fragment ({store.fragments})
+            </button>
+          )}
+          {store.crowns < TRAIN_COST && !trainErr && (
+            <p style={{ color: "var(--muted2)", fontSize: 11, textAlign: "center", marginTop: 8 }}>
+              Need {TRAIN_COST} Crowns for a body session — win a fight in the Arena.
+            </p>
+          )}
         </div>
-        <DoctrineDial label="Aggression" value={recipe.strat.aggression} color="#ff6b4a" hints={["Patient", "Relentless"]} highlight={litAxes.has("aggression")} />
-        <DoctrineDial label="Focus" value={recipe.strat.focus} color="#b07bff" hints={["Broad", "Single-minded"]} highlight={litAxes.has("focus")} />
-        <DoctrineDial label="Risk" value={recipe.strat.risk} color="#f5d020" hints={["Safe", "Reckless"]} highlight={litAxes.has("risk")} />
 
         <button
           type="button"
           className="btn"
-          style={{ ["--ac" as string]: "var(--line2)", width: "100%", fontSize: 12, marginTop: 16 }}
+          style={{ ["--ac" as string]: "var(--line2)", width: "100%", fontSize: 12, marginTop: 12 }}
           onClick={() => setShowAdvanced((v) => !v)}
         >
           {showAdvanced ? "Hide advanced" : "Advanced · brain, persona, body stats"}
@@ -4084,7 +4264,7 @@ function TrainOverlay({
               BRAIN · who thinks in the arena (default is fine)
             </div>
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 8px" }}>
-              <strong>House · Grok</strong> is the built-in mind — zero setup. Only switch if you want your own model or agent.
+              <strong>Built-in brain</strong> needs zero setup. Only switch if you want your own model or agent.
             </p>
             <AgentPicker ckey={ckey} recipe={recipe} />
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "16px 0 8px" }}>
@@ -4107,11 +4287,6 @@ function TrainOverlay({
               <span>{champ.wins}W / {champ.losses}L</span>
             </div>
           </div>
-        )}
-        {store.fragments === 0 && (
-          <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", textAlign: "center", marginTop: 14, letterSpacing: 0.5 }}>
-            Fragments fund free sessions — clear world goals &amp; caches in the wilds.
-          </p>
         )}
       </div>
     </div>
@@ -4234,10 +4409,10 @@ function DuelBetting({
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <button className={betSide === "me" ? "btn btn-primary" : "btn"} style={{ ...pickBtn, ["--ac" as string]: "var(--good)" }} onClick={() => setBetSide(betSide === "me" ? null : "me")}>
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>back {ownedName}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Back {ownedName}</span>
         </button>
         <button className={betSide === "opp" ? "btn btn-primary" : "btn"} style={{ ...pickBtn, ["--ac" as string]: "var(--bad)" }} disabled={oppDisabled} onClick={() => setBetSide(betSide === "opp" ? null : "opp")}>
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>back {oppName}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Back {oppName}</span>
         </button>
       </div>
       {betSide && (
@@ -4297,30 +4472,30 @@ function ChallengeOverlay(props: {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr",
-              gap: 10,
-              alignItems: "stretch",
+              gap: 12,
+              alignItems: "start",
               marginBottom: 4,
-              padding: "18px 10px",
-              borderRadius: 14,
-              background: "var(--panel2)",
-              border: "1px solid var(--line)",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
-              <ChampionAvatar ckey={owned} type={ownedEntry.type} champion={ownedChamp} size={92} />
-              <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{ownedEntry.name}</div>
-              <div className="mono" style={{ fontSize: 10, color: ownedCol, marginTop: 4 }}>YOURS · L{levelFor(ownedChamp.xp).level}</div>
-            </div>
-            <div style={{ display: "grid", placeItems: "center", padding: "0 2px" }}>
-              <div className="mono" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--panel)", border: "1px solid var(--line2)", fontSize: 11, fontWeight: 800, color: "var(--muted2)", flexShrink: 0 }}>
-                VS
+            <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ width: "100%", borderRadius: 12, overflow: "hidden", border: `1px solid color-mix(in srgb, ${ownedCol} 45%, var(--line2))` }}>
+                <ChampionPortrait rosterKey={owned} type={ownedEntry.type} champion={ownedChamp} preset="portrait" colorHex={ownedCol} eager />
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ownedEntry.name}</div>
+                <div className="mono" style={{ fontSize: 10, color: ownedCol, marginTop: 4 }}>YOURS · L{levelFor(ownedChamp.xp).level}</div>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 0, textAlign: "center" }}>
-              <ChampionAvatar ckey={opponent} type={oppEntry.type} champion={oppChamp} size={92} />
-              <div style={{ fontWeight: 700, marginTop: 10, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{oppName}</div>
-              <div className="mono" style={{ fontSize: 10, color: col, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
-                {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}
+            <div className="mono" style={{ fontSize: 13, color: "var(--muted2)", fontWeight: 800, paddingTop: 48 }}>VS</div>
+            <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ width: "100%", borderRadius: 12, overflow: "hidden", border: `1px solid color-mix(in srgb, ${col} 45%, var(--line2))` }}>
+                <ChampionPortrait rosterKey={opponent} type={oppEntry.type} champion={oppChamp} preset="portrait" colorHex={col} eager />
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{oppName}</div>
+                <div className="mono" style={{ fontSize: 10, color: col, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}
+                </div>
               </div>
             </div>
           </div>

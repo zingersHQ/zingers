@@ -51,6 +51,7 @@ import { useTheme } from "@/lib/theme";
 import { useGraphicsTier } from "@/lib/graphics-tier";
 import { CircuitScene } from "./circuit-scene";
 import { CircuitGhostLeave } from "./circuit-ghost";
+import { AscentSigil } from "./climb/ascent-sigil";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { ClimbGhostRacer, GHOST_CAPSULE_FOOT } from "./climb/ghost-racer";
@@ -316,6 +317,9 @@ export default function World({
   circuitGhostPath = null,
   circuitGhostRunStartMs = 0,
   circuitGhostSectorKey = 0,
+  circuitGoldIndex,
+  ascentReaches = 0,
+  ascentSigilAccent,
   worldLife,
   trainerXp = 0,
   gpuLite = false,
@@ -375,6 +379,12 @@ export default function World({
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
+  /** Golden-ring checkpoint index (altitude detour) — shared with Climb. */
+  circuitGoldIndex?: number;
+  /** Flight sigil glyph count from campsLit (0..10). */
+  ascentReaches?: number;
+  /** Accent for the sigil halo (Reach theme of deepest lit camp). */
+  ascentSigilAccent?: string;
   /** Life-leave ghost pose (presentation); cleared via onCircuitGhostDone. */
   circuitGhost?: ({ x: number; y: number; z: number; heading: number; id: number }) | null;
   onCircuitGhostDone?: () => void;
@@ -461,9 +471,8 @@ export default function World({
   const initialSpawn = venueSpawn ?? earlyResume;
   const spawnCam = useMemo(() => {
     if (inCircuit && venueSpawn) {
-      // Start in FRONT of the pad looking at the flyer (return portal behind them).
-      // CameraController holds, then Q-sweeps to chase down-track.
-      return [venueSpawn[0], venueSpawn[1] + 2.5, venueSpawn[2] + 8.4] as [number, number, number];
+      // Behind the pad looking down-track (+Z) at the rings — not the return portal.
+      return [venueSpawn[0], venueSpawn[1] + 2.8, venueSpawn[2] - 9.2] as [number, number, number];
     }
     if (inAmphitheatre && venueSpawn) {
       // behind the player looking toward the throne (−z): player at z=12 facing π
@@ -795,6 +804,7 @@ export default function World({
                 biome={biome}
                 cpNextRef={circuitCpNextRef}
                 showFloor={false}
+                goldIndex={circuitGoldIndex}
               />
               {circuitPhase === "running" && circuitHazards.length > 0 && <HazardField hazards={circuitHazards} />}
               {ownedKey &&
@@ -814,6 +824,8 @@ export default function World({
                     padPos={[circuitTrack.spawn[0] - 2.6, circuitTrack.spawn[1] - 1.35, circuitTrack.spawn[2] + 0.45]}
                     followPos={handlerPos}
                     poseOut={circuitChampPos}
+                    ascentReaches={ascentReaches}
+                    sigilAccent={ascentSigilAccent ?? biome.lights.arenaPoint}
                   />
                 </Suspense>
               )}
@@ -1506,6 +1518,8 @@ function CircuitSpectator({
   padPos,
   followPos,
   poseOut,
+  ascentReaches = 0,
+  sigilAccent,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -1518,9 +1532,23 @@ function CircuitSpectator({
   followPos: React.RefObject<THREE.Vector3>;
   /** Publish champion world pose for challenge-ghost overlap. */
   poseOut?: React.RefObject<THREE.Vector3 | null>;
+  ascentReaches?: number;
+  sigilAccent?: string;
 }) {
   const c = champions.find((x) => x.key === ownedKey);
   const flying = phase === "running";
+  const sigilGrp = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (!sigilGrp.current || ascentReaches <= 0) return;
+    const p = poseOut?.current;
+    if (p) {
+      sigilGrp.current.position.set(p.x, p.y, p.z);
+      return;
+    }
+    const [px, py, pz] = padPos;
+    sigilGrp.current.position.set(px, py + 1.05, pz);
+  });
 
   if (!c) return null;
   const [px, py, pz] = padPos;
@@ -1552,6 +1580,11 @@ function CircuitSpectator({
         chasing={flying}
         poseOut={poseOut}
       />
+      {ascentReaches > 0 && (
+        <group ref={sigilGrp} position={[px, top, pz]}>
+          <AscentSigil reaches={ascentReaches} accent={sigilAccent ?? accent} />
+        </group>
+      )}
     </group>
   );
 }
@@ -4165,15 +4198,14 @@ function CameraController({
       if (camCue.current) camCue.current.inputLock = false;
       return;
     }
-    // Arrival choreography: face the Trainer with the return portal behind them,
-    // hold, then Q-sweep until the lens sits behind looking down the Circuit.
-    // Also re-arms on life-continue (circuitArriveNonce bump) so the ghost beat
-    // plays in the same front-facing window — held longer during "continue".
-    // Read phase via ref so flipping continue→ready does NOT re-arm arrive.
+    // Arrival: lens already behind the Trainer looking down-track at the rings
+    // (heading + π). Hold, then settle into chase — never open on the return portal.
+    // Re-arms on life-continue (circuitArriveNonce). Read phase via ref so
+    // flipping continue→ready does NOT re-arm arrive.
     const hold =
       circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
     const h = camCue.current?.heading ?? 0;
-    yaw.current = h; // front of character
+    yaw.current = h + Math.PI; // behind character → rings ahead
     pitch.current = PITCH_GROUND;
     distTarget.current = CAM_DIST_DEFAULT;
     recenter.current = 0; // arrive hold owns the lens — ignore spawn recenters
@@ -4399,10 +4431,8 @@ function CameraController({
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
     else prevCircuitPhase.current = null;
 
-    // Arrival: ease from a slight off-angle + wider frame into face-on (portal
-    // behind the Trainer), then Q-sweep to chase — not a locked still portrait.
-    // Pause the countdown until the capsule exists — otherwise the hold burns
-    // during the blank GLB window and free-look is live the moment they appear.
+    // Arrival: hold behind the Trainer looking at the rings, ease distance in,
+    // then soft settle into chase. Pause countdown until the capsule exists.
     const circuitArriveActive = inCircuit && circuitArriveHold.current > 0;
     if (circuitArriveActive) {
       if (!bodyReady) {
@@ -4415,16 +4445,17 @@ function CameraController({
           circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
         const u = 1 - circuitArriveHold.current / holdSpan; // 0→1
         if (cue) {
-          const drift = (1 - u) * 0.28; // ~16° → face-on
-          yaw.current = cue.heading + drift;
+          // Stay behind (+π); tiny lateral drift so it isn't locked-still.
+          const drift = Math.sin(u * Math.PI) * 0.08;
+          yaw.current = cue.heading + Math.PI + drift;
         }
-        pitch.current = PITCH_GROUND - 0.06 * (1 - u);
-        distTarget.current = CAM_DIST_DEFAULT * (1.14 - 0.14 * u);
+        pitch.current = PITCH_GROUND - 0.04 * (1 - u);
+        distTarget.current = CAM_DIST_DEFAULT * (1.1 - 0.1 * u);
         if (holdBefore > 0 && circuitArriveHold.current === 0) {
           recenter.current = CIRCUIT_ARRIVE_SWEEP_S;
           recenterPitch.current = PITCH_GROUND;
           distTarget.current = CAM_DIST_DEFAULT;
-          if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.35);
+          if (cue) cue.zoom = Math.min(1.2, cue.zoom + 0.28);
         }
       }
     }

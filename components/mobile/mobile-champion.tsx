@@ -11,11 +11,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
-import { TYPE_COLOR, blank } from "@/lib/evolve/progression";
+import { TYPE_COLOR, blank, levelFor } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { TRAIN_COST } from "@/lib/economy";
 import { ROSTER } from "@/lib/engine/roster";
-import { IMPRINT_LESSONS, describeDial, imprintDayIndex } from "@/lib/imprints";
+import { describeDial, imprintDayIndex, lessonsForSession } from "@/lib/imprints";
 import { useChampions } from "@/store/champions";
 import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champion-avatar";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
@@ -56,6 +56,16 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const champ = useMemo(() => (owned ? progress[owned] ?? blank() : null), [owned, progress]);
   const strat: Strat = (owned && recipes[owned]?.strat) || DEFAULT_STRAT;
   const nick = (owned && recipes[owned]?.nick) || "";
+  const sessionLessons = useMemo(() => {
+    if (!owned || !ROSTER[owned] || !champ) return [];
+    return lessonsForSession({
+      ckey: owned,
+      type: ROSTER[owned].type,
+      level: levelFor(champ.xp).level,
+      strat,
+      day,
+    });
+  }, [owned, champ, strat, day]);
   const [nickDraft, setNickDraft] = useState(nick);
   useEffect(() => {
     setNickDraft(nick);
@@ -247,13 +257,13 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
         {/* imprint — daily choice is the point: same menu, different career path */}
         <div className="panel" style={{ ["--ac" as string]: col, padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: col, marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Brain size={12} strokeWidth={2.4} /> LESSONS · SHAPE {name.toUpperCase()} TODAY
+            <Brain size={12} strokeWidth={2.4} /> TODAY&apos;S LESSONS · EACH ONCE PER DAY
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            Same lesson menu for every Trainer — the surprise is which one you pick today, and what the fights do in between. One sticks per day; it remembers in its own voice.
+            Free. Picked for {name}&apos;s Force &amp; temperament — new set tomorrow. Teaching one doesn&apos;t lock the others.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
-            {IMPRINT_LESSONS.map((l) => {
+            {sessionLessons.map((l) => {
               const learned = imprintDays[owned]?.[l.id] === day;
               const locked = learned || (!!imprinting && imprinting !== l.id);
               const nudge = describeDial(l.dial);
@@ -268,7 +278,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700 }}>{l.label}</div>
                     <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 1 }}>
-                      {learned ? "Learned today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
+                      {learned ? "Taught today · back tomorrow" : nudge ? `${l.hint} · ${nudge}` : l.hint}
                     </div>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: learned ? "var(--muted2)" : col, fontWeight: 700 }}>{imprinting === l.id ? "…" : learned ? "✓" : "Teach"}</span>

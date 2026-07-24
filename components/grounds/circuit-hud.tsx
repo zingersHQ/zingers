@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Flag, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
+import { reachThemeByIndex } from "./climb/reaches";
 import { rewardSfx } from "@/lib/sfx";
 
 export type CircuitPhase = "ready" | "running" | "sector" | "done" | "failed" | "continue" | "ceiling" | "prove";
@@ -142,6 +143,14 @@ export function CircuitHud({
   sectorTotal = 100,
   reachName,
   lives = CIRCUIT_LIVES,
+  runMode = "ranked",
+  campsLit = 0,
+  scoutCamp = 1,
+  onPickRanked,
+  onPickScout,
+  showModePicker = false,
+  ascentReaches = 0,
+  climbHundred = false,
 }: {
   phase: CircuitPhase;
   sectorIndex: number;
@@ -178,6 +187,17 @@ export function CircuitHud({
   reachName?: string;
   /** Remaining lives in the current run (2 → 1 continue → 0 run over). */
   lives?: number;
+  /** Ranked campaign vs unranked scout practice. */
+  runMode?: "ranked" | "scout";
+  campsLit?: number;
+  scoutCamp?: number;
+  onPickRanked?: () => void;
+  onPickScout?: (camp: number) => void;
+  /** Ready at run start with full lives — show ranked/scout picker. */
+  showModePicker?: boolean;
+  /** Flight sigil depth from campsLit (0..10). */
+  ascentReaches?: number;
+  climbHundred?: boolean;
 }) {
   const running = phase === "running";
   const sectorN = sectorIndex + 1;
@@ -345,6 +365,88 @@ export function CircuitHud({
         <CircuitBoardPanel board={board} loading={boardLoading} accent={accent} personalBest={personalBest} sectorTotal={sectorTotal} />
       )}
 
+      {phase === "ready" && showModePicker && onPickRanked && onPickScout && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: compact ? 88 : 72,
+            zIndex: 56,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            pointerEvents: "none",
+            padding: "0 16px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 6,
+              maxWidth: 440,
+              pointerEvents: "auto",
+            }}
+          >
+            <button
+              type="button"
+              onClick={onPickRanked}
+              className="mono"
+              style={{
+                padding: "6px 12px",
+                borderRadius: 999,
+                border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
+                background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
+                color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: 0.8,
+                cursor: "pointer",
+              }}
+            >
+              RANKED · SECTOR 1
+            </button>
+            {campsLit >= 1 &&
+              Array.from({ length: campsLit }, (_, i) => {
+                const camp = i + 1;
+                const on = runMode === "scout" && scoutCamp === camp;
+                const theme = reachThemeByIndex(camp - 1);
+                return (
+                  <button
+                    key={camp}
+                    type="button"
+                    onClick={() => onPickScout(camp)}
+                    className="mono"
+                    title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
+                      background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
+                      color: on ? theme.accent : "rgba(242,238,251,.75)",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 0.6,
+                      cursor: "pointer",
+                    }}
+                  >
+                    SCOUT · CAMP {theme.roman}
+                  </button>
+                );
+              })}
+          </div>
+          {runMode === "scout" && (
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
+              PRACTICE · no board · half XP · quarter Crowns
+              {climbHundred ? " · ★ Hundred" : ""}
+            </div>
+          )}
+        </div>
+      )}
+
       {phase === "ready" && (
         <SectorIntro
           key={sectorIndex}
@@ -435,6 +537,12 @@ export function CircuitHud({
               {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
             </div>
           )}
+          {ascentReaches > 0 && (
+            <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12, fontSize: 10, letterSpacing: 1.5, color: accent }}>
+              <Sparkles size={12} strokeWidth={2.2} />
+              FLIGHT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
+            </div>
+          )}
           {guestClaim && onClaim && (
             <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
               <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
@@ -473,6 +581,12 @@ export function CircuitHud({
           {challengeResult && challengeLabel && (
             <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
               {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
+            </div>
+          )}
+          {ascentReaches > 0 && (
+            <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12, fontSize: 10, letterSpacing: 1.5, color: "var(--muted, #9a96b8)" }}>
+              <Sparkles size={12} strokeWidth={2.2} style={{ color: accent }} />
+              FLIGHT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
             </div>
           )}
           {guestClaim && onClaim && (
