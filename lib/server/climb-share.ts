@@ -1,4 +1,4 @@
-// Short climb-challenge share IDs — fat ?climb=&gp= URLs become /ascent?c=<id>.
+// Short climb-challenge share IDs — fat ?climb=&gp= URLs become /ascent/<id>.
 // Created only when someone shares (not every run). Redis-backed with memory fallback.
 import "server-only";
 import { Redis } from "@upstash/redis";

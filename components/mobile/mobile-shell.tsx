@@ -28,7 +28,7 @@ import { guestLoanerKey } from "@/lib/first-duel";
 import { getOwnerToken } from "@/lib/owner";
 import { track as pingEvent } from "@/lib/track";
 import { STORAGE } from "@/lib/brand";
-import { resolveClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
+import { resolveClimbChallengeFromLocation, type ClimbChallenge } from "@/lib/climb-challenge";
 import { formatCircuitMs } from "@/components/grounds/circuit";
 
 type TabId = "today" | "watch" | "champion" | "climb" | "rank";
@@ -117,7 +117,7 @@ export function MobileShell() {
     let cancelled = false;
     (async () => {
       if (typeof window === "undefined") return;
-      const c = await resolveClimbChallengeFromSearch(window.location.search);
+      const c = await resolveClimbChallengeFromLocation();
       if (cancelled) return;
       if (c) {
         setChallenge(c);

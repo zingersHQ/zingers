@@ -1,4 +1,4 @@
-// Short climb challenge shares — POST to mint /ascent?c=<id>, GET to resolve.
+// Short climb challenge shares — POST to mint /ascent/<id>, GET to resolve.
 import { NextRequest, NextResponse } from "next/server";
 import { createClimbShare, getClimbShare, isValidShareId } from "@/lib/server/climb-share";
 import { rateLimit } from "@/lib/server/rate-limit";
@@ -36,5 +36,5 @@ export async function POST(req: NextRequest) {
   if ("error" in result) return bad(result.error);
 
   // Client builds absolute URL from its origin (localhost / preview / prod).
-  return NextResponse.json({ ok: true, id: result.id, path: `/ascent?c=${result.id}` });
+  return NextResponse.json({ ok: true, id: result.id, path: `/ascent/${result.id}` });
 }

@@ -115,7 +115,7 @@ import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
 import {
   createClimbChallengeUrl,
   isClimbChallengeBeat,
-  resolveClimbChallengeFromSearch,
+  resolveClimbChallengeFromLocation,
   type ClimbChallenge,
 } from "@/lib/climb-challenge";
 import { ALTITUDE_KEY_SECTOR, needsAltitudeProve } from "@/lib/ascent-rules";
@@ -959,12 +959,12 @@ export default function GroundsScreen({
     return () => window.clearTimeout(t);
   }, [activeVenue, circuitPhase, advanceCircuitSector]);
 
-  // Async challenge deep-link: /ascent?c=<id> or legacy ?climb=…&gp=…
+  // Async challenge deep-link: /ascent/<id> or legacy ?climb=…&gp=…
   useEffect(() => {
     if (typeof window === "undefined") return;
     let cancelled = false;
     void (async () => {
-      const c = await resolveClimbChallengeFromSearch(window.location.search);
+      const c = await resolveClimbChallengeFromLocation();
       if (cancelled || !c) return;
       // On /grounds roam, ignore old mobile-only door tags; /ascent accepts all.
       if (!ascentEntry && c.door === "thumb") return;

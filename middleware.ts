@@ -53,6 +53,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/ascent${search}`, request.url), 308);
   }
 
+  // Legacy short shares used ?c= — prefer clean /ascent/<id> paths.
+  if (pathname === "/ascent") {
+    const c = request.nextUrl.searchParams.get("c")?.trim() ?? "";
+    if (/^[a-zA-Z0-9]{6,16}$/.test(c)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/ascent/${c}`;
+      url.searchParams.delete("c");
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   if (pathname === "/org" || pathname.startsWith("/org/")) {
     const rest = pathname === "/org" ? "" : pathname.slice("/org".length);
     // Keep /org on localhost for dev; redirect in production on the game domain

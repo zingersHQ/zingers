@@ -1,8 +1,9 @@
 // Ascent challenge links — async rivalry (nail-it P0/P1).
 // Preferred share URL (minted on share only):
-//   /ascent?c=<shortId>          → payload in Redis
-// Fat legacy / inbound still works:
-//   /ascent?climb=<sectors>-<ms>-<name>&gp=<ghostPath>&mk=&ascent=
+//   /ascent/<shortId>            → payload in Redis
+// Still accepted:
+//   /ascent?c=<shortId>          (redirects to path form)
+//   /ascent?climb=…&gp=…         (fat legacy)
 // Path samples are ALWAYS in Climb-canonical space (mobile units).
 
 import { BRAND } from "@/lib/brand";
@@ -36,8 +37,19 @@ const PARAM = "climb";
 const PATH_PARAM = "gp";
 const DOOR_PARAM = "ascent";
 const MIND_PARAM = "mk";
-/** Short Redis-backed share id (created only when the Trainer shares). */
+/** Legacy short-id query (middleware redirects to /ascent/<id>). */
 const SHORT_PARAM = "c";
+
+/** Redis share ids are 6–16 alphanumerics (no punctuation — path-safe). */
+export function isClimbShareId(id: string): boolean {
+  return /^[a-zA-Z0-9]{6,16}$/.test(id);
+}
+
+/** Pull share id from `/ascent/<id>` (preferred) or null. */
+export function readClimbShareIdFromPath(pathname: string): string | null {
+  const m = pathname.match(/^\/ascent\/([a-zA-Z0-9]{6,16})\/?$/);
+  return m?.[1] ?? null;
+}
 
 /** Encode a finished run into a shareable challenge query value. */
 export function encodeClimbChallenge(c: ClimbChallenge): string {
@@ -104,25 +116,61 @@ export function readClimbChallengeFromSearch(search: string): ClimbChallenge | n
   }
 }
 
+async function fetchClimbShare(id: string): Promise<ClimbChallenge | null> {
+  if (!isClimbShareId(id)) return null;
+  try {
+    const r = await fetch(`/api/climb-share?id=${encodeURIComponent(id)}`);
+    if (!r.ok) return null;
+    const j = (await r.json()) as { challenge?: ClimbChallenge };
+    if (j.challenge && Number.isFinite(j.challenge.sectors)) return j.challenge;
+  } catch {
+    /* miss */
+  }
+  return null;
+}
+
 /**
- * Resolve a challenge from the URL: short `?c=` via API, else fat legacy params.
+ * Resolve a challenge from pathname + search:
+ *   /ascent/<id>  → Redis
+ *   ?c=<id>       → Redis (legacy; middleware usually redirects)
+ *   ?climb=&gp=   → fat decode
  * Call from client effects — never during SSR render.
  */
-export async function resolveClimbChallengeFromSearch(search: string): Promise<ClimbChallenge | null> {
+export async function resolveClimbChallengeFromLocation(
+  pathname?: string,
+  search?: string,
+): Promise<ClimbChallenge | null> {
+  const path =
+    pathname ?? (typeof window !== "undefined" ? window.location.pathname : "");
+  const q =
+    search ?? (typeof window !== "undefined" ? window.location.search : "");
+
+  const fromPath = readClimbShareIdFromPath(path);
+  if (fromPath) {
+    const hit = await fetchClimbShare(fromPath);
+    if (hit) return hit;
+  }
+
   try {
-    const q = new URLSearchParams(search.startsWith("?") ? search : `?${search}`);
-    const short = (q.get(SHORT_PARAM) || "").trim();
-    if (short && /^[a-zA-Z0-9]{6,16}$/.test(short)) {
-      const r = await fetch(`/api/climb-share?id=${encodeURIComponent(short)}`);
-      if (r.ok) {
-        const j = (await r.json()) as { challenge?: ClimbChallenge };
-        if (j.challenge && Number.isFinite(j.challenge.sectors)) return j.challenge;
-      }
+    const params = new URLSearchParams(q.startsWith("?") ? q : `?${q}`);
+    const short = (params.get(SHORT_PARAM) || "").trim();
+    if (short) {
+      const hit = await fetchClimbShare(short);
+      if (hit) return hit;
     }
   } catch {
-    /* fall through to fat decode */
+    /* fall through */
   }
-  return readClimbChallengeFromSearch(search);
+
+  return readClimbChallengeFromSearch(q);
+}
+
+/** @deprecated prefer resolveClimbChallengeFromLocation */
+export async function resolveClimbChallengeFromSearch(search: string): Promise<ClimbChallenge | null> {
+  return resolveClimbChallengeFromLocation(
+    typeof window !== "undefined" ? window.location.pathname : "",
+    search,
+  );
 }
 
 /**
@@ -154,9 +202,11 @@ export async function createClimbChallengeUrl(
       /\/$/,
       "",
     );
-    if (typeof j.path === "string" && j.path.startsWith("/ascent?")) return `${base}${j.path}`;
-    if (typeof j.id === "string" && /^[a-zA-Z0-9]{6,16}$/.test(j.id)) {
-      return `${base}/ascent?c=${j.id}`;
+    if (typeof j.path === "string" && /^\/ascent\/[a-zA-Z0-9]{6,16}$/.test(j.path)) {
+      return `${base}${j.path}`;
+    }
+    if (typeof j.id === "string" && isClimbShareId(j.id)) {
+      return `${base}/ascent/${j.id}`;
     }
   } catch {
     /* fat fallback */
