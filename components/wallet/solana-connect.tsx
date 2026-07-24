@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Unplug, Wallet } from "lucide-react";
 import bs58 from "bs58";
 import { STORAGE } from "@/lib/brand";
-import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
+import { getHandle, getOwnerToken, setHandle as persistHandle, setOwnerToken } from "@/lib/owner";
 import { shortPubkey } from "@/lib/trainer-label";
 import { track as pingEvent } from "@/lib/track";
 
@@ -32,9 +32,9 @@ function noWalletHint(): string {
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const mobile = /iPhone|iPad|iPod|Android/i.test(ua);
   if (mobile) {
-    return "No wallet in this browser. Open zingers.gg inside a Solana wallet app, or connect on desktop. Name only — recovery code still moves champions & Crowns.";
+    return "No wallet in this browser. Open zingers.gg inside a Solana wallet app, or connect on desktop.";
   }
-  return "No wallet found. Install a Solana wallet extension, then reload. Name only — recovery code still moves champions & Crowns.";
+  return "No wallet found. Install a Solana wallet extension, then reload.";
 }
 
 const ink = "var(--ink)";
@@ -173,16 +173,30 @@ export function SolanaConnect({
         pubkey?: string;
         name?: string | null;
         nameError?: string;
+        ownerToken?: string;
+        restored?: boolean;
         error?: string;
       };
       if (!pr.ok || !pj.pubkey) throw new Error(pj.error || "Could not link.");
+
+      // Reconnect on a new device: adopt the canonical career token (same path as recovery code).
+      if (pj.ownerToken && pj.ownerToken !== token) {
+        const adopted = setOwnerToken(pj.ownerToken);
+        if (adopted) {
+          if (pj.pubkey) localStorage.setItem(STORAGE.solPubkey, pj.pubkey);
+          if (pj.name) persistHandle(pj.name);
+          pingEvent(pj.restored ? "sol_restore" : "sol_link");
+          window.location.reload();
+          return;
+        }
+      }
 
       setPubkey(pj.pubkey);
       localStorage.setItem(STORAGE.solPubkey, pj.pubkey);
       if (pj.name) applyName(pj.name);
       else if (name.trim()) persistHandle(name.trim());
       if (pj.nameError) setErr(pj.nameError);
-      pingEvent("sol_link");
+      pingEvent(pj.restored ? "sol_restore" : "sol_link");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Cancelled.");
     } finally {
@@ -318,8 +332,8 @@ export function SolanaConnect({
           YOUR NAME
         </div>
         <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: "0 0 8px" }}>
-          Optional. Connect proves a wallet so you can keep a unique Trainer name on the boards. It does not move
-          champions or Crowns — use your recovery code for that.
+          Optional. First connect binds this device&apos;s career to your wallet; reconnect restores name, champions,
+          and Crowns. Keep a recovery code as backup.
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <input

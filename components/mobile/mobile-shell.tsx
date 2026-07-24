@@ -28,7 +28,7 @@ import { guestLoanerKey } from "@/lib/first-duel";
 import { getOwnerToken } from "@/lib/owner";
 import { track as pingEvent } from "@/lib/track";
 import { STORAGE } from "@/lib/brand";
-import { readClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
+import { resolveClimbChallengeFromSearch, type ClimbChallenge } from "@/lib/climb-challenge";
 import { formatCircuitMs } from "@/components/grounds/circuit";
 
 type TabId = "today" | "watch" | "champion" | "climb" | "rank";
@@ -85,12 +85,12 @@ export function MobileShell() {
   const adopting = activeTab === "champion" && unowned;
   const immersive = activeTab === "climb" || adopting;
 
-  // Leave immersive chrome. Exit Ascent never dumps to Today (homepage) —
-  // Champion tab is claim (guest) or raise (owned), i.e. start / continue the game.
+  // Leave immersive chrome. Leaving Flight lands on Today (the phone home);
+  // Claim still opens the Champion adopt picker with the loaner preselected.
   const exitImmersive = useCallback(() => {
     if (activeTab === "climb") {
       setPrevTab("climb");
-      setTab("champion");
+      setTab("today");
       return;
     }
     const safe =
@@ -100,7 +100,7 @@ export function MobileShell() {
     setTab(safe);
   }, [prevTab, activeTab, unowned]);
 
-  // guest Climb → claim: jump to the Champion tab (which shows adopt when unowned)
+  // guest Flight → claim: Champion tab (adopt when unowned; loaner preselected)
   const claimFromClimb = useCallback(() => {
     pingEvent("m_claim_from_climb");
     setPrevTab(tab);
@@ -114,8 +114,11 @@ export function MobileShell() {
   const [splashGate, setSplashGate] = useState<"checking" | "splash" | "shell">("checking");
   useEffect(() => {
     // Challenge deep-links skip the splash and open Climb immediately.
-    if (typeof window !== "undefined") {
-      const c = readClimbChallengeFromSearch(window.location.search);
+    let cancelled = false;
+    (async () => {
+      if (typeof window === "undefined") return;
+      const c = await resolveClimbChallengeFromSearch(window.location.search);
+      if (cancelled) return;
       if (c) {
         setChallenge(c);
         pingEvent("climb_challenge_open");
@@ -128,13 +131,16 @@ export function MobileShell() {
         }
         return;
       }
-    }
-    try {
-      setSplashGate(localStorage.getItem(STORAGE.mSplash) ? "shell" : "splash");
-    } catch {
-      // no storage — skip the splash rather than gate the whole app on it
-      setSplashGate("shell");
-    }
+      try {
+        setSplashGate(localStorage.getItem(STORAGE.mSplash) ? "shell" : "splash");
+      } catch {
+        // no storage — skip the splash rather than gate the whole app on it
+        setSplashGate("shell");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const dismissSplash = useCallback(() => {
     try {

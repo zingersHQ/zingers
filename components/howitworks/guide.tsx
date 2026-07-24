@@ -354,7 +354,7 @@ const SLIDES: Slide[] = [
           className="btn btn-primary"
           style={{ ["--ac" as string]: "var(--gold)", fontSize: 17, padding: "14px 28px" }}
         >
-          Enter the Grounds →
+          Enter the world →
         </Link>
         <Link href="/ascent" className="btn" style={{ ["--ac" as string]: "#39e0ff", fontSize: 14, padding: "10px 18px" }}>
           Or fly on your phone →

@@ -174,7 +174,7 @@ export function ClimbProveGate({
               className="mono"
               style={{ padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,.16)", background: "transparent", color: "#e6e2f5", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
             >
-              Practice Reach I
+              Practice the opening sky
             </button>
           </>
         )}

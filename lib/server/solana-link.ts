@@ -281,7 +281,15 @@ export async function verifyAndLink(opts: {
   message: string;
   name?: string;
 }): Promise<
-  | { ok: true; pubkey: string; name: string | null; nameError?: string }
+  | {
+      ok: true;
+      pubkey: string;
+      name: string | null;
+      nameError?: string;
+      /** Career key bound to this pubkey — adopt on the client when restored. */
+      ownerToken: string;
+      restored: boolean;
+    }
   | { ok: false; error: string }
 > {
   const store = solanaLinks();
@@ -300,7 +308,12 @@ export async function verifyAndLink(opts: {
   if (!valid) return { ok: false, error: "Signature invalid." };
 
   const pubkey = opts.pubkey.trim();
-  await store.link(opts.ownerToken, pubkey);
+  // First link wins: reconnect returns the canonical career token instead of
+  // remapping the pubkey onto a fresh device token (which orphaned saves).
+  const existing = await store.getToken(pubkey);
+  const restored = !!(existing && existing !== opts.ownerToken);
+  const ownerToken = restored && existing ? existing : opts.ownerToken;
+  if (!restored) await store.link(opts.ownerToken, pubkey);
 
   let nameError: string | undefined;
   const incoming = cleanTrainerName(opts.name);
@@ -310,7 +323,7 @@ export async function verifyAndLink(opts: {
   }
 
   const name = (await store.getName(pubkey)) || null;
-  return { ok: true, pubkey, name, nameError };
+  return { ok: true, pubkey, name, nameError, ownerToken, restored };
 }
 
 export async function linkedIdentity(ownerToken: string): Promise<{ pubkey: string | null; name: string | null }> {

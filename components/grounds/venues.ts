@@ -25,8 +25,8 @@ export const VENUES: Record<VenueId, VenueDef> = {
   },
   circuit: {
     id: "circuit",
-    name: "The Ascent",
-    shortLabel: "Ascent",
+    name: "Flight",
+    shortLabel: "Flight",
     blurb: "Fly the hundred-sector sky · same run on phone or desktop",
     color: "#39e0ff",
   },

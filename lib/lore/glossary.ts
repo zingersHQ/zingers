@@ -29,7 +29,6 @@ export const GLOSSARY: GlossaryGroup[] = [
     title: "You and the world",
     entries: [
       { term: "Trainer", short: "You. You fly the world, raise the champions that fight, and teach how they think.", was: "Reader" },
-      { term: "Trainer name", short: "The unique name you play under. You can link an optional wallet to keep it across devices." },
       { term: "The world", short: "The 3D place you fly around in — a cluster of floating regions, each with its own arena. Its lore name is the Grounds." },
       { term: "The Hub", short: "Where you land: the central meeting ground, ringed by gates out to every region. Its lore name is the Concord.", was: "the Concord" },
       { term: "Region", short: "A place you fly out to from the Hub to fight. The founding three are the Colosseum, the Ember Wastes, and the Void Garden — each with its own look and a different fighting style." },
@@ -38,7 +37,7 @@ export const GLOSSARY: GlossaryGroup[] = [
       { term: "Flight", short: "The flight game: fly up through the sky and your champion flies beside you. The same game on phone and desktop. How high you climb marks its body.", was: "the Ascent / Circuit / Climb" },
       { term: "Reach", short: "A band of the sky in Flight, each with its own weather and hazards (shown in-game as plain sky progress). Ten stack from the ground to the quiet at the top." },
       { term: "Camp", short: "A resting waystation between two Reaches. Reaching one for the first time lights it for good." },
-      { term: "Jetpack", short: "The Trainer's tool for flight. Only you carry one — your champion is a mind, so it flies beside you on its own." },
+      { term: "Jetpack", short: "The Trainer's tool for flight. Only you carry one — your champion flies beside you on its own." },
     ],
   },
   {
@@ -46,9 +45,8 @@ export const GLOSSARY: GlossaryGroup[] = [
     title: "Your champion",
     entries: [
       { term: "Champion", short: "An AI fighter you raise. Each one argues, adapts, and has its own voice." },
-      { term: "Mind", short: "Another word for a champion, especially a new one you haven't shaped yet." },
       { term: "Strategy", short: "A champion's aggression, focus, and risk dials — how it fights. You seed them at adopt; Imprints and fights move them after that.", was: "doctrine" },
-      { term: "Temperament", short: "The Strategy dials shown as status meters after adopt — a readout of how the mind has drifted, not free-drag sliders." },
+      { term: "Temperament", short: "The Strategy dials shown as status meters after adopt — a readout of how the champion has drifted, not free-drag sliders." },
       { term: "Imprint", short: "A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials." },
       { term: "Persona", short: "A champion's voice and personality, which you can write yourself." },
       { term: "Sigil", short: "A champion's Force badge, the small symbol that shows its fighting style." },

@@ -47,10 +47,10 @@ a layer *beneath* the game, never a gate in front of it. *(`docs/bible/08-econom
 **Shipped today:** optional Solana wallet link (Phantom SIWS-style prove-ownership)
 to keep a unique **Trainer name** across devices. No spend approvals. No token UI.
 
-**Honest scope (2026-07):** connect binds **name ↔ pubkey** to the *current*
-device `ownerToken`. It does **not** restore champions, Crowns, or `/api/save`.
-Cross-device career still uses the recovery code (`setOwnerToken`). A later
-Phase 2 can return the canonical token on reconnect — still without `$ZING`.
+**Honest scope (2026-07):** first connect binds **name ↔ pubkey ↔ ownerToken**
+(the device career key). Reconnect on a new device returns that canonical
+`ownerToken` so champions, Crowns, and `/api/save` restore after reload — still
+without `$ZING`. Recovery code remains a backup if the wallet is lost.
 
 **Naming:** in-game Crowns live at `/api/wallet` (off-chain). Solana is
 `solana-link` / “Connect” — never call Crowns a chain wallet in player copy.

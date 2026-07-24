@@ -51,7 +51,7 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
         TRAINER
       </div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 12px" }}>
-        Optional name (wallet) and recovery code (this device&apos;s career). Nothing here is required to play.
+        Optional wallet (keeps name + career across devices) and recovery code (backup). Nothing here is required to play.
       </p>
 
       <SolanaConnect onIdentity={onHandle} />
@@ -62,7 +62,7 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
         RECOVERY CODE
       </div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 6px" }}>
-        This moves champions, Crowns, and cloud save across devices. Wallet connect does not.
+        Backup if you lose the wallet. Reconnecting the same wallet also restores champions, Crowns, and cloud save.
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <code style={{ ...inputStyle, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

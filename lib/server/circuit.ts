@@ -11,8 +11,14 @@
 // short token). Client-supplied handles are ignored on submit.
 import "server-only";
 import { Redis } from "@upstash/redis";
-import { CLIMB_SECTOR_COUNT } from "@/lib/ascent-rules";
+import { ascentCraftCrowns, CLIMB_SECTOR_COUNT } from "@/lib/ascent-rules";
+import {
+  DAILY_VARIABLE_EARN_CAP,
+  MAX_GAUNTLET_PAYOUTS_PER_DAY,
+} from "@/lib/economy";
+import { getStore } from "@/lib/server/store";
 import { resolveTrainerLabel } from "@/lib/server/solana-link";
+import { track } from "@/lib/server/track";
 
 export type CircuitBody = "thumb" | "flight";
 
@@ -60,7 +66,11 @@ const BOARD_CAP = 50;
 // 90-min ceiling: a desktop 6-DOF full clear is aspirationally 60–90 min. Still
 // < 10M so "one more sector always outranks any time" holds in the packing.
 const MAX_MS = 90 * 60 * 1000;
+/** Soft floor — rejects absurd "100 sectors in 2s" board posts (not proof of play). */
+const MIN_MS_PER_SECTOR = 250;
 export const MAX_SECTORS = CLIMB_SECTOR_COUNT;
+
+const utcDay = () => Math.floor(Date.now() / 86_400_000);
 
 function reachOf(sectors: number): number {
   return sectors <= 0 ? 0 : Math.ceil(sectors / 10);
@@ -191,25 +201,94 @@ export async function submitCircuitRun(
   token: string,
   sectors: number,
   totalMs: number,
-  clearedAll: boolean,
+  _clearedAll: boolean,
   body: CircuitBody = "thumb",
-): Promise<{ saved: boolean; entry: CircuitPublicEntry }> {
+): Promise<{
+  saved: boolean;
+  entry: CircuitPublicEntry;
+  craftCrowns: number;
+  balance?: number;
+  rejected?: string;
+}> {
   const tok = token.slice(0, 128);
   const handle = (await resolveTrainerLabel(tok)).slice(0, 48);
   const s = Math.max(0, Math.min(MAX_SECTORS, Math.floor(sectors)));
+  const ms = Math.max(0, Math.min(MAX_MS, Math.floor(totalMs)));
+  // Server decides clear — client flag is ignored.
+  const clearedAll = s === MAX_SECTORS;
+
+  if (s > 0 && ms < s * MIN_MS_PER_SECTOR) {
+    const prev = (await getCircuitBoard(1, tok, body)).mine;
+    return {
+      saved: false,
+      craftCrowns: 0,
+      rejected: "time_too_fast",
+      entry: prev
+        ? {
+            handle: prev.handle,
+            sectors: prev.sectors,
+            totalMs: prev.totalMs,
+            clearedAll: prev.clearedAll,
+            reach: prev.reach,
+            you: true,
+          }
+        : {
+            handle,
+            sectors: 0,
+            totalMs: 0,
+            clearedAll: false,
+            reach: 0,
+            you: true,
+          },
+    };
+  }
+
   const entry: CircuitEntry = {
     token: tok,
     handle,
     sectors: s,
-    totalMs: Math.max(0, Math.min(MAX_MS, Math.floor(totalMs))),
-    clearedAll: !!clearedAll,
+    totalMs: ms,
+    clearedAll,
     at: Date.now(),
     body,
     reach: reachOf(s),
   };
   const result = await getCircuitStore().submit(entry);
+
+  // Craft Crowns only on a real server-side PB — amount from shared formula, not client.
+  let craftCrowns = 0;
+  let balance: number | undefined;
+  if (result.saved) {
+    const amt = ascentCraftCrowns(result.entry.sectors, result.entry.clearedAll);
+    if (amt > 0) {
+      const store = getStore();
+      const day = utcDay();
+      const claimKey = `ascent:${body}:${tok}:${result.entry.sectors}:${result.entry.totalMs}`;
+      const claimed = await store.claimOnce(claimKey, 2 * 86_400);
+      if (claimed) {
+        const n = await store.incrGauntletPayout(tok, day);
+        if (n <= MAX_GAUNTLET_PAYOUTS_PER_DAY) {
+          const earned = await store.incrDailyEarn(tok, day, amt);
+          if (earned <= DAILY_VARIABLE_EARN_CAP) {
+            const w = await store.adjustWallet(tok, amt);
+            if (w.ok) {
+              craftCrowns = amt;
+              balance = w.balance;
+              void track("earn", tok, amt);
+            }
+          } else {
+            await store.incrDailyEarn(tok, day, -amt);
+          }
+        }
+      }
+    }
+  }
+  if (balance == null) balance = await getStore().getWallet(tok);
+
   return {
     saved: result.saved,
+    craftCrowns,
+    balance,
     entry: {
       handle: result.entry.handle,
       sectors: result.entry.sectors,

@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
     pubkey: result.pubkey,
     name: result.name,
     nameError: result.nameError,
+    ownerToken: result.ownerToken,
+    restored: result.restored,
   });
 }
 

@@ -24,7 +24,7 @@ import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
-import { climbChallengeUrl, isClimbChallengeBeat, type ClimbChallenge } from "@/lib/climb-challenge";
+import { createClimbChallengeUrl, isClimbChallengeBeat, type ClimbChallenge } from "@/lib/climb-challenge";
 import {
   ghostPathForSector,
   ghostPathHasSamples,
@@ -712,17 +712,16 @@ export default function CircuitLite({
       const deeper = run.sectors > (prev?.sectors ?? -1);
 
       let xp = 0;
-      let crowns = 0;
       if (deeper) {
         xp = ascentDepthXp(run.sectors, clearedAll); // depth → XP (soul)
         if (xp > 0) awardTrainerXp(xp);
       }
-      if (better) {
-        crowns = ascentCraftCrowns(run.sectors, clearedAll); // craft → Crowns
-      }
-      crowns += bonusCrowns.current; // golden-ring surprise pays regardless (§7b)
-      if (crowns > 0) void awardGauntlet(crowns);
-      setReward(xp > 0 || crowns > 0 ? { xp, crowns, deeper } : null);
+      // Craft Crowns are server-paid on a real board PB (/api/circuit). Golden-ring
+      // surprise stays a soft gauntlet claim (small, capped).
+      const bonus = bonusCrowns.current;
+      if (bonus > 0) void awardGauntlet(bonus);
+      const expectCraft = better ? ascentCraftCrowns(run.sectors, clearedAll) : 0;
+      setReward(xp > 0 || expectCraft + bonus > 0 ? { xp, crowns: expectCraft + bonus, deeper } : null);
 
       if (better) {
         saveCircuitPersonalBest(run, "thumb");
@@ -739,7 +738,15 @@ export default function CircuitLite({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: tok, sectors: run.sectors, totalMs: run.totalMs, clearedAll, body: "thumb" }),
         })
-          .then(() => loadBoard())
+          .then(async (r) => {
+            try {
+              const j = (await r.json()) as { balance?: number };
+              if (typeof j.balance === "number") useChampions.getState().setBalance(j.balance);
+            } catch {
+              /* ignore */
+            }
+            return loadBoard();
+          })
           .catch(() => {});
       }
     },
@@ -1081,12 +1088,13 @@ export default function CircuitLite({
     if (samplesRef.current.length >= 2) {
       paths[sector] = [...samplesRef.current];
     }
-    const url = climbChallengeUrl({
+    const url = await createClimbChallengeUrl({
       sectors,
       totalMs,
       name: getHandle() || undefined,
       mind: activeKey || undefined,
       path: ghostPathHasSamples(paths) ? paths : undefined,
+      door: "thumb",
     });
     try {
       if (navigator.share) {

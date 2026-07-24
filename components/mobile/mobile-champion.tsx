@@ -42,6 +42,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [nickSaved, setNickSaved] = useState(false);
   const [imprinting, setImprinting] = useState<string | null>(null);
   const [reply, setReply] = useState<string | null>(null);
   // Axes an Imprint just nudged — the STRATEGY dials glow briefly so the lesson
@@ -59,7 +60,11 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   useEffect(() => {
     setNickDraft(nick);
   }, [nick, owned]);
+  useEffect(() => {
+    setNickSaved(false);
+  }, [owned]);
 
+  const nickDirty = nickDraft.trim() !== nick;
   const flash = useCallback((m: string) => {
     setToast(m);
     setTimeout(() => setToast(null), 2600);
@@ -118,7 +123,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const canTrain = crowns >= TRAIN_COST;
 
   return (
-    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 14px 24px" }}>
+    <div style={{ position: "relative", height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 14px 24px" }}>
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         {/* header + wallet */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -167,17 +172,21 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
         </div>
 
-        {/* nickname — Trainer stamp; shows on share cards */}
+        {/* nickname — shows on share cards / profile */}
         <div className="panel" style={{ padding: 14, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-            NICKNAME · YOUR NAME FOR THIS MIND
+            NICKNAME · YOUR NAME FOR THIS CHAMPION
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               value={nickDraft}
-              onChange={(e) => setNickDraft(e.target.value.slice(0, 24))}
+              onChange={(e) => {
+                setNickDraft(e.target.value.slice(0, 24));
+                setNickSaved(false);
+              }}
               placeholder={name}
               maxLength={24}
+              aria-label="Champion nickname"
               style={{
                 flex: 1,
                 padding: "10px 12px",
@@ -191,25 +200,35 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
             />
             <button
               type="button"
+              disabled={!nickDirty}
               onClick={() => {
-                if (!owned) return;
+                if (!owned || !nickDirty) return;
                 setNick(owned, nickDraft);
-                flash(nickDraft.trim() ? "Nickname locked in." : "Nickname cleared.");
+                setNickSaved(true);
+                flash(nickDraft.trim() ? "Nickname saved." : "Nickname cleared.");
               }}
               style={{
                 padding: "10px 14px",
                 borderRadius: 10,
                 border: "none",
-                background: col,
-                color: "#0a0a12",
+                background: nickSaved && !nickDirty ? "transparent" : col,
+                color: nickSaved && !nickDirty ? col : "#0a0a12",
+                outline: nickSaved && !nickDirty ? `1px solid ${col}` : "none",
                 fontWeight: 800,
                 fontSize: 13,
-                cursor: "pointer",
+                cursor: nickDirty ? "pointer" : "default",
+                opacity: nickDirty || nickSaved ? 1 : 0.45,
+                minWidth: 72,
               }}
             >
-              Save
+              {nickSaved && !nickDirty ? "Saved" : "Save"}
             </button>
           </div>
+          {nickSaved && !nickDirty ? (
+            <p className="mono" style={{ fontSize: 10, color: col, margin: "8px 0 0", lineHeight: 1.4 }}>
+              Locked in — shows on this champion&apos;s profile.
+            </p>
+          ) : null}
         </div>
 
         {/* temperament — status meters; Imprints + fights grow these (never drag) */}
@@ -297,7 +316,27 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       </div>
 
       {toast && (
-        <div className="mono" style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 50, background: "#12101f", border: `1px solid ${col}`, borderRadius: 10, padding: "11px 16px", fontSize: 12, color: "var(--ink)", boxShadow: "0 20px 50px -20px #000", maxWidth: "90%", textAlign: "center" }}>
+        <div
+          className="mono"
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 80,
+            background: "#12101f",
+            border: `1px solid ${col}`,
+            borderRadius: 10,
+            padding: "11px 16px",
+            fontSize: 12,
+            color: "var(--ink)",
+            boxShadow: "0 20px 50px -20px #000",
+            maxWidth: "90%",
+            textAlign: "center",
+          }}
+        >
           {toast}
         </div>
       )}

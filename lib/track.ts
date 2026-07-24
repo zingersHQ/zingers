@@ -21,6 +21,7 @@ export type ClientEvent =
   // the mobile Climb-first door (docs/two-doors.md §3)
   | "m_splash" | "m_fly" | "m_guest_run" | "m_claim_from_climb"
   | "sol_link"
+  | "sol_restore"
   | "sol_link_no_wallet"
   // nail-it P0 — Climb share / prove / challenge + ascent-first funnel
   | "fj_train_to_ascent"

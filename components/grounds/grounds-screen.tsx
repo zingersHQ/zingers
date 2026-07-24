@@ -113,9 +113,9 @@ import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
 import {
-  climbChallengeUrl,
+  createClimbChallengeUrl,
   isClimbChallengeBeat,
-  readClimbChallengeFromSearch,
+  resolveClimbChallengeFromSearch,
   type ClimbChallenge,
 } from "@/lib/climb-challenge";
 import { ALTITUDE_KEY_SECTOR, needsAltitudeProve } from "@/lib/ascent-rules";
@@ -546,10 +546,18 @@ export default function GroundsScreen({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: tok, sectors, totalMs, clearedAll, body: "flight" }),
       })
-        .then(() => loadCircuitBoard())
+        .then(async (r) => {
+          try {
+            const j = (await r.json()) as { balance?: number };
+            if (typeof j.balance === "number") store.setBalance(j.balance);
+          } catch {
+            /* ignore */
+          }
+          return loadCircuitBoard();
+        })
         .catch(() => {});
     },
-    [loadCircuitBoard, owned],
+    [loadCircuitBoard, owned, store],
   );
 
   const resetCircuitRun = useCallback(() => {
@@ -870,7 +878,7 @@ export default function GroundsScreen({
     if (circuitSectorSamplesRef.current.length >= 2) {
       paths[circuitSectorIdx] = [...circuitSectorSamplesRef.current];
     }
-    const url = climbChallengeUrl(
+    const url = await createClimbChallengeUrl(
       {
         sectors,
         totalMs,
@@ -951,16 +959,23 @@ export default function GroundsScreen({
     return () => window.clearTimeout(t);
   }, [activeVenue, circuitPhase, advanceCircuitSector]);
 
-  // Async challenge deep-link: /ascent?climb=…&gp=… (legacy /grounds?…&ascent=flight too)
+  // Async challenge deep-link: /ascent?c=<id> or legacy ?climb=…&gp=…
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const c = readClimbChallengeFromSearch(window.location.search);
-    // On /grounds roam, ignore old mobile-only door tags; /ascent accepts all.
-    if (!c || (!ascentEntry && c.door === "thumb")) return;
-    setCircuitChallenge(c);
-    setCircuitChallengeDismissed(false);
-    track("climb_challenge_open");
-    if (!gameSession) enterVenue("circuit");
+    let cancelled = false;
+    void (async () => {
+      const c = await resolveClimbChallengeFromSearch(window.location.search);
+      if (cancelled || !c) return;
+      // On /grounds roam, ignore old mobile-only door tags; /ascent accepts all.
+      if (!ascentEntry && c.door === "thumb") return;
+      setCircuitChallenge(c);
+      setCircuitChallengeDismissed(false);
+      track("climb_challenge_open");
+      if (!gameSession) enterVenue("circuit");
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
   }, []);
 

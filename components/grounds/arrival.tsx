@@ -122,7 +122,7 @@ export function ArrivalSequence({
             </div>
 
             <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--muted)", margin: "12px 2px 16px" }}>
-              This mind is yours now. Step into the Concord — <strong style={{ color: "var(--fg)" }}>train</strong> it to grow sharper, or walk to a <strong style={{ color: "var(--fg)" }}>gate</strong> and put it in a fight.
+              This mind is yours now. Step into the Hub — <strong style={{ color: "var(--fg)" }}>train</strong> it to grow sharper, or walk to a <strong style={{ color: "var(--fg)" }}>gate</strong> and put it in a fight.
             </p>
 
             <button
@@ -130,7 +130,7 @@ export function ArrivalSequence({
               onClick={() => setPhase("cover")}
               style={{ ["--ac" as string]: accent, fontSize: 14, padding: "10px 20px", width: "100%" }}
             >
-              Enter the Grounds →
+              Enter the world →
             </button>
           </div>
         </div>
