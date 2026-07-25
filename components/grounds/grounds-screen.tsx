@@ -4384,12 +4384,18 @@ export default function GroundsScreen({
         <TrainOverlay
           ckey={owned}
           entry={byKey[owned]}
-          onClose={() => setOverlay("none")}
+          onClose={(afterSession) => {
+            setOverlay("none");
+            // Closed without the Arena handoff — soft nudge toward the pit.
+            if (afterSession) {
+              setRegionRaiseCoach(false);
+              setArenaFightCoach(true);
+            }
+          }}
           onContinueToFight={() => {
             setOverlay("none");
             setRegionRaiseCoach(false);
-            setArenaFightCoach(true);
-            // Soft drop near the central Arena (region origin), facing inward.
+            // Already delivering them to the Arena — skip the duplicate coach toast.
             window.setTimeout(() => travelRef.current?.(0, 12, Math.PI), 80);
           }}
         />
@@ -4481,7 +4487,20 @@ export default function GroundsScreen({
 
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
-        <MatchHud bout={bout} owned={owned!} opponent={matchBKey} foeMeta={duelMeta} foeType={towerAgents.find((a) => a.id === opponentId)?.type} byKey={byKey} get={store.get} result={result} onClose={dismissMatch} isMobile={isMobile} />
+        <MatchHud
+          bout={bout}
+          owned={owned!}
+          opponent={matchBKey}
+          foeMeta={duelMeta}
+          foeType={towerAgents.find((a) => a.id === opponentId)?.type}
+          byKey={byKey}
+          get={store.get}
+          result={result}
+          onClose={dismissMatch}
+          isMobile={isMobile}
+          // TribunalMatchBanner owns the case quote — don't stack a second copy.
+          hideTopic={isTribunal && !opponentId && !result}
+        />
       )}
 
     </main>
@@ -4601,7 +4620,8 @@ function TrainOverlay({
 }: {
   ckey: string;
   entry: RosterEntry;
-  onClose: () => void;
+  /** `afterSession` when closing after a completed train without the Arena CTA. */
+  onClose: (afterSession?: boolean) => void;
   /** After a paid/fragment session — close and steer toward the Arena. */
   onContinueToFight?: () => void;
 }) {
@@ -4710,7 +4730,7 @@ function TrainOverlay({
               Teach a free lesson to shape how they think — or spend Crowns to grow body &amp; XP.
             </p>
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, flexShrink: 0 }}>
+          <button onClick={() => onClose(sessionDone)} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 0, flexShrink: 0 }}>
             <X size={20} strokeWidth={2} />
           </button>
         </div>
@@ -5209,8 +5229,10 @@ function MatchHud(props: {
   result: { won: boolean; crowns: number; betWon: boolean | null; ladders: string[]; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null; home: boolean } | null;
   onClose: () => void;
   isMobile: boolean;
+  /** When another surface (Tribunal banner) already shows the case. */
+  hideTopic?: boolean;
 }) {
-  const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile } = props;
+  const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile, hideTopic } = props;
   const t = bout.turn;
   const [study, setStudy] = useState(false);
   const canSkip = bout.phase === "live" && (t?.round ?? 0) >= 2 && !result && !bout.end;
@@ -5256,8 +5278,8 @@ function MatchHud(props: {
           <div className="mono" style={{ fontSize: isMobile ? 11 : 12, color: "var(--gold)", letterSpacing: 1 }}>
             {aName} <span style={{ color: "var(--muted2)" }}>vs</span> {bName}
           </div>
-          {bout.start && (
-            <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.35 }}>
+          {bout.start && !hideTopic && (
+            <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.45 }}>
               &ldquo;{bout.start.topic}&rdquo;
             </div>
           )}

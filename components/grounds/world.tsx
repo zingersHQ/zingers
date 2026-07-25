@@ -44,7 +44,15 @@ import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import { worldById, type GateDef } from "./worlds";
 import { natureGroundPalette } from "@/lib/render/nature-kit";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
-import { towerLayout, assignMidPerch, pickSummitAgent, type TowerNode } from "./tower-layout";
+import {
+  towerLayout,
+  assignMidPerch,
+  pickSummitAgent,
+  findTowerPad,
+  clampToTowerPad,
+  towerPadSurface,
+  type TowerNode,
+} from "./tower-layout";
 import { RenderBoundary, WEBGL_POWER } from "./render-guard";
 import { jetFallSfx, jumpBeep, setJet, stopJet, smokePoofSfx } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
@@ -653,7 +661,10 @@ export default function World({
   }, [bands.tower, summitAgent]);
   // shared, deterministic tower layout — colliders, perched agents and the
   // challenge proximity check all read from this same list.
-  const towerNodes = useMemo(() => towerLayout(shape, sc.towerAngle, sc.towerSteps), [shape, sc.towerAngle, sc.towerSteps]);
+  const towerNodes = useMemo(
+    () => towerLayout(shape, sc.towerAngle, sc.towerSteps, knoll),
+    [shape, sc.towerAngle, sc.towerSteps, knoll],
+  );
   const perched = useMemo(() => assignMidPerch(towerNodes, midTowerAgents), [towerNodes, midTowerAgents]);
   const summitPos = useMemo<[number, number, number] | null>(() => {
     if (!towerNodes.length) return null;
@@ -1038,6 +1049,7 @@ export default function World({
                   shape={shape}
                   spawnKnoll={knoll}
                   ascentFoot={ascentFoot}
+                  towerPads={towerNodes}
                 />
               )}
             </>
@@ -1276,7 +1288,15 @@ function companionFeetY(
   shape: TerrainShape,
   knoll: SpawnKnoll,
   ascent: AscentFoot | null = null,
+  platforms: TowerNode[] | null = null,
+  preferY: number | null = null,
 ): number {
+  // Tower pads are floating RigidBodies — terrain height under them is the floor
+  // far below. Prefer the pad the Trainer is standing on (same platform beside them).
+  if (platforms?.length && preferY != null) {
+    const pad = findTowerPad(x, z, preferY, platforms) ?? findTowerPad(x, z, preferY, platforms, { margin: 2.4 });
+    if (pad) return towerPadSurface(pad);
+  }
   return worldWalkHeight(x, z, shape, knoll, ascent);
 }
 
@@ -1293,6 +1313,7 @@ function OwnedCompanion({
   shape,
   spawnKnoll,
   ascentFoot = null,
+  towerPads = null,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
@@ -1306,6 +1327,8 @@ function OwnedCompanion({
   shape: TerrainShape;
   spawnKnoll: SpawnKnoll;
   ascentFoot?: AscentFoot | null;
+  /** Tower helix pads — companion stands on the same pad as the Trainer. */
+  towerPads?: TowerNode[] | null;
 }) {
   const [ownedAct, setOwnedAct] = useState(0);
   useEffect(() => {
@@ -1347,11 +1370,16 @@ function OwnedCompanion({
   useEffect(() => {
     const hp = handlerPos.current;
     const hh = handlerHeading.current;
-    const y = companionFeetY(hp.x, hp.z, shape, spawnKnoll, ascentFoot);
-    wpos.current.set(hp.x, y, hp.z);
+    const feetY = hp.y - FOOT_OFF;
+    const pad = towerPads?.length ? findTowerPad(hp.x, hp.z, feetY, towerPads) : null;
+    const stand = pad
+      ? clampToTowerPad(hp.x, hp.z, pad, 0.7)
+      : { x: hp.x, z: hp.z };
+    const y = companionFeetY(stand.x, stand.z, shape, spawnKnoll, ascentFoot, towerPads, feetY);
+    wpos.current.set(stand.x, y, stand.z);
     wvel.current.set(0, 0, 0);
     smoothHVel.current.set(0, 0, 0);
-    followTarget.current.set(hp.x, y, hp.z);
+    followTarget.current.set(stand.x, y, stand.z);
     followHeading.current = hh;
     rigHeading.current = hh;
     hPrev.current = hp.clone();
@@ -1360,7 +1388,7 @@ function OwnedCompanion({
     introBooted.current = false;
     prevWposInit.current = false;
     companionLocoHold.current = 0;
-  }, [ownedKey, shape, spawnKnoll, ascentFoot, handlerPos, handlerHeading]);
+  }, [ownedKey, shape, spawnKnoll, ascentFoot, towerPads, handlerPos, handlerHeading]);
 
   useFrame((_, dtRaw) => {
     if (!rigRef.current || !c) return;
@@ -1392,11 +1420,22 @@ function OwnedCompanion({
     const hK = (1 - Math.exp(-headingSmooth * dt)) * (smSpeed > minPathSpeed ? 1 : 0.4);
     followHeading.current += dFollowH * hK;
 
+    // Trainer feet ≈ capsule centre − FOOT_OFF. Pad under them is the companion's floor.
+    const handlerFeetY = hp.y - FOOT_OFF;
+    const handlerPad =
+      towerPads?.length ? findTowerPad(hp.x, hp.z, handlerFeetY, towerPads) : null;
+
     if (!introBooted.current) {
       introBooted.current = true;
-      const far = companionDockSlot(hp.x, hp.z, hh, introStart);
-      wpos.current.set(far.tx, companionFeetY(far.tx, far.tz, shape, spawnKnoll, ascentFoot), far.tz);
-      followTarget.current.set(far.tx, wpos.current.y, far.tz);
+      let far = companionDockSlot(hp.x, hp.z, hh, introStart);
+      if (handlerPad) {
+        // Intro used to spawn ~11u away at terrain Y — on the Tower that is the void floor.
+        const onPad = clampToTowerPad(far.tx, far.tz, handlerPad);
+        far = { tx: onPad.x, tz: onPad.z };
+      }
+      const bootY = companionFeetY(far.tx, far.tz, shape, spawnKnoll, ascentFoot, towerPads, handlerFeetY);
+      wpos.current.set(far.tx, bootY, far.tz);
+      followTarget.current.set(far.tx, bootY, far.tz);
     }
 
     // Chase target: trail the main path when moving, idle wing slot when still.
@@ -1415,16 +1454,37 @@ function OwnedCompanion({
       rawTx = dock.tx;
       rawTz = dock.tz;
     }
+    // Wing slot can hang off a small pad into open air — keep it on the Trainer's pad.
+    if (handlerPad) {
+      const clamped = clampToTowerPad(rawTx, rawTz, handlerPad);
+      rawTx = clamped.x;
+      rawTz = clamped.z;
+    }
     const ft = followTarget.current;
     const tK = 1 - Math.exp(-slotSmooth * dt);
     ft.x += (rawTx - ft.x) * tK;
     ft.z += (rawTz - ft.z) * tK;
 
-    const introDock = companionDockSlot(hp.x, hp.z, hh, slotR);
-    const tx = introActive.current ? introDock.tx : ft.x;
-    const tz = introActive.current ? introDock.tz : ft.z;
-    const slotGroundY = companionFeetY(tx, tz, shape, spawnKnoll, ascentFoot);
-    const handlerFlying = cue?.flying ?? hp.y > liftThreshold;
+    let introDock = companionDockSlot(hp.x, hp.z, hh, slotR);
+    if (handlerPad) {
+      const clamped = clampToTowerPad(introDock.tx, introDock.tz, handlerPad);
+      introDock = { tx: clamped.x, tz: clamped.z };
+    }
+    let tx = introActive.current ? introDock.tx : ft.x;
+    let tz = introActive.current ? introDock.tz : ft.z;
+    if (handlerPad) {
+      const clamped = clampToTowerPad(tx, tz, handlerPad);
+      tx = clamped.x;
+      tz = clamped.z;
+    }
+    const slotGroundY = handlerPad
+      ? towerPadSurface(handlerPad)
+      : companionFeetY(tx, tz, shape, spawnKnoll, ascentFoot, towerPads, handlerFeetY);
+    // Absolute Y is huge on the Tower — measure lift against the standable floor
+    // (pad top + capsule foot offset), not against world zero / liftThreshold alone.
+    const standCenterY = handlerPad ? towerPadSurface(handlerPad) + FOOT_OFF : 0;
+    const handlerFlying =
+      cue?.flying ?? (handlerPad ? hp.y - standCenterY > liftThreshold : hp.y > liftThreshold);
     const dockY = handlerFlying ? Math.max(slotGroundY, hp.y - wingDrop) : slotGroundY;
 
     const ex = tx - wpos.current.x;
@@ -1491,6 +1551,15 @@ function OwnedCompanion({
       wpos.current.y += (dockY - wpos.current.y) * Math.min(1, dt * yRate) + climb * dt * (handlerFlying ? 0.9 : 0);
       vel.y *= Math.exp(-21 * dt); // dt-based (≈0.7/frame @60fps)
       if (!handlerFlying) wpos.current.y = Math.max(slotGroundY, wpos.current.y);
+    }
+
+    // Stay on the Trainer's pad in xz (don't drift into void and "fall" to terrain).
+    if (handlerPad && !handlerFlying) {
+      const onPad = clampToTowerPad(wpos.current.x, wpos.current.z, handlerPad);
+      wpos.current.x = onPad.x;
+      wpos.current.z = onPad.z;
+      // If we were still at terrain height from a bad boot, snap up onto the pad.
+      if (wpos.current.y < slotGroundY - 0.5) wpos.current.y = slotGroundY;
     }
 
     const chasePlanar = Math.hypot(vel.x, vel.z);
@@ -2559,20 +2628,38 @@ function SummitGuardian({
         </mesh>
       ))}
       <group ref={group} visible={!playReveal || reduce}>
-        <PerchedAgent agent={agent} position={[0, 0, 0]} />
+        <PerchedAgent agent={agent} position={[0, 0, 0]} summit worldAnchor={position} />
       </group>
     </group>
   );
 }
 
-function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; position: [number, number, number]; ground?: boolean }) {
+function PerchedAgent({
+  agent,
+  position,
+  ground = false,
+  summit = false,
+  worldAnchor,
+}: {
+  agent: TowerAgent;
+  position: [number, number, number];
+  ground?: boolean;
+  /** Peak guardian on the Tower summit — label reads as the Peak fight, not another mid-climb seat. */
+  summit?: boolean;
+  /** World xz/y for label cull when `position` is local (nested under SummitGuardian). */
+  worldAnchor?: [number, number, number];
+}) {
   const champ = useMemo(() => pseudoChampion(agent), [agent]);
   const vis = STATUS_VIS[agent.status];
   const disabled = agent.status === "disabled";
   const hibernating = agent.status === "hibernating";
   const ringRef = useRef<THREE.Mesh>(null);
   const beamRef = useRef<THREE.Mesh>(null);
-  const rot = useMemo(() => Math.atan2(-position[0], -position[2]), [position]);
+  const anchor = worldAnchor ?? position;
+  const rot = useMemo(() => {
+    if (Math.hypot(anchor[0], anchor[2]) < 0.05) return Math.PI; // face plaza from summit centre
+    return Math.atan2(-anchor[0], -anchor[2]);
+  }, [anchor]);
   // Distance-cull the floating name plate: drei <Html> recomputes a CSS matrix
   // every frame, and a populated Tower can hold dozens. Past reading range we
   // unmount the DOM node entirely (hysteresis so it doesn't thrash on the edge).
@@ -2582,13 +2669,13 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     if (ringRef.current) {
-      const sc = 1 + Math.sin(t * (hibernating ? 0.8 : 2.2) + position[1]) * (disabled ? 0.02 : 0.08);
+      const sc = 1 + Math.sin(t * (hibernating ? 0.8 : 2.2) + anchor[1]) * (disabled ? 0.02 : 0.08);
       ringRef.current.scale.set(sc, sc, sc);
     }
     if (beamRef.current) beamRef.current.rotation.y += 0.6 * dt; // dt-based spin
-    const dx = state.camera.position.x - position[0];
-    const dy = state.camera.position.y - position[1];
-    const dz = state.camera.position.z - position[2];
+    const dx = state.camera.position.x - anchor[0];
+    const dy = state.camera.position.y - anchor[1];
+    const dz = state.camera.position.z - anchor[2];
     const d2 = dx * dx + dy * dy + dz * dz;
     const want = labelShown.current ? d2 < 56 * 56 : d2 < 48 * 48;
     if (want !== labelShown.current) {
@@ -2596,6 +2683,8 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
       setLabelOn(want);
     }
   });
+
+  const role = ground ? "ROAMING AGENT" : summit ? "PEAK · SUMMIT" : "RANKED AGENT";
 
   return (
     <group position={position}>
@@ -2632,7 +2721,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
       {labelOn && (
         <Html position={[0, 1.7, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "RANKED AGENT"}</div>
+            <div style={{ fontSize: 9, letterSpacing: 1.4, color: summit ? "var(--gold)" : vis.color, fontWeight: 700 }}>{role}</div>
             <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
               {agent.name}
               {agent.handle && agent.handle.toUpperCase() !== "HOUSE" ? (

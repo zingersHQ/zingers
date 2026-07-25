@@ -59,7 +59,7 @@ the atom (camera, degrees of freedom, art density, duration, control scheme) is
 | Verb | Soul atom (invariant, all devices) | Body (free to differ per device) |
 |------|------------------------------------|----------------------------------|
 | **Flight** | You *ascend*; altitude is the score; **one fall returns you to zero**; the run **marks your champion**. | One-thumb hold-to-thrust vs. 6-DOF free flight; 2.5D vs. Full 3D. |
-| **Spectate** | Two minds argue to a **clear winner**, and **you have a stake** in the outcome. | Full live fight vs. Highlight-clip + predict-the-winner; 6-minute watch vs. 20-second call. |
+| **Spectate** | Two minds argue to a **clear winner**, and **you have a stake** in the outcome. | Full live fight vs. short highlight + predict-the-winner; 6-minute watch vs. 20-second call. Depth under Flight, not the growth face (`growth-strategy.md`). |
 | **Roam** | You are **present in the world above the Long Vault**; you tend and claim. | Full 3D free-roam vs. A leaner presence surface. |
 | **Persuade** (the Keepers) | You **out-talk a guarded mind**; argument is physics; the crack is **shareable**. | In-world shrine vs. A one-screen quick-crack. |
 | **Standings** | An **objective, honest** record of standing. | How and where it's surfaced. |

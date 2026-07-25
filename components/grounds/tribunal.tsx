@@ -238,11 +238,12 @@ export function TribunalBriefing(props: {
 
 // In-bout strip: keeps the case + your stance on screen while the argument runs.
 export function TribunalMatchBanner({ proposition, myStance, isMobile }: { proposition: string; myStance: Stance; isMobile: boolean }) {
+  // Sit under MatchHud's "A vs B" line (desktop ~70 + name row; mobile clears the taller chrome).
   return (
     <div
       style={{
         position: "absolute",
-        top: isMobile ? 104 : 70,
+        top: isMobile ? 104 : 92,
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 40,
@@ -252,8 +253,20 @@ export function TribunalMatchBanner({ proposition, myStance, isMobile }: { propo
     >
       <div className="panel" style={{ ["--ac" as string]: GOLD, borderColor: GOLD, padding: isMobile ? "7px 11px" : "8px 14px", display: "flex", alignItems: "center", gap: 10 }}>
         <Scale size={isMobile ? 14 : 16} color={GOLD} strokeWidth={2.2} style={{ flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, fontStyle: "italic", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontSize: isMobile ? 11 : 12,
+              fontWeight: 700,
+              fontStyle: "italic",
+              lineHeight: 1.45,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
             &ldquo;{proposition}&rdquo;
           </div>
         </div>

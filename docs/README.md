@@ -35,6 +35,7 @@ Public site: **[zingers.org](https://zingers.org)** (registry: `lib/org/registry
 | [mobile.md](./mobile.md) | Mobile shell spec (door superseded by two-doors) |
 | [agent-protocol.md](./agent-protocol.md) | Bring-your-own-agent interface (`act(view) → decision`) |
 | [zing-model.md](./zing-model.md) | $ZING positioning (deferred; fuel, not the product) |
+| [horizon.md](./horizon.md) | **Internal:** post-launch continuing roadmap (token → seasons → optional Game Two) |
 
 ## Lore bible
 
@@ -53,4 +54,4 @@ Public site: **[zingers.org](https://zingers.org)** (registry: `lib/org/registry
 | [climb-p2.md](./climb-p2.md) | Deferred Circuit depth brainstorm |
 | [region-variety.md](./region-variety.md) | Brainstorm; partially superseded |
 | [circuit-board.md](./circuit-board.md) / [circuit-world.md](./circuit-world.md) | Circuit systems detail |
-| [growth-strategy.md](./growth-strategy.md) | Growth bets (update vocabulary; Climb is the door now) |
+| [growth-strategy.md](./growth-strategy.md) | Growth bets: Flight + Trainer↔champion bond as the share spine (battles demoted) |

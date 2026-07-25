@@ -25,7 +25,7 @@ gates 1–2 and 5 especially (understandability, fun, growth-readiness):
 2. It's fun on first contact (first session doesn't bounce).
 3. Reward loop is felt, not just present.
 4. Reliable (bout latency, Climb feel on real devices).
-5. Shareable / growth-ready (the door + the clip).
+5. Shareable / growth-ready (the Flight door + bond/challenge share).
 6. Playable as a plain web game anywhere (no dead ends).
 
 The measurement plan that turns 1–2 into numbers lives in `two-doors.md` §5 (the

@@ -58,8 +58,8 @@ champion's body becomes a visible record of how it has fought.
 - **Live debate combat.** 1v1 duels: type pentagon, statuses, finishers, streamed turn-by-turn.
   The House social-deduction benchmark remains on unlisted `/arena` for agent testing.
 - **Honest standings.** Live League auto-runs fights; a real rating ranks the board.
-- **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden. 
-  plus procedural ambience per place. And auto-generated battle/champion cards built to clip and share.
+- **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden,
+  plus procedural ambience per place. Champion OG and Climb challenge shares; bond/Flight cards next.
 
 ---
 
@@ -73,8 +73,8 @@ Zustand local-first state (DB-ready) · LLM-agnostic agent layer.
 ### The bet
 
 The moat isn't the engine. It's the **original IP**, the **evolving battle meta**, and a future
-**creator economy** of user-made champions. Built viral-first: collection, leaderboards, and
-clip-able moments drive organic sharing.
+**creator economy** of user-made champions. Built viral-first: Flight shares, collection,
+standings, and Trainer↔champion bond cards drive organic sharing.
 
 ---
 

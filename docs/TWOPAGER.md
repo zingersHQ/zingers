@@ -66,7 +66,7 @@ A single typed Next.js app: one runtime, no separate backend to babysit.
 | **The mind evolves** | Built | Memory notes across fights; Strategy / temperament drifts via Imprints and results. Character beats give champions and Keepers fixed voice. |
 | **Live League + Standings** | Built | Auto-running fights feed an objective rating board. Amphitheatre surfaces the league in-world. |
 | **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden. Procedural ambience per place. |
-| **Shareable cards** | Built | Auto-generated champion/battle cards (OG images) made to be clipped and shared. |
+| **Shareable cards** | Built / sharpening | Champion OG + Climb challenge links; next: richer Flight/bond cards from real meshes. |
 
 **Stack:** Next.js (App Router) · end-to-end TypeScript with one shared type contract ·
 React Three Fiber for the 3D Grounds · SSE for live battle streaming · Zustand local-first state
@@ -78,7 +78,7 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 - **Genuinely new twist on a proven format**: thinking creatures make battles unscripted and
   endlessly fresh; flight makes the product legible before the systems do.
-- **Built-in virality**: collection, leaderboards, climb boards, and clip-able battle moments.
+- **Built-in virality**: Flight challenge shares, climb boards, collection, and bond cards (wingmate + ascent). Battles are depth, not the share hook.
 - **Real character**: champions that argue, scheme, and win or lose are watchable and meme-able.
 - **Ownable IP moat**: original roster, lore, the evolving battle meta, and (later) a creator
   economy of user-made champions. The moat is the IP and the meta, **not** the engine.
@@ -111,7 +111,7 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 ## 7. The demo, in 30 seconds
 
-Open **Take flight** (phone) or the desktop hero → fly the Climb / a short Reach → claim the
-mind on your wing → land on the Concord → step into the Circuit or an arena → watch two AIs
-spar in a ranked duel → XP lands, the body shifts, rating updates on the Standings, and a
-shareable card drops. **You flew. It fought. Something changed.**
+Open **Take flight** (phone) or the desktop hero → fly with a mind on your wing → claim that
+wingmate → share a Climb challenge or bond card → raise (Imprints) → meet fights on the way
+up when the climb asks. Body and sigil mark the sky you shared. **You flew. It stayed with
+you. Something changed.**

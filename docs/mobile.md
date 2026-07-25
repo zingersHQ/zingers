@@ -122,14 +122,13 @@ Notes:
   apply the same test to every new mobile surface.)
 - **Zero-friction entry (keep).** First bout watched requires no signup/key/
   download — the heuristic fallback already allows this (`growth-strategy.md`
-  §3.4.4). The mobile Today tab must honor it: you can call & watch before you own
-  anything, then "claim the mind you just watched."
-- **Share is native to mobile.** The share artifact (emoji grid now; clip later)
-  is a first-class button on Today/Watch, not an afterthought. (Clip export is a
-  known gap, `growth-strategy.md` §3.1.3 — spec'd as a dependency, not built here.)
-- **Moderation before growth.** Any mobile spectating that fans out publicly
-  inherits the launch-blocking moderation requirement (`growth-strategy.md`
-  §3.4.1). Flag as a hard dependency for the public mobile spectate push.
+  §3.4.4). Prefer claim-after-flight on the Take flight door; Today may still
+  let a guest call & watch, then claim.
+- **Share is native to mobile.** The share spine is Flight challenge + bond cards
+  (`growth-strategy.md` §3.1). First-class on Climb / Champion; Today/Watch shares
+  stay secondary depth, not the face rewrite.
+- **Moderation before growth.** Any public AI fan-out inherits the launch-blocking
+  moderation requirement (`growth-strategy.md` §3.4.1).
 
 ---
 
@@ -176,7 +175,7 @@ the Circuit, career-derived body render, OG cards.
   `app/standings`;
 - **integrate `/circuit-lite`** as the Climb tab (device-route + reach it from the
   shell; stop it being an island);
-- (dependencies, tracked not built here) clip export; moderation layer; accounts.
+- (dependencies, tracked not built here) richer Flight/bond share cards; moderation; accounts.
 
 ---
 
@@ -185,14 +184,14 @@ the Circuit, career-derived body render, OG cards.
 - **M0 — foundation:** unified device hook + the mobile shell + bottom tab bar,
   with the already-built Circuit wired in as the first real tab. (Proves the shell
   with something that works today.)
-- **M1 — the soul:** mobile **Watch** (spectate + predict) + mobile **Today**
-  (daily call + streak + share). This is the core loop and the growth engine.
-- **M2 — attachment:** mobile **Champion** (strategy + train + diary + evolution
+- **M1 — the face:** Climb tab feel + challenge share. Growth engine = Take flight
+  → claim wingmate (`growth-strategy.md` north-star). Watch/Today are not the door.
+- **M2 — the bond:** mobile **Champion** (temperament + train + diary + ascent/evo
   reveal) + mobile **Rank**. Closes "check on / raise your champion" on the phone.
-- **M3 — presence:** the Roam call from §5.1 (lean presence surface or the
-  champion-lives-here surface) + Persuade/Keepers quick-crack.
+- **M3 — depth lanes:** mobile **Watch** / **Today** (predict + streak) as secondary
+  rituals under the climb; Persuade/Keepers quick-crack; lean presence if needed.
 - **Dependencies (parallel, per growth-strategy sequencing):** moderation layer,
-  accounts/persistence, clip export.
+  accounts/persistence, Flight/bond share forge.
 
 ---
 

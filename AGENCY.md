@@ -2,7 +2,7 @@
 name: Zingers
 stage: launched
 autonomy: propose
-north_star: "Players fly the Ascent, raise an AI champion that fights beside them, and share the legend both become — the loop that drives organic, viral growth."
+north_star: "Players fly the Ascent with a champion beside them, raise the bond, and share the flight and legend both become — the loop that drives organic, viral growth."
 target: { launch: "Launch v0.1 CLOSED (engineering). Flight-First gates shipped on zingers.gg. Remaining: human playtests, growth push, weekly ship notes — ops, not blockers." }
 economics: { model: "Proposed: free-to-play; future monetization via cosmetics, battle passes, and 'infinite battles'. In-game soft currency is Crowns (server-authoritative wallet). $ZING is fuel, not the product — deferred; see docs/zing-model.md.", costs: "LLM inference (xAI/Grok ~1 call/turn + local judge by default), Vercel hosting + cron, Upstash Redis persistence" }
 guardrails:
@@ -20,7 +20,7 @@ links: { repo: "https://github.com/zingersHQ/zingers", site: "https://zingers.gg
 the Long Vault (the Ascent), adopt an AI champion that flies beside them, raise *how*
 it thinks (not how to twitch-control it), send it into the battles that stud the climb,
 and watch its body physically evolve into a visible record of its career *and* their
-climbs — then clip and share that legend.
+climbs — then share the flight and the bond that legend became.
 
 Core principle (from `docs/game-spec.md`): **the LLM is the actor, the engine is the game.**
 Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
@@ -41,7 +41,7 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
 - **Identity:** Trainers are nameless drivers; champions get unique names on claim/standings.
   Optional Solana wallet is recovery only. Token/`$ZING` deliberately deferred.
 - **The bet:** the moat isn't the engine — it's original IP, the evolving battle meta, and a
-  future creator economy. Built viral-first (climb boards, collection, clip-able moments).
+  future creator economy. Built viral-first (Flight shares, climb boards, collection, bond cards).
 - **Open agent layer:** `act(view) → decision` (`docs/agent-protocol.md`). Default: single-shot
   JSON + local judge; tool loop / LLM judge are env-gated.
 
@@ -64,6 +64,11 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   trading, user-made champions.
 - [ ] **Phase 6 — Proposed: Accounts & monetization.** Full cloud accounts, cosmetics, battle
   passes, "infinite battles." Token after traction.
+- [ ] **Phase 7+ — Proposed: post-traction horizon.** Seasons that fund the house; `$ZING`
+  live (opt-in standing / permanence); creator royalties; collectible mint only if IP
+  already loved. Far options if treasury allows: deepen this body, or a second-game
+  open world (same IP), or small franchise splinters. Internal map: `docs/horizon.md`.
+  Not a public promise.
 
 ## Product & Design
 
@@ -172,7 +177,8 @@ champions, token launch, new venues as face work.
 - Roster cloud sync for recruit loop; Discord invite if still placeholder.
 
 **Forecast:** Launch v0.1 engineering closed. Next is distribution (ship notes, playtests,
-growth), then Phase 5 depth. Token stays frozen.
+growth), then Phase 5 depth. Token stays frozen. Post-success path sketched internally in
+`docs/horizon.md` (continuing spine, not a crossroads).
 **Risks:** Climb feel busy-ness; onboarding length vs. fun; two-domain routing; LLM cost if
 league goes paid or tool-loop defaults flip on.
 
@@ -184,3 +190,5 @@ league goes paid or tool-loop defaults flip on.
 - Accounts: when full cloud sync for roster/recruits?
 - Creator economy moderation vs authoritative engine + ELO?
 - Community: Discord invite + who runs the weekly devlog?
+- Horizon: token-only monetization vs parallel Stripe/IAP for non-wallet players?
+  (`docs/horizon.md` §7)
