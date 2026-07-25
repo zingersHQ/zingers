@@ -35,7 +35,7 @@ export const WING_TRAITS: Record<WingTraitId, WingTraitDef> = {
   second_wind: {
     id: "second_wind",
     name: "Second Wind",
-    gloss: "One extra life on every ranked flight.",
+    gloss: "One extra life on every flight (on top of the usual three).",
     innateType: "COMPOSURE",
   },
   gold_eye: {

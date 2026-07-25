@@ -205,7 +205,7 @@ export function CircuitHud({
   sectorTotal?: number;
   /** short Reach name only — no roman/tagline essay */
   reachName?: string;
-  /** Remaining lives in the current run (2 → 1 continue → 0 run over). */
+  /** Remaining lives in the current run (3 → continues → 0 run over). */
   lives?: number;
   /** Cap from wing traits (Second Wind → 3). */
   maxLives?: number;

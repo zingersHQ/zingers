@@ -129,6 +129,7 @@ import {
   ascentCraftCrowns,
   ascentDepthXp,
   clearAscentSessionMods,
+  lifeRestoreOnReachClear,
   needsAltitudeProve,
   setAscentSessionMods,
 } from "@/lib/ascent-rules";
@@ -1148,6 +1149,11 @@ export default function GroundsScreen({
       setCircuitPhase("ranklock");
       outcomeSfx(true);
       return;
+    }
+    // Reach Gate Trial clear → one life back (capped at run max). Parity with Climb.
+    if (lifeRestoreOnReachClear(circuitSectorIdx) && circuitLivesRef.current < wingLivesCap.current) {
+      circuitLivesRef.current += 1;
+      setCircuitLives(circuitLivesRef.current);
     }
     setCircuitSectorIdx(next);
     setCircuitPhase("ready");

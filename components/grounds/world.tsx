@@ -15,6 +15,7 @@ import { flightAttitudePlanar } from "@/lib/render/animations";
 import { ASCENT_GLIDE, ascentSessionMods } from "@/lib/ascent-rules";
 import { ReaderBackSigil, ReaderRankEmblem } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
+import { FIRST_MIND_KEYS } from "@/lib/engine/roster";
 import { FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { Jetpack } from "./jetpack";
@@ -56,6 +57,7 @@ import { usePrefersReducedMotion } from "@/components/arena/juice";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { ClimbGhostRacer, GHOST_CAPSULE_FOOT } from "./climb/ghost-racer";
 import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
+import { sectorFlightBand } from "./climb/flight-cruise";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { circuitSector } from "./circuit-tracks";
@@ -939,12 +941,7 @@ export default function World({
                 <RegionChampions
                   champions={champions}
                   ownedKey={ownedKey}
-                  trainPad={trainPad}
-                  arena={ARENA}
                   roam={sc.roam}
-                  worldLife={worldLife}
-                  pledged={pledged}
-                  handlerPos={handlerPos}
                 />
               )}
               {/* your champion follows you everywhere it can — hub AND regions — so
@@ -1112,40 +1109,56 @@ function roamHome(key: string, champions: GroundChampion[], roam: BiomeConfig["s
   return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
 }
 
-// Region minds with ambient life — your companion drills at the train pad, others
-// occasionally spar / gesture so the plaza doesn't read as eight identical props.
+// Plaza NPC budget. The collectible dex is 100+ minds (Stage 6 batch) — never
+// mesh all of them. The Grounds were designed around ~eight First Mind props.
+const REGION_AMBIENT_NPCS = 8;
+
+/** Cap ambient plaza cast: First Minds first, then a stable hash fill. */
+function ambientRegionCast(champions: GroundChampion[], ownedKey: string | null): GroundChampion[] {
+  const byKey = new Map(champions.map((c) => [c.key, c] as const));
+  const out: GroundChampion[] = [];
+  const seen = new Set<string>();
+  const push = (c: GroundChampion | undefined) => {
+    if (!c || c.key === ownedKey || seen.has(c.key)) return;
+    seen.add(c.key);
+    out.push(c);
+  };
+  for (const k of FIRST_MIND_KEYS) push(byKey.get(k));
+  if (out.length < REGION_AMBIENT_NPCS) {
+    const rest = champions
+      .filter((c) => c.key !== ownedKey && !seen.has(c.key))
+      .sort((a, b) => keyHash(a.key) - keyHash(b.key));
+    for (const c of rest) {
+      push(c);
+      if (out.length >= REGION_AMBIENT_NPCS) break;
+    }
+  }
+  return out.slice(0, REGION_AMBIENT_NPCS);
+}
+
+// Region minds with ambient life — a small plaza cast gestures so the slab
+// doesn't feel empty. Owned companion is OwnedCompanion (scene-level), not here.
 function RegionChampions({
   champions,
   ownedKey,
-  trainPad,
-  arena,
   roam,
-  worldLife,
-  pledged = null,
-  handlerPos,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
-  trainPad: [number, number, number];
-  arena: [number, number, number];
   roam: BiomeConfig["scene"]["roam"];
-  worldLife?: WorldLife;
-  pledged?: CreatureType | null;
-  handlerPos: React.RefObject<THREE.Vector3>;
 }) {
+  const cast = useMemo(() => ambientRegionCast(champions, ownedKey), [champions, ownedKey]);
   const [npcActs, setNpcActs] = useState<Record<string, number>>({});
   const [npcGestures, setNpcGestures] = useState<Record<string, "wave" | "punch">>({});
-  const [ownedAct, setOwnedAct] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
-      const npcs = champions.filter((c) => c.key !== ownedKey);
-      if (!npcs.length) return;
-      const a = npcs[Math.floor(Math.random() * npcs.length)]!;
+      if (!cast.length) return;
+      const a = cast[Math.floor(Math.random() * cast.length)]!;
       let b = a;
-      if (npcs.length > 1) {
+      if (cast.length > 1) {
         do {
-          b = npcs[Math.floor(Math.random() * npcs.length)]!;
+          b = cast[Math.floor(Math.random() * cast.length)]!;
         } while (b.key === a.key);
       }
       const gesture = (): "wave" | "punch" => (Math.random() < 0.55 ? "punch" : "wave");
@@ -1161,55 +1174,30 @@ function RegionChampions({
       }));
     }, 5200);
     return () => clearInterval(id);
-  }, [champions, ownedKey]);
-
-  useEffect(() => {
-    if (!worldLife?.training) return;
-    const id = setInterval(() => setOwnedAct((n) => n + 1), 2000);
-    return () => clearInterval(id);
-  }, [worldLife?.training]);
-
-  useEffect(() => {
-    if (worldLife?.companionLine || worldLife?.companionEmote) setOwnedAct((n) => n + 1);
-  }, [worldLife?.companionLine, worldLife?.companionEmote, worldLife?.companionAct]);
+  }, [cast]);
 
   return (
     <>
-      {champions.map((c) => {
-        const owned = c.key === ownedKey;
-        // The owned champion is now the persistent following companion, rendered
-        // once at scene level (OwnedCompanion) so it's present in the hub too — skip
-        // it here to avoid a double render in region scenes.
-        if (owned) return null;
-        const home = roamHome(c.key, champions, roam);
-        const actSig = owned ? (worldLife?.companionAct ?? 0) + ownedAct : (npcActs[c.key] ?? 0);
-        const actName = owned ? (worldLife?.training ? "punch" : "wave") : (npcGestures[c.key] ?? "wave");
-        const padLeash = owned
-          ? { handlerRef: handlerPos, pad: trainPad as [number, number, number], arenaRotation: Math.atan2(arena[0] - home[0], arena[2] - home[2]) }
-          : undefined;
+      {cast.map((c) => {
+        const home = roamHome(c.key, cast, roam);
         return (
           <ChampionMesh
             key={c.key}
             type={c.type}
             champion={c.champion}
             identityKey={c.key}
-            label={c.name + (owned ? "  ◆ YOURS" : "")}
-            clan={owned ? pledged : null}
+            label={c.name}
             position={[home[0], 0, home[2]]}
-            rotation={owned ? Math.atan2(arena[0] - home[0], arena[2] - home[2]) : 0}
-            selected={owned}
-            wander={!owned}
-            padLeash={padLeash}
-            restPose={owned ? "standing" : "idle"}
-            breatheIntensity={owned ? 0.35 : 1}
-            idlePhase={owned ? c.key.length * 0.7 : undefined}
+            rotation={0}
+            selected={false}
+            wander
+            restPose="idle"
+            breatheIntensity={1}
             worldRadius={roam.spread}
             wanderInner={roam.inner}
             wanderSpeed={roam.speed}
-            actSignal={actSig}
-            actName={actName}
-            speechLine={owned ? worldLife?.companionLine : null}
-            speechEmote={owned ? worldLife?.companionEmote : null}
+            actSignal={npcActs[c.key] ?? 0}
+            actName={npcGestures[c.key] ?? "wave"}
             sceneScale={WORLD_AGENT_SCALE}
           />
         );
@@ -2634,6 +2622,7 @@ const FLY_DIVE_GLIDE = ASCENT_GLIDE.diveGlide;
 const FLY_SPOOL = 9;       // how fast the thrust COMMAND ramps in/out — jet-puff cadence
 // Circuit Ascent runner (climb-feel §4): auto-forward along +Z so altitude is the
 // skill axis and forward is the heartbeat. W surges, S brakes + soft dive; A/D = light steer.
+// Fallback band when sector idx is unavailable — live Flight uses sectorFlightBand.
 const CIRCUIT_CRUISE = 14;
 const CIRCUIT_SURGE = 18;
 const CIRCUIT_BRAKE = 8;
@@ -3381,7 +3370,10 @@ function Handler({
 
     if (circuitRunning) {
       const speedMult = ascentSessionMods().cruiseSpeedMult;
-      const cruise = (az > 0.2 ? CIRCUIT_SURGE : az < -0.2 ? CIRCUIT_BRAKE : CIRCUIT_CRUISE) * speedMult;
+      // Matched to layout gapSec (same soul as mobile Climb cruise).
+      const band = sectorFlightBand(circuitSectorIdx);
+      const cruise =
+        (az > 0.2 ? band.surge : az < -0.2 ? band.brake : band.cruise) * speedMult;
       // light lateral steer only (layouts are coplanar). Steer along the CAMERA's
       // right axis, not world +X: the Circuit lens looks down-track (+Z), so a raw
       // +X nudge read as screen-LEFT — D/→ moved left and A/← moved right. right.x

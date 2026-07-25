@@ -6,7 +6,7 @@
 // bodies" and docs/climb.md › "The Hundred-Sector Ascent"). It REUSES the shared
 // 3D scene (CircuitScene) but swaps the six-DOF Handler controller for a single-
 // input, auto-forward flyer under a trailing chase camera — the whole game
-// collapses to: HOLD to rise, release to fall, thread the gate; two lives, then reset.
+// collapses to: HOLD to rise, release to fall, thread the gate; three lives, then reset.
 //
 // Content is the 100-sector climb (components/grounds/climb/*): ten themed
 // Reaches (each a band of 10 sectors wearing an existing biome skin — the mirror
@@ -47,9 +47,11 @@ import {
   ascentSessionMods,
   clearAscentSessionMods,
   CLIMB_SECTOR_COUNT,
+  lifeRestoreOnReachClear,
   needsAltitudeProve,
   setAscentSessionMods,
 } from "@/lib/ascent-rules";
+import { sectorFlightCruise } from "./climb/flight-cruise";
 import {
   evaluateLadder,
   hitsRankLock,
@@ -141,9 +143,8 @@ interface RunReward {
 // ── flight feel — a HEAVY robot fighting a POWERFUL jetpack ───────────────────
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
-// Forward SPEED is per-sector now (difficulty §3); the rest is constant feel.
-// Wind push — hard +Z cruise (desktop Circuit feel). No soft float-from-zero.
-const CIRCUIT_CRUISE = 20;  // above desktop surge (18) — portrait under-reads speed
+// Forward SPEED is per-sector (difficulty §3 × desktop gap scale) so authored
+// gapSec is real time on both bodies. Vertical feel stays constant.
 const GRAVITY = 28;
 const THRUST_ACCEL = 50;
 const PRESS_KICK = 4.0;
@@ -787,7 +788,10 @@ export default function CircuitLite({
   const biome = theme.biome;
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
-  const speed = useMemo(() => CIRCUIT_CRUISE * (modifier?.speedMult ?? 1), [modifier]);
+  const speed = useMemo(
+    () => sectorFlightCruise(sector) * (modifier?.speedMult ?? 1),
+    [sector, modifier],
+  );
   const hazards = useMemo(() => sectorHazards(sector, track, layoutSeed), [sector, track, layoutSeed]);
   const moteColor = runMods.moteColor ?? modifier?.moteColor ?? accent;
   const fogNear = 30 * (modifier?.fogNearMult ?? 1) * runMods.fogNearMult;
@@ -1390,6 +1394,12 @@ export default function CircuitLite({
         recordRun(next, true);
         setPhase("ranklock");
         return s;
+      }
+      // Reach Gate Trial clear → one life back (capped at run max). Depth breath,
+      // not a camp warp — ranked still dies back to sector 1 when lives hit 0.
+      if (lifeRestoreOnReachClear(s) && livesRef.current < wingLivesCap.current) {
+        livesRef.current += 1;
+        setLives(livesRef.current);
       }
       rewardSfx("big");
       samplesRef.current = [];

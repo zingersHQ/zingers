@@ -9,8 +9,9 @@
 > champion, same ledger.
 
 Status: **systems largely shipped** (mobile Climb + desktop Circuit share the
-100-sector Ascent; 2 lives; sector opens; Reach terrain). Feel polish ongoing —
-see [`climb-feel.md`](./climb-feel.md) and [`flight-first-plan.md`](./flight-first-plan.md).
+100-sector Ascent; 3 lives + Reach-clear restore; sector opens; Reach terrain).
+Feel polish ongoing — see [`climb-feel.md`](./climb-feel.md) and
+[`flight-first-plan.md`](./flight-first-plan.md).
 Companions: [`essence.md`](./essence.md), [`mobile.md`](./mobile.md),
 [`game-spec.md`](./game-spec.md), [`circuit-world.md`](./circuit-world.md),
 [`bible/10-ascent.md`](./bible/10-ascent.md).
@@ -20,16 +21,18 @@ Companions: [`essence.md`](./essence.md), [`mobile.md`](./mobile.md),
 ## 1. Non-negotiables (inherited, not re-decided)
 
 From `essence.md` §2–3, the Climb's **soul atom**: *you ascend; altitude is the
-score; two lives then back to zero; the run marks your champion.* Everything
+score; lives then back to zero; the run marks your champion.* Everything
 below is body, and must never violate these:
 
 1. **One input.** Hold to rise, release to fall. **Amended (see
    [`climb-feel.md`](./climb-feel.md) §1c):** on mobile, rings share one lateral
    plane (`x = 0`) — no weave, no auto-X centering. Lateral skill stays out;
    height is the only skill axis. Any hazard that requires a second input is out.
-2. **Two lives = one continue on the same sector, then run over → sector 1** for
-   ranked runs. First fail spends a life (ghost leave + pad retry); second ends
-   the run. Camps (§6) give practice starts, never ranked shortcuts.
+2. **Three lives** on a ranked run: each fail spends a life (ghost leave + pad
+   retry on the same sector); at zero the run is over → sector 1. Clearing a
+   Reach Gate Trial restores one life (capped at the run max) so deep Flight
+   breathes without camp warps. Camps (§6) give practice starts, never ranked
+   shortcuts. Wing trait Second Wind adds one more life on top.
 3. **Depth is soul → cross-device** (Trainer XP, ascent sigil, Saga events).
    **Time/mastery is craft → per-device** (Crowns, split leaderboards).
 4. **Everything marks the champion.** New Reach reached → career-ledger event →

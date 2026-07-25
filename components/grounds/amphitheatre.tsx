@@ -24,6 +24,7 @@ import { TYPE_COLOR, EMBLEM, levelFor, tierFor, skillLevel } from "@/lib/evolve/
 import { ratingOf } from "@/lib/evolve/elo";
 import { FORCES } from "@/lib/lore/canon";
 import { useChampions } from "@/store/champions";
+import { FIRST_MIND_KEYS } from "@/lib/engine/roster";
 
 const STONE = "#2a2218";
 const STONE_HI = "#4a3b26";
@@ -93,17 +94,24 @@ export function Amphitheatre({
   champions: GroundChampion[];
   focus?: React.MutableRefObject<GalleryFocus | null>;
 }) {
-  const { fighters, live, verdict } = useLeague(champions);
+  // Full dex is 100+ — league exhibition + throne ladder stay on a small cast.
+  const venueCast = useMemo(() => {
+    const prefer = new Set<string>(FIRST_MIND_KEYS);
+    const first = champions.filter((c) => prefer.has(c.key));
+    if (first.length >= 2) return first;
+    return champions.slice(0, 8);
+  }, [champions]);
+  const { fighters, live, verdict } = useLeague(venueCast);
   const progress = useChampions((s) => s.progress);
 
   const ladder = useMemo(() => {
     const get = useChampions.getState();
-    return [...champions]
+    return [...venueCast]
       .map((c) => ({ entry: c, champ: progress[c.key] || get.get(c.key) }))
       .sort((a, b) => skillLevel(b.champ) - skillLevel(a.champ) || ratingOf(b.champ) - ratingOf(a.champ))
       .slice(0, 5);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [champions, progress]);
+  }, [venueCast, progress]);
 
   const champ = ladder[0];
 

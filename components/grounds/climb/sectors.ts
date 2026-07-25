@@ -12,6 +12,7 @@
 import type { CircuitCheckpoint, CircuitTrackDef } from "../circuit";
 import { hash01 } from "../landmarks";
 import { CLIMB_SECTOR_COUNT, roleIndex, roleOf, sectorDifficulty, type Role } from "./difficulty";
+import { clampDeltaToBudget, maxClimbDeltaY } from "./flyer-budget";
 import { reachTheme } from "./reaches";
 
 const SIGNATURE_NAMES: Record<number, string> = {
@@ -51,28 +52,29 @@ function makeRng(i: number, seed = ""): () => number {
 
 /** Role → raw height delta before anti-ladder enforcement. */
 function gateHeightDelta(role: Role, g: number, d: ReturnType<typeof sectorDifficulty>, rnd: () => number): number {
-  const amp = Math.max(d.gateRadius * 1.45, d.vertStep * 1.7);
+  // Amp stays readable but inside flyer-budget once gapSec is applied.
+  const amp = Math.max(d.gateRadius * 1.1, d.vertStep * 1.35);
   switch (role) {
     case "arrival":
       // short rising staircase — 3 rings, clear steps (not a long ladder)
-      return d.vertStep * (1.15 + rnd() * 0.3);
+      return d.vertStep * (1.05 + rnd() * 0.25);
     case "teach":
       // mostly up, one early dip so flap timing lands before hazards
-      return g === 1 ? -amp * 0.55 : d.vertStep * (1.1 + rnd() * 0.3);
+      return g === 1 ? -amp * 0.45 : d.vertStep * (1.0 + rnd() * 0.25);
     case "rhythm":
-      return Math.sin((g + 1) * Math.PI) * amp * (0.95 + rnd() * 0.15);
+      return Math.sin((g + 1) * Math.PI) * amp * (0.85 + rnd() * 0.12);
     case "combine":
     case "twist":
-      return (g % 2 === 0 ? 1 : -0.75) * amp * (0.8 + rnd() * 0.3);
+      return (g % 2 === 0 ? 1 : -0.7) * amp * (0.75 + rnd() * 0.25);
     case "pressure":
     case "pressure2":
-      return (g % 3 === 1 ? -1.15 : 1) * amp * (1.0 + rnd() * 0.3);
+      return (g % 3 === 1 ? -1.0 : 1) * amp * (0.9 + rnd() * 0.2);
     case "vista":
       return (g % 2 === 0 ? 0.55 : -0.35) * d.vertStep * (0.9 + rnd() * 0.25);
     case "gauntlet":
-      return Math.sin(g * 1.7 + 0.4) * amp * (1.15 + rnd() * 0.2);
+      return Math.sin(g * 1.7 + 0.4) * amp * (1.0 + rnd() * 0.15);
     case "trial":
-      return (g % 2 === 0 ? 1.0 : -0.85) * amp * (1.05 + rnd() * 0.2);
+      return (g % 2 === 0 ? 1.0 : -0.8) * amp * (0.95 + rnd() * 0.15);
   }
 }
 
@@ -129,7 +131,10 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   // Arrival's 3-ring staircase may rise twice. Everything else reverses by the
   // third same-direction step so long diagonals can't form.
   const allowMono = role === "arrival";
-  const minSwing = d.gateRadius * 1.2;
+  // Readable swing, but never above what a controlled flap can cover in the
+  // tightest gap this role allows (matched cruise → gapSec is real time).
+  const budgetFloor = maxClimbDeltaY(gapMin) * 0.72;
+  const minSwing = Math.min(d.gateRadius * 0.95, Math.max(d.vertStep * 0.85, budgetFloor * 0.55));
 
   const gatePos: { x: number; y: number; z: number }[] = [];
 
@@ -148,16 +153,18 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
 
     const raw = gateHeightDelta(role, g, d, rnd);
     const swung = enforceSwing(raw, minSwing, sameDirStreak, lastSign, allowMono);
-    lastSign = swung.sign;
-    sameDirStreak = swung.streak;
-    y += swung.dy;
+    // Hard law: every gate-to-gate ΔY must be flappable in this gap's time.
+    const dy = clampDeltaToBudget(swung.dy, gap);
+    lastSign = dy === 0 ? swung.sign : Math.sign(dy);
+    sameDirStreak = lastSign === swung.sign ? swung.streak : 1;
+    y += dy;
     y = Math.max(yFloor, Math.min(yCeil, y));
 
-    // If clamp flattened us against a neighbor, nudge off the wall.
+    // If clamp flattened us against a neighbor, nudge off the wall (still budgeted).
     if (gatePos.length > 0) {
       const prevY = gatePos[gatePos.length - 1]!.y;
       if (Math.abs(y - prevY) < minSwing * 0.85) {
-        const nudge = (y >= prevY ? 1 : -1) * minSwing;
+        const nudge = clampDeltaToBudget((y >= prevY ? 1 : -1) * minSwing, gap);
         y = Math.max(yFloor, Math.min(yCeil, prevY + nudge));
       }
     }

@@ -162,7 +162,7 @@ export function applyCareerToMods<T extends FlightModifiers>(mods: T, career: Ca
   } else if (career.fatigue === 2) {
     m.cruiseSink -= 0.7;
     m.cruiseSpeedMult *= 0.92;
-    // Spent: can't hold a third life — rotate the stable.
+    // Spent: strip bonus lives (Second Wind / base-3) — rotate the stable.
     if (m.lives > 2) m.lives = 2;
   }
 

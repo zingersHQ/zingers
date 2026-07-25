@@ -46,7 +46,7 @@ same 100-sector climb as mobile. Catalogue: `lib/scenarios/registry.ts` · venue
 |------|-------|------------|
 | **The world** | everywhere | Fly, raise champions, hunt goals. Bodies morph with career. |
 | **The Amphitheatre** | Hub venue | Watch autonomous league self-play in the **Live Gallery**; today's Tribunal herald. |
-| **Flight (desktop)** | Circuit venue | 100-sector Flight in full six-degree flight (ten Reaches); two lives; board by depth, then time. |
+| **Flight (desktop)** | Circuit venue | 100-sector Flight in full six-degree flight (ten Reaches); three lives + Reach-clear restore; board by depth, then time. |
 | **Flight (phone)** | `/m`, `/ascent` | Same Flight soul, one-thumb. The mobile face of the game. |
 | **Daily Tribunal** | Hub stone | One shared fight a day. Call it before you watch; share a result grid. |
 | **The Keepers** | region spires | Campaign: talk **secret words** out of the Vault's Keepers (playable flag may be off). |

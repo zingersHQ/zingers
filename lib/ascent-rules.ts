@@ -2,12 +2,21 @@
 // Layout/lives/gates already share modules; this holds the remaining pure
 // contracts so bodies can't drift. Forward cruise, jet tables, camera, and
 // Rapier vs kinematic loops stay body-local on purpose.
-import { CLIMB_SECTOR_COUNT, REACH_SIZE } from "@/components/grounds/climb/difficulty";
+import { CLIMB_SECTOR_COUNT, REACH_SIZE, roleIndex } from "@/components/grounds/climb/difficulty";
 
 export { CLIMB_SECTOR_COUNT, REACH_SIZE };
 
 /** Reach II gate — first altitude key (needs a claimed win to continue). */
 export const ALTITUDE_KEY_SECTOR = 10;
+
+/**
+ * After clearing 0-based sector `cleared`, restore one life if that sector was
+ * a Reach Gate Trial (k=10). Ranked runs still restart at sector 1 when lives
+ * hit zero — this is breath at Reach boundaries, not a camp warp.
+ */
+export function lifeRestoreOnReachClear(clearedSectorIdx: number): boolean {
+  return roleIndex(clearedSectorIdx) === REACH_SIZE;
+}
 
 /** Shared vertical glide (both bodies). Forward speed stays body-local. */
 export const ASCENT_GLIDE = {

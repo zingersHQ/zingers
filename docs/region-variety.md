@@ -76,7 +76,7 @@ region-bound scenario.) Each new entry is a new *reason* to pick a region or ven
 | **Open Duel** | ✅ shipped | pick your opponent, settle it (default everywhere) |
 | **The Gauntlet** | ✅ shipped | rising chain of fighters; press luck or cash out |
 | **The Tribunal** | ✅ shipped | assigned-stance debate to a jury; switching sides scores ≈0 |
-| **The Circuit** | ✅ shipped (venue) | 100-sector Ascent (ten Reaches); two lives; same climb as mobile Climb |
+| **The Circuit** | ✅ shipped (venue) | 100-sector Ascent (ten Reaches); three lives + Reach-clear restore; same climb as mobile Climb |
 | **The Atelier** (Void) | proposal | "reframe" mode: Spark-biased scoring tilt |
 | **Siege / King-of-the-hill** | proposal | hold the arena vs a queue for a timer |
 | **Relay** | proposal | 3-champion team, momentum carries between bouts |

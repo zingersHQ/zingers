@@ -15,12 +15,15 @@ import type { CircuitCheckpoint, CircuitTrackDef } from "../circuit";
 import { CLIMB_SECTOR_COUNT, climbSector } from "./sectors";
 import { reachTheme, reachThemeByIndex, type ReachTheme } from "./reaches";
 import { sectorDifficulty } from "./difficulty";
+import {
+  DESKTOP_GAP_SCALE,
+  DESKTOP_RADIUS_SCALE,
+  DESKTOP_VERT_SCALE,
+} from "./body-scale";
 
 /** Exported so ghost samples can round-trip in canonical Climb space. */
-export const DESKTOP_GAP_SCALE = 1.55; // forward (Z) ring spacing
-export const DESKTOP_VERT_SCALE = 1.35; // climb (Y)
+export { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE, DESKTOP_RADIUS_SCALE };
 const LAT_SCALE = 1; // climb-feel §1c: rings are coplanar (x=0); no lateral stretch
-const RADIUS_SCALE = 1.15; // ring openings (more forgiving threading a hoop at speed)
 
 export const DESKTOP_CIRCUIT_COUNT = CLIMB_SECTOR_COUNT;
 
@@ -39,7 +42,7 @@ function scaleCheckpoint(cp: CircuitCheckpoint): CircuitCheckpoint {
     index: cp.index,
     label: cp.label,
     pos: [cp.pos[0] * LAT_SCALE, cp.pos[1] * DESKTOP_VERT_SCALE, cp.pos[2] * DESKTOP_GAP_SCALE],
-    radius: cp.radius * RADIUS_SCALE,
+    radius: cp.radius * DESKTOP_RADIUS_SCALE,
     ...(cp.finish ? { finish: true } : {}),
   };
 }

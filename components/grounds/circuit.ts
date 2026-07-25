@@ -1,8 +1,13 @@
 // The Circuit — a dedicated solo time-trial track. Pure layout (no React/three)
 // so the scene, Handler proximity checks and HUD all agree on geometry.
 
-/** Ranked Climb/Circuit: one continue, then run over (ghost leave on spend). */
-export const CIRCUIT_LIVES = 2;
+/**
+ * Ranked Climb/Circuit starting lives. Spend down to continue on the same
+ * sector (ghost leave); at 0 the run is over → sector 1. Clearing a Reach
+ * restores one life (see `lifeRestoreOnReachClear`) so deep Flight stays fair
+ * without mid-run camp warps.
+ */
+export const CIRCUIT_LIVES = 3;
 
 /**
  * Sector-open cinematic — one clock for title card + arrive camera (Wii Sports
