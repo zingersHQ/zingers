@@ -17,5 +17,5 @@ Hand-shaped roster content. Never auto-ship unreviewed LLM sludge.
 - Persona is a lowercase clause (engine + first-duel copy)
 - Short evocative names. No meme keys. No `DRAFT_*` in `reviewed/`
 - No spaced em dash in player-facing strings. No player-facing "bout"
-- No new GLTF — Force archetype + phenotype parts + career morph only
+- No new GLTF — Force archetype + species kit (`lib/render/species.ts`) + career morph only
 - Weekly starters rotate one per Force from First Minds + baked pool

@@ -6,17 +6,18 @@
 
 Every champion is also a **card**. The card is the portable, collectible face of a
 mind, and its single best trick is already true in code: **the art evolves**,
-because the art is the champion's body. Career bone morph
-(`lib/evolve/appearance.ts`) plus a seeded **phenotype** part kit
-(`lib/render/phenotype.ts`) make same-Force minds read as different species, then
-grow stranger with tier. A card you own gets visibly stronger as you fight it.
+because the art is the champion's body. Each mind key resolves a stable **species
+kit** (`lib/render/species.ts`) on the shared rig: breed silhouette + part loadout,
+plus career bone morph (`lib/evolve/appearance.ts`). Same-Force minds read as
+different animals; tier bolts on more armour. A card you own gets visibly stronger
+as you fight it.
 
 ## Anatomy of a card
 
 | Part | Source | Notes |
 |------|--------|-------|
 | **Mind** (name, force, lineage) | First Minds + baked dex (`content/minds/reviewed/`) + season generator | the identity |
-| **Art** | genome + Force archetype + phenotype → body render | changes with career and tier, deterministically |
+| **Art** | genome + Force archetype + species kit → body render | changes with career and tier, deterministically |
 | **Stats** | the five combat stats + rating | the numbers |
 | **Sigils** | earned force-heraldry (I/II/III). Badges you win, not buy | the badges |
 | **Attributes** | the moveset (4 moves) | the "abilities" line: this is the TCG depth |

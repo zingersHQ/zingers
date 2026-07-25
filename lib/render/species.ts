@@ -4,7 +4,7 @@
 // Pokemon-grade variety cannot come from random part lottery on one rig. Each
 // champion gets a stable SPECIES KIT: silhouette bias + which solid parts they
 // wear. First Minds are hand-authored; later dex minds map onto Force BREEDS
-// (4–5 distinct animals per Clan), then a light seed jitter so cousins differ.
+// (~7 distinct animals per Clan), then a light seed jitter so cousins differ.
 //
 // Wired from champion-mesh via identityKey. Without a key, phenotypeOf lottery
 // remains the fallback.
@@ -111,6 +111,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
 /**
  * Force breeds — distinct animals within a Clan. Dex minds land on one breed
  * by key hash so the gallery reads like a real pokedex line, not RNG sludge.
+ * Aim ~7 per Force so cousins don't share one silhouette across the whole Clan.
  */
 export const BREEDS: Record<CreatureType, Breed[]> = {
   LOGIC: [
@@ -156,6 +157,39 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         back: "slab",
         chest: "lattice",
         morph: { headScale: 0.88, neckLen: 1.08, torsoGirth: 0.86, armLen: 1.14, legLen: 1.12 },
+      },
+    },
+    {
+      id: "cipher",
+      kit: {
+        tag: "mask cipher",
+        headgear: "mask",
+        shoulders: "vent",
+        back: "coils",
+        chest: "ring",
+        morph: { headScale: 0.98, neckLen: 1.1, torsoGirth: 0.88, armLen: 1.06, legLen: 1.04 },
+      },
+    },
+    {
+      id: "abacus",
+      kit: {
+        tag: "disk abacus",
+        headgear: "disks",
+        shoulders: "plates",
+        back: "slab",
+        chest: "core",
+        morph: { headScale: 0.92, neckLen: 0.98, torsoGirth: 1.0, shoulder: 1.08, footScale: 1.06 },
+      },
+    },
+    {
+      id: "rule",
+      kit: {
+        tag: "bare rule",
+        headgear: "antenna",
+        shoulders: "none",
+        back: "none",
+        chest: "lattice",
+        morph: { headScale: 0.9, neckLen: 1.2, torsoGirth: 0.84, armLen: 1.16, legLen: 1.14 },
       },
     },
   ],
@@ -204,6 +238,39 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         morph: { h: 0.96, headScale: 0.85, torsoGirth: 0.88, armGirth: 0.95, asym: 0.3, legLen: 1.18 },
       },
     },
+    {
+      id: "scrap",
+      kit: {
+        tag: "mask scrap",
+        headgear: "mask",
+        shoulders: "spike",
+        back: "none",
+        chest: "eye",
+        morph: { h: 0.91, headScale: 0.93, torsoGirth: 0.76, asym: 0.52, armLen: 1.08 },
+      },
+    },
+    {
+      id: "spark",
+      kit: {
+        tag: "disk spark",
+        headgear: "disks",
+        shoulders: "vent",
+        back: "kite",
+        chest: "bars",
+        morph: { h: 0.89, headScale: 0.98, torsoGirth: 0.74, asym: 0.38, legLen: 1.12 },
+      },
+    },
+    {
+      id: "fang",
+      kit: {
+        tag: "quill fang",
+        headgear: "quills",
+        shoulders: "spike",
+        back: "thrusters",
+        chest: "eye",
+        morph: { h: 0.87, headScale: 1.04, torsoGirth: 0.78, asym: 0.48, legLen: 1.1 },
+      },
+    },
   ],
   COMPOSURE: [
     {
@@ -248,6 +315,39 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         back: "none",
         chest: "bars",
         morph: { h: 1.08, headScale: 0.6, torsoGirth: 1.12, shoulder: 1.0, legGirth: 1.05, footScale: 1.15 },
+      },
+    },
+    {
+      id: "reef",
+      kit: {
+        tag: "mask reef",
+        headgear: "mask",
+        shoulders: "plates",
+        back: "coils",
+        chest: "core",
+        morph: { h: 1.03, headScale: 0.64, torsoGirth: 1.04, shoulder: 0.9, legLen: 1.06 },
+      },
+    },
+    {
+      id: "pillar",
+      kit: {
+        tag: "disk pillar",
+        headgear: "disks",
+        shoulders: "pauldron",
+        back: "none",
+        chest: "ring",
+        morph: { h: 1.1, headScale: 0.56, torsoGirth: 1.14, shoulder: 0.98, footScale: 1.16 },
+      },
+    },
+    {
+      id: "bastion",
+      kit: {
+        tag: "dome bastion",
+        headgear: "dome",
+        shoulders: "pauldron",
+        back: "slab",
+        chest: "bars",
+        morph: { h: 1.07, headScale: 0.57, torsoGirth: 1.12, shoulder: 0.96, footScale: 1.14 },
       },
     },
   ],
@@ -296,6 +396,39 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         morph: { h: 1.06, headScale: 0.76, neckLen: 1.48, torsoGirth: 0.94, shoulder: 0.58, footScale: 1.42 },
       },
     },
+    {
+      id: "chorus",
+      kit: {
+        tag: "crest chorus",
+        headgear: "crest",
+        shoulders: "vent",
+        back: "kite",
+        chest: "lattice",
+        morph: { h: 1.02, headScale: 0.8, neckLen: 1.42, shoulder: 0.62, footScale: 1.28 },
+      },
+    },
+    {
+      id: "soapbox",
+      kit: {
+        tag: "disk soapbox",
+        headgear: "disks",
+        shoulders: "none",
+        back: "banner",
+        chest: "eye",
+        morph: { h: 1.05, headScale: 0.74, neckLen: 1.5, shoulder: 0.54, footScale: 1.36 },
+      },
+    },
+    {
+      id: "satire",
+      kit: {
+        tag: "mask satire",
+        headgear: "mask",
+        shoulders: "vent",
+        back: "none",
+        chest: "lattice",
+        morph: { h: 0.98, headScale: 0.86, neckLen: 1.3, torsoGirth: 0.9, armLen: 1.12 },
+      },
+    },
   ],
   CREATIVITY: [
     {
@@ -340,6 +473,39 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         back: "wings",
         chest: "diamond",
         morph: { h: 0.84, headScale: 1.25, neckLen: 0.8, torsoGirth: 0.52, shoulder: 0.55, legLen: 1.12, asym: 0.18 },
+      },
+    },
+    {
+      id: "palette",
+      kit: {
+        tag: "disk palette",
+        headgear: "disks",
+        shoulders: "none",
+        back: "wings",
+        chest: "eye",
+        morph: { h: 0.87, headScale: 1.18, neckLen: 0.86, torsoGirth: 0.56, armLen: 1.22, asym: 0.26 },
+      },
+    },
+    {
+      id: "draft",
+      kit: {
+        tag: "mask draft",
+        headgear: "mask",
+        shoulders: "vent",
+        back: "thrusters",
+        chest: "lattice",
+        morph: { h: 0.89, headScale: 1.08, neckLen: 0.9, torsoGirth: 0.6, armLen: 1.16, asym: 0.22 },
+      },
+    },
+    {
+      id: "echo",
+      kit: {
+        tag: "quill echo",
+        headgear: "quills",
+        shoulders: "vent",
+        back: "kite",
+        chest: "diamond",
+        morph: { h: 0.85, headScale: 1.22, neckLen: 0.82, torsoGirth: 0.54, armLen: 1.24, asym: 0.28 },
       },
     },
   ],
@@ -510,7 +676,99 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     chest: "diamond",
     morph: { h: 0.86, headScale: 1.22, torsoGirth: 0.56, asym: 0.24 },
   },
+  // Extra named overrides — break leftover gallery twins that still share a breed.
+  FLUX: {
+    tag: "disk flux",
+    headgear: "disks",
+    shoulders: "spike",
+    back: "thrusters",
+    chest: "core",
+    morph: { h: 0.9, asym: 0.5, legLen: 1.12 },
+  },
+  HAVOC: {
+    tag: "mask havoc",
+    headgear: "mask",
+    shoulders: "plates",
+    back: "kite",
+    chest: "bars",
+    morph: { h: 0.88, asym: 0.55, armLen: 1.1 },
+  },
+  SCRAP: {
+    tag: "mask scrap",
+    headgear: "mask",
+    shoulders: "spike",
+    back: "none",
+    chest: "eye",
+    morph: { h: 0.91, asym: 0.5, torsoGirth: 0.76 },
+  },
+  CANVAS: {
+    tag: "disk canvas",
+    headgear: "disks",
+    shoulders: "none",
+    back: "wings",
+    chest: "lattice",
+    morph: { h: 0.86, headScale: 1.16, asym: 0.24 },
+  },
+  MOSAIC: {
+    tag: "mask mosaic",
+    headgear: "mask",
+    shoulders: "vent",
+    back: "wings",
+    chest: "eye",
+    morph: { h: 0.87, headScale: 1.12, asym: 0.3 },
+  },
+  BRACE: {
+    tag: "disk brace",
+    headgear: "disks",
+    shoulders: "pauldron",
+    back: "slab",
+    chest: "bars",
+    morph: { h: 1.08, headScale: 0.56, footScale: 1.14 },
+  },
+  CADENCE: {
+    tag: "mask cadence",
+    headgear: "mask",
+    shoulders: "none",
+    back: "banner",
+    chest: "ring",
+    morph: { neckLen: 1.48, shoulder: 0.56, footScale: 1.34 },
+  },
+  LITANY: {
+    tag: "disk litany",
+    headgear: "disks",
+    shoulders: "vent",
+    back: "banner",
+    chest: "diamond",
+    morph: { neckLen: 1.52, footScale: 1.4 },
+  },
 };
+
+/** Small seeded part swaps — cousins stay in-family but don't clone 1:1. */
+function spiceParts(kit: SpeciesKit, key: string): Pick<SpeciesKit, "shoulders" | "chest" | "back"> {
+  const h = hash(`${key}:parts`);
+  let { shoulders, chest, back } = kit;
+  if (h % 5 === 0) {
+    if (chest === "diamond") chest = "lattice";
+    else if (chest === "lattice") chest = "diamond";
+    else if (chest === "bars") chest = "core";
+    else if (chest === "core") chest = "bars";
+    else if (chest === "eye") chest = "ring";
+    else if (chest === "ring") chest = "eye";
+  }
+  if (h % 7 === 1) {
+    if (shoulders === "vent") shoulders = "plates";
+    else if (shoulders === "plates") shoulders = "vent";
+    else if (shoulders === "none") shoulders = "vent";
+    else if (shoulders === "spike") shoulders = "vent";
+  }
+  if (h % 11 === 2) {
+    if (back === "thrusters") back = "kite";
+    else if (back === "kite") back = "thrusters";
+    else if (back === "wings") back = "kite";
+    else if (back === "none" && kit.headgear !== "dome") back = "coils";
+  }
+  return { shoulders, chest, back };
+}
 
 /** Resolve the stable species kit for a roster key. */
 export function speciesKitFor(key: string, type?: CreatureType): SpeciesKit | null {
@@ -522,13 +780,19 @@ export function speciesKitFor(key: string, type?: CreatureType): SpeciesKit | nu
   const breeds = BREEDS[t];
   if (!breeds?.length) return null;
   const breed = breeds[hash(k) % breeds.length]!;
-  // light per-key spice on morph only — parts stay breed-pure so the animal reads
+  // Morph spice + light part spice — breed family stays readable, gallery clones thin out.
   const spice = ((hash(k + ":spice") % 1000) / 1000 - 0.5) * 0.06;
   const m = { ...breed.kit.morph };
   if (m.headScale != null) m.headScale *= 1 + spice;
   if (m.legLen != null) m.legLen *= 1 - spice * 0.5;
   if (m.torsoGirth != null) m.torsoGirth *= 1 + spice * 0.4;
-  return { ...breed.kit, morph: m, tag: `${breed.id}:${breed.kit.tag}` };
+  const parts = spiceParts(breed.kit, k);
+  return {
+    ...breed.kit,
+    ...parts,
+    morph: m,
+    tag: `${breed.id}:${breed.kit.tag}`,
+  };
 }
 
 /** Tier-gate an authored kit into a Phenotype (species mark from day one). */

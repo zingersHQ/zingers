@@ -131,11 +131,15 @@ moves, and silhouette. They are never a sixth Force.
 2. `npm run bake:minds` → `lib/minds/baked.ts`.
 3. Runtime merges into roster, banter, beats, first-duel hooks, and showcase cards.
 
-**How they look different:** one shared rig per Force archetype, then a seeded
-**phenotype** (headgear, shoulders, chest, back) plus career bone morph
-(`lib/render/phenotype.ts`, `lib/evolve/appearance.ts`). Rookies already wear a
-species mark so the adopt grid and dex read as different animals, not palette swaps.
-As they climb tiers, more armour layers bolt on. No new GLTF per mind.
+**How they look different:** one shared robot rig, then a stable **species kit**
+per mind key (`lib/render/species.ts`): silhouette morph bias plus which solid
+parts they wear (headgear, shoulders, chest, back). First Minds are hand-authored;
+later dex minds land on a Force **breed** line (~7 animals per Clan) with light
+seeded spice so cousins differ. Career bone morph and tier still grow the body
+(`lib/evolve/appearance.ts`). Rookies already wear their species mark so the adopt
+grid and dex read as different animals, not palette swaps. As they climb tiers,
+more armour layers bolt on. No new GLTF per mind. The old phenotype lottery remains
+only as a fallback when there is no roster key.
 
 **Rotation:** weekly starters pick one key per Force from First Minds + baked pool.
 The dex grows in waves toward a large collectible set; ownership and trade stay on
