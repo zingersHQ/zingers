@@ -130,31 +130,34 @@ interface SectorDifficulty {
 }
 ```
 
-Tuning targets (current feel constants as the baseline):
+Tuning targets (shipped in `components/grounds/climb/difficulty.ts`):
 
-- **Speed** `8.2 + 0.38·(b−1) + 0.04·k`, cap **12.5** (≈ +52% by Reach X). The
-  *swift* modifier (§5) multiplies ×1.22 — that cap still keeps the reaction
-  window ≥ ~0.45s at the tightest gap.
-- **Gate radius** `4.0 − 0.13·(b−1) − 0.02·k`, floor **2.55** (champion is ~0.7
-  scale — floor keeps ≥ 1.8 body-heights of opening).
-- **Gap between rings** in *seconds of flight* (the honest unit): base band
-  `1.2s–2.2s`; Vista sectors stretch to **5.0s max — the hard cap** (user law:
-  no dead air beyond a 5-second glide). Long gaps are always *scenic*, never
-  *empty*: motes thicken, a prop parade passes, or a Crowns pickup line arcs
-  through them.
-- **Gates per sector** `4 + floor(b/2) + (k ∈ {8,9} ? 1 : 0)`, cap 9. Sector
-  length ≈ gates × gap × speed → runs of ~35–90s per sector; a full 1–100 clear
-  is a **~50–70 min** aspirational feat (nobody does it week one — that's the
-  point), while the *median session* stays the addictive 30–90s death loop in
-  whatever Reach the player currently bleeds in.
-- **Vertical amplitude** grows with `b`; the soft ceiling (park inside the next
-  ring's opening) and floor-death stay exactly as shipped.
-- **Fail states unchanged:** miss a ring → run over; fall below floor → run
-  over. Hazards never insta-kill (§4) — they *push you toward* those two fails.
+- **Speed** ~`7.7 + 0.3·b0 + 0.028·k`, cap **11.4** (bodies cruise at
+  `speed × DESKTOP_GAP_SCALE` so gapSec stays real time). Late bite is rhythm +
+  hazards, not raw mph. Swift still multiplies when that modifier is live.
+- **Gate radius** ~`4.2 − 0.12·b0 − 0.018·k`, floor **2.7**.
+- **Gap between rings** in *seconds of flight*: role bands ~`1.25s–2.2s`; Vista
+  stretches to **~3.8s max** (scenic, not a dead float between rings).
+- **Gates per sector** `4 + floor(b0/3) + (surge/gauntlet ? 1 : 0)`, **cap 8**.
+  Arrival and Vista hold at **4** (breath via spacing, not stub corridors).
+  Early sectors feel like a short run; deep Reaches stretch without becoming a
+  ring ladder. Layout ΔY is clamped to `flyer-budget.ts` so longer ≠ impossible.
+- **Cross-Reach variety:** same role bar every Reach, but archetypes are
+  Reach-flavored (amp / phase / bite slot) so Arrival@11 does not photocopy
+  Arrival@1.
+- **Fail states:** miss a ring or fall → life lost (3 lives; Reach-clear can
+  restore). Hazards never insta-kill (§4). They shove you toward those fails.
 
 **Difficulty curve check** (the shape we're buying): smooth saw-tooth — each
 Reach opens *below* the previous Reach's peak (k1–k2 dip ≈ 20%), peaks at k9–k10
 above it. Progress feels like conquering weather, not climbing a cliff.
+
+**After the Hundred:** clearing all 100 ranked is a **summit**, not the start of
+endless Flappy. Prestige is cleaner flights (fewer stumbles, more gold, lives
+left), friend challenges, and weekly expeditions. Do **not** pitch cross-body
+speedruns. Mobile forward cruise is fixed (HOLD is altitude only); desktop surge
+stays a quiet craft flex on the `flight` board. Flap-count prestige is out (body
+inputs differ).
 
 ---
 
@@ -175,23 +178,26 @@ Every hazard telegraphs ≥ 1.2s before it can touch you (glow ramp, whistle SFX
 with `duckAmbience`, or entry from visible distance). Nothing spawns inside the
 two-second corridor ahead of the champion.
 
-### The menu (each Reach fields 1 signature + 1–2 shared)
+### The menu (shipped kinds — `climb/hazards.ts`)
 
-| Hazard | Behavior (all one-axis, dodge by altitude timing) | Native Reach |
+All hazards are **bad**. They stumble you. They are not prizes. Visual law:
+danger reds / magenta / cold spiked cyan. Never treasure gold (that color is
+reserved for golden rings).
+
+| Hazard | Behavior (dodge by altitude timing) | Read |
 |---|---|---|
-| **Drift crystal** | large slow crystal crosses the corridor on a fixed diagonal | III, VIII |
-| **Spore bloom** | stationary sphere that inflates/deflates on a visible 3s cycle | III |
-| **Cinder arc** | glowing meteor lobs across on a telegraphed parabola, trail warns | IV, IX |
-| **Thermal gust** | visible updraft column: inside it thrust is ×1.5 (a *helpful* hazard you can overshoot with) | IV, VI |
-| **Brazier plume** | flame column rises from a platform on a 2s on/off beat | V |
-| **Banner lines** | horizontal pennant ropes between stands — thread over/under | V |
-| **Ring rotor** | a bar rotating *inside* a gate — thread the open half (Gate Trial staple) | k10 everywhere from Reach IV |
-| **Warden wisp** | the "attacker": drifts toward your altitude for 4s (slow homing, eye-glow + hum telegraph), then self-extinguishes; never faster than half your climb rate | VII, IX, X |
-| **Crosswind band** | marked band of sky with steady lateral shove — the auto-threader visibly leans, gates need earlier commitment | VI, VII |
-| **Star shard** | fast, straight, fully telegraphed by a 1.5s light-line — the only "bullet", Reach X only | X |
+| **Drift crystal** | bobbing spiked shard in the corridor | hostile cyan spikes + danger halo |
+| **Cinder arc** | lobbing warm sphere on a parabola | ember orange |
+| **Brazier plume** | on/off flame column with telegraph scale | hot orange column |
+| **Warden wisp** | vertical-sweeping attacker sphere | magenta + halo |
+| **Ring rotor** | spinning bar *inside* a gate | danger red/magenta bar (never gold) |
 
-Density budget: `hazardBudget` = 0 (Reach I) → 5 (Reach IX–X), spent per the
-role table (§2): zero in k1/k6, peaks in k5/k8/k9.
+Reach I fields none (`hazardBudget` 0). Budget ramps with Reach + role (zero on
+arrival / vista / rhythm; peaks on pressure / gauntlet / trial). One-shot teach
+toast on first hazard sector.
+
+**Not shipped** (do not teach): thermal gust as a helpful pickup, spore bloom,
+banner lines, crosswind, star shard. Aspirational menu only.
 
 ---
 
@@ -255,28 +261,22 @@ in the desktop world. Same daily-index plumbing as imprints/nodes.
 | Beat personal best time-at-depth | — | Crowns `= 3·sectors + 15·(Reaches cleared)` |
 | First time lighting a camp | Saga event + sigil growth + cosmetic | Crowns chest |
 | Clean thread (through inner 50% of a ring) | — | streak counter; ×5 streak = +Crowns ping |
-| Golden ring (surprise, §7b) | — | +25 Crowns |
-| Today's Ascent depth | — | Crowns ×2 in featured Reach |
+| Golden ring (§7b) | — | +25 Crowns (wing traits can bump); HUD flashes `+N Crowns` |
 | The Hundred (s100 cleared, ranked) | permanent Saga chapter + unique sigil crown | one-time large Crowns purse + board flag `clearedAll` |
 
 Anti-farm rules carry over: rewards gate on *genuine improvement* (existing
 `isCircuitRunBetter` logic), scout runs pay fractional, server-side Crowns stay
 authoritative via `awardGauntlet` clamps.
 
-### 7b. Surprise budget (the "reasonable use" law)
+### 7b. Golden rings (the only mid-corridor reward)
 
-Surprises stay surprising only if they're rationed. Global budget: **at most
-one surprise event per run**, rolled once at run start (seeded per run, not per
-sector):
+Shipped: ~12.5% chance **per sector** (`gold-ring.ts`) to pull one mid gate off
+the glide line and paint it treasure gold (sparkle halo). Threading it pays
+**+25 Crowns** (not lives, not XP). One-shot teach: "Gold rings pay Crowns.
+Climb for them." Hazards never wear that gold.
 
-| Event | Odds | What happens |
-|---|---|---|
-| Golden ring | 1/8 runs | one ring in your path turns gold; threading it pays +25 Crowns and a chime |
-| Keeper watch | 1/25 | the current Reach's canon Keeper stands on a platform, watching; threading the next 3 rings clean earns a one-line bark ("The Keeper of the Wastes nods.") → career-ledger event |
-| Meteor shower | 1/40 | 20s of cosmetic shooting stars (reduced-motion: static constellation glow) |
-| Rival line | 1/12 (only if board has a rival) | a faint colored altitude line shows the next player above you on the board; passing it flashes their handle |
-
-Nothing in the surprise table affects difficulty; hazards never surprise.
+Aspirational surprises (Keeper watch, meteor shower, rival line) are not in the
+live corridor. Do not teach them until they ship.
 
 ---
 

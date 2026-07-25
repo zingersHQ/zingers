@@ -35,6 +35,8 @@ export const STORAGE = {
   guestClimbBest: "zingers_guest_climb_best_v1",
   /** sessionStorage: claim from /ascent → cover + Concord gate guide on /grounds remount. */
   postClaimGuide: "zingers_post_claim_guide_v1",
+  /** One-shot Flight teach latches (hazard / gold / Gate Trial). */
+  flightTeach: "zingers_flight_teach_v1",
 } as const;
 
 export function pageTitle(suffix?: string) {

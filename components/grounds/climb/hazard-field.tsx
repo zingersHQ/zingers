@@ -5,17 +5,21 @@
 // stay in exact lockstep with whatever collision test runs against the same
 // clock (the kinematic flyer on mobile, the Handler capsule on desktop). ≤5
 // hazards per sector, so per-hazard meshes are cheap.
-import { useRef } from "react";
+//
+// Visual law: DANGER never wears treasure gold. Warm reds / magenta / cold
+// hostile cyan with spikes. Gold rings (circuit-scene) are the only reward read.
+import { useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { hazardState, type Hazard } from "./hazards";
 
+/** Hostile palette — never `#f5d020` (Crowns / gold rings). */
 export const HAZARD_COLOR: Record<Hazard["kind"], string> = {
-  driftCrystal: "#8affff",
+  driftCrystal: "#4ec8ff",
   cinderArc: "#ff7a2a",
   plume: "#ff5a1a",
   wardenWisp: "#ff4a6a",
-  ringRotor: "#ffd66a",
+  ringRotor: "#ff2d55",
 };
 
 function HazardMesh({ h }: { h: Hazard }) {
@@ -39,28 +43,70 @@ function HazardMesh({ h }: { h: Hazard }) {
     }
   });
 
-  let geom: React.ReactNode;
-  if (h.kind === "driftCrystal") geom = <octahedronGeometry args={[h.radius, 0]} />;
-  else if (h.kind === "cinderArc") geom = <sphereGeometry args={[h.radius, 12, 12]} />;
-  else if (h.kind === "wardenWisp") geom = <sphereGeometry args={[h.radius, 12, 12]} />;
-  else if (h.kind === "ringRotor") geom = <boxGeometry args={[(h.gate?.r ?? 2) * 1.8, 0.24, 0.24]} />;
-  else geom = <cylinderGeometry args={[h.radius, h.radius * 0.7, h.height, 10]} />; // plume
-
-  const inner = (
-    <mesh position={h.kind === "plume" ? [0, h.height / 2, 0] : [0, 0, 0]}>
-      {geom}
-      <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.2} roughness={0.5} toneMapped={false} depthWrite={h.kind !== "plume"} />
-    </mesh>
-  );
+  const r = h.radius;
+  let geom: ReactNode;
+  if (h.kind === "driftCrystal") {
+    // Spiky hostile shard — not a pretty loot gem
+    geom = (
+      <>
+        <mesh>
+          <tetrahedronGeometry args={[r * 1.15, 0]} />
+          <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.35} roughness={0.35} toneMapped={false} depthWrite />
+        </mesh>
+        <mesh rotation={[0.6, 0.4, 0.2]}>
+          <tetrahedronGeometry args={[r * 0.7, 0]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.1} transparent opacity={0.85} metalness={0.3} roughness={0.4} toneMapped={false} depthWrite={false} />
+        </mesh>
+      </>
+    );
+  } else if (h.kind === "cinderArc") {
+    geom = (
+      <mesh>
+        <sphereGeometry args={[r, 12, 12]} />
+        <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.2} roughness={0.5} toneMapped={false} />
+      </mesh>
+    );
+  } else if (h.kind === "wardenWisp") {
+    geom = (
+      <mesh>
+        <sphereGeometry args={[r, 12, 12]} />
+        <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.2} roughness={0.5} toneMapped={false} />
+      </mesh>
+    );
+  } else if (h.kind === "ringRotor") {
+    // Thick danger bar with warn ticks — never treasure gold
+    const half = (h.gate?.r ?? 2) * 1.8;
+    geom = (
+      <>
+        <mesh>
+          <boxGeometry args={[half * 2, 0.32, 0.32]} />
+          <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.6} transparent opacity={0.95} metalness={0.25} roughness={0.45} toneMapped={false} />
+        </mesh>
+        {[-0.55, 0, 0.55].map((u) => (
+          <mesh key={u} position={[half * u, 0, 0.2]}>
+            <boxGeometry args={[0.18, 0.5, 0.12]} />
+            <meshBasicMaterial color="#ff8aa0" toneMapped={false} />
+          </mesh>
+        ))}
+      </>
+    );
+  } else {
+    geom = (
+      <mesh position={[0, h.height / 2, 0]}>
+        <cylinderGeometry args={[r, r * 0.7, h.height, 10]} />
+        <meshStandardMaterial ref={mat} color={color} emissive={color} emissiveIntensity={1.4} transparent opacity={0.95} metalness={0.2} roughness={0.5} toneMapped={false} depthWrite={false} />
+      </mesh>
+    );
+  }
 
   return (
     <group ref={grp}>
-      {inner}
-      {/* a faint danger halo so hazards read from a distance (the telegraph) */}
-      {(h.kind === "wardenWisp" || h.kind === "driftCrystal") && (
+      {geom}
+      {/* Danger halo — telegraph from a distance (never crown-gold) */}
+      {(h.kind === "wardenWisp" || h.kind === "driftCrystal" || h.kind === "ringRotor") && (
         <mesh>
-          <sphereGeometry args={[h.radius * 1.7, 12, 12]} />
-          <meshBasicMaterial color={color} transparent opacity={0.14} depthWrite={false} blending={THREE.AdditiveBlending} />
+          <sphereGeometry args={[r * (h.kind === "ringRotor" ? 2.2 : 1.7), 12, 12]} />
+          <meshBasicMaterial color={color} transparent opacity={0.16} depthWrite={false} blending={THREE.AdditiveBlending} />
         </mesh>
       )}
     </group>

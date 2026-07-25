@@ -21,11 +21,14 @@ function aheadOpacity(ahead: number, finish: boolean): number {
   return Math.max(0.14, base * Math.pow(0.55, ahead - 1));
 }
 
+const TREASURE_GOLD = "#f5d020";
+
 const CheckpointRing = memo(function CheckpointRing({
   cp,
   color,
   finish,
   highlight = false,
+  treasure = false,
   cpNextRef,
 }: {
   cp: CircuitCheckpoint;
@@ -33,6 +36,8 @@ const CheckpointRing = memo(function CheckpointRing({
   finish?: boolean;
   /** the next gate the flyer is aiming for — pulses so the target reads at a glance */
   highlight?: boolean;
+  /** golden-ring reward — sparkle so it never reads as a hazard bar */
+  treasure?: boolean;
   /** live "next checkpoint index" — when present, rings flip green as you pass
    *  them and the current target pulses (the desktop 6-DOF feedback the mobile
    *  Climb `highlight` never got). A ref so per-gate progress needs no re-render. */
@@ -41,6 +46,7 @@ const CheckpointRing = memo(function CheckpointRing({
   const r = cp.radius;
   const grp = useRef<THREE.Group>(null);
   const torusMat = useRef<THREE.MeshBasicMaterial>(null);
+  const sparkleMat = useRef<THREE.MeshBasicMaterial>(null);
   const burst = useRef<THREE.Mesh>(null);
   const burstMat = useRef<THREE.MeshBasicMaterial>(null);
   const burstT = useRef(0);
@@ -63,12 +69,13 @@ const CheckpointRing = memo(function CheckpointRing({
     if (passed && !wasPassed.current) burstT.current = 0.55;
     wasPassed.current = passed;
 
-    g.scale.setScalar(isNext ? 1 + Math.sin(clock.elapsedTime * 5) * 0.07 : 1);
+    const pulse = treasure ? 1 + Math.sin(clock.elapsedTime * 6.5) * 0.1 : isNext ? 1 + Math.sin(clock.elapsedTime * 5) * 0.07 : 1;
+    g.scale.setScalar(pulse);
 
     const k = 1 - Math.exp(-11 * dt);
     if (passed) {
       target.copy(passCol);
-    } else if (isNext || ahead <= 0) {
+    } else if (treasure || isNext || ahead <= 0) {
       target.copy(base);
     } else {
       // further rings: wash color lighter/duller so near gates pop by contrast
@@ -80,10 +87,13 @@ const CheckpointRing = memo(function CheckpointRing({
       torusMat.current.color.lerp(target, k);
       const op = passed
         ? 0.9
-        : isNext
+        : treasure || isNext
           ? 1
           : aheadOpacity(ahead, !!finish);
       torusMat.current.opacity = op;
+    }
+    if (sparkleMat.current && treasure && !passed) {
+      sparkleMat.current.opacity = 0.35 + Math.sin(clock.elapsedTime * 8) * 0.2;
     }
 
     if (burstT.current > 0) {
@@ -102,13 +112,26 @@ const CheckpointRing = memo(function CheckpointRing({
   return (
     <group ref={grp} position={cp.pos}>
       <mesh>
-        <torusGeometry args={[r, highlight ? 0.18 : finish ? 0.14 : 0.1, 12, 48]} />
-        <meshBasicMaterial ref={torusMat} color={color} transparent opacity={highlight ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
+        <torusGeometry args={[r, treasure ? 0.22 : highlight ? 0.18 : finish ? 0.14 : 0.1, 12, 48]} />
+        <meshBasicMaterial ref={torusMat} color={color} transparent opacity={highlight || treasure ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
       </mesh>
+      {/* Treasure sparkle — crown-gold halo so reward rings ≠ hazard bars */}
+      {treasure && (
+        <>
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[r * 0.72, r * 1.08, 36]} />
+            <meshBasicMaterial ref={sparkleMat} color={TREASURE_GOLD} transparent opacity={0.45} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} side={THREE.DoubleSide} />
+          </mesh>
+          <mesh>
+            <torusGeometry args={[r * 1.12, 0.05, 8, 40]} />
+            <meshBasicMaterial color="#ffe28a" transparent opacity={0.75} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+          </mesh>
+        </>
+      )}
       {/* confirmation burst — a bright ring that blooms outward once on a pass */}
       <mesh ref={burst} visible={false}>
         <torusGeometry args={[r, 0.06, 8, 40]} />
-        <meshBasicMaterial ref={burstMat} color={PASS_GREEN} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        <meshBasicMaterial ref={burstMat} color={treasure ? TREASURE_GOLD : PASS_GREEN} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
     </group>
   );
@@ -306,9 +329,10 @@ export const CircuitScene = memo(function CircuitScene({
           <CheckpointRing
             key={cp.index}
             cp={cp}
-            color={gold ? "#f5d020" : cp.finish ? biome.platform.top : accent}
+            color={gold ? TREASURE_GOLD : cp.finish ? biome.platform.top : accent}
             finish={cp.finish}
             highlight={cp.index === highlightIndex || gold}
+            treasure={gold}
             cpNextRef={cpNextRef}
           />
         );

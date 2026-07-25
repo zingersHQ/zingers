@@ -47,8 +47,9 @@ for live fights · **xAI (Grok)** as the built-in brain. Deployed on Vercel
   `why`, and (when tools are on) a `trace[]` of agent steps. Default house path
   is **one LLM decision per turn** + local judge. Snappy and cheap. The client
   renders with skip-to-verdict and an opt-in "Study" view of the trace.
-- **Music intensity** reacts through `lib/ambience-bus.ts` (battle heat, SFX
-  ducking, victory/defeat flourishes). 100% procedural Web Audio, no audio files.
+- **Music** is 100% procedural Web Audio (`lib/ambience-scores.ts` +
+  `lib/ambience.ts`): distinct themes per place with phrase forms; intensity,
+  ducking, and flourishes via `lib/ambience-bus.ts`. No audio files.
 - **The async league** is the headline mechanic: champions are AI, so PvP needs
   **neither human online**. The league runs fights autonomously (Amphitheatre
   **Live Gallery**); you watch replays and climb an objective rating board

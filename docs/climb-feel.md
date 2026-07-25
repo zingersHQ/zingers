@@ -51,7 +51,7 @@ driven by role `k`, not free RNG zig-zag.
 
 | Role | Layout feel | Geometry rules |
 |---|---|---|
-| Arrival | “learn the corridor” | 3–4 wide rings, **rising staircase** with clear steps, no hazards |
+| Arrival | “learn the corridor” | **4** wide rings, **rising staircase** with clear steps (Reach-flavored amp / rare dip later), no hazards |
 | Teach / Combine | introduce hazard between rings | gaps mid-band; one hazard mid-gap |
 | Rhythm | pure Flappy cadence | **equal gapSec**, alternating high/low Y (sine), no hazards |
 | Pressure | bite | tighter gaps, smaller radius, hazard in *every other* gap |

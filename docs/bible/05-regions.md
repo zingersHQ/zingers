@@ -126,6 +126,7 @@ the Grounds. Not a vendor outside the fiction.
 
 ## The soundtrack of a place
 
-The Hum is audible. Each region and venue resolves its own procedural mood. 
-Concord hub, region biome, Amphitheatre, Circuit, and live fights each carry a
-distinct score (`lib/ambience-scores.ts`). The world sounds like where you are.
+The Hum is audible. Each region and venue resolves its own procedural theme.
+Concord hub, region biome, Amphitheatre, Flight, and live fights each carry a
+distinct score with its own melody and phrase form (`lib/ambience-scores.ts`).
+The world sounds like where you are.

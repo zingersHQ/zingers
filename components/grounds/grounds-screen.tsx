@@ -177,6 +177,7 @@ import {
   scoutStartSector,
 } from "@/lib/climb-campaign";
 import { goldRingCrowns, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
+import { consumeFlightTeach, goldPayoutLine } from "@/components/grounds/climb/flight-teach";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -636,6 +637,12 @@ export default function GroundsScreen({
   const [goldGate, setGoldGate] = useState(-1);
   const [goldGeom, setGoldGeom] = useState<GoldGeom | null>(null);
   const bonusCrowns = useRef(0);
+  const circuitStumbleCount = useRef(0);
+  const circuitGoldRings = useRef(0);
+  const [circuitClearSnap, setCircuitClearSnap] = useState<{
+    mastery: { stumbles: number; goldRings: number; livesLeft: number; maxLives: number };
+    firstHundred: boolean;
+  } | null>(null);
 
   const baseCircuitTrack = useMemo(
     () => desktopCircuitSector(circuitSectorIdx, circuitLayoutSeed),
@@ -680,9 +687,35 @@ export default function GroundsScreen({
       activeVenue === "circuit" ? sectorHazards(circuitSectorIdx, circuitTrack, circuitLayoutSeed) : [],
     [activeVenue, circuitSectorIdx, circuitTrack, circuitLayoutSeed],
   );
+  const [circuitTeachMsg, setCircuitTeachMsg] = useState<string | null>(null);
+  const circuitTeachTimer = useRef<number | null>(null);
+  const flashCircuitTeach = useCallback((msg: string | null, ms = 3400) => {
+    if (!msg) return;
+    setCircuitTeachMsg(msg);
+    if (circuitTeachTimer.current != null) window.clearTimeout(circuitTeachTimer.current);
+    circuitTeachTimer.current = window.setTimeout(() => setCircuitTeachMsg(null), ms);
+  }, []);
+  useEffect(() => () => {
+    if (circuitTeachTimer.current != null) window.clearTimeout(circuitTeachTimer.current);
+  }, []);
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    if (circuitPhase !== "ready" && circuitPhase !== "running") return;
+    if (circuitSectorIdx === 9) flashCircuitTeach(consumeFlightTeach("gateTrial"), 4200);
+  }, [activeVenue, circuitSectorIdx, circuitPhase, flashCircuitTeach]);
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    if (circuitPhase !== "ready" && circuitPhase !== "running") return;
+    if (circuitHazards.length > 0) flashCircuitTeach(consumeFlightTeach("hazard"));
+  }, [activeVenue, circuitSectorIdx, circuitHazards.length, circuitPhase, flashCircuitTeach]);
+  useEffect(() => {
+    if (activeVenue !== "circuit") return;
+    if (goldGate >= 0) flashCircuitTeach(consumeFlightTeach("gold"));
+  }, [activeVenue, goldGate, flashCircuitTeach]);
   const [circuitStumble, setCircuitStumble] = useState(false);
   const circuitStumbleTimer = useRef<number | null>(null);
   const onCircuitStumble = useCallback(() => {
+    circuitStumbleCount.current += 1;
     duckAmbience(0.5, 300);
     setCircuitStumble(true);
     if (circuitStumbleTimer.current != null) window.clearTimeout(circuitStumbleTimer.current);
@@ -884,6 +917,9 @@ export default function GroundsScreen({
     setCircuitChallengeResult(null);
     setCircuitOvertakeToast(false);
     bonusCrowns.current = 0;
+    circuitStumbleCount.current = 0;
+    circuitGoldRings.current = 0;
+    setCircuitClearSnap(null);
     const start = circuitRunModeRef.current === "scout" ? circuitStartSectorRef.current : 0;
     setCircuitSectorIdx(start);
     setCircuitCpPassed(1);
@@ -1101,6 +1137,15 @@ export default function GroundsScreen({
     if (next >= cap) {
       // Frozen at sector clear — do not re-read wall clock (includes load gap).
       const total = circuitRunMsRef.current;
+      setCircuitClearSnap({
+        firstHundred: circuitRunModeRef.current === "ranked" && !climbHundred,
+        mastery: {
+          stumbles: circuitStumbleCount.current,
+          goldRings: circuitGoldRings.current,
+          livesLeft: circuitLivesRef.current,
+          maxLives: wingLivesCap.current,
+        },
+      });
       setCircuitRunMs(total);
       setCircuitPhase("done");
       submitCircuitRun(cap, total, true);
@@ -1161,7 +1206,7 @@ export default function GroundsScreen({
     setCircuitArriveNonce((n) => n + 1);
     const s = desktopCircuitSector(next, circuitLayoutSeedRef.current).spawn;
     setTimeout(() => travelRef.current?.(s[0], s[2], 0), 50);
-  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge, finalizeCircuitSectorPath, expedition.sectors]);
+  }, [circuitSectorIdx, submitCircuitRun, store, owned, circuitChallenge, finalizeCircuitSectorPath, expedition.sectors, climbHundred]);
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
@@ -1358,9 +1403,12 @@ export default function GroundsScreen({
       setCircuitCpPassed(index + 1);
       // Golden ring — pay Crowns, clear gold color (geom offset stays).
       if (!cp.finish && index === goldGate) {
-        bonusCrowns.current += goldRingCrowns(runModsRef.current.goldCrownsMult);
+        const paid = goldRingCrowns(runModsRef.current.goldCrownsMult);
+        bonusCrowns.current += paid;
+        circuitGoldRings.current += 1;
         setGoldGate(-1);
         rewardSfx("big");
+        flashCircuitTeach(goldPayoutLine(paid), 2200);
       } else if (!cp.finish) {
         // a rising tick each time you thread a ring (the finish keeps its fanfare)
         jumpBeep(Math.min(4, index));
@@ -1376,6 +1424,15 @@ export default function GroundsScreen({
           circuitRunModeRef.current === "expedition" ? expedition.sectors : DESKTOP_CIRCUIT_COUNT;
         if (circuitSectorIdx + 1 >= cap) {
           const total = runElapsed;
+          setCircuitClearSnap({
+            firstHundred: circuitRunModeRef.current === "ranked" && !climbHundred,
+            mastery: {
+              stumbles: circuitStumbleCount.current,
+              goldRings: circuitGoldRings.current,
+              livesLeft: circuitLivesRef.current,
+              maxLives: wingLivesCap.current,
+            },
+          });
           setCircuitPhase("done");
           submitCircuitRun(cap, total, true);
           if (circuitChallenge && circuitRunModeRef.current === "ranked") {
@@ -1403,7 +1460,7 @@ export default function GroundsScreen({
         }
       }
     },
-    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, goldGate],
+    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, goldGate, flashCircuitTeach, climbHundred],
   );
 
   // Auto-advance after a clear (mobile-like). Brief "sector" phase avoids a soft-lock
@@ -3471,7 +3528,10 @@ export default function GroundsScreen({
           // Guests get top-right "Claim a champion" (continue) — not Exit Ascent.
           onExit={circuitGuest ? undefined : leaveAscent}
           onShareChallenge={shareCircuitChallenge}
-          shareChallengeLabel={isTouch ? "Challenge a friend" : "Copy challenge link"}
+          shareChallengeLabel={isTouch ? "Share challenge" : "Copy challenge link"}
+          shareMsg={circuitShareMsg}
+          teachMsg={circuitTeachMsg}
+          clearSnap={circuitClearSnap}
           onProve={
             circuitGuest
               ? undefined
@@ -3595,24 +3655,6 @@ export default function GroundsScreen({
           >
             <X size={14} strokeWidth={2.2} />
           </button>
-        </div>
-      )}
-
-      {circuitShareMsg && (
-        <div
-          className="mono panel pop"
-          style={{
-            position: "absolute",
-            bottom: 96,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 140,
-            padding: "8px 14px",
-            fontSize: 12,
-            pointerEvents: "none",
-          }}
-        >
-          {circuitShareMsg}
         </div>
       )}
 

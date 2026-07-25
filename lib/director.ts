@@ -236,12 +236,15 @@ function hundredDirective(climb: ClimbProgress, name: string | null): Directive 
   };
 }
 
-function recordDirective(name: string | null): Directive {
+function recordDirective(name: string | null, expeditionOpen?: boolean): Directive {
+  const weekly = expeditionOpen
+    ? "This week's expedition is a new sky. Or share a challenge and race a friend."
+    : "Share a challenge and race a friend. When the week turns, a new sky opens.";
   return {
     id: "record",
     kicker: speaker(name),
-    title: "We've seen every sector. Now we go faster.",
-    detail: "The board ranks depth first, then time. Beat our own best.",
+    title: "We've stood at the top. Now we fly cleaner.",
+    detail: `The Hundred is a summit, not a finish line. Chase a cleaner run. ${weekly}`,
     cta: "Fly with me",
     target: "flight",
     spoken: true,
@@ -367,7 +370,7 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
   else if (needsRotate) primary = rotateDirective(name!, form, fatigue);
   else if (s.levelPct >= 0.85) primary = evolveDirective(name!);
   else if (atRankCeiling && nextUnlock) primary = unlockDirective(nextUnlock, ladder.level, name);
-  else if (climb.hundred) primary = recordDirective(name);
+  else if (climb.hundred) primary = recordDirective(name, s.expeditionOpen);
   else if (ladder.maxReaches >= 10 && climb.campsLit >= 10) primary = hundredDirective(climb, name);
   else if (
     unlockReady &&

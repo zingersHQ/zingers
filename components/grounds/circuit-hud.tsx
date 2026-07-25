@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Flag, Rocket, RotateCcw, Share2, Skull, Spar
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { reachThemeByIndex } from "./climb/reaches";
+import { FlightTeachToast } from "./climb/flight-teach-toast";
+import { flightMasteryLine, hundredClearDetail } from "./climb/flight-mastery";
 import { rewardSfx } from "@/lib/sfx";
 import { NextLine } from "@/components/director/next-card";
 import { traitLabel, type WingTraitId } from "@/lib/wing-traits";
@@ -23,6 +25,43 @@ export interface CircuitBoardEntry {
 function rankLabel(e: CircuitBoardEntry): string | null {
   const h = e.handle?.trim();
   return h || null;
+}
+
+/** Corner share control — icon alone was unread; toast lives in the modal. */
+function ShareChallengeBtn({
+  onClick,
+  label,
+}: {
+  onClick: () => void;
+  label?: string;
+}) {
+  const tip = label || "Share challenge";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={tip}
+      aria-label={tip}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        height: 34,
+        padding: "0 10px",
+        borderRadius: 10,
+        border: "1px solid var(--line2)",
+        background: "transparent",
+        color: "var(--muted)",
+        cursor: "pointer",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: 0.4,
+      }}
+    >
+      <Share2 size={14} strokeWidth={2.2} />
+      Share
+    </button>
+  );
 }
 
 function LifePips({ lives, maxLives = CIRCUIT_LIVES, accent }: { lives: number; maxLives?: number; accent: string }) {
@@ -134,6 +173,9 @@ export function CircuitHud({
   onExit,
   onShareChallenge,
   shareChallengeLabel,
+  shareMsg = null,
+  teachMsg = null,
+  clearSnap = null,
   onProve,
   onClaim,
   claimName,
@@ -187,8 +229,17 @@ export function CircuitHud({
   onExit?: () => void;
   /** Share this run as an async Climb challenge (same levels as mobile). */
   onShareChallenge?: () => void;
-  /** Desktop: "Copy challenge link"; mobile: native share wording. */
+  /** Tooltip / aria — e.g. "Copy challenge link" on desktop. */
   shareChallengeLabel?: string;
+  /** Clipboard / share feedback shown inside the outcome modal. */
+  shareMsg?: string | null;
+  /** One-shot Flight teach / gold payout toast. */
+  teachMsg?: string | null;
+  /** FULL CLEAR mastery snapshot (stumbles / gold / lives). */
+  clearSnap?: {
+    mastery: { stumbles: number; goldRings: number; livesLeft: number; maxLives: number };
+    firstHundred: boolean;
+  } | null;
   /** Open in-place altitude Prove (Reach II gate). */
   onProve?: () => void;
   /** Guest Ascent: open champion selection to claim (not auto-claim the loaner). */
@@ -282,6 +333,7 @@ export function CircuitHud({
 
   return (
     <>
+      <FlightTeachToast message={teachMsg} accent={accent} />
       {/* Guests: continue into the game (claim) — not an exit. Owned: leave chrome. */}
       {guestClaim && onClaim && (
         <button
@@ -647,34 +699,25 @@ export function CircuitHud({
         <CircuitModal
           accent={accent}
           icon={<Flag size={28} color={accent} />}
-          kicker="FULL CLEAR"
+          kicker={clearSnap?.firstHundred ? "THE HUNDRED" : "FULL CLEAR"}
           title={`All ${sectorTotal} sectors`}
-          sub={`${formatCircuitMs(runMs)}s total`}
+          sub={hundredClearDetail(!!clearSnap?.firstHundred)}
           headerAction={
             onShareChallenge ? (
-              <button
-                type="button"
-                onClick={onShareChallenge}
-                title={shareChallengeLabel || "Share challenge"}
-                aria-label={shareChallengeLabel || "Share challenge"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  border: "1px solid var(--line2)",
-                  background: "transparent",
-                  color: "var(--muted)",
-                  cursor: "pointer",
-                }}
-              >
-                <Share2 size={15} strokeWidth={2.2} />
-              </button>
+              <ShareChallengeBtn onClick={onShareChallenge} label={shareChallengeLabel} />
             ) : undefined
           }
         >
+          {clearSnap && (
+            <div className="mono" style={{ fontSize: 12, letterSpacing: 0.6, fontWeight: 700, color: accent, marginBottom: 12 }}>
+              {flightMasteryLine(clearSnap.mastery)}
+            </div>
+          )}
+          {shareMsg && (
+            <div className="mono pop" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 700, color: accent, marginBottom: 12 }}>
+              {shareMsg}
+            </div>
+          )}
           {challengeResult && challengeLabel && (
             <div
               className="mono"
@@ -706,7 +749,7 @@ export function CircuitHud({
             </button>
           )}
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <Rocket size={16} strokeWidth={2.2} /> Run again
+            <Rocket size={16} strokeWidth={2.2} /> Fly cleaner
           </button>
           {!guestClaim && onToHub && (
             <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
@@ -731,29 +774,15 @@ export function CircuitHud({
           }
           headerAction={
             onShareChallenge ? (
-              <button
-                type="button"
-                onClick={onShareChallenge}
-                title={shareChallengeLabel || "Share challenge"}
-                aria-label={shareChallengeLabel || "Share challenge"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  border: "1px solid var(--line2)",
-                  background: "transparent",
-                  color: "var(--muted)",
-                  cursor: "pointer",
-                }}
-              >
-                <Share2 size={15} strokeWidth={2.2} />
-              </button>
+              <ShareChallengeBtn onClick={onShareChallenge} label={shareChallengeLabel} />
             ) : undefined
           }
         >
+          {shareMsg && (
+            <div className="mono pop" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 700, color: accent, marginBottom: 12 }}>
+              {shareMsg}
+            </div>
+          )}
           {challengeResult && challengeLabel && (
             <div
               className="mono"
@@ -879,7 +908,7 @@ function CircuitModal({
         {icon && <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{icon}</div>}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>{kicker}</div>
         <div style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>{title}</div>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>{sub}</div>
+        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16, lineHeight: 1.45 }}>{sub}</div>
         {children}
       </div>
     </div>

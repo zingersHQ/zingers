@@ -1,5 +1,11 @@
-// Procedural score presets — one distinct loop per place in the world.
-// Still Web Audio (no shipped files); each mood is chords + melody + texture.
+// Procedural score presets — one distinct theme per place in the world.
+// Still Web Audio (no shipped files). Each mood is harmony + melody pool +
+// motifs arranged in a classical phrase form (AABA / period) so loops breathe
+// instead of cycling three sparse bars forever.
+//
+// Motifs are indices into `melody` (-1 = rest). Forms are motif indices per bar.
+// Inspiration is public-domain craft (hymnody, sequences, modes) — not copies
+// of copyrighted tunes.
 
 export type Mood =
   | "concord"
@@ -28,7 +34,13 @@ export interface ScoreConfig {
   chords: number[][];
   /** Melody pool as MIDI note numbers. */
   melody: number[];
+  /** Eight-step bars; values are indices into `melody`, or -1 rest. */
   motifs: number[][];
+  /**
+   * Phrase form — motif index per bar. Classic AABA / periods so themes return
+   * after contrast instead of 0→1→2→0. Omit to cycle motifs in order.
+   */
+  form?: number[];
   tempo: number;
   /** Cheerful distant birds — open wilds, not hub or void. */
   birds: boolean;
@@ -46,152 +58,218 @@ export interface ScoreConfig {
   shimmer?: number;
 }
 
-// ── Concord — ceremonial hub: sparse gold bells over open fifths ─────────────
+// ── Concord — Seal Hymn: open fifths, plagal breath, processional ───────────
+// Mode: D Dorian feel. Sparse gold bells over a long amen-shaped period.
 const CONCORD_CHORDS = [
-  [50, 57, 62, 69],
-  [45, 52, 57, 64],
-  [47, 54, 59, 66],
-  [43, 50, 55, 62],
+  [50, 57, 62, 69], // D5
+  [53, 60, 65, 72], // F
+  [55, 62, 67, 74], // G
+  [48, 55, 60, 67], // C
+  [50, 57, 62, 69], // D
+  [45, 52, 57, 64], // A
+  [47, 54, 59, 66], // Bb
+  [43, 50, 55, 62], // G
 ];
+// D E F G A Bb C D
+const CONCORD_MELODY = [62, 64, 65, 67, 69, 70, 72, 74];
 
-const CONCORD_MELODY = [62, 66, 69, 71, 74, 66, 69];
-
-// ── Colosseum — violet tribunal home: the original bright grounds loop ───────
+// ── Colosseum — Tribunal fanfare: bright Ionian, rising thirds ──────────────
 const COLOSSEUM_CHORDS = [
-  [60, 64, 67, 72],
-  [62, 67, 71, 74],
-  [60, 64, 69, 72],
-  [60, 65, 69, 72],
+  [60, 64, 67, 72], // C
+  [55, 59, 62, 67], // G
+  [57, 60, 64, 69], // Am
+  [53, 57, 60, 65], // F
+  [60, 64, 67, 72], // C
+  [52, 55, 59, 64], // Em
+  [50, 53, 57, 62], // Dm
+  [55, 59, 62, 67], // G
 ];
+// G A B C D E F G
+const COLOSSEUM_MELODY = [67, 69, 71, 72, 74, 76, 77, 79];
 
-const COLOSSEUM_MELODY = [67, 69, 72, 74, 76, 79, 81, 84];
-
-// ── Ember Wastes — molten pulse, low register, no birds ────────────────────
+// ── Ember Wastes — Phrygian heat: half-step scrape, low pulse ───────────────
 const EMBER_CHORDS = [
-  [52, 55, 59, 64],
-  [50, 53, 57, 62],
-  [47, 50, 55, 59],
-  [45, 48, 52, 57],
+  [52, 55, 59, 64], // Em
+  [53, 56, 60, 65], // F
+  [50, 53, 57, 62], // Dm
+  [47, 50, 55, 59], // G
+  [52, 55, 59, 64], // Em
+  [48, 52, 55, 60], // C
+  [45, 48, 52, 57], // Am
+  [50, 53, 56, 62], // D / F
 ];
+// E F G A Bb C D E
+const EMBER_MELODY = [64, 65, 67, 69, 70, 72, 74, 76];
 
-const EMBER_MELODY = [59, 62, 64, 67, 69, 62, 59];
-
-// ── Void Garden — airy suspended harmony, slow drift ─────────────────────────
+// ── Void Garden — Lydian drift: #4 sparkle, wide suspended leaps ────────────
 const VOID_CHORDS = [
-  [57, 62, 69, 74],
-  [55, 60, 67, 72],
-  [53, 58, 65, 70],
-  [52, 57, 64, 69],
+  [53, 57, 60, 67], // Fmaj7-ish / open
+  [55, 59, 62, 69], // G
+  [57, 60, 64, 71], // Am + B
+  [52, 55, 59, 66], // Em
+  [53, 57, 60, 67], // F
+  [50, 53, 57, 64], // Dm
+  [48, 52, 55, 62], // C
+  [55, 59, 62, 69], // G
 ];
+// F G A B C D E F  (Lydian #4 = B)
+const VOID_MELODY = [65, 67, 69, 71, 72, 74, 76, 77];
 
-const VOID_MELODY = [74, 76, 79, 81, 84, 79, 76];
-
-// ── Amphitheatre — torchlit dusk, restless crowd energy ────────────────────
+// ── Amphitheatre — Mixolydian torch dance ───────────────────────────────────
 const AMP_CHORDS = [
-  [57, 60, 64, 67],
-  [55, 58, 62, 65],
-  [53, 57, 60, 64],
-  [52, 55, 59, 62],
+  [55, 59, 62, 67], // G
+  [53, 57, 60, 65], // F
+  [50, 53, 57, 62], // Dm
+  [48, 52, 55, 60], // C
+  [55, 59, 62, 67], // G
+  [57, 60, 64, 67], // Am
+  [52, 55, 59, 62], // Em
+  [53, 57, 60, 65], // F
 ];
+// G A Bb C D E F G
+const AMP_MELODY = [67, 69, 70, 72, 74, 76, 77, 79];
 
-const AMP_MELODY = [67, 69, 72, 74, 72, 69, 67, 65];
-
-// ── Circuit — driving tunnel run ─────────────────────────────────────────────
+// ── Flight (circuit) — ascending sequences, moto perpetuo climb ─────────────
+// Distinct from battle: hopeful minor with rising sequential phrases.
 const CIRCUIT_CHORDS = [
-  [48, 55, 60, 64],
-  [50, 57, 62, 65],
-  [47, 54, 58, 62],
-  [45, 52, 57, 60],
+  [57, 60, 64, 69], // Am
+  [53, 57, 60, 65], // F
+  [48, 52, 55, 60], // C
+  [55, 59, 62, 67], // G
+  [57, 60, 64, 69], // Am
+  [50, 53, 57, 62], // Dm
+  [52, 55, 59, 64], // Em
+  [57, 60, 64, 69], // Am
 ];
+// A B C D E F G A
+const CIRCUIT_MELODY = [69, 71, 72, 74, 76, 77, 79, 81];
 
-const CIRCUIT_MELODY = [64, 67, 69, 72, 69, 67, 64, 62];
-
-// ── Battle — stakes overlay (unchanged character) ───────────────────────────
+// ── Battle — coiled stakes: chromatic bite, short aggressive calls ──────────
 const BATTLE_CHORDS = [
-  [57, 60, 64, 69],
-  [53, 57, 60, 65],
-  [55, 59, 62, 67],
-  [52, 55, 59, 64],
+  [57, 60, 64, 69], // Am
+  [56, 59, 63, 68], // Ab / tense
+  [53, 57, 60, 65], // F
+  [55, 58, 62, 67], // G / Bb
+  [52, 55, 59, 64], // Em
+  [50, 53, 56, 62], // Dm / F
+  [56, 59, 63, 68], // Ab again
+  [57, 60, 64, 69], // Am
 ];
+// A C Eb E F Ab A C
+const BATTLE_MELODY = [69, 72, 75, 76, 77, 80, 81, 84];
 
-const BATTLE_MELODY = [69, 72, 74, 76, 79, 81, 84, 88];
+/** AABA-style period: statement, statement, contrast, return — then bridge. */
+const FORM_AABA_BRIDGE = [0, 0, 1, 0, 2, 2, 1, 0, 3, 3, 1, 0];
+/** Flight: longer arc before the loop feels like a restart. */
+const FORM_FLIGHT = [0, 0, 1, 0, 2, 2, 1, 0, 3, 3, 4, 1, 0, 2, 1, 0];
+/** Battle: punchier, shorter periods so heat stays urgent. */
+const FORM_BATTLE = [0, 1, 0, 2, 0, 1, 3, 2];
 
 export const SCORES: Record<Mood, ScoreConfig> = {
   concord: {
     chords: CONCORD_CHORDS,
     melody: CONCORD_MELODY,
     motifs: [
-      [2, -1, -1, 4, -1, -1, -1, -1],
-      [0, -1, 2, -1, 4, -1, -1, -1],
-      [4, -1, 2, -1, 0, -1, -1, -1],
+      // A — open rise, hymn breath
+      [0, -1, 2, -1, 4, -1, 3, -1],
+      // B — falling amen / plagal answer
+      [4, 3, 2, 0, 1, -1, 0, -1],
+      // A' — denser processional
+      [0, 2, 3, 4, 3, -1, 7, -1],
+      // C — lift toward the seal, then settle
+      [3, -1, 4, 6, 7, -1, 4, 2],
     ],
-    tempo: 640,
+    form: FORM_AABA_BRIDGE,
+    tempo: 620,
     birds: false,
     pulse: false,
     voiceGain: 0.24,
-    // ceremonial breath — a slow low swell under the bells, and the faintest air
-    pad: { gain: 0.045, cutoff: 850 },
-    shimmer: 0.012,
+    pad: { gain: 0.048, cutoff: 820 },
+    shimmer: 0.011,
+    counter: [-1, -1, 0, -1, -1, 2, -1, -1],
   },
   colosseum: {
     chords: COLOSSEUM_CHORDS,
     melody: COLOSSEUM_MELODY,
     motifs: [
-      [4, -1, 5, -1, 4, -1, 2, -1],
-      [2, -1, 4, 5, -1, -1, 4, -1],
-      [5, -1, 4, -1, 2, -1, 4, -1],
+      // A — bright fanfare thirds
+      [0, 2, 4, -1, 4, 5, 4, 2],
+      // B — answering descent
+      [4, 5, 7, 5, 4, 2, 0, -1],
+      // A' — leap and land
+      [3, 4, 5, 7, 5, 4, 2, 0],
+      // C — tribunal close
+      [7, 5, 4, 2, 4, 3, 0, -1],
     ],
-    tempo: 520,
+    form: FORM_AABA_BRIDGE,
+    tempo: 500,
     birds: true,
     pulse: false,
-    // a low answering phrase on the offbeats keeps the bright loop grounded
+    voiceGain: 0.26,
     counter: [0, -1, -1, 2, -1, -1, 1, -1],
+    shimmer: 0.008,
   },
   ember: {
     chords: EMBER_CHORDS,
     melody: EMBER_MELODY,
     motifs: [
-      [3, -1, 2, -1, 4, -1, 2, -1],
-      [2, 4, -1, 3, -1, 2, -1, -1],
-      [4, -1, 3, 2, -1, -1, 4, -1],
+      // A — Phrygian scrape (E–F)
+      [0, 1, 0, 2, 3, -1, 2, 0],
+      // B — sink into the ash
+      [3, 2, 1, 0, 1, 0, -1, -1],
+      // A' — restless climb
+      [4, 3, 2, 1, 0, 1, 3, -1],
+      // C — forge hammer answer
+      [0, -1, 1, 3, 4, 3, 1, 0],
     ],
-    tempo: 380,
+    form: FORM_AABA_BRIDGE,
+    tempo: 360,
     birds: false,
     pulse: true,
     voiceGain: 0.26,
-    // hot wind over the wastes + a smouldering low reply
-    shimmer: 0.018,
-    counter: [-1, 2, -1, -1, 0, -1, -1, -1],
+    shimmer: 0.02,
+    counter: [-1, 1, -1, -1, 0, -1, 2, -1],
   },
   void: {
     chords: VOID_CHORDS,
     melody: VOID_MELODY,
     motifs: [
-      [3, -1, 5, -1, 4, -1, -1, -1],
-      [5, -1, 4, -1, 3, -1, 6, -1],
-      [4, -1, -1, 5, -1, 3, -1, -1],
+      // A — wide suspended leaps
+      [0, -1, 4, -1, 7, -1, 4, -1],
+      // B — drift down the #4
+      [7, 5, 3, 2, 4, -1, 0, -1],
+      // A' — starlit answer
+      [3, 5, 7, -1, 5, 3, 0, -1],
+      // C — settle into mist
+      [4, -1, 7, 5, 3, 0, -1, -1],
     ],
-    tempo: 580,
+    form: FORM_AABA_BRIDGE,
+    tempo: 560,
     birds: false,
     pulse: false,
     voiceGain: 0.22,
-    // weightless: a wide suspended pad and a constant starlit hiss
-    pad: { gain: 0.055, cutoff: 1200 },
-    shimmer: 0.026,
+    pad: { gain: 0.058, cutoff: 1250 },
+    shimmer: 0.028,
+    counter: [-1, 4, -1, -1, 0, -1, -1, 2],
   },
   amphitheatre: {
     chords: AMP_CHORDS,
     melody: AMP_MELODY,
     motifs: [
-      [2, 4, -1, 3, 2, -1, 4, -1],
-      [4, -1, 2, 3, -1, 4, -1, 2],
-      [3, 2, -1, 4, 3, -1, 2, -1],
+      // A — torchlight step
+      [0, 2, 3, 2, 4, -1, 3, 2],
+      // B — crowd sway
+      [4, 3, 2, 0, 1, 2, 3, -1],
+      // A' — lift over the stands
+      [3, 4, 5, 7, 5, 4, 2, 0],
+      // C — dusk turn
+      [2, 0, 2, 4, 3, 2, 0, -1],
     ],
-    tempo: 420,
+    form: FORM_AABA_BRIDGE,
+    tempo: 400,
     birds: false,
     pulse: true,
     voiceGain: 0.27,
-    // restless crowd energy — a churning arpeggio under the torchlight
     arp: { pattern: [0, 2, 1, 3, 0, 2, 1, 2], gain: 0.014 },
     counter: [3, -1, -1, 1, -1, 2, -1, -1],
   },
@@ -199,32 +277,46 @@ export const SCORES: Record<Mood, ScoreConfig> = {
     chords: CIRCUIT_CHORDS,
     melody: CIRCUIT_MELODY,
     motifs: [
-      [4, 2, -1, 3, 4, -1, 2, 1],
-      [2, -1, 4, 3, 1, -1, 2, -1],
-      [5, 4, -1, 2, 3, -1, 1, 2],
+      // A — ascending sequence (the climb itself)
+      [0, 2, 3, 4, 3, 2, 0, 2],
+      // B — crest and fall
+      [4, 5, 7, 5, 4, 3, 2, 0],
+      // A' — higher sequence
+      [2, 3, 4, 5, 7, 5, 4, 3],
+      // C — summit run
+      [7, 5, 4, 2, 3, 4, 5, 7],
+      // D — resolve home, breath before the next sector
+      [0, 3, 5, 7, 5, 3, 2, 0],
     ],
-    tempo: 260,
+    form: FORM_FLIGHT,
+    tempo: 248,
     birds: false,
     pulse: true,
     voiceGain: 0.3,
-    // tunnel run — a driving straight-eight arpeggio carries the momentum
-    arp: { pattern: [0, 1, 2, 3, 2, 1, 0, 1], gain: 0.018 },
+    arp: { pattern: [0, 1, 2, 3, 2, 1, 0, 1], gain: 0.017 },
+    counter: [-1, 0, -1, 2, -1, 4, -1, 3],
+    shimmer: 0.01,
   },
   battle: {
     chords: BATTLE_CHORDS,
     melody: BATTLE_MELODY,
     motifs: [
-      [4, 2, -1, 3, 4, -1, 2, 1],
-      [2, -1, 4, 3, 1, -1, 2, -1],
-      [5, 4, -1, 2, 3, -1, 1, 2],
+      // A — coiled strike (not the Flight climb)
+      [0, 3, 4, 3, 5, 4, 3, 0],
+      // B — chromatic jab
+      [4, 5, 6, 5, 4, 3, 1, 0],
+      // C — pressure swell
+      [3, 0, 3, 5, 6, -1, 4, 3],
+      // D — verdict lean
+      [6, 5, 4, 3, 1, 0, 3, -1],
     ],
-    tempo: 300,
+    form: FORM_BATTLE,
+    tempo: 290,
     birds: false,
     pulse: true,
     voiceGain: 0.28,
-    // stakes: a coiled arpeggio + a dark pad floor for intensity to open up
-    arp: { pattern: [0, 2, 1, 3, 0, 2, 3, 1], gain: 0.015 },
-    pad: { gain: 0.04, cutoff: 1400 },
+    arp: { pattern: [0, 3, 1, 2, 0, 3, 2, 1], gain: 0.016 },
+    pad: { gain: 0.042, cutoff: 1350 },
   },
 };
 
@@ -257,6 +349,6 @@ export const MOOD_LABELS: Record<Mood, string> = {
   ember: "Ember Wastes",
   void: "Void Garden",
   amphitheatre: "The Amphitheatre",
-  circuit: "The Circuit",
+  circuit: "Flight",
   battle: "Combat",
 };

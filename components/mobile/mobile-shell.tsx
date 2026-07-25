@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Home, Eye, Shield, Rocket, Trophy, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CircuitLite from "@/components/grounds/circuit-lite";
+import { AmbienceEngine } from "@/components/grounds/ambience";
 import MobileToday from "@/components/mobile/mobile-today";
 import MobileWatch from "@/components/mobile/mobile-watch";
 import MobileChampion from "@/components/mobile/mobile-champion";
@@ -180,6 +181,9 @@ export function MobileShell() {
         overscrollBehavior: "none",
       }}
     >
+      {/* Procedural score host — desktop mounts this on Grounds; Climb needs it
+          too or Flight intensity/mood calls are no-ops on the phone. */}
+      <AmbienceEngine />
       {splashGate === "checking" && (
         <div aria-hidden style={{ position: "fixed", inset: 0, zIndex: 1200, background: splashSky }} />
       )}

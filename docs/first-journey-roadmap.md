@@ -91,10 +91,11 @@ how a player plays, while the Chronicle turns on the season clock.
 | `ember` | Ember Gauntlet |
 | `void` | Void Garden |
 | `amphitheatre` | Amphitheatre venue |
-| `circuit` | Circuit venue |
+| `circuit` | Flight (Circuit / Climb) |
 | `battle` | Any live fight or Keeper duel |
 
-Scores live in `lib/ambience-scores.ts`; `grounds-screen` calls `resolveAmbienceMood()`.
+Scores live in `lib/ambience-scores.ts` (modes + AABA-style forms).
+`grounds-screen` calls `resolveAmbienceMood()`; mobile Climb pins `circuit`.
 
 ## Terminology
 

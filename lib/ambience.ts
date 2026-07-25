@@ -1,7 +1,7 @@
-// Procedural ambient soundscape — one synthesised score per place in the world.
+// Procedural ambient soundscape — one synthesised theme per place in the world.
 //
-// Each region / venue has its own chord loop, melody, tempo, and texture
-// (birds, downbeat pulse, arpeggio, pad swell, counter-melody, air bed). Combat
+// Each region / venue has its own harmony, melody pool, tempo, texture, and
+// classical phrase form (AABA / periods via `form` in ambience-scores). Combat
 // morphs into the battle overlay, and a 0..1 intensity knob heats the running
 // score in place — tempo push, brighter tone, denser layers, and past 0.8 a low
 // pedal + heartbeat for the endgame. No audio files — everything is Web Audio,
@@ -49,6 +49,7 @@ export class Ambience {
   private stepTimer: ReturnType<typeof setTimeout> | null = null;
   private birdTimer: ReturnType<typeof setTimeout> | null = null;
   private step = 0;
+  private bar = 0;
   private chordIdx = 0;
   private motifIdx = 0;
   private on = false;
@@ -64,9 +65,10 @@ export class Ambience {
     if (mood === this.mood) return;
     this.mood = mood;
     this.step = 0;
+    this.bar = 0;
     this.chordIdx = 0;
-    this.motifIdx = 0;
     const cfg = SCORES[mood];
+    this.motifIdx = cfg.form?.[0] ?? 0;
     if (this.voice) this.voice.gain.value = cfg.voiceGain ?? 1;
     if (!this.on) return;
     if (this.stepTimer) clearTimeout(this.stepTimer);
@@ -328,8 +330,13 @@ export class Ambience {
     this.step++;
     if (this.step >= 8) {
       this.step = 0;
-      this.chordIdx = (this.chordIdx + 1) % cfg.chords.length;
-      this.motifIdx = (this.motifIdx + 1) % cfg.motifs.length;
+      this.bar++;
+      this.chordIdx = this.bar % cfg.chords.length;
+      const form = cfg.form;
+      this.motifIdx =
+        form && form.length > 0
+          ? form[this.bar % form.length]!
+          : this.bar % cfg.motifs.length;
     }
     const swing = this.step % 2 === 0 ? 1.08 : 0.92;
     // heat pushes the tempo a little — never enough to read as a restart

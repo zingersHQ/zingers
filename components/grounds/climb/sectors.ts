@@ -50,45 +50,96 @@ function makeRng(i: number, seed = ""): () => number {
   return () => ((s = (s * 16807) % 2147483647), s / 2147483647);
 }
 
+/**
+ * Reach salt so Arrival@1 ≠ Arrival@11 ≠ Arrival@21 by amplitude / phase /
+ * which gap bites — role bar stays, choreography doesn't photocopy.
+ */
+function reachFlavor(reach: number, rnd: () => number) {
+  const r = Math.max(0, Math.min(9, reach));
+  // Stable per-Reach bias + tiny per-sector jitter (rnd already sector-seeded).
+  const ampMul = 0.88 + r * 0.028 + rnd() * 0.08;
+  const phase = r * 0.73 + rnd() * 0.35;
+  const dipGate = (1 + (r % 3)) % Math.max(2, 4); // early dip slot drifts by Reach
+  const biteMod = (r + 1) % 3; // which gap gets the pressure "bite"
+  const stagger = 0.15 + (r % 4) * 0.05;
+  return { ampMul, phase, dipGate, biteMod, stagger };
+}
+
 /** Role → raw height delta before anti-ladder enforcement. */
-function gateHeightDelta(role: Role, g: number, d: ReturnType<typeof sectorDifficulty>, rnd: () => number): number {
+function gateHeightDelta(
+  role: Role,
+  g: number,
+  d: ReturnType<typeof sectorDifficulty>,
+  rnd: () => number,
+  flavor: ReturnType<typeof reachFlavor>,
+): number {
   // Amp stays readable but inside flyer-budget once gapSec is applied.
-  const amp = Math.max(d.gateRadius * 1.1, d.vertStep * 1.35);
+  const amp = Math.max(d.gateRadius * 1.1, d.vertStep * 1.35) * flavor.ampMul;
   switch (role) {
-    case "arrival":
-      // short rising staircase — 3 rings, clear steps (not a long ladder)
-      return d.vertStep * (1.05 + rnd() * 0.25);
+    case "arrival": {
+      // short rising staircase — Reach salt on step size; rare mid dip later
+      const step = d.vertStep * (1.05 + rnd() * 0.25) * flavor.ampMul;
+      if (d.reach >= 2 && g === flavor.dipGate && rnd() < 0.35 + d.reach * 0.04) {
+        return -amp * (0.35 + rnd() * 0.15);
+      }
+      return step;
+    }
     case "teach":
-      // mostly up, one early dip so flap timing lands before hazards
-      return g === 1 ? -amp * 0.45 : d.vertStep * (1.0 + rnd() * 0.25);
+      // mostly up; dip gate drifts by Reach so Approach never feels identical
+      return g === flavor.dipGate ? -amp * (0.4 + rnd() * 0.12) : d.vertStep * (1.0 + rnd() * 0.25) * flavor.ampMul;
     case "rhythm":
-      return Math.sin((g + 1) * Math.PI) * amp * (0.85 + rnd() * 0.12);
+      return Math.sin((g + 1) * Math.PI + flavor.phase) * amp * (0.85 + rnd() * 0.12);
     case "combine":
-    case "twist":
-      return (g % 2 === 0 ? 1 : -0.7) * amp * (0.75 + rnd() * 0.25);
+    case "twist": {
+      const a = g % 2 === 0 ? 1 : -0.7;
+      // Reach flips the opening polarity so Weave/Twist alternate feel
+      const pol = d.reach % 2 === 0 ? a : -a;
+      return pol * amp * (0.75 + rnd() * 0.25);
+    }
     case "pressure":
     case "pressure2":
-      return (g % 3 === 1 ? -1.0 : 1) * amp * (0.9 + rnd() * 0.2);
+      // bite slot = every-3rd offset by Reach (not always g%3===1)
+      return (g + flavor.biteMod) % 3 === 1 ? -amp * (0.9 + rnd() * 0.2) : amp * (0.9 + rnd() * 0.2);
     case "vista":
-      return (g % 2 === 0 ? 0.55 : -0.35) * d.vertStep * (0.9 + rnd() * 0.25);
+      return (g % 2 === 0 ? 0.55 : -0.35) * d.vertStep * (0.9 + rnd() * 0.25) * flavor.ampMul;
     case "gauntlet":
-      return Math.sin(g * 1.7 + 0.4) * amp * (1.0 + rnd() * 0.15);
-    case "trial":
-      return (g % 2 === 0 ? 1.0 : -0.8) * amp * (0.95 + rnd() * 0.15);
+      return Math.sin(g * 1.7 + 0.4 + flavor.phase) * amp * (1.0 + rnd() * 0.15);
+    case "trial": {
+      const a = g % 2 === 0 ? 1.0 : -0.8;
+      const pol = d.reach % 2 === 0 ? a : -a * 0.95;
+      return pol * amp * (0.95 + rnd() * 0.15);
+    }
   }
 }
 
-function gapFor(role: Role, g: number, gapMin: number, gapMax: number, rnd: () => number, gates: number): number {
-  if (role === "rhythm") return (gapMin + gapMax) * 0.5;
+function gapFor(
+  role: Role,
+  g: number,
+  gapMin: number,
+  gapMax: number,
+  rnd: () => number,
+  gates: number,
+  flavor: ReturnType<typeof reachFlavor>,
+): number {
+  if (role === "rhythm") {
+    // Equal cadence with a Reach-staggered micro swing so bars don't clone
+    const mid = (gapMin + gapMax) * 0.5;
+    return mid * (1 + ((g + flavor.biteMod) % 2 === 0 ? flavor.stagger * 0.15 : -flavor.stagger * 0.1));
+  }
   if (role === "vista") {
     const mid = Math.floor(gates / 2);
     if (g === mid) return gapMax;
-    return gapMin + (gapMax - gapMin) * 0.25 * rnd();
+    return gapMin + (gapMax - gapMin) * (0.2 + flavor.stagger) * rnd();
   }
   if (role === "pressure" || role === "pressure2" || role === "gauntlet") {
-    return g % 3 === 2 ? gapMax * 0.85 : gapMin + (gapMax - gapMin) * 0.2 * rnd();
+    // Bite gap drifts with Reach so surge rhythm changes altitude-to-altitude
+    return (g + flavor.biteMod) % 3 === 2
+      ? gapMax * (0.8 + flavor.stagger * 0.3)
+      : gapMin + (gapMax - gapMin) * (0.15 + flavor.stagger) * rnd();
   }
-  return gapMin + (gapMax - gapMin) * rnd();
+  // Soft Reach bias on the random band so gap rhythm drifts with altitude
+  const lo = gapMin + (gapMax - gapMin) * flavor.stagger * 0.35;
+  return lo + (gapMax - lo) * rnd();
 }
 
 /**
@@ -127,8 +178,9 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   const d = sectorDifficulty(i);
   const role = roleOf(i);
   const rnd = makeRng(i, seed);
+  const flavor = reachFlavor(d.reach, rnd);
   const [gapMin, gapMax] = d.gapSec;
-  // Arrival's 3-ring staircase may rise twice. Everything else reverses by the
+  // Arrival's short staircase may rise twice. Everything else reverses by the
   // third same-direction step so long diagonals can't form.
   const allowMono = role === "arrival";
   // Readable swing, but never above what a controlled flap can cover in the
@@ -148,10 +200,10 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   let sameDirStreak = 0;
 
   for (let g = 0; g < d.gates; g++) {
-    const gap = gapFor(role, g, gapMin, gapMax, rnd, d.gates);
+    const gap = gapFor(role, g, gapMin, gapMax, rnd, d.gates, flavor);
     z += d.speed * gap + (g === 0 ? 4 : 0);
 
-    const raw = gateHeightDelta(role, g, d, rnd);
+    const raw = gateHeightDelta(role, g, d, rnd, flavor);
     const swung = enforceSwing(raw, minSwing, sameDirStreak, lastSign, allowMono);
     // Hard law: every gate-to-gate ΔY must be flappable in this gap's time.
     const dy = clampDeltaToBudget(swung.dy, gap);

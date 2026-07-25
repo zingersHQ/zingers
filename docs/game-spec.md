@@ -77,14 +77,22 @@ Live sequencing: **[flight-first-plan.md](./flight-first-plan.md)** and
 
 - **Challenges:** race another Trainer's ghost mark; share `/ascent/<id>`; overtake toasts
   when you clear past their tip ([`bible/10-ascent.md`](./bible/10-ascent.md)).
+- **Corridor feel:** 4–8 rings per sector; Reach-flavored layouts; hazards read as
+  danger (not loot); gold rings are the only mid-run reward (+Crowns + toast);
+  one-shot teach for first hazard / gold / Gate Trial.
+- **After the Hundred:** finite summit (not endless). Prestige is cleaner flights,
+  friend challenges, and weekly expeditions. Not a cross-body speedrun pitch
+  (mobile cruise is fixed; desktop surge stays a quiet craft flex on its board).
 - **Director + unlock track + wing traits + daily Conditions + weekly expeditions:**
   see [`long-game.md`](./long-game.md).
 
 ### Ambience
 
 Procedural soundtrack per place (`lib/ambience-scores.ts`): Hub, each region
-biome, Amphitheatre, Flight, and live fights each resolve their own mood via
-`resolveAmbienceMood()`. Loud SFX duck the score through `lib/ambience-bus.ts`.
+biome, Amphitheatre, Flight, and live fights each carry a distinct theme (modes,
+melodic motifs, AABA-style phrase forms) via `resolveAmbienceMood()`. Mobile
+Climb mounts the same engine and pins the Flight score. Loud SFX duck through
+`lib/ambience-bus.ts`.
 
 ## Economy sketch
 

@@ -111,6 +111,14 @@ Same Reaches, same Camps, same Vault below, same champion on your wing. How high
 climbed is a fact about your Trainer that travels with you everywhere; how *fast* you
 flew it is a craft that each device scores on its own terms.
 
+Between gates, sparks and bars that shove you are hazards. They are never prizes.
+The only mid-run treasure is a gold ring pulled off the line. Thread it for Crowns.
+Systems detail: [`climb.md`](../climb.md).
+
+Clearing all one hundred sectors is a summit. After that the climb does not become
+endless. You fly cleaner, race a friend's ghost, or wait for a new weekly sky.
+Speed is not the story. Mobile and desktop keep their own craft boards.
+
 ## Why this matters for play
 
 - **The sky is the spine.** Every region has a Reach above it; every Reach shows you

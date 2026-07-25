@@ -122,7 +122,10 @@ import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
-import { setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
+import { setMood, setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
+import { consumeFlightTeach, goldPayoutLine } from "./climb/flight-teach";
+import { FlightTeachToast } from "./climb/flight-teach-toast";
+import { flightMasteryLine, hundredClearDetail } from "./climb/flight-mastery";
 import { track as pingEvent } from "@/lib/track";
 
 // a leaderboard row as returned by /api/circuit
@@ -620,6 +623,8 @@ export default function CircuitLite({
   /** Last finished run depth/time — for share + challenge links on the fall card. */
   const [lastRun, setLastRun] = useState<{ sectors: number; totalMs: number } | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const [teachMsg, setTeachMsg] = useState<string | null>(null);
+  const teachTimer = useRef<number | null>(null);
   const [challengeResult, setChallengeResult] = useState<ClimbChallengeMark | null>(null);
   const [overtakeToast, setOvertakeToast] = useState(false);
   const samplesRef = useRef<ClimbGhostSample[]>([]);
@@ -771,6 +776,12 @@ export default function CircuitLite({
   const [goldGate, setGoldGate] = useState(-1);
   const [goldGeom, setGoldGeom] = useState<{ idx: number; dy: number } | null>(null);
   const bonusCrowns = useRef(0);
+  const stumbleCountRef = useRef(0);
+  const goldRingsRef = useRef(0);
+  const [clearSnap, setClearSnap] = useState<{
+    mastery: { stumbles: number; goldRings: number; livesLeft: number; maxLives: number };
+    firstHundred: boolean;
+  } | null>(null);
 
   // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
   // Expedition passes a weekly seed so the route differs from the Hundred.
@@ -1155,13 +1166,47 @@ export default function CircuitLite({
     }
   }, [baseTrack, runId]);
 
+  // Flight theme — mobile Climb never hit resolveAmbienceMood; pin the circuit
+  // score for the whole run, then soft-land on Concord when the tab closes.
+  useEffect(() => {
+    setMood("circuit");
+    return () => {
+      setMood("concord");
+      setAmbienceIntensity(0);
+    };
+  }, []);
+
   // music intensity per sector — Silent Sky drops it to a bare drone (§5)
   useEffect(() => {
     setAmbienceIntensity(runMods.ambience ?? modifier?.ambience ?? 0.32);
   }, [sector, modifier, runMods.ambience]);
 
+  const flashTeach = useCallback((msg: string | null, ms = 3400) => {
+    if (!msg) return;
+    setTeachMsg(msg);
+    if (teachTimer.current != null) window.clearTimeout(teachTimer.current);
+    teachTimer.current = window.setTimeout(() => setTeachMsg(null), ms);
+  }, []);
+  useEffect(() => () => {
+    if (teachTimer.current != null) window.clearTimeout(teachTimer.current);
+  }, []);
+
+  // One-shot corridor lessons — Gate Trial exam, first hazards, first gold ring.
+  useEffect(() => {
+    if (phase !== "ready" && phase !== "running") return;
+    if (sector === 9) flashTeach(consumeFlightTeach("gateTrial"), 4200);
+  }, [sector, phase, flashTeach]);
+  useEffect(() => {
+    if (phase !== "ready" && phase !== "running") return;
+    if (hazards.length > 0) flashTeach(consumeFlightTeach("hazard"));
+  }, [sector, hazards.length, phase, flashTeach]);
+  useEffect(() => {
+    if (goldGate >= 0) flashTeach(consumeFlightTeach("gold"));
+  }, [goldGate, flashTeach]);
+
   // a hazard hit: flash the screen edges + duck the score under the thud
   const onStumble = useCallback(() => {
+    stumbleCountRef.current += 1;
     duckAmbience(0.6, 260);
     setStumbleFlash(true);
     if (stumbleTimer.current != null) window.clearTimeout(stumbleTimer.current);
@@ -1224,6 +1269,9 @@ export default function CircuitLite({
     sectorStart.current = 0;
     runStart.current = 0;
     bonusCrowns.current = 0;
+    stumbleCountRef.current = 0;
+    goldRingsRef.current = 0;
+    setClearSnap(null);
     applyWingSession(runModsRef.current, true);
     setGhost(null);
     altitudeProvedRef.current = !needsAltitudeProve(champWins);
@@ -1328,14 +1376,17 @@ export default function CircuitLite({
       setTargetIdx(nextIdx);
       // the ring just threaded is nextIdx-1 — if it was the golden ring, pay out
       if (nextIdx - 1 === goldGate) {
-        bonusCrowns.current += goldRingCrowns(runModsRef.current.goldCrownsMult);
+        const paid = goldRingCrowns(runModsRef.current.goldCrownsMult);
+        bonusCrowns.current += paid;
+        goldRingsRef.current += 1;
         setGoldGate(-1);
         rewardSfx("big");
+        flashTeach(goldPayoutLine(paid), 2200);
       } else {
         rewardSfx("small");
       }
     },
-    [goldGate],
+    [goldGate, flashTeach],
   );
 
   const onSectorClear = useCallback(() => {
@@ -1364,6 +1415,16 @@ export default function CircuitLite({
       if (next >= cap) {
         samplesRef.current = [];
         rewardSfx("epic");
+        const firstHundred = runModeRef.current === "ranked" && !climbHundred;
+        setClearSnap({
+          firstHundred,
+          mastery: {
+            stumbles: stumbleCountRef.current,
+            goldRings: goldRingsRef.current,
+            livesLeft: livesRef.current,
+            maxLives: wingLivesCap.current,
+          },
+        });
         recordRun(cap, true);
         setPhase("done");
         return s;
@@ -1408,7 +1469,7 @@ export default function CircuitLite({
       setPhase("ready");
       return next;
     });
-  }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors, challenge]);
+  }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors, challenge, climbHundred]);
 
   const onFail = useCallback(
     (r: FailReason) => {
@@ -1839,6 +1900,8 @@ export default function CircuitLite({
         <div style={{ position: "absolute", inset: 0, zIndex: 22, pointerEvents: "none", boxShadow: "inset 0 0 90px 12px rgba(255,74,106,.55)", background: "radial-gradient(circle at center, transparent 55%, rgba(255,74,106,.18) 100%)" }} />
       )}
 
+      <FlightTeachToast message={teachMsg} accent={accent} />
+
       {/* Guests: top-right claim (continue). Owned/standalone: leave chrome. */}
       {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && phase !== "ranklock" && (
         <button
@@ -2136,34 +2199,43 @@ export default function CircuitLite({
                 right: 12,
                 display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
-                width: 36,
-                height: 36,
+                gap: 6,
+                height: 34,
+                padding: "0 10px",
                 borderRadius: 10,
                 border: "1px solid rgba(255,255,255,.16)",
                 background: "transparent",
                 color: "var(--muted, #9a96b8)",
                 cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 0.4,
               }}
             >
-              <Share2 size={15} strokeWidth={2.4} />
+              <Share2 size={14} strokeWidth={2.4} />
+              Share
             </button>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: phase === "done" ? accent : "#ff5a5a" }}>
               {phase === "done" ? <Flag size={30} strokeWidth={2.2} /> : <Skull size={30} strokeWidth={2.2} />}
             </div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: phase === "done" ? accent : "#ff5a5a" }}>
-              {phase === "done" ? "FULL CLEAR" : "RUN OVER"}
+              {phase === "done" ? (clearSnap?.firstHundred ? "THE HUNDRED" : "FULL CLEAR") : "RUN OVER"}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", margin: "8px 0 4px" }}>
               {phase === "done" ? `All ${CLIMB_SECTOR_COUNT} sectors` : `${sector} sector${sector === 1 ? "" : "s"} cleared`}
             </div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 14 }}>
+            <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 10, lineHeight: 1.45 }}>
               {phase === "done"
-                ? "you flew the whole climb"
+                ? hundredClearDetail(!!clearSnap?.firstHundred)
                 : failReason === "gates"
                   ? "out of lives. Missed a gate · back to sector 1"
                   : "out of lives · back to sector 1"}
             </div>
+            {phase === "done" && clearSnap && (
+              <div className="mono" style={{ fontSize: 11, letterSpacing: 0.6, color: accent, marginBottom: 14, fontWeight: 700 }}>
+                {flightMasteryLine(clearSnap.mastery)}
+              </div>
+            )}
             {newBest ? (
               <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, padding: "5px 12px", borderRadius: 999, background: accent, color: "#0a0a12", fontWeight: 800, fontSize: 11, letterSpacing: 1 }}>
                 <Trophy size={13} strokeWidth={2.6} /> NEW BEST
@@ -2271,7 +2343,7 @@ export default function CircuitLite({
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
             >
-              <Rocket size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
+              <Rocket size={16} strokeWidth={2.4} /> {phase === "done" ? "Fly cleaner" : "Try again"}
             </button>
             {shareMsg && (
               <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginTop: 10 }}>
