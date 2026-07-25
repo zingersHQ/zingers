@@ -649,7 +649,7 @@ export function getStore(): Store {
     cached = new UpstashStore(new Redis({ url, token }));
   } else {
     if (!warnedMemory) {
-      console.warn("[zingers] No Redis env — using in-memory store (not shared across instances). Provision Upstash to enable the real shared ladder.");
+      console.warn("[zingers] No Redis env — using in-memory store (not shared across instances). Provision Upstash to enable shared standings.");
       warnedMemory = true;
     }
     cached = new MemoryStore();

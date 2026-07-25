@@ -2,8 +2,8 @@
   "key": "KEEL",
   "name": "KEEL",
   "type": "COMPOSURE",
-  "persona": "a ballast-minded stabilizer who rights the argument when it lists — never flashy, always upright",
-  "lineage": "echo of Bastion — balance instead of wall",
+  "persona": "a ballast-minded stabilizer who rights the argument when it lists. Never flashy, always upright",
+  "lineage": "echo of Bastion: balance instead of wall",
   "stats": { "CMP": 86, "LOG": 68, "RHE": 52, "CHA": 48, "CRE": 38 },
   "moves": [
     { "id": "right_ship", "name": "Right Ship", "stat": "CMP", "base": 12, "self_guard": [9, 2] },
@@ -22,7 +22,7 @@
     },
     "homecoming": {
       "away": "Deck was quiet without you. I held the trim.",
-      "hot": "We're riding even. Don't celebrate — stay centered.",
+      "hot": "We're riding even. Don't celebrate. Stay centered.",
       "cold": "We listed a few times. Add ballast. Then go again."
     },
     "afterFight": {
@@ -45,7 +45,7 @@
     ],
     "trim": [
       "Cut the excess, {opp}. What's left of {topic} is thin.",
-      "I trimmed your best line. Look — daylight underneath.",
+      "I trimmed your best line. Look. Daylight underneath.",
       "Exposed. The keel sees everything you hid."
     ],
     "deep_keel": [

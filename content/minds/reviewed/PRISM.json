@@ -3,7 +3,7 @@
   "name": "PRISM",
   "type": "CREATIVITY",
   "persona": "a refractive stylist who splits one weak point into a spectrum of angles until the opponent can't track the color that hurts",
-  "lineage": "echo of Muse — spectrum instead of twist",
+  "lineage": "echo of Muse: spectrum instead of twist",
   "stats": { "CRE": 88, "RHE": 62, "CHA": 55, "LOG": 48, "CMP": 42 },
   "moves": [
     { "id": "split_light", "name": "Split Light", "stat": "CRE", "base": 18 },
@@ -12,12 +12,12 @@
     { "id": "white_out", "name": "White-Out", "stat": "CRE", "base": 28, "requires": "two_cre", "finisher": true }
   ],
   "beats": {
-    "wake": "Oh good — a Trainer with eyes. Let's see what colors this place can take.",
+    "wake": "Oh good. A Trainer with eyes. Let's see what colors this place can take.",
     "imprintAsk": "Bend me once before we climb. One new angle is enough.",
     "flightReact": ["The sky has more bands than you think.", "…full spectrum. I'm up."],
     "greeting": {
       "train": "Show me a new angle. I'll multiply it.",
-      "return": "You're back — the light changed while you were out.",
+      "return": "You're back. The light changed while you were out.",
       "arena": "Find me someone monochrome."
     },
     "homecoming": {
@@ -45,7 +45,7 @@
     ],
     "false_hue": [
       "That wasn't the real color of your point, {opp}.",
-      "Confused yet? Good — {topic} was never that simple.",
+      "Confused yet? Good. {topic} was never that simple.",
       "False hue. {opp} just argued with a reflection."
     ],
     "white_out": [

@@ -3,7 +3,7 @@
   "name": "FABLE",
   "type": "CREATIVITY",
   "persona": "a storyteller who wins by casting the opponent as a character in a tale that already decided how they lose",
-  "lineage": "echo of Muse — narrative instead of reframe",
+  "lineage": "echo of Muse: narrative instead of reframe",
   "stats": { "CRE": 86, "RHE": 70, "CHA": 58, "CMP": 45, "LOG": 42 },
   "moves": [
     { "id": "cast", "name": "Cast", "stat": "CRE", "base": 16, "apply": ["tilted", 1.0] },
@@ -12,7 +12,7 @@
     { "id": "once_upon", "name": "Once Upon", "stat": "CRE", "base": 27, "requires": "two_cre", "finisher": true }
   ],
   "beats": {
-    "wake": "There you are — my co-author. Let's write someone a bad ending.",
+    "wake": "There you are. My co-author. Let's write someone a bad ending.",
     "imprintAsk": "Give me one moral before we climb. I'll weave it in.",
     "flightReact": ["Chapter one: leave the ground.", "…and they flew happily. For now."],
     "greeting": {
@@ -30,7 +30,7 @@
       "loss": "{opp} stole the ending. We draft a sharper one."
     },
     "imprintAck": "Woven into the next tale. I won't forget the moral.",
-    "rankedFinale": "Ranked win — a clean ending the board can quote."
+    "rankedFinale": "Ranked win. A clean ending the board can quote."
   },
   "banter": {
     "cast": [
@@ -40,7 +40,7 @@
     ],
     "moral": [
       "And the moral is: {opp} should have stayed quiet.",
-      "Listen close — this lesson is about {topic} and your ego.",
+      "Listen close. This lesson is about {topic} and your ego.",
       "I'm the chorus, {opp}. You're the example."
     ],
     "twist_ending": [
@@ -51,7 +51,7 @@
     "once_upon": [
       "Once upon a time, {opp} lost. The end.",
       "Finisher fairy tale: {topic} belongs to me.",
-      "Once upon — and {opp} never recovered."
+      "Once upon. And {opp} never recovered."
     ]
   },
   "firstDuel": { "hook": "Casts you as the villain. Writes the ending early.", "originAxis": "flair" },

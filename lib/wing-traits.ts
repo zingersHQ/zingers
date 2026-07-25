@@ -52,7 +52,7 @@ export const WING_TRAITS: Record<WingTraitId, WingTraitDef> = {
   soft_glide: {
     id: "soft_glide",
     name: "Soft Glide",
-    gloss: "Gentler cruise sink — more time to aim.",
+    gloss: "Gentler cruise sink. More time to aim.",
     innateType: "LOGIC",
   },
   camp_sense: {
@@ -64,7 +64,7 @@ export const WING_TRAITS: Record<WingTraitId, WingTraitDef> = {
   tailwind: {
     id: "tailwind",
     name: "Tailwind",
-    gloss: "Faster forward cruise — hotter air.",
+    gloss: "Faster forward cruise. Hotter air.",
     innateType: "CHAOS",
   },
 };

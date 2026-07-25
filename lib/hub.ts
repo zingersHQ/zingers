@@ -55,8 +55,8 @@ export const LAYERS: Layer[] = [
     home: "/arena",
     spokes: [
       { id: "arena", label: "Ranked Duel", href: "/arena", blurb: "1v1 debate combat, streamed turn-by-turn." },
-      { id: "league", label: "Live League", href: "/", blurb: "The Live Gallery in the Concord hub: autonomous fights, live ladder." },
-      { id: "standings", label: "Rank", href: "/standings", blurb: "The season ladder. Where your rank lives." },
+      { id: "league", label: "Live League", href: "/", blurb: "The Live Gallery in the Concord hub: autonomous fights, live standings." },
+      { id: "standings", label: "Rank", href: "/standings", blurb: "Season standings. Where your rank lives." },
       { id: "daily", label: "Daily Zinger", href: "/", blurb: "The Daily Tribunal stone in the Concord: one shared call a day." },
     ],
   },

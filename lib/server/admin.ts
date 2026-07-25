@@ -153,7 +153,7 @@ function buildAlerts(x: AlertInput): Alert[] {
       level: "crit",
       code: "store_memory",
       title: "Database not connected — data is NOT being saved",
-      detail: "The store is on the in-memory fallback; the ladder, wallets and analytics reset on every cold start. Provision Upstash Redis and set KV_REST_API_URL / KV_REST_API_TOKEN.",
+      detail: "The store is on the in-memory fallback; standings, wallets and analytics reset on every cold start. Provision Upstash Redis and set KV_REST_API_URL / KV_REST_API_TOKEN.",
     });
   } else if (!x.ping) {
     out.push({

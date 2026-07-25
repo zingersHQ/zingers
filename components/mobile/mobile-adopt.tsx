@@ -83,7 +83,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
           <Sparkles size={24} strokeWidth={2} style={{ color: "var(--accent)" }} />
           <div style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 4px" }}>Choose your champion</div>
           <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
-            {READER_COPY.claimLine} Pick one to begin — they start green and evolve as you train and call fights.
+            {READER_COPY.claimLine} Pick one to begin. They start green and evolve as you train and call fights.
           </p>
         </div>
 

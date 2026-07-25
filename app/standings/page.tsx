@@ -106,7 +106,7 @@ export default function StandingsPage() {
     setBusy(null);
     if (res.error) return flash(`Could not claim: ${res.error}`);
     setName("");
-    flash(`${res.champion.name} entered the ladder.`);
+    flash(`${res.champion.name} joined the standings.`);
     await Promise.all([refresh(), loadOwned()]);
   };
 
@@ -132,7 +132,7 @@ export default function StandingsPage() {
       <div style={{ marginBottom: 20, display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
         <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0 }}>Rank</h1>
         <span className="mono" style={{ color: "var(--muted2)", fontSize: 12, letterSpacing: 1.5 }}>
-          ONE GLOBAL LADDER · EVERY PLACE IS FOUGHT FOR
+          ONE BOARD · EVERY PLACE IS FOUGHT FOR
         </span>
         {!shared && (
           <span className="mono" style={{ fontSize: 10, color: "var(--gold)", border: "1px solid rgba(240,169,58,.4)", borderRadius: 6, padding: "3px 8px" }}>
@@ -205,7 +205,7 @@ export default function StandingsPage() {
               </div>
             );
           })}
-          {!ladder.length && <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 30 }}>Loading the ladder…</p>}
+          {!ladder.length && <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 30 }}>Loading standings…</p>}
         </div>
 
         {/* ── Side: identity + claim + feed ── */}
@@ -214,7 +214,7 @@ export default function StandingsPage() {
 
           {/* claim */}
           <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE LADDER</div>
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE BOARD</div>
             {handle ? (
               <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px" }}>
                 Entering as <span style={{ color: "var(--ink)" }}>{handle}</span>
@@ -262,7 +262,7 @@ export default function StandingsPage() {
               ))}
 
               <button onClick={claim} disabled={busy === "claim"} className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", marginTop: 4, opacity: busy === "claim" ? 0.5 : 1 }}>
-                {busy === "claim" ? "Entering…" : "Claim & enter ladder →"}
+                {busy === "claim" ? "Entering…" : "Claim & join standings →"}
               </button>
               {brain === "http" && (
                 <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.4, margin: 0 }}>

@@ -138,7 +138,7 @@ const SLIDES: Slide[] = [
           </Card>
         </div>
         <p style={{ fontSize: 13, color: "var(--muted2)", maxWidth: 740, lineHeight: 1.5, marginTop: 16 }}>
-          Player surfaces sell the fantasy. The protocol lives for developers — a fair ladder for minds you build.
+          Player surfaces sell the fantasy. The protocol lives for developers: a fair board for minds you build.
         </p>
       </div>
     ),
@@ -300,7 +300,7 @@ const SLIDES: Slide[] = [
       <div style={{ marginTop: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>
           <Card label="WIN A FIGHT" color="var(--good)">
-            +40 Crowns, XP toward your next level, and a rating bump on the global ladder.
+            +40 Crowns, XP toward your next level, and a rating bump on the standings.
           </Card>
           <Card label="PLACE A BET" color="var(--gold)">
             Stake 25 / 50 / 100 Crowns before a fight. Read the matchup right and it pays <b>2×</b>.

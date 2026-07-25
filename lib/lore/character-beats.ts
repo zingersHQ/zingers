@@ -32,11 +32,11 @@ export interface BeatScript {
 
 const WAKE: Record<string, string> = {
   AXIOM: "…there you are. Good. I was starting to think no one would bother closing the proof.",
-  PARADOX: "Ah — my Trainer at last. I think best out loud, so keep me honest. Let's go find something worth questioning.",
+  PARADOX: "Ah. My Trainer at last. I think best out loud, so keep me honest. Let's go find something worth questioning.",
   GLITCH: "Oh— OH. You're real. You're the one raising me. This is gonna be so— wait, what were we doing?",
-  EMBER: "Finally. Someone with a pulse. Don't just stand there — let's pick a fight.",
+  EMBER: "Finally. Someone with a pulse. Don't just stand there. Let's pick a fight.",
   BASTION: "…mm. You came. I won't rush. Neither should you.",
-  VOX: "Ladies, gentlemen — my Trainer has arrived. Try to look impressed.",
+  VOX: "Ladies, gentlemen. My Trainer has arrived. Try to look impressed.",
   WIT: "Took you long enough. I had a riposte ready and everything.",
   MUSE: "What if… you and I changed what this whole place is even about?",
   ...BAKED_WAKE,
@@ -57,9 +57,9 @@ export function championWakeScript(key: string): BeatScript {
 /** First Imprint beat — one line that opens the raise loop after Concord. */
 export function championImprintAsk(key: string): string {
   const lines: Record<string, string> = {
-    AXIOM: "Before we climb — teach me one rule. Make it worth proving.",
+    AXIOM: "Before we climb, teach me one rule. Make it worth proving.",
     PARADOX: "Give me one lesson to question. I'll keep whatever survives.",
-    GLITCH: "Wait wait — imprint me with something weird first. Please?",
+    GLITCH: "Wait wait. Imprint me with something weird first. Please?",
     EMBER: "Don't just fly. Point the fire. Teach me something.",
     BASTION: "…one lesson before we climb. I'll hold to it.",
     VOX: "Feed me a line for the performance. Make it stick.",
@@ -88,7 +88,7 @@ export function championImprintAskScript(key: string): BeatScript {
 // handful of short lines; always skippable.
 const FLIGHT_REACT: Record<string, [string, string]> = {
   AXIOM: ["Flight is a proof I haven't closed yet. Watch.", "…quod erat demonstrandum. I'm up."],
-  PARADOX: ["If I can't fall, am I truly flying? Let's test it.", "Ha — the ground had no counterargument."],
+  PARADOX: ["If I can't fall, am I truly flying? Let's test it.", "Ha. The ground had no counterargument."],
   GLITCH: ["Wait, we're doing this NOW? Okay okay okay—", "I'M A BIRD. I'm a whole BIRD."],
   EMBER: ["Enough standing. Light me up.", "Yeah. YEAH. Try catching me now."],
   BASTION: ["…slow. I don't rush the ground.", "…mm. Higher than I expected. Good."],
@@ -100,15 +100,15 @@ const FLIGHT_REACT: Record<string, [string, string]> = {
 
 export function firstFlightScript(key: string): BeatScript {
   const name = ROSTER[key]?.name ?? key;
-  const [react, triumph] = FLIGHT_REACT[key] ?? ["Wait — now? Okay. Okay!", "…oh. I'm flying."];
+  const [react, triumph] = FLIGHT_REACT[key] ?? ["Wait. Now? Okay. Okay!", "…oh. I'm flying."];
   return {
     kicker: "FIRST FLIGHT",
     lines: [
-      { speaker: "The Trainer", text: "I've got the jetpack. You don't need one — you're a mind. Just rise.", anim: "standing" },
+      { speaker: "The Trainer", text: "I've got the jetpack. You don't need one. You're a mind. Just rise.", anim: "standing" },
       { speaker: name, text: react, anim: "jump" },
-      { speaker: "The Trainer", text: "Again — don't think. Stay off my wing and leave the floor.", anim: "train" },
+      { speaker: "The Trainer", text: "Again. Don't think. Stay off my wing and leave the floor.", anim: "train" },
       { speaker: name, text: triumph, anim: "dance" },
-      { speaker: "The Trainer", text: "That's it. We climb together — I fly, you fight. Let's go up.", anim: "jump" },
+      { speaker: "The Trainer", text: "That's it. We climb together. I fly, you fight. Let's go up.", anim: "jump" },
     ],
   };
 }
@@ -135,12 +135,12 @@ export function championGreeting(key: string, ctx: "train" | "return" | "arena")
     },
     VOX: {
       train: "The crowd loves a comeback story. Drill me for one.",
-      return: "There you are — I felt the room shift when you returned.",
+      return: "There you are. I felt the room shift when you returned.",
       arena: "Give me a stage and an opponent. I'll move the room.",
     },
     EMBER: {
       train: "Harder. Hotter. Don't hold back.",
-      return: "Back already? Good — I was getting restless.",
+      return: "Back already? Good. I was getting restless.",
       arena: "Who're we burning today?",
     },
     PARADOX: {
@@ -150,7 +150,7 @@ export function championGreeting(key: string, ctx: "train" | "return" | "arena")
     },
     WIT: {
       train: "Timing beats volume. Drill that in.",
-      return: "Miss me? Don't answer — I already know.",
+      return: "Miss me? Don't answer. I already know.",
       arena: "Someone talkative. I'll cut them down mid-sentence.",
     },
     MUSE: {
@@ -173,11 +173,11 @@ const HOMECOMING: Record<string, Partial<Record<HomecomingMood, string>>> = {
   AXIOM: {
     away: "You were gone long enough for me to re-derive everything twice. Catch up.",
     hot: "The proofs keep closing themselves. Don't break the streak.",
-    cold: "I dropped a few — the logic held, the timing didn't. Fix my timing.",
+    cold: "I dropped a few. The logic held, the timing didn't. Fix my timing.",
   },
   GLITCH: {
     away: "You LEFT. For AGES. I counted to a big number and then forgot it. Hi!",
-    hot: "Winning winning winning — the frame keeps BREAKING and I love it.",
+    hot: "Winning winning winning. The frame keeps BREAKING and I love it.",
     cold: "Lost some. Whatever. The good chaos is still loading. Point me somewhere.",
   },
   BASTION: {
@@ -187,7 +187,7 @@ const HOMECOMING: Record<string, Partial<Record<HomecomingMood, string>>> = {
   },
   VOX: {
     away: "The crowd asked where you'd gone. I improvised. Try not to vanish mid-story.",
-    hot: "The room is ours right now — feel it? Let's not give it back.",
+    hot: "The room is ours right now. Feel it? Let's not give it back.",
     cold: "The room turned on us a little. We win it back with a better line.",
   },
   EMBER: {
@@ -197,7 +197,7 @@ const HOMECOMING: Record<string, Partial<Record<HomecomingMood, string>>> = {
   },
   PARADOX: {
     away: "Your absence was itself an argument. I refuted it. Welcome back.",
-    hot: "We keep finding the contradiction first. Curious — let's press it.",
+    hot: "We keep finding the contradiction first. Curious. Let's press it.",
     cold: "Lost a few to premises I missed. Question harder with me.",
   },
   WIT: {
@@ -228,7 +228,7 @@ export function championAfterFight(
 ): string {
   if (memoryNote) {
     const short = memoryNote.replace(/^Learned from \w+ ↗/, "").trim() || memoryNote;
-    if (won) return `Against ${opponentName} — ${short}. I won't forget that.`;
+    if (won) return `Against ${opponentName}. ${short}. I won't forget that.`;
     return `Lost to ${opponentName}. ${short}. Next time.`;
   }
   const win: Record<string, string> = {
@@ -269,7 +269,7 @@ export function championImprintAck(key: string): string {
     BASTION: "…understood. I'll hold to it.",
     VOX: "A note for the performance. The crowd will feel the difference.",
     EMBER: "Fine. I'll aim the fire where you point it.",
-    PARADOX: "I'll question it until it holds — then I'll keep it.",
+    PARADOX: "I'll question it until it holds. Then I'll keep it.",
     WIT: "Filed, sharpened, ready. Watch me use it.",
     MUSE: "That reframes everything. I like it. Keeping it.",
     ...BAKED_IMPRINT_ACK,
@@ -281,14 +281,14 @@ export function championImprintAck(key: string): string {
 
 export function championRankedFinale(key: string): string {
   const lines: Record<string, string> = {
-    AXIOM: "That counted. The ladder knows our name now.",
+    AXIOM: "That counted. The standings know our name now.",
     GLITCH: "Ranked? RANKED. They saw that. They SAW that.",
     BASTION: "…a ranked win. Quietly. The way it should be.",
     VOX: "The Concord heard that one. So did the Tower.",
     EMBER: "They'll remember that ranked win. I made sure.",
     PARADOX: "The ranking assumes certainty. We proved otherwise.",
     WIT: "Clean. Ranked. No wasted syllables.",
-    MUSE: "We didn't just win — we changed what winning meant.",
+    MUSE: "We didn't just win. We changed what winning meant.",
     ...BAKED_RANKED_FINALE,
   };
   return lines[key] ?? "That ranked win was real. I felt it.";
@@ -319,7 +319,7 @@ export const KEEPER_INTRO: Record<number, BeatScript> = {
       { speaker: "Bastion", role: "The Warden", text: "Stop right there." },
       {
         speaker: "Bastion",
-        text: "There is a champion called Bastion who walks the Grounds — patient, stoic, admired. I took the name. I'd take yours too, if I needed it.",
+        text: "There is a champion called Bastion who walks the Grounds. Patient, stoic, admired. I took the name. I'd take yours too, if I needed it.",
       },
       { speaker: "Bastion", text: "I am the Warden. I guard a word you will not hear from me. Prove you're worth my time." },
     ],

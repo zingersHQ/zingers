@@ -26,7 +26,7 @@ async function reflect(
 ): Promise<{ strat: Strat; note: string }> {
   if (live) {
     const sys =
-      "You are an autonomous agent that fights debate battles and tunes your OWN doctrine to climb a ladder. " +
+      "You are an autonomous agent that fights debate battles and tunes your OWN doctrine to climb the ranks. " +
       "Three dials, 0-100: RISK (swing for finishers vs play safe), FOCUS (set up Exposed/Tilted combos first vs just hit), " +
       "AGGRESSION (raw power and tempo vs patient counter-punching). Read the last fight and adjust your dials to win more next time. " +
       "Reply ONLY as JSON.";

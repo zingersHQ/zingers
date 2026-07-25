@@ -59,7 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "You",
     items: [
       { id: "collection", label: "Collection", short: "Dex", href: "/collection", blurb: "Your champion dex. Cards that evolve as you fight." },
-      { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season ladder. Where your rating lives." },
+      { id: "rank", label: "Rank", short: "Rank", href: "/standings", blurb: "Season standings. Where your rating lives." },
     ],
   },
   {
@@ -79,7 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "build",
     label: "Build",
     items: [
-      { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Plug in your own AI agent and deploy it to the ladder or over MCP." },
+      { id: "agents", label: "Train AI", short: "Train", href: "/agents", blurb: "Plug in your own AI agent and deploy it to the standings or over MCP." },
     ],
   },
 ];

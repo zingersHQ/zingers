@@ -96,7 +96,7 @@ export function scarsFrom(champ: Champion, events: CareerEvent[] | undefined): S
     out.push({
       id: "split_lip",
       name: "Split Lip",
-      gloss: "Three losses in a row left a mark — hazards shove harder.",
+      gloss: "Three losses in a row left a mark. Hazards shove harder.",
     });
   }
   if (champ.losses >= 15 && champ.wins < champ.losses) {
@@ -110,7 +110,7 @@ export function scarsFrom(champ: Champion, events: CareerEvent[] | undefined): S
     out.push({
       id: "vault_callus",
       name: "Vault Callus",
-      gloss: "Scarred into toughness — one extra beat of stumble grace.",
+      gloss: "Scarred into toughness. One extra beat of stumble grace.",
     });
   }
   // At most two scars surface so the readout stays legible.

@@ -1,18 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// The Director — "what should I do now?" (docs/long-game.md §6, Stage 0–4).
+// The Director — "what should we do now?" (docs/long-game.md §6).
 //
-// Zingers ships far more content than a player ever perceives: camps, chests,
-// imprints, the daily, the board. None of it announces itself, so the game reads
-// as finished the moment the first fight ends. The Director indexes what already
-// exists and names ONE next thing, plus at most two smaller ones — never a menu.
-//
-// Stage 1: the Unlock Ladder is the spine — when the sky or a named door is
-// closed, the Director points at the rank that opens it.
-// Stage 4: cold/spent form rotates the stable; retire-eligible and rival Face
-// surface as smaller asks.
-//
-// Pure and framework-free so both bodies (mobile Climb, desktop Circuit) and any
-// future surface read the same answer. State comes in; copy goes out.
+// Brain: pure function over save state. One primary ask + ≤2 smaller ones.
+// Mouth: the champion speaks. Kickers are their name, never a quest sign (NEXT).
+// Copy rules: docs/vocabulary.md — first person we/us, warm and direct, no em dash.
 // ─────────────────────────────────────────────────────────────────────────────
 import { CLIMB_SECTOR_COUNT, REACH_SIZE } from "@/components/grounds/climb/difficulty";
 import { reachThemeByIndex } from "@/components/grounds/climb/reaches";
@@ -38,15 +29,17 @@ export interface DirectiveProgress {
 
 export interface Directive {
   id: string;
-  /** Small label above the line, e.g. NEXT / TODAY. */
+  /** Speaker label: champion name, or a soft invite when none yet. */
   kicker: string;
-  /** The one line. Imperative or a named destination — never a question. */
+  /** What they say. Warm, direct, first person when a champion is owned. */
   title: string;
-  /** One supporting line: the number, the reward, the reason. */
+  /** One supporting beat. Numbers and rewards live here when needed. */
   detail: string;
   cta: string;
   target: DirectiveTarget;
   progress?: DirectiveProgress;
+  /** True when the line is in the champion's voice (quote UI). */
+  spoken?: boolean;
 }
 
 export interface DirectorPlan {
@@ -84,7 +77,7 @@ export interface DirectorSnapshot {
   rivalName?: string | null;
   /** True when the feud is fresh, behind, or a new chapter. */
   rivalDue?: boolean;
-  /** Stage 5 — weekly Expedition unlocked (camp or depth). */
+  /** Weekly Expedition unlocked (camp or depth). */
   expeditionOpen?: boolean;
 }
 
@@ -102,6 +95,10 @@ function campSector(n: number): number {
 
 const plural = (n: number, one: string, many = `${one}s`) => (n === 1 ? one : many);
 
+function speaker(name: string | null): string {
+  return (name ?? "Your champion").toUpperCase();
+}
+
 function targetForUnlock(kind: UnlockKind): DirectiveTarget {
   if (kind === "recruit") return "collection";
   if (kind === "region" || kind === "mode") return "hub";
@@ -111,42 +108,45 @@ function targetForUnlock(kind: UnlockKind): DirectiveTarget {
 function ctaForUnlock(kind: UnlockKind): string {
   if (kind === "recruit") return "Open collection";
   if (kind === "region" || kind === "mode") return "Go to the Hub";
-  if (kind === "scout") return "Fly";
-  return "Earn rank";
+  if (kind === "scout") return "Fly with me";
+  return "Let's earn rank";
 }
 
-// ── the primary rules, highest urgency first ─────────────────────────────────
+// ── primary asks (champion voice when owned) ─────────────────────────────────
 
 function claimDirective(): Directive {
   return {
     id: "claim",
-    kicker: "NEXT",
-    title: "Keep the mind that flew with you",
-    detail: "Claim a champion and your runs start counting — XP, Crowns, and a place on the board.",
+    kicker: "A WILD MIND",
+    title: "Don't leave me in the sky.",
+    detail: "Claim me and our runs start counting. XP, Crowns, a place on the board.",
     cta: "Choose your champion",
     target: "claim",
+    spoken: true,
   };
 }
 
-function firstFlightDirective(): Directive {
+function firstFlightDirective(name: string | null): Directive {
   return {
     id: "first-flight",
-    kicker: "NEXT",
-    title: "Take your first flight",
-    detail: "Hold to rise, release to fall, thread the rings. How high you get is the score.",
-    cta: "Fly",
+    kicker: speaker(name),
+    title: "Come on. First flight. Just us and the rings.",
+    detail: "Hold to rise, release to fall. How high we get is the score.",
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
   };
 }
 
 function evolveDirective(name: string): Directive {
   return {
     id: "evolve",
-    kicker: "NEXT",
-    title: `${name} is one win from the next level`,
-    detail: "Take a fight or train once to cross it — the body changes with the record.",
+    kicker: speaker(name),
+    title: "I'm almost there. One more win and I change.",
+    detail: "A fight or a train. The body grows with the record.",
     cta: "Open your champion",
     target: "champion",
+    spoken: true,
   };
 }
 
@@ -155,151 +155,176 @@ function rotateDirective(name: string, form: FormBand, fatigue: 0 | 1 | 2): Dire
   const broken = form === "broken";
   return {
     id: "rotate",
-    kicker: "NEXT",
-    title: spent || broken ? `Rest ${name} — field another mind` : `${name} is cold — rotate the stable`,
+    kicker: speaker(name),
+    title: spent || broken
+      ? "I'm spent. Field someone fresh. I'll still be here."
+      : "I'm cold today. Let another mind take the sky for a bit.",
     detail: spent
-      ? "Spent wings: Flight lives and cruise sink. Switch champions or seal them in the Long Vault."
+      ? "Tired wings mean fewer lives and a heavier fall. Rest me, or seal me when you're ready."
       : broken
-        ? "A losing streak is dragging Flight. A fresher mind flies cleaner."
-        : "Cold form slows the climb. Train lightly, or let another champion take the sky.",
+        ? "The losses are in my bones. A fresher mind flies cleaner right now."
+        : "Cold form slows the climb. A light train, or a swap, and we come back stronger.",
     cta: "Open collection",
     target: "collection",
+    spoken: true,
   };
 }
 
-function unlockDirective(u: UnlockDef, level: number): Directive {
+function unlockDirective(u: UnlockDef, level: number, name: string | null): Directive {
   const ready = level >= u.minLevel;
+  const who = speaker(name);
+  if (ready) {
+    return {
+      id: `unlock-${u.id}`,
+      kicker: who,
+      title: `Hey. ${u.name} is open. Let's go see it.`,
+      detail: unlockNeedLine(u, level),
+      cta: ctaForUnlock(u.kind),
+      target: targetForUnlock(u.kind),
+      spoken: true,
+    };
+  }
   return {
     id: `unlock-${u.id}`,
-    kicker: ready ? "UNLOCKED" : "NEXT",
-    title: ready ? `Open ${u.name}` : `Unlock ${u.name}`,
+    kicker: who,
+    title: `I want ${u.name}. We unlock it together.`,
     detail: unlockNeedLine(u, level),
-    cta: ready ? ctaForUnlock(u.kind) : "Fly · fight · teach",
-    target: ready ? targetForUnlock(u.kind) : "flight",
-    progress: ready
-      ? undefined
-      : { at: Math.max(0, level), of: u.minLevel, unit: "rank" },
+    cta: "Fly · fight · teach",
+    target: "flight",
+    spoken: true,
+    progress: { at: Math.max(0, level), of: u.minLevel, unit: "rank" },
   };
 }
 
-function campDirective(climb: ClimbProgress, maxReaches: number): Directive {
+function campDirective(climb: ClimbProgress, maxReaches: number, name: string | null): Directive {
   const camp = Math.min(climb.campsLit + 1, maxReaches);
   const target = campSector(camp);
   const from = campSector(camp - 1);
   const need = Math.max(1, target - climb.bestSectors);
   const theme = reachThemeByIndex(Math.max(0, camp - 1));
+  const crowns = firstLightChestCrowns(camp);
   return {
     id: `camp-${camp}`,
-    kicker: "NEXT",
-    title: `Reach ${theme.roman} — ${theme.name}`,
-    detail: `${need} ${plural(need, "sector")} higher lights Camp ${camp}: a one-time ${firstLightChestCrowns(camp)} Crown chest.`,
-    cta: "Fly",
+    kicker: speaker(name),
+    title: `Stay with me. ${need} more ${plural(need, "stretch")} of sky and we light the next camp.`,
+    detail: `That's Camp ${camp}, into ${theme.name}. First time there, a ${crowns} Crown chest is waiting.`,
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
     progress: { at: Math.max(0, climb.bestSectors - from), of: Math.max(1, target - from), unit: "sectors" },
   };
 }
 
-function hundredDirective(climb: ClimbProgress): Directive {
+function hundredDirective(climb: ClimbProgress, name: string | null): Directive {
   const need = Math.max(1, CLIMB_SECTOR_COUNT - climb.bestSectors);
   return {
     id: "hundred",
-    kicker: "NEXT",
-    title: "Finish the Hundred",
-    detail: `${need} ${plural(need, "sector")} from the top of the sky · ${HUNDRED_CHEST_CROWNS} Crown purse, once.`,
-    cta: "Fly",
+    kicker: speaker(name),
+    title: "The top of the sky. Stay with me all the way.",
+    detail: `${need} ${plural(need, "sector")} left. Finish once and there's a ${HUNDRED_CHEST_CROWNS} Crown purse for us.`,
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
     progress: { at: climb.bestSectors, of: CLIMB_SECTOR_COUNT, unit: "sectors" },
   };
 }
 
-function recordDirective(): Directive {
+function recordDirective(name: string | null): Directive {
   return {
     id: "record",
-    kicker: "NEXT",
-    title: "Beat your own record",
-    detail: "Every sector is behind you. The board ranks depth first, then time — so now go faster.",
-    cta: "Fly",
+    kicker: speaker(name),
+    title: "We've seen every sector. Now we go faster.",
+    detail: "The board ranks depth first, then time. Beat our own best.",
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
   };
 }
 
-// ── the smaller asks ─────────────────────────────────────────────────────────
+// ── smaller asks ─────────────────────────────────────────────────────────────
 
-function dailyDirective(streak: number): Directive {
+function dailyDirective(streak: number, name: string | null): Directive {
   return {
     id: "daily",
-    kicker: "TODAY",
-    title: "Today's fight",
-    detail: streak > 0 ? `Call the winner · ${streak}-day streak on the line` : "Two minds argue. Call the winner.",
+    kicker: speaker(name),
+    title: streak > 0
+      ? `Today's fight is up. Our ${streak}-day streak is on the line.`
+      : "Today's fight is up. Call the winner with me.",
+    detail: "Same fight for every Trainer. One call.",
     cta: "Call it",
     target: "daily",
+    spoken: true,
   };
 }
 
 function imprintDirective(name: string): Directive {
   return {
     id: "imprint",
-    kicker: "TODAY",
-    title: `Teach ${name} something`,
-    detail: "A fresh lesson is waiting. What it learns changes how it fights — and how you fly.",
-    cta: "Teach",
+    kicker: speaker(name),
+    title: "Teach me something before we climb.",
+    detail: "A fresh lesson is waiting. What I learn changes how I fight, and how we fly.",
+    cta: "Teach me",
     target: "champion",
+    spoken: true,
   };
 }
 
-function skyDirective(c: RunCondition): Directive {
+function skyDirective(c: RunCondition, name: string | null): Directive {
   return {
     id: `sky-${c.id}`,
-    kicker: "TODAY",
-    title: `Sky: ${c.name}`,
-    detail: c.gloss,
-    cta: "Fly",
+    kicker: speaker(name),
+    title: `Feel that? Today's sky is ${c.name}.`,
+    detail: c.gloss.replace(/\s*—\s*/g, ". ").replace(/\.\./g, "."),
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
   };
 }
 
 function retireDirective(name: string): Directive {
   return {
     id: "retire",
-    kicker: "LEGACY",
-    title: `Seal ${name} in the Long Vault`,
-    detail: "Retirement leaves an heirloom wing for the next mind you claim — and a legend on the House ladder.",
+    kicker: speaker(name),
+    title: "If you're ready, seal me in the Long Vault.",
+    detail: "I'll leave an heirloom wing for the next mind you claim, and a legend on the House standings.",
     cta: "Open your champion",
     target: "champion",
+    spoken: true,
   };
 }
 
-function rivalDirective(name: string): Directive {
+function rivalDirective(rivalName: string, name: string | null): Directive {
   return {
     id: "rival",
-    kicker: "FEUD",
-    title: `Face ${name}`,
-    detail: "A Rival Trainer is waiting in the Concord. Head-to-head that escalates with every chapter.",
+    kicker: speaker(name),
+    title: `${rivalName} is waiting. Face them with me.`,
+    detail: "A Rival Trainer in the Hub. Head to head, chapter after chapter.",
     cta: "Go to the Hub",
     target: "hub",
+    spoken: true,
   };
 }
 
-function expeditionDirective(): Directive {
+function expeditionDirective(name: string | null): Directive {
   const exp = thisWeekExpedition();
   return {
     id: `expedition-${exp.weekId}`,
-    kicker: "WEEK",
-    title: `Expedition: ${exp.name}`,
-    detail: exp.gloss,
-    cta: "Fly",
+    kicker: speaker(name),
+    title: `This week's route is ${exp.name}. Fly it with me.`,
+    detail: exp.gloss.replace(/\s*—\s*/g, ". ").replace(/\s*·\s*/g, ". "),
+    cta: "Fly with me",
     target: "flight",
+    spoken: true,
   };
 }
 
 /**
- * The whole point: one next thing, always true, derived from state the game
- * already keeps. Never returns null — a Trainer with nothing left still gets
- * "beat your own record".
+ * One next thing, always true. Never returns null. When a champion is owned,
+ * they speak. Guests hear a wild mind inviting claim.
  */
 export function nextObjective(s: DirectorSnapshot): DirectorPlan {
   const { climb } = s;
-  const name = s.championName ?? "your champion";
+  const name = s.championName;
   const form = s.form ?? "steady";
   const fatigue = s.fatigue ?? 0;
   const ladder = evaluateLadder({
@@ -330,57 +355,62 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
 
   let primary: Directive;
   if (!s.owned) primary = claimDirective();
-  else if (climb.bestSectors <= 0) primary = firstFlightDirective();
-  else if (needsRotate) primary = rotateDirective(name, form, fatigue);
-  else if (s.levelPct >= 0.85) primary = evolveDirective(name);
-  else if (atRankCeiling && nextUnlock) primary = unlockDirective(nextUnlock, ladder.level);
-  else if (climb.hundred) primary = recordDirective();
-  else if (ladder.maxReaches >= 10 && climb.campsLit >= 10) primary = hundredDirective(climb);
+  else if (climb.bestSectors <= 0) primary = firstFlightDirective(name);
+  else if (needsRotate) primary = rotateDirective(name!, form, fatigue);
+  else if (s.levelPct >= 0.85) primary = evolveDirective(name!);
+  else if (atRankCeiling && nextUnlock) primary = unlockDirective(nextUnlock, ladder.level, name);
+  else if (climb.hundred) primary = recordDirective(name);
+  else if (ladder.maxReaches >= 10 && climb.campsLit >= 10) primary = hundredDirective(climb, name);
   else if (
     unlockReady &&
     nextUnlock &&
     nextUnlock.kind !== "reach_block" &&
-    // Don't yank them off an active camp push inside open sky.
     (ladder.level >= nextUnlock.minLevel || climb.bestSectors >= ladder.lockSector - REACH_SIZE)
   ) {
-    primary = unlockDirective(nextUnlock, ladder.level);
+    primary = unlockDirective(nextUnlock, ladder.level, name);
   } else if (climb.campsLit >= ladder.maxReaches && ladder.maxReaches < 10 && nextUnlock) {
-    // Filled every open camp — point at the rank that widens the sky.
-    primary = unlockDirective(nextUnlock, ladder.level);
+    primary = unlockDirective(nextUnlock, ladder.level, name);
   } else {
-    primary = campDirective(climb, ladder.maxReaches);
+    primary = campDirective(climb, ladder.maxReaches, name);
   }
 
   const also: Directive[] = [];
-  if (!s.dailyDone) also.push(dailyDirective(s.dailyStreak));
-  if (s.owned && s.imprintReady && primary.id !== "evolve" && primary.id !== "rotate") {
-    also.push(imprintDirective(name));
+  if (!s.dailyDone && s.owned) also.push(dailyDirective(s.dailyStreak, name));
+  else if (!s.dailyDone) {
+    also.push({
+      id: "daily",
+      kicker: "TODAY",
+      title: "Today's fight is waiting.",
+      detail: "Two minds argue. Call the winner.",
+      cta: "Call it",
+      target: "daily",
+      spoken: false,
+    });
   }
-  // Surface the next named door as a smaller ask when primary is a camp push.
+  if (s.owned && s.imprintReady && primary.id !== "evolve" && primary.id !== "rotate") {
+    also.push(imprintDirective(name!));
+  }
   if (
     nextUnlock &&
     !primary.id.startsWith("unlock-") &&
     also.length < 2 &&
     (nextUnlock.kind === "reach_block" || ladder.level >= nextUnlock.minLevel - 1)
   ) {
-    also.push(unlockDirective(nextUnlock, ladder.level));
+    also.push(unlockDirective(nextUnlock, ladder.level, name));
   }
-  // Today's ranked Flight weather — one more reason the sky feels different.
   const sky = dailyFlightCondition();
   if (s.owned && sky.id !== "clear" && also.length < 2 && !primary.id.startsWith("sky-")) {
-    also.push(skyDirective(sky));
+    also.push(skyDirective(sky, name));
   }
-  // Weekly Expedition — shared seeded route + board (Stage 5).
   if (s.owned && s.expeditionOpen && also.length < 2 && !primary.id.startsWith("expedition-")) {
-    also.push(expeditionDirective());
+    also.push(expeditionDirective(name));
   }
-  if (s.canRetire && also.length < 2 && primary.id !== "retire") {
-    also.push(retireDirective(name));
+  if (s.canRetire && s.owned && also.length < 2 && primary.id !== "retire") {
+    also.push(retireDirective(name!));
   }
   if (s.rivalDue && s.rivalName && also.length < 2 && primary.id !== "rival") {
-    also.push(rivalDirective(s.rivalName));
+    also.push(rivalDirective(s.rivalName, name));
   }
-  // Solo roster that's spent/broken — still nudge rotate as also when primary stayed flight.
   if (
     s.owned &&
     !needsRotate &&
@@ -388,7 +418,7 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
     also.length < 2 &&
     primary.id !== "rotate"
   ) {
-    also.push(rotateDirective(name, form, fatigue));
+    also.push(rotateDirective(name!, form, fatigue));
   }
 
   return { primary, also: also.slice(0, 2) };

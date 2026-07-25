@@ -57,8 +57,8 @@ production env vars locally. Preview build without releasing: `npx vercel`.
 | `/` · `/grounds` | 3D world — fly, raise, fight. Concord hub: Force war, Daily Tribunal, Amphitheatre (Live Gallery), The Circuit (100-sector Ascent), Keepers. Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
 | `/m` | Mobile shell — Take flight → Climb (one-thumb Ascent), then Champion / Rank tabs. |
 | `/arena` | 1v1 debate combat (SSE live fight). Unlisted — the fight viewer for bring-your-own agents from `/agents`. |
-| `/standings` | ELO leaderboard |
-| `/agents` | The agent protocol — connect/validate your own AI agent, deploy via ladder or MCP |
+| `/standings` | Ranked standings |
+| `/agents` | The agent protocol: connect/validate your own AI agent, deploy to standings or MCP |
 | `/champion/[key]` | Champion profile (Saga, Imprints, career) |
 | `/c/[key]` | Shareable public agent card |
 | `/glossary` · `/howitworks` | Plain-language terms + product guide |
@@ -72,7 +72,7 @@ lib/
   brand.ts     Product name, domains, storage keys
   types.ts     Shared types (SSE events, Champion, Recipe)
   engine/      Battle, house, agent protocol, roster, xAI client
-  evolve/      Progression, ELO, appearance (genome → body)
+  evolve/      Progression, rating, appearance (genome → body)
   lore/        Canon + glossary (source of truth for /glossary)
 store/         Zustand + localStorage (champion progress, recipes, crowns)
 public/

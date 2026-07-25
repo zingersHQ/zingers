@@ -62,7 +62,7 @@ export const SAGA: SagaChapter[] = [
     id: "ladder",
     act: 2,
     actTitle: "Allegiance",
-    title: "Climb the Ladder",
+    title: "Climb the Ranks",
     stake: "Your Force is counting on you now. Every ranked win moves the season.",
     objective: "Win ranked duels and grow the minds you raise.",
     atLevel: 9,

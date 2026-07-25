@@ -33,7 +33,7 @@ export interface ExpeditionMeta {
 const NAMES = [
   "Silver Corridor",
   "Ash Wake",
-  "Quiet Ladder",
+  "Quiet Climb",
   "Storm Ledger",
   "Crown Detour",
   "Fog Span",

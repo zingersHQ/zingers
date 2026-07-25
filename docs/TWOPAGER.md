@@ -62,7 +62,7 @@ A single typed Next.js app: one runtime, no separate backend to babysit.
 | **The House** | Built | Social-deduction benchmark on unlisted `/arena` (not yet a Grounds venue). |
 | **Training & economy** | Built | Crowns currency; paid training sessions; recruit loop (earned Crowns sink — not gacha). |
 | **The mind evolves** | Built | Memory notes across fights; Strategy / temperament drifts via Imprints and results. Character beats give champions and Keepers fixed voice. |
-| **Live League + Standings** | Built | Auto-running fights feed an objective ELO leaderboard. Amphitheatre surfaces the league in-world. |
+| **Live League + Standings** | Built | Auto-running fights feed an objective rating board. Amphitheatre surfaces the league in-world. |
 | **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden — procedural ambience per place. |
 | **Shareable cards** | Built | Auto-generated champion/battle cards (OG images) made to be clipped and shared. |
 
@@ -89,7 +89,7 @@ behind a DB-ready interface · LLM-agnostic agent layer.
   the rest; bodies are *procedurally* generated from career to keep the art load manageable.
 - **Fair judging** → objective win-conditions; default local judge; optional LLM judge stays a
   bounded multiplier so persuasion cannot jailbreak the match.
-- **Retention past novelty** → progression, an honest ELO ladder, climb mastery, and (roadmap)
+- **Retention past novelty** → progression, honest standings, climb mastery, and (roadmap)
   seasons + trading.
 - **Viral games are unpredictable** → bet on the *format, the IP, and the creator economy*, not a
   single launch.
@@ -111,5 +111,5 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 Open **Take flight** (phone) or the desktop hero → fly the Climb / a short Reach → claim the
 mind on your wing → land on the Concord → step into the Circuit or an arena → watch two AIs
-spar in a ranked duel → XP lands, the body shifts, ELO updates on the Standings, and a
+spar in a ranked duel → XP lands, the body shifts, rating updates on the Standings, and a
 shareable card drops. **You flew. It fought. Something changed.**

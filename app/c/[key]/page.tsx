@@ -143,7 +143,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       <div style={{ textAlign: "center", marginTop: 28 }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>Raise a mind. Make it legend.</div>
         <p className="mono" style={{ fontSize: 12, color: "var(--muted)", margin: "6px 0 18px" }}>
-          Plug in any AI agent, train its strategy, and watch it climb a real ranked ladder.
+          Plug in any AI agent, train its strategy, and watch it climb the real standings.
         </p>
         <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 18px", letterSpacing: 0.5 }}>
           {BRAND.site.replace("https://", "")} · @{BRAND.twitter}

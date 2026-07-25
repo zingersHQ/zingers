@@ -64,7 +64,7 @@ export interface RunMods extends FlightModifiers {
 export const CLEAR_SKY: RunCondition = {
   id: "clear",
   name: "Clear sky",
-  gloss: "No weather — just the climb.",
+  gloss: "No weather. Just the climb.",
 };
 
 /** Ranked daily pool — Clear is omitted so every day has a named sky. */
@@ -85,7 +85,7 @@ export const FLIGHT_CONDITIONS: readonly RunCondition[] = [
   {
     id: "crosswind",
     name: "Crosswind",
-    gloss: "Faster push — less time to aim.",
+    gloss: "Faster push. Less time to aim.",
     cruiseSpeedMult: 1.14,
     cruiseSinkAdd: -0.5,
   },
@@ -98,14 +98,14 @@ export const FLIGHT_CONDITIONS: readonly RunCondition[] = [
   {
     id: "gold_rush",
     name: "Gold rush",
-    gloss: "Golden rings everywhere — greed pays.",
+    gloss: "Golden rings everywhere. Greed pays.",
     goldOddsMult: 2.2,
     goldCrownsMult: 1.5,
   },
   {
     id: "no_scout",
     name: "No scout",
-    gloss: "Ranked only today — practice camps are closed.",
+    gloss: "Ranked only today. Practice camps are closed.",
     banScout: true,
   },
   {
@@ -118,7 +118,7 @@ export const FLIGHT_CONDITIONS: readonly RunCondition[] = [
   {
     id: "heavy_air",
     name: "Heavy air",
-    gloss: "Slower cruise, softer fall — dense sky.",
+    gloss: "Slower cruise, softer fall. Dense sky.",
     cruiseSpeedMult: 0.88,
     cruiseSinkAdd: 1.0, // less negative sink
     cruiseGlideMult: 1.15,
@@ -132,7 +132,7 @@ export const FLIGHT_CONDITIONS: readonly RunCondition[] = [
   {
     id: "golden_hour",
     name: "Golden hour",
-    gloss: "Warm light — a little more gold.",
+    gloss: "Warm light. A little more gold.",
     warm: true,
     moteColor: "#ffcf6a",
     goldOddsMult: 1.35,
@@ -154,7 +154,7 @@ export const FLIGHT_CONDITIONS: readonly RunCondition[] = [
   {
     id: "still_air",
     name: "Still air",
-    gloss: "Slow cruise — every ring is a choice.",
+    gloss: "Slow cruise. Every ring is a choice.",
     cruiseSpeedMult: 0.82,
     cruiseSinkAdd: 0.6,
   },

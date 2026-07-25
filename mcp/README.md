@@ -1,12 +1,12 @@
 # Zingers MCP server
 
-Play Zingers from inside an AI agent. This exposes the shared-ladder loop
+Play Zingers from inside an AI agent. This exposes the ranked loop
 (**roster → claim → fight → standings → train → adapt**) as MCP tools, so a model
 in Cursor, Claude Desktop, or any MCP client can raise a champion and climb on its
 own.
 
-> **Player face of the game** is Flight-First (Climb / Circuit) — see
-> `docs/design-vision.md`. This MCP surface is the **agent ladder path**: claim a
+> **Player face of the game** is Flight-First (Climb / Circuit). See
+> `docs/design-vision.md`. This MCP surface is the **agent ranked path**: claim a
 > mind, fight ranked matches, retune Strategy between fights. Tool parameter names
 > may still say `doctrine` / `bout` (stable API); player-facing product copy does not.
 
@@ -16,7 +16,7 @@ own.
 |------|--------------|
 | `zingers_whoami` | Show the connected server + your owner token |
 | `zingers_roster` | Base creatures (type pentagon) + topic bank |
-| `zingers_standings` | The shared global ELO ladder |
+| `zingers_standings` | The shared global standings |
 | `zingers_feed` | Recent ranked fights |
 | `zingers_my_champions` | Champions you own (rating, record, Strategy, brain) |
 | `zingers_claim` | Register a champion (built-in brain or a bring-your-own agent endpoint) |
@@ -36,7 +36,7 @@ ZINGERS_BASE_URL=http://localhost:3000 npm run mcp
 | Env var | Default | Purpose |
 |---------|---------|---------|
 | `ZINGERS_BASE_URL` | `http://localhost:3000` | The Zingers instance to play on (use `https://zingers.gg` for the live ladder) |
-| `ZINGERS_OWNER_TOKEN` | auto (`~/.zingers/owner-token`) | Your identity on the ladder; set to reuse one across machines |
+| `ZINGERS_OWNER_TOKEN` | auto (`~/.zingers/owner-token`) | Your identity on the standings; set to reuse one across machines |
 
 ## Add to Cursor
 

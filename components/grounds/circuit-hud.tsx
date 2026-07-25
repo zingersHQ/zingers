@@ -611,7 +611,7 @@ export function CircuitHud({
               {failReason === "gates" ? "Missed a gate" : "You fell"}
             </div>
             <div className="mono" style={{ fontSize: 13, letterSpacing: 1.6, color: "#ffb4b4", fontWeight: 800 }}>
-              LAST LIFE · same sector — not game over yet
+              LAST LIFE · same sector. Not game over yet
             </div>
           </div>
         </div>
@@ -644,7 +644,37 @@ export function CircuitHud({
       )}
 
       {phase === "done" && (
-        <CircuitModal accent={accent} icon={<Flag size={28} color={accent} />} kicker="FULL CLEAR" title={`All ${sectorTotal} sectors`} sub={`${formatCircuitMs(runMs)}s total`}>
+        <CircuitModal
+          accent={accent}
+          icon={<Flag size={28} color={accent} />}
+          kicker="FULL CLEAR"
+          title={`All ${sectorTotal} sectors`}
+          sub={`${formatCircuitMs(runMs)}s total`}
+          headerAction={
+            onShareChallenge ? (
+              <button
+                type="button"
+                onClick={onShareChallenge}
+                title={shareChallengeLabel || "Share challenge"}
+                aria-label={shareChallengeLabel || "Share challenge"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  border: "1px solid var(--line2)",
+                  background: "transparent",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                }}
+              >
+                <Share2 size={15} strokeWidth={2.2} />
+              </button>
+            ) : undefined
+          }
+        >
           {challengeResult && challengeLabel && (
             <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
               {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
@@ -662,19 +692,14 @@ export function CircuitHud({
               <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
             </button>
           )}
-          {onShareChallenge && (
-            <button type="button" className="btn" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onShareChallenge}>
-              <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
-            </button>
-          )}
+          <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
+            <RotateCcw size={16} strokeWidth={2.2} /> Run again
+          </button>
           {!guestClaim && onToHub && (
-            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
+            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
               <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
             </button>
           )}
-          <button type="button" className={guestClaim ? "btn" : "btn btn-primary"} style={{ ["--ac" as string]: guestClaim ? "var(--line2)" : accent, width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={16} strokeWidth={2.2} /> Run again
-          </button>
         </CircuitModal>
       )}
 
@@ -686,10 +711,34 @@ export function CircuitHud({
           title={`${sectorIndex} sector${sectorIndex === 1 ? "" : "s"} cleared`}
           sub={
             guestClaim
-              ? "Out of lives. Claim a champion — or try again as a guest."
+              ? "Out of lives. Claim a champion, or try again as a guest."
               : failReason === "gates"
-                ? "Out of lives — missed a gate. Try again, share the run, or head back."
-                : "Out of lives. Try again, share the run, or head back."
+                ? "Out of lives. Missed a gate. Try again, or head back to the Hub."
+                : "Out of lives. Try again, or head back to the Hub."
+          }
+          headerAction={
+            onShareChallenge ? (
+              <button
+                type="button"
+                onClick={onShareChallenge}
+                title={shareChallengeLabel || "Share challenge"}
+                aria-label={shareChallengeLabel || "Share challenge"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  border: "1px solid var(--line2)",
+                  background: "transparent",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                }}
+              >
+                <Share2 size={15} strokeWidth={2.2} />
+              </button>
+            ) : undefined
           }
         >
           {challengeResult && challengeLabel && (
@@ -708,32 +757,27 @@ export function CircuitHud({
             <>
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.45, marginBottom: 12 }}>
                 {claimName
-                  ? `${claimName} flew with you — claim it, or pick another champion.`
-                  : "Claim a champion to keep this run — XP, Crowns, and the board."}
+                  ? `${claimName} flew with you. Claim it, or pick another champion.`
+                  : "Claim a champion to keep this run. XP, Crowns, and the board."}
               </div>
               <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onClaim}>
                 <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
               </button>
             </>
           )}
-          {onShareChallenge && (
-            <button type="button" className="btn" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onShareChallenge}>
-              <Share2 size={15} strokeWidth={2.2} /> {shareChallengeLabel || "Challenge a friend"}
-            </button>
-          )}
-          {!guestClaim && onToHub && (
-            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
-              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
-            </button>
-          )}
           <button
             type="button"
-            className={guestClaim || onToHub ? "btn" : "btn btn-primary"}
-            style={{ ["--ac" as string]: guestClaim || onToHub ? "var(--line2)" : "#ff5a5a", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            className="btn btn-primary"
+            style={{ ["--ac" as string]: guestClaim ? accent : "#ff5a5a", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             onClick={onRestart}
           >
             <RotateCcw size={16} strokeWidth={2.2} /> Try again
           </button>
+          {!guestClaim && onToHub && (
+            <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
+              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
+            </button>
+          )}
         </CircuitModal>
       )}
 
@@ -788,6 +832,7 @@ function CircuitModal({
   kicker,
   title,
   sub,
+  headerAction,
   children,
 }: {
   accent: string;
@@ -795,11 +840,16 @@ function CircuitModal({
   kicker: string;
   title: string;
   sub: string;
+  /** Corner control (e.g. share) — not a peer of the main exit actions. */
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 160, padding: 16, pointerEvents: "auto" }}>
-      <div className="panel pop" style={{ ["--ac" as string]: accent, padding: 24, width: "min(400px, 92vw)", textAlign: "center", borderColor: accent, pointerEvents: "auto" }}>
+      <div className="panel pop" style={{ ["--ac" as string]: accent, padding: 24, width: "min(400px, 92vw)", textAlign: "center", borderColor: accent, pointerEvents: "auto", position: "relative" }}>
+        {headerAction && (
+          <div style={{ position: "absolute", top: 12, right: 12 }}>{headerAction}</div>
+        )}
         {icon && <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>{icon}</div>}
         <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>{kicker}</div>
         <div style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>{title}</div>
@@ -849,7 +899,7 @@ function CircuitBoardPanel({
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>…</div>
       ) : named.length === 0 ? (
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.4 }}>
-          no runs yet — claim a name in Standings
+          no runs yet. Claim a name in Standings
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

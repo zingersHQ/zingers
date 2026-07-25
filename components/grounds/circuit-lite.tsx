@@ -1606,7 +1606,7 @@ export default function CircuitLite({
           <div className="mono" style={{ textAlign: "center", color: accent }}>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>RESTORING GRAPHICS…</div>
             <div style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 6, letterSpacing: 0.5 }}>
-              the renderer hiccuped — one moment
+              the renderer hiccuped. One moment.
             </div>
           </div>
         </div>
@@ -2052,7 +2052,30 @@ export default function CircuitLite({
       {/* ── outcome overlays ── */}
       {(phase === "failed" || phase === "done") && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(6,5,11,.62)", backdropFilter: "blur(5px)", zIndex: 30 }}>
-          <div style={{ textAlign: "center", padding: 26, borderRadius: 18, border: `1px solid ${phase === "done" ? accent : "#ff5a5a"}`, background: "rgba(12,11,18,.9)", maxWidth: "88vw", width: 360 }}>
+          <div style={{ position: "relative", textAlign: "center", padding: 26, borderRadius: 18, border: `1px solid ${phase === "done" ? accent : "#ff5a5a"}`, background: "rgba(12,11,18,.9)", maxWidth: "88vw", width: 360 }}>
+            <button
+              type="button"
+              onClick={() => void shareChallenge()}
+              title="Share challenge"
+              aria-label="Share challenge"
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,.16)",
+                background: "transparent",
+                color: "var(--muted, #9a96b8)",
+                cursor: "pointer",
+              }}
+            >
+              <Share2 size={15} strokeWidth={2.4} />
+            </button>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: phase === "done" ? accent : "#ff5a5a" }}>
               {phase === "done" ? <Flag size={30} strokeWidth={2.2} /> : <Skull size={30} strokeWidth={2.2} />}
             </div>
@@ -2066,7 +2089,7 @@ export default function CircuitLite({
               {phase === "done"
                 ? "you flew the whole climb"
                 : failReason === "gates"
-                  ? "out of lives — missed a gate · back to sector 1"
+                  ? "out of lives. Missed a gate · back to sector 1"
                   : "out of lives · back to sector 1"}
             </div>
             {newBest ? (
@@ -2133,7 +2156,7 @@ export default function CircuitLite({
               </div>
               {board.length === 0 ? (
                 <div className="mono" style={{ fontSize: 10, color: "var(--muted2, #6b6785)" }}>
-                  {getOwnerToken() ? "no runs yet — set the pace" : "claim a Trainer to rank"}
+                  {getOwnerToken() ? "no runs yet. Set the pace" : "claim a Trainer to rank"}
                 </div>
               ) : (
                 board.slice(0, 5).map((r, i) => (
@@ -2156,7 +2179,7 @@ export default function CircuitLite({
             {guest && onClaim && (
               <>
                 <div className="mono" style={{ fontSize: 10.5, color: "var(--muted, #9a96b8)", lineHeight: 1.5, marginBottom: 12, letterSpacing: 0.3 }}>
-                  A wild mind flew with you. Claim it to keep your run — earn XP, Crowns, and a place on the board.
+                  A wild mind flew with you. Claim it to keep your run. Earn XP, Crowns, and a place on the board.
                 </div>
                 <button
                   type="button"
@@ -2169,23 +2192,16 @@ export default function CircuitLite({
             )}
             <button
               type="button"
-              onClick={() => void shareChallenge()}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: `1px solid ${accent}88`, background: "rgba(255,255,255,.04)", color: accent, fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 10 }}
-            >
-              <Share2 size={15} strokeWidth={2.4} /> Challenge a friend
-            </button>
-            {shareMsg && (
-              <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginBottom: 10 }}>
-                {shareMsg}
-              </div>
-            )}
-            <button
-              type="button"
               onClick={resetRun}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: guest && onClaim ? "1px solid rgba(255,255,255,.16)" : "none", background: guest && onClaim ? "transparent" : accent, color: guest && onClaim ? "#e6e2f5" : "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
             >
               <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>
+            {shareMsg && (
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginTop: 10 }}>
+                {shareMsg}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2204,7 +2220,7 @@ export default function CircuitLite({
               Prove your mind for the higher sky
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 18, lineHeight: 1.5 }}>
-              A short fight opens Reach II. Win here — then keep climbing.
+              A short fight opens Reach II. Win here, then keep climbing.
             </div>
             {!guest && (
               <button

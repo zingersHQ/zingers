@@ -2524,7 +2524,7 @@ function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; 
       {labelOn && (
         <Html position={[0, 1.7, 0]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap", opacity: disabled ? 0.55 : 1 }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "LADDER AGENT"}</div>
+            <div style={{ fontSize: 9, letterSpacing: 1.4, color: vis.color, fontWeight: 700 }}>{ground ? "ROAMING AGENT" : "RANKED AGENT"}</div>
             <div style={{ fontWeight: 700, color: "#fff", fontSize: 18, textShadow: "0 2px 8px #000" }}>
               {agent.name}
               {agent.handle && agent.handle.toUpperCase() !== "HOUSE" ? (

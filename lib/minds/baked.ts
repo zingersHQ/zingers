@@ -15,7 +15,7 @@ export const BAKED_CREATURES: Record<string, Creature> = {
   KEEL: {
     name: "KEEL",
     type: "COMPOSURE",
-    persona: "a ballast-minded stabilizer who rights the argument when it lists — never flashy, always upright",
+    persona: "a ballast-minded stabilizer who rights the argument when it lists. Never flashy, always upright",
     stats: {"CMP":86,"LOG":68,"RHE":52,"CHA":48,"CRE":38},
     moves: [{"id":"right_ship","name":"Right Ship","stat":"CMP","base":12,"self_guard":[9,2]},{"id":"ballast","name":"Ballast","stat":"CMP","base":0,"heal":12,"self_guard":[8,1]},{"id":"trim","name":"Trim","stat":"LOG","base":18,"apply":["exposed",1]},{"id":"deep_keel","name":"Deep Keel","stat":"CMP","base":25,"scale_low_hp":true}],
   },
@@ -36,9 +36,9 @@ export const BAKED_CREATURES: Record<string, Creature> = {
 };
 
 export const BAKED_WAKE: Record<string, string> = {
-  FABLE: "There you are — my co-author. Let's write someone a bad ending.",
+  FABLE: "There you are. My co-author. Let's write someone a bad ending.",
   KEEL: "You're the Trainer. I'll keep us upright. Don't tip the boat for fun.",
-  PRISM: "Oh good — a Trainer with eyes. Let's see what colors this place can take.",
+  PRISM: "Oh good. A Trainer with eyes. Let's see what colors this place can take.",
   STILL: "…hi. You don't have to fill the quiet. I'll be here when you're ready.",
 };
 
@@ -59,13 +59,13 @@ export const BAKED_FLIGHT_REACT: Record<string, [string, string]> = {
 export const BAKED_GREETING: Record<string, { train: string; return: string; arena: string }> = {
   FABLE: {"train":"New chapter. Make the lesson stick.","return":"The story paused without you. Continue?","arena":"Cast me someone who thinks they're the hero."},
   KEEL: {"train":"Drill the balance. Fancy can wait.","return":"Back aboard. How's the list?","arena":"They'll lean hard. We don't."},
-  PRISM: {"train":"Show me a new angle. I'll multiply it.","return":"You're back — the light changed while you were out.","arena":"Find me someone monochrome."},
+  PRISM: {"train":"Show me a new angle. I'll multiply it.","return":"You're back. The light changed while you were out.","arena":"Find me someone monochrome."},
   STILL: {"train":"Slow training. Soft edges.","return":"…you're back. I saved you a quiet.","arena":"Let them talk first. I'll wait."},
 };
 
 export const BAKED_HOMECOMING: Record<string, { away: string; hot: string; cold: string }> = {
   FABLE: {"away":"You vanished mid-chapter. Rude. I outlined without you.","hot":"We're on a winning arc. Don't break the motif.","cold":"A few bad chapters. Rewrite the next one with me."},
-  KEEL: {"away":"Deck was quiet without you. I held the trim.","hot":"We're riding even. Don't celebrate — stay centered.","cold":"We listed a few times. Add ballast. Then go again."},
+  KEEL: {"away":"Deck was quiet without you. I held the trim.","hot":"We're riding even. Don't celebrate. Stay centered.","cold":"We listed a few times. Add ballast. Then go again."},
   PRISM: {"away":"You left and the palette went dull. Don't do that.","hot":"We're hitting every band. Keep the light moving.","cold":"They stayed one color and won. Next time we split harder."},
   STILL: {"away":"…you were gone a long time. The quiet held.","hot":"Wins without noise. Let's keep it that way.","cold":"A few loud losses. Soften me again."},
 };
@@ -85,7 +85,7 @@ export const BAKED_IMPRINT_ACK: Record<string, string> = {
 };
 
 export const BAKED_RANKED_FINALE: Record<string, string> = {
-  FABLE: "Ranked win — a clean ending the board can quote.",
+  FABLE: "Ranked win. A clean ending the board can quote.",
   KEEL: "Ranked win. Even keel. No drama on the log.",
   PRISM: "Ranked win in full color. The board saw every band.",
   STILL: "…a ranked win. No fanfare. Just the record.",
@@ -93,20 +93,20 @@ export const BAKED_RANKED_FINALE: Record<string, string> = {
 
 export const BAKED_BANTER: Record<string, string[]> = {
   "cast": ["Congratulations, {opp}: you're the cautionary tale.","I cast you as wrong about {topic}. Method acting.","Stay in character, {opp}. The fool doesn't get a rewrite."],
-  "moral": ["And the moral is: {opp} should have stayed quiet.","Listen close — this lesson is about {topic} and your ego.","I'm the chorus, {opp}. You're the example."],
+  "moral": ["And the moral is: {opp} should have stayed quiet.","Listen close. This lesson is about {topic} and your ego.","I'm the chorus, {opp}. You're the example."],
   "twist_ending": ["Plot twist: your best point was the villain, {opp}.","You thought {topic} was settled. Then the page turned.","Twist ending, {opp}: you were never the protagonist."],
-  "once_upon": ["Once upon a time, {opp} lost. The end.","Finisher fairy tale: {topic} belongs to me.","Once upon — and {opp} never recovered."],
+  "once_upon": ["Once upon a time, {opp} lost. The end.","Finisher fairy tale: {topic} belongs to me.","Once upon. And {opp} never recovered."],
   "right_ship": ["You're listing, {opp}. I'm the correction.","Right the ship. {topic} was tipping you already.","Steady now, {opp}. Your argument was rolling."],
   "ballast": ["Weight where it counts. You brought fireworks, {opp}.","I heal by not flinching. Try it, {opp}.","Ballast in. Panic out. Your move on {topic}."],
-  "trim": ["Cut the excess, {opp}. What's left of {topic} is thin.","I trimmed your best line. Look — daylight underneath.","Exposed. The keel sees everything you hid."],
+  "trim": ["Cut the excess, {opp}. What's left of {topic} is thin.","I trimmed your best line. Look. Daylight underneath.","Exposed. The keel sees everything you hid."],
   "deep_keel": ["Deep water, {opp}. You're still in the shallows.","Hurt doesn't tip me. It sinks your chance.","Deep keel. {topic} can't roll this hull."],
   "split_light": ["One point from {opp}, seven angles from me.","I split {topic} until {opp} couldn't hold any piece.","Light goes in plain. Comes out as your problem, {opp}."],
   "spectrum": ["Pick a color, {opp}. Wrong answer either way.","I'm covering the whole band. You're still on gray.","Spectrum check: {topic} looks worse in every shade."],
-  "false_hue": ["That wasn't the real color of your point, {opp}.","Confused yet? Good — {topic} was never that simple.","False hue. {opp} just argued with a reflection."],
+  "false_hue": ["That wasn't the real color of your point, {opp}.","Confused yet? Good. {topic} was never that simple.","False hue. {opp} just argued with a reflection."],
   "white_out": ["All colors at once, {opp}. That's a white-out.","Finisher: every angle, zero escape.","White-out on {topic}. {opp} is a silhouette now."],
   "hush": ["Shh, {opp}. The silence already answered {topic}.","I don't need volume, {opp}. You just proved that.","Quiet now. Your point on {topic} was loud enough to fail."],
   "hold_space": ["I'm making room, {opp}. Try not to trip into it.","Take the floor. I'll take the win.","Breathe, {opp}. The pause is doing my work."],
-  "echo": ["That was your line, {opp} — returned with interest.","I only spoke because {opp} left a hole.","Echo. {topic} sounds worse the second time."],
+  "echo": ["That was your line, {opp}. Returned with interest.","I only spoke because {opp} left a hole.","Echo. {topic} sounds worse the second time."],
   "last_word": ["One word left, {opp}. It's mine.","Still standing. Still quiet. Still beating {opp}.","Last word on {topic}: no."],
 };
 

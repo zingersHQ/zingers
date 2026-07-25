@@ -208,7 +208,7 @@ export function AdminDashboard() {
             <Kpi color="#36d39a" icon={<Users size={15} />} label="MAU" value={fmt(data.active.mau)} sub="30-day uniques" />
             <Kpi color="var(--accent)" icon={<Activity size={15} />} label="Sessions" value={fmt(data.engagement.sessions)} sub={`new ${fmt(data.engagement.newUsers)} · ret ${fmt(data.engagement.returning)}`} />
             <Kpi color="#ff6b4a" icon={<Swords size={15} />} label="Duels" value={fmt(data.engagement.duels)} sub={`${fmt(data.engagement.wins)} player wins`} />
-            <Kpi color="var(--gold)" icon={<Swords size={15} />} label="Ladder" value={fmt(data.championCount)} sub="champions registered" />
+            <Kpi color="var(--gold)" icon={<Swords size={15} />} label="Roster" value={fmt(data.championCount)} sub="champions registered" />
           </div>
 
           {/* economy + expenses */}

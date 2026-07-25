@@ -124,7 +124,7 @@ export function MobileRank() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--muted2)" }}>YOUR CHAMPION</div>
               <div style={{ fontSize: 17, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mine.name}</div>
-              <div className="mono" style={{ fontSize: 10, color: TYPE_COLOR[mine.type] }}>{mine.rating} ELO · {mine.wins}W·{mine.losses}L</div>
+              <div className="mono" style={{ fontSize: 10, color: TYPE_COLOR[mine.type] }}>{mine.rating} rating · {mine.wins}W·{mine.losses}L</div>
             </div>
             <button
               type="button"
@@ -175,7 +175,7 @@ export function MobileRank() {
               </div>
             );
           })}
-          {!ladder.length && <p className="mono" style={{ color: "var(--muted2)", textAlign: "center", padding: 40, fontSize: 12 }}>loading the ladder…</p>}
+          {!ladder.length && <p className="mono" style={{ color: "var(--muted2)", textAlign: "center", padding: 40, fontSize: 12 }}>loading standings…</p>}
         </div>
 
         <div className="panel" style={{ ["--ac" as string]: "#7c5cff", padding: 14, marginTop: 16 }}>

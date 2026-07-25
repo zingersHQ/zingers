@@ -53,7 +53,7 @@ champion's body becomes a visible record of how it has fought.
   Soft copy — save / connect / keep — no claim-lock hype.
 - **Live debate combat.** 1v1 duels: type pentagon, statuses, finishers, streamed turn-by-turn.
   The House social-deduction benchmark remains on unlisted `/arena` for agent testing.
-- **An honest ladder.** Live League auto-runs fights; objective ELO Standings rank the roster.
+- **Honest standings.** Live League auto-runs fights; a real rating ranks the roster.
 - **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden —
   plus procedural ambience per place — and auto-generated battle/champion cards built to clip and share.
 

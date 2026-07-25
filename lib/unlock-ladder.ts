@@ -54,7 +54,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 3,
     kind: "reach_block",
     name: "Reaches III–IV",
-    gloss: "Garden Drift and Ember Thermals — the mid sky opens.",
+    gloss: "Garden Drift and Ember Thermals. The mid sky opens.",
     maxReaches: 4,
   },
   {
@@ -62,7 +62,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 3,
     kind: "scout",
     name: "Scout flights",
-    gloss: "Practice from a lit camp — half XP, quiet Crowns.",
+    gloss: "Practice from a lit camp. Half XP, quiet Crowns.",
   },
   {
     id: "broker",
@@ -78,7 +78,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 1,
     kind: "region",
     name: "the Colosseum",
-    gloss: "The Tribunal — argue the side you're given.",
+    gloss: "The Tribunal. Argue the side you're given.",
     worldId: "grounds",
   },
   {
@@ -86,7 +86,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 5,
     kind: "region",
     name: "the Gauntlet",
-    gloss: "The Ember Wastes — keep winning to grow the prize.",
+    gloss: "The Ember Wastes. Keep winning to grow the prize.",
     worldId: "gauntlet",
   },
   {
@@ -102,7 +102,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 7,
     kind: "reach_block",
     name: "Reaches V–VI",
-    gloss: "The Amphitheatre and Concord Dawn — thin bright air.",
+    gloss: "The Amphitheatre and Concord Dawn. Thin bright air.",
     maxReaches: 6,
   },
   {
@@ -118,7 +118,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 10,
     kind: "reach_block",
     name: "Reaches VII–VIII",
-    gloss: "High Colosseum and Garden Zenith — the hard climb.",
+    gloss: "High Colosseum and Garden Zenith. The hard climb.",
     maxReaches: 8,
   },
   {
@@ -126,7 +126,7 @@ export const UNLOCK_LADDER: readonly UnlockDef[] = [
     minLevel: 13,
     kind: "reach_block",
     name: "Reaches IX–X",
-    gloss: "Ember Corona and the Hum — the top of the sky.",
+    gloss: "Ember Corona and the Hum. The top of the sky.",
     maxReaches: 10,
   },
 ] as const;
@@ -290,12 +290,12 @@ export function evaluateLadder(s: LadderSnapshot): LadderState {
 /** Copy helpers for Flight rank-lock UI and the Director. */
 export function unlockNeedLine(u: UnlockDef, level: number): string {
   if (level >= u.minLevel) {
-    if (u.kind === "scout") return "Light a camp on a ranked flight, then Scout opens.";
-    if (u.kind === "region") return "Finish your first duel, then this gate opens.";
+    if (u.kind === "scout") return "Light a camp on a ranked flight with me, then Scout opens.";
+    if (u.kind === "region") return "Finish our first duel, then this gate opens.";
     return u.gloss;
   }
   const need = u.minLevel - level;
-  return `Trainer rank ${u.minLevel} · ${need} ${need === 1 ? "rank" : "ranks"} to go · ${u.gloss}`;
+  return `Trainer rank ${u.minLevel}. ${need} ${need === 1 ? "rank" : "ranks"} to go. ${u.gloss}`;
 }
 
 export function reachLockCopy(maxReaches: number, next: UnlockDef | null): {
@@ -306,15 +306,15 @@ export function reachLockCopy(maxReaches: number, next: UnlockDef | null): {
   const theme = reachThemeByIndex(Math.min(9, maxReaches));
   if (next?.kind === "reach_block") {
     return {
-      kicker: "RANK GATE",
-      title: `Trainer rank ${next.minLevel} opens ${next.name}`,
+      kicker: "YOUR CHAMPION",
+      title: `Stay with me. Trainer rank ${next.minLevel} opens ${next.name}.`,
       detail: `${theme.name} is as high as this rank goes. ${next.gloss}`,
     };
   }
   return {
-    kicker: "RANK GATE",
-    title: "Higher sky needs a higher rank",
-    detail: `${theme.name} is the top of your open sky. Keep flying, fighting, and teaching to climb Trainer rank.`,
+    kicker: "YOUR CHAMPION",
+    title: "Higher sky needs a higher rank. Stay with me.",
+    detail: `${theme.name} is the top of our open sky. Keep flying, fighting, and teaching to climb Trainer rank.`,
   };
 }
 

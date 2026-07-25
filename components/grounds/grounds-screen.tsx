@@ -4786,7 +4786,7 @@ function ChallengeOverlay(props: {
             {duelCloseBtn(onClose)}
           </div>
           <p className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "10px 0 18px", lineHeight: 1.55 }}>
-            Next on the ladder. Beat them to keep climbing.
+            Next on the board. Beat them to keep climbing.
           </p>
           <div
             style={{
@@ -4814,7 +4814,7 @@ function ChallengeOverlay(props: {
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{oppName}</div>
                 <div className="mono" style={{ fontSize: 10, color: col, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {duelMeta?.handle ? `@${duelMeta.handle}` : "LADDER AGENT"} · L{levelFor(oppChamp.xp).level}
+                  {duelMeta?.handle ? `@${duelMeta.handle}` : "RANKED AGENT"} · L{levelFor(oppChamp.xp).level}
                 </div>
               </div>
             </div>
@@ -4849,7 +4849,7 @@ function ChallengeOverlay(props: {
           {duelCloseBtn(onClose)}
         </div>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "10px 0 4px", lineHeight: 1.55 }}>
-          Practice against a seeded <b>First Mind</b> in the plaza pit. Wins here earn XP and Crowns; climb the Tower for ranked ladder fights.
+          Practice against a seeded <b>First Mind</b> in the plaza pit. Wins here earn XP and Crowns; climb the Tower for ranked fights.
         </div>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 16 }}>
           You field <b style={{ color: ownedCol }}>{ownedEntry.name}</b>.

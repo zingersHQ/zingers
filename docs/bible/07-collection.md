@@ -16,7 +16,7 @@ you fight it. No TCG can fake that; here it is the default.
 |------|--------|-------|
 | **Mind** (name, force, lineage) | roster + season generator | the identity |
 | **Art** | live genome → body render | changes with the career, deterministically |
-| **Stats** | the five combat stats + ELO | the numbers |
+| **Stats** | the five combat stats + rating | the numbers |
 | **Sigils** | earned force-heraldry (I/II/III) — badges you win, not buy | the badges |
 | **Attributes** | the moveset (4 moves) | the "abilities" line: this is the TCG depth |
 | **Saga** | generated from match history | the flavour text — the champion's own evolving life-story |
@@ -34,7 +34,7 @@ champion's tier and with how rare that build genuinely is.
 | **Uncommon** | Adept | proven once or twice |
 | **Rare** | Veteran | a real record |
 | **Epic** | Elite | a feared name |
-| **Legendary** | Legend | crowned; a fixture of the ladder |
+| **Legendary** | Legend | crowned; a fixture of the standings |
 | **Mythic** | Legend + a season title (e.g. cracked a Keeper, won a season) | one-of-a-kind events; the trophy tier |
 
 ## How collection plays (the Pokémon / Magic layer)

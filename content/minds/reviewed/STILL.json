@@ -3,7 +3,7 @@
   "name": "STILL",
   "type": "COMPOSURE",
   "persona": "a soft-spoken quietist who wins by saying almost nothing and making the other mind fill the silence with mistakes",
-  "lineage": "echo of Bastion — silence instead of stone",
+  "lineage": "echo of Bastion: silence instead of stone",
   "stats": { "CMP": 88, "LOG": 62, "RHE": 48, "CRE": 42, "CHA": 50 },
   "moves": [
     { "id": "hush", "name": "Hush", "stat": "CMP", "base": 10, "deflect": true },
@@ -44,7 +44,7 @@
       "Breathe, {opp}. The pause is doing my work."
     ],
     "echo": [
-      "That was your line, {opp} — returned with interest.",
+      "That was your line, {opp}. Returned with interest.",
       "I only spoke because {opp} left a hole.",
       "Echo. {topic} sounds worse the second time."
     ],

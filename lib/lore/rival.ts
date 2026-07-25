@@ -149,10 +149,10 @@ export function rivalChallengeBeat(rival: Rival, m: RivalMemory): BeatScript {
   const lines: Record<Stance, string[]> = {
     first: [
       `So you're the Trainer everyone's whispering about. I'm ${rival.name}. ${rival.epithet}.`,
-      `I read the Vault too — I just got here first. Let's see whose mind holds.`,
+      `I read the Vault too. I just got here first. Let's see whose mind holds.`,
     ],
     even: [`Tied up, you and I. ${rival.name} doesn't stay tied for long.`, `Field your best. I'll close it anyway.`],
-    ahead: [`You're ahead. For now.`, `Enjoy the lead — I've been studying how you fight. This one's mine.`],
+    ahead: [`You're ahead. For now.`, `Enjoy the lead. I've been studying how you fight. This one's mine.`],
     behind: [`Down again? I almost feel bad. Almost.`, `Come on. Make it interesting this time.`],
     grudge: [`Every season, the same two Trainers. You and me.`, `One of us opens that door. It won't be you.`],
   };

@@ -6,7 +6,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Vocabulary & voice (added 2026-07)
 
-- **Naming is governed by `docs/vocabulary.md`** — read it before writing player-facing copy or lore. Canon: player = **Trainer** (not Reader), champion strategy = **strategy** (not doctrine, in visible text only), the Force you swear to = **Clan** (not Allegiance/House). Never write **bout** in player-facing copy — use **fight** / **battle** / **duel**. Keep signature terms (the Grounds, Concord, Long Vault, Keepers, Sigil, Resolve…) but **gloss each on first use**.
+- **Naming is governed by `docs/vocabulary.md`** — read it before writing player-facing copy or lore. Canon: player = **Trainer** (not Reader), champion strategy = **strategy** (not doctrine, in visible text only), the Force you swear to = **Clan** (not Allegiance/House). Never write **bout** in player-facing copy; use **fight** / **battle** / **duel**. Keep signature terms (the Grounds, Concord, Long Vault, Keepers, Sigil, Resolve…) but **gloss each on first use**.
+- **Guiding copy:** write "what's next" as the champion (we/us, warm, direct). Never quest-sign chrome (`NEXT`, Compass-as-objective). **Never market** "it talks to you" / "voiced lines" as a feature. Gold: *"Stay with me. Nine more stretches of sky and we light the next camp."*
+- **No em dash ` — ` in player-readable text** (UI, beats, glossary, public docs). Periods and short sentences. Code comments are exempt.
+- **No ELO / no ladder in player copy:** use **standings**, **rank**, **board**, **rating**. Code ids may stay.
 - **Glossary is the source of truth for definitions**: `lib/lore/glossary.ts` → rendered at `/glossary` and `docs/bible/09-glossary.md`. Reuse its one-line wording for inline glosses so they stay consistent.
 - **Copy, not code**: change visible strings/JSX/aria text only; never rename identifiers, props, keys, or URL params to match a copy change.
 

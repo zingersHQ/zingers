@@ -492,7 +492,7 @@ export function PlayerHub({
                   <Crown size={15} color="var(--gold)" />
                   <span style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>Rank</span>
-                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Season ladder & rating</span>
+                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Season standings & rating</span>
                   </span>
                 </span>
                 <ChevronRight size={15} color="var(--muted2)" />

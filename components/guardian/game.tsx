@@ -357,7 +357,7 @@ function Battle({
     <div style={wrapStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
         <button className="btn" onClick={onExit} style={{ padding: "6px 12px", fontSize: 12 }}>
-          ← Ladder
+          ← Back
         </button>
         <div>
           <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1 }}>
@@ -746,7 +746,7 @@ function OutcomeCard({
           </button>
         )}
         <button className="btn" onClick={copy}>{copied ? "✓ Copied" : "Share"}</button>
-        <button className="btn" onClick={onExit}>Ladder</button>
+        <button className="btn" onClick={onExit}>Back</button>
       </div>
     </div>
   );

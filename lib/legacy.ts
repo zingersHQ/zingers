@@ -99,7 +99,7 @@ export function retireChampion(
     fromKey: key,
     fromName: name,
     wingTrait: trait,
-    gloss: `${name}'s wing — the next mind starts with ${traitLabel(trait)}.`,
+    gloss: `${name}'s wing. The next mind starts with ${traitLabel(trait)}.`,
     ts: Date.now(),
     pending: true,
   };

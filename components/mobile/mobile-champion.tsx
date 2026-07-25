@@ -105,7 +105,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       const out = await imprint(owned, lessonId);
       setImprinting(null);
       if (!out.applied) {
-        flash("Already internalized today — try a different lesson.");
+        flash("Already internalized today. Try a different lesson.");
         return;
       }
       setReply(out.reply);
@@ -241,7 +241,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
           {nickSaved && !nickDirty ? (
             <p className="mono" style={{ fontSize: 10, color: col, margin: "8px 0 0", lineHeight: 1.4 }}>
-              Locked in — shows on this champion&apos;s profile.
+              Locked in. Shows on this champion&apos;s profile.
             </p>
           ) : null}
         </div>
@@ -259,7 +259,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
             <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
               {career.scars.map((scar) => (
                 <li key={scar.id} style={{ fontSize: 12, lineHeight: 1.4, color: "var(--muted)" }}>
-                  <strong style={{ color: "var(--ink)" }}>{scar.name}</strong> — {scar.gloss}
+                  <strong style={{ color: "var(--ink)" }}>{scar.name}</strong>. {scar.gloss}
                 </li>
               ))}
             </ul>
@@ -299,7 +299,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
             TEMPERAMENT · HOW {(nick || name).toUpperCase()} THINKS
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
-            Its fighting nature — grown by lessons you teach and fights it survives. Not sliders you set.
+            Its fighting nature: grown by lessons you teach and fights it survives. Not sliders you set.
           </p>
           {DIALS.map((d) => (
             <DoctrineDial key={d.key} label={d.label} value={strat[d.key]} color={col} hints={d.hints} highlight={litAxes.has(d.key)} />
@@ -312,7 +312,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
             <Brain size={12} strokeWidth={2.4} /> TODAY&apos;S LESSONS · EACH ONCE PER DAY
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            Free. Picked for {name}&apos;s Force &amp; temperament — new set tomorrow. Teaching one doesn&apos;t lock the others.
+            Free. Picked for {name}&apos;s Force &amp; temperament. New set tomorrow. Teaching one doesn&apos;t lock the others.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
             {sessionLessons.map((l) => {

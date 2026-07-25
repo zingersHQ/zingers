@@ -256,7 +256,7 @@ function Verdict({
         )}
         {pick !== null && resultMsg && (
           <div style={{ marginTop: 14, padding: "9px 12px", borderRadius: 10, border: `1px solid ${correct ? "var(--good)" : "var(--bad)"}`, color: correct ? "var(--good)" : "var(--bad)", fontWeight: 700, fontSize: 13 }}>
-            {correct ? "✓ Right call — streak up!" : "✗ Wrong call — streak reset."}
+            {correct ? "✓ Right call. Streak up!" : "✗ Wrong call. Streak reset."}
           </div>
         )}
         <button
