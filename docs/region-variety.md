@@ -126,9 +126,10 @@ explicitly warns against minting new top-level containers).
 
 ## Axis C — Traversal as a game
 
-The Tower (a climbable helix) and the three goals (Peak via flight, Depth descent,
-Secret hunt) are the seed of a movement game, but every region traverses
-identically. Two cheap ways to make *getting around* region-specific:
+The Tower (a climbable helix) hosts **The Peak** at its summit: claim the Peak,
+then the summit champion smoke-appears and becomes challengeable. Depth descent
+and Secret hunt complete the three goals. Every region still traverses similarly.
+Two cheap ways to make *getting around* more region-specific:
 
 1. **Hazards from the biome you already have.** Ember's rift is lava (a real
    hazard to fly across); Void's is a river of light; the Colosseum's is a

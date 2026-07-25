@@ -105,15 +105,19 @@ foot and by jetpack (`components/grounds/terrain.tsx`):
 Every region offers exactly **three** goals each season, on a template a Trainer
 reads at a glance (`components/grounds/goals.ts`):
 
-- **▲ The Peak**. Reach the region's highest point (flight-gated).
+- **▲ The Peak**. Claim the **Tower summit** (climb or fly). Not the Flight mountain
+  (that portal is for Ascent) and not a random terrain high point. Claiming the Peak
+  pays the goal reward, then the summit champion **appears** in a short smoke-in
+  cinematic. After the appear finishes, you can challenge them.
 - **▼ The Depth**. Descend into the rift floor.
 - **◆ The Secret**. Find a hidden Keeper echo out in the mid-field (drops lore).
 
-Goals are deterministic and **season-aware**: their placements reseed each season,
-so the hunt refreshes, and the season's **featured region** (the Chronicle's
-spotlight, see [seasons.md](./06-seasons.md)) pays a premium. Clearing one pays
-**Crowns** (the earned in-game currency), **Fragments** (the resource that powers up
-champions), Trainer XP, and Force-war points; the ledger resets at the season turn.
+Goals are deterministic and **season-aware**: Depth and Secret bearings reseed each
+season, while the Peak stays on the Tower summit. The season's **featured region**
+(the Chronicle's spotlight, see [seasons.md](./06-seasons.md)) pays a premium.
+Clearing one pays **Crowns** (the earned in-game currency), **Fragments** (the resource
+that powers up champions), Trainer XP, and Force-war points; the ledger resets at
+the season turn.
 
 ## The Broker
 

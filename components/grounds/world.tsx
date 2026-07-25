@@ -44,8 +44,9 @@ import { FORCES, FORCE_MOTTO } from "@/lib/lore/canon";
 import { worldById, type GateDef } from "./worlds";
 import { natureGroundPalette } from "@/lib/render/nature-kit";
 import { bandAgents, roamerSpot, dayKey, type DiscoveryNode, type NodeKind } from "./landmarks";
+import { towerLayout, assignMidPerch, pickSummitAgent, type TowerNode } from "./tower-layout";
 import { RenderBoundary, WEBGL_POWER } from "./render-guard";
-import { jetFallSfx, jumpBeep, setJet, stopJet } from "@/lib/sfx";
+import { jetFallSfx, jumpBeep, setJet, stopJet, smokePoofSfx } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
 import { useSettings } from "@/store/settings";
 import { useTheme } from "@/lib/theme";
@@ -283,6 +284,10 @@ export default function World({
   towerAgents = [],
   nodes = [],
   goals = [],
+  /** Season Peak already claimed — summit champion stands ready (no appear cinematic). */
+  peakCleared = false,
+  /** Bumped when Peak is claimed this session — plays the smoke-in reveal once. */
+  summitRevealNonce = 0,
   gates = [],
   pledged = null,
   choosingClan = false,
@@ -343,6 +348,8 @@ export default function World({
   towerAgents?: TowerAgent[];
   nodes?: DiscoveryNode[];
   goals?: WorldGoal[];
+  peakCleared?: boolean;
+  summitRevealNonce?: number;
   gates?: GateDef[];
   pledged?: CreatureType | null;
   /** True while the Clan sheet is open — lowers every flag except the preview. */
@@ -363,7 +370,7 @@ export default function World({
   muteClanInvite?: boolean;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
-  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number) => void) | null>;
+  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number, y?: number) => void) | null>;
   touchBottomInset?: number;
   /** Passive postcard mode: no player avatar, no input — an auto-orbit camera
       drifts over the region. Used for the docs/org region figures. */
@@ -420,7 +427,8 @@ export default function World({
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
   gpuLite?: boolean;
   /** After leaving a venue, mount the Handler at this wilds pose (Ascent portal exit). */
-  resumeSpawn?: { x: number; z: number; heading?: number } | null;
+  /** Optional y = capsule centre (Tower summit etc.). Terrain height used when omitted. */
+  resumeSpawn?: { x: number; z: number; y?: number; heading?: number } | null;
   /** Fired once the WebGL renderer exists (parent can clear failure UI). */
   onGlReady?: () => void;
 }) {
@@ -482,7 +490,9 @@ export default function World({
   const earlyResume = !inVenue && resumeSpawn
     ? ([
         resumeSpawn.x,
-        terrainHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll) + 1.2,
+        typeof resumeSpawn.y === "number" && Number.isFinite(resumeSpawn.y)
+          ? resumeSpawn.y
+          : terrainHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll) + 1.2,
         resumeSpawn.z,
       ] as [number, number, number])
     : null;
@@ -613,7 +623,10 @@ export default function World({
   const bodySpawn = useMemo(() => {
     if (venueSpawn) return venueSpawn;
     if (!resumeSpawn || inVenue) return null;
-    const y = worldWalkHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll, ascentFoot) + 0.75;
+    const y =
+      typeof resumeSpawn.y === "number" && Number.isFinite(resumeSpawn.y)
+        ? resumeSpawn.y
+        : worldWalkHeight(resumeSpawn.x, resumeSpawn.z, shape, knoll, ascentFoot) + 0.75;
     return [resumeSpawn.x, y, resumeSpawn.z] as [number, number, number];
   }, [venueSpawn, resumeSpawn, inVenue, shape, knoll, ascentFoot]);
   const venueExitTarget = useMemo(() => {
@@ -630,30 +643,67 @@ export default function World({
   }, [sc.towerAngle]);
   const day = useMemo(() => dayKey(), []);
   // split the ladder population: the weakest roam the open ground (walk-up
-  // challenges); the rest hold the Tower, strongest at the summit.
+  // challenges); the rest hold the Tower. Strongest waits at the Peak summit
+  // until the Peak goal is claimed (smoke-in reveal), then becomes challengeable.
   const bands = useMemo(() => bandAgents(towerAgents), [towerAgents]);
+  const summitAgent = useMemo(() => pickSummitAgent(bands.tower), [bands.tower]);
+  const midTowerAgents = useMemo(() => {
+    if (!summitAgent) return bands.tower;
+    return bands.tower.filter((a) => a.id !== summitAgent.id);
+  }, [bands.tower, summitAgent]);
   // shared, deterministic tower layout — colliders, perched agents and the
   // challenge proximity check all read from this same list.
   const towerNodes = useMemo(() => towerLayout(shape, sc.towerAngle, sc.towerSteps), [shape, sc.towerAngle, sc.towerSteps]);
-  const perched = useMemo(() => assignPerch(towerNodes, bands.tower), [towerNodes, bands.tower]);
+  const perched = useMemo(() => assignMidPerch(towerNodes, midTowerAgents), [towerNodes, midTowerAgents]);
+  const summitPos = useMemo<[number, number, number] | null>(() => {
+    if (!towerNodes.length) return null;
+    const top = towerNodes[towerNodes.length - 1];
+    return [top.pos[0], top.pos[1] + top.size[1] / 2, top.pos[2]];
+  }, [towerNodes]);
   // ground roamers stand at deterministic mid-field spots that rotate by day
   const roamers = useMemo(
     () => bands.roamers.map((a) => ({ agent: a, pos: roamerSpot(a.id, day, shape) as [number, number, number] })),
     [bands.roamers, day, shape],
   );
-  const challengeTargets = useMemo(
-    () =>
-      perched
-        .filter((p) => p.agent.status === "awaiting" && p.agent.key !== ownedKey)
-        .map((p) => ({
-          key: p.agent.key,
-          name: p.agent.name,
-          handle: p.agent.handle,
-          id: p.agent.id,
-          pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]),
-        })),
-    [perched, ownedKey],
-  );
+  const [summitChallengeReady, setSummitChallengeReady] = useState(peakCleared);
+  const [summitCam, setSummitCam] = useState<{ x: number; y: number; z: number } | null>(null);
+  useEffect(() => {
+    if (peakCleared && summitRevealNonce === 0) setSummitChallengeReady(true);
+  }, [peakCleared, summitRevealNonce]);
+  useEffect(() => {
+    if (summitRevealNonce <= 0 || !summitPos) return;
+    setSummitChallengeReady(false);
+    setSummitCam({ x: summitPos[0], y: summitPos[1] + 1.1, z: summitPos[2] });
+    const t = window.setTimeout(() => setSummitCam(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [summitRevealNonce, summitPos]);
+  const challengeTargets = useMemo(() => {
+    const mid = perched
+      .filter((p) => p.agent.status === "awaiting" && p.agent.key !== ownedKey)
+      .map((p) => ({
+        key: p.agent.key,
+        name: p.agent.name,
+        handle: p.agent.handle,
+        id: p.agent.id,
+        pos: new THREE.Vector3(p.pos[0], p.pos[1] + 1.2, p.pos[2]),
+      }));
+    if (
+      summitChallengeReady &&
+      summitAgent &&
+      summitPos &&
+      summitAgent.status === "awaiting" &&
+      summitAgent.key !== ownedKey
+    ) {
+      mid.push({
+        key: summitAgent.key,
+        name: summitAgent.name,
+        handle: summitAgent.handle,
+        id: summitAgent.id,
+        pos: new THREE.Vector3(summitPos[0], summitPos[1] + 1.2, summitPos[2]),
+      });
+    }
+    return mid;
+  }, [perched, ownedKey, summitChallengeReady, summitAgent, summitPos]);
   const groundTargets = useMemo(
     () =>
       roamers
@@ -810,7 +860,7 @@ export default function World({
           {inAmphitheatre && !showcase && (
             <>
               <AmphitheatreColliders />
-              <Amphitheatre champions={champions} focus={galleryFocus} />
+              <Amphitheatre champions={champions} focus={galleryFocus} hideFighters={!!match} />
               <VenueExitPortal pos={VENUE_EXIT.amphitheatre.pos} label="Exit to the wilds" accent={VENUES.amphitheatre.color} />
             </>
           )}
@@ -916,6 +966,15 @@ export default function World({
               {!match && <BrokerPost pos={brokerPad} biome={biome} />}
               {!match && <GoalMarkers goals={goals} />}
               {!match && perched.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} />)}
+              {!match && summitAgent && summitPos && (peakCleared || summitRevealNonce > 0) && (
+                <SummitGuardian
+                  key={`summit-${summitAgent.id}-${summitRevealNonce}`}
+                  agent={summitAgent}
+                  position={summitPos}
+                  playReveal={summitRevealNonce > 0}
+                  onReady={() => setSummitChallengeReady(true)}
+                />
+              )}
               {!match && roamers.map((p) => <PerchedAgent key={p.agent.id} agent={p.agent} position={p.pos} ground />)}
               {/* Back to the Concord — the monumental Return Portal standing at
                   the spawn point, facing the plaza (you emerge from it here). */}
@@ -1058,10 +1117,10 @@ export default function World({
       {showcase ? (
         <ShowcaseCamera shape={shape} />
       ) : (
-        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} clanShot={clanShot} circuitArriveNonce={circuitArriveNonce} />
+        <CameraController match={match} handlerPos={handlerPos} camCue={camCue} camDrag={camDrag} shape={shape} galleryFocus={galleryFocus} inCircuit={inCircuit} circuitPhase={circuitPhase} matchWide={isTouch} clanShot={clanShot} summitShot={summitCam} circuitArriveNonce={circuitArriveNonce} />
       )}
     </Canvas>
-    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match && !clanShot} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
+    {isTouch && !showcase && <TouchControls active={controlsEnabled && !match && !clanShot && !summitCam} move={touchMove} btn={touchBtn} cam={camDrag} cue={camCue} bottomInset={touchBottomInset} hudLeftInset={120} />}
     </>
   );
 }
@@ -1933,11 +1992,11 @@ function GoalBeacon({ goal }: { goal: WorldGoal }) {
           <meshBasicMaterial color={col} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
         </mesh>
       </group>
-      {/* a summit landing halo so the flight-gated peak reads as a place to reach */}
+      {/* landing halo on the Tower summit pad (Peak floats ~1.55 above the surface) */}
       {goal.kind === "peak" && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.0, 0]}>
-          <ringGeometry args={[3.0, 3.5, 40]} />
-          <meshBasicMaterial color={col} transparent opacity={0.3} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} fog={false} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.55, 0]}>
+          <ringGeometry args={[2.6, 3.2, 40]} />
+          <meshBasicMaterial color={col} transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} fog={false} />
         </mesh>
       )}
       <pointLight position={[0, 0.9, 0]} intensity={secret ? 12 : 24} color={col} distance={15} />
@@ -2315,60 +2374,8 @@ function Platforms({ biome, shape, count }: { biome: BiomeConfig; shape: Terrain
 // ── The Tower ────────────────────────────────────────────────────────────────
 // A climbable helix of small floating platforms spiralling toward the sky. The
 // gaps are tuned to the Handler's jump arc + multi-jump so a confident player
-// can chain hops all the way to the summit. Other agents perch on the platforms.
-const CHECKPOINT_EVERY = 12;         // a generous landing pad (and respawn anchor) every ~12 hops
-
-interface TowerNode {
-  pos: [number, number, number];
-  size: [number, number, number];
-  checkpoint?: boolean; // wide rest pad that also catches a fall
-}
-
-interface Perch {
-  agent: TowerAgent;
-  pos: [number, number, number];
-}
-
-function towerLayout(shape: TerrainShape, angle: number, steps: number): TowerNode[] {
-  const cx = Math.cos(angle) * (PLAZA_R + 9);
-  const cz = Math.sin(angle) * (PLAZA_R + 9);
-  const baseY = terrainHeight(cx, cz, shape);
-  const out: TowerNode[] = [];
-  // a low entry step you can hop onto straight off the ground — the first checkpoint
-  out.push({ pos: [cx, baseY + 1.2, cz], size: [4.6, 0.5, 4.6], checkpoint: true });
-  let y = baseY + 1.2;
-  for (let i = 0; i < steps; i++) {
-    const a = i * 0.95 + 0.5;
-    const radius = 3.6 + Math.sin(i * 0.7) * 0.6;
-    // gaps stay inside the jump arc the whole way up (normalised by step count)
-    const step = 2.7 + (i / steps) * 0.9;
-    y += step;
-    const isCp = (i + 1) % CHECKPOINT_EVERY === 0;
-    // platforms taper gently as you ascend; checkpoints are wide, safe landing pads
-    const w = isCp ? 4.6 : Math.max(2.0, 3.2 - i * 0.008);
-    out.push({ pos: [cx + Math.cos(a) * radius, y, cz + Math.sin(a) * radius], size: [w, 0.45, w], checkpoint: isCp });
-  }
-  // the summit — a wide platform, the prize at the top
-  y += 3.1;
-  out.push({ pos: [cx, y, cz], size: [6.5, 0.6, 6.5], checkpoint: true });
-  return out;
-}
-
-// Spread agents across the tower with rating rising as you climb — weakest near
-// the base, the strongest perched on the summit.
-function assignPerch(nodes: TowerNode[], agents: TowerAgent[]): Perch[] {
-  if (!agents.length) return [];
-  const slots = nodes.slice(1); // leave the entry step clear
-  const sorted = [...agents].sort((a, b) => a.rating - b.rating);
-  const n = Math.min(sorted.length, slots.length);
-  const out: Perch[] = [];
-  for (let i = 0; i < n; i++) {
-    const slot = n === 1 ? slots[slots.length - 1] : slots[Math.round((i * (slots.length - 1)) / (n - 1))];
-    out.push({ agent: sorted[i], pos: [slot.pos[0], slot.pos[1] + slot.size[1] / 2, slot.pos[2]] });
-  }
-  return out;
-}
-
+// can chain hops all the way to the summit. Mid-climb agents perch on the way;
+// the Peak claim at the top reveals the summit champion.
 function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
   const beamRef = useRef<THREE.Mesh>(null);
   const base = nodes[0];
@@ -2394,7 +2401,7 @@ function Tower({ biome, nodes }: { biome: BiomeConfig; nodes: TowerNode[] }) {
         <Html position={[0, beamH + 1.5, 0]} center distanceFactor={26} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
           <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
             <div style={{ fontWeight: 700, color: "#fff", fontSize: 22, letterSpacing: 2, textShadow: "0 2px 10px #000" }}>↑ THE TOWER</div>
-            <div style={{ fontSize: 11, color: biome.platform.top, letterSpacing: 1 }}>climb to challenge the agents above</div>
+            <div style={{ fontSize: 11, color: biome.platform.top, letterSpacing: 1 }}>claim the Peak · challenge the summit</div>
           </div>
         </Html>
       </group>
@@ -2442,6 +2449,120 @@ function pseudoChampion(a: TowerAgent): Champion {
   c.xp = a.battles * 60;
   c.rating = a.rating;
   return c;
+}
+
+/** Summit champion after Peak claim — smoke-bomb appear, then challengeable. */
+function SummitGuardian({
+  agent,
+  position,
+  playReveal,
+  onReady,
+}: {
+  agent: TowerAgent;
+  position: [number, number, number];
+  playReveal: boolean;
+  onReady: () => void;
+}) {
+  const reduce = useSettings((s) => s.reduceMotion);
+  const group = useRef<THREE.Group>(null);
+  const puffRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const puffState = useRef(
+    Array.from({ length: 28 }, () => ({
+      pos: new THREE.Vector3(),
+      vel: new THREE.Vector3(),
+      life: 0,
+      max: 1,
+      size: 1,
+    })),
+  );
+  const tRef = useRef(playReveal && !reduce ? 0 : 1);
+  const readySent = useRef(false);
+  const poofed = useRef(false);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    readySent.current = false;
+    poofed.current = false;
+    tRef.current = playReveal && !reduce ? 0 : 1;
+    if (!playReveal || reduce) {
+      onReadyRef.current();
+      readySent.current = true;
+    }
+  }, [playReveal, reduce, agent.id]);
+
+  useFrame((_, dtRaw) => {
+    const dt = Math.min(0.05, dtRaw);
+    if (tRef.current < 1) {
+      if (!poofed.current && tRef.current < 0.05) {
+        poofed.current = true;
+        smokePoofSfx();
+        for (let i = 0; i < puffState.current.length; i++) {
+          const p = puffState.current[i];
+          const a = (i / puffState.current.length) * Math.PI * 2;
+          const r = 0.2 + Math.random() * 0.55;
+          p.pos.set(Math.cos(a) * r * 0.3, 0.2 + Math.random() * 0.4, Math.sin(a) * r * 0.3);
+          p.vel.set(Math.cos(a) * (1.6 + Math.random() * 2.2), 1.4 + Math.random() * 2.4, Math.sin(a) * (1.6 + Math.random() * 2.2));
+          p.max = 0.55 + Math.random() * 0.45;
+          p.life = p.max;
+          p.size = 0.35 + Math.random() * 0.45;
+        }
+      }
+      tRef.current = Math.min(1, tRef.current + dt / 1.35);
+      const u = tRef.current;
+      // ease-out pop: small → overshoot → settle (PerchedAgent keeps its own scale)
+      const pop = u < 0.55
+        ? (u / 0.55) * (u / 0.55)
+        : 1 + Math.sin(((u - 0.55) / 0.45) * Math.PI) * 0.1 * (1 - (u - 0.55) / 0.45);
+      if (group.current) {
+        group.current.scale.setScalar(Math.max(0.001, pop));
+        group.current.visible = u > 0.08;
+      }
+      if (u >= 1 && !readySent.current) {
+        readySent.current = true;
+        onReadyRef.current();
+      }
+    } else if (group.current) {
+      group.current.scale.setScalar(1);
+      group.current.visible = true;
+    }
+
+    for (let i = 0; i < puffState.current.length; i++) {
+      const p = puffState.current[i];
+      const m = puffRefs.current[i];
+      if (!m) continue;
+      if (p.life <= 0) {
+        if (m.visible) m.visible = false;
+        continue;
+      }
+      p.life -= dt;
+      p.vel.y += 1.2 * dt;
+      p.vel.multiplyScalar(Math.exp(-2.8 * dt));
+      p.pos.addScaledVector(p.vel, dt);
+      const age = 1 - Math.max(0, p.life) / p.max;
+      m.visible = true;
+      m.position.copy(p.pos);
+      m.scale.setScalar(p.size * (0.7 + age * 2.1));
+      const mat = m.material as THREE.MeshBasicMaterial;
+      const g = 0.72 - age * 0.25;
+      mat.color.setRGB(g, g, g + 0.04);
+      mat.opacity = (1 - age * age) * 0.85;
+    }
+  });
+
+  return (
+    <group position={position}>
+      {puffState.current.map((_, i) => (
+        <mesh key={i} ref={(el) => { puffRefs.current[i] = el; }} visible={false} renderOrder={12}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshBasicMaterial color="#c8c8d4" transparent opacity={0} depthWrite={false} />
+        </mesh>
+      ))}
+      <group ref={group} visible={!playReveal || reduce}>
+        <PerchedAgent agent={agent} position={[0, 0, 0]} />
+      </group>
+    </group>
+  );
 }
 
 function PerchedAgent({ agent, position, ground = false }: { agent: TowerAgent; position: [number, number, number]; ground?: boolean }) {
@@ -2900,7 +3021,7 @@ function Handler({
   spawnKnoll: SpawnKnoll;
   onAltitude?: (y: number) => void;
   onPose?: (x: number, z: number, heading: number) => void;
-  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number) => void) | null>;
+  travelRef?: React.MutableRefObject<((x: number, z: number, faceHeading?: number, y?: number) => void) | null>;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
   // bind foot quats + scratch pose math (feet aren't reset by the idle mixer)
@@ -3017,12 +3138,18 @@ function Handler({
   // compass). Reads the live body each call, so it survives remounts.
   useEffect(() => {
     if (!travelRef) return;
-    travelRef.current = (x, z, faceHeading) => {
+    travelRef.current = (x, z, faceHeading, yOverride) => {
       const rb = body.current;
       if (!rb) return;
-      // venue floors (amphitheatre sand / circuit pad) = y≈0; else host terrain / Ascent
+      // venue floors (amphitheatre sand / circuit pad) = y≈0; else host terrain / Ascent.
+      // Optional yOverride keeps Tower summit / floating pads (capsule centre).
       const groundY = inAmphitheatre || circuitMode ? 0 : worldWalkHeight(x, z, shape, spawnKnoll, ascentFoot);
-      const y = spawnPos ? spawnPos[1] : groundY + FOOT_OFF + 1.4;
+      const y =
+        typeof yOverride === "number" && Number.isFinite(yOverride)
+          ? yOverride
+          : spawnPos
+            ? spawnPos[1]
+            : groundY + FOOT_OFF + 1.4;
       rb.setTranslation({ x, y, z }, true);
       rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
       jumps.current = 0;
@@ -4023,11 +4150,13 @@ function Handler({
         <group ref={camAnchor} />
         <group
           visible={
+            !matchActive &&
             !(
               circuitMode &&
               (circuitPhase === "sector" || circuitPhase === "done" || circuitPhase === "failed")
             )
             // "continue" keeps the body visible beside the departing ghost
+            // Matches hide the Trainer entirely — only the two champions stay on stage
           }
         >
           <group ref={inner} position={[0, -FOOT_OFF, 0]} scale={READER_SCALE}>
@@ -4132,6 +4261,7 @@ function CameraController({
   circuitPhase = null,
   matchWide = false,
   clanShot = null,
+  summitShot = null,
   circuitArriveNonce = 0,
 }: {
   match: MatchView | null;
@@ -4146,6 +4276,8 @@ function CameraController({
   matchWide?: boolean;
   /** Clan swear shot — frame Trainer + rising flag; free look disabled. */
   clanShot?: { x: number; z: number } | null;
+  /** Peak claim — brief look at the summit champion smoke-in. */
+  summitShot?: { x: number; y: number; z: number } | null;
   /** Bumped on life-continue to re-arm the front-facing arrive hold. */
   circuitArriveNonce?: number;
 }) {
@@ -4304,6 +4436,24 @@ function CameraController({
       const cz = tz + Math.cos(dirYaw.current) * orbit;
       camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-(cin ? 3.4 : 2.5) * dt));
       camera.lookAt(tx, ty, tz);
+      return;
+    }
+
+    // Peak claim — short cinematic on the summit while the champion appears.
+    if (summitShot) {
+      const hp = handlerPos.current;
+      const fx = summitShot.x - hp.x;
+      const fy = summitShot.y - hp.y;
+      const fz = summitShot.z - hp.z;
+      const fl = Math.hypot(fx, fz) || 1;
+      const nx = fx / fl;
+      const nz = fz / fl;
+      // Stand a few meters back from the player toward the guardian, slightly high.
+      const cx = hp.x + nx * 2.4 - nz * 1.6;
+      const cz = hp.z + nz * 2.4 + nx * 1.6;
+      const cy = hp.y + 2.2 + Math.min(2.5, Math.max(0, fy) * 0.15);
+      camera.position.lerp(tmp.current.set(cx, cy, cz), 1 - Math.exp(-4.2 * dt));
+      camera.lookAt(summitShot.x, summitShot.y + 0.6, summitShot.z);
       return;
     }
 

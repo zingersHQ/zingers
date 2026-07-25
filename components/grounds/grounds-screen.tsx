@@ -331,7 +331,7 @@ export default function GroundsScreen({
   const world = useMemo(() => worldById(worldId), [worldId]);
   const [gameSession, setGameSession] = useState<GameSession | null>(null);
   /** Mount Handler at this wilds pose after leaving a venue (Ascent portal exit). */
-  const [wildResume, setWildResume] = useState<{ x: number; z: number; heading?: number } | null>(null);
+  const [wildResume, setWildResume] = useState<{ x: number; z: number; y?: number; heading?: number } | null>(null);
   const activeVenue = gameSession?.venue ?? null;
   const venueHostWorldId = gameSession?.hostWorldId ?? worldId;
   const inVenue = !!activeVenue;
@@ -481,6 +481,12 @@ export default function GroundsScreen({
     () => allGoals.filter((g) => !doneGoals.includes(g.id)),
     [allGoals, doneGoals],
   );
+  const peakGoalId = useMemo(() => allGoals.find((g) => g.kind === "peak")?.id ?? null, [allGoals]);
+  const peakCleared = !!(peakGoalId && doneGoals.includes(peakGoalId));
+  const [summitRevealNonce, setSummitRevealNonce] = useState(0);
+  useEffect(() => {
+    setSummitRevealNonce(0);
+  }, [world.id]);
 
   // ── exploration: districts (compass + fast-travel) and discovery caches ──────
   const landmarks = useMemo(() => landmarksOf(biome), [biome]);
@@ -495,7 +501,7 @@ export default function GroundsScreen({
     [isHub, inVenue, allNodes, claimedToday],
   );
   const poseRef = useRef<Pose>({ x: 0, z: 34, heading: Math.PI });
-  const travelRef = useRef<((x: number, z: number, faceHeading?: number) => void) | null>(null);
+  const travelRef = useRef<((x: number, z: number, faceHeading?: number, y?: number) => void) | null>(null);
   // Portals cross by walking through — latch so exit/resume can't instantly re-enter.
   const portalAutoKey = useRef<string | null>(null);
 
@@ -747,10 +753,11 @@ export default function GroundsScreen({
     const heading = pose.heading ?? Math.PI;
     poseRef.current = { x: pose.x, z: pose.z, heading };
     // Venue remount clears travelRef briefly — retry until the Handler hooks up.
+    // Optional y keeps Tower / floating pads (terrain height alone would drop you).
     let tries = 0;
     const attempt = () => {
       if (travelRef.current) {
-        travelRef.current(pose.x, pose.z, heading);
+        travelRef.current(pose.x, pose.z, heading, pose.y);
         return;
       }
       if (++tries < 50) window.setTimeout(attempt, 40);
@@ -1524,6 +1531,30 @@ export default function GroundsScreen({
     setTimeout(() => restorePose(safe), 150);
   }, [worldId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Persist exact wilds pose when the tab hides / closes so reload lands where you left.
+  // Venues already wrote the host return pose on enter — only refresh last-world there.
+  useEffect(() => {
+    if (!owned) return;
+    const persist = () => {
+      if (inVenue) {
+        saveLastWorld(venueHostWorldId);
+        return;
+      }
+      const pose = safeWildPose(worldId, capturePose());
+      saveWorldPose(worldId, pose);
+      saveLastWorld(worldId);
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") persist();
+    };
+    window.addEventListener("pagehide", persist);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", persist);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [owned, inVenue, worldId, venueHostWorldId, capturePose]);
+
   useEffect(() => {
     if (circuitPhase !== "running") return;
     let raf = 0;
@@ -1562,6 +1593,12 @@ export default function GroundsScreen({
   // In-world swear shot after a pledge — letterboxed camera + rising flag.
   const [clanCeremony, setClanCeremony] = useState<ClanCeremony | null>(null);
   const pendingClanCeremony = useRef<CreatureType | null>(null);
+  /** Where you were when you opened the Clan swear (region Tower, etc.) — restored after the cinematic. */
+  const clanReturnRef = useRef<{
+    worldId: string;
+    venue: VenueId | null;
+    pose: { x: number; z: number; y?: number; heading: number };
+  } | null>(null);
   const reduceMotionPref = usePrefersReducedMotion();
   const counters = useRef({ pa: 0, pb: 0, ha: 0, hb: 0 });
   const historyRef = useRef(bout.history);
@@ -1915,21 +1952,63 @@ export default function GroundsScreen({
     setPledgeFlash({ name: c.name, motto: c.motto, color: c.color });
     if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
     pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2200);
-  }, []);
+
+    // Put the Trainer back where they swore from (e.g. Tower summit after a fight).
+    // Do not use travelToWorld(hub→region): that forces the Vaultgate entrance pose.
+    const ret = clanReturnRef.current;
+    clanReturnRef.current = null;
+    if (!ret) return;
+
+    const backToRegion = ret.worldId !== "concord";
+    if (backToRegion) {
+      const pose = {
+        x: ret.pose.x,
+        z: ret.pose.z,
+        y: ret.pose.y ?? 0,
+        heading: ret.pose.heading,
+      };
+      saveWorldPose(ret.worldId, pose);
+      saveLastWorld(ret.worldId);
+      setGameSession(null);
+      // Mount on the saved pad (y matters on the Tower summit). Avoid travelToWorld —
+      // hub→region always forces the Vaultgate entrance.
+      setWildResume({ x: pose.x, z: pose.z, y: pose.y, heading: pose.heading });
+      setWorldId(ret.worldId);
+      if (ret.venue) {
+        window.setTimeout(() => enterVenue(ret.venue!), 220);
+      }
+      return;
+    }
+
+    // Already in the Hub: ceremony parked you at the flag — restore prior plaza spot.
+    if (!ret.venue) {
+      window.setTimeout(() => restorePose(ret.pose), 40);
+    } else {
+      window.setTimeout(() => enterVenue(ret.venue!), 80);
+    }
+  }, [restorePose, enterVenue]);
 
   const beginClanCeremony = useCallback(
     (type: CreatureType) => {
       const fm = forceMeta(type);
       const payload: ClanCeremony = { type, name: fm.name, motto: fm.motto, color: TYPE_COLOR[type] };
       const reduce = reduceMotionPref || useSettings.getState().reduceMotion;
+      // Remember the spot before any Concord travel / flag park.
+      clanReturnRef.current = {
+        worldId,
+        venue: activeVenue,
+        pose: capturePose(),
+      };
       if (reduce) {
         pledgeSfx();
         setPledgeFlash({ name: payload.name, motto: payload.motto, color: payload.color });
         if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
         pledgeFlashTimer.current = setTimeout(() => setPledgeFlash(null), 2800);
+        clanReturnRef.current = null; // never left — no restore needed
         return;
       }
-      // Ceremony needs the Concord plaza. If you're elsewhere, queue a travel.
+      // Ceremony needs the Concord plaza flags. If you're elsewhere, queue a travel,
+      // then finishClanCeremony returns you to clanReturnRef.
       if (!isHub || inVenue) {
         pendingClanCeremony.current = type;
         if (inVenue) exitVenue();
@@ -1939,7 +2018,7 @@ export default function GroundsScreen({
       placeAtClanFlag(type);
       setClanCeremony(payload);
     },
-    [reduceMotionPref, isHub, inVenue, exitVenue, travelToWorld, placeAtClanFlag],
+    [reduceMotionPref, isHub, inVenue, exitVenue, travelToWorld, placeAtClanFlag, worldId, activeVenue, capturePose],
   );
 
   // After a queued Concord travel, park at the flag and open the swear shot.
@@ -2128,6 +2207,7 @@ export default function GroundsScreen({
       if (await store.completeGoal(near.id, reward)) {
         setGoalFlash({ label: near.label, goalKind: near.goalKind, ...reward });
         setNear(null);
+        if (near.goalKind === "peak") setSummitRevealNonce((n) => n + 1);
         if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
         goalFlashTimer.current = setTimeout(() => setGoalFlash(null), 3200);
         reactCompanion("triumph");
@@ -3260,6 +3340,8 @@ export default function GroundsScreen({
               towerAgents={isHub || inVenue ? [] : towerAgents}
               nodes={liveNodes}
               goals={isHub ? [] : liveGoals}
+              peakCleared={!isHub && !inVenue && peakCleared}
+              summitRevealNonce={isHub || inVenue ? 0 : summitRevealNonce}
               gates={isHub ? CONCORD_GATES : []}
               pledged={store.force}
               choosingClan={clanOpen}
@@ -5276,6 +5358,7 @@ function MatchHud(props: {
         const rankDelta = result.globalDelta ?? result.ratingDelta;
         const hasReward = result.crowns !== 0 || result.betWon !== null;
         const hasProgress = !!result.leveledTo || result.ladders.length > 0 || rankDelta != null;
+        const hasPayoff = hasReward || hasProgress;
         return (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", zIndex: 55, padding: 16 }}>
           {result.won && <Confetti accent="#f0a93a" count={70} originTop="34%" />}
@@ -5284,45 +5367,57 @@ function MatchHud(props: {
             style={{
               ["--ac" as string]: ac,
               position: "relative",
-              padding: 24,
-              width: "min(380px, 92vw)",
+              padding: "22px 22px 20px",
+              width: "min(360px, 92vw)",
               maxHeight: "90vh",
               overflow: "auto",
               textAlign: "center",
               boxShadow: `0 0 80px -30px ${ac}`,
               display: "flex",
               flexDirection: "column",
-              gap: 18,
+              gap: 14,
             }}
           >
-            {/* header */}
+            {/* verdict — short, then get out of the way */}
             <div>
-              <div className="glow" style={{ fontSize: 28, fontWeight: 800, color: ac, letterSpacing: 1 }}>
+              <div className="glow" style={{ fontSize: 26, fontWeight: 800, color: ac, letterSpacing: 1.2, lineHeight: 1 }}>
                 {result.won ? "VICTORY" : "DEFEAT"}
               </div>
-              <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+              <div className="mono" style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 5, letterSpacing: 0.4 }}>
                 {bout.end?.winner_name} wins · {bout.end?.rounds} rounds
               </div>
             </div>
 
-            {/* the signature moment */}
-            {hl && (
-              <div style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid var(--line2)", textAlign: "left" }}>
-                <div className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--gold)" }}>{hlLabel} · R{hl.round}</div>
-                <div style={{ fontStyle: "italic", fontSize: 13.5, marginTop: 4, lineHeight: 1.4 }}>&ldquo;{hl.line}&rdquo;</div>
-                <div className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", marginTop: 3 }}>— {hl.actor_name}</div>
-              </div>
-            )}
-
-            {/* rewards + progression read as one block */}
-            {(hasReward || hasProgress || result.learned) && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                {/* reward — crowns + wager, one line */}
+            {/* payoff first — crowns + progression are the point of the card */}
+            {hasPayoff && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "14px 12px",
+                  borderRadius: 12,
+                  background: result.won ? "rgba(80, 220, 160, 0.06)" : "rgba(255, 90, 90, 0.06)",
+                  border: `1px solid ${result.won ? "rgba(80, 220, 160, 0.22)" : "rgba(255, 90, 90, 0.2)"}`,
+                }}
+              >
                 {hasReward && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
                     {result.crowns !== 0 && (
-                      <span style={{ fontSize: 26, fontWeight: 800, color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                        {result.crowns >= 0 ? "+" : ""}{result.crowns} <Crown size={20} strokeWidth={2.2} />
+                      <span
+                        style={{
+                          fontSize: 32,
+                          fontWeight: 800,
+                          letterSpacing: 0.5,
+                          color: result.crowns >= 0 ? "var(--gold)" : "var(--bad)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {result.crowns >= 0 ? "+" : ""}{result.crowns} <Crown size={24} strokeWidth={2.2} />
                       </span>
                     )}
                     {result.betWon !== null && (
@@ -5338,7 +5433,6 @@ function MatchHud(props: {
                   </div>
                 )}
 
-                {/* one tidy progress strip — XP, skills, rank, reader, level-up */}
                 {hasProgress && (
                   <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
                     {result.leveledTo && (
@@ -5348,21 +5442,42 @@ function MatchHud(props: {
                       <span key={l} className="chip" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{l}</span>
                     ))}
                     {rankDelta != null && (
-                      <span className="chip" style={{ borderColor: "var(--line)", color: rankDelta >= 0 ? "var(--good)" : "var(--bad)" }}>
+                      <span
+                        className="chip"
+                        style={{
+                          borderColor: rankDelta >= 0 ? "var(--good)" : "var(--bad)",
+                          color: rankDelta >= 0 ? "var(--good)" : "var(--bad)",
+                        }}
+                      >
                         Ladder {rankDelta >= 0 ? "+" : ""}{rankDelta}
                       </span>
                     )}
                   </div>
                 )}
-
-                {result.learned && (
-                  <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", fontStyle: "italic" }}>{result.learned}</div>
-                )}
               </div>
             )}
 
-            {/* actions — full-width row; equal halves when paired */}
-            <div style={{ display: "flex", gap: 8, width: "100%" }}>
+            {/* signature line — flavor under the numbers, quieter */}
+            {hl && (
+              <div style={{ padding: "0 2px", textAlign: "left" }}>
+                <div className="mono" style={{ fontSize: 8.5, letterSpacing: 1.4, color: "var(--muted2)" }}>
+                  {hlLabel} · R{hl.round}
+                </div>
+                <div style={{ fontStyle: "italic", fontSize: 13, marginTop: 4, lineHeight: 1.4, color: "var(--ink)", opacity: 0.88 }}>
+                  &ldquo;{hl.line}&rdquo;
+                </div>
+                <div className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", marginTop: 3 }}>- {hl.actor_name}</div>
+              </div>
+            )}
+
+            {result.learned && (
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", fontStyle: "italic", marginTop: hl ? -4 : 0 }}>
+                {result.learned}
+              </div>
+            )}
+
+            {/* actions */}
+            <div style={{ display: "flex", gap: 8, width: "100%", marginTop: 2 }}>
               <button
                 className="btn"
                 style={{
@@ -5391,7 +5506,7 @@ function MatchHud(props: {
                 }}
                 onClick={onClose}
               >
-                back to The Grounds
+                CONTINUE
               </button>
             </div>
           </div>

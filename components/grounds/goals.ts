@@ -1,17 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // World goals — the few, legible objectives that give a reason to leave the
 // plaza. Each region offers exactly three, on a template every player reads at a
-// glance: a PEAK (reach the summit — teaches flight), a DEPTH (descend the rift —
-// teaches risk traversal), and a SECRET (find a hidden Keeper echo — drops lore).
+// glance: a PEAK (claim the Tower summit — teaches flight + climb), a DEPTH
+// (descend the rift — teaches risk traversal), and a SECRET (find a hidden
+// Keeper echo — drops lore).
 //
-// Goals are deterministic and SEASON-AWARE: their bearings reseed every season,
-// so the spotlight rotates and there's always a fresh hunt. The featured region's
-// goals pay a premium. Pure (no React/three state) so the scene, the compass and
-// the store all agree on where a goal is and what it's worth.
+// Claiming the Peak reveals the summit champion with a short appear cinematic;
+// after that you can challenge them. Goals are SEASON-AWARE so the hunt refreshes.
+// Pure (no React/three state) so the scene, the compass and the store all agree.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { BiomeConfig } from "./biomes";
 import { PLAZA_R, ISLAND_PLAY_R, terrainHeight, shapeOf, spawnKnollFor, riftDepthEnd, type TerrainShape, type SpawnKnoll } from "./terrain";
 import { hash01 } from "./landmarks";
+import { towerSummitSurface } from "./tower-layout";
 
 const TWO_PI = Math.PI * 2;
 
@@ -38,8 +39,7 @@ export interface WorldGoal {
 }
 
 // Sweep a coarse polar grid of the wilds and return the highest / lowest sampled
-// point. Cheap (runs once per region per season, memoised by the caller) and
-// robust — the peak naturally avoids the rift, the depth naturally finds it.
+// point. Used for Depth fallback when a region has no rift.
 function extreme(shape: TerrainShape, want: "high" | "low", knoll: SpawnKnoll): [number, number, number] {
   let bestY = want === "high" ? -Infinity : Infinity;
   let best: [number, number, number] = [0, 0, 0];
@@ -85,17 +85,22 @@ export function worldGoals(biome: BiomeConfig, season: number, featured: boolean
   const shape = shapeOf(biome);
   const knoll = spawnKnollFor(biome);
   const sk = `${biome.id}:s${season}`;
+  const sc = biome.scene;
 
-  // PEAK — the highest standing point; reached by flight.
-  const peak = extreme(shape, "high", knoll);
+  // PEAK — the Tower summit (not raw terrain high ground, and not the Flight mountain).
+  const summit = towerSummitSurface(shape, sc.towerAngle, sc.towerSteps, knoll);
+  const peakPos: [number, number, number] = [summit[0], summit[1] + 1.55, summit[2]];
 
   // DEPTH — the rift floor at the far end of the chasm (on the approach route).
   const depth = shape.canyonDepth > 0 ? riftDepthEnd(shape, knoll) : extreme(shape, "low", knoll);
 
-  // SECRET — a hidden Keeper echo on the ground, mid-field, on a seeded bearing
-  // kept away from the peak so the three goals don't pile up.
-  const sa = hash01(`${sk}:secret:a`) * TWO_PI;
-  const sr = PLAZA_R + 8 + hash01(`${sk}:secret:r`) * 36; // out past the plaza, spread mid-field
+  // SECRET — a hidden Keeper echo on the ground, mid-field, kept off the Tower bearing.
+  let sa = hash01(`${sk}:secret:a`) * TWO_PI;
+  const towerA = sc.towerAngle;
+  // Nudge away if the seed lands within ~40° of the Tower so Peak and Secret don't stack.
+  const dA = Math.abs(((sa - towerA + Math.PI) % TWO_PI) - Math.PI);
+  if (dA < 0.7) sa = towerA + (sa > towerA ? 1.2 : -1.2);
+  const sr = PLAZA_R + 8 + hash01(`${sk}:secret:r`) * 36;
   const sx = Math.cos(sa) * sr;
   const sz = Math.sin(sa) * sr;
   const secretPos: [number, number, number] = [sx, terrainHeight(sx, sz, shape, knoll) + 0.9, sz];
@@ -105,9 +110,9 @@ export function worldGoals(biome: BiomeConfig, season: number, featured: boolean
       id: `${sk}:peak`,
       kind: "peak",
       label: "The Peak",
-      hint: "Fly to the highest point in this region",
+      hint: "Climb or fly to the Tower summit",
       color: biome.platform.top,
-      pos: [peak[0], peak[1] + 2.2, peak[2]],
+      pos: peakPos,
       radius: 4.5,
       flight: true,
       reward: scaleReward(BASE.peak, featured),

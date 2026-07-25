@@ -90,9 +90,12 @@ export function AmphitheatreColliders() {
 export function Amphitheatre({
   champions,
   focus,
+  hideFighters = false,
 }: {
   champions: GroundChampion[];
   focus?: React.MutableRefObject<GalleryFocus | null>;
+  /** Player bout owns the podiums — suppress the ambient league pair. */
+  hideFighters?: boolean;
 }) {
   // First Minds only — never mesh the collectible dex in the venue.
   const venueCast = useMemo(() => pickVenueCast(champions), [champions]);
@@ -129,7 +132,7 @@ export function Amphitheatre({
       <DailyHerald />
 
       {/* the two fighters trading blows on the dais (idle between bouts) */}
-      {fighters && (
+      {fighters && !hideFighters && (
         <>
           <ChampionMesh
             type={fighters.a.type}
@@ -159,7 +162,7 @@ export function Amphitheatre({
       )}
 
       {/* the verdict, called out over the ring between bouts */}
-      {verdict && (
+      {verdict && !hideFighters && (
         <Html position={[0, 4.0, 0]} center distanceFactor={14} zIndexRange={[24, 0]} style={{ pointerEvents: "none" }}>
           <div
             className="pop"

@@ -59,7 +59,7 @@ mirror deliberately, so each Reach advertises one thing the player can't yet do.
 | **The Keepers / campaign** | "Keeper watch" surprise: the current Reach's canon Keeper stands on a platform watching; a clean pass earns a bark → ledger event. | `climb.md` §7b (surprise table) |
 | **The ranked ladder** | "Rival line" surprise: a faint altitude line marks the next player above you on the board; passing it flashes their handle. Rank *is* altitude, made literal. | `climb.md` §7b |
 | **Raising / the champion** | Your champion flies beside you the whole time; the ascent sigil on its body grows as you climb — you watch raising happen on its skin. | `essence.md` §3, `climb.md` §6 |
-| **The Towers** | A region's Tower silhouette rises past you as you climb over that region; higher Reaches clear its peak. | `docs/bible/05-regions.md` (Peak goal, flight-gated) |
+| **The Towers** | A region's Tower silhouette rises past you as you climb over that region; higher Reaches clear its summit (Grounds Peak lives on that pad). | `docs/bible/05-regions.md` (Peak on Tower summit) |
 | **The Vault / seasons** | The topmost Reach (The Hum) is the closest anyone gets to the Vault's silence; the season's featured Reach glows (Today's Ascent). | `climb.md` §6 (Today's Ascent) |
 
 ### The law as a build rule (like the essence atoms)

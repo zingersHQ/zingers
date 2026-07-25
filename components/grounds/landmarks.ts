@@ -54,7 +54,7 @@ export function landmarksOf(biome: BiomeConfig): Landmark[] {
   const marks: Landmark[] = [
     { kind: "arena", label: "The Arena", sub: "duels & gauntlet", color: biome.lights.arenaPoint, pos: [0, 0, 0] },
     { kind: "train", label: "Training Pad", sub: "raise your champion", color: biome.lights.trainPoint, pos: train },
-    { kind: "tower", label: "The Tower", sub: "ranked climb", color: biome.platform.top, pos: tower },
+    { kind: "tower", label: "The Tower", sub: "Peak & ranked climb", color: biome.platform.top, pos: tower },
   ];
   // Keepers stripped from face (lib/features.ts) — compass must not advertise the climbs.
   if (KEEPERS_PLAYABLE) {

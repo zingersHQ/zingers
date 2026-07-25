@@ -174,6 +174,54 @@ function chime(c: AudioContext, out: GainNode, freq: number, t: number, dur: num
   o2.stop(t + dur + 0.02);
 }
 
+// Smoke-bomb poof when a summit champion materializes after claiming the Peak.
+export function smokePoofSfx() {
+  if (!enabled()) return;
+  const c = ensure();
+  if (!c || !master) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  duckAmbience(0.38, 280);
+
+  const t = c.currentTime + 0.005;
+  const buf = c.createBuffer(1, Math.floor(c.sampleRate * 0.35), c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const u = i / data.length;
+    data[i] = (Math.random() * 2 - 1) * (1 - u) * (1 - u);
+  }
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.setValueAtTime(420, t);
+  bp.frequency.exponentialRampToValueAtTime(180, t + 0.28);
+  bp.Q.value = 0.7;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.28, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+  src.connect(bp);
+  bp.connect(g);
+  g.connect(master);
+  src.start(t);
+  src.stop(t + 0.35);
+
+  // soft low thump under the haze
+  const o = c.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(90, t);
+  o.frequency.exponentialRampToValueAtTime(48, t + 0.18);
+  const og = c.createGain();
+  og.gain.setValueAtTime(0.0001, t);
+  og.gain.exponentialRampToValueAtTime(0.14, t + 0.015);
+  og.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  o.connect(og);
+  og.connect(master);
+  o.start(t);
+  o.stop(t + 0.24);
+}
+
 // A bright, climbing arpeggio for a reward/claim — the bigger the tier, the more
 // notes it climbs and the more sparkle tails off the top. "epic" is reserved for
 // big standing objectives (peak / depth / secret).
