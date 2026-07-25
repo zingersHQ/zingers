@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
+import type { CreatureType } from "@/lib/types";
+import { FORCES, FOUNDING_REGIONS, KEEPERS, WHEEL } from "@/lib/lore/canon";
 import { FIRST_MIND_KEYS } from "@/lib/cards/assets";
 import { BAKED_MIND_KEYS } from "@/lib/minds/baked";
 import { ROSTER } from "@/lib/engine/roster";
@@ -10,7 +11,30 @@ import { keeperKindForName } from "@/components/grounds/keeper-regalia";
 import { RegionScene } from "@/components/lore/region-scene";
 import { showcaseChampion, showcaseForForce, showcaseForKeeper } from "@/lib/render/showcase";
 
-const DEX_LATER = BAKED_MIND_KEYS.filter((k) => ROSTER[k]);
+/** Deal minds round-robin by Force so each desktop page of 5 is one of each Clan. */
+function interleaveByForce(keys: readonly string[]): string[] {
+  const buckets = Object.fromEntries(WHEEL.map((f) => [f, [] as string[]])) as Record<CreatureType, string[]>;
+  for (const k of keys) {
+    const t = ROSTER[k]?.type;
+    if (t && buckets[t]) buckets[t].push(k);
+  }
+  const out: string[] = [];
+  let guard = 0;
+  while (guard++ < keys.length + 5) {
+    let took = false;
+    for (const f of WHEEL) {
+      const next = buckets[f].shift();
+      if (next) {
+        out.push(next);
+        took = true;
+      }
+    }
+    if (!took) break;
+  }
+  return out;
+}
+
+const DEX_LATER = interleaveByForce(BAKED_MIND_KEYS.filter((k) => ROSTER[k]));
 
 const FORCE_SLUG: Record<string, string> = {
   LOGIC: "lattice",
@@ -112,7 +136,7 @@ export function BibleGallery() {
       </Section>
 
       <Section title="The Eight First Minds" kicker="archetypes · every later mind echoes one">
-        <GalleryPager label="first minds" items={firstTiles} minCol={220} />
+        <div className="bible-first-grid">{firstTiles}</div>
       </Section>
 
       {DEX_LATER.length > 0 && (
