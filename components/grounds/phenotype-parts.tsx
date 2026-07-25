@@ -361,20 +361,31 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "helm") {
-    // closed cranial shell with a brow ridge — reads as a different skull type
+    // closed cranial shell: canopy + cheek plates + glowing brow slit (reads as
+    // a different skull type, not a floating box)
     return (
       <group position={[0, center, 0]}>
         <mesh>
-          <sphereGeometry args={[r * 1.08, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.62]} />
+          <sphereGeometry args={[r * 1.1, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.68]} />
           {smooth(pal.secondary, 0.62, 0.38)}
         </mesh>
-        <mesh position={[0, r * 0.15, r * 0.7]} rotation={[0.35, 0, 0]}>
-          <boxGeometry args={[r * 1.5, r * 0.22, r * 0.28]} />
+        <mesh position={[0, r * 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r * 1.06, r * 0.06, 10, 28]} />
           {smooth(shade(pal.secondary), 0.55, 0.45)}
         </mesh>
-        <mesh position={[0, r * 0.28, r * 0.95]}>
-          <boxGeometry args={[r * 0.9, r * 0.08, r * 0.1]} />
-          {glowMat(pal.glow, 1.2 * k)}
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[s * r * 0.72, -r * 0.05, r * 0.25]} rotation={[0.15, s * 0.35, s * 0.25]}>
+            <boxGeometry args={[r * 0.45, r * 0.7, r * 0.22]} />
+            {smooth(shade(pal.secondary), 0.58, 0.42)}
+          </mesh>
+        ))}
+        <mesh position={[0, r * 0.22, r * 0.88]} rotation={[0.2, 0, 0]}>
+          <boxGeometry args={[r * 1.15, r * 0.1, r * 0.12]} />
+          {glowMat(pal.glow, 1.35 * k)}
+        </mesh>
+        <mesh position={[0, r * 0.55, -r * 0.15]} scale={[0.9, 0.35, 0.7]}>
+          <sphereGeometry args={[r * 0.45, 14, 10]} />
+          {smooth(pal.accent, 0.55, 0.4)}
         </mesh>
       </group>
     );
@@ -403,22 +414,32 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "quills") {
+    // rooted quill fan: shared scalp plate + tapered spikes (not floating cones)
     const n = Math.max(4, Math.min(8, count + 2));
     return (
-      <group position={[0, center + r * 0.35, -r * 0.1]}>
+      <group position={[0, center + r * 0.28, -r * 0.08]}>
+        <mesh position={[0, -r * 0.05, 0]} rotation={[0.4, 0, 0]}>
+          <sphereGeometry args={[r * 0.55, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+          {smooth(shade(pal.secondary), 0.55, 0.45)}
+        </mesh>
         {Array.from({ length: n }).map((_, i) => {
           const t = n === 1 ? 0 : i / (n - 1) - 0.5;
-          const len = r * (1.4 - Math.abs(t) * 0.55);
+          const len = r * (1.35 - Math.abs(t) * 0.5);
           return (
-            <mesh
+            <group
               key={i}
-              position={[t * r * 1.15, len * 0.35, -Math.abs(t) * r * 0.25]}
-              rotation={[-0.55 - Math.abs(t) * 0.35, 0, t * 0.5]}
-              scale={[0.22, 1, 0.22]}
+              position={[t * r * 1.05, len * 0.2, -Math.abs(t) * r * 0.22]}
+              rotation={[-0.5 - Math.abs(t) * 0.3, 0, t * 0.45]}
             >
-              <coneGeometry args={[r * 0.22, len, 6]} />
-              {i % 2 ? glowMat(pal.glow, 1.1 * k) : smooth(pal.secondary, 0.55, 0.4)}
-            </mesh>
+              <mesh position={[0, -len * 0.05, 0]}>
+                <cylinderGeometry args={[r * 0.08, r * 0.12, r * 0.14, 8]} />
+                {smooth(shade(pal.secondary), 0.5, 0.5)}
+              </mesh>
+              <mesh scale={[0.2, 1, 0.2]}>
+                <coneGeometry args={[r * 0.2, len, 6]} />
+                {i % 2 ? glowMat(pal.glow, 1.1 * k) : smooth(pal.secondary, 0.55, 0.4)}
+              </mesh>
+            </group>
           );
         })}
       </group>

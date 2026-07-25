@@ -69,13 +69,15 @@ interface ForceCatalog {
 // Per-Force catalogs — weighted so a Force reads as a family while individuals
 // diverge hard (Pokemon-style: same type line, different animal).
 const CATALOG: Record<CreatureType, ForceCatalog> = {
+  // Catalogs bias toward parts that sit ON the skull/torso (crest/fin/horns/
+  // antenna/dome/helm). Floating disks and face-box masks are retired from the
+  // roll table — same class of failure as the old crownRing halo.
   LOGIC: {
     headgear: [
-      ["crest", 2],
+      ["crest", 3],
       ["antenna", 3],
       ["dome", 2],
       ["helm", 3],
-      ["disks", 2],
       ["none", 1],
     ],
     visor: [
@@ -86,28 +88,27 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     ],
     shoulders: [
       ["vent", 3],
-      ["plates", 3],
+      ["plates", 2],
       ["pauldron", 1],
-      ["none", 1],
+      ["none", 2],
     ],
     back: [
       ["slab", 2],
       ["coils", 2],
-      ["none", 2],
+      ["none", 3],
     ],
     chest: [
-      ["diamond", 2],
-      ["lattice", 3],
+      ["diamond", 3],
+      ["lattice", 2],
       ["core", 2],
       ["none", 1],
     ],
   },
   CHAOS: {
     headgear: [
-      ["horns", 3],
-      ["fin", 2],
-      ["quills", 3],
-      ["mask", 2],
+      ["horns", 4],
+      ["fin", 3],
+      ["quills", 2],
       ["antenna", 1],
       ["none", 1],
     ],
@@ -125,21 +126,20 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     ],
     back: [
       ["thrusters", 3],
-      ["kite", 2],
-      ["none", 1],
+      ["kite", 1],
+      ["none", 2],
     ],
     chest: [
-      ["bars", 2],
-      ["eye", 3],
+      ["bars", 3],
+      ["eye", 2],
       ["core", 2],
       ["none", 1],
     ],
   },
   COMPOSURE: {
     headgear: [
-      ["dome", 3],
+      ["dome", 4],
       ["helm", 3],
-      ["mask", 2],
       ["none", 2],
       ["crest", 1],
     ],
@@ -156,11 +156,11 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     ],
     // Stillness reads as immovable from mass + ground rings — no bolted slabs.
     back: [
-      ["none", 3],
-      ["coils", 2],
+      ["none", 4],
+      ["coils", 1],
     ],
     chest: [
-      ["bars", 2],
+      ["bars", 3],
       ["core", 3],
       ["ring", 2],
       ["none", 1],
@@ -168,10 +168,10 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
   },
   RHETORIC: {
     headgear: [
-      ["crest", 3],
-      ["disks", 3],
+      ["crest", 4],
       ["helm", 2],
-      ["antenna", 1],
+      ["antenna", 2],
+      ["none", 1],
     ],
     visor: [
       ["twin", 3],
@@ -180,29 +180,27 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
       ["single", 1],
     ],
     shoulders: [
-      ["none", 3],
+      ["none", 4],
       ["vent", 2],
       ["plates", 1],
     ],
     back: [
-      ["none", 2],
+      ["none", 3],
       ["banner", 2],
-      ["kite", 2],
+      ["kite", 1],
     ],
     chest: [
-      ["diamond", 2],
-      ["eye", 2],
+      ["diamond", 3],
       ["ring", 2],
+      ["eye", 1],
       ["none", 1],
     ],
   },
   CREATIVITY: {
     headgear: [
-      ["antenna", 2],
-      ["fin", 2],
-      ["quills", 3],
-      ["disks", 2],
-      ["mask", 1],
+      ["antenna", 3],
+      ["fin", 3],
+      ["quills", 2],
       ["none", 1],
     ],
     visor: [
@@ -213,19 +211,18 @@ const CATALOG: Record<CreatureType, ForceCatalog> = {
     ],
     shoulders: [
       ["vent", 2],
-      ["none", 2],
-      ["plates", 2],
+      ["none", 3],
+      ["plates", 1],
     ],
     back: [
       ["wings", 3],
-      ["kite", 2],
       ["thrusters", 1],
-      ["none", 1],
+      ["none", 2],
     ],
     chest: [
-      ["diamond", 2],
+      ["diamond", 3],
       ["lattice", 2],
-      ["eye", 2],
+      ["eye", 1],
       ["none", 1],
     ],
   },

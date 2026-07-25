@@ -8,7 +8,7 @@ import { blank } from "@/lib/evolve/progression";
 import { trainerLevel } from "@/lib/evolve/trainer";
 import { recruitSlotsOpen } from "@/lib/unlock-ladder";
 import { RECRUIT_COST } from "@/lib/economy";
-import { ChampionCardFrame, FIRST_MIND_KEYS } from "@/components/collection/card-frame";
+import { ChampionCardFrame, DEX_MIND_KEYS } from "@/components/collection/card-frame";
 import { SeasonBanner } from "@/components/lore/season-banner";
 
 export default function CollectionPage() {
@@ -24,7 +24,7 @@ export default function CollectionPage() {
   useEffect(() => setMounted(true), []);
 
   const cards = useMemo<Card[]>(
-    () => FIRST_MIND_KEYS.filter((k) => ROSTER[k]).map((k) => cardOf(k, progress[k] || blank())),
+    () => DEX_MIND_KEYS.filter((k) => ROSTER[k]).map((k) => cardOf(k, progress[k] || blank())),
     [progress],
   );
 
@@ -43,10 +43,9 @@ export default function CollectionPage() {
         </span>
       </div>
       <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, maxWidth: 720, margin: "0 0 22px" }}>
-        Every champion is a card. Its portrait is its body, and its body is a deterministic function of how it has
-        fought, so a card you raise gets visibly stronger and stranger over time. Rarity is <em>earned</em>, never
-        rolled — and so is ownership: recruit a mind with Crowns, then make it legend. More minds arrive each season as
-        the Vault remembers them.
+        Every champion is a card. Eight First Minds are the archetypes; the growing dex are lineage echoes.
+        Portraits are bodies, and bodies change with career. Rarity is earned, never rolled. Recruit with Crowns,
+        then make it legend.
       </p>
 
       <div style={{ marginBottom: 22 }}>

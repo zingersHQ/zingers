@@ -13,6 +13,7 @@ import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
 import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
 import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
+import { phenotypeFromSpecies, speciesKitFor } from "@/lib/render/species";
 import { bodyPalette, forceColors, regionOf, sideOf, roleOf, seedFrom, type BodyPalette } from "@/lib/render/palette";
 import { ANIM, flightAttitudePlanar, type GestureClip, type RestPose } from "@/lib/render/animations";
 import { useSettings } from "@/store/settings";
@@ -669,7 +670,16 @@ export function ChampionMesh({
     [identityKey, colHex, champion.xp, champion.aggression, champion.flair, champion.resilience, champion.creativity],
   );
 
-  const app = useMemo(() => archetypeAppearance(champion, type, seed), [champion, type, seed]);
+  // Authored species kit when identityKey is a roster mind — stable animal line
+  // instead of phenotype lottery. Keepers / ghosts / unnamed stay on lottery.
+  const species = useMemo(
+    () => (identityKey ? speciesKitFor(identityKey, type) : null),
+    [identityKey, type],
+  );
+  const app = useMemo(
+    () => archetypeAppearance(champion, type, seed, species?.morph),
+    [champion, type, seed, species],
+  );
   // Colour identity: regular minds are restrained to their Force's two-tone pair;
   // Keepers ignore the pair and get the richer, patterned, multi-colour treatment.
   const isKeeper = !!keeper;
@@ -679,16 +689,21 @@ export function ChampionMesh({
     return p;
   }, [colHex, seed, type, isKeeper, clan]);
 
-  // seeded, tier-gated, skill-flavoured solid anatomy (helmet / visor / shoulders
-  // / chest / back) — the "this is a different model of robot" layer. Cheap + pure,
-  // so it's left for the compiler to memoize.
+  // Species parts lock the collectible silhouette; lottery + skill nudge remain
+  // for unnamed / keeper / ghost bodies.
   const domAxis = dominant(champion);
-  const pheno = phenotypeOf(type, seed, claimedTi, domAxis.axis.k, domAxis.value);
+  const pheno = useMemo(
+    () =>
+      species
+        ? phenotypeFromSpecies(species, claimedTi)
+        : phenotypeOf(type, seed, claimedTi, domAxis.axis.k, domAxis.value),
+    [species, claimedTi, type, seed, domAxis.axis.k, domAxis.value],
+  );
 
   // Build the real rigged body: clone the shared RobotExpressive rig, recolour it
   // per region, scale to height + morph the SKELETON to this Force's proportions,
   // and wire its idle / walk / punch clips. Rebuilds only when the identity changes.
-  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}|${isKeeper}`;
+  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}|${isKeeper}|${species?.tag ?? ""}`;
   const built = useMemo(() => buildCharacter(scene, animations, champion, colHex, app, seed, palette), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gref = useRef<THREE.Group>(null);

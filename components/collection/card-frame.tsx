@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Card } from "@/lib/cards/card";
 import type { Champion } from "@/lib/types";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
-export { FIRST_MIND_KEYS } from "@/lib/cards/assets";
+export { FIRST_MIND_KEYS, DEX_MIND_KEYS } from "@/lib/cards/assets";
 
 export function shareQuery(
   card: Card,

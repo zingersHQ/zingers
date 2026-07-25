@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Champion, CreatureType } from "@/lib/types";
 import { appearanceOf, jitterMorph, type Appearance, type BoneMorph } from "@/lib/evolve/appearance";
+import { applyMorphBias, type MorphBias } from "@/lib/render/morph-bias";
 
 export type FeatureSet = "lattice" | "static" | "monolith" | "chorus" | "spark";
 
@@ -143,16 +144,30 @@ function planMorph(base: BoneMorph, plan: BodyPlan): BoneMorph {
 
 /** Layer a Force archetype's body plan + material language onto the genome
  *  appearance, then apply the per-individual seed jitter (+ asymmetry). The
- *  genome (career) still drives the *range*; the archetype sets the species; the
- *  seed makes each one an individual. */
-export function archetypeAppearance(champion: Champion, type: CreatureType, seed = 0): Appearance {
+ *  genome (career) still drives the *range*; the archetype sets the Clan shape;
+ *  an optional species bias locks the animal line; the seed makes cousins differ. */
+export function archetypeAppearance(
+  champion: Champion,
+  type: CreatureType,
+  seed = 0,
+  species?: MorphBias | null,
+): Appearance {
   const base = appearanceOf(champion);
   const k = kitFor(type);
-  const planned = planMorph(base.morph, k.body);
-  const morph = seed ? jitterMorph(planned, seed, k.body.asym) : planned;
+  let planned = planMorph(base.morph, k.body);
+  let h = base.h * k.body.h;
+  if (species) {
+    const biased = applyMorphBias(planned, species, h);
+    planned = biased.morph;
+    h = biased.h;
+  }
+  // Species kits keep breed silhouette readable; lottery path keeps full spread.
+  const spread = species ? 0.38 : 1;
+  const asym = Math.max(k.body.asym, species?.asym ?? 0);
+  const morph = seed ? jitterMorph(planned, seed, asym, spread) : planned;
   return {
     ...base,
-    h: cl(base.h * k.body.h, 0.7, 5.2),
+    h: cl(h, 0.7, 5.2),
     width: morph.torsoGirth,
     headScale: morph.headScale,
     handScale: morph.handScale,

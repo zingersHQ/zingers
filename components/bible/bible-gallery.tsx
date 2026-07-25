@@ -2,11 +2,14 @@
 import Link from "next/link";
 import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
 import { FIRST_MIND_KEYS } from "@/lib/cards/assets";
+import { BAKED_MIND_KEYS } from "@/lib/minds/baked";
 import { ROSTER } from "@/lib/engine/roster";
 import { CanonRenderTile } from "@/components/bible/canon-render-tile";
 import { keeperKindForName } from "@/components/grounds/keeper-regalia";
 import { RegionScene } from "@/components/lore/region-scene";
 import { showcaseChampion, showcaseForForce, showcaseForKeeper } from "@/lib/render/showcase";
+
+const DEX_LATER = BAKED_MIND_KEYS.filter((k) => ROSTER[k]);
 
 const FORCE_SLUG: Record<string, string> = {
   LOGIC: "lattice",
@@ -42,7 +45,7 @@ export function BibleGallery() {
         </div>
       </Section>
 
-      <Section title="The Eight First Minds" kicker="starter roster · evolving bodies">
+      <Section title="The Eight First Minds" kicker="archetypes · every later mind echoes one">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {FIRST_MIND_KEYS.map((key) => {
             const r = ROSTER[key];
@@ -62,6 +65,29 @@ export function BibleGallery() {
           })}
         </div>
       </Section>
+
+      {DEX_LATER.length > 0 && (
+        <Section title="The Dex" kicker={`${DEX_LATER.length} later minds · lineage echoes · evolving bodies`}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+            {DEX_LATER.map((key) => {
+              const r = ROSTER[key];
+              const force = FORCES[r.type];
+              const { type, champion } = showcaseChampion(key);
+              return (
+                <Link key={key} href={`/champion/${key}`} className="panel" style={{ ["--ac" as string]: force.hex, overflow: "hidden", padding: 0, textDecoration: "none", color: "inherit" }}>
+                  <div style={{ aspectRatio: "1 / 1" }}>
+                    <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="portrait" label={`${key} portrait`} />
+                  </div>
+                  <div style={{ padding: "10px 12px 12px" }}>
+                    <div style={{ fontWeight: 800, fontSize: 14 }}>{key}</div>
+                    <div className="mono" style={{ fontSize: 9.5, color: force.hex }}>{force.name}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </Section>
+      )}
 
       <Section title="The Founding Regions" kicker="biome-lit game renders">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>

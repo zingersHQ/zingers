@@ -140,10 +140,14 @@ export function appearanceOf(p: Champion): Appearance {
 }
 
 /** Apply a stable per-individual jitter to a morph so two identical careers still
- *  read as distinct beings (and so a CHAOS mind gets its lopsided asymmetry). */
-export function jitterMorph(m: BoneMorph, seed: number, asym = 0): BoneMorph {
+ *  read as distinct beings (and so a CHAOS mind gets its lopsided asymmetry).
+ *  `spread` scales the jitter budget — authored species kits use ~0.4 so breed
+ *  silhouette stays readable; lottery fallbacks keep the full 1.0 collectible spread. */
+export function jitterMorph(m: BoneMorph, seed: number, asym = 0, spread = 1): BoneMorph {
   const rnd = mulberry32(seed || 1);
-  const j = (v: number, amt: number, lo: number, hi: number) => cl(v * (1 + (rnd() - 0.5) * amt), lo, hi);
+  const s = Math.max(0, Math.min(1.5, spread));
+  const j = (v: number, amt: number, lo: number, hi: number) =>
+    cl(v * (1 + (rnd() - 0.5) * amt * s), lo, hi);
   // Wider individual jitter so a dex of same-Force minds reads as different
   // animals, not palette swaps (collectible silhouette budget).
   const out: BoneMorph = {

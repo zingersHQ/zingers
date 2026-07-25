@@ -178,7 +178,7 @@ export const ROSTER: Record<string, Creature> = {
   ...BAKED_CREATURES,
 };
 
-/** Canonical starter roster order — onboarding, collection, bible gallery. */
+/** The eight archetypes. Gallery "First Minds", lineage parents, canon. */
 export const FIRST_MIND_KEYS = [
   "AXIOM",
   "VOX",
@@ -188,6 +188,11 @@ export const FIRST_MIND_KEYS = [
   "EMBER",
   "PARADOX",
   "WIT",
+] as const satisfies readonly (keyof typeof ROSTER)[];
+
+/** Full collectible dex order: First Minds, then baked later minds. */
+export const DEX_MIND_KEYS = [
+  ...FIRST_MIND_KEYS,
   ...BAKED_MIND_KEYS,
 ] as const satisfies readonly (keyof typeof ROSTER)[];
 
