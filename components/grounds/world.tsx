@@ -15,7 +15,7 @@ import { flightAttitudePlanar } from "@/lib/render/animations";
 import { ASCENT_GLIDE, ascentSessionMods } from "@/lib/ascent-rules";
 import { ReaderBackSigil, ReaderRankEmblem } from "./reader-regalia";
 import { ChampionMesh, buildCharacter, applyBoneMorph, WORLD_AGENT_SCALE, READER_SCALE } from "./champion-mesh";
-import { FIRST_MIND_KEYS } from "@/lib/engine/roster";
+import { pickAmbientCast } from "./ambient-cast";
 import { FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { Jetpack } from "./jetpack";
@@ -941,6 +941,7 @@ export default function World({
                 <RegionChampions
                   champions={champions}
                   ownedKey={ownedKey}
+                  worldId={regionWorldId}
                   roam={sc.roam}
                 />
               )}
@@ -1109,45 +1110,23 @@ function roamHome(key: string, champions: GroundChampion[], roam: BiomeConfig["s
   return [Math.cos(a) * roam.radius, 0, Math.sin(a) * roam.radius];
 }
 
-// Plaza NPC budget. The collectible dex is 100+ minds (Stage 6 batch) — never
-// mesh all of them. The Grounds were designed around ~eight First Mind props.
-const REGION_AMBIENT_NPCS = 8;
-
-/** Cap ambient plaza cast: First Minds first, then a stable hash fill. */
-function ambientRegionCast(champions: GroundChampion[], ownedKey: string | null): GroundChampion[] {
-  const byKey = new Map(champions.map((c) => [c.key, c] as const));
-  const out: GroundChampion[] = [];
-  const seen = new Set<string>();
-  const push = (c: GroundChampion | undefined) => {
-    if (!c || c.key === ownedKey || seen.has(c.key)) return;
-    seen.add(c.key);
-    out.push(c);
-  };
-  for (const k of FIRST_MIND_KEYS) push(byKey.get(k));
-  if (out.length < REGION_AMBIENT_NPCS) {
-    const rest = champions
-      .filter((c) => c.key !== ownedKey && !seen.has(c.key))
-      .sort((a, b) => keyHash(a.key) - keyHash(b.key));
-    for (const c of rest) {
-      push(c);
-      if (out.length >= REGION_AMBIENT_NPCS) break;
-    }
-  }
-  return out.slice(0, REGION_AMBIENT_NPCS);
-}
-
-// Region minds with ambient life — a small plaza cast gestures so the slab
-// doesn't feel empty. Owned companion is OwnedCompanion (scene-level), not here.
+// Region minds with ambient life — world-flavored First Mind cast (see ambient-cast).
+// Owned companion is OwnedCompanion (scene-level), not here.
 function RegionChampions({
   champions,
   ownedKey,
+  worldId,
   roam,
 }: {
   champions: GroundChampion[];
   ownedKey: string | null;
+  worldId: string;
   roam: BiomeConfig["scene"]["roam"];
 }) {
-  const cast = useMemo(() => ambientRegionCast(champions, ownedKey), [champions, ownedKey]);
+  const cast = useMemo(
+    () => pickAmbientCast(champions, worldId, ownedKey),
+    [champions, worldId, ownedKey],
+  );
   const [npcActs, setNpcActs] = useState<Record<string, number>>({});
   const [npcGestures, setNpcGestures] = useState<Record<string, "wave" | "punch">>({});
 

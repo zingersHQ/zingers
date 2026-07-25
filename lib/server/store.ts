@@ -127,6 +127,8 @@ export interface Store {
   ping(): Promise<boolean>;
   getChampion(id: string): Promise<LadderChampion | null>;
   putChampion(c: LadderChampion): Promise<void>;
+  /** Drop a ladder row (used to prune accidental dex-wide house seeds). */
+  removeChampion(id: string): Promise<void>;
   topChampions(limit: number): Promise<LadderChampion[]>;
   countChampions(): Promise<number>;
   pushFeed(e: FeedEntry): Promise<void>;
@@ -319,6 +321,10 @@ class UpstashStore implements Store {
     await this.r.set(K.champ(c.id), c);
     await this.r.zadd(K.ladder, { score: c.rating, member: c.id });
   }
+  async removeChampion(id: string) {
+    await this.r.del(K.champ(id));
+    await this.r.zrem(K.ladder, id);
+  }
   async topChampions(limit: number) {
     const ids = (await this.r.zrange<string[]>(K.ladder, 0, limit - 1, { rev: true })) || [];
     if (!ids.length) return [];
@@ -501,6 +507,9 @@ class MemoryStore implements Store {
   }
   async putChampion(c: LadderChampion) {
     this.champs.set(c.id, { ...c });
+  }
+  async removeChampion(id: string) {
+    this.champs.delete(id);
   }
   async topChampions(limit: number) {
     return [...this.champs.values()].sort((a, b) => b.rating - a.rating).slice(0, limit);

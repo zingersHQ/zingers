@@ -33,6 +33,7 @@ import {
 } from "@/lib/first-duel";
 import { noteGuestClimbDepth } from "@/lib/guest-climb";
 import { ROSTER } from "@/lib/engine/roster";
+import { practiceOpponentKeys } from "@/lib/scene-population";
 import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { READER_COPY } from "@/lib/player-copy";
 import { getOwnerToken, getHandle } from "@/lib/owner";
@@ -4365,6 +4366,9 @@ function BrokerOverlay({ onClose }: { onClose: () => void }) {
 }
 
 function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: string) => Champion; onPick: (k: string) => void }) {
+  // Legacy claim grid — First Minds only (full dex belongs in /collection).
+  const picks = roster.filter((r) => practiceOpponentKeys().includes(r.key));
+  const shown = picks.length >= 2 ? picks : roster.slice(0, 8);
   return (
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(6px)", zIndex: 40, padding: 20 }}>
       <div className="panel" style={{ padding: 26, width: "min(760px, 95vw)", maxHeight: "90vh", overflow: "auto", textAlign: "center" }}>
@@ -4382,7 +4386,7 @@ function Onboarding({ roster, get, onPick }: { roster: RosterEntry[]; get: (k: s
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
-          {roster.map((r) => {
+          {shown.map((r) => {
             const c = get(r.key);
             const col = TYPE_COLOR[r.type];
             const lf = levelFor(c.xp);
@@ -4842,7 +4846,9 @@ function ChallengeOverlay(props: {
   onFight: () => void;
 }) {
   const { owned, ownedEntry, roster, get, opponent, setOpponent, locked, duelMeta, betSide, setBetSide, betAmt, setBetAmt, crowns, onClose, onFight } = props;
-  const opps = roster.filter((r) => r.key !== owned);
+  // First Minds only — full dex as opponent Avatars melts WebGL on desktop.
+  const practiceKeys = new Set(practiceOpponentKeys(owned));
+  const opps = roster.filter((r) => practiceKeys.has(r.key));
   const oppEntry = opponent ? roster.find((r) => r.key === opponent) : null;
   const ownedCol = TYPE_COLOR[ownedEntry.type];
   const ownedChamp = get(owned);

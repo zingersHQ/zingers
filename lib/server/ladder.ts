@@ -2,7 +2,7 @@
 // run ranked bouts that update the ONE global ELO, and read the live feed.
 import "server-only";
 import { battleEvents, type SideConfig } from "@/lib/engine/battle";
-import { ROSTER, TOPICS } from "@/lib/engine/roster";
+import { FIRST_MIND_KEYS, ROSTER, TOPICS } from "@/lib/engine/roster";
 import { hasExternalAgent } from "@/lib/engine/side-config";
 import type { CreatureType } from "@/lib/types";
 import { BET_PAYOUT_MULT, GROUNDS_WIN_REWARD, HOME_WIN_BONUS, HOME_WAR_WEIGHT } from "@/lib/economy";
@@ -28,14 +28,17 @@ function sideOf(c: LadderChampion): SideConfig {
   return cfg;
 }
 
-// Seed the First Minds as permanent house champions so the ladder is never empty
-// and there are always opponents for the cron league. Idempotent per roster key —
-// new minds added to ROSTER are backfilled on the next ensureSeeded() call.
+const FIRST_MIND_SET = new Set<string>(FIRST_MIND_KEYS);
+
+// Seed the Eight First Minds as permanent house champions so the ladder is never
+// empty. The collectible dex (100+) must NOT be house-seeded — that flooded the
+// Tower with ChampionMeshes and made desktop Grounds unusable after Stage 6.
 export async function ensureSeeded(): Promise<void> {
   const store = getStore();
-  const entries = Object.entries(ROSTER);
   await Promise.all(
-    entries.map(async ([key, c], i) => {
+    FIRST_MIND_KEYS.map(async (key, i) => {
+      const c = ROSTER[key];
+      if (!c) return;
       const id = `house-${key}`;
       if (await store.getChampion(id)) return;
       await store.putChampion({
@@ -54,6 +57,24 @@ export async function ensureSeeded(): Promise<void> {
         ownerToken: "",
         createdAt: Date.now(),
       });
+    }),
+  );
+  // One-time prune of the Stage-6 accident (house-<DEX_KEY> for every baked mind).
+  await pruneDexHouseFlood();
+}
+
+/** Drop house bots that aren't First Minds. Player claims (house:false) stay. */
+async function pruneDexHouseFlood(): Promise<void> {
+  const store = getStore();
+  const n = await store.countChampions();
+  if (n <= FIRST_MIND_KEYS.length + 8) return; // nothing to prune
+  const all = await store.topChampions(Math.min(500, n + 10));
+  await Promise.all(
+    all.map(async (c) => {
+      if (!c.house) return;
+      if (!c.id.startsWith("house-")) return;
+      if (FIRST_MIND_SET.has(c.key)) return;
+      await store.removeChampion(c.id);
     }),
   );
 }

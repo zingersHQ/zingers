@@ -4,8 +4,9 @@
 // external `http` agent is reachable, and how active the champion has been.
 import "server-only";
 import type { AgentStatus, TowerAgent } from "@/lib/types";
-import { getLadder } from "./ladder";
-import type { LadderChampion } from "./store";
+import { SCENE_GROUNDS_AGENT_LIMIT, isSceneLadderAgent } from "@/lib/scene-population";
+import { ensureSeeded } from "./ladder";
+import { getStore, type LadderChampion } from "./store";
 
 // ── reachability cache for bring-your-own `http` agents ──────────────────────
 // A perched external agent is "awaiting" if its endpoint answers, "disabled" if
@@ -47,10 +48,19 @@ async function statusOf(c: LadderChampion): Promise<AgentStatus> {
   return c.battles === 0 ? "hibernating" : "awaiting";
 }
 
-export async function getTowerAgents(limit = 40): Promise<TowerAgent[]> {
-  const champs = await getLadder(limit);
+/**
+ * Live Tower / plaza agents for the Grounds scene.
+ * House bots: First Minds only. Player claims always eligible.
+ * Cap keeps ChampionMesh count inside the scene budget.
+ */
+export async function getTowerAgents(limit = SCENE_GROUNDS_AGENT_LIMIT): Promise<TowerAgent[]> {
+  await ensureSeeded();
+  const store = getStore();
+  const overfetch = Math.min(200, Math.max(limit * 4, 40));
+  const raw = await store.topChampions(overfetch);
+  const scene = raw.filter(isSceneLadderAgent).slice(0, limit);
   return Promise.all(
-    champs.map(async (c) => ({
+    scene.map(async (c) => ({
       id: c.id,
       key: c.key,
       name: c.name,

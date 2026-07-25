@@ -15,6 +15,7 @@ import { TYPE_COLOR, skillLevel, skillCount } from "@/lib/evolve/progression";
 import { tribunalDraw, type Stance, type TribunalDraw } from "@/lib/scenarios/registry";
 import type { TribunalConfig } from "@/lib/scenarios/types";
 import { ChampionPortrait } from "@/components/render/champion-portrait";
+import { practiceOpponentKeys } from "@/lib/scene-population";
 
 const GOLD = "#f0a93a";
 
@@ -102,7 +103,8 @@ export function TribunalBriefing(props: {
   onFight: () => void;
 }) {
   const { ownedEntry, roster, get, cfg, seed, opponent, setOpponent, betSide, setBetSide, betAmt, setBetAmt, crowns, onClose, onFight } = props;
-  const opps = roster.filter((r) => r.key !== ownedEntry.key);
+  const oppKeys = new Set(practiceOpponentKeys(ownedEntry.key));
+  const opps = roster.filter((r) => oppKeys.has(r.key));
   const oppEntry = opponent ? roster.find((r) => r.key === opponent) : null;
 
   const draw: TribunalDraw = useMemo(

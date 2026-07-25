@@ -8,6 +8,7 @@
 import type { TowerAgent } from "@/lib/types";
 import { KEEPERS_PLAYABLE } from "@/lib/features";
 import type { BiomeConfig } from "./biomes";
+import { SCENE_ROAMER_CAP, SCENE_TOWER_MESH_CAP } from "@/lib/scene-population";
 import { PLAZA_R, ISLAND_PLAY_R, terrainHeight, shapeOf, spawnKnollFor, type TerrainShape } from "./terrain";
 
 const TWO_PI = Math.PI * 2;
@@ -77,9 +78,10 @@ export interface AgentBands {
 
 export function bandAgents(agents: TowerAgent[]): AgentBands {
   const sorted = [...agents].sort((a, b) => a.rating - b.rating);
-  // up to a third of the board (capped) becomes ground roamers
-  const roamN = Math.min(6, Math.floor(sorted.length * 0.35));
-  return { roamers: sorted.slice(0, roamN), tower: sorted.slice(roamN) };
+  // Hard mesh budgets — the collectible dex must never become a plaza crowd.
+  const roamN = Math.min(SCENE_ROAMER_CAP, Math.max(0, Math.floor(sorted.length * 0.35)));
+  const tower = sorted.slice(roamN, roamN + SCENE_TOWER_MESH_CAP);
+  return { roamers: sorted.slice(0, roamN), tower };
 }
 
 // where a roaming agent stands — a deterministic mid-field spot that rotates by
