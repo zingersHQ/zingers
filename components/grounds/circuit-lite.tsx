@@ -1983,7 +1983,6 @@ export default function CircuitLite({
         phase !== "done" &&
         phase !== "continue" &&
         phase !== "prove" &&
-        phase !== "sector" &&
         phase !== "ceiling" &&
         phase !== "ranklock" && (
         <ChallengeOvertakeToast
