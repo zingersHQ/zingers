@@ -115,10 +115,14 @@ import { DailySheet } from "@/components/grounds/daily-sheet";
 import { CircuitHud, type CircuitPhase, type CircuitFailReason, type CircuitBoardEntry } from "@/components/grounds/circuit-hud";
 import { ClimbProveGate } from "@/components/grounds/climb/prove-gate";
 import {
+  buildShareGhostPaths,
+  challengeTipFurthestZ,
+  climbChallengeMark,
   createClimbChallengeUrl,
-  isClimbChallengeBeat,
+  isChallengeTipSectorClear,
   resolveClimbChallengeFromLocation,
   type ClimbChallenge,
+  type ClimbChallengeMark,
 } from "@/lib/climb-challenge";
 import {
   ALTITUDE_KEY_SECTOR,
@@ -128,6 +132,7 @@ import {
   needsAltitudeProve,
   setAscentSessionMods,
 } from "@/lib/ascent-rules";
+import { ChallengeOvertakeToast } from "@/components/grounds/climb/challenge-overtake-toast";
 import {
   evaluateLadder,
   hitsRankLock,
@@ -516,7 +521,8 @@ export default function GroundsScreen({
   const circuitSampleLastT = useRef(0);
   const [circuitChallenge, setCircuitChallenge] = useState<ClimbChallenge | null>(null);
   const [circuitChallengeDismissed, setCircuitChallengeDismissed] = useState(false);
-  const [circuitChallengeResult, setCircuitChallengeResult] = useState<"beat" | "miss" | null>(null);
+  const [circuitChallengeResult, setCircuitChallengeResult] = useState<ClimbChallengeMark | null>(null);
+  const [circuitOvertakeToast, setCircuitOvertakeToast] = useState(false);
   const [circuitShareMsg, setCircuitShareMsg] = useState<string | null>(null);
   /** Wall clock when the current Circuit run went live (ghost replay sync). */
   const [circuitGhostRunStartMs, setCircuitGhostRunStartMs] = useState(0);
@@ -874,6 +880,7 @@ export default function GroundsScreen({
     setCircuitGhost(null);
     setCircuitGhostRunStartMs(0);
     setCircuitChallengeResult(null);
+    setCircuitOvertakeToast(false);
     bonusCrowns.current = 0;
     const start = circuitRunModeRef.current === "scout" ? circuitStartSectorRef.current : 0;
     setCircuitSectorIdx(start);
@@ -1072,6 +1079,15 @@ export default function GroundsScreen({
 
   const advanceCircuitSector = useCallback(() => {
     finalizeCircuitSectorPath(circuitSectorIdx);
+    if (
+      circuitChallenge &&
+      circuitRunModeRef.current === "ranked" &&
+      isChallengeTipSectorClear(circuitSectorIdx, circuitChallenge.sectors)
+    ) {
+      setCircuitOvertakeToast(true);
+      setCircuitChallengeResult("beat");
+      track("climb_challenge_overtake");
+    }
     const next = circuitSectorIdx + 1;
     circuitCpNext.current = 1;
     setCircuitCpPassed(1);
@@ -1087,12 +1103,19 @@ export default function GroundsScreen({
       setCircuitPhase("done");
       submitCircuitRun(cap, total, true);
       if (circuitChallenge && circuitRunModeRef.current === "ranked") {
-        const beat = isClimbChallengeBeat(
+        const tipZ = challengeTipFurthestZ(circuitChallenge.path, circuitChallenge.sectors);
+        const mark = climbChallengeMark(
           { sectors: cap, totalMs: total },
-          circuitChallenge,
+          { sectors: circuitChallenge.sectors, totalMs: circuitChallenge.totalMs, tipZ },
         );
-        setCircuitChallengeResult(beat ? "beat" : "miss");
-        track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+        setCircuitChallengeResult(mark);
+        track(
+          mark === "beat"
+            ? "climb_challenge_beat"
+            : mark === "surpassed"
+              ? "climb_challenge_surpass"
+              : "climb_challenge_miss",
+        );
       }
       if (circuitRunModeRef.current === "ranked") store.awardTrainerXp(120);
       outcomeSfx(true);
@@ -1166,6 +1189,9 @@ export default function GroundsScreen({
         setCircuitCpPassed(1);
         setCircuitSectorMs(0);
         circuitSectorStart.current = 0;
+        // Drop the missed attempt so share/ghost keep only the pass that follows.
+        circuitSectorSamplesRef.current = [];
+        circuitSampleLastT.current = 0;
 
         const s = desktopCircuitSector(circuitSectorIdx, circuitLayoutSeedRef.current).spawn;
         const ghostPose: CircuitGhostPose = {
@@ -1207,9 +1233,30 @@ export default function GroundsScreen({
       setCircuitPhase("failed");
       submitCircuitRun(sectors, total, false);
       if (circuitChallenge) {
-        const beat = isClimbChallengeBeat({ sectors, totalMs: total }, circuitChallenge);
-        setCircuitChallengeResult(beat ? "beat" : "miss");
-        track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+        const tipZ = challengeTipFurthestZ(circuitChallenge.path, circuitChallenge.sectors);
+        const failZ =
+          circuitSectorSamplesRef.current.length >= 2
+            ? circuitSectorSamplesRef.current[circuitSectorSamplesRef.current.length - 1]!.z
+            : pose
+              ? toClimbCanonical(pose.y, pose.z).z
+              : null;
+        const mark = climbChallengeMark(
+          {
+            sectors,
+            totalMs: total,
+            failZ,
+            failSectorIdx: circuitSectorIdx,
+          },
+          { sectors: circuitChallenge.sectors, totalMs: circuitChallenge.totalMs, tipZ },
+        );
+        setCircuitChallengeResult(mark);
+        track(
+          mark === "beat"
+            ? "climb_challenge_beat"
+            : mark === "surpassed"
+              ? "climb_challenge_surpass"
+              : "climb_challenge_miss",
+        );
       }
       outcomeSfx(false);
     },
@@ -1254,11 +1301,14 @@ export default function GroundsScreen({
       circuitPhase === "running" && circuitRunStart.current
         ? performance.now() - circuitRunStart.current
         : circuitRunMsRef.current || circuitRunMs;
-    // Include the in-progress sector if we died mid-flight.
-    const paths: ClimbGhostSectors = circuitSectorPathsRef.current.map((s) => [...s]);
-    if (circuitSectorSamplesRef.current.length >= 2) {
-      paths[circuitSectorIdx] = [...circuitSectorSamplesRef.current];
-    }
+    // Cleared sectors keep passed paths only; fail tip attaches at death index.
+    const paths = buildShareGhostPaths(
+      circuitSectorPathsRef.current,
+      sectors,
+      circuitPhase === "failed" && circuitSectorSamplesRef.current.length >= 2
+        ? circuitSectorSamplesRef.current
+        : null,
+    );
     const url = await createClimbChallengeUrl(
       {
         sectors,
@@ -1322,12 +1372,19 @@ export default function GroundsScreen({
           setCircuitPhase("done");
           submitCircuitRun(cap, total, true);
           if (circuitChallenge && circuitRunModeRef.current === "ranked") {
-            const beat = isClimbChallengeBeat(
+            const tipZ = challengeTipFurthestZ(circuitChallenge.path, circuitChallenge.sectors);
+            const mark = climbChallengeMark(
               { sectors: cap, totalMs: total },
-              circuitChallenge,
+              { sectors: circuitChallenge.sectors, totalMs: circuitChallenge.totalMs, tipZ },
             );
-            setCircuitChallengeResult(beat ? "beat" : "miss");
-            track(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+            setCircuitChallengeResult(mark);
+            track(
+              mark === "beat"
+                ? "climb_challenge_beat"
+                : mark === "surpassed"
+                  ? "climb_challenge_surpass"
+                  : "climb_challenge_miss",
+            );
           }
           if (circuitRunModeRef.current === "ranked") store.awardTrainerXp(120);
           outcomeSfx(true);
@@ -3317,6 +3374,7 @@ export default function GroundsScreen({
               if (target === "flight" || target === "claim") goFlight();
               else if (target === "daily") setOverlay("daily");
               else if (target === "collection") router.push("/collection");
+              else if (target === "train" && owned) setOverlay("train");
               else if (target === "champion" && owned) router.push(`/champion/${owned}`);
               // hub — already here; region unlocks are a walk to a gate
             }}
@@ -3470,6 +3528,18 @@ export default function GroundsScreen({
           }
         />
       )}
+
+      {activeVenue === "circuit" &&
+        circuitOvertakeToast &&
+        circuitPhase !== "failed" &&
+        circuitPhase !== "continue" &&
+        circuitPhase !== "prove" && (
+          <ChallengeOvertakeToast
+            name={circuitChallenge?.name}
+            accent={circuitReach.accent}
+            onDone={() => setCircuitOvertakeToast(false)}
+          />
+        )}
 
       {activeVenue === "circuit" &&
         !travelCard &&

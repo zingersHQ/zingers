@@ -614,8 +614,9 @@ export function ChampionMesh({
   /** wordless reaction glyph — the companion's "HEY!"/impression bubble */
   speechEmote?: string | null;
   /** strip the detached floating decor (archetype constructs, orbiting evo shards,
-   *  tier rings) that don't track the skeleton — keeps body + crown. Used by the
-   *  close-up character-select showcase. */
+   *  aura sphere) that don't track the skeleton — keeps body + crown. Used by the
+   *  close-up character-select showcase. Flight companions (`companionDrive` /
+   *  `padLeash`) still keep the floor ground-ring so altitude reads in the air. */
   hideFloaters?: boolean;
   /** Ghost / showcase: flight pose without the jetpack VFX. */
   suppressJetpack?: boolean;
@@ -1322,8 +1323,9 @@ export function ChampionMesh({
       {/* ground aura ring — floor glow; stays OUTSIDE the leaning body group so it
           lies flat on the floor; also excluded from the fit envelope. The owned
           companion detaches + sinks this toward the ground while flying (see the
-          companion floor-ring block above). */}
-      {!hideFloaters && (
+          companion floor-ring block above). Flight keeps the ring even when
+          hideFloaters strips aura / archetype floaters. */}
+      {(!hideFloaters || companionDrive || padLeash) && (
         <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} userData={{ fitIgnore: true }}>
           <ringGeometry args={[0.78, 0.92, 48]} />
           <meshBasicMaterial color={col} transparent opacity={selected ? 0.8 : 0.22} side={THREE.DoubleSide} />

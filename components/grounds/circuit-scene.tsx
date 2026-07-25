@@ -10,6 +10,16 @@ import { VENUE_EXIT } from "./venues";
 
 // the colour a ring flips to the instant you thread it — the "it counted" read
 const PASS_GREEN = "#5cf08a";
+// far rings wash toward this so stacked gates don't fight the next target
+const FAR_WASH = "#a8a4b8";
+
+/** Opacity for a gate N steps ahead of the flyer (1 = immediate next after target). */
+function aheadOpacity(ahead: number, finish: boolean): number {
+  if (ahead <= 0) return finish ? 0.92 : 0.72;
+  // 1 → ~0.42, 2 → ~0.24, 3 → ~0.16 — next ring stays the clear read
+  const base = finish ? 0.7 : 0.42;
+  return Math.max(0.14, base * Math.pow(0.55, ahead - 1));
+}
 
 const CheckpointRing = memo(function CheckpointRing({
   cp,
@@ -37,6 +47,7 @@ const CheckpointRing = memo(function CheckpointRing({
   const wasPassed = useRef(false);
   const base = useMemo(() => new THREE.Color(color), [color]);
   const passCol = useMemo(() => new THREE.Color(PASS_GREEN), []);
+  const washCol = useMemo(() => new THREE.Color(FAR_WASH), []);
   const target = useMemo(() => new THREE.Color(color), [color]);
 
   useFrame(({ clock }, dt) => {
@@ -45,6 +56,8 @@ const CheckpointRing = memo(function CheckpointRing({
     const next = cpNextRef ? cpNextRef.current : -1;
     const passed = cpNextRef ? cp.index < next : false;
     const isNext = cpNextRef ? cp.index === next : highlight;
+    // how many gates ahead of the current target (0 = next / unknown)
+    const ahead = cpNextRef && next >= 0 && cp.index > next ? cp.index - next : 0;
 
     // fresh crossing → kick the confirmation burst
     if (passed && !wasPassed.current) burstT.current = 0.55;
@@ -53,10 +66,24 @@ const CheckpointRing = memo(function CheckpointRing({
     g.scale.setScalar(isNext ? 1 + Math.sin(clock.elapsedTime * 5) * 0.07 : 1);
 
     const k = 1 - Math.exp(-11 * dt);
-    target.copy(passed ? passCol : base);
+    if (passed) {
+      target.copy(passCol);
+    } else if (isNext || ahead <= 0) {
+      target.copy(base);
+    } else {
+      // further rings: wash color lighter/duller so near gates pop by contrast
+      const washAmt = Math.min(0.78, 0.28 + (ahead - 1) * 0.22);
+      target.copy(base).lerp(washCol, washAmt);
+      target.multiplyScalar(1 - washAmt * 0.35);
+    }
     if (torusMat.current) {
       torusMat.current.color.lerp(target, k);
-      torusMat.current.opacity = passed ? 0.9 : isNext ? 1 : finish ? 0.92 : 0.6;
+      const op = passed
+        ? 0.9
+        : isNext
+          ? 1
+          : aheadOpacity(ahead, !!finish);
+      torusMat.current.opacity = op;
     }
 
     if (burstT.current > 0) {

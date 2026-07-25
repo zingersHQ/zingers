@@ -19,10 +19,24 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { ChampionMesh, buildCharacter, applyBoneMorph, READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { Jetpack } from "./jetpack";
-import { blank } from "@/lib/evolve/progression";
-import { readerPalette } from "@/lib/render/palette";
+import { blank, TYPE_COLOR } from "@/lib/evolve/progression";
+import { GOLD, readerPalette } from "@/lib/render/palette";
 import type { Champion, CreatureType } from "@/lib/types";
 import { COMPANION_FOLLOW, companionDockSlot, companionPathSlot } from "./companion-follow";
+import { useSettings } from "@/store/settings";
+
+// Pilot ground-rings — same language as Handler in world.tsx: detach + sink while
+// aloft so altitude reads under the Trainer. Body-local units (rings sit outside
+// the lean / scale groups). Gated by reduce-motion.
+const PILOT_RING_SINK_BIG = 0.85;
+const PILOT_RING_SINK_SMALL = 1.5;
+const PILOT_RING_OSC_AMP = 0.16;
+const PILOT_RING_OSC_HZ = 1.4;
+const PILOT_RING_FALL_UP = 0.55;
+const PILOT_RING_FALL_REF = 8;
+const PILOT_RING_EASE = 8;
+const _pilotFlatQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+const _pilotParentQ = new THREE.Quaternion();
 
 // Flight leash mirrors Grounds OwnedCompanion's *moving* branch: inherit the
 // pilot's path velocity, then close the wing-slot gap (catchK). Without the
@@ -51,6 +65,8 @@ export function RobotPilot({
   faceHeading = 0,
   scale = READER_SCALE,
   lean = 0.38,
+  /** Optional climb/sink velocity (u/s) — rings ride up while descending. */
+  climbVelRef,
 }: {
   force?: CreatureType | null;
   flyingRef: React.RefObject<boolean>;
@@ -59,6 +75,7 @@ export function RobotPilot({
   scale?: number;
   /** Forward lean (rad) while flying — nose into travel. */
   lean?: number;
+  climbVelRef?: React.RefObject<number>;
 }) {
   const { scene, animations } = useGLTF("/models/RobotExpressive.glb");
   const pal = useMemo(() => readerPalette(force), [force]);
@@ -75,6 +92,11 @@ export function RobotPilot({
   const qFoot = useRef(new THREE.Quaternion());
   const qThigh = useRef(new THREE.Quaternion());
   const qKnee = useRef(new THREE.Quaternion());
+  const ringBig = useRef<THREE.Mesh>(null);
+  const ringSmall = useRef<THREE.Mesh>(null);
+  const ringYBig = useRef(0);
+  const ringYSmall = useRef(0);
+  const ringOscT = useRef(0);
 
   useEffect(() => {
     const idle = built.actions.idle;
@@ -150,6 +172,38 @@ export function RobotPilot({
       const want = aloft ? lean : 0;
       leanGrp.current.rotation.x += (want - leanGrp.current.rotation.x) * (1 - Math.exp(-8 * dt));
     }
+
+    // Ground rings: sink while aloft (Handler parity). Keep them world-flat even
+    // when Climb pitches the Flyer parent group.
+    if (ringBig.current || ringSmall.current) {
+      const reduce = useSettings.getState().reduceMotion;
+      const climbV = climbVelRef?.current ?? 0;
+      const sinkT = reduce ? 0 : aloft ? 1 : 0;
+      const fallT = reduce || !aloft || climbV >= 0 ? 0 : Math.min(1, -climbV / PILOT_RING_FALL_REF);
+      ringOscT.current += dt;
+      const osc =
+        PILOT_RING_OSC_AMP *
+        (0.5 - 0.5 * Math.cos(ringOscT.current * PILOT_RING_OSC_HZ * Math.PI * 2)) *
+        sinkT;
+      const tgtBig = -PILOT_RING_SINK_BIG * sinkT + PILOT_RING_FALL_UP * fallT + osc * 0.4;
+      const tgtSmall = -PILOT_RING_SINK_SMALL * sinkT + PILOT_RING_FALL_UP * fallT + osc;
+      const rk = 1 - Math.exp(-PILOT_RING_EASE * dt);
+      ringYBig.current += (tgtBig - ringYBig.current) * rk;
+      ringYSmall.current += (tgtSmall - ringYSmall.current) * rk;
+      const flatten = (mesh: THREE.Mesh | null, y: number) => {
+        if (!mesh) return;
+        mesh.position.y = y;
+        const parent = mesh.parent;
+        if (!parent) {
+          mesh.quaternion.copy(_pilotFlatQ);
+          return;
+        }
+        parent.getWorldQuaternion(_pilotParentQ);
+        mesh.quaternion.copy(_pilotParentQ).invert().multiply(_pilotFlatQ);
+      };
+      flatten(ringBig.current, 0.04 + ringYBig.current);
+      flatten(ringSmall.current, 0.045 + ringYSmall.current);
+    }
   });
 
   return (
@@ -160,6 +214,24 @@ export function RobotPilot({
         </group>
         <Jetpack h={built.h * scale} flyingRef={flyingRef} burstRef={burstRef} />
       </group>
+      {/* Trainer ground rings — gold by default; pledged Force tints the outer band.
+          Outside lean so they stay horizontal; sink while flying (see PILOT_RING_*). */}
+      <mesh ref={ringBig} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+        <ringGeometry args={[0.39, 0.5, 40]} />
+        <meshBasicMaterial
+          color={force ? TYPE_COLOR[force] : GOLD}
+          transparent
+          opacity={0.78}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+      {force && (
+        <mesh ref={ringSmall} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045, 0]}>
+          <ringGeometry args={[0.32, 0.38, 40]} />
+          <meshBasicMaterial color={GOLD} transparent opacity={0.85} side={THREE.DoubleSide} depthWrite={false} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -380,7 +452,7 @@ export function FlyingFollower({
           rotation={0}
           selected
           showLabel={false}
-          hideFloaters
+          hideFloaters // aura / archetype floaters only — ground ring stays (companionDrive)
           suppressJetpack={suppressJetpack}
           restPose="standing"
           breatheIntensity={0.4}

@@ -19,7 +19,14 @@ import type { FormBand } from "@/lib/career-friction";
 import { thisWeekExpedition } from "@/lib/expeditions";
 
 /** Where a directive sends the Trainer. Each body maps these to its own nav. */
-export type DirectiveTarget = "flight" | "champion" | "daily" | "claim" | "hub" | "collection";
+export type DirectiveTarget =
+  | "flight"
+  | "champion"
+  | "train"
+  | "daily"
+  | "claim"
+  | "hub"
+  | "collection";
 
 export interface DirectiveProgress {
   at: number;
@@ -264,7 +271,8 @@ function imprintDirective(name: string): Directive {
     title: "Teach me something before we climb.",
     detail: "A fresh lesson is waiting. What I learn changes how I fight, and how we fly.",
     cta: "Teach me",
-    target: "champion",
+    // Train overlay (desktop) / Champion tab lessons (mobile). Not the career page.
+    target: "train",
     spoken: true,
   };
 }

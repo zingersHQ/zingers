@@ -16,8 +16,8 @@ import type { Champion, CreatureType } from "@/lib/types";
 /** Desktop capsule centre → soles (matches world.tsx FOOT_OFF). Mobile pass 0. */
 export const GHOST_CAPSULE_FOOT = (0.55 + 0.45) * READER_SCALE;
 
-/** See-through twin — readable, not solid. */
-const GHOST_OPACITY = 0.36;
+/** See-through twin — readable, clearly not solid. */
+const GHOST_OPACITY = 0.2;
 const GHOST_BODY = "#c8d4ff";
 const GHOST_GLOW = "#7a92ff";
 
@@ -51,7 +51,7 @@ function ghostifySolid(root: THREE.Object3D, opacity = GHOST_OPACITY) {
     mesh.material = new THREE.MeshStandardMaterial({
       color,
       emissive,
-      emissiveIntensity: 0.28,
+      emissiveIntensity: 0.16,
       transparent: true,
       opacity,
       depthWrite: false,

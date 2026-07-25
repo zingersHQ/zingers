@@ -7,8 +7,16 @@
 // Path samples are ALWAYS in Climb-canonical space (mobile units).
 
 import { BRAND } from "@/lib/brand";
-import { CLIMB_SECTOR_COUNT, isClimbChallengeBeat } from "@/lib/ascent-rules";
 import {
+  CLIMB_SECTOR_COUNT,
+  climbChallengeMark,
+  isChallengeTipSectorClear,
+  isClimbChallengeBeat,
+  type ClimbChallengeMark,
+} from "@/lib/ascent-rules";
+import {
+  buildShareGhostPaths,
+  challengeTipFurthestZ,
   decodeGhostPath,
   encodeGhostPath,
   type ClimbGhostSectors,
@@ -16,7 +24,15 @@ import {
 
 const MAX_SECTORS = CLIMB_SECTOR_COUNT;
 
-export { isClimbChallengeBeat, CLIMB_SECTOR_COUNT };
+export {
+  isClimbChallengeBeat,
+  climbChallengeMark,
+  isChallengeTipSectorClear,
+  CLIMB_SECTOR_COUNT,
+  buildShareGhostPaths,
+  challengeTipFurthestZ,
+};
+export type { ClimbChallengeMark };
 
 export type ClimbDoor = "thumb" | "flight";
 

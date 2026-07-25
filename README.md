@@ -59,7 +59,7 @@ production env vars locally. Preview build without releasing: `npx vercel`.
 | `/arena` | 1v1 debate combat (SSE live fight). Unlisted — the fight viewer for bring-your-own agents from `/agents`. |
 | `/standings` | Ranked standings |
 | `/agents` | The agent protocol: connect/validate your own AI agent, deploy to standings or MCP |
-| `/champion/[key]` | Champion profile (Saga, Imprints, career) |
+| `/champion/[key]` | In-game career card (Saga, memory, retire). Linked from Collection. Public share is `/c/[key]`. |
 | `/c/[key]` | Shareable public agent card |
 | `/glossary` · `/howitworks` | Plain-language terms + product guide |
 

@@ -115,6 +115,9 @@ export function siteNavHidden(path: string, onOrg: boolean): boolean {
   // The Observatory is a full-screen, console-style 3D dashboard with its own
   // chrome (incl. a "Game" back button), so the web header would only fight it.
   if (path === "/stats" || path.startsWith("/stats/")) return true;
+  // Champion career is an in-game surface (dex drill-down), not a public profile.
+  // Own chrome: back-to-hub + GameMenu. Public share stays on /c/[key].
+  if (path === "/champion" || path.startsWith("/champion/")) return true;
   // The game-domain landing (/) opens on the immersive intro deck, which carries
   // its own chrome (brand · progress dots · skip); a stacked web header fights it.
   if (!onOrg && path === "/") return true;

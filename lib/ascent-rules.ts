@@ -40,6 +40,55 @@ export function isClimbChallengeBeat(
   return false;
 }
 
+/**
+ * Challenge race mark for HUD copy.
+ * - beat: deeper (or same depth, faster)
+ * - surpassed: died on their fail sector but flew past their furthest Z
+ * - miss: still short of their mark
+ */
+export type ClimbChallengeMark = "beat" | "surpassed" | "miss";
+
+export function climbChallengeMark(
+  run: {
+    sectors: number;
+    totalMs: number;
+    /** Canonical Climb Z at death (only for failed runs). */
+    failZ?: number | null;
+    /** Sector index where the run ended (failed, not cleared). */
+    failSectorIdx?: number | null;
+  },
+  challenge: {
+    sectors: number;
+    totalMs: number;
+    tipZ?: number | null;
+  },
+): ClimbChallengeMark {
+  if (isClimbChallengeBeat(run, challenge)) return "beat";
+  const tipZ = challenge.tipZ;
+  const failZ = run.failZ;
+  const failSector = run.failSectorIdx;
+  if (
+    tipZ != null &&
+    Number.isFinite(tipZ) &&
+    failZ != null &&
+    Number.isFinite(failZ) &&
+    failSector != null &&
+    failSector === challenge.sectors &&
+    failZ > tipZ + 0.35
+  ) {
+    return "surpassed";
+  }
+  return "miss";
+}
+
+/** True when clearing `clearedSectorIdx` finishes the sector the challenger failed on. */
+export function isChallengeTipSectorClear(
+  clearedSectorIdx: number,
+  challengeSectors: number,
+): boolean {
+  return clearedSectorIdx === challengeSectors;
+}
+
 export function needsAltitudeProve(wins: number | null | undefined): boolean {
   return (wins ?? 0) < 1;
 }

@@ -23,24 +23,38 @@ export function encodeGhostPath(sectors: ClimbGhostSectors | ClimbGhostSample[])
   const list = normalizeSectors(sectors);
   if (!list.length) return null;
 
-  if (list.length === 1) {
+  // Preserve sector indices — never filter holes (that shifts fail tips onto clears).
+  let max = -1;
+  for (let i = 0; i < Math.min(MAX_SECTORS, list.length); i++) {
+    if (list[i] && list[i]!.length >= 2) max = i;
+  }
+  if (max < 0) return null;
+
+  if (max === 0) {
     // Keep v1 for single-sector shares (shorter + legacy-compatible).
     return encodeV1(list[0]!);
   }
 
-  const thinned = list
-    .slice(0, MAX_SECTORS)
-    .map((s) => thinSamples(s, MAX_PER_SECTOR))
-    .filter((s) => s.length >= 2);
-  if (!thinned.length) return null;
+  const packed: ClimbGhostSample[][] = [];
+  for (let i = 0; i <= max; i++) {
+    const s = list[i];
+    if (s && s.length >= 2) packed.push(thinSamples(s, MAX_PER_SECTOR));
+    else {
+      // Index placeholder so later sectors keep their slot.
+      packed.push([
+        { t: 0, y: 0, z: 0 },
+        { t: 20, y: 0, z: 0.1 },
+      ]);
+    }
+  }
 
   let size = 2;
-  for (const s of thinned) size += 5 + s.length * 5;
+  for (const s of packed) size += 5 + s.length * 5;
   const full = new Uint8Array(size);
   full[0] = VERSION_V2;
-  full[1] = thinned.length;
+  full[1] = packed.length;
   let o = 2;
-  for (const s of thinned) {
+  for (const s of packed) {
     o = writeSectorBlock(full, o, s);
   }
   return bytesToB64url(full);
@@ -74,7 +88,12 @@ export function decodeGhostPath(raw: string | null | undefined): ClimbGhostSecto
   }
 }
 
-/** Path for the live sector — falls back to sector 0 so old links still race. */
+/**
+ * Path for the live sector.
+ * v1 (single blob): replay on every sector (legacy links).
+ * v2 (per-sector): exact index only — never borrow another sector's path
+ * (that mixed fail tips into later clears after sparse/hole encodes).
+ */
 export function ghostPathForSector(
   sectors: ClimbGhostSectors | null | undefined,
   sectorIdx: number,
@@ -82,8 +101,44 @@ export function ghostPathForSector(
   if (!sectors?.length) return null;
   const direct = sectors[sectorIdx];
   if (direct && direct.length >= 2) return direct;
-  const fallback = sectors[0];
-  return fallback && fallback.length >= 2 ? fallback : null;
+  if (sectors.length === 1) {
+    const only = sectors[0];
+    return only && only.length >= 2 ? only : null;
+  }
+  return null;
+}
+
+/**
+ * Build a share path: cleared sectors keep their *passed* recordings only.
+ * Optional fail tip is attached at `clearedSectors` (the sector they died on),
+ * never over a cleared index — so a continue-then-pass cannot ship the miss.
+ */
+export function buildShareGhostPaths(
+  clearedPaths: ClimbGhostSectors,
+  clearedSectors: number,
+  failSamples?: ClimbGhostSample[] | null,
+): ClimbGhostSectors {
+  const n = Math.max(0, Math.floor(clearedSectors));
+  const out: ClimbGhostSectors = [];
+  for (let i = 0; i < n; i++) {
+    const p = clearedPaths[i];
+    if (p && p.length >= 2) out[i] = p.map((s) => ({ ...s }));
+  }
+  if (failSamples && failSamples.length >= 2) {
+    out[n] = failSamples.map((s) => ({ ...s }));
+  }
+  return out;
+}
+
+/** Furthest canonical Z on the challenge fail tip (sector index === cleared count). */
+export function challengeTipFurthestZ(
+  path: ClimbGhostSectors | null | undefined,
+  clearedSectors: number,
+): number | null {
+  if (!path?.length) return null;
+  const tip = path[Math.max(0, Math.floor(clearedSectors))];
+  if (!tip || tip.length < 2) return null;
+  return tip[tip.length - 1]!.z;
 }
 
 export function ghostPathHasSamples(sectors: ClimbGhostSectors | null | undefined): boolean {
@@ -117,7 +172,8 @@ function normalizeSectors(sectors: ClimbGhostSectors | ClimbGhostSample[]): Clim
   if (first && typeof (first as ClimbGhostSample).t === "number") {
     return [sectors as ClimbGhostSample[]];
   }
-  return (sectors as ClimbGhostSectors).filter((s) => s.length >= 2);
+  // Keep index alignment (sparse slots stay empty — encode pads them).
+  return sectors as ClimbGhostSectors;
 }
 
 function encodeV1(samples: ClimbGhostSample[]): string | null {

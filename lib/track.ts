@@ -29,6 +29,8 @@ export type ClientEvent =
   | "climb_prove_open" | "climb_prove_start" | "climb_prove_win" | "climb_prove_lose" | "climb_prove_resume"
   | "climb_challenge_open"
   | "climb_challenge_beat"
+  | "climb_challenge_surpass"
+  | "climb_challenge_overtake"
   | "climb_challenge_miss";
 
 function post(type: ClientEvent): void {

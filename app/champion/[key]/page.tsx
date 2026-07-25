@@ -2,7 +2,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock, Mountain } from "lucide-react";
+import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock, Mountain, ArrowLeft } from "lucide-react";
 import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
 import { houseProfile } from "@/lib/evolve/elo";
 import { appearanceOf } from "@/lib/evolve/appearance";
@@ -11,7 +11,9 @@ import { cardOf } from "@/lib/cards/card";
 import { ROSTER } from "@/lib/engine/roster";
 import { ChampionCardFrame, shareQuery } from "@/components/collection/card-frame";
 import { StyleRadar } from "@/components/collection/style-radar";
+import { GameMenu } from "@/components/game-dock";
 import { useIsMobile } from "@/lib/use-device";
+import { playEntryHref } from "@/lib/play-nav";
 import type { CareerEvent, CareerEventKind } from "@/lib/types";
 import { getHandle } from "@/lib/owner";
 import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
@@ -59,13 +61,14 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
     .sort((a, b) => b[1] - a[1])
     .map(([label, value]) => ({ label, value }));
 
+  const hubHref = playEntryHref(isMobile);
   const heroButtons = (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       <Link href={shareHref} className="btn btn-primary" style={{ ["--ac" as string]: card.rarityHex, flex: "1 1 140px", textAlign: "center" }}>
         Share card
       </Link>
-      <Link href="/arena" className="btn" style={{ ["--ac" as string]: col, flex: "1 1 140px", textAlign: "center" }}>
-        Fight
+      <Link href={hubHref} className="btn" style={{ ["--ac" as string]: col, flex: "1 1 140px", textAlign: "center" }}>
+        Back to the Hub
       </Link>
     </div>
   );
@@ -114,7 +117,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
           <ul style={{ margin: "12px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
             {career.scars.map((scar) => (
               <li key={scar.id} style={{ fontSize: 13, lineHeight: 1.45, color: "var(--muted)" }}>
-                <strong style={{ color: "var(--ink)" }}>{scar.name}</strong> — {scar.gloss}
+                <strong style={{ color: "var(--ink)" }}>{scar.name}</strong>. {scar.gloss}
               </li>
             ))}
           </ul>
@@ -258,7 +261,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
               </div>
             ) : (
               <p style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
-                No skills yet. Fight and train to push a fighting axis past its thresholds — each crossing unlocks a named skill.
+                No skills yet. Fight and train to push a fighting axis past its thresholds. Each crossing unlocks a named skill.
               </p>
             )}
           </div>
@@ -296,24 +299,43 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
   );
 
   return (
-    <main style={{ maxWidth: 1180, margin: "0 auto", padding: "26px 22px 90px" }}>
-      <Link href="/collection" className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>
-        ← collection
-      </Link>
+    <>
+      <GameMenu fixed />
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "26px 22px 90px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 4, paddingLeft: 52 }}>
+          <Link
+            href={hubHref}
+            className="btn"
+            style={{
+              ["--ac" as string]: "var(--line2)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              padding: "6px 10px",
+            }}
+          >
+            <ArrowLeft size={14} strokeWidth={2.2} /> Hub
+          </Link>
+          <Link href="/collection" className="mono" style={{ fontSize: 12, color: "var(--muted2)" }}>
+            Collection
+          </Link>
+        </div>
 
-      {isMobile ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 14 }}>
-          {cardFrame}
-          {heroButtons}
-          {detailStack}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 440px) minmax(0, 1fr)", gap: 22, alignItems: "start", marginTop: 14 }}>
-          {cardFrame}
-          <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>{detailStack}</section>
-        </div>
-      )}
-    </main>
+        {isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 14 }}>
+            {cardFrame}
+            {heroButtons}
+            {detailStack}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 440px) minmax(0, 1fr)", gap: 22, alignItems: "start", marginTop: 14 }}>
+            {cardFrame}
+            <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>{detailStack}</section>
+          </div>
+        )}
+      </main>
+    </>
   );
 }
 
@@ -395,7 +417,7 @@ function Meter({ label, v, c, max = 100 }: { label: string; v: number; c: string
           {v}{max === 100 ? "" : `/${max}`}
         </span>
       </div>
-      <div style={{ height: 7, borderRadius: 5, background: "#241f33", overflow: "hidden" }}>
+      <div style={{ height: 7, borderRadius: 5, background: "var(--line)", overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: c, transition: "width .5s ease" }} />
       </div>
     </div>

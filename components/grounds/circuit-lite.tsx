@@ -24,7 +24,16 @@ import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
-import { createClimbChallengeUrl, isClimbChallengeBeat, type ClimbChallenge } from "@/lib/climb-challenge";
+import { ChallengeOvertakeToast } from "./climb/challenge-overtake-toast";
+import {
+  buildShareGhostPaths,
+  challengeTipFurthestZ,
+  climbChallengeMark,
+  createClimbChallengeUrl,
+  isChallengeTipSectorClear,
+  type ClimbChallenge,
+  type ClimbChallengeMark,
+} from "@/lib/climb-challenge";
 import {
   ghostPathForSector,
   ghostPathHasSamples,
@@ -250,6 +259,7 @@ function Flyer({
 
   // the pilot (robot) is always flying here; puff its jetpack while thrusting
   const flyingRef = useRef(true);
+  const climbVelRef = useRef(0); // published for RobotPilot ground-ring sink/ride
   const jetEmit = useRef(0);
 
   const camWant = useRef(new THREE.Vector3());
@@ -299,6 +309,7 @@ function Flyer({
       vy.current = vy.current + (sink - vy.current) * k;
     }
     pos.current.y += vy.current * dt;
+    climbVelRef.current = vy.current;
 
     // coplanar corridor (climb-feel §1c): rings sit at x=0 — pin the flyer to the
     // flight plane. No lateral ease toward a weaving next-gate (that rubber-band
@@ -406,7 +417,15 @@ function Flyer({
     <group ref={grp} position={track.spawn}>
       <group position={[0, CHAMP_Y, 0]}>
         <Suspense fallback={<group scale={PILOT_SCALE}><MechBody accent={accent} /></group>}>
-          <RobotPilot force={champType} flyingRef={flyingRef} burstRef={pilotBurstRef} faceHeading={CHAMP_FACE} scale={PILOT_SCALE} lean={0.42} />
+          <RobotPilot
+            force={champType}
+            flyingRef={flyingRef}
+            burstRef={pilotBurstRef}
+            faceHeading={CHAMP_FACE}
+            scale={PILOT_SCALE}
+            lean={0.42}
+            climbVelRef={climbVelRef}
+          />
         </Suspense>
       </group>
       <AscentSigil reaches={ascentReaches} accent={sigilAccent} />
@@ -600,7 +619,8 @@ export default function CircuitLite({
   /** Last finished run depth/time — for share + challenge links on the fall card. */
   const [lastRun, setLastRun] = useState<{ sectors: number; totalMs: number } | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
-  const [challengeResult, setChallengeResult] = useState<"beat" | "miss" | null>(null);
+  const [challengeResult, setChallengeResult] = useState<ClimbChallengeMark | null>(null);
+  const [overtakeToast, setOvertakeToast] = useState(false);
   const samplesRef = useRef<ClimbGhostSample[]>([]);
   const sectorPathsRef = useRef<ClimbGhostSectors>([]);
   const [ghostStartMs, setGhostStartMs] = useState(0);
@@ -845,9 +865,24 @@ export default function CircuitLite({
       const startAt = startSectorRef.current;
       setLastRun({ sectors: sectorsCleared, totalMs });
       if (challenge && mode === "ranked") {
-        const beat = isClimbChallengeBeat({ sectors: sectorsCleared, totalMs }, challenge);
-        setChallengeResult(beat ? "beat" : "miss");
-        pingEvent(beat ? "climb_challenge_beat" : "climb_challenge_miss");
+        const tipZ = challengeTipFurthestZ(challenge.path, challenge.sectors);
+        const mark = climbChallengeMark(
+          {
+            sectors: sectorsCleared,
+            totalMs,
+            failZ: clearedAll ? null : samplesRef.current[samplesRef.current.length - 1]?.z,
+            failSectorIdx: clearedAll ? null : sector,
+          },
+          { sectors: challenge.sectors, totalMs: challenge.totalMs, tipZ },
+        );
+        setChallengeResult(mark);
+        pingEvent(
+          mark === "beat"
+            ? "climb_challenge_beat"
+            : mark === "surpassed"
+              ? "climb_challenge_surpass"
+              : "climb_challenge_miss",
+        );
       }
       if (guest) {
         if (mode === "ranked") noteGuestClimbDepth(sectorsCleared);
@@ -1026,6 +1061,7 @@ export default function CircuitLite({
       activeKey,
       scoutCrownsRemaining,
       noteScoutCrowns,
+      sector,
     ],
   );
 
@@ -1177,6 +1213,7 @@ export default function CircuitLite({
     setNewBest(false);
     setReward(null);
     setChallengeResult(null);
+    setOvertakeToast(false);
     samplesRef.current = [];
     sectorPathsRef.current = [];
     setGhostStartMs(0);
@@ -1305,8 +1342,18 @@ export default function CircuitLite({
     setSector((s) => {
       if (samplesRef.current.length >= 2) {
         const paths = sectorPathsRef.current.slice();
+        // Passed attempt only — overwrites any stale miss from a spent life.
         paths[s] = [...samplesRef.current];
         sectorPathsRef.current = paths;
+      }
+      if (
+        challenge &&
+        runModeRef.current === "ranked" &&
+        isChallengeTipSectorClear(s, challenge.sectors)
+      ) {
+        setOvertakeToast(true);
+        setChallengeResult("beat");
+        pingEvent("climb_challenge_overtake");
       }
       const next = s + 1;
       const cap = runModeRef.current === "expedition" ? expedition.sectors : CLIMB_SECTOR_COUNT;
@@ -1351,7 +1398,7 @@ export default function CircuitLite({
       setPhase("ready");
       return next;
     });
-  }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors]);
+  }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors, challenge]);
 
   const onFail = useCallback(
     (r: FailReason) => {
@@ -1367,6 +1414,8 @@ export default function CircuitLite({
         livesRef.current -= 1;
         setLives(livesRef.current);
         setTargetIdx(1);
+        // Drop the missed attempt so share/ghost keep only the pass that follows.
+        samplesRef.current = [];
         duckAmbience(0.55, 800);
         setPhase("continue");
         continueTimers.current.push(
@@ -1401,10 +1450,12 @@ export default function CircuitLite({
   const shareChallenge = useCallback(async () => {
     const sectors = lastRun?.sectors ?? sector;
     const totalMs = lastRun?.totalMs ?? Math.max(0, performance.now() - runStart.current);
-    const paths: ClimbGhostSectors = sectorPathsRef.current.map((s) => [...s]);
-    if (samplesRef.current.length >= 2) {
-      paths[sector] = [...samplesRef.current];
-    }
+    const failed = phase === "failed";
+    const paths = buildShareGhostPaths(
+      sectorPathsRef.current,
+      sectors,
+      failed && samplesRef.current.length >= 2 ? samplesRef.current : null,
+    );
     const url = await createClimbChallengeUrl({
       sectors,
       totalMs,
@@ -1432,7 +1483,7 @@ export default function CircuitLite({
       setShareMsg("Copy failed");
       window.setTimeout(() => setShareMsg(null), 2200);
     }
-  }, [lastRun, sector, activeKey]);
+  }, [lastRun, sector, activeKey, phase]);
 
   const gateCount = track.checkpoints.length - 1; // gates 1..finish
   const gatesCleared = Math.max(0, targetIdx - 1); // in the current sector
@@ -1841,6 +1892,17 @@ export default function CircuitLite({
         );
       })()}
 
+      {overtakeToast &&
+        phase !== "failed" &&
+        phase !== "continue" &&
+        phase !== "prove" && (
+        <ChallengeOvertakeToast
+          name={challenge?.name}
+          accent={accent}
+          onDone={() => setOvertakeToast(false)}
+        />
+      )}
+
       {/* ── life-lost beat — hold the pad so fail SFX + ghost can land ── */}
       {phase === "continue" && (
         <div
@@ -2135,8 +2197,10 @@ export default function CircuitLite({
                   marginBottom: 14,
                   padding: "8px 12px",
                   borderRadius: 10,
-                  border: `1px solid ${challengeResult === "beat" ? accent : "#ff5a5a88"}`,
-                  color: challengeResult === "beat" ? accent : "#ff8a8a",
+                  border: `1px solid ${
+                    challengeResult === "miss" ? "#ff5a5a88" : accent
+                  }`,
+                  color: challengeResult === "miss" ? "#ff8a8a" : accent,
                   fontSize: 11,
                   letterSpacing: 1,
                   fontWeight: 800,
@@ -2144,7 +2208,9 @@ export default function CircuitLite({
               >
                 {challengeResult === "beat"
                   ? `YOU BEAT ${challenge.name || "THEM"} · ${challenge.sectors}/100`
-                  : `${challenge.name || "THEY"} HOLD · need ${challenge.sectors}+ sectors`}
+                  : challengeResult === "surpassed"
+                    ? `PAST THEIR MARK · further than ${challenge.name || "them"}`
+                    : `${challenge.name || "THEY"} HOLD · need ${challenge.sectors}+ sectors`}
               </div>
             )}
 

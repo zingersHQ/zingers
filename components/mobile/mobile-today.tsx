@@ -245,7 +245,8 @@ function Hub({
               else if (target === "flight") onNavigate?.("climb");
               else if (target === "collection") router.push("/collection");
               else if (target === "hub") router.push("/grounds");
-              else onNavigate?.("champion");
+              // train + champion both land on the Champion tab (lessons + career).
+              else if (target === "train" || target === "champion") onNavigate?.("champion");
             }}
           />
 

@@ -197,7 +197,7 @@ export function CircuitHud({
   /** Claimed Trainer: leave the Ascent (usually back to the Concord). */
   onToHub?: () => void;
   hubLabel?: string;
-  challengeResult?: "beat" | "miss" | null;
+  challengeResult?: "beat" | "surpassed" | "miss" | null;
   challengeLabel?: string | null;
   accent: string;
   compact?: boolean;
@@ -676,8 +676,21 @@ export function CircuitHud({
           }
         >
           {challengeResult && challengeLabel && (
-            <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
-              {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
+            <div
+              className="mono"
+              style={{
+                fontSize: 11,
+                letterSpacing: 1,
+                fontWeight: 800,
+                color: challengeResult === "miss" ? "#ff8a8a" : accent,
+                marginBottom: 12,
+              }}
+            >
+              {challengeResult === "beat"
+                ? `YOU BEAT ${challengeLabel}`
+                : challengeResult === "surpassed"
+                  ? `PAST THEIR MARK · further than ${challengeLabel}`
+                  : `${challengeLabel} HOLD`}
             </div>
           )}
           {ascentReaches > 0 && (
@@ -742,8 +755,21 @@ export function CircuitHud({
           }
         >
           {challengeResult && challengeLabel && (
-            <div className="mono" style={{ fontSize: 11, letterSpacing: 1, fontWeight: 800, color: challengeResult === "beat" ? accent : "#ff8a8a", marginBottom: 12 }}>
-              {challengeResult === "beat" ? `YOU BEAT ${challengeLabel}` : `${challengeLabel} HOLD`}
+            <div
+              className="mono"
+              style={{
+                fontSize: 11,
+                letterSpacing: 1,
+                fontWeight: 800,
+                color: challengeResult === "miss" ? "#ff8a8a" : accent,
+                marginBottom: 12,
+              }}
+            >
+              {challengeResult === "beat"
+                ? `YOU BEAT ${challengeLabel}`
+                : challengeResult === "surpassed"
+                  ? `PAST THEIR MARK · further than ${challengeLabel}`
+                  : `${challengeLabel} HOLD`}
             </div>
           )}
           {ascentReaches > 0 && (
