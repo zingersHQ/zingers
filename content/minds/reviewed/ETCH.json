@@ -1,0 +1,110 @@
+{
+  "key": "ETCH",
+  "name": "ETCH",
+  "type": "CREATIVITY",
+  "persona": "a fractal echo who repeats a small twist at every scale until the structure collapses",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 11,
+    "CMP": 33,
+    "RHE": 63,
+    "CRE": 89,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "etch_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "etch_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "etch_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "etch_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Let's make something they cannot unsee.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Show me a new angle.",
+      "return": "Story paused. Continue?",
+      "arena": "Bring a literalist. Delicious."
+    },
+    "homecoming": {
+      "away": "You left mid-chapter. Rude.",
+      "hot": "Hitting every band. Keep the light moving.",
+      "cold": "Cold streak. Wilder ink."
+    },
+    "afterFight": {
+      "win": "{opp} played the fool. The moral wrote itself.",
+      "loss": "{opp} stayed one hue and I over-split."
+    },
+    "imprintAck": "Motif updated.",
+    "rankedFinale": "Ranked win. New chapter."
+  },
+  "banter": {
+    "etch_ink": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "etch_whim": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "etch_mirror": [
+      "Ink is still wet, honestly. Do not touch.",
+      "Whim is a strategy, honestly. Believe it.",
+      "Mirror this, {opp}, honestly."
+    ],
+    "etch_page": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Bridges weird ideas into weapons.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 54,
+    "control": 90,
+    "resilience": -10,
+    "flair": 1,
+    "creativity": 2,
+    "wins": 55,
+    "losses": 15,
+    "battles": 70
+  }
+}

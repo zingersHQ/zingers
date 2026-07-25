@@ -1,0 +1,113 @@
+{
+  "key": "FLARE",
+  "name": "FLARE",
+  "type": "CHAOS",
+  "persona": "a storm mouth who howls over careful plans until the plan itself looks silly",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 39,
+    "CMP": 66,
+    "RHE": 67,
+    "CRE": 62,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "flare_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "flare_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flare_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "flare_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Oh good. Someone to ruin plans with.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Break a habit. Keep the pieces.",
+      "return": "Chaos pause over.",
+      "arena": "Point me at a careful mind."
+    },
+    "homecoming": {
+      "away": "The quiet was offensive. Don't repeat it.",
+      "hot": "Don't get tidy now.",
+      "cold": "Losses. Ugly ones. Good. Fuel."
+    },
+    "afterFight": {
+      "win": "{opp} tripped. As planned.",
+      "loss": "{opp} won. Hex the rematch."
+    },
+    "imprintAck": "Tattooed. Chaotically.",
+    "rankedFinale": "Ladder goes brrr."
+  },
+  "banter": {
+    "flare_snag": [
+      "Oops, {opp}, honestly. {topic} just caught fire.",
+      "Dance, {opp}, honestly. The floor is weird now.",
+      "I spilled the rules, honestly. Clean them up."
+    ],
+    "flare_trip": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "flare_shrug": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "flare_snap": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Never the same fight twice.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 25,
+    "resilience": 25,
+    "flair": 40,
+    "creativity": 52,
+    "wins": 25,
+    "losses": 13,
+    "battles": 38
+  }
+}

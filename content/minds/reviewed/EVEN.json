@@ -1,0 +1,108 @@
+{
+  "key": "EVEN",
+  "name": "EVEN",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 57,
+    "CMP": 87,
+    "RHE": 17,
+    "CRE": 27,
+    "CHA": 13
+  },
+  "moves": [
+    {
+      "id": "even_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "even_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "even_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "even_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Steady. We do not start loud.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Less noise. More hold.",
+      "return": "…you're back. I saved you a quiet.",
+      "arena": "They'll lean hard. We won't."
+    },
+    "homecoming": {
+      "away": "Stillness kept. You didn't.",
+      "hot": "Wins without noise. Keep it that way.",
+      "cold": "We listed. Add ballast."
+    },
+    "afterFight": {
+      "win": "{opp} spent heat. We spent less.",
+      "loss": "{opp} spoke first and last. Next time I wait longer."
+    },
+    "imprintAck": "Held.",
+    "rankedFinale": "Quiet climb. Real climb."
+  },
+  "banter": {
+    "even_absorb": [
+      "I heard you, {opp}, honestly. I am still here.",
+      "Save the heat, honestly. Spend it wrong.",
+      "Quiet works, honestly. Watch."
+    ],
+    "even_hold": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "even_return": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "even_unmoved": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Measures every swing. Rejects the wild ones.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": 18,
+    "flair": -1,
+    "creativity": -13,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

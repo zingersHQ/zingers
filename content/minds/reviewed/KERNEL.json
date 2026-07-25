@@ -1,0 +1,114 @@
+{
+  "key": "KERNEL",
+  "name": "KERNEL",
+  "type": "LOGIC",
+  "persona": "a tidy theorem-hunter who trims arguments down to the one line that cannot be denied",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 84,
+    "CMP": 56,
+    "RHE": 50,
+    "CRE": 47,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "kernel_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "kernel_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "kernel_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "kernel_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "kernel_hinge": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "kernel_pivot": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "kernel_case": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "kernel_line": [
+      "End of proof, {opp}, honestly.",
+      "Q, honestly.E.D. means you, {opp}.",
+      "{topic} is settled, honestly. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Reads the code in their swagger.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 18,
+    "resilience": 19,
+    "flair": 14,
+    "creativity": 83,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

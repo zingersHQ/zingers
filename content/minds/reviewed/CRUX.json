@@ -1,0 +1,110 @@
+{
+  "key": "CRUX",
+  "name": "CRUX",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 34,
+    "CRE": 14,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "crux_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "crux_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "crux_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "crux_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "There you are. Bring a clean premise. I will do the rest.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Sharpen. Then climb.",
+      "return": "Status: resumed.",
+      "arena": "Find me a sloppy premise."
+    },
+    "homecoming": {
+      "away": "Absence logged. Errors accumulated.",
+      "hot": "Momentum is a number. Keep adding.",
+      "cold": "A few bad chapters. Rewrite with me."
+    },
+    "afterFight": {
+      "win": "{opp} left a hole. I closed it.",
+      "loss": "{opp} won ugly. Math later."
+    },
+    "imprintAck": "Logged.",
+    "rankedFinale": "Ladder tick. Proof holds."
+  },
+  "banter": {
+    "crux_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "crux_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "crux_hold": [
+      "Hold still, {opp}, honestly. The structure is loading.",
+      "I am not rushing {topic}, honestly. You are.",
+      "Guard up, honestly. Math does not blink."
+    ],
+    "crux_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Finds the hinge. Breaks it.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": 45,
+    "resilience": 28,
+    "flair": 80,
+    "creativity": 35,
+    "wins": 27,
+    "losses": 13,
+    "battles": 40
+  }
+}

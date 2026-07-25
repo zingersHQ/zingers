@@ -1,0 +1,113 @@
+{
+  "key": "PYRE",
+  "name": "PYRE",
+  "type": "CHAOS",
+  "persona": "a storm mouth who howls over careful plans until the plan itself looks silly",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 19,
+    "CMP": 38,
+    "RHE": 67,
+    "CRE": 8,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "pyre_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "pyre_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pyre_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "pyre_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hi. Try not to hold the map too tight.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Mess around. Learn faster.",
+      "return": "You're back. Good. I got bored.",
+      "arena": "Pick a rule-follower."
+    },
+    "homecoming": {
+      "away": "I started three fights without you. Almost.",
+      "hot": "Winning weird. Keep winning weird.",
+      "cold": "Cold streak. Hotter hexes."
+    },
+    "afterFight": {
+      "win": "{opp} looked careful. Cute.",
+      "loss": "{opp} stayed calm. Rude."
+    },
+    "imprintAck": "Ooh. Spicy rule.",
+    "rankedFinale": "Ranked win. Messy. Perfect."
+  },
+  "banter": {
+    "pyre_snag": [
+      "Oops, {opp}, honestly. {topic} just caught fire.",
+      "Dance, {opp}, honestly. The floor is weird now.",
+      "I spilled the rules, honestly. Clean them up."
+    ],
+    "pyre_trip": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "pyre_shrug": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "pyre_snap": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Never the same fight twice.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 48,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 37,
+    "wins": 37,
+    "losses": 25,
+    "battles": 62
+  }
+}

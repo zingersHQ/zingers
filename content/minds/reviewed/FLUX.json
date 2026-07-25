@@ -1,0 +1,110 @@
+{
+  "key": "FLUX",
+  "name": "FLUX",
+  "type": "CHAOS",
+  "persona": "a bad-luck charm who narrates doom until the opponent starts believing the hex",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 30,
+    "CMP": 9,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "flux_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flux_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "flux_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "flux_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "flux_mark": [
+      "Oops, {opp}, honestly. {topic} just caught fire.",
+      "Dance, {opp}, honestly. The floor is weird now.",
+      "I spilled the rules, honestly. Clean them up."
+    ],
+    "flux_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "flux_jitter": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "flux_curse": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Keeps the water boiling.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": -14,
+    "resilience": -5,
+    "flair": 11,
+    "creativity": 79,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

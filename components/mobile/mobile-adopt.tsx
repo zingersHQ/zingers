@@ -24,8 +24,6 @@ import {
   personaLine,
   markFirstDuelComplete,
 } from "@/lib/first-duel";
-import { READER_COPY } from "@/lib/player-copy";
-
 export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
   const adoptStarterRookie = useChampions((s) => s.adoptStarterRookie);
   // preselect the loaner the guest just flew in the Climb, if it's a valid starter
@@ -77,17 +75,17 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
   const pickedPersona = picked ? personaLine(picked) : null;
 
   return (
-    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "calc(18px + env(safe-area-inset-top, 0px)) 14px calc(20px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "calc(12px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <Sparkles size={24} strokeWidth={2} style={{ color: "var(--accent)" }} />
-          <div style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 4px" }}>Choose your champion</div>
-          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
-            {READER_COPY.claimLine} Pick one to begin. They start green and evolve as you train and call fights.
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <Sparkles size={20} strokeWidth={2} style={{ color: "var(--accent)" }} />
+          <div style={{ fontSize: 20, fontWeight: 800, margin: "4px 0 3px" }}>Choose your champion</div>
+          <p style={{ fontSize: 12, lineHeight: 1.4, color: "var(--muted, #9a96b8)", margin: "0 auto", maxWidth: 320 }}>
+            Pick one to begin. They start green and evolve as you train and call fights.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
           {starters.map((key) => {
             const type = ROSTER[key].type;
             const col = TYPE_COLOR[type];
@@ -107,7 +105,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
                   padding: 0,
                   textAlign: "center",
                   cursor: "pointer",
-                  borderRadius: 16,
+                  borderRadius: 14,
                   overflow: "hidden",
                   border: on ? `1.5px solid ${col}` : "1px solid var(--line, rgba(255,255,255,.09))",
                   background: on ? "var(--panel2, #15131f)" : "rgba(255,255,255,.02)",
@@ -115,8 +113,8 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
                   transition: "border-color .14s, box-shadow .14s, background .14s",
                 }}
               >
-                {/* borderless full-body render — fills the cell, sized by count */}
-                <div style={{ width: "100%", aspectRatio: "1 / 1", position: "relative" }}>
+                {/* slightly squat portrait so 5 starters + CTA fit a phone viewport */}
+                <div style={{ width: "100%", aspectRatio: "1 / 0.82", position: "relative" }}>
                   <ChampionPortraitScene
                     type={type}
                     champion={previewRookieChampion(key)}
@@ -130,10 +128,10 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
                       aria-hidden
                       style={{
                         position: "absolute",
-                        top: 8,
-                        right: 8,
-                        width: 24,
-                        height: 24,
+                        top: 6,
+                        right: 6,
+                        width: 22,
+                        height: 22,
                         borderRadius: 999,
                         display: "grid",
                         placeItems: "center",
@@ -142,13 +140,13 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
                         boxShadow: "0 2px 10px rgba(0,0,0,.4)",
                       }}
                     >
-                      <Check size={15} strokeWidth={3} />
+                      <Check size={14} strokeWidth={3} />
                     </span>
                   )}
                 </div>
-                <div style={{ padding: "8px 8px 11px", width: "100%" }}>
-                  <div style={{ fontSize: cols >= 3 ? 13 : 16, fontWeight: 800, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ROSTER[key].name}</div>
-                  <div className="mono" style={{ fontSize: 9.5, color: col, marginTop: 2, letterSpacing: 0.4 }}>{forceName(type)}</div>
+                <div style={{ padding: "5px 6px 7px", width: "100%" }}>
+                  <div style={{ fontSize: cols >= 3 ? 12.5 : 15, fontWeight: 800, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ROSTER[key].name}</div>
+                  <div className="mono" style={{ fontSize: 9, color: col, marginTop: 1, letterSpacing: 0.4 }}>{forceName(type)}</div>
                 </div>
               </button>
             );
@@ -156,12 +154,12 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
         </div>
 
         {/* the picked mind's hook + persona — name sticks before first flight */}
-        <div style={{ minHeight: 52, textAlign: "center", margin: "12px auto 0", maxWidth: 340 }}>
-          <p style={{ fontSize: 12.5, lineHeight: 1.4, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", margin: 0 }}>
+        <div style={{ minHeight: 44, textAlign: "center", margin: "8px auto 0", maxWidth: 340 }}>
+          <p style={{ fontSize: 12, lineHeight: 1.35, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", margin: 0 }}>
             {pickedHook ?? "Tap a champion to meet them."}
           </p>
           {pickedPersona && (
-            <p style={{ fontSize: 12, lineHeight: 1.4, color: "var(--muted, #9a96b8)", margin: "4px 0 0" }}>
+            <p style={{ fontSize: 11.5, lineHeight: 1.35, color: "var(--muted, #9a96b8)", margin: "3px 0 0" }}>
               {pickedPersona}
             </p>
           )}
@@ -173,12 +171,12 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
           disabled={!picked}
           style={{
             width: "100%",
-            marginTop: 10,
+            marginTop: 8,
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
-            padding: "15px 16px",
+            padding: "13px 16px",
             borderRadius: 13,
             border: "none",
             background: picked ? "var(--accent, #7cf6c8)" : "var(--panel2, #1a1826)",
@@ -191,7 +189,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
           {picked ? <>Raise {ROSTER[picked].name} <ChevronRight size={17} strokeWidth={2.6} /></> : "Pick a champion above"}
         </button>
 
-        <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2, #6b6785)", textAlign: "center", lineHeight: 1.5, margin: "12px 0 0" }}>
+        <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2, #6b6785)", textAlign: "center", lineHeight: 1.45, margin: "8px 0 0" }}>
           One champion to start · a new pool of starters rotates weekly
         </p>
       </div>

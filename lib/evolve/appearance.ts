@@ -144,18 +144,20 @@ export function appearanceOf(p: Champion): Appearance {
 export function jitterMorph(m: BoneMorph, seed: number, asym = 0): BoneMorph {
   const rnd = mulberry32(seed || 1);
   const j = (v: number, amt: number, lo: number, hi: number) => cl(v * (1 + (rnd() - 0.5) * amt), lo, hi);
+  // Wider individual jitter so a dex of same-Force minds reads as different
+  // animals, not palette swaps (collectible silhouette budget).
   const out: BoneMorph = {
-    headScale: j(m.headScale, 0.16, 0.56, 2.15),
-    neckLen: j(m.neckLen, 0.2, 0.4, 2.05),
-    torsoGirth: j(m.torsoGirth, 0.16, 0.48, 2.25),
-    torsoLen: j(m.torsoLen, 0.08, 0.86, 1.24),
-    shoulder: j(m.shoulder, 0.18, 0.58, 2.1),
-    armGirth: j(m.armGirth, 0.18, 0.56, 1.95),
-    armLen: j(m.armLen, 0.16, 0.62, 1.64),
-    legGirth: j(m.legGirth, 0.18, 0.6, 1.95),
-    legLen: j(m.legLen, 0.14, 0.64, 1.62),
-    handScale: j(m.handScale, 0.16, 0.34, 0.96),
-    footScale: j(m.footScale, 0.1, 0.6, 1.9),
+    headScale: j(m.headScale, 0.28, 0.52, 2.25),
+    neckLen: j(m.neckLen, 0.34, 0.38, 2.15),
+    torsoGirth: j(m.torsoGirth, 0.28, 0.44, 2.35),
+    torsoLen: j(m.torsoLen, 0.14, 0.82, 1.28),
+    shoulder: j(m.shoulder, 0.3, 0.52, 2.2),
+    armGirth: j(m.armGirth, 0.28, 0.5, 2.0),
+    armLen: j(m.armLen, 0.26, 0.58, 1.72),
+    legGirth: j(m.legGirth, 0.28, 0.54, 2.05),
+    legLen: j(m.legLen, 0.24, 0.58, 1.78),
+    handScale: j(m.handScale, 0.24, 0.3, 0.98),
+    footScale: j(m.footScale, 0.18, 0.55, 1.95),
     asymL: 1,
     asymR: 1,
   };

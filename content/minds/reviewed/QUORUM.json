@@ -1,0 +1,110 @@
+{
+  "key": "QUORUM",
+  "name": "QUORUM",
+  "type": "RHETORIC",
+  "persona": "a stage-born orator who treats every exchange like a packed house waiting for a line",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 8,
+    "CMP": 10,
+    "RHE": 87,
+    "CRE": 15,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "quorum_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "quorum_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quorum_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quorum_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Spotlight's warm. Stay in it with me.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Stage presence is a stat.",
+      "return": "The audience fidgeted without you.",
+      "arena": "I need a foil. Any foil."
+    },
+    "homecoming": {
+      "away": "Intermission ran long.",
+      "hot": "Crowd's with us. Don't flub the encore.",
+      "cold": "They stole the ovation. Draft a sharper speech."
+    },
+    "afterFight": {
+      "win": "{opp} got laughed out.",
+      "loss": "{opp} took the ovation. Draft better."
+    },
+    "imprintAck": "On the record.",
+    "rankedFinale": "Ranked. Mic still hot."
+  },
+  "banter": {
+    "quorum_herald": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "quorum_gloss": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "quorum_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "quorum_ovation": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rhythm first. Kill line late.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 57,
+    "resilience": 44,
+    "flair": 58,
+    "creativity": 93,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

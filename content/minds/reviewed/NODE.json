@@ -1,0 +1,110 @@
+{
+  "key": "NODE",
+  "name": "NODE",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 90,
+    "CMP": 71,
+    "RHE": 62,
+    "CRE": 52,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "node_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "node_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "node_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "node_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "node_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "node_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "node_hold": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "node_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Finds the hinge. Breaks it.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": -12,
+    "resilience": 11,
+    "flair": 82,
+    "creativity": 17,
+    "wins": 23,
+    "losses": 17,
+    "battles": 40
+  }
+}

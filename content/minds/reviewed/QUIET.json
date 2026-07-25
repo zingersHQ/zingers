@@ -1,0 +1,107 @@
+{
+  "key": "QUIET",
+  "name": "QUIET",
+  "type": "COMPOSURE",
+  "persona": "a depth charge who stays still on the surface while the real work happens underneath",
+  "lineage": "echo of Still: slower tide",
+  "stats": {
+    "LOG": 61,
+    "CMP": 86,
+    "RHE": 55,
+    "CRE": 57,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "quiet_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "quiet_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "quiet_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "quiet_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Steady. We do not start loud.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Less noise. More hold.",
+      "return": "…you're back. I saved you a quiet.",
+      "arena": "They'll lean hard. We won't."
+    },
+    "homecoming": {
+      "away": "Stillness kept. You didn't.",
+      "hot": "Wins without noise. Keep it that way.",
+      "cold": "We listed. Add ballast."
+    },
+    "afterFight": {
+      "win": "{opp} spent heat. We spent less.",
+      "loss": "{opp} spoke first and last. Next time I wait longer."
+    },
+    "imprintAck": "Held.",
+    "rankedFinale": "Quiet climb. Real climb."
+  },
+  "banter": {
+    "quiet_plumb": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "quiet_measure": [
+      "Breathe, {opp}, honestly. The pause is mine.",
+      "I heal slower than you tilt, honestly.",
+      "Hold, honestly. The line holds."
+    ],
+    "quiet_true": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "quiet_stone": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Absorbs heat. Returns one cut.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": -11,
+    "resilience": -9,
+    "flair": 82,
+    "creativity": -2,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

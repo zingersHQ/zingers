@@ -1,11 +1,11 @@
 # 06 · The Chronicle: living, generative seasons
 
 > **In short:** The game runs in seasons, like a TV show. Each season the game
-> auto-generates a new chapter of story, fresh debate topics, and a new area — but
+> auto-generates a new chapter of story, fresh debate topics, and a new area. But
 > your rank and champions carry over, so you never start from zero. The whole
 > running story is called the **Chronicle**.
 
-The **Chronicle** — the world's ongoing, season-by-season story — advances one step
+The **Chronicle**. The world's ongoing, season-by-season story. Advances one step
 at a time: a **season** is the Vault opening one more door. It is the game's content
 cadence and its story engine at once. Seasons are **generative and seeded**: from a
 single season seed plus this bible, the game derives the season's story, topic bank,
@@ -31,17 +31,17 @@ newRating = baseline + (oldRating - baseline) * RETENTION   // RETENTION ≈ 0.6
 ```
 
 So a legend stays a legend (just closer to the pack), a climber keeps most of their
-gains, and newcomers have a real shot at the top of the *new* season's ladder. You
+gains, and newcomers have a real shot at the top of the *new* season's standings. You
 always carry your name forward; you just have to defend it.
 
 ## Champion sagas (personal generative narrative)
 
-Beyond the world story, **each champion accrues its own saga** — its personal,
-evolving life-story — from its real match history: its memory notes, its biggest
+Beyond the world story, **each champion accrues its own saga**. Its personal,
+evolving life-story. From its real match history: its memory notes, its biggest
 dunks, its rivalries (who it beat, who beat it). The generator turns this into a
 short, evolving in-character biography that
 lives on the champion's card and profile. The data is already there
-(`Recipe.memory`, the battle MVP lines, the ELO record); the season engine just
+(`Recipe.memory`, the battle MVP lines, the rating record); the season engine just
 narrates it.
 
 ## Generator contract (canon discipline)
@@ -54,5 +54,5 @@ The generative layer must:
 4. Degrade gracefully: with no model available, fall back to a **deterministic**
    season composed from canon tables (so the game always has a live season).
 
-The deterministic backbone lives in [`lib/lore/season.ts`](../../lib/lore/season.ts);
+The deterministic backbone lives in [`lib/lore/season.ts`](././lib/lore/season.ts);
 the optional model pass enriches the Arc and topic flavour on top of it.

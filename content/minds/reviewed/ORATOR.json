@@ -1,0 +1,110 @@
+{
+  "key": "ORATOR",
+  "name": "ORATOR",
+  "type": "RHETORIC",
+  "persona": "a stage-born orator who treats every exchange like a packed house waiting for a line",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 50,
+    "CMP": 61,
+    "RHE": 87,
+    "CRE": 38,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "orator_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "orator_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "orator_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "orator_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Finally, a Trainer who can work a room.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Warm the voice. Then the fists.",
+      "return": "Missed your cue. Forgiven.",
+      "arena": "Cast me someone who thinks they're the hero."
+    },
+    "homecoming": {
+      "away": "I ad-libbed. It was fine. Come back anyway.",
+      "hot": "Hot mic. Hot record.",
+      "cold": "Tough room. Better lines next."
+    },
+    "afterFight": {
+      "win": "{opp} forgot the audience. Fatal.",
+      "loss": "{opp} won the room. We rewrite."
+    },
+    "imprintAck": "Quoted forever.",
+    "rankedFinale": "Ladder loves a speech."
+  },
+  "banter": {
+    "orator_herald": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "orator_gloss": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "orator_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "orator_ovation": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rhythm first. Kill line late.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": 89,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 38,
+    "losses": 15,
+    "battles": 53
+  }
+}

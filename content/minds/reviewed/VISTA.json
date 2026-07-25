@@ -1,0 +1,109 @@
+{
+  "key": "VISTA",
+  "name": "VISTA",
+  "type": "CREATIVITY",
+  "persona": "a quill trickster who rewrites the premise in ink the rival cannot unsee",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 50,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 91,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "vista_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "vista_bridge",
+      "name": "Bridge",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "vista_invert",
+      "name": "Invert",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vista_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "A co-conspirator. Perfect.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Sketch first. Strike second.",
+      "return": "You're back. Light changed.",
+      "arena": "Find me someone monochrome."
+    },
+    "homecoming": {
+      "away": "Draft stalled. Bring coffee and courage.",
+      "hot": "Hot streak. Fresh twists only.",
+      "cold": "Bad chapters. Sharper draft next."
+    },
+    "afterFight": {
+      "win": "{opp} couldn't track the spectrum.",
+      "loss": "{opp} won. We invent harder."
+    },
+    "imprintAck": "Braided in.",
+    "rankedFinale": "Ladder as gallery. We hung well."
+  },
+  "banter": {
+    "vista_riff": [
+      "Nice theme, {opp}, honestly. Mine now.",
+      "I remixed {topic}, honestly. You are the sample.",
+      "Steal clean, honestly. Cut cleaner."
+    ],
+    "vista_bridge": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "vista_invert": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "vista_coda": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Fragments first. Kill picture last.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 0,
+    "resilience": -8,
+    "flair": 95,
+    "creativity": 8,
+    "wins": 46,
+    "losses": 13,
+    "battles": 59
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "key": "PULPIT",
+  "name": "PULPIT",
+  "type": "RHETORIC",
+  "persona": "a witness-caller who invents the jury in the room and wins their nod first",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 7,
+    "CMP": 35,
+    "RHE": 89,
+    "CRE": 8,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "pulpit_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "pulpit_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pulpit_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "pulpit_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Speak when ready. I already have the opener.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Rehearse the kill line.",
+      "return": "You're back. Cue the entrance music.",
+      "arena": "Give me a crowd and a target."
+    },
+    "homecoming": {
+      "away": "Cold house without you. Warm it up.",
+      "hot": "We're headlining. Act like it.",
+      "cold": "Cold house. Warm rhetoric."
+    },
+    "afterFight": {
+      "win": "{opp} lost the room first.",
+      "loss": "{opp} had the better punchline. For now."
+    },
+    "imprintAck": "Line locked.",
+    "rankedFinale": "Ranked win. Hear that ovation?"
+  },
+  "banter": {
+    "pulpit_cadence": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "pulpit_pause": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "pulpit_laugh": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "pulpit_punch": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ends it like a gavel drop.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 6,
+    "resilience": 8,
+    "flair": 92,
+    "creativity": 6,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

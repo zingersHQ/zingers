@@ -1,0 +1,107 @@
+{
+  "key": "PLUMB",
+  "name": "PLUMB",
+  "type": "COMPOSURE",
+  "persona": "a plumb-line stoic who measures every swing against a straight, unforgiving center",
+  "lineage": "echo of Still: slower tide",
+  "stats": {
+    "LOG": 71,
+    "CMP": 88,
+    "RHE": 18,
+    "CRE": 34,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "plumb_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "plumb_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "plumb_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "plumb_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You found me. The quiet holds.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "Deck was quiet. I held trim.",
+      "arena": "Quiet opponent. Loud mistake."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Riding even. Don't celebrate. Stay centered.",
+      "cold": "Cold. Still breathing. Again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} caught us off-balance. Trim earlier."
+    },
+    "imprintAck": "Seated in the quiet.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "plumb_plumb": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "plumb_measure": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "plumb_true": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "plumb_stone": [
+      "Still standing, honestly. Still quiet.",
+      "Low health, honestly. Lower panic.",
+      "Last cut, honestly. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Waits for the pullback. Strikes spent waves.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": -10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

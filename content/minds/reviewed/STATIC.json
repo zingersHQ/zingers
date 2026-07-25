@@ -1,0 +1,113 @@
+{
+  "key": "STATIC",
+  "name": "STATIC",
+  "type": "CHAOS",
+  "persona": "a pattern-breaker who overlays weird rules onto the match until fair play looks naive",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 33,
+    "CMP": 37,
+    "RHE": 63,
+    "CRE": 29,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "static_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "static_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "static_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "static_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "static_snag": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "static_trip": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "static_shrug": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "static_snap": [
+      "Louder than your plan, {opp}, honestly.",
+      "Collapse looks good on you, honestly.",
+      "{topic} ends messy, honestly. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Tiny traps. Big falls.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": 82,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 32,
+    "wins": 61,
+    "losses": 13,
+    "battles": 74
+  }
+}

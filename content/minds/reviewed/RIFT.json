@@ -1,0 +1,110 @@
+{
+  "key": "RIFT",
+  "name": "RIFT",
+  "type": "CHAOS",
+  "persona": "a needler who wins by irritation more than brilliance and enjoys every flinch",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 38,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 52,
+    "CHA": 85
+  },
+  "moves": [
+    {
+      "id": "rift_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rift_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "rift_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "rift_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "rift_mark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "rift_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "rift_jitter": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "rift_curse": [
+      "Louder than your plan, {opp}, honestly.",
+      "Collapse looks good on you, honestly.",
+      "{topic} ends messy, honestly. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Starts a riot with one line.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 21,
+    "resilience": 35,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

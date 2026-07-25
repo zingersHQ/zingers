@@ -1,0 +1,110 @@
+{
+  "key": "SKETCH",
+  "name": "SKETCH",
+  "type": "CREATIVITY",
+  "persona": "a riff mind who improvises dangerous bridges between unrelated ideas mid-swing",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 25,
+    "CMP": 32,
+    "RHE": 61,
+    "CRE": 85,
+    "CHA": 7
+  },
+  "moves": [
+    {
+      "id": "sketch_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "sketch_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "sketch_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "sketch_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "sketch_reframe": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "sketch_steal": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "sketch_plot": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "sketch_magnum": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Makes seriousness look unimaginative.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": 54,
+    "resilience": 54,
+    "flair": 59,
+    "creativity": 94,
+    "wins": 52,
+    "losses": 16,
+    "battles": 68
+  }
+}

@@ -12,6 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **No ELO / no ladder in player copy:** use **standings**, **rank**, **board**, **rating**. Code ids may stay.
 - **Glossary is the source of truth for definitions**: `lib/lore/glossary.ts` → rendered at `/glossary` and `docs/bible/09-glossary.md`. Reuse its one-line wording for inline glosses so they stay consistent.
 - **Copy, not code**: change visible strings/JSX/aria text only; never rename identifiers, props, keys, or URL params to match a copy change.
+- **Org docs sync**: zingers.org is this repo (`docs/` + `lib/org/registry.ts`). Any change to narrative, concept, core loop, mechanics, or mechanisms must update the matching public docs. Follow the **`org-docs-sync`** skill (`.cursor/skills/org-docs-sync/SKILL.md`).
 
 # Game-feel conventions (added 2026-07)
 

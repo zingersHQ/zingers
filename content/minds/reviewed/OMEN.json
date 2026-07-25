@@ -1,0 +1,110 @@
+{
+  "key": "OMEN",
+  "name": "OMEN",
+  "type": "CHAOS",
+  "persona": "a needler who wins by irritation more than brilliance and enjoys every flinch",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 48,
+    "RHE": 58,
+    "CRE": 70,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "omen_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "omen_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "omen_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "omen_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Oh good. Someone to ruin plans with.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Break a habit. Keep the pieces.",
+      "return": "Chaos pause over.",
+      "arena": "Point me at a careful mind."
+    },
+    "homecoming": {
+      "away": "The quiet was offensive. Don't repeat it.",
+      "hot": "Don't get tidy now.",
+      "cold": "Losses. Ugly ones. Good. Fuel."
+    },
+    "afterFight": {
+      "win": "{opp} tripped. As planned.",
+      "loss": "{opp} won. Hex the rematch."
+    },
+    "imprintAck": "Tattooed. Chaotically.",
+    "rankedFinale": "Ladder goes brrr."
+  },
+  "banter": {
+    "omen_mark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "omen_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "omen_jitter": [
+      "Trip, honestly. That was free, {opp}.",
+      "You walked into it, honestly. On {topic}, even.",
+      "Snag, honestly. Laugh. Repeat."
+    ],
+    "omen_curse": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Starts a riot with one line.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 93,
+    "resilience": -5,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

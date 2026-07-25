@@ -1,0 +1,110 @@
+{
+  "key": "WRECK",
+  "name": "WRECK",
+  "type": "CHAOS",
+  "persona": "a shape-shifter who changes the subject mid-sentence and dares anyone to keep up",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 41,
+    "CMP": 58,
+    "RHE": 61,
+    "CRE": 65,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "wreck_spark",
+      "name": "Spark Riot",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "wreck_wild",
+      "name": "Wild Swing",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "wreck_gas",
+      "name": "Gas Up",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "wreck_burn",
+      "name": "Burnout",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "Oh good. Someone to ruin plans with.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Break a habit. Keep the pieces.",
+      "return": "Chaos pause over.",
+      "arena": "Point me at a careful mind."
+    },
+    "homecoming": {
+      "away": "The quiet was offensive. Don't repeat it.",
+      "hot": "Don't get tidy now.",
+      "cold": "Losses. Ugly ones. Good. Fuel."
+    },
+    "afterFight": {
+      "win": "{opp} tripped. As planned.",
+      "loss": "{opp} won. Hex the rematch."
+    },
+    "imprintAck": "Tattooed. Chaotically.",
+    "rankedFinale": "Ladder goes brrr."
+  },
+  "banter": {
+    "wreck_spark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "wreck_wild": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "wreck_gas": [
+      "Trip, honestly. That was free, {opp}.",
+      "You walked into it, honestly. On {topic}, even.",
+      "Snag, honestly. Laugh. Repeat."
+    ],
+    "wreck_burn": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rewrites the rules mid-swing.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": -2,
+    "resilience": 2,
+    "flair": 12,
+    "creativity": 92,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "ANCHOR",
+  "name": "ANCHOR",
+  "type": "COMPOSURE",
+  "persona": "a stone-paced duelist who refuses urgency and wins on the opponent's exhaustion",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 21,
+    "CRE": 13,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "anchor_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "anchor_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "anchor_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "anchor_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Steady. We do not start loud.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Less noise. More hold.",
+      "return": "…you're back. I saved you a quiet.",
+      "arena": "They'll lean hard. We won't."
+    },
+    "homecoming": {
+      "away": "Stillness kept. You didn't.",
+      "hot": "Wins without noise. Keep it that way.",
+      "cold": "We listed. Add ballast."
+    },
+    "afterFight": {
+      "win": "{opp} spent heat. We spent less.",
+      "loss": "{opp} spoke first and last. Next time I wait longer."
+    },
+    "imprintAck": "Held.",
+    "rankedFinale": "Quiet climb. Real climb."
+  },
+  "banter": {
+    "anchor_harbor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "anchor_heal": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "anchor_shore": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "anchor_low": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Soft voice. Hard center.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 5,
+    "resilience": -2,
+    "flair": 81,
+    "creativity": -7,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

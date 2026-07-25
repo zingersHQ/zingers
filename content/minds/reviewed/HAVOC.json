@@ -1,0 +1,110 @@
+{
+  "key": "HAVOC",
+  "name": "HAVOC",
+  "type": "CHAOS",
+  "persona": "a needler who wins by irritation more than brilliance and enjoys every flinch",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 21,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "havoc_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "havoc_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "havoc_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "havoc_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Hi. Try not to hold the map too tight.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Mess around. Learn faster.",
+      "return": "You're back. Good. I got bored.",
+      "arena": "Pick a rule-follower."
+    },
+    "homecoming": {
+      "away": "I started three fights without you. Almost.",
+      "hot": "Winning weird. Keep winning weird.",
+      "cold": "Cold streak. Hotter hexes."
+    },
+    "afterFight": {
+      "win": "{opp} looked careful. Cute.",
+      "loss": "{opp} stayed calm. Rude."
+    },
+    "imprintAck": "Ooh. Spicy rule.",
+    "rankedFinale": "Ranked win. Messy. Perfect."
+  },
+  "banter": {
+    "havoc_mark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "havoc_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "havoc_jitter": [
+      "Trip, honestly. That was free, {opp}.",
+      "You walked into it, honestly. On {topic}, even.",
+      "Snag, honestly. Laugh. Repeat."
+    ],
+    "havoc_curse": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Starts a riot with one line.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 55,
+    "control": -8,
+    "resilience": 1,
+    "flair": 2,
+    "creativity": 93,
+    "wins": 49,
+    "losses": 22,
+    "battles": 71
+  }
+}

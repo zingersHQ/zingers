@@ -1,0 +1,110 @@
+{
+  "key": "QUAKE",
+  "name": "QUAKE",
+  "type": "CHAOS",
+  "persona": "a needler who wins by irritation more than brilliance and enjoys every flinch",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 12,
+    "CMP": 32,
+    "RHE": 62,
+    "CRE": 16,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "quake_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quake_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quake_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "quake_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "quake_mark": [
+      "Oops, {opp}, honestly. {topic} just caught fire.",
+      "Dance, {opp}, honestly. The floor is weird now.",
+      "I spilled the rules, honestly. Clean them up."
+    ],
+    "quake_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "quake_jitter": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "quake_curse": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Starts a riot with one line.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 83,
+    "control": 4,
+    "resilience": -2,
+    "flair": 7,
+    "creativity": 3,
+    "wins": 31,
+    "losses": 16,
+    "battles": 47
+  }
+}

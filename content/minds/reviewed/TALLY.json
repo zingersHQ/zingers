@@ -1,0 +1,110 @@
+{
+  "key": "TALLY",
+  "name": "TALLY",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 16,
+    "CRE": 6,
+    "CHA": 22
+  },
+  "moves": [
+    {
+      "id": "tally_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tally_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tally_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tally_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "There you are. Bring a clean premise. I will do the rest.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Sharpen. Then climb.",
+      "return": "Status: resumed.",
+      "arena": "Find me a sloppy premise."
+    },
+    "homecoming": {
+      "away": "Absence logged. Errors accumulated.",
+      "hot": "Momentum is a number. Keep adding.",
+      "cold": "A few bad chapters. Rewrite with me."
+    },
+    "afterFight": {
+      "win": "{opp} left a hole. I closed it.",
+      "loss": "{opp} won ugly. Math later."
+    },
+    "imprintAck": "Logged.",
+    "rankedFinale": "Ladder tick. Proof holds."
+  },
+  "banter": {
+    "tally_cut": [
+      "Your premise fails, {opp}, honestly. On {topic}, the line is already closed.",
+      "Counted, honestly. Corrected. {opp} is next.",
+      "I do not shout, {opp}, honestly. I finish {topic}."
+    ],
+    "tally_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "tally_hold": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "tally_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Finds the hinge. Breaks it.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": 38,
+    "resilience": 57,
+    "flair": 92,
+    "creativity": 34,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

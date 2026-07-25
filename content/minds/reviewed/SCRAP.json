@@ -1,0 +1,110 @@
+{
+  "key": "SCRAP",
+  "name": "SCRAP",
+  "type": "CHAOS",
+  "persona": "a bad-luck charm who narrates doom until the opponent starts believing the hex",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 42,
+    "RHE": 70,
+    "CRE": 44,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "scrap_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "scrap_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scrap_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "scrap_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Oh good. Someone to ruin plans with.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Break a habit. Keep the pieces.",
+      "return": "Chaos pause over.",
+      "arena": "Point me at a careful mind."
+    },
+    "homecoming": {
+      "away": "The quiet was offensive. Don't repeat it.",
+      "hot": "Don't get tidy now.",
+      "cold": "Losses. Ugly ones. Good. Fuel."
+    },
+    "afterFight": {
+      "win": "{opp} tripped. As planned.",
+      "loss": "{opp} won. Hex the rematch."
+    },
+    "imprintAck": "Tattooed. Chaotically.",
+    "rankedFinale": "Ladder goes brrr."
+  },
+  "banter": {
+    "scrap_mark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "scrap_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "scrap_jitter": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "scrap_curse": [
+      "Louder than your plan, {opp}, honestly.",
+      "Collapse looks good on you, honestly.",
+      "{topic} ends messy, honestly. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Keeps the water boiling.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 32,
+    "resilience": 51,
+    "flair": 91,
+    "creativity": 20,
+    "wins": 40,
+    "losses": 19,
+    "battles": 59
+  }
+}

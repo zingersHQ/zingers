@@ -1,0 +1,108 @@
+{
+  "key": "RIDGE",
+  "name": "RIDGE",
+  "type": "COMPOSURE",
+  "persona": "a ballast mind who lets the room thrash and answers only when thrashing costs them",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 56,
+    "CMP": 84,
+    "RHE": 54,
+    "CRE": 54,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "ridge_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "ridge_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "ridge_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "ridge_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "You found me. The quiet holds.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "Deck was quiet. I held trim.",
+      "arena": "Quiet opponent. Loud mistake."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Riding even. Don't celebrate. Stay centered.",
+      "cold": "Cold. Still breathing. Again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} caught us off-balance. Trim earlier."
+    },
+    "imprintAck": "Seated in the quiet.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "ridge_harbor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "ridge_heal": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "ridge_shore": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "ridge_low": [
+      "Still standing, honestly. Still quiet.",
+      "Low health, honestly. Lower panic.",
+      "Last cut, honestly. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Steadies the fight until they beach.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 33,
+    "resilience": 41,
+    "flair": 32,
+    "creativity": 83,
+    "wins": 36,
+    "losses": 25,
+    "battles": 61
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "YARN",
+  "name": "YARN",
+  "type": "CREATIVITY",
+  "persona": "a whimsy blade who wins by making seriousness look like a lack of imagination",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 53,
+    "CMP": 70,
+    "RHE": 71,
+    "CRE": 92,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "yarn_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "yarn_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "yarn_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "yarn_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "yarn_ink": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "yarn_whim": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "yarn_mirror": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "yarn_page": [
+      "Last page, honestly. Your name is footnote.",
+      "Art wins, honestly. Argue later.",
+      "Wake up inside my metaphor, honestly."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Answers with prettier questions.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": 10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

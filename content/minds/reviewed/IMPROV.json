@@ -1,0 +1,109 @@
+{
+  "key": "IMPROV",
+  "name": "IMPROV",
+  "type": "CREATIVITY",
+  "persona": "a mosaic builder who wins with fragments that only lock into a kill at the end",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 14,
+    "CMP": 22,
+    "RHE": 64,
+    "CRE": 84,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "improv_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "improv_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "improv_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "improv_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Let's make something they cannot unsee.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Show me a new angle.",
+      "return": "Story paused. Continue?",
+      "arena": "Bring a literalist. Delicious."
+    },
+    "homecoming": {
+      "away": "You left mid-chapter. Rude.",
+      "hot": "Hitting every band. Keep the light moving.",
+      "cold": "Cold streak. Wilder ink."
+    },
+    "afterFight": {
+      "win": "{opp} played the fool. The moral wrote itself.",
+      "loss": "{opp} stayed one hue and I over-split."
+    },
+    "imprintAck": "Motif updated.",
+    "rankedFinale": "Ranked win. New chapter."
+  },
+  "banter": {
+    "improv_glyph": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "improv_mosaic": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "improv_dream": [
+      "Ink is still wet, honestly. Do not touch.",
+      "Whim is a strategy, honestly. Believe it.",
+      "Mirror this, {opp}, honestly."
+    ],
+    "improv_wake": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Moves the fight into a metaphor they own.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 16,
+    "resilience": 89,
+    "flair": -17,
+    "creativity": 5,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

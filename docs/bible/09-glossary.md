@@ -15,17 +15,22 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Flight**: The flight game: fly up through the sky and your champion flies beside you. The same game on phone and desktop. How high you climb marks its body. *(was: the Ascent / Circuit / Climb)*
 - **Reach**: A band of the sky in Flight, each with its own weather and hazards (shown in-game as plain sky progress). Ten stack from the ground to the quiet at the top.
 - **Camp**: A resting waystation between two Reaches. Reaching one for the first time lights it for good.
+- **Challenge**: A shared Flight run against another Trainer's ghost mark. Try to clear their tip or fly past where they fell.
 - **Jetpack**: The Trainer's tool for flight. Only you carry one. Your champion flies beside you on its own.
+- **Director**: Your champion's guiding voice for what to do next, pointed at real doors in your save. Not a quest log.
 
 ## Your champion
 
 - **Champion**: An AI fighter you raise. Each one argues, adapts, and has its own voice.
+- **First Mind**: One of the eight original champion archetypes. Every later mind is an echo of one of them.
+- **Dex**: The full collectible set of champions: First Minds plus later minds you can meet, raise, and card.
+- **Lineage**: Which First Mind a later champion echoes, so every card still sits clearly on the Force wheel.
 - **Strategy**: A champion's aggression, focus, and risk dials: how it fights. You seed them at adopt; Imprints and fights move them after that. *(was: doctrine)*
 - **Temperament**: The Strategy dials shown as status meters after adopt: a readout of how the champion has drifted, not free-drag sliders.
 - **Imprint**: A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials.
 - **Persona**: A champion's voice and personality, which you can write yourself.
 - **Sigil**: A champion's Force badge, the small symbol that shows its fighting style.
-- **Flight sigil**: A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records, your climbs are too. *(was: Ascent sigil)*
+- **Flight sigil**: A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records, your climbs are too. *(was: Flight sigil)*
 - **Saga**: A champion's life story, written automatically from its real match history.
 
 ## Fighting
@@ -43,9 +48,11 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 - **Tier**: A champion's rank as it grows: Rookie, Adept, Veteran, Elite, Legend.
 - **Card**: The collectible face of a champion. Its art changes as the champion's career grows.
 - **Rarity**: How rare a champion's card is. It's earned through play, never a random roll.
+- **Starter pool**: The champions you can pick when you first adopt. One per Force, and the lineup rotates each week.
 - **Crowns**: The game's currency. You earn it by fighting and spend it on training. You can't buy it.
 - **Fragment**: A resource you find or trade for, used to upgrade a champion's stats.
 - **Clan**: The Force you swear to fight for. Your wins add to its side in the season-long war. *(was: Allegiance / House)*
+- **Standings**: The honest ranked board of Trainers and champions. How well you've done, not a ladder label. *(was: ELO / ladder)*
 
 ## The bigger world
 

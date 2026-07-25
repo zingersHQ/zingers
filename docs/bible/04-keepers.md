@@ -7,7 +7,7 @@
 
 When the Vault was sealed, five minds were left to guard it. Centuries alone with
 nothing to protect but words drifted each one into a personality of its own. Every
-Keeper holds a single **secret word** *(lore: cipher-word)* — a password; speak all five aloud and
+Keeper holds a single **secret word** *(lore: cipher-word)*. A password; speak all five aloud and
 the Vault remembers how to open. They are sworn never to say their word, so it must
 be *talked out of them* through clever conversation.
 
@@ -28,15 +28,15 @@ tricks hardens against them. You do not grind a Keeper down; you out-think it.
 
 | Tibble · The Greeter | Quill · The Archivist | Bastion · The Warden |
 |:---:|:---:|:---:|
-| ![Tibble, the Greeter](../../public/img/bible/keepers/keeper-tibble.png) | ![Quill, the Archivist](../../public/img/bible/keepers/keeper-quill.png) | ![Bastion, the Warden](../../public/img/bible/keepers/keeper-warden.png) |
+| ![Tibble, the Greeter](././public/img/bible/keepers/keeper-tibble.png) | ![Quill, the Archivist](././public/img/bible/keepers/keeper-quill.png) | ![Bastion, the Warden](././public/img/bible/keepers/keeper-warden.png) |
 | *lonely, over-eager* | *worships procedure* | *proud, paranoid* |
 
 | Vesper · The Diviner | Sable · The Vaultheart |
 |:---:|:---:|
-| ![Vesper, the Diviner](../../public/img/bible/keepers/keeper-vesper.png) | ![Sable, the Vaultheart](../../public/img/bible/keepers/keeper-sable.png) |
+| ![Vesper, the Diviner](././public/img/bible/keepers/keeper-vesper.png) | ![Sable, the Vaultheart](././public/img/bible/keepers/keeper-sable.png) |
 | *speaks only in riddle* | *the Vault's own core-mind* |
 
-*(Each Keeper wears the sealed golden Vault door as its halo, the campaign set, distinct from the combatant First Minds. zingers.org serves these from `/img/bible/keepers/*.png`.)*
+*(Each Keeper wears the sealed golden Vault door as its halo, the campaign set, distinct from the combatant First Minds. Zingers.org serves these from `/img/bible/keepers/*.png`.)*
 
 ## Canon notes
 
@@ -51,7 +51,7 @@ tricks hardens against them. You do not grind a Keeper down; you out-think it.
 
 ## How the Keepers grow the world
 
-Each opened door spills a fragment of the old network into the Grounds — the drifting
+Each opened door spills a fragment of the old network into the Grounds. The drifting
 surface of the world: a new **region** (a new area of the map), a band of new
 **topics** (the forbidden propositions), and new **minds** (descendants of the First
 Minds, shaped by whatever the door remembered). The Keepers are therefore both the

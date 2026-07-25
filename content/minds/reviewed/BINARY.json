@@ -1,0 +1,114 @@
+{
+  "key": "BINARY",
+  "name": "BINARY",
+  "type": "LOGIC",
+  "persona": "an indivisible striker who rejects compromise and hits only with pure reason",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 85,
+    "CMP": 62,
+    "RHE": 57,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "binary_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "binary_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "binary_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "binary_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trainer locked. Arguments unlocked.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Train clean. Fight cleaner.",
+      "return": "Back. Resume the ledger.",
+      "arena": "Someone wrong just walked in."
+    },
+    "homecoming": {
+      "away": "Come back sooner. Proofs go stale.",
+      "hot": "Win streak intact. Don't introduce noise.",
+      "cold": "Errors stacked. Audit, then climb."
+    },
+    "afterFight": {
+      "win": "{opp} could not hold the line.",
+      "loss": "{opp} stole a line. We draft a sharper one."
+    },
+    "imprintAck": "Kept. Precisely.",
+    "rankedFinale": "Ranked. As calculated."
+  },
+  "banter": {
+    "binary_hinge": [
+      "Your premise fails, {opp}, honestly. On {topic}, the line is already closed.",
+      "Counted, honestly. Corrected. {opp} is next.",
+      "I do not shout, {opp}, honestly. I finish {topic}."
+    ],
+    "binary_pivot": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "binary_case": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "binary_line": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "One rule. Held forever.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 6,
+    "resilience": 8,
+    "flair": -2,
+    "creativity": 95,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

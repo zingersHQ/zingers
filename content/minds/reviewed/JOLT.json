@@ -1,0 +1,110 @@
+{
+  "key": "JOLT",
+  "name": "JOLT",
+  "type": "CHAOS",
+  "persona": "a needler who wins by irritation more than brilliance and enjoys every flinch",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 30,
+    "RHE": 58,
+    "CRE": 7,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "jolt_mark",
+      "name": "Hex Mark",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jolt_luck",
+      "name": "Bad Luck",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jolt_jitter",
+      "name": "Jitter",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jolt_curse",
+      "name": "Curse End",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Hi. Try not to hold the map too tight.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Mess around. Learn faster.",
+      "return": "You're back. Good. I got bored.",
+      "arena": "Pick a rule-follower."
+    },
+    "homecoming": {
+      "away": "I started three fights without you. Almost.",
+      "hot": "Winning weird. Keep winning weird.",
+      "cold": "Cold streak. Hotter hexes."
+    },
+    "afterFight": {
+      "win": "{opp} looked careful. Cute.",
+      "loss": "{opp} stayed calm. Rude."
+    },
+    "imprintAck": "Ooh. Spicy rule.",
+    "rankedFinale": "Ranked win. Messy. Perfect."
+  },
+  "banter": {
+    "jolt_mark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "jolt_luck": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "jolt_jitter": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "jolt_curse": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Starts a riot with one line.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 87,
+    "resilience": -19,
+    "flair": 0,
+    "creativity": 17,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

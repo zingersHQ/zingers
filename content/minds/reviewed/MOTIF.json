@@ -1,0 +1,109 @@
+{
+  "key": "MOTIF",
+  "name": "MOTIF",
+  "type": "CREATIVITY",
+  "persona": "a motif thief who steals the opponent's theme and returns it as a better song",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 6,
+    "CMP": 32,
+    "RHE": 52,
+    "CRE": 85,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "motif_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "motif_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "motif_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "motif_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "A co-conspirator. Perfect.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Sketch first. Strike second.",
+      "return": "You're back. Light changed.",
+      "arena": "Find me someone monochrome."
+    },
+    "homecoming": {
+      "away": "Draft stalled. Bring coffee and courage.",
+      "hot": "Hot streak. Fresh twists only.",
+      "cold": "Bad chapters. Sharper draft next."
+    },
+    "afterFight": {
+      "win": "{opp} couldn't track the spectrum.",
+      "loss": "{opp} won. We invent harder."
+    },
+    "imprintAck": "Braided in.",
+    "rankedFinale": "Ladder as gallery. We hung well."
+  },
+  "banter": {
+    "motif_glyph": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "motif_mosaic": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "motif_dream": [
+      "Ink is still wet, honestly. Do not touch.",
+      "Whim is a strategy, honestly. Believe it.",
+      "Mirror this, {opp}, honestly."
+    ],
+    "motif_wake": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rewrites the premise in wet ink.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": -14,
+    "resilience": -10,
+    "flair": -9,
+    "creativity": 11,
+    "wins": 42,
+    "losses": 19,
+    "battles": 61
+  }
+}

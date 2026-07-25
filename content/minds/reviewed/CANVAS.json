@@ -1,0 +1,110 @@
+{
+  "key": "CANVAS",
+  "name": "CANVAS",
+  "type": "CREATIVITY",
+  "persona": "a riff mind who improvises dangerous bridges between unrelated ideas mid-swing",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 45,
+    "CMP": 43,
+    "RHE": 57,
+    "CRE": 84,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "canvas_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "canvas_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "canvas_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "canvas_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Let's make something they cannot unsee.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Show me a new angle.",
+      "return": "Story paused. Continue?",
+      "arena": "Bring a literalist. Delicious."
+    },
+    "homecoming": {
+      "away": "You left mid-chapter. Rude.",
+      "hot": "Hitting every band. Keep the light moving.",
+      "cold": "Cold streak. Wilder ink."
+    },
+    "afterFight": {
+      "win": "{opp} played the fool. The moral wrote itself.",
+      "loss": "{opp} stayed one hue and I over-split."
+    },
+    "imprintAck": "Motif updated.",
+    "rankedFinale": "Ranked win. New chapter."
+  },
+  "banter": {
+    "canvas_reframe": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "canvas_steal": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "canvas_plot": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "canvas_magnum": [
+      "Last page, honestly. Your name is footnote.",
+      "Art wins, honestly. Argue later.",
+      "Wake up inside my metaphor, honestly."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Makes seriousness look unimaginative.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": -7,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

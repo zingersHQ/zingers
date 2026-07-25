@@ -1,0 +1,108 @@
+{
+  "key": "TIDE",
+  "name": "TIDE",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 61,
+    "CMP": 84,
+    "RHE": 52,
+    "CRE": 58,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "tide_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "tide_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "tide_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "tide_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hi. No rush. I will still be here.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Drill the balance.",
+      "return": "Return noted. Still here.",
+      "arena": "Let them talk first."
+    },
+    "homecoming": {
+      "away": "I held the trim. Come aboard.",
+      "hot": "Hot streak. Cool head.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't.",
+      "loss": "{opp} won loud. We answer soft."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "Ranked. Still breathing."
+  },
+  "banter": {
+    "tide_absorb": [
+      "I heard you, {opp}, honestly. I am still here.",
+      "Save the heat, honestly. Spend it wrong.",
+      "Quiet works, honestly. Watch."
+    ],
+    "tide_hold": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "tide_return": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "tide_unmoved": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Measures every swing. Rejects the wild ones.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 43,
+    "resilience": 27,
+    "flair": 30,
+    "creativity": 46,
+    "wins": 35,
+    "losses": 25,
+    "battles": 60
+  }
+}

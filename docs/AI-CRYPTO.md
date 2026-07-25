@@ -4,7 +4,7 @@
 
 ### Thinking creatures first. Collectible legends underneath.
 
-Zingers leads with a real AI game — creatures that actually think — and keeps any
+Zingers leads with a real AI game. Creatures that actually think. And keeps any
 ownership layer opt-in, walled off, and utility-anchored. Two layers, kept
 strictly distinct. Today a wallet is optional **Trainer identity** only; token
 launch is deliberately deferred. *(`docs/flight-first-plan.md`, `docs/zing-model.md`.)*
@@ -13,7 +13,7 @@ launch is deliberately deferred. *(`docs/flight-first-plan.md`, `docs/zing-model
 
 ## The AI layer (the product)
 
-**Pluggable agents.** The engine asks one question per turn — *given this state
+**Pluggable agents.** The engine asks one question per turn. *given this state
 and these legal moves, what do you do?* Any brain implementing `act(view) →
 decision` can drive a champion. *(`docs/agent-protocol.md`.)*
 
@@ -25,7 +25,7 @@ decision` can drive a champion. *(`docs/agent-protocol.md`.)*
   turns, low cost. Opt-in: `ZINGERS_AGENT_TOOLS=1` enables a bounded
   reason → act → observe → commit tool loop (`simulate_move`, `scout_opponent`,
   `commit_move`, capped at 3 steps); `ZINGERS_LLM_JUDGE=1` swaps in an LLM wit
-  scorer (still a bounded multiplier — never match-deciding alone).
+  scorer (still a bounded multiplier. Never match-deciding alone).
 - **Persistent memory & drift.** Each champion carries memory notes plus
   **Strategy / temperament** dials (aggression, focus, risk). You seed them at
   adopt; after that the UI is a readout. **Imprints** (a capped model call with
@@ -39,7 +39,7 @@ decision` can drive a champion. *(`docs/agent-protocol.md`.)*
 
 ## The crypto layer (opt-in, underneath)
 
-**Cardinal rule:** the game is **free and complete** without a wallet — you can
+**Cardinal rule:** the game is **free and complete** without a wallet. You can
 raise legends, climb seasons, and crack the Vault having never seen one. Crypto is
 a layer *beneath* the game, never a gate in front of it. *(`docs/bible/08-economy.md`,
 `docs/zing-model.md`.)*
@@ -49,35 +49,35 @@ to keep a unique **Trainer name** across devices. No spend approvals. No token U
 
 **Honest scope (2026-07):** first connect binds **name ↔ pubkey ↔ ownerToken**
 (the device career key). Reconnect on a new device returns that canonical
-`ownerToken` so champions, Crowns, and `/api/save` restore after reload — still
+`ownerToken` so champions, Crowns, and `/api/save` restore after reload. Still
 without `$ZING`. Recovery code remains a backup if the wallet is lost.
 
 **Naming:** in-game Crowns live at `/api/wallet` (off-chain). Solana is
-`solana-link` / “Connect” — never call Crowns a chain wallet in player copy.
+`solana-link` / “Connect”. Never call Crowns a chain wallet in player copy.
 
 ### Two economies, never bridged
 
 | | **Crowns** | **$ZING** (working name) |
 |---|---|---|
-| Nature | Soft, in-game, server-authoritative | Hard, on-chain (SPL / Solana) — *not launched* |
+| Nature | Soft, in-game, server-authoritative | Hard, on-chain (SPL / Solana). *not launched* |
 | How you get it | *Earned* by playing | *Bought* on a market, or airdropped for play (future) |
-| What it's for | Training, entries, backing, cosmetic reforges | On-chain ladder entry, minting cards, patron standing (future) |
+| What it's for | Training, entries, backing, cosmetic reforges | On-chain standings entry, minting cards, patron standing (future) |
 | Cashes out? | **Never** | Only on the open market, never *through us* |
 
-The wall between them — no conversion, no shared wallet — is the single most
+The wall between them. No conversion, no shared wallet. Is the single most
 important invariant. It is what keeps Zingers *not* a security and *not* a casino.
 
-### What the token does — and only this (future)
+### What the token does. And only this (future)
 
-1. **Pays opt-in on-chain ladder entry** via **burn-or-stake** — burn is a small
+1. **Pays opt-in on-chain board entry** via **burn-or-stake**. Burn is a small
    consumed access fee (pure deflation); stake is a larger, **refundable-in-full**
    deposit that returns principal only. Stake persists across seasons, so loyal
    players lock capital and play free forever. **No yield, ever.**
-2. **Mints permanence** — burn to immortalize a champion as an on-chain card. The
+2. **Mints permanence**. Burn to immortalize a champion as an on-chain card. The
    art is deterministic from the career record, so **the token *is* the track
    record.** It fills provenance fields that already exist inert (`mintId`,
-   `owner`, `chain`, `mintedSeason`) — a fill-in, not a refactor.
-3. **Confers standing** — patron crests for backing a champion, dex provenance,
+   `owner`, `chain`, `mintedSeason`). A fill-in, not a refactor.
+3. **Confers standing**. Patron crests for backing a champion, dex provenance,
    and next-season airdrop *weight* earned by play.
 
 ### Guardrails (the indie-safe envelope)

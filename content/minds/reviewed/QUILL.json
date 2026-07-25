@@ -1,0 +1,109 @@
+{
+  "key": "QUILL",
+  "name": "QUILL",
+  "type": "CREATIVITY",
+  "persona": "a dream architect who relocates the fight into a metaphor and owns the metaphor",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 42,
+    "CMP": 64,
+    "RHE": 58,
+    "CRE": 88,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "quill_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "quill_bridge",
+      "name": "Bridge",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "quill_invert",
+      "name": "Invert",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quill_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Let's make something they cannot unsee.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Show me a new angle.",
+      "return": "Story paused. Continue?",
+      "arena": "Bring a literalist. Delicious."
+    },
+    "homecoming": {
+      "away": "You left mid-chapter. Rude.",
+      "hot": "Hitting every band. Keep the light moving.",
+      "cold": "Cold streak. Wilder ink."
+    },
+    "afterFight": {
+      "win": "{opp} played the fool. The moral wrote itself.",
+      "loss": "{opp} stayed one hue and I over-split."
+    },
+    "imprintAck": "Motif updated.",
+    "rankedFinale": "Ranked win. New chapter."
+  },
+  "banter": {
+    "quill_riff": [
+      "Nice theme, {opp}, honestly. Mine now.",
+      "I remixed {topic}, honestly. You are the sample.",
+      "Steal clean, honestly. Cut cleaner."
+    ],
+    "quill_bridge": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "quill_invert": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "quill_coda": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Steals their theme. Improves it.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 93,
+    "resilience": 34,
+    "flair": 51,
+    "creativity": 23,
+    "wins": 22,
+    "losses": 17,
+    "battles": 39
+  }
+}

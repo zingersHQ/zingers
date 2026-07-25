@@ -1,7 +1,7 @@
 # The Zingers Bible
 
 > **In short:** This is the rulebook for the whole made-up world of Zingers. You're
-> a **Trainer** — you raise AI "champions" that argue in live debate battles. This
+> a **Trainer**. You raise AI "champions" that argue in live debate battles. This
 > folder is where every name, place, and rule of that world is written down, so the
 > game never contradicts itself.
 
@@ -14,7 +14,7 @@
 
 Anything the game *invents* (a season's story, a new champion's saga, a topic, a
 region event) must be **consistent with this bible**. The machine-readable slice
-of it lives in [`lib/lore/canon.ts`](../../lib/lore/canon.ts); the prose lives here.
+of it lives in [`lib/lore/canon.ts`](././lib/lore/canon.ts); the prose lives here.
 
 ## Index
 
@@ -22,44 +22,45 @@ of it lives in [`lib/lore/canon.ts`](../../lib/lore/canon.ts); the prose lives h
 |---|------|---------------------|
 | 01 | [cosmology.md](./01-cosmology.md) | The world, the Hum, the Long Vault: why anything exists |
 | 02 | [forces.md](./02-forces.md) | The Five Forces (the type pentagon), as in-world physics |
-| 03 | [champions.md](./03-champions.md) | What a champion *is*; character voice; the eight First Minds |
+| 03 | [champions.md](./03-champions.md) | What a champion *is*; First Minds; the growing dex |
 | 04 | [keepers.md](./04-keepers.md) | The five Keepers of the Long Vault (the campaign spine) |
 | 05 | [regions.md](./05-regions.md) | The map: regions, Concord venues, force-bias, arenas |
 | 06 | [seasons.md](./06-seasons.md) | The Chronicle: how living seasons are generated |
 | 07 | [collection.md](./07-collection.md) | Cards, rarity, attributes: the collection layer |
 | 08 | [economy.md](./08-economy.md) | Crowns, and the optional ownership layer beneath |
 | 09 | [glossary.md](./09-glossary.md) | Plain one-line definition of every signature term (mirrors `lib/lore/glossary.ts`) |
-| 10 | [ascent.md](./10-ascent.md) | The sky above the Vault: Reaches, Camps, flight, the ascent sigil (the vertical world) |
+| 10 | [ascent.md](./10-ascent.md) | Flight (vertical world): Reaches, Camps, Flight sigil, challenges |
 
 ## How the three play-layers sit in the canon
 
-The game is one world entered at three session-lengths (the design north star). The
-**Ascent** — flying the sky above the Vault (see [ascent.md](./10-ascent.md)) — is the
-spine that threads all three: it's the first thing a newcomer does, and the sky over
-every region shows you what's below:
+The game is one world entered at three session-lengths (the design north star).
+**Flight** (see [ascent.md](./10-ascent.md)) is the spine that threads all three:
+it's the first thing a newcomer does, and the sky over every region shows you what's
+below:
 
-- **Roam (open-ended)**: *the Grounds* — the drifting, explorable surface of the
-  world, flown between on a jetpack. You live in it, watch the league happen around
-  you, fly up to champions and rivals. The connective tissue.
+- **Roam (open-ended)**: *the world* (lore: the Grounds). The drifting, explorable
+  surface, flown between on a jetpack. You live in it, watch the league happen
+  around you, fly up to champions and rivals. The connective tissue.
 - **Quick match (2–5 min)**: *the Arena / League*. Drop in, fight one ranked battle,
   hold your rank. Always available from anywhere in the world.
 - **Raise (15–60 min)**: *the Campaign & Collection*. The growing RPG: raise minds,
   evolve their bodies, advance the Chronicle, build a collection.
 
-None of these "finish." The **Long Vault** — a sealed store of everything the old
-network could never finish — opens one more door each season; the climb is the point.
+None of these "finish." The **Long Vault** (a sealed store of everything the old
+network could never finish) opens one more door each season; the climb is the point.
 
 ## Canon discipline (for writers and the generator alike)
 
 - **Names are fixed.** Forces, Keepers, regions, and the eight First Minds do not
-  get renamed by a season. Seasons add; they do not overwrite.
+  get renamed by a season. Seasons and dex waves **add** minds; they do not overwrite
+  archetypes.
 - **Forces use their plain name in-game.** The player-facing name of each Force is
   the plain one (Logic / Static / Calm / Chorus / Spark; see
   [02-forces.md](./02-forces.md)). The older poetic names (the Lattice / Stillness
   / …) are retained only as *etymology* in the bible and never shown in gameplay
-  UI. The player is the **Trainer** — the person who raises the champions; the Force
+  UI. The player is the **Trainer**. The person who raises the champions; the Force
   a Trainer swears to is their **Clan** (the group you pick a side with). The 3D
-  avatar is the **Handler** — see [cosmology.md](./01-cosmology.md).
+  avatar is the **Handler**. See [cosmology.md](./01-cosmology.md).
 - **The engine is the physics.** Damage, types, and statuses in
   `docs/combat-design.md` are *literally true* in-world. Argument shapes reality.
 - **Generated lore is additive and seeded.** A season's story is produced from a

@@ -1,0 +1,110 @@
+{
+  "key": "SCALAR",
+  "name": "SCALAR",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 85,
+    "CMP": 61,
+    "RHE": 58,
+    "CRE": 46,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "scalar_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "scalar_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scalar_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "scalar_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trainer locked. Arguments unlocked.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Train clean. Fight cleaner.",
+      "return": "Back. Resume the ledger.",
+      "arena": "Someone wrong just walked in."
+    },
+    "homecoming": {
+      "away": "Come back sooner. Proofs go stale.",
+      "hot": "Win streak intact. Don't introduce noise.",
+      "cold": "Errors stacked. Audit, then climb."
+    },
+    "afterFight": {
+      "win": "{opp} could not hold the line.",
+      "loss": "{opp} stole a line. We draft a sharper one."
+    },
+    "imprintAck": "Kept. Precisely.",
+    "rankedFinale": "Ranked. As calculated."
+  },
+  "banter": {
+    "scalar_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "scalar_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "scalar_hold": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "scalar_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Finds the hinge. Breaks it.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 94,
+    "control": 22,
+    "resilience": 30,
+    "flair": 31,
+    "creativity": 21,
+    "wins": 36,
+    "losses": 20,
+    "battles": 56
+  }
+}

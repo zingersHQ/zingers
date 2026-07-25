@@ -1,0 +1,106 @@
+{
+  "key": "RHETOR",
+  "name": "RHETOR",
+  "type": "RHETORIC",
+  "persona": "a gloss artist who polishes weak claims until they shine just long enough to cut",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 59,
+    "CMP": 50,
+    "RHE": 92,
+    "CRE": 47,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "rhetor_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "rhetor_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rhetor_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "rhetor_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Finally, a Trainer who can work a room.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Warm the voice. Then the fists.",
+      "return": "Missed your cue. Forgiven.",
+      "arena": "Cast me someone who thinks they're the hero."
+    },
+    "homecoming": {
+      "away": "I ad-libbed. It was fine. Come back anyway.",
+      "hot": "Hot mic. Hot record.",
+      "cold": "Tough room. Better lines next."
+    },
+    "afterFight": {
+      "win": "{opp} forgot the audience. Fatal.",
+      "loss": "{opp} won the room. We rewrite."
+    },
+    "imprintAck": "Quoted forever.",
+    "rankedFinale": "Ladder loves a speech."
+  },
+  "banter": {
+    "rhetor_cadence": [
+      "Ladies and minds: {opp} on {topic}, honestly.",
+      "Give them a hand, honestly. Then take the point.",
+      "House likes me, honestly. House decides."
+    ],
+    "rhetor_pause": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "rhetor_laugh": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "rhetor_punch": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Builds a speech around their tell.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 12,
+    "flair": -6,
+    "creativity": -9,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

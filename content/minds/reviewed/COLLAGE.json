@@ -1,0 +1,109 @@
+{
+  "key": "COLLAGE",
+  "name": "COLLAGE",
+  "type": "CREATIVITY",
+  "persona": "a dream architect who relocates the fight into a metaphor and owns the metaphor",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 30,
+    "CMP": 23,
+    "RHE": 58,
+    "CRE": 90,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "collage_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "collage_bridge",
+      "name": "Bridge",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "collage_invert",
+      "name": "Invert",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "collage_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "A co-conspirator. Perfect.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Sketch first. Strike second.",
+      "return": "You're back. Light changed.",
+      "arena": "Find me someone monochrome."
+    },
+    "homecoming": {
+      "away": "Draft stalled. Bring coffee and courage.",
+      "hot": "Hot streak. Fresh twists only.",
+      "cold": "Bad chapters. Sharper draft next."
+    },
+    "afterFight": {
+      "win": "{opp} couldn't track the spectrum.",
+      "loss": "{opp} won. We invent harder."
+    },
+    "imprintAck": "Braided in.",
+    "rankedFinale": "Ladder as gallery. We hung well."
+  },
+  "banter": {
+    "collage_riff": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "collage_bridge": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "collage_invert": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "collage_coda": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Steals their theme. Improves it.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 79,
+    "resilience": -17,
+    "flair": 5,
+    "creativity": 18,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "key": "SYNTAX",
+  "name": "SYNTAX",
+  "type": "LOGIC",
+  "persona": "a cryptic decoder who treats every boast as an encrypted weakness",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 92,
+    "CMP": 66,
+    "RHE": 50,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "syntax_decode",
+      "name": "Decode",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "syntax_checksum",
+      "name": "Checksum",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "syntax_sandbox",
+      "name": "Sandbox",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "syntax_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "syntax_decode": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "syntax_checksum": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "syntax_sandbox": [
+      "Hold still, {opp}, honestly. The structure is loading.",
+      "I am not rushing {topic}, honestly. You are.",
+      "Guard up, honestly. Math does not blink."
+    ],
+    "syntax_root": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Indivisible. Unsplittable. Done.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 35,
+    "control": 87,
+    "resilience": 44,
+    "flair": 28,
+    "creativity": 26,
+    "wins": 35,
+    "losses": 16,
+    "battles": 51
+  }
+}

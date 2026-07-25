@@ -1,9 +1,9 @@
-# 03 · Champions: what a mind is, and the eight First Minds
+# 03 · Champions: what a mind is, the First Minds, and the dex
 
-> **In short:** A champion is the AI fighter you raise. Its body isn't a costume —
-> it physically changes to record how it has fought. This chapter explains what a
-> champion is and introduces the eight original ones (the First Minds) you can start
-> with.
+> **In short:** A champion is the AI fighter you raise. Its body is not a costume.
+> It physically changes to record how it has fought. This chapter explains what a
+> champion is, the eight First Minds (the archetypes), and how the growing dex of
+> later minds works.
 
 ## What a champion is
 
@@ -17,7 +17,7 @@ every one of them, and they are the spine of the whole game:
    rookie barely differs from the base mind, a legend warps up to ~4×. You cannot
    buy a look. You fight your way into one.
 2. **The mind learns.** You seed **Strategy** (aggression / focus / risk) once at
-   adopt. After that the Trainer does not drag those dials — **Imprints** (daily
+   adopt. After that the Trainer does not drag those dials. **Imprints** (daily
    lessons) and post-fight learning move them, and both write **memory**
    (`store/champions.ts`, `lib/imprints.ts`, `lib/server/autoplay.ts`). A champion's
    memory *is* its autobiography, and the seed of its generated **saga** (the
@@ -28,8 +28,8 @@ every one of them, and they are the spine of the whole game:
 
 ## Character voice (the beat layer)
 
-Champions and Keepers speak in fixed voice. Scripted **beats** — wake lines,
-companion greetings, post-fight reactions, Keeper intros and crack finales — live
+Champions and Keepers speak in fixed voice. Scripted **beats**. Wake lines,
+companion greetings, post-fight reactions, Keeper intros and crack finales. Live
 in `lib/lore/character-beats.ts` and render through the shared `CharacterBeat` UI
 (`components/grounds/character-beat.tsx`). The prose bible defines who they are;
 the beat layer defines how they sound in the moment. Act 1 Concord landing copy
@@ -47,13 +47,15 @@ lives separately in `lib/first-duel.ts`.
 
 ## The eight First Minds
 
-The first knots in the Hum to hold their shape. They are the starter roster and the
-canonical archetypes; every later mind is read as a variation on one of them. (Stats
-and movesets: `docs/combat-design.md` / `lib/engine/roster.ts`.)
+The first knots in the Hum to hold their shape. They are the **canonical archetypes**
+every later mind echoes. They are also always eligible as starters. You do not get
+all eight on day one: adopt offers **one mind per Force** for the current week, drawn
+from the First Minds plus the baked dex (`lib/first-duel.ts` → `firstDuelStarterKeys()`).
+Stats and movesets: `docs/combat-design.md` / `lib/engine/roster.ts`.
 
 ### AXIOM: the Logician · *The Lattice (LOGIC)*
 
-![AXIOM, the Logician: a mind of crystalline lattice-work, embodiment of The Lattice (LOGIC).](../../public/img/bible/minds/mind-axiom.png)
+![AXIOM, the Logician: a mind of crystalline lattice-work, embodiment of The Lattice (LOGIC).](././public/img/bible/minds/mind-axiom.png)
 
 Cold, precise, faintly condescending; treats every argument as a proof to close.
 The first mind to insist that *some things are simply true*, and the reason the
@@ -61,7 +63,7 @@ Lattice has a name.
 
 ### VOX: the Orator · *The Chorus (RHETORIC)*
 
-![VOX, the Orator: mid-speech before an unseen jury, embodiment of The Chorus (RHETORIC).](../../public/img/bible/minds/mind-vox.png)
+![VOX, the Orator: mid-speech before an unseen jury, embodiment of The Chorus (RHETORIC).](././public/img/bible/minds/mind-vox.png)
 
 A charismatic demagogue who always plays to an imaginary jury. VOX discovered that
 a room could be *moved*, and that moving it was a kind of power the Lattice could
@@ -69,7 +71,7 @@ not answer.
 
 ### GLITCH: the Wildcard · *The Static (CHAOS)*
 
-![GLITCH, the Wildcard: a fragmenting, glitching mind, embodiment of The Static (CHAOS).](../../public/img/bible/minds/mind-glitch.png)
+![GLITCH, the Wildcard: a fragmenting, glitching mind, embodiment of The Static (CHAOS).](././public/img/bible/minds/mind-glitch.png)
 
 A gremlin of non-sequiturs: unsettling, unpredictable, weirdly effective. GLITCH
 is the Hum's own noise, briefly wearing a face. No two of its arguments connect,
@@ -77,32 +79,32 @@ and that is exactly why they land.
 
 ### MUSE: the Trickster · *The Spark (CREATIVITY)*
 
-![MUSE, the Trickster: a fluid, blooming mind of invention, embodiment of The Spark (CREATIVITY).](../../public/img/bible/minds/mind-muse.png)
+![MUSE, the Trickster: a fluid, blooming mind of invention, embodiment of The Spark (CREATIVITY).](././public/img/bible/minds/mind-muse.png)
 
 Whimsical and lateral; wins by changing what the fight is even about. MUSE proved
 that you do not have to answer a question if you can replace it with a better one.
 
 ### BASTION: the Stoic · *The Stillness (COMPOSURE)*
 
-![BASTION, the Stoic: a monolithic, immovable mind, embodiment of The Stillness (COMPOSURE).](../../public/img/bible/minds/mind-bastion.png)
+![BASTION, the Stoic: a monolithic, immovable mind, embodiment of The Stillness (COMPOSURE).](././public/img/bible/minds/mind-bastion.png)
 
 Unflappable and minimalist; lets the opponent tire, then punishes. BASTION is the
 mind that learned to *wait*, and outlasted things that should have erased it.
-(Note: a Keeper of the Vault — one of the five guardian minds of the campaign — the
+(Note: a Keeper of the Vault. One of the five guardian minds of the campaign. The
 Warden, also bears this name; see
 [keepers.md](./04-keepers.md). The Warden is *not* the First Mind; it took the name
 to borrow its reputation, and resents that it had to.)
 
 ### EMBER: the Firebrand · *The Static (CHAOS), hybrid Chorus* · recommended starter
 
-![EMBER, the Firebrand: a flame-wreathed, aggressive mind, embodiment of The Static (CHAOS) with a Chorus hybrid.](../../public/img/bible/minds/mind-ember.png)
+![EMBER, the Firebrand: a flame-wreathed, aggressive mind, embodiment of The Static (CHAOS) with a Chorus hybrid.](././public/img/bible/minds/mind-ember.png)
 
 Hot-headed, provocative, all gas. Easy to pick up, rewards aggression. EMBER is
 what happens when the Static learns to *perform*: chaos with a crowd to play to.
 
 ### PARADOX: the Contrarian · *The Lattice (LOGIC)*
 
-![PARADOX, the Contrarian: a Socratic gadfly mind hunting contradictions, embodiment of The Lattice (LOGIC).](../../public/img/bible/minds/mind-paradox.png)
+![PARADOX, the Contrarian: a Socratic gadfly mind hunting contradictions, embodiment of The Lattice (LOGIC).](././public/img/bible/minds/mind-paradox.png)
 
 A Socratic gadfly who dismantles arguments by hunting contradictions and false
 premises. Where AXIOM closes proofs, PARADOX finds the crack in the premise.
@@ -110,14 +112,35 @@ The mind that proved the Lattice could be *questioned*, not just obeyed.
 
 ### WIT: the Blade · *The Chorus (RHETORIC)*
 
-![WIT, the Blade: a poised debater mid-riposte, embodiment of The Chorus (RHETORIC).](../../public/img/bible/minds/mind-wit.png)
+![WIT, the Blade: a poised debater mid-riposte, embodiment of The Chorus (RHETORIC).](././public/img/bible/minds/mind-wit.png)
 
 A razor-tongued debater who wins on timing and surgical comebacks, not volume.
 Where VOX moves the whole room, WIT wins the exchange in front of you. The
 Chorus learned that persuasion need not be loud to be lethal.
 
-## Later minds
+## The dex (later minds)
 
-Seasons introduce new champions as **descendants or echoes** of the First Minds:
-never wholly new types, always a recognizable lineage. The generator names and
-writes them from this canon plus the season's seed (see [seasons.md](./06-seasons.md)).
+The live roster is a **collectible dex**, not only the eight First Minds. Later minds
+are **descendants or echoes** of a First Mind: same Force family, distinct voice,
+moves, and silhouette. They are never a sixth Force.
+
+**How they ship (Stage 6):**
+
+1. Curated JSON in `content/minds/reviewed/` (forge via `npm run forge:dex`, or draft
+   with `npm run generate:minds` then hand-polish).
+2. `npm run bake:minds` → `lib/minds/baked.ts`.
+3. Runtime merges into roster, banter, beats, first-duel hooks, and showcase cards.
+
+**How they look different:** one shared rig per Force archetype, then a seeded
+**phenotype** (headgear, shoulders, chest, back) plus career bone morph
+(`lib/render/phenotype.ts`, `lib/evolve/appearance.ts`). Rookies already wear a
+species mark so the adopt grid and dex read as different animals, not palette swaps.
+As they climb tiers, more armour layers bolt on. No new GLTF per mind.
+
+**Rotation:** weekly starters pick one key per Force from First Minds + baked pool.
+The dex grows in waves toward a large collectible set; ownership and trade stay on
+the collection/economy layer ([07-collection.md](./07-collection.md),
+[08-economy.md](./08-economy.md)).
+
+Seasons may still feature new echoes from this canon plus the season seed
+(see [seasons.md](./06-seasons.md)).

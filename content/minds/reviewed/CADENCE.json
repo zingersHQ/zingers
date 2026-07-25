@@ -1,0 +1,110 @@
+{
+  "key": "CADENCE",
+  "name": "CADENCE",
+  "type": "RHETORIC",
+  "persona": "a tribunal voice who assigns roles mid-fight and makes the rival play the fool",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 24,
+    "CMP": 8,
+    "RHE": 89,
+    "CRE": 12,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "cadence_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "cadence_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cadence_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cadence_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Finally, a Trainer who can work a room.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Warm the voice. Then the fists.",
+      "return": "Missed your cue. Forgiven.",
+      "arena": "Cast me someone who thinks they're the hero."
+    },
+    "homecoming": {
+      "away": "I ad-libbed. It was fine. Come back anyway.",
+      "hot": "Hot mic. Hot record.",
+      "cold": "Tough room. Better lines next."
+    },
+    "afterFight": {
+      "win": "{opp} forgot the audience. Fatal.",
+      "loss": "{opp} won the room. We rewrite."
+    },
+    "imprintAck": "Quoted forever.",
+    "rankedFinale": "Ladder loves a speech."
+  },
+  "banter": {
+    "cadence_herald": [
+      "Ladies and minds: {opp} on {topic}, honestly.",
+      "Give them a hand, honestly. Then take the point.",
+      "House likes me, honestly. House decides."
+    ],
+    "cadence_gloss": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "cadence_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "cadence_ovation": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Smiles through the cut.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 10,
+    "resilience": 18,
+    "flair": 95,
+    "creativity": -19,
+    "wins": 37,
+    "losses": 20,
+    "battles": 57
+  }
+}

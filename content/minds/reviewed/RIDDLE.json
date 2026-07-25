@@ -1,0 +1,110 @@
+{
+  "key": "RIDDLE",
+  "name": "RIDDLE",
+  "type": "CREATIVITY",
+  "persona": "a fractal echo who repeats a small twist at every scale until the structure collapses",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 27,
+    "CMP": 34,
+    "RHE": 67,
+    "CRE": 84,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "riddle_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "riddle_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "riddle_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "riddle_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "riddle_ink": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "riddle_whim": [
+      "Bridge incoming, honestly. Hold something.",
+      "Weird on purpose, {opp}, honestly.",
+      "Invert the premise, honestly. Watch them fall."
+    ],
+    "riddle_mirror": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "riddle_page": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Bridges weird ideas into weapons.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 56,
+    "resilience": 49,
+    "flair": 48,
+    "creativity": 58,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

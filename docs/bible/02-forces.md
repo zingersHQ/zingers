@@ -5,14 +5,14 @@
 > another, like rock-paper-scissors in a ring of five. That matchup ring decides
 > who has the edge in a fight.
 
-Every mind in the Hum is shaped by five **Forces** — the five elemental fighting
+Every mind in the Hum is shaped by five **Forces**. The five elemental fighting
 types of this world. They are the in-world name for the **type pentagon**
 (`docs/combat-design.md`). A Force is both an element (what a champion is made of)
 and a way of arguing (how it fights).
 
 The player-facing name of a Force is its **plain name** below (Logic / Static /
-Calm / Chorus / Spark). Each also carries an older, poetic name — its *etymology*
-— kept here as flavour but never shown in the game UI.
+Calm / Chorus / Spark). Each also carries an older, poetic name. Its *etymology*
+.  kept here as flavour but never shown in the game UI.
 
 | Force | Etymology | Element of… | Argues by… | Sigil | Hex |
 |-------|-----------|-------------|------------|:-----:|-----|
@@ -23,7 +23,7 @@ Calm / Chorus / Spark). Each also carries an older, poetic name — its *etymolo
 | **Spark** | *the Spark* | invention, metaphor, reframe | changing the question | ✺ | `#f5d020` |
 
 > The five `CreatureType` codes in the engine (`LOGIC / CHAOS / COMPOSURE /
-> RHETORIC / CREATIVITY`) are unchanged — they are internal keys. Only the
+> RHETORIC / CREATIVITY`) are unchanged. They are internal keys. Only the
 > *display* name shown to players is the plain name above. Canonical source:
 > `lib/lore/canon.ts › FORCES[type].name` (poetic name lives on as `.inWorld`).
 
@@ -31,12 +31,12 @@ Calm / Chorus / Spark). Each also carries an older, poetic name — its *etymolo
 
 | Logic | Static | Calm |
 |:---:|:---:|:---:|
-| ![Logic](../../public/img/bible/forces/force-lattice.png) | ![Static](../../public/img/bible/forces/force-static.png) | ![Calm](../../public/img/bible/forces/force-stillness.png) |
+| ![Logic](././public/img/bible/forces/force-lattice.png) | ![Static](././public/img/bible/forces/force-static.png) | ![Calm](././public/img/bible/forces/force-stillness.png) |
 | *order, proof, structure* | *noise, entropy, surprise* | *patience, endurance, calm* |
 
 | Chorus | Spark |
 |:---:|:---:|
-| ![Chorus](../../public/img/bible/forces/force-chorus.png) | ![Spark](../../public/img/bible/forces/force-spark.png) |
+| ![Chorus](././public/img/bible/forces/force-chorus.png) | ![Spark](././public/img/bible/forces/force-spark.png) |
 | *crowd, feeling, persuasion* | *invention, metaphor, reframe* |
 
 *(zingers.org serves these from `/img/bible/forces/*.png`.)*
@@ -69,7 +69,7 @@ five; what it *does* in the ring decides which one swells.
 
 ## Sigils
 
-A Force, grown strong in a mind, etches a **sigil** — an earned emblem, like a badge
+A Force, grown strong in a mind, etches a **sigil**. An earned emblem, like a badge
 or a rank insignia (◆ Logic · ✦ Static · ▲ Calm · ◉ Chorus · ✺ Spark). Sigils have
 three ranks (I/II/III). They are the heraldry of
 the collection layer and the title system ("The Annihilator", "The Puppeteer");
@@ -77,13 +77,13 @@ they are *earned*, never assigned.
 
 ## Force vs Clan (type vs team)
 
-Two different things draw from the same five Forces — keep them distinct:
+Two different things draw from the same five Forces. Keep them distinct:
 
 - A champion's **Force** is *what it is*: its fighting style, fixed at creation. It
   drives the body, the abilities, the wheel matchup, and the **base colour + sigil**
   worn on every fighter.
 - A **Clan** is *whose side you chose*: a Trainer swears to one Force for the
-  season-long war, and ranked wins feed that Force's standing — regardless of what
+  season-long war, and ranked wins feed that Force's standing. Regardless of what
   Forces the Trainer's champions happen to be. A Clan is worn as a **crest/banner**
   on the Trainer and on fielded champions, never as the base body colour.
 
@@ -91,11 +91,11 @@ So: *every champion has a Force; the Force you swear to is your Clan.*
 
 ## The Clan war (the Trainer's war)
 
-Pledging to a Clan — the Force you swear allegiance to for the season — binds your
+Pledging to a Clan. The Force you swear allegiance to for the season. Binds your
 ranked wins to that Force's standing in the season-long war between the five. You may
 switch Clan between seasons, but contribution stays with the Force that earned it. The
 pledge is taken under the
-Force's **motto** — its `argues` line, said as a vow:
+Force's **motto**. Its `argues` line, said as a vow:
 
 | Force | Motto |
 |-------|-------|

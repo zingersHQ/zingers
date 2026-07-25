@@ -1,0 +1,108 @@
+{
+  "key": "SHORE",
+  "name": "SHORE",
+  "type": "COMPOSURE",
+  "persona": "a harbor keeper who steadies the fight until reckless minds beach themselves",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 62,
+    "CMP": 88,
+    "RHE": 43,
+    "CRE": 60,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "shore_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "shore_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "shore_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "shore_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Steady. We do not start loud.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Less noise. More hold.",
+      "return": "…you're back. I saved you a quiet.",
+      "arena": "They'll lean hard. We won't."
+    },
+    "homecoming": {
+      "away": "Stillness kept. You didn't.",
+      "hot": "Wins without noise. Keep it that way.",
+      "cold": "We listed. Add ballast."
+    },
+    "afterFight": {
+      "win": "{opp} spent heat. We spent less.",
+      "loss": "{opp} spoke first and last. Next time I wait longer."
+    },
+    "imprintAck": "Held.",
+    "rankedFinale": "Quiet climb. Real climb."
+  },
+  "banter": {
+    "shore_moor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "shore_ballast": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "shore_tide": [
+      "Returned with interest, {opp}, honestly.",
+      "You swung, honestly. I waited. That is the skill.",
+      "{topic} rewards patience, honestly. Not you."
+    ],
+    "shore_deep": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "No hurry. Their hurry loses.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -4,
+    "resilience": -8,
+    "flair": -9,
+    "creativity": 16,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

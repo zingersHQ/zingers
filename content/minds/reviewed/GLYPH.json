@@ -1,0 +1,110 @@
+{
+  "key": "GLYPH",
+  "name": "GLYPH",
+  "type": "CREATIVITY",
+  "persona": "a riddle keeper who answers questions with prettier questions until logic trips",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 43,
+    "CMP": 38,
+    "RHE": 57,
+    "CRE": 88,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "glyph_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "glyph_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "glyph_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "glyph_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "glyph_reframe": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "glyph_steal": [
+      "Bridge incoming, honestly. Hold something.",
+      "Weird on purpose, {opp}, honestly.",
+      "Invert the premise, honestly. Watch them fall."
+    ],
+    "glyph_plot": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "glyph_magnum": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Repeats a small twist until it breaks them.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": -5,
+    "resilience": 11,
+    "flair": -17,
+    "creativity": 15,
+    "wins": 42,
+    "losses": 14,
+    "battles": 56
+  }
+}

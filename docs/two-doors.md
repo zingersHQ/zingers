@@ -1,71 +1,62 @@
-# ZINGERS — One soul, two doors (product-framing decision)
+# ZINGERS: One soul, two doors (product-framing decision)
 
-> **In short:** This doc answers "so what's this gonna be?" — the identity
-> decision for the whole product. **The Ascent (the Climb) is the game** — the
-> spine, the face, the brand, and the first thing anyone does. **Battles are what
-> you meet on the way up**: the depth the climb reveals, and what lets you climb
-> higher. **Mobile is the face** (a bus-time flight anyone gets in zero seconds);
-> **desktop is the full ascent** (the same climb, plus the living Grounds it rises
-> over). The AI-agent layer is the invisible engine — sold as fantasy, never as
-> tech. Crypto stays off to the side as fuel. Everything else here is the concrete
-> plan to make each of those sentences true, with file pointers.
+> **In short:** This doc answers "so what's this gonna be?": the identity
+> decision for the whole product. **Flight is the game**: the spine, the face,
+> the brand, and the first thing anyone does. **Battles are what you meet on the
+> way up**: the depth the climb reveals, and what lets you climb higher.
+> **Mobile is the face** (a bus-time flight anyone gets in zero seconds);
+> **desktop is the full world** (the same Flight soul, plus the living map it
+> rises over). The AI-agent layer is the invisible engine, sold as fantasy, never
+> as tech. Crypto stays off to the side as fuel.
 
-Version 2.0 — July 2026 (**Flight-First recut**, aligned with `design-vision.md`
-v3.0; supersedes v1.0's "desktop is the product / Climb is the lobby" framing).
+Version 2.1 · July 2026 (**Flight-First**, aligned with `design-vision.md` v3.1).
 Decision record + implementation plan.
-Companions: [`design-vision.md`](./design-vision.md) (north star),
-[`essence.md`](./essence.md) (one soul, native bodies),
-[`mobile.md`](./mobile.md) (the phone shell — **§3's default door is superseded
-here**, see §3 below), [`growth-strategy.md`](./growth-strategy.md)
-(distribution), [`zing-model.md`](./zing-model.md) (token),
-[`vocabulary.md`](./vocabulary.md) (copy). Copy follows the vocabulary doc;
-identifiers/analytics keys never change for copy reasons.
+Companions: [`design-vision.md`](./design-vision.md), [`essence.md`](./essence.md),
+[`long-game.md`](./long-game.md), [`mobile.md`](./mobile.md) (§3 default door
+superseded here), [`vocabulary.md`](./vocabulary.md). Copy follows the vocabulary
+doc; identifiers/analytics keys never change for copy reasons.
 
 ---
 
 ## 0. The decision, in five lines
 
-1. **The Ascent is the game.** Flight — the Climb — is the spine, the brand, and
-   the first verb everyone understands in zero seconds. Battles are not deleted or
-   shrunk; they are **repositioned** from *the product* to *what you meet on the way
-   up*: the depth the climb reveals, and (aspirationally) the thing that lets you
-   climb higher (see [`flyover.md`](./flyover.md), `design-vision.md` v3.0).
-2. **Two doors on one climb.** *Mobile is the face* — a bus-time one-thumb flight,
+1. **Flight is the game.** One soul on phone and desktop. Battles are not deleted
+   or shrunk; they are **repositioned** from *the product* to *what you meet on the
+   way up* (see [`flyover.md`](./flyover.md), `design-vision.md` v3.1).
+2. **Two doors on one Flight.** *Mobile is the face*: a bus-time one-thumb flight,
    with champion/watch/rank revealing themselves as the world the flight is over.
-   *Desktop is the full ascent* — the same climb in six-degree flight, plus the
-   living Grounds it rises over, where the deep raising happens. Neither is the
-   other's leftovers.
+   *Desktop is the full world*: the same Flight soul in six-degree flight, plus the
+   Hub and regions where deep raising happens. Neither is the other's leftovers.
 3. **Agents are the engine, not the pitch.** Player-facing surfaces sell the
    fantasy ("the creatures actually think"); the word "agent" lives only on
-   developer surfaces (`/agents`, docs, protocol). The narrative is not hostage
-   to AI — it is *enabled* by it.
+   developer surfaces (`/agents`, docs, protocol).
 4. **Crypto stays fuel.** Per [`zing-model.md`](./zing-model.md): $ZING is an
    optional premium layer, Crowns stay off-chain and server-authoritative, and
    no player-facing surface promises earnings before the creator economy exists.
 5. **Web-first now; platforms later.** Steam/console are marketing beats after
    the Launch v0.1 gates are green, not engineering projects now (§6).
 
-**The one-liner:** *You fly. It fights. You both rise. — a 30-second flight anyone
-gets on a phone, that opens into a whole world you climb on a desktop.*
+**The one-liner:** *You fly. It fights. You both rise.* A 30-second flight anyone
+gets on a phone, that opens into a whole world you keep climbing on a desktop.
 
 ---
 
 ## 1. Why this framing (the reasoning we're committing to)
 
 - The game's moat (per `AGENCY.md`) is original IP + an evolving battle meta +
-  a future creator economy. All three depend on the minds being real — so we do
+  a future creator economy. All three depend on the minds being real. So we do
   **not** strip the agent layer to make a simpler game. But none of them require
   the *word* "agent" anywhere a player first lands.
 - The Climb is the only verb a stranger understands in **zero seconds** (the
-  Flappy Bird atom, `essence.md` §3). "Today's bout to call" — the door
-  `mobile.md` §3 chose — presumes the visitor already cares about a champion.
+  Flappy Bird atom, `essence.md` §3). "Today's fight to call". The door
+  `mobile.md` §3 chose. Presumes the visitor already cares about a champion.
   A cold visitor doesn't. So the *door* changes; the *body of the game behind
   it* (the tab shell, the spectate-lane thesis) does not.
 - A *generic* ascender is a commodity (the hyper-casual space is brutal, and we'd
   enter it as WebGL without an app store). What makes ours not-a-clone is precisely
   the soul thread: *the run marks your champion*, your champion flies beside you,
   the Reaches are the real regions of a real world, and the battles it flies over
-  are minds actually thinking. **The Climb isn't a lobby that leads to the game —
+  are minds actually thinking. **The Climb isn't a lobby that leads to the game. 
   the Climb *is* the game, and it keeps revealing more of itself as you rise.**
 - Desktop's open questions ("would people understand it? is it fun? do they
   feel reward?") are exactly Launch v0.1 gates 1–2, and they are currently
@@ -81,35 +72,35 @@ scope here.
 
 ## 2. Narrative positioning (what we say, everywhere)
 
-**Sell the fantasy, not the tech.** The narrative we have — the Hum, the Long
-Vault, the Keepers, *"a mind argues itself into a body"* — is a
+**Sell the fantasy, not the tech.** The narrative we have. The Hum, the Long
+Vault, the Keepers, *"a mind argues itself into a body"*. Is a
 creature-raising fantasy that AI makes possible. Pokémon never marketed its
 creatures as state machines.
 
-Rules (apply to every player-facing surface — landing, `/m`, store pages,
+Rules (apply to every player-facing surface. Landing, `/m`, store pages,
 social copy):
 
-1. **The magic line is:** "the creatures actually think — no two battles are
+1. **The magic line is:** "the creatures actually think. No two battles are
    the same." Never "AI agents battle each other."
 2. **"Agent" is developer vocabulary.** It lives on `/agents`, in
    [`agent-protocol.md`](./agent-protocol.md), `docs/`, and the MCP surface.
    The nav already frames this correctly (`lib/play-nav.ts` "Build" group);
    keep it that way. Audit task: sweep player-facing strings for
    "agent"/"AI agent"/"LLM" (landing `components/home/landing.tsx`, `/m` tabs,
-   `/howitworks`, share cards) and replace with fantasy copy — **copy only,
+   `/howitworks`, share cards) and replace with fantasy copy. **copy only,
    never identifiers/keys** (per `vocabulary.md` and `AGENTS.md`).
 3. **Crypto is invisible until it's real.** No $ZING mention on any game
    surface pre-launch. No "earn money" promises anywhere: the only sanctioned
    earning path is the future creator economy (user-made champions → royalties,
    Phase 5+), and it stays in docs until it exists.
 4. **The reward vocabulary players *do* get:** your champion's **body** (the
-   visible record of its career), **rank** (Trainer Rank + the ladder),
-   **Crowns**, the **Saga**, your **rival**. These are the honest incentives —
+   visible record of its career), **rank** (Trainer Rank + the standings),
+   **Crowns**, the **Saga**, your **rival**. These are the honest incentives. 
    lead with them when copy asks "why play?".
 
 ---
 
-## 3. Mobile: the Climb-first door (supersedes `mobile.md` §3 "default door")
+## 3. Mobile: the Flight-first door (supersedes `mobile.md` §3 "default door")
 
 ### 3.1 What changes and what doesn't
 
@@ -117,52 +108,52 @@ social copy):
 |---|---|
 | The bottom-tab shell (`components/mobile/mobile-shell.tsx`), all five tabs | The **default door** is no longer the Today tab |
 | Phone = spectate/predict/share lane as the *depth* behind the door | The *door* is the Climb (perform first, care later) |
-| "One soul, native bodies", every verb's atom | Climb gains a **guest mode** (see 3.3 — the atom is preserved) |
-| No login; identity = device token (`lib/owner.ts`) | Copy: never "sign in" — **"Claim a mind"** |
+| "One soul, native bodies", every verb's atom | Climb gains a **guest mode** (see 3.3. The atom is preserved) |
+| No login; identity = device token (`lib/owner.ts`) | Copy: never "sign in". **"Claim a mind"** |
 
 ### 3.2 The first screen: the poster
 
 A cold visitor to `/m` (or a phone routed from Play, `lib/play-nav.ts`
 `MOBILE_PLAY_HREF`) gets a **full-screen splash**, not a tab grid:
 
-- **Art:** the epic image — the Trainer flying with the jetpack, their champion
+- **Art:** the epic image. The Trainer flying with the jetpack, their champion
   flying beside them. (Canon-perfect: *the Trainer flies, the champion fights.*)
   - Asset: a rendered poster. Options, in order of preference: (a) a static
-    art asset (fastest, most control — **needs to be produced**, this is the
+    art asset (fastest, most control. **needs to be produced**, this is the
     one external dependency of the whole phase); (b) a live R3F scene reusing
     `ChampionPortraitScene` + the jetpack rig (zero new art, but WebGL cost at
-    the worst possible moment — first paint). Start with (a).
+    the worst possible moment. First paint). Start with (a).
 - **Copy:** brand + tagline + one line of fantasy. Suggested: `ZINGERS` /
   *"Raise a mind. Make it legend."* / primary CTA **"FLY"**.
-- **CTAs:** primary **Fly** → straight into the Climb (guest or owned, 3.3).
+- **CTAs:** primary **Fly** → straight into Flight (guest or owned, 3.3).
   Secondary, smaller: **"Your champion"** (owned trainers) or **"What is
   this?"** (→ Today tab / howitworks). Returning players with an owned champion
   may skip the splash entirely after the first session (see 3.5 flags).
 - **New component:** `components/mobile/mobile-splash.tsx`, mounted by
   `MobileShell` as a pre-tab state. Session-scoped dismissal flag in
-  `lib/brand.ts` `STORAGE` (e.g. `mSplash: "zingers_m_splash_v1"` —
+  `lib/brand.ts` `STORAGE` (e.g. `mSplash: "zingers_m_splash_v1"`. 
   sessionStorage, so every cold open of a new session shows the poster, but
   in-session navigation never re-interrupts).
 
-### 3.3 Guest Climb (the design decision that makes the door possible)
+### 3.3 Guest Flight (the design decision that makes the door possible)
 
-Today the Climb tab is **locked** until a champion is claimed
+Today the Flight tab is **locked** until a champion is claimed
 (`mobile-shell.tsx` `climbLocked`, ~line 50). A bus-time door cannot open on a
 lock. Decision: **unlock it with a loaner.**
 
-- **The loaner:** a "wild mind" — deterministic, from the current weekly
+- **The loaner:** a "wild mind". Deterministic, from the current weekly
   rotation (`firstDuelStarterKeys()`, `lib/first-duel.ts`), so the guest sees a
   real champion fly beside them, not a placeholder. Seed the pick from the
   device token so the same visitor keeps meeting "their" wild mind (attachment
   before adoption).
 - **The atom, preserved** (`essence.md` §2: the run *marks the champion*): a
-  guest run **marks nothing** — and that's the hook, not a violation. Banner
+  guest run **marks nothing**. And that's the hook, not a violation. Banner
   during/after a guest run: *"A wild mind flies with you. **Claim it** to keep
   your climb."* On claim, the current run's best depth converts into the first
   career mark (one-time, client-held until adoption, then written through the
   normal Climb reward path).
 - **Boards:** guest runs never write the leaderboard (`/api/circuit` POST is
-  simply not called without an owned champion — mirror the existing gating in
+  simply not called without an owned champion. Mirror the existing gating in
   `circuit-lite.tsx` `recordRun`). No new server surface needed for guests.
 - **The claim moment:** after a fall (the natural pause), the retry card gains
   a second button: **"Claim this mind"** → the existing selection surface
@@ -176,21 +167,21 @@ lock. Decision: **unlock it with a loaner.**
 
 ### 3.4 The shell behind the door
 
-Unchanged in structure (Today · Watch · Champion · Climb · Rank), two
+Unchanged in structure (Today · Watch · Champion · Flight · Rank), two
 adjustments:
 
 - **Exiting the Climb as a guest** lands on **Champion** (the claim surface),
-  not Today — a guest has no "today" yet. Owned trainers keep the current
+  not Today. A guest has no "today" yet. Owned trainers keep the current
   behavior (back to last browse tab).
 - **Copy:** no "sign in" anywhere. The acquisition verb is **claim**
   (`READER_COPY.claimLine` canon: *you did not become this champion, you
   claimed it*). The Trainer-code (`components/trainer-code.tsx`) remains the
-  "bring your progress to another device" story — frame it as *"your Trainer
+  "bring your progress to another device" story. Frame it as *"your Trainer
   sigil"*, never as an account.
 
 ### 3.5 Flags & measurement for the door
 
-- `STORAGE.mSplash` (sessionStorage) — splash seen this session.
+- `STORAGE.mSplash` (sessionStorage). Splash seen this session.
 - New client events (see §5 for the mechanism): `m_splash`, `m_fly` (guest
   Fly tap), `m_guest_run` (first guest run started), `m_claim_from_climb`
   (adoption reached from the Climb hook). The door's success metric is
@@ -199,7 +190,7 @@ adjustments:
 ### 3.6 Explicit non-goals (mobile)
 
 - No app-store build, no separate mobile save, no accounts (all per
-  `mobile.md` §4–5 — unchanged).
+  `mobile.md` §4–5. Unchanged).
 - No stripping of Watch/Today/Rank: the shell stays whole. We are re-ordering
   the door, not amputating the lobby.
 
@@ -207,24 +198,24 @@ adjustments:
 
 ## 4. Desktop: unchanged scope, plus one honesty rule
 
-Desktop **is** the product and stays whole: the Grounds, Act 1, the venues, the
+Desktop **is** the product and stays whole: the world, Act 1, the venues, the
 league, the saga. No redesign is part of this decision. Two commitments:
 
 1. **"Online game you could ship anywhere" discipline.** Keep the game
-   playable, complete and legible as a plain web game (it already is — Launch
+   playable, complete and legible as a plain web game (it already is. Launch
    v0.1's six gates are exactly this bar). Anything that would *only* make
    sense inside a future wrapper (overlay SDKs, platform achievements) waits.
 2. **The core-loop questions get measured, not debated.** "Would people
-   understand it? is it fun? do they feel reward?" — §5 wires the funnel so
+   understand it? is it fun? do they feel reward?". §5 wires the funnel so
    these become dashboard numbers. Design reacts to the numbers *after* they
    exist.
 
 **On incentives (the honest answer to "what does the player get?"):** identity
-(the body as track record), standing (rank/ladder/war), story (saga, rival),
-and one pure-skill lane (the Climb/Circuit — the only place the Trainer
+(the body as track record), standing (rank/standings/war), story (saga, rival),
+and one pure-skill lane (the Climb/Circuit. The only place the Trainer
 performs). There is deliberately **no** money-earning promise (§2.3). If
 playtests show the reward loop is thin, the lever is making *watching* more
-dramatic (the debate lines, the Highlight, the judge) — not adding extrinsic
+dramatic (the debate lines, the Highlight, the judge). Not adding extrinsic
 rewards.
 
 ---
@@ -232,10 +223,10 @@ rewards.
 ## 5. Measurement: turn gates 1–2 from assumptions into numbers
 
 This is the highest-leverage work in the whole doc. Today the funnel is coarse
-(`session → claim → train → bout → return`, `lib/server/track.ts`). The
+(`session → claim → train → fight → return`; analytics may still say `bout`). The
 first-journey steps and time-to-first-evolution are invisible.
 
-### 5.1 New events (aggregate counters — same privacy posture, no per-user trail)
+### 5.1 New events (aggregate counters. Same privacy posture, no per-user trail)
 
 Extend `Z_EVENTS` in `lib/server/track.ts`:
 
@@ -259,8 +250,8 @@ rate-limited, aggregate-only.
 
 | Event | Where it fires |
 |---|---|
-| `fj_cinematic` | `components/intro/first-run.tsx` — cinematic complete |
-| `fj_pick` / `fj_tune` / `fj_duel` / `fj_evolve` | `components/intro/first-duel.tsx` — the funnel's step transitions (pick → tune → fight → evolve card) |
+| `fj_cinematic` | `components/intro/first-run.tsx`. Cinematic complete |
+| `fj_pick` / `fj_tune` / `fj_duel` / `fj_evolve` | `components/intro/first-duel.tsx`. The funnel's step transitions (pick → tune → fight → evolve card) |
 | `fj_land` | the Concord-landing beat (`components/grounds/grounds-screen.tsx`, the guided-funnel/first-landing path around the `guideWorld` logic) |
 
 Fire each **once per browser** (localStorage latch alongside the existing
@@ -274,7 +265,7 @@ The tracker is aggregate-only, so we bucket client-side: stamp
 alongside the `new_user` latch in `lib/track.ts`), and when `fj_evolve` fires,
 send exactly one of `ttfe_u5` / `ttfe_u8` / `ttfe_over` (<5 min, 5–8 min,
 >8 min). Gate 1 is green when the sub-8-minute share is a healthy majority of
-new users — visible as three bars on `/stats`.
+new users. Visible as three bars on `/stats`.
 
 ### 5.4 Dashboard
 
@@ -287,7 +278,7 @@ game?" into a chart with a bounce-point.
 
 ## 6. Platforms (Steam, console): posture, not project
 
-- **Now:** nothing. Web-first is the strategy, not a compromise — zero-install
+- **Now:** nothing. Web-first is the strategy, not a compromise. Zero-install
   is what makes the mobile door and share cards work as growth.
 - **After the six Launch v0.1 gates are green:** a Steam release is a
   *marketing beat* implemented as a wrapper (Electron/CEF-class shell around
@@ -306,7 +297,7 @@ game?" into a chart with a bounce-point.
 > Effort scale: **quick** = within a session · **session** = one focused
 > session · **deep** = multiple sessions.
 
-### T0 — Measurement first (desktop funnel + TTFE) — *session*
+### T0. Measurement first (desktop funnel + TTFE). *session*
 The instrumentation of §5. No visible product change; unblocks every "is it
 understandable/fun?" debate with data. **Do this before touching the mobile
 door** so the door's effect is measurable from day one.
@@ -317,42 +308,42 @@ door** so the door's effect is measurable from day one.
 - Accept: `/stats` shows the 6-step first-journey funnel + 3 TTFE buckets;
   events fire once per browser; `npm run build` + lints clean.
 
-### T1 — Guest Climb (the unlock) — *session/deep*
+### T1. Guest Flight (the unlock). *session/deep*
 §3.3. The Climb runs with a loaner wild mind for visitors with no champion;
 claim hook on the fall card; no board/career writes while guest.
 - Files: `components/mobile/mobile-shell.tsx`, `components/grounds/circuit-lite.tsx`,
   `components/mobile/mobile-adopt.tsx`, `lib/first-duel.ts` (export the seeded
   pick if needed).
-- Accept: fresh browser → `/m` → Climb tab playable immediately; falling shows
+- Accept: fresh browser → `/m` → Flight tab playable immediately; falling shows
   "Claim this mind"; claiming lands on adoption with that mind preselected;
   guest depth never appears on `/api/circuit` boards; owned-champion behavior
   byte-identical to today.
 
-### T2 — The splash door — *session*
+### T2. The splash door. *session*
 §3.2. `mobile-splash.tsx` + default-door rewiring + `STORAGE.mSplash` +
-`m_*` events. **Depends on the poster asset** — if art isn't ready, ship with
+`m_*` events. **Depends on the poster asset**. If art isn't ready, ship with
 a typographic poster (brand + tagline over a dark gradient) and swap the image
 later; don't block the flow on the asset.
 - Accept: cold phone visit → poster → one tap → flying; returning owned
   trainer skips to their last browse tab; splash never re-shows in-session.
 
-### T3 — Vocabulary sweep (fantasy, not tech) — *quick*
+### T3. Vocabulary sweep (fantasy, not tech). *quick*
 §2.2. Audit player-facing strings for "agent/AI/LLM"; replace with fantasy
-copy. Copy only — no identifier, key, or route changes.
+copy. Copy only. No identifier, key, or route changes.
 - Files: `components/home/landing.tsx`, `components/mobile/*`, `/howitworks`,
   share-card copy. `/agents`, `/readme`, docs stay technical.
 - Accept: `rg -i "\bagents?\b|\bLLM\b" components app --glob '*.tsx'` returns
   only developer surfaces (`/agents`, docs renderers) and code comments.
 
-### T4 — Read the numbers, then decide — *ops, recurring*
+### T4. Read the numbers, then decide. *ops, recurring*
 After T0–T2 have a week of traffic: read the funnel bounce-point, the TTFE
 buckets, and guest→claim conversion on `/stats`. **The next product decision
-(deepening watch-drama vs. shortening onboarding vs. mobile-door iteration)
+(deepening watch-drama vs. Shortening onboarding vs. Mobile-door iteration)
 is made from that chart**, not from intuition. Feeds the weekly ledger.
 
 ### Dependencies & open questions
 
-- **Poster art** (T2) — the one external asset. Owner: human.
+- **Poster art** (T2). The one external asset. Owner: human.
 - **Splash for owned trainers**: current call is skip-after-first-session;
   revisit if returning players report missing the "front door" feel.
 - **Guest depth → first career mark on claim** (3.3): the one-time conversion
@@ -360,17 +351,17 @@ is made from that chart**, not from intuition. Feeds the weekly ledger.
   normal Climb reward path with the guest depth replayed as one run). Punt-able:
   T1 ships without the conversion (claim just unlocks marking from then on).
 - **Unrelated but sequenced before all of this:** the four device-verify items
-  already in the ledger (Climb feel, Amphitheatre, live-bout latency). Decide
+  already in the ledger (Flight feel, Amphitheatre, live-fight latency). Decide
   the door only after confirming the door feels good on a phone.
 
 ---
 
 ## 8. What this doc deliberately does NOT change
 
-- The desktop game's scope, the engine, ELO, the judge bounds, Crowns
-  server-authority — untouched (guardrails in `AGENCY.md`).
-- `mobile.md`'s shell architecture, verb bodies, and M1–M3 sequencing — still
+- The desktop game's scope, the engine, rating, the judge bounds, Crowns
+  server-authority. Untouched (guardrails in `AGENCY.md`).
+- `mobile.md`'s shell architecture, verb bodies, and M1–M3 sequencing. Still
   the plan for the lobby's depth. Only its §3 *default door* is superseded.
-- The Launch v0.1 six gates — this doc *serves* gates 1, 2 and 5; it replaces
+- The Launch v0.1 six gates. This doc *serves* gates 1, 2 and 5; it replaces
   none of them.
-- Analytics/event keys, `bout` vocabulary in code — stable, per `AGENTS.md`.
+- Analytics/event keys, `bout` vocabulary in code. Stable, per `AGENTS.md`.

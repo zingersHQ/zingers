@@ -1,0 +1,109 @@
+{
+  "key": "RIFF",
+  "name": "RIFF",
+  "type": "CREATIVITY",
+  "persona": "a motif thief who steals the opponent's theme and returns it as a better song",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 50,
+    "CMP": 40,
+    "RHE": 58,
+    "CRE": 89,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "riff_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "riff_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riff_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riff_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "riff_glyph": [
+      "Nice theme, {opp}, honestly. Mine now.",
+      "I remixed {topic}, honestly. You are the sample.",
+      "Steal clean, honestly. Cut cleaner."
+    ],
+    "riff_mosaic": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "riff_dream": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "riff_wake": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rewrites the premise in wet ink.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -15,
+    "resilience": 10,
+    "flair": -2,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

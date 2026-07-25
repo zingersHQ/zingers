@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Flag, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, Rocket, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
 import { reachThemeByIndex } from "./climb/reaches";
@@ -706,11 +706,11 @@ export function CircuitHud({
             </button>
           )}
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={16} strokeWidth={2.2} /> Run again
+            <Rocket size={16} strokeWidth={2.2} /> Run again
           </button>
           {!guestClaim && onToHub && (
             <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
-              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
+              {hubLabel || "To the Hub"}
             </button>
           )}
         </CircuitModal>
@@ -797,11 +797,11 @@ export function CircuitHud({
             style={{ ["--ac" as string]: guestClaim ? accent : "#ff5a5a", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             onClick={onRestart}
           >
-            <RotateCcw size={16} strokeWidth={2.2} /> Try again
+            <Rocket size={16} strokeWidth={2.2} /> Try again
           </button>
           {!guestClaim && onToHub && (
             <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onToHub}>
-              <ChevronLeft size={16} strokeWidth={2.2} /> {hubLabel || "To the Hub"}
+              {hubLabel || "To the Hub"}
             </button>
           )}
         </CircuitModal>

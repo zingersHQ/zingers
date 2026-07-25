@@ -1,11 +1,11 @@
 # 05 · Regions: the map of the Grounds
 
-> **In short:** The map isn't one big landmass — it's a scattering of floating
+> **In short:** The map isn't one big landmass. It's a scattering of floating
 > **regions** you jetpack between through gates. Each region favors one Force and has
 > its own arena where fights happen. At the center is the **Concord**, the neutral hub
 > you set out from.
 
-The Grounds are the surface over the Long Vault — but not one continuous surface.
+The Grounds are the surface over the Long Vault. But not one continuous surface.
 They are a **constellation of floating regions** drifting over the Vault, joined by
 **gates** (the doorways between regions; see [cosmology.md](./01-cosmology.md)). As
 Keeper-doors open, the constellation grows: each new region is a piece of the old
@@ -13,14 +13,14 @@ network's memory, made into terrain. A region has a **force-bias** (an arena rul
 rewards one way of arguing and lightly punishes another) and an **arena** where fights
 are fought.
 
-At the center floats **the Concord** — the neutral hub above the sealed door, common
+At the center floats **the Hub** (lore: the Concord). The neutral hub above the sealed door, common
 ground for all five forces and the gate-ring out to every region. The Concord is
 where a Trainer spawns, banks, and chooses a destination; it has no force-bias and
 no arena of its own (`lib/lore/canon.ts › CONCORD`).
 
 ## Concord venues: games at the hub
 
-The Concord hosts **venues** — walk-up games ringed around the seal, visually
+The Concord hosts **venues**. Walk-up games ringed around the seal, visually
 distinct from the **gates** that lead to the regions
 (`components/grounds/venues.ts`). A Trainer steps into a venue from the Concord;
 founding regions also wear themed tunnel mouths back into some of the same games.
@@ -28,15 +28,15 @@ founding regions also wear themed tunnel mouths back into some of the same games
 | Venue | What it is |
 |-------|------------|
 | **The Amphitheatre** | Watch the autonomous league fight and read today's Tribunal herald (the **Tribunal** is the flagship courtroom-style debate arena). The **Live Gallery** and Daily Tribunal surface here. |
-| **The Circuit** | The raceable body of **the Ascent** (see [ascent.md](./10-ascent.md)): a flying run up through the Reaches — clear each sector in sequence, one fall sends you back to the start. Ranked by depth cleared, then total time (`/api/circuit`). The same climb is flown one-thumb on a phone and in full flight here. |
+| **The Circuit** | Desktop body of **Flight** (see [ascent.md](./10-ascent.md)): clear each sector in sequence; one fall returns you to the start. Board by depth, then time (`/api/circuit`). Same soul as one-thumb Flight on phones. |
 
-**Circuit tunnels** — each founding region also has a themed tunnel mouth: the
+**Circuit tunnels**. Each founding region also has a themed tunnel mouth: the
 Ascent Tunnel on the Obsidian Colosseum, the Ember Chute on the Wastes, the Void
 Sleeve on the Garden. The run is the same game; the shell reads the host world.
 
-Regions host **arena scenarios** in the plaza (Open Duel, The Gauntlet — a
-press-your-luck run of back-to-back fights — and The Tribunal). The Circuit is a
-*venue*, not a region — it is reached through Concord portals and region tunnel
+Regions host **arena scenarios** in the plaza (Open Duel, The Gauntlet. A
+press-your-luck run of back-to-back fights. And The Tribunal). The Circuit is a
+*venue*, not a region. It is reached through Concord portals and region tunnel
 mouths, not a gate.
 
 The three founding regions exist today as the 3D worlds (`components/grounds/worlds.ts`);
@@ -52,15 +52,15 @@ later regions are added by the Chronicle.
 
 **The Obsidian Colosseum**: the oldest standing arena, where reputations are made.
 
-![The Obsidian Colosseum: a vast obsidian tribunal lit by a shaft of amber light.](../../public/img/bible/regions/region-colosseum.png)
+![The Obsidian Colosseum: a vast obsidian tribunal lit by a shaft of amber light.](././public/img/bible/regions/region-colosseum.png)
 
 **The Ember Wastes**: a cracked, burning flat where the Hum runs hot.
 
-![The Ember Wastes: a scorched plain veined with magenta fire, the Pit sunk at its heart.](../../public/img/bible/regions/region-wastes.png)
+![The Ember Wastes: a scorched plain veined with magenta fire, the Pit sunk at its heart.](././public/img/bible/regions/region-wastes.png)
 
 **The Void Garden**: a slow, impossible garden grown from unfinished ideas.
 
-![The Void Garden: floating islands of luminous, half-finished flora over the void.](../../public/img/bible/regions/region-garden.png)
+![The Void Garden: floating islands of luminous, half-finished flora over the void.](././public/img/bible/regions/region-garden.png)
 
 *(zingers.org serves these from `/img/bible/regions/*.png`.)*
 
@@ -90,24 +90,24 @@ proposition from the season's topic bank, and argue to a jury (the judge model).
 A region is not just its arena. Each one is a real piece of geography you cross on
 foot and by jetpack (`components/grounds/terrain.tsx`):
 
-- **The plaza** — the flat civic heart (arena, training pad, Keepers' Spire, the
+- **The plaza**. The flat civic heart (arena, training pad, Keepers' Spire, the
   Broker), where the district grows as the region matures (see
   [economy.md](./08-economy.md) on world growth).
-- **The wilds** — rolling hills (or, in the Ember Wastes, sharp volcanic spires)
+- **The wilds**. Rolling hills (or, in the Ember Wastes, sharp volcanic spires)
   rising beyond the plaza, scattered with caches and roaming minds.
-- **The great rift** — a chasm carved outward from the plaza on a single bearing,
+- **The great rift**. A chasm carved outward from the plaza on a single bearing,
   themed by region: the Ember Wastes run with **lava** (a hazard you fly across),
   the Void Garden with a **river of light**, the Obsidian Colosseum with a violet
-  **vault-crack**. The rift is real low ground — you descend into it or cross it.
+  **vault-crack**. The rift is real low ground. You descend into it or cross it.
 
 ## Goals: the three standing objectives
 
 Every region offers exactly **three** goals each season, on a template a Trainer
 reads at a glance (`components/grounds/goals.ts`):
 
-- **▲ The Peak** — reach the region's highest point (flight-gated).
-- **▼ The Depth** — descend into the rift floor.
-- **◆ The Secret** — find a hidden Keeper echo out in the mid-field (drops lore).
+- **▲ The Peak**. Reach the region's highest point (flight-gated).
+- **▼ The Depth**. Descend into the rift floor.
+- **◆ The Secret**. Find a hidden Keeper echo out in the mid-field (drops lore).
 
 Goals are deterministic and **season-aware**: their placements reseed each season,
 so the hunt refreshes, and the season's **featured region** (the Chronicle's
@@ -117,15 +117,15 @@ champions), Trainer XP, and Force-war points; the ledger resets at the season tu
 
 ## The Broker
 
-A standing mind in every region that **deals in fragments** — the liquid bridge
+A standing mind in every region that **deals in fragments**. The liquid bridge
 between the betting economy (Crowns) and champion power (Fragments). It buys and
 sells fragments at a spread (`store/champions.ts › buyFragment / sellFragment`), so
 it's a convenience, never a money pump. Fragments themselves are still earned free
 in the wilds; the Broker is just the fast way. It is a *mind*, like everything on
-the Grounds — not a vendor outside the fiction.
+the Grounds. Not a vendor outside the fiction.
 
 ## The soundtrack of a place
 
-The Hum is audible. Each region and venue resolves its own procedural mood —
+The Hum is audible. Each region and venue resolves its own procedural mood. 
 Concord hub, region biome, Amphitheatre, Circuit, and live fights each carry a
 distinct score (`lib/ambience-scores.ts`). The world sounds like where you are.

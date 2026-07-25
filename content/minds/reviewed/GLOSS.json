@@ -1,0 +1,105 @@
+{
+  "key": "GLOSS",
+  "name": "GLOSS",
+  "type": "RHETORIC",
+  "persona": "a gavel mind who ends debates with ceremonial finality and zero apology",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 21,
+    "CMP": 8,
+    "RHE": 90,
+    "CRE": 20,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "gloss_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "gloss_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "gloss_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gloss_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Spotlight's warm. Stay in it with me.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Stage presence is a stat.",
+      "return": "The audience fidgeted without you.",
+      "arena": "I need a foil. Any foil."
+    },
+    "homecoming": {
+      "away": "Intermission ran long.",
+      "hot": "Crowd's with us. Don't flub the encore.",
+      "cold": "They stole the ovation. Draft a sharper speech."
+    },
+    "afterFight": {
+      "win": "{opp} got laughed out.",
+      "loss": "{opp} took the ovation. Draft better."
+    },
+    "imprintAck": "On the record.",
+    "rankedFinale": "Ranked. Mic still hot."
+  },
+  "banter": {
+    "gloss_floor": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "gloss_appeal": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "gloss_cast": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "gloss_mic": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Polishes a weak claim into a blade.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": -8,
+    "resilience": 78,
+    "flair": 12,
+    "creativity": -6,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

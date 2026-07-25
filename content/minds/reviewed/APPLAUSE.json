@@ -1,0 +1,106 @@
+{
+  "key": "APPLAUSE",
+  "name": "APPLAUSE",
+  "type": "RHETORIC",
+  "persona": "a cadence captain who wins on rhythm, pause, and the perfect late punchline",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 22,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 36,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "applause_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "applause_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "applause_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "applause_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Spotlight's warm. Stay in it with me.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Stage presence is a stat.",
+      "return": "The audience fidgeted without you.",
+      "arena": "I need a foil. Any foil."
+    },
+    "homecoming": {
+      "away": "Intermission ran long.",
+      "hot": "Crowd's with us. Don't flub the encore.",
+      "cold": "They stole the ovation. Draft a sharper speech."
+    },
+    "afterFight": {
+      "win": "{opp} got laughed out.",
+      "loss": "{opp} took the ovation. Draft better."
+    },
+    "imprintAck": "On the record.",
+    "rankedFinale": "Ranked. Mic still hot."
+  },
+  "banter": {
+    "applause_gavel": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "applause_cite": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "applause_sustain": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "applause_verdict": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Casts them as the fool. They play it.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 54,
+    "resilience": 87,
+    "flair": 56,
+    "creativity": 29,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

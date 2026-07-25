@@ -1,7 +1,7 @@
 # 08 · Economy: Crowns, and the ownership layer beneath
 
 > **In short:** The game is completely free to play. **Crowns** are the in-game
-> money you earn by playing — you can never buy them or cash them out. There's an
+> money you earn by playing. You can never buy them or cash them out. There's an
 > optional crypto token underneath for collectors, but it only buys bragging rights
 > and access, never power and never a payout. The two currencies never mix.
 
@@ -11,14 +11,14 @@ never a gate in front of it. A player can raise legends, climb seasons, collect 
 dex, and crack the Vault having never seen a wallet.
 
 Everything below obeys one design law: **the token buys standing, access, and
-permanence — never yield.** No staking APY, no "stake to earn," no pot where
+permanence. Never yield.** No staking APY, no "stake to earn," no pot where
 winners take losers' money. Break that law and we become a security and a casino;
 keep it and we stay an indie game with a collectible legend layer.
 
 A second discipline, from the bible's canon rules: **we don't invent new top-level
-names.** The on-chain layer reuses the words the world already has — **seasons**
+names.** The on-chain layer reuses the words the world already has. **seasons**
 (the Chronicle, [`06-seasons.md`](./06-seasons.md)) and **regions** (the themed
-arenas, [`05-regions.md`](./05-regions.md)) — rather than minting "Eras/Worlds"
+arenas, [`05-regions.md`](./05-regions.md)). Rather than minting "Eras/Worlds"
 that would collide with canon.
 
 ---
@@ -29,7 +29,7 @@ that would collide with canon.
 |---|---|---|
 | Nature | Soft, in-game | Hard, on-chain (Solana / SPL) |
 | How you get it | *Earned* by playing | *Bought* on a market, or airdropped for play |
-| What it's for | Training, entries, backing, cosmetic reforges | On-chain ladder entry, minting cards, patron standing |
+| What it's for | Training, entries, backing, cosmetic reforges | On-chain standings entry, minting cards, patron standing |
 | Cash value | None, ever | Market value (not our promise) |
 | Cashes out? | **Never** | Only on the open market, never *through us* |
 
@@ -49,19 +49,19 @@ The token is an opt-in collector / loyalty layer for the committed.
 
 | Source | Reward |
 |--------|--------|
-| Win a fight | Crowns + XP + ELO |
+| Win a fight | Crowns + XP + rating |
 | Press the Gauntlet | escalating pot, press-your-luck (the **Gauntlet** is a run of back-to-back fights where the reward climbs but one loss ends it) |
 | Train | spend Crowns → XP + body evolution toward your strategy (the fighting style you've set) |
 | Daily / season objectives | a steady trickle |
 
-Crowns buy **training, entries, and cosmetic reforges** — things that affect *your*
+Crowns buy **training, entries, and cosmetic reforges**. Things that affect *your*
 account's progress. They are play money: abundant, never sold, never cashed out.
 (Canonical values live in `lib/economy.ts`; the server owns the balance, the client
 mirrors it.)
 
 ### "Back," not "bet"
 
-Inside the Crowns economy, the player verb is **back** — you *back* a champion to
+Inside the Crowns economy, the player verb is **back**. You *back* a champion to
 win (Arena/Daily streaks, ranked Grounds wagers). We retire the word "bet"
 everywhere in the UI and copy. "Back your champion" reads as conviction, not
 gambling, and it's the same verb the token layer uses (you *back* a champion for a
@@ -74,9 +74,9 @@ season). The mechanic underneath is unchanged; only the language is.
 One hard asset sits beneath the game. It does exactly three things, and nothing
 that looks like an investment return:
 
-1. **Pays on-chain ladder entry** — by burning a little or staking more (below).
-2. **Mints permanence** — burned to immortalize a champion as an on-chain card.
-3. **Confers standing** — patron crests, dex provenance, next-season allocation
+1. **Pays on-chain board entry**. By burning a little or staking more (below).
+2. **Mints permanence**. Burned to immortalize a champion as an on-chain card.
+3. **Confers standing**. Patron crests, dex provenance, next-season allocation
    weight.
 
 Supply is deflationary by construction: every entry-burn and every mint-burn
@@ -85,28 +85,28 @@ treasury chunk for airdrops; we never pay it out as yield.
 
 ---
 
-## The on-chain ladder (what the token gates)
+## The on-chain standings (what the token gates)
 
 The free game already runs on a **season** clock: a season is the Vault opening one
-more door — generative, seeded, with a *soft* rank reset so you always carry your
+more door. Generative, seeded, with a *soft* rank reset so you always carry your
 name forward ([`06-seasons.md`](./06-seasons.md)). **That free season is untouched
 and stays free for everyone.**
 
-The token gates an **opt-in on-chain ladder that runs on the same season clock.**
+The token gates an **opt-in on-chain standings that runs on the same season clock.**
 Entering it is the only thing the token unlocks for play; the campaign, Crowns
-ladder, dex, and Daily remain wallet-free. The on-chain ladder:
+standings, dex, and Daily remain wallet-free. The on-chain standings:
 
-- **Runs per season** — opens when the season opens, **closes on-chain** when it
+- **Runs per season**. Opens when the season opens, **closes on-chain** when it
   turns (mints settle, crests award, next season's airdrop weights tally). Reuses
   `mintedSeason` provenance, so a minted card is stamped with the season it was
   immortalized in.
 - **Is scoped by region (optional, later).** Regions already are the themed arenas
   with force-bias ([`05-regions.md`](./05-regions.md)), wired through `/api/battle`
   as `regionBias`. A mature version can price entry **per region** so a player picks
-  which arena(s) to contest. v1 keeps it to **one season-wide ladder**; region
+  which arena(s) to contest. V1 keeps it to **one season-wide standings**; region
   scoping is the proven-loop expansion, not the launch.
 
-> **v1 scope:** one season-wide on-chain ladder with burn-or-stake entry and an
+> **v1 scope:** one season-wide on-chain standings with burn-or-stake entry and an
 > on-chain close. Per-region ladders come after the loop earns it. Don't build the
 > taxonomy before the loop proves out.
 
@@ -114,7 +114,7 @@ ladder, dex, and Daily remain wallet-free. The on-chain ladder:
 
 ## Entry: burn-or-stake
 
-Entering the on-chain ladder for a season has one price payable two ways. The
+Entering the on-chain standings for a season has one price payable two ways. The
 *choice* self-segments players, and both paths reduce circulating supply.
 
 | Path | Cost | Outcome | Who picks it |
@@ -122,14 +122,14 @@ Entering the on-chain ladder for a season has one price payable two ways. The
 | **Burn** | small (`N`) | tokens destroyed forever | casual / one-season players |
 | **Stake** | larger (`~5–10·N`) | locked till the season ends, **returned in full** | committed / recurring players |
 
-- **Burn** is a consumed access fee — a *purchase*, not a wager. Pure deflation;
+- **Burn** is a consumed access fee. A *purchase*, not a wager. Pure deflation;
   feeds the buy-and-burn narrative organically.
-- **Stake** is a **refundable entry deposit** — principal returns intact at season
+- **Stake** is a **refundable entry deposit**. Principal returns intact at season
   close, with **no extra tokens**. The only "cost" is illiquidity (capital locked
   for the season). Stakers temporarily remove float; burners remove it permanently.
 
 A one-season player is better off burning `N`. A recurring player is better off
-staking once — which leads to the loyalty loop.
+staking once. Which leads to the loyalty loop.
 
 ### The loyalty loop: keep it staked, skip the burn
 
@@ -149,21 +149,21 @@ your standing season to season, and now you can keep your *seat* too.
 
 ## Season close: what staking is *for*
 
-When a season turns (deterministically — fights are provably fair via seeded RNG,
-`lib/engine/xai.ts:makeRng`), the on-chain ladder settles. **All rewards are
+When a season turns (deterministically. Fights are provably fair via seeded RNG,
+`lib/engine/xai.ts:makeRng`), the on-chain standings settles. **All rewards are
 non-financial.** Stakers get their principal back *plus* status; nobody gets more
 tokens than they put in.
 
 - **Mint-to-immortalize.** Top champions (and any owner who opts in) **burn token to
   mint** their champion as a permanent on-chain card. The art is deterministic from
   the career record, so *the token is the track record*. This fills the inert
-  provenance fields that already exist — `mintId`, `owner`, `chain`, `mintedSeason`
-  in `CardProvenance` (`lib/cards/card.ts`) — with no schema change.
+  provenance fields that already exist. `mintId`, `owner`, `chain`, `mintedSeason`
+  in `CardProvenance` (`lib/cards/card.ts`). With no schema change.
 - **Patron crests.** If you **backed** (staked behind) a champion for the season,
   you receive a cosmetic **crest** on its card and your handle/wallet recorded in
-  the card's provenance/patron list. Weighted by how the champion placed — but the
+  the card's provenance/patron list. Weighted by how the champion placed. But the
   reward is *glory*, not a payout.
-- **Airdrop weight.** Participation (ELO climbed, fights watched, Daily streaks,
+- **Airdrop weight.** Participation (rating climbed, fights watched, Daily streaks,
   Crowns earned, seasons staked) sets your **allocation weight** for the next
   airdrop from the seeded treasury. The token is thus *earned by play*, not sold
   into.
@@ -180,12 +180,12 @@ the trophy case, never the slot machine.
 - **The wall holds.** Crowns and the token never convert and never share a balance
   (`lib/economy.ts` stays token-free; the token lives in its own module/contract).
 - **Provenance is already wired.** `CardProvenance` carries inert `mintId`, `owner`,
-  `chain`, `mintedSeason` from day one — adding the chain is a *fill-in*, not a
+  `chain`, `mintedSeason` from day one. Adding the chain is a *fill-in*, not a
   refactor. Add a patron list field when crests land.
 - **Regions, not new worlds.** Per-arena scoping reuses `regionBias` and the
   canonical regions rather than inventing a parallel container.
 - **No game-affecting power is ever sold.** Token and ownership buy provenance,
-  entry, crests, and cosmetics — never stats, never wins. Pay-to-own, never
+  entry, crests, and cosmetics. Never stats, never wins. Pay-to-own, never
   pay-to-win.
 - **Determinism is the prerequisite.** On-chain season close only works because
   fights are provably fair (seeded, deterministic RNG). Keep that invariant sacred.
@@ -199,26 +199,26 @@ We launch lean, but we stay inside this envelope on purpose:
 - **No yield.** Stake returns *exactly* principal. Never "stake to earn more
   tokens," never APY, never a share of others' burns. This is the line between a
   refundable deposit and an unregistered security/lottery.
-- **Burn is a fee, not a wager.** You burn to *access* the ladder, with no monetary
+- **Burn is a fee, not a wager.** You burn to *access* the standings, with no monetary
   prize for "winning" denominated in the token.
-- **Rewards are cosmetic/standing/allocation** — crests, mints, dex provenance,
+- **Rewards are cosmetic/standing/allocation**. Crests, mints, dex provenance,
   airdrop weight. Not cash, not token payouts scaled to performance.
-- **No marketing of price.** We talk about legends, seasons, and collecting — never
+- **No marketing of price.** We talk about legends, seasons, and collecting. Never
   "number go up," never returns.
 - **Crowns never cash out.** The soft economy stays walled from anything with market
   value.
 
 Stay in this envelope and the token is a utility/collectible with a deflationary
-sink — the lowest-pressure posture available for an unincorporated indie launch.
+sink. The lowest-pressure posture available for an unincorporated indie launch.
 (Geo/KYC and a legal wrapper are only needed if we ever add token-denominated
-*prizes* — which this design deliberately avoids.)
+*prizes*. Which this design deliberately avoids.)
 
 ---
 
 ## Open questions (to settle before build)
 
 - **Token name & ticker.** `$ZING` is a placeholder. Candidates that fit the lore:
-  relic/ember/sigil-adjacent. (Note: "Crowns" is taken by the soft currency — avoid
+  relic/ember/sigil-adjacent. (Note: "Crowns" is taken by the soft currency. Avoid
   collision.)
 - **Entry numbers.** Concrete `N` (burn) and the stake multiple (`5–10·N`), tuned
   against expected token price so neither path is a no-brainer.

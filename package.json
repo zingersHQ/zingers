@@ -12,6 +12,7 @@
     "cost": "node scripts/cost-scenarios.mjs",
     "check:db": "node scripts/check-db.mjs",
     "generate:minds": "node scripts/generate-minds.mjs",
+    "forge:dex": "node scripts/forge-dex.mjs",
     "bake:minds": "node scripts/bake-minds.mjs",
     "mcp": "node mcp/zingers-mcp.mjs"
   },

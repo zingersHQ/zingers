@@ -1,0 +1,105 @@
+{
+  "key": "STAGE",
+  "name": "STAGE",
+  "type": "RHETORIC",
+  "persona": "a keynote predator who builds a speech around the opponent's worst tell",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 7,
+    "CMP": 26,
+    "RHE": 86,
+    "CRE": 21,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "stage_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "stage_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "stage_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "stage_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Finally, a Trainer who can work a room.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Warm the voice. Then the fists.",
+      "return": "Missed your cue. Forgiven.",
+      "arena": "Cast me someone who thinks they're the hero."
+    },
+    "homecoming": {
+      "away": "I ad-libbed. It was fine. Come back anyway.",
+      "hot": "Hot mic. Hot record.",
+      "cold": "Tough room. Better lines next."
+    },
+    "afterFight": {
+      "win": "{opp} forgot the audience. Fatal.",
+      "loss": "{opp} won the room. We rewrite."
+    },
+    "imprintAck": "Quoted forever.",
+    "rankedFinale": "Ladder loves a speech."
+  },
+  "banter": {
+    "stage_floor": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "stage_appeal": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "stage_cast": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "stage_mic": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Calls a jury. Collects the verdict.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 36,
+    "resilience": 37,
+    "flair": 22,
+    "creativity": 78,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

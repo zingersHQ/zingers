@@ -4,17 +4,28 @@
 // skeleton; this layer bolts SOLID anatomy onto it — headgear, visor/face, shoulder
 // rigs, a back unit, a chest core. Each individual draws a coherent set from its
 // Force's biased catalog, seeded by identity so it's stable, and GATED BY TIER so
-// a rookie is a bare chassis and a legend wears the full regalia — evolution you
-// can see. The champion's dominant skill nudges one slot, so the body reflects how
-// the mind actually fought (a brawler grows horns; a schemer grows antennae).
+// a rookie wears a species mark and a legend wears the full regalia — evolution
+// you can see. The champion's dominant skill nudges one slot, so the body reflects
+// how the mind actually fought (a brawler grows horns; a schemer grows antennae).
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CreatureType, StyleAxis } from "@/lib/types";
 
-export type Headgear = "none" | "crest" | "fin" | "horns" | "antenna" | "dome" | "crownRing";
-export type Visor = "single" | "twin" | "triple" | "band" | "slit";
-export type Shoulders = "none" | "pauldron" | "spike" | "vent";
-export type Back = "none" | "thrusters" | "slab" | "wings" | "banner";
-export type Chest = "none" | "diamond" | "ring" | "bars";
+export type Headgear =
+  | "none"
+  | "crest"
+  | "fin"
+  | "horns"
+  | "antenna"
+  | "dome"
+  | "crownRing"
+  | "helm"
+  | "mask"
+  | "quills"
+  | "disks";
+export type Visor = "single" | "twin" | "triple" | "band" | "slit" | "hex" | "cross";
+export type Shoulders = "none" | "pauldron" | "spike" | "vent" | "plates";
+export type Back = "none" | "thrusters" | "slab" | "wings" | "banner" | "coils" | "kite";
+export type Chest = "none" | "diamond" | "ring" | "bars" | "core" | "eye" | "lattice";
 
 export interface Phenotype {
   headgear: Headgear;
@@ -55,49 +66,168 @@ interface ForceCatalog {
   chest: [Chest, number][];
 }
 
-// Per-Force catalogs — weighted so a Force reads as a family (LOGIC favours clean
-// geometry, CHAOS favours jagged/asymmetric, COMPOSURE favours heavy slabs,
-// RHETORIC favours broadcast/ceremonial, CREATIVITY favours light/playful).
+// Per-Force catalogs — weighted so a Force reads as a family while individuals
+// diverge hard (Pokemon-style: same type line, different animal).
 const CATALOG: Record<CreatureType, ForceCatalog> = {
   LOGIC: {
-    headgear: [["crest", 3], ["antenna", 3], ["dome", 1], ["none", 1]],
-    visor: [["band", 3], ["single", 2], ["twin", 1]],
-    shoulders: [["vent", 3], ["pauldron", 1], ["none", 2]],
-    back: [["slab", 2], ["none", 3]],
-    chest: [["diamond", 3], ["none", 1]],
+    headgear: [
+      ["crest", 2],
+      ["antenna", 3],
+      ["dome", 2],
+      ["helm", 3],
+      ["disks", 2],
+      ["none", 1],
+    ],
+    visor: [
+      ["band", 3],
+      ["single", 2],
+      ["hex", 2],
+      ["cross", 1],
+    ],
+    shoulders: [
+      ["vent", 3],
+      ["plates", 3],
+      ["pauldron", 1],
+      ["none", 1],
+    ],
+    back: [
+      ["slab", 2],
+      ["coils", 2],
+      ["none", 2],
+    ],
+    chest: [
+      ["diamond", 2],
+      ["lattice", 3],
+      ["core", 2],
+      ["none", 1],
+    ],
   },
   CHAOS: {
-    headgear: [["horns", 3], ["fin", 3], ["antenna", 1], ["none", 1]],
-    visor: [["triple", 3], ["slit", 3], ["single", 1]],
-    shoulders: [["spike", 4], ["vent", 1], ["none", 1]],
-    back: [["thrusters", 3], ["none", 2]],
-    chest: [["bars", 3], ["diamond", 1], ["none", 1]],
+    headgear: [
+      ["horns", 3],
+      ["fin", 2],
+      ["quills", 3],
+      ["mask", 2],
+      ["antenna", 1],
+      ["none", 1],
+    ],
+    visor: [
+      ["triple", 2],
+      ["slit", 3],
+      ["cross", 2],
+      ["single", 1],
+    ],
+    shoulders: [
+      ["spike", 4],
+      ["plates", 2],
+      ["vent", 1],
+      ["none", 1],
+    ],
+    back: [
+      ["thrusters", 3],
+      ["kite", 2],
+      ["none", 1],
+    ],
+    chest: [
+      ["bars", 2],
+      ["eye", 3],
+      ["core", 2],
+      ["none", 1],
+    ],
   },
   COMPOSURE: {
-    headgear: [["dome", 3], ["none", 3], ["crest", 1]],
-    visor: [["band", 3], ["slit", 2], ["single", 1]],
-    shoulders: [["pauldron", 4], ["vent", 1]],
-    // the Stillness reads as immovable from its mass + ground rings — no slab
-    // bolted behind the figure (those static blocks were cut by design).
-    back: [["none", 1]],
-    chest: [["bars", 3], ["none", 2]],
+    headgear: [
+      ["dome", 3],
+      ["helm", 3],
+      ["mask", 2],
+      ["none", 2],
+      ["crest", 1],
+    ],
+    visor: [
+      ["band", 3],
+      ["slit", 2],
+      ["hex", 2],
+      ["single", 1],
+    ],
+    shoulders: [
+      ["pauldron", 3],
+      ["plates", 3],
+      ["vent", 1],
+    ],
+    // Stillness reads as immovable from mass + ground rings — no bolted slabs.
+    back: [
+      ["none", 3],
+      ["coils", 2],
+    ],
+    chest: [
+      ["bars", 2],
+      ["core", 3],
+      ["ring", 2],
+      ["none", 1],
+    ],
   },
   RHETORIC: {
-    headgear: [["crest", 3], ["antenna", 1]],
-    visor: [["twin", 3], ["band", 2], ["single", 1]],
-    // a speaker, not a linebacker: no big pauldron pads or "ears" on the frame —
-    // either bare shoulders or slim vents only.
-    shoulders: [["none", 4], ["vent", 1]],
-    // keep the back clean — no wing panels or banners flaring off the silhouette.
-    back: [["none", 1]],
-    chest: [["diamond", 3], ["none", 1]],
+    headgear: [
+      ["crest", 3],
+      ["disks", 3],
+      ["helm", 2],
+      ["antenna", 1],
+    ],
+    visor: [
+      ["twin", 3],
+      ["band", 2],
+      ["hex", 2],
+      ["single", 1],
+    ],
+    shoulders: [
+      ["none", 3],
+      ["vent", 2],
+      ["plates", 1],
+    ],
+    back: [
+      ["none", 2],
+      ["banner", 2],
+      ["kite", 2],
+    ],
+    chest: [
+      ["diamond", 2],
+      ["eye", 2],
+      ["ring", 2],
+      ["none", 1],
+    ],
   },
   CREATIVITY: {
-    headgear: [["antenna", 3], ["fin", 3], ["none", 1]],
-    visor: [["single", 3], ["twin", 2], ["triple", 1]],
-    shoulders: [["vent", 2], ["none", 3]],
-    back: [["wings", 3], ["thrusters", 1], ["none", 2]],
-    chest: [["diamond", 3], ["none", 1]],
+    headgear: [
+      ["antenna", 2],
+      ["fin", 2],
+      ["quills", 3],
+      ["disks", 2],
+      ["mask", 1],
+      ["none", 1],
+    ],
+    visor: [
+      ["single", 2],
+      ["twin", 2],
+      ["hex", 2],
+      ["triple", 1],
+    ],
+    shoulders: [
+      ["vent", 2],
+      ["none", 2],
+      ["plates", 2],
+    ],
+    back: [
+      ["wings", 3],
+      ["kite", 2],
+      ["thrusters", 1],
+      ["none", 1],
+    ],
+    chest: [
+      ["diamond", 2],
+      ["lattice", 2],
+      ["eye", 2],
+      ["none", 1],
+    ],
   },
 };
 
@@ -123,17 +253,18 @@ export function phenotypeOf(
   const rnd = mulberry32((seed ^ 0x9e3779b9) >>> 0);
   const cat = CATALOG[type] ?? CATALOG.LOGIC;
 
-  // tier gates which slots are "earned". A bare rookie has only a visor; each tier
-  // unlocks the next layer of anatomy.
-  const hasHead = tierIdx >= 1;
-  const hasShoulders = tierIdx >= 2;
-  const hasChest = tierIdx >= 3;
-  const hasBack = tierIdx >= 4;
+  // Species mark from day one (Pokemon baby form), then layer armour as they climb.
+  // Visor is unused in mesh (eyes live on the rig); kept for future/face variants.
+  const hasHead = true;
+  const hasShoulders = tierIdx >= 1;
+  const hasChest = tierIdx >= 2;
+  const hasBack = tierIdx >= 3;
 
   let headgear: Headgear = "none";
   if (hasHead) {
     headgear = pick(rnd, cat.headgear);
-    // a strongly-dominant axis stamps its signature crown on top of the catalog
+    // rookies almost always keep a tell — reroll "none" once
+    if (headgear === "none" && tierIdx <= 1) headgear = pick(rnd, cat.headgear.filter(([k]) => k !== "none"));
     if (dominantAxis && dominantVal >= 8 && rnd() < 0.7) headgear = AXIS_HEADGEAR[dominantAxis];
   }
 

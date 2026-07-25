@@ -1,0 +1,109 @@
+{
+  "key": "FRACTAL",
+  "name": "FRACTAL",
+  "type": "CREATIVITY",
+  "persona": "a quill trickster who rewrites the premise in ink the rival cannot unsee",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 16,
+    "CMP": 28,
+    "RHE": 62,
+    "CRE": 89,
+    "CHA": 13
+  },
+  "moves": [
+    {
+      "id": "fractal_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "fractal_bridge",
+      "name": "Bridge",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "fractal_invert",
+      "name": "Invert",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "fractal_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "fractal_riff": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "fractal_bridge": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "fractal_invert": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "fractal_coda": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Fragments first. Kill picture last.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 89,
+    "control": 9,
+    "resilience": -17,
+    "flair": 15,
+    "creativity": 19,
+    "wins": 30,
+    "losses": 21,
+    "battles": 51
+  }
+}

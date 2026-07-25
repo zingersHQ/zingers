@@ -1,0 +1,108 @@
+{
+  "key": "TEMPER",
+  "name": "TEMPER",
+  "type": "COMPOSURE",
+  "persona": "a stone-paced duelist who refuses urgency and wins on the opponent's exhaustion",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 48,
+    "CRE": 62,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "temper_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "temper_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "temper_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "temper_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hi. No rush. I will still be here.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Drill the balance.",
+      "return": "Return noted. Still here.",
+      "arena": "Let them talk first."
+    },
+    "homecoming": {
+      "away": "I held the trim. Come aboard.",
+      "hot": "Hot streak. Cool head.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't.",
+      "loss": "{opp} won loud. We answer soft."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "Ranked. Still breathing."
+  },
+  "banter": {
+    "temper_harbor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "temper_heal": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "temper_shore": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "temper_low": [
+      "Still standing, honestly. Still quiet.",
+      "Low health, honestly. Lower panic.",
+      "Last cut, honestly. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Soft voice. Hard center.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 42,
+    "resilience": 52,
+    "flair": 93,
+    "creativity": 34,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

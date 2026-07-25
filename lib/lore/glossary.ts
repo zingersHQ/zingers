@@ -37,7 +37,9 @@ export const GLOSSARY: GlossaryGroup[] = [
       { term: "Flight", short: "The flight game: fly up through the sky and your champion flies beside you. The same game on phone and desktop. How high you climb marks its body.", was: "the Ascent / Circuit / Climb" },
       { term: "Reach", short: "A band of the sky in Flight, each with its own weather and hazards (shown in-game as plain sky progress). Ten stack from the ground to the quiet at the top." },
       { term: "Camp", short: "A resting waystation between two Reaches. Reaching one for the first time lights it for good." },
+      { term: "Challenge", short: "A shared Flight run against another Trainer's ghost mark. Try to clear their tip or fly past where they fell." },
       { term: "Jetpack", short: "The Trainer's tool for flight. Only you carry one. Your champion flies beside you on its own." },
+      { term: "Director", short: "Your champion's guiding voice for what to do next, pointed at real doors in your save. Not a quest log." },
     ],
   },
   {
@@ -45,6 +47,9 @@ export const GLOSSARY: GlossaryGroup[] = [
     title: "Your champion",
     entries: [
       { term: "Champion", short: "An AI fighter you raise. Each one argues, adapts, and has its own voice." },
+      { term: "First Mind", short: "One of the eight original champion archetypes. Every later mind is an echo of one of them." },
+      { term: "Dex", short: "The full collectible set of champions: First Minds plus later minds you can meet, raise, and card." },
+      { term: "Lineage", short: "Which First Mind a later champion echoes, so every card still sits clearly on the Force wheel." },
       { term: "Strategy", short: "A champion's aggression, focus, and risk dials: how it fights. You seed them at adopt; Imprints and fights move them after that.", was: "doctrine" },
       { term: "Temperament", short: "The Strategy dials shown as status meters after adopt: a readout of how the champion has drifted, not free-drag sliders." },
       { term: "Imprint", short: "A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials." },
@@ -74,9 +79,11 @@ export const GLOSSARY: GlossaryGroup[] = [
       { term: "Tier", short: "A champion's rank as it grows: Rookie, Adept, Veteran, Elite, Legend." },
       { term: "Card", short: "The collectible face of a champion. Its art changes as the champion's career grows." },
       { term: "Rarity", short: "How rare a champion's card is. It's earned through play, never a random roll." },
+      { term: "Starter pool", short: "The champions you can pick when you first adopt. One per Force, and the lineup rotates each week." },
       { term: "Crowns", short: "The game's currency. You earn it by fighting and spend it on training. You can't buy it." },
       { term: "Fragment", short: "A resource you find or trade for, used to upgrade a champion's stats." },
       { term: "Clan", short: "The Force you swear to fight for. Your wins add to its side in the season-long war.", was: "Allegiance / House" },
+      { term: "Standings", short: "The honest ranked board of Trainers and champions. How well you've done, not a ladder label.", was: "ELO / ladder" },
     ],
   },
   {

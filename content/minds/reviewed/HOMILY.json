@@ -1,0 +1,105 @@
+{
+  "key": "HOMILY",
+  "name": "HOMILY",
+  "type": "RHETORIC",
+  "persona": "a gavel mind who ends debates with ceremonial finality and zero apology",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 57,
+    "CMP": 67,
+    "RHE": 91,
+    "CRE": 71,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "homily_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "homily_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "homily_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "homily_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Speak when ready. I already have the opener.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Rehearse the kill line.",
+      "return": "You're back. Cue the entrance music.",
+      "arena": "Give me a crowd and a target."
+    },
+    "homecoming": {
+      "away": "Cold house without you. Warm it up.",
+      "hot": "We're headlining. Act like it.",
+      "cold": "Cold house. Warm rhetoric."
+    },
+    "afterFight": {
+      "win": "{opp} lost the room first.",
+      "loss": "{opp} had the better punchline. For now."
+    },
+    "imprintAck": "Line locked.",
+    "rankedFinale": "Ranked win. Hear that ovation?"
+  },
+  "banter": {
+    "homily_floor": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "homily_appeal": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "homily_cast": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "homily_mic": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Polishes a weak claim into a blade.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 10,
+    "resilience": 3,
+    "flair": -3,
+    "creativity": 78,
+    "wins": 31,
+    "losses": 21,
+    "battles": 52
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "UNIT",
+  "name": "UNIT",
+  "type": "LOGIC",
+  "persona": "a point-finder who ignores side plots and drives every exchange to the decisive hinge",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 89,
+    "CMP": 67,
+    "RHE": 44,
+    "CRE": 47,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "unit_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "unit_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "unit_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "unit_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "unit_sum": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "unit_factor": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "unit_brace": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "unit_total": [
+      "End of proof, {opp}, honestly.",
+      "Q, honestly.E.D. means you, {opp}.",
+      "{topic} is settled, honestly. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Aims once. Lands true.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 22,
+    "control": 92,
+    "resilience": 29,
+    "flair": 31,
+    "creativity": 56,
+    "wins": 21,
+    "losses": 17,
+    "battles": 38
+  }
+}

@@ -1,4 +1,4 @@
-# Zingers — Flight-First development plan (session lock)
+# Zingers. Flight-First development plan (session lock)
 
 > **In short:** Climb is the face; battles are depth; desktop is the full ascent.
 > Optional Solana wallet = Trainer identity (not economy). Coin/token is a
@@ -47,7 +47,7 @@ No new modes, Reach art sprees, collection trading, House promotion, token UI.
 | **4** | `LLM_DAILY_BUDGET_USD` set; Climb-heavy stays cheap |
 | **5** | Growth push only after door feels good |
 | **6** | Secondary: evolution / collection |
-| **—** | Token deferred; wallet ≠ coin |
+| **. ** | Token deferred; wallet ≠ coin |
 
 ---
 
@@ -77,9 +77,9 @@ No new modes, Reach art sprees, collection trading, House promotion, token UI.
 ## Wallet rules (non-negotiable)
 
 - Never required for Fly / Climb / claim / Crowns.
-- SIWS-style prove-ownership only — no spend approvals.
+- SIWS-style prove-ownership only. No spend approvals.
 - Server links `pubkey` ↔ owner token; game state stays off-chain.
-- Copy = Trainer sigil / connect — never deposit or fuel.
+- Copy = Trainer sigil / connect. Never deposit or fuel.
 - Future coin attaches to the same socket; **zero token logic now**.
 
 ---

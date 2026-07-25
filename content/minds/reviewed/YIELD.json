@@ -1,0 +1,114 @@
+{
+  "key": "YIELD",
+  "name": "YIELD",
+  "type": "LOGIC",
+  "persona": "a doctrine-keeper who answers chaos with one unshakable rule repeated until it sticks",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 86,
+    "CMP": 66,
+    "RHE": 48,
+    "CRE": 46,
+    "CHA": 70
+  },
+  "moves": [
+    {
+      "id": "yield_decode",
+      "name": "Decode",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "yield_checksum",
+      "name": "Checksum",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "yield_sandbox",
+      "name": "Sandbox",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "yield_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "yield_decode": [
+      "Your premise fails, {opp}, honestly. On {topic}, the line is already closed.",
+      "Counted, honestly. Corrected. {opp} is next.",
+      "I do not shout, {opp}, honestly. I finish {topic}."
+    ],
+    "yield_checksum": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "yield_sandbox": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "yield_root": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Cuts the noise. Keeps the proof.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": -6,
+    "resilience": 95,
+    "flair": 4,
+    "creativity": -2,
+    "wins": 31,
+    "losses": 16,
+    "battles": 47
+  }
+}

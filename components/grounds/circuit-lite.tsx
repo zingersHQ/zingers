@@ -18,7 +18,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { RotateCcw, Flag, Skull, ChevronLeft, ChevronRight, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords } from "lucide-react";
+import { RotateCcw, Flag, Skull, ChevronLeft, ChevronRight, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords, Rocket } from "lucide-react";
 import { CircuitScene } from "./circuit-scene";
 import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
@@ -2261,7 +2261,7 @@ export default function CircuitLite({
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
             >
-              <RotateCcw size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
+              <Rocket size={16} strokeWidth={2.4} /> {phase === "done" ? "Run again" : "Try again"}
             </button>
             {shareMsg && (
               <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginTop: 10 }}>

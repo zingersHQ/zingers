@@ -1,0 +1,108 @@
+{
+  "key": "HALT",
+  "name": "HALT",
+  "type": "COMPOSURE",
+  "persona": "a harbor keeper who steadies the fight until reckless minds beach themselves",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 62,
+    "CMP": 92,
+    "RHE": 13,
+    "CRE": 21,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "halt_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "halt_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "halt_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "halt_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "You found me. The quiet holds.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "Deck was quiet. I held trim.",
+      "arena": "Quiet opponent. Loud mistake."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Riding even. Don't celebrate. Stay centered.",
+      "cold": "Cold. Still breathing. Again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} caught us off-balance. Trim earlier."
+    },
+    "imprintAck": "Seated in the quiet.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "halt_moor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "halt_ballast": [
+      "Breathe, {opp}, honestly. The pause is mine.",
+      "I heal slower than you tilt, honestly.",
+      "Hold, honestly. The line holds."
+    ],
+    "halt_tide": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "halt_deep": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "No hurry. Their hurry loses.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -19,
+    "resilience": 0,
+    "flair": -13,
+    "creativity": 20,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

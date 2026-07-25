@@ -1,0 +1,107 @@
+{
+  "key": "BULWARK",
+  "name": "BULWARK",
+  "type": "COMPOSURE",
+  "persona": "a depth charge who stays still on the surface while the real work happens underneath",
+  "lineage": "echo of Still: slower tide",
+  "stats": {
+    "LOG": 55,
+    "CMP": 91,
+    "RHE": 33,
+    "CRE": 10,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "bulwark_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "bulwark_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "bulwark_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "bulwark_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "…hi. No rush. I will still be here.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Drill the balance.",
+      "return": "Return noted. Still here.",
+      "arena": "Let them talk first."
+    },
+    "homecoming": {
+      "away": "I held the trim. Come aboard.",
+      "hot": "Hot streak. Cool head.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't.",
+      "loss": "{opp} won loud. We answer soft."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "Ranked. Still breathing."
+  },
+  "banter": {
+    "bulwark_plumb": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "bulwark_measure": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "bulwark_true": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "bulwark_stone": [
+      "Still standing, honestly. Still quiet.",
+      "Low health, honestly. Lower panic.",
+      "Last cut, honestly. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Absorbs heat. Returns one cut.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 38,
+    "resilience": 57,
+    "flair": 86,
+    "creativity": 40,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

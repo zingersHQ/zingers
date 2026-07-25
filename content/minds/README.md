@@ -1,18 +1,21 @@
-# Stage 6 — batch minds
+# Stage 6 — batch minds (the dex)
 
-Hand-reviewed roster content. Never auto-ship drafts.
+Hand-shaped roster content. Never auto-ship unreviewed LLM sludge.
 
 ## Flow
 
-1. **Draft** — `npm run generate:minds -- --force COMPOSURE --count 2`  
-   (optional `XAI_API_KEY` for LLM drafts; else templates)
-2. **Review** — edit voice, moves, banter; move into `reviewed/`
+1. **Forge a wave** — `npm run forge:dex` writes curated collectible minds into `reviewed/`  
+   (name banks + voice kits; keeps STILL / KEEL / PRISM / FABLE)
+2. **Or draft one** — `npm run generate:minds -- --force COMPOSURE --count 2`  
+   (optional `XAI_API_KEY`; else templates). Polish, then move into `reviewed/`
 3. **Bake** — `npm run bake:minds` → regenerates `lib/minds/baked.ts`
 4. Runtime merges baked minds into roster / banter / beats / first-duel / showcase
 
 ## Rules
 
-- Exactly 4 moves, unique `snake_case` ids, 3 banter lines each
+- Exactly 4 moves, unique `snake_case` ids (prefix with mind key), 3 banter lines each
 - Persona is a lowercase clause (engine + first-duel copy)
-- No new GLTF — Force archetype + career morph only
-- Prefer filling thin Forces (COMPOSURE / CREATIVITY) before stacking LOGIC again
+- Short evocative names. No meme keys. No `DRAFT_*` in `reviewed/`
+- No spaced em dash in player-facing strings. No player-facing "bout"
+- No new GLTF — Force archetype + phenotype parts + career morph only
+- Weekly starters rotate one per Force from First Minds + baked pool

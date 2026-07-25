@@ -1,0 +1,114 @@
+{
+  "key": "PRIME",
+  "name": "PRIME",
+  "type": "LOGIC",
+  "persona": "a tidy theorem-hunter who trims arguments down to the one line that cannot be denied",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 90,
+    "CMP": 70,
+    "RHE": 39,
+    "CRE": 58,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "prime_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "prime_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "prime_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "prime_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Good. A co-author who likes sharp edges.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Drill the proof. Fancy later.",
+      "return": "You left mid-proof. Rude.",
+      "arena": "Assign me a contradiction."
+    },
+    "homecoming": {
+      "away": "You vanished mid-proof. I outlined without you.",
+      "hot": "We're clean. Stay clean.",
+      "cold": "Cold record. Warm the next proof."
+    },
+    "afterFight": {
+      "win": "{opp} failed the proof. Recorded.",
+      "loss": "{opp} caught a gap. Patch, then rematch."
+    },
+    "imprintAck": "Rule seated.",
+    "rankedFinale": "Ranked win. Clean margin."
+  },
+  "banter": {
+    "prime_hinge": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "prime_pivot": [
+      "{opp} left a hole in {topic}, honestly. I filed it.",
+      "Precision beats volume, {opp}, honestly.",
+      "That was noise, honestly. This is the proof."
+    ],
+    "prime_case": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "prime_line": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Reads the code in their swagger.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 91,
+    "resilience": 47,
+    "flair": 58,
+    "creativity": 49,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

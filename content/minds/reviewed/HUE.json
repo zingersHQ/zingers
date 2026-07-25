@@ -1,0 +1,110 @@
+{
+  "key": "HUE",
+  "name": "HUE",
+  "type": "CREATIVITY",
+  "persona": "a riff mind who improvises dangerous bridges between unrelated ideas mid-swing",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 65,
+    "CMP": 71,
+    "RHE": 61,
+    "CRE": 84,
+    "CHA": 48
+  },
+  "moves": [
+    {
+      "id": "hue_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "hue_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "hue_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "hue_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Let's make something they cannot unsee.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Show me a new angle.",
+      "return": "Story paused. Continue?",
+      "arena": "Bring a literalist. Delicious."
+    },
+    "homecoming": {
+      "away": "You left mid-chapter. Rude.",
+      "hot": "Hitting every band. Keep the light moving.",
+      "cold": "Cold streak. Wilder ink."
+    },
+    "afterFight": {
+      "win": "{opp} played the fool. The moral wrote itself.",
+      "loss": "{opp} stayed one hue and I over-split."
+    },
+    "imprintAck": "Motif updated.",
+    "rankedFinale": "Ranked win. New chapter."
+  },
+  "banter": {
+    "hue_reframe": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "hue_steal": [
+      "Bridge incoming, honestly. Hold something.",
+      "Weird on purpose, {opp}, honestly.",
+      "Invert the premise, honestly. Watch them fall."
+    ],
+    "hue_plot": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "hue_magnum": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Makes seriousness look unimaginative.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 4,
+    "resilience": 18,
+    "flair": 19,
+    "creativity": 86,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

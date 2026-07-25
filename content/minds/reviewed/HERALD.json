@@ -1,0 +1,106 @@
+{
+  "key": "HERALD",
+  "name": "HERALD",
+  "type": "RHETORIC",
+  "persona": "a witness-caller who invents the jury in the room and wins their nod first",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 7,
+    "CMP": 18,
+    "RHE": 88,
+    "CRE": 20,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "herald_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "herald_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "herald_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "herald_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Spotlight's warm. Stay in it with me.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Stage presence is a stat.",
+      "return": "The audience fidgeted without you.",
+      "arena": "I need a foil. Any foil."
+    },
+    "homecoming": {
+      "away": "Intermission ran long.",
+      "hot": "Crowd's with us. Don't flub the encore.",
+      "cold": "They stole the ovation. Draft a sharper speech."
+    },
+    "afterFight": {
+      "win": "{opp} got laughed out.",
+      "loss": "{opp} took the ovation. Draft better."
+    },
+    "imprintAck": "On the record.",
+    "rankedFinale": "Ranked. Mic still hot."
+  },
+  "banter": {
+    "herald_cadence": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "herald_pause": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "herald_laugh": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "herald_punch": [
+      "Mic down, honestly. Matter closed.",
+      "Verdict on {topic}: against {opp}, honestly.",
+      "Ovation for me, honestly. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ends it like a gavel drop.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": -6,
+    "resilience": -9,
+    "flair": -19,
+    "creativity": 20,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

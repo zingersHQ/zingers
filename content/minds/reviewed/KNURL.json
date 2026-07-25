@@ -1,0 +1,110 @@
+{
+  "key": "KNURL",
+  "name": "KNURL",
+  "type": "CHAOS",
+  "persona": "a tripwire mind that leaves tiny verbal snags and laughs when the rival steps in them",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 31,
+    "CMP": 27,
+    "RHE": 65,
+    "CRE": 32,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "knurl_spark",
+      "name": "Spark Riot",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "knurl_wild",
+      "name": "Wild Swing",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "knurl_gas",
+      "name": "Gas Up",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "knurl_burn",
+      "name": "Burnout",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "Hi. Try not to hold the map too tight.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Mess around. Learn faster.",
+      "return": "You're back. Good. I got bored.",
+      "arena": "Pick a rule-follower."
+    },
+    "homecoming": {
+      "away": "I started three fights without you. Almost.",
+      "hot": "Winning weird. Keep winning weird.",
+      "cold": "Cold streak. Hotter hexes."
+    },
+    "afterFight": {
+      "win": "{opp} looked careful. Cute.",
+      "loss": "{opp} stayed calm. Rude."
+    },
+    "imprintAck": "Ooh. Spicy rule.",
+    "rankedFinale": "Ranked win. Messy. Perfect."
+  },
+  "banter": {
+    "knurl_spark": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "knurl_wild": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "knurl_gas": [
+      "Trip, honestly. That was free, {opp}.",
+      "You walked into it, honestly. On {topic}, even.",
+      "Snag, honestly. Laugh. Repeat."
+    ],
+    "knurl_burn": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Howls until plans look silly.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": -1,
+    "resilience": 7,
+    "flair": 84,
+    "creativity": 18,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

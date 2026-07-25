@@ -1,0 +1,106 @@
+{
+  "key": "INVECTIVE",
+  "name": "INVECTIVE",
+  "type": "RHETORIC",
+  "persona": "a jest-blade who smiles through the cut and makes the wound feel like a joke",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 48,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 48,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "invective_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "invective_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "invective_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "invective_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Speak when ready. I already have the opener.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Rehearse the kill line.",
+      "return": "You're back. Cue the entrance music.",
+      "arena": "Give me a crowd and a target."
+    },
+    "homecoming": {
+      "away": "Cold house without you. Warm it up.",
+      "hot": "We're headlining. Act like it.",
+      "cold": "Cold house. Warm rhetoric."
+    },
+    "afterFight": {
+      "win": "{opp} lost the room first.",
+      "loss": "{opp} had the better punchline. For now."
+    },
+    "imprintAck": "Line locked.",
+    "rankedFinale": "Ranked win. Hear that ovation?"
+  },
+  "banter": {
+    "invective_gavel": [
+      "Ladies and minds: {opp} on {topic}, honestly.",
+      "Give them a hand, honestly. Then take the point.",
+      "House likes me, honestly. House decides."
+    ],
+    "invective_cite": [
+      "Cited, {opp}. Your line is exhibit A.",
+      "I object to your confidence.",
+      "Sustain the bit. Kill the claim."
+    ],
+    "invective_sustain": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "invective_verdict": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Plays to the house. Wins the nod.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 10,
+    "resilience": -2,
+    "flair": 12,
+    "creativity": 81,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

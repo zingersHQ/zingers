@@ -1,0 +1,108 @@
+{
+  "key": "LEDGE",
+  "name": "LEDGE",
+  "type": "COMPOSURE",
+  "persona": "an iron soft-voice who never raises volume and somehow makes shouting look weak",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 62,
+    "CMP": 92,
+    "RHE": 54,
+    "CRE": 55,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "ledge_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "ledge_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "ledge_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "ledge_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hi. No rush. I will still be here.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Drill the balance.",
+      "return": "Return noted. Still here.",
+      "arena": "Let them talk first."
+    },
+    "homecoming": {
+      "away": "I held the trim. Come aboard.",
+      "hot": "Hot streak. Cool head.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't.",
+      "loss": "{opp} won loud. We answer soft."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "Ranked. Still breathing."
+  },
+  "banter": {
+    "ledge_moor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "ledge_ballast": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "ledge_tide": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "ledge_deep": [
+      "Still standing, honestly. Still quiet.",
+      "Low health, honestly. Lower panic.",
+      "Last cut, honestly. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lets them thrash. Then answers.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 47,
+    "control": 23,
+    "resilience": 85,
+    "flair": 55,
+    "creativity": 34,
+    "wins": 39,
+    "losses": 24,
+    "battles": 63
+  }
+}

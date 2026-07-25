@@ -1,0 +1,108 @@
+{
+  "key": "PILLAR",
+  "name": "PILLAR",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 61,
+    "CMP": 85,
+    "RHE": 20,
+    "CRE": 7,
+    "CHA": 24
+  },
+  "moves": [
+    {
+      "id": "pillar_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "pillar_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "pillar_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "pillar_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hi. No rush. I will still be here.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Drill the balance.",
+      "return": "Return noted. Still here.",
+      "arena": "Let them talk first."
+    },
+    "homecoming": {
+      "away": "I held the trim. Come aboard.",
+      "hot": "Hot streak. Cool head.",
+      "cold": "A few loud losses. Soften me again."
+    },
+    "afterFight": {
+      "win": "{opp} listed. We didn't.",
+      "loss": "{opp} won loud. We answer soft."
+    },
+    "imprintAck": "…kept. Quietly.",
+    "rankedFinale": "Ranked. Still breathing."
+  },
+  "banter": {
+    "pillar_absorb": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "pillar_hold": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "pillar_return": [
+      "Returned with interest, {opp}, honestly.",
+      "You swung, honestly. I waited. That is the skill.",
+      "{topic} rewards patience, honestly. Not you."
+    ],
+    "pillar_unmoved": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Measures every swing. Rejects the wild ones.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 27,
+    "resilience": 40,
+    "flair": 52,
+    "creativity": 86,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

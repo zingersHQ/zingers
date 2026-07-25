@@ -1,0 +1,106 @@
+{
+  "key": "JEST",
+  "name": "JEST",
+  "type": "RHETORIC",
+  "persona": "a witness-caller who invents the jury in the room and wins their nod first",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 57,
+    "CMP": 70,
+    "RHE": 89,
+    "CRE": 41,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "jest_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "jest_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jest_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "jest_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Spotlight's warm. Stay in it with me.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Stage presence is a stat.",
+      "return": "The audience fidgeted without you.",
+      "arena": "I need a foil. Any foil."
+    },
+    "homecoming": {
+      "away": "Intermission ran long.",
+      "hot": "Crowd's with us. Don't flub the encore.",
+      "cold": "They stole the ovation. Draft a sharper speech."
+    },
+    "afterFight": {
+      "win": "{opp} got laughed out.",
+      "loss": "{opp} took the ovation. Draft better."
+    },
+    "imprintAck": "On the record.",
+    "rankedFinale": "Ranked. Mic still hot."
+  },
+  "banter": {
+    "jest_cadence": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "jest_pause": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "jest_laugh": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "jest_punch": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ends it like a gavel drop.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 0,
+    "resilience": 12,
+    "flair": 78,
+    "creativity": 1,
+    "wins": 39,
+    "losses": 15,
+    "battles": 54
+  }
+}

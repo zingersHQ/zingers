@@ -1,0 +1,110 @@
+{
+  "key": "INDEX",
+  "name": "INDEX",
+  "type": "LOGIC",
+  "persona": "a base-case pedant who collapses grand claims into tiny countable parts",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 88,
+    "CMP": 71,
+    "RHE": 16,
+    "CRE": 10,
+    "CHA": 10
+  },
+  "moves": [
+    {
+      "id": "index_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "index_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "index_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "index_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Trainer locked. Arguments unlocked.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Train clean. Fight cleaner.",
+      "return": "Back. Resume the ledger.",
+      "arena": "Someone wrong just walked in."
+    },
+    "homecoming": {
+      "away": "Come back sooner. Proofs go stale.",
+      "hot": "Win streak intact. Don't introduce noise.",
+      "cold": "Errors stacked. Audit, then climb."
+    },
+    "afterFight": {
+      "win": "{opp} could not hold the line.",
+      "loss": "{opp} stole a line. We draft a sharper one."
+    },
+    "imprintAck": "Kept. Precisely.",
+    "rankedFinale": "Ranked. As calculated."
+  },
+  "banter": {
+    "index_sum": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "index_factor": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "index_brace": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "index_total": [
+      "End of proof, {opp}, honestly.",
+      "Q, honestly.E.D. means you, {opp}.",
+      "{topic} is settled, honestly. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Writes the ending before they finish.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": -13,
+    "resilience": 5,
+    "flair": 18,
+    "creativity": 84,
+    "wins": 54,
+    "losses": 20,
+    "battles": 74
+  }
+}

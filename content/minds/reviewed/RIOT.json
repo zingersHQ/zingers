@@ -1,0 +1,113 @@
+{
+  "key": "RIOT",
+  "name": "RIOT",
+  "type": "CHAOS",
+  "persona": "a storm mouth who howls over careful plans until the plan itself looks silly",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 67,
+    "CMP": 65,
+    "RHE": 63,
+    "CRE": 61,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "riot_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riot_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riot_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "riot_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "riot_snag": [
+      "Oops, {opp}, honestly. {topic} just caught fire.",
+      "Dance, {opp}, honestly. The floor is weird now.",
+      "I spilled the rules, honestly. Clean them up."
+    ],
+    "riot_trip": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "riot_shrug": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "riot_snap": [
+      "Louder than your plan, {opp}.",
+      "Collapse looks good on you.",
+      "{topic} ends messy. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Never the same fight twice.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 86,
+    "resilience": -13,
+    "flair": -10,
+    "creativity": -14,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

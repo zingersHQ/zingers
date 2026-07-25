@@ -1,0 +1,109 @@
+{
+  "key": "WHIM",
+  "name": "WHIM",
+  "type": "CREATIVITY",
+  "persona": "a mosaic builder who wins with fragments that only lock into a kill at the end",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 52,
+    "CMP": 54,
+    "RHE": 68,
+    "CRE": 92,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "whim_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "whim_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "whim_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "whim_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "You brought eyes. I brought angles.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "Play. Then commit.",
+      "return": "Palette went dull. Don't do that.",
+      "arena": "I want a rigid mind to bend."
+    },
+    "homecoming": {
+      "away": "The motif missed its co-author.",
+      "hot": "We're on a winning arc. Don't break the motif.",
+      "cold": "They stayed one color and won. Split harder."
+    },
+    "afterFight": {
+      "win": "{opp} brought one color. I brought more.",
+      "loss": "{opp} stole the ending. Sharper draft next."
+    },
+    "imprintAck": "Ink took.",
+    "rankedFinale": "Ranked. Art lands."
+  },
+  "banter": {
+    "whim_glyph": [
+      "Nice theme, {opp}. Mine now.",
+      "I remixed {topic}. You are the sample.",
+      "Steal clean. Cut cleaner."
+    ],
+    "whim_mosaic": [
+      "Bridge incoming. Hold something.",
+      "Weird on purpose, {opp}.",
+      "Invert the premise. Watch them fall."
+    ],
+    "whim_dream": [
+      "Ink is still wet, honestly. Do not touch.",
+      "Whim is a strategy, honestly. Believe it.",
+      "Mirror this, {opp}, honestly."
+    ],
+    "whim_wake": [
+      "Last page. Your name is footnote.",
+      "Art wins. Argue later.",
+      "Wake up inside my metaphor."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Moves the fight into a metaphor they own.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 93,
+    "resilience": 0,
+    "flair": -18,
+    "creativity": -5,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

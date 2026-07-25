@@ -72,10 +72,17 @@ Advantage ×1.25, neutral ×1.0, disadvantage ×0.8.
 
 ---
 
-## 5. Roster (8 starters)
+## 5. Roster (eight First Minds + growing dex)
 
-Stat budget = 300 each (balanced). Each has 4 moves; movesets carry **setup → payoff** combos so play has texture.
-Two minds share each of **LOGIC**, **RHETORIC**, and **CHAOS**; **CREATIVITY** and **COMPOSURE** have one each.
+The eight **First Minds** below are the canonical archetypes and the baseline
+moveset reference. The live game also merges a **baked dex** of later minds from
+`content/minds/reviewed/` → `lib/minds/baked.ts` (see `docs/bible/03-champions.md`).
+Weekly adopt offers one starter per Force from First Minds + that pool.
+
+Stat budget ≈ 300 each (balanced). Each has 4 moves; movesets carry **setup → payoff**
+combos so play has texture. Among the First Minds: two share each of **LOGIC**,
+**RHETORIC**, and **CHAOS**; **CREATIVITY** and **COMPOSURE** began with one each
+and are filled out by the dex.
 
 ### AXIOM: Logician (LOGIC)
 *Cold, precise, faintly condescending. Treats every argument as a proof to close.*

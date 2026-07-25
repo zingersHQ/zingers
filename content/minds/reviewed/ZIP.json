@@ -1,0 +1,106 @@
+{
+  "key": "ZIP",
+  "name": "ZIP",
+  "type": "CHAOS",
+  "persona": "a churn engine who never lets the tempo settle long enough for a clean counter",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 12,
+    "CMP": 10,
+    "RHE": 52,
+    "CRE": 38,
+    "CHA": 92
+  },
+  "moves": [
+    {
+      "id": "zip_howl",
+      "name": "Howl",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "zip_scatter",
+      "name": "Scatter",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "zip_taunt",
+      "name": "Taunt Fire",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "zip_fall",
+      "name": "Collapse",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "You look careful. I can fix that.",
+    "imprintAsk": "One bad idea before we climb. Make it fun.",
+    "flightReact": [
+      "Don't look down. Or do.",
+      "Still flying. Somehow. Love it."
+    ],
+    "greeting": {
+      "train": "Warm up weird.",
+      "return": "Miss me? The mess waited.",
+      "arena": "I want someone tidy to ruin."
+    },
+    "homecoming": {
+      "away": "Missed your chaos license.",
+      "hot": "We're hot. Pour gas carefully.",
+      "cold": "We tripped on our own snags. Hilarious. Fix it."
+    },
+    "afterFight": {
+      "win": "{opp} wanted order. Got me.",
+      "loss": "{opp} got lucky. Or good. Annoying either way."
+    },
+    "imprintAck": "Kept. Probably.",
+    "rankedFinale": "Ranked. Still feral."
+  },
+  "banter": {
+    "zip_howl": [
+      "Oops, {opp}. {topic} just caught fire.",
+      "Dance, {opp}. The floor is weird now.",
+      "I spilled the rules. Clean them up."
+    ],
+    "zip_scatter": [
+      "Hex on your timing, {opp}.",
+      "Lucky me. Unlucky {topic}.",
+      "Smile, {opp}. The bad part is scheduled."
+    ],
+    "zip_taunt": [
+      "Trip. That was free, {opp}.",
+      "You walked into it. On {topic}, even.",
+      "Snag. Laugh. Repeat."
+    ],
+    "zip_fall": [
+      "Louder than your plan, {opp}, honestly.",
+      "Collapse looks good on you, honestly.",
+      "{topic} ends messy, honestly. As designed."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Annoys them into mistakes.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 95,
+    "control": 41,
+    "resilience": 57,
+    "flair": 34,
+    "creativity": 51,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

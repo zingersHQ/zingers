@@ -1,0 +1,108 @@
+{
+  "key": "WARDEN",
+  "name": "WARDEN",
+  "type": "COMPOSURE",
+  "persona": "a stone-paced duelist who refuses urgency and wins on the opponent's exhaustion",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 64,
+    "CMP": 92,
+    "RHE": 21,
+    "CRE": 26,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "warden_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "warden_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "warden_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "warden_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "You found me. The quiet holds.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "Deck was quiet. I held trim.",
+      "arena": "Quiet opponent. Loud mistake."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Riding even. Don't celebrate. Stay centered.",
+      "cold": "Cold. Still breathing. Again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} caught us off-balance. Trim earlier."
+    },
+    "imprintAck": "Seated in the quiet.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "warden_harbor": [
+      "I heard you, {opp}. I am still here.",
+      "Save the heat. Spend it wrong.",
+      "Quiet works. Watch."
+    ],
+    "warden_heal": [
+      "Breathe, {opp}, honestly. The pause is mine.",
+      "I heal slower than you tilt, honestly.",
+      "Hold, honestly. The line holds."
+    ],
+    "warden_shore": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "warden_low": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Soft voice. Hard center.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 51,
+    "resilience": 83,
+    "flair": 58,
+    "creativity": 59,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

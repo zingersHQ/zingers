@@ -1,0 +1,108 @@
+{
+  "key": "WEIGHT",
+  "name": "WEIGHT",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 63,
+    "CMP": 92,
+    "RHE": 55,
+    "CRE": 55,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "weight_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "weight_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "weight_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "weight_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "You found me. The quiet holds.",
+    "imprintAsk": "One soft rule before we climb. I will keep it.",
+    "flightReact": [
+      "…up. Quietly.",
+      "Level. Good."
+    ],
+    "greeting": {
+      "train": "Slow training. Soft edges.",
+      "return": "Deck was quiet. I held trim.",
+      "arena": "Quiet opponent. Loud mistake."
+    },
+    "homecoming": {
+      "away": "…you were gone a long time. The quiet held.",
+      "hot": "Riding even. Don't celebrate. Stay centered.",
+      "cold": "Cold. Still breathing. Again."
+    },
+    "afterFight": {
+      "win": "{opp} filled the silence. That was enough.",
+      "loss": "{opp} caught us off-balance. Trim earlier."
+    },
+    "imprintAck": "Seated in the quiet.",
+    "rankedFinale": "…a ranked win. No fanfare. Just the record."
+  },
+  "banter": {
+    "weight_absorb": [
+      "I heard you, {opp}, honestly. I am still here.",
+      "Save the heat, honestly. Spend it wrong.",
+      "Quiet works, honestly. Watch."
+    ],
+    "weight_hold": [
+      "Breathe, {opp}. The pause is mine.",
+      "I heal slower than you tilt.",
+      "Hold. The line holds."
+    ],
+    "weight_return": [
+      "Returned with interest, {opp}.",
+      "You swung. I waited. That is the skill.",
+      "{topic} rewards patience. Not you."
+    ],
+    "weight_unmoved": [
+      "Still standing. Still quiet.",
+      "Low health. Lower panic.",
+      "Last cut. Soft voice."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Measures every swing. Rejects the wild ones.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 82,
+    "resilience": 29,
+    "flair": 56,
+    "creativity": 44,
+    "wins": 36,
+    "losses": 16,
+    "battles": 52
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "GAVEL",
+  "name": "GAVEL",
+  "type": "RHETORIC",
+  "persona": "a stage-born orator who treats every exchange like a packed house waiting for a line",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 44,
+    "CMP": 47,
+    "RHE": 87,
+    "CRE": 70,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "gavel_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "gavel_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "gavel_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gavel_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Speak when ready. I already have the opener.",
+    "imprintAsk": "One line before we climb. Make it quotable.",
+    "flightReact": [
+      "House in the sky. Follow my lead.",
+      "We stuck the landing. Bow later."
+    ],
+    "greeting": {
+      "train": "Rehearse the kill line.",
+      "return": "You're back. Cue the entrance music.",
+      "arena": "Give me a crowd and a target."
+    },
+    "homecoming": {
+      "away": "Cold house without you. Warm it up.",
+      "hot": "We're headlining. Act like it.",
+      "cold": "Cold house. Warm rhetoric."
+    },
+    "afterFight": {
+      "win": "{opp} lost the room first.",
+      "loss": "{opp} had the better punchline. For now."
+    },
+    "imprintAck": "Line locked.",
+    "rankedFinale": "Ranked win. Hear that ovation?"
+  },
+  "banter": {
+    "gavel_herald": [
+      "Ladies and minds: {opp} on {topic}.",
+      "Give them a hand. Then take the point.",
+      "House likes me. House decides."
+    ],
+    "gavel_gloss": [
+      "Cited, {opp}, honestly. Your line is exhibit A.",
+      "I object to your confidence, honestly.",
+      "Sustain the bit, honestly. Kill the claim."
+    ],
+    "gavel_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "gavel_ovation": [
+      "Mic down. Matter closed.",
+      "Verdict on {topic}: against {opp}.",
+      "Ovation for me. Lesson for you."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Rhythm first. Kill line late.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 53,
+    "control": 54,
+    "resilience": 39,
+    "flair": 47,
+    "creativity": 83,
+    "wins": 53,
+    "losses": 16,
+    "battles": 69
+  }
+}

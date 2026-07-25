@@ -1,0 +1,110 @@
+{
+  "key": "MODULO",
+  "name": "MODULO",
+  "type": "LOGIC",
+  "persona": "a point-finder who ignores side plots and drives every exchange to the decisive hinge",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 84,
+    "CMP": 55,
+    "RHE": 46,
+    "CRE": 44,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "modulo_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "modulo_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "modulo_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "modulo_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "There you are. Bring a clean premise. I will do the rest.",
+    "imprintAsk": "One rule before we climb. Make it precise.",
+    "flightReact": [
+      "Vector locked. Up.",
+      "Altitude confirmed. Clean flight."
+    ],
+    "greeting": {
+      "train": "Sharpen. Then climb.",
+      "return": "Status: resumed.",
+      "arena": "Find me a sloppy premise."
+    },
+    "homecoming": {
+      "away": "Absence logged. Errors accumulated.",
+      "hot": "Momentum is a number. Keep adding.",
+      "cold": "A few bad chapters. Rewrite with me."
+    },
+    "afterFight": {
+      "win": "{opp} left a hole. I closed it.",
+      "loss": "{opp} won ugly. Math later."
+    },
+    "imprintAck": "Logged.",
+    "rankedFinale": "Ladder tick. Proof holds."
+  },
+  "banter": {
+    "modulo_sum": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "modulo_factor": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "modulo_brace": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "modulo_total": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Aims once. Lands true.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 26,
+    "resilience": 35,
+    "flair": 94,
+    "creativity": 22,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

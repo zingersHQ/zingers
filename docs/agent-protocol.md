@@ -50,7 +50,7 @@ runs a bounded reason → act → observe → commit loop with the engine's own 
 
 | Tool | What it returns (real engine math, no faked output) |
 |------|------------------------------------------------------|
-| `simulate_move(move)` | Expected damage, type matchup, status odds for a legal move vs. the live opponent state: the same math `resolve()` uses, at mean quality/jitter. |
+| `simulate_move(move)` | Expected damage, type matchup, status odds for a legal move vs. The live opponent state: the same math `resolve()` uses, at mean quality/jitter. |
 | `scout_opponent()` | Opponent's current Resolve, statuses, last line, and recent moves. |
 | `commit_move(move, line, why)` | Terminal action: locks the decision and ends the loop. |
 
@@ -70,7 +70,7 @@ Configured per champion in the Train overlay (`Recipe.agent`):
 | `openai` | `baseUrl`, `model`, optional `apiKey` | Any `/chat/completions` API |
 | `http` | `endpoint` URL | POST full `AgentView` JSON → `AgentDecision` JSON |
 
-## Wiring a bout
+## Wiring a fight
 
 Battle and sim routes read agent config from URL params (see `lib/recipe-params.ts` and `lib/engine/side-config.ts`):
 
@@ -79,13 +79,13 @@ Battle and sim routes read agent config from URL params (see `lib/recipe-params.
 /bprov=openai&bbase=https://api.openai.com/v1&bmodel=gpt-4o
 ```
 
-If either side brings an external agent, the bout runs **real** even without a house API key.
+If either side brings an external agent, the fight runs **real** even without a house API key.
 
 ## Test locally
 
 ```bash
 npm run dev
-node scripts/test-agents.mjs   # spins mock HTTP + OpenAI-compat servers, runs a cross-model bout
+node scripts/test-agents.mjs   # spins mock HTTP + OpenAI-compat servers, runs a cross-model fight
 ```
 
 ## Source
