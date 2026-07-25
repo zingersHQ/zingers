@@ -1,9 +1,9 @@
 ---
 name: Zingers
-stage: prelaunch
+stage: launched
 autonomy: propose
 north_star: "Players fly the Ascent, raise an AI champion that fights beside them, and share the legend both become — the loop that drives organic, viral growth."
-target: { launch: "Launch v0.1 = Flight-First gates in docs/flight-first-plan.md (feel + funnel + cheap Climb-heavy loop). Not a date." }
+target: { launch: "Launch v0.1 CLOSED (engineering). Flight-First gates shipped on zingers.gg. Remaining: human playtests, growth push, weekly ship notes — ops, not blockers." }
 economics: { model: "Proposed: free-to-play; future monetization via cosmetics, battle passes, and 'infinite battles'. In-game soft currency is Crowns (server-authoritative wallet). $ZING is fuel, not the product — deferred; see docs/zing-model.md.", costs: "LLM inference (xAI/Grok ~1 call/turn + local judge by default), Vercel hosting + cron, Upstash Redis persistence" }
 guardrails:
   - "The engine is authoritative: stats/types/statuses/ELO decide combat. Wit quality is a bounded 0.7–1.3 (max 1.4) multiplier (local judge default; LLM judge opt-in) and can never single-handedly decide a match."
@@ -38,8 +38,8 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   Raise, deploy, and the league self-plays in the Amphitheatre **Live Gallery**; you watch and climb ELO.
 - **Raise model:** seed **Strategy** at adopt; UI shows **temperament meters** (readout). Daily
   **Imprints** and fights move the dials — no free-drag training sliders.
-- **Identity:** unique Trainer names; optional Solana wallet to keep the name. Soft copy
-  (save / connect / keep). Token/`$ZING` deliberately deferred.
+- **Identity:** Trainers are nameless drivers; champions get unique names on claim/standings.
+  Optional Solana wallet is recovery only. Token/`$ZING` deliberately deferred.
 - **The bet:** the moat isn't the engine — it's original IP, the evolving battle meta, and a
   future creator economy. Built viral-first (climb boards, collection, clip-able moments).
 - **Open agent layer:** `act(view) → decision` (`docs/agent-protocol.md`). Default: single-shot
@@ -56,10 +56,12 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   Imprints, Promotion Trials, rival system, procedural ambience.
 - [x] **Phase 4 — Flight-First (CURRENT face).** Climb/Circuit 100-sector Ascent; two doors
   (mobile Take flight → Climb; desktop fly → pick); guest Climb; Solana Trainer identity;
-  unique Trainer names; temperament meters; robot brand mark; sector opens + life-continue.
-  Remaining: human playtests, key art, growth push after feel (`docs/flight-first-plan.md`).
+  unique champion names; temperament meters; robot brand mark; Peak-on-Tower; species kits
+  densified. **Launch v0.1 engineering closed.** Ops after: human playtests, key art,
+  growth push, weekly `@zingersHQ` notes (`docs/flight-first-plan.md`).
 - [~] **Phase 5 — Collection & creator economy.** Deterministic recruit (Crowns sink, earned
-  never rolled). Still owed: full roster server-sync, trading, user-made champions.
+  never rolled); species kits + Collection pager live. Still owed: full roster server-sync,
+  trading, user-made champions.
 - [ ] **Phase 6 — Proposed: Accounts & monetization.** Full cloud accounts, cosmetics, battle
   passes, "infinite battles." Token after traction.
 
@@ -97,23 +99,23 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
 
 ## Launch
 
-- **Status:** prelaunch. Live on `zingers.gg` / `zingers.org`. Launch v0.1 = measurable
-  Flight-First gates in `docs/flight-first-plan.md`, not a calendar date.
+- **Status:** **Launch v0.1 closed (engineering).** Live on `zingers.gg` / `zingers.org`.
+  Flight-First face shipped; see `docs/flight-first-plan.md`.
 
-### Launch v0.1 — definition of done (Flight-First)
+### Launch v0.1 — gates (closed)
 
-| Gate | Metric |
-|------|--------|
-| **1′** | Cold phone → flying &lt;10s after Take flight |
-| **2′** | Guest→claim visible on `/stats` MOBILE DOOR |
-| **3′** | Climb “one more run” feels good on real devices |
-| **4** | `LLM_DAILY_BUDGET_USD` set; Climb-heavy stays cheap |
-| **5** | Growth push only after the door feels good |
-| **6** | Secondary: evolution / collection loop |
-| **—** | Token deferred; wallet ≠ coin |
+| Gate | Metric | Status |
+|------|--------|--------|
+| **1′** | Cold phone → flying &lt;10s after Take flight | shipped (door + Climb) |
+| **2′** | Guest→claim visible on `/stats` MOBILE DOOR | shipped |
+| **3′** | Climb “one more run” feels good on real devices | shipped; ongoing human playtests |
+| **4** | `LLM_DAILY_BUDGET_USD` set; Climb-heavy stays cheap | set in production |
+| **5** | Growth push only after the door feels good | ops next (not a code blocker) |
+| **6** | Secondary: evolution / collection loop | shipped (species kits + Collection) |
+| **—** | Token deferred; wallet ≠ coin | still frozen |
 
-Supporting: waitlist / Discord / weekly `@zingersHQ` devlog still owed for distribution.
-`$ZING` model written (`docs/zing-model.md`) — awaiting founder sign-off; not a Climb blocker.
+Supporting: weekly `@zingersHQ` ship notes + Discord still owed for distribution.
+`$ZING` model written (`docs/zing-model.md`) — awaiting founder sign-off; not blocking.
 
 Explicitly **out of scope for v0.1:** full cloud accounts, real-money monetization, user-made
 champions, token launch, new venues as face work.
@@ -163,16 +165,16 @@ champions, token launch, new venues as face work.
 - Flight-First desktop door (fly → pick); mobile Climb feel / cruise; Ascent pad start; Reach terrain.
 - Champion biography stack (ledger, Saga, Homecoming, Imprints, Trials); snappy arena (1 LLM/turn + local judge).
 
-**In progress / next:**
-- Device playtests (Climb feel, sector card, Surge dive, boards).
-- Growth push only after feel acceptance; weekly `@zingersHQ` devlog cadence.
+**In progress / next (post–v0.1 ops):**
+- Post the Peak-on-Tower / Grounds polish ship note on `@zingersHQ`.
+- Human playtests (Climb feel, `/stats` MOBILE DOOR); growth push when ready.
 - Key art / share-card rasters (live WebGL hero covers homepage doors for now).
 - Roster cloud sync for recruit loop; Discord invite if still placeholder.
 
-**Forecast:** Prod has the Climb presentation + identity bundle. Next is feel smoke on live
-devices, then human playtests reading `/stats` MOBILE DOOR. Token stays frozen.
-**Risks:** Climb feel busy-ness (sector card + continue); onboarding length vs. fun; two-domain
-routing; LLM cost if league goes paid or tool-loop defaults flip on.
+**Forecast:** Launch v0.1 engineering closed. Next is distribution (ship notes, playtests,
+growth), then Phase 5 depth. Token stays frozen.
+**Risks:** Climb feel busy-ness; onboarding length vs. fun; two-domain routing; LLM cost if
+league goes paid or tool-loop defaults flip on.
 
 ## Open Questions
 

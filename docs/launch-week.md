@@ -1,9 +1,9 @@
 # ZINGERS — Launch-week plan (and the Flight-First reframe)
 
-> **Status (July 2026):** Most of P4 / Flight-First **shipped**. Treat this doc as
-> the historical plan + remaining ops checklist. **Live roadmap & phase checkboxes:**
-> [`flight-first-plan.md`](./flight-first-plan.md). Remaining: human playtests, key art,
-> growth push after Climb feel acceptance.
+> **Status (July 2026):** Launch v0.1 **engineering closed**. Treat this doc as the
+> historical plan + remaining **ops** checklist. **Live roadmap & phase checkboxes:**
+> [`flight-first-plan.md`](./flight-first-plan.md). Ops remaining: human playtests, key art,
+> growth push, weekly ship notes.
 >
 > **In short:** Ordered ship plan for Launch v0.1. P4 was the surgical recut of the
 > first 90 seconds to **wake → fly → claim → it flies beside you → climb → battles**.

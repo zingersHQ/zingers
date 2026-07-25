@@ -67,10 +67,10 @@ No new modes, Reach art sprees, collection trading, House promotion, token UI.
 | **2.3 Fantasy copy sweep** | shipped | `/howitworks` + intro/share surfaces; `/agents` stays technical |
 | **2.4–2.5 Solana wallet identity** | shipped | Phantom SIWS → `/api/solana-link`; Rank + Trainer code UI |
 | **3 Boards chrome** | mostly shipped | PB + board on Climb fall card |
-| **4 Playtests** | todo | 10–30 humans |
+| **4 Playtests** | ongoing ops | engineering bar met; keep 10–30 human sessions as post-launch |
 | **5 One altitude key** | shipped (thin) | Reach II needs 1 duel win (Climb + desktop Circuit) |
 | **6 Desktop first 90s** | shipped (corrected) | summoning → **pick** (not CircuitLite); native Circuit venue unlocked pre-duel. Mobile `/m` keeps Climb-first. |
-| **7 Hygiene** | todo | LLM budget, growth after feel |
+| **7 Hygiene** | shipped / ops | `LLM_DAILY_BUDGET_USD` set in prod; growth push + ship notes after feel |
 
 ---
 
@@ -103,3 +103,6 @@ No new modes, Reach art sprees, collection trading, House promotion, token UI.
 5. One raise bridge or motivated copy  
 6. Optional Phantom link; core loop wallet-free  
 7. No token UI · Crowns-only economy · LLM budget set  
+
+**Launch v0.1 (July 2026): engineering closed.** Gates above are live on `zingers.gg`.
+Human playtests and the growth push are post-launch ops, not open engineering blockers.
