@@ -109,7 +109,7 @@ social copy):
 | The bottom-tab shell (`components/mobile/mobile-shell.tsx`), all five tabs | The **default door** is no longer the Today tab |
 | Phone = spectate/predict/share lane as the *depth* behind the door | The *door* is the Climb (perform first, care later) |
 | "One soul, native bodies", every verb's atom | Climb gains a **guest mode** (see 3.3. The atom is preserved) |
-| No login; identity = device token (`lib/owner.ts`) | Copy: never "sign in". **"Claim a mind"** |
+| No login; identity = device token (`lib/owner.ts`). Champions named on standings claim (`champion-names`) | Copy: never "sign in". **"Claim a mind"** |
 
 ### 3.2 The first screen: the poster
 

@@ -261,17 +261,12 @@ export async function checkTrainerName(rawName: string, ownerToken?: string): Pr
   return { status: "taken", name };
 }
 
-/** Server-authoritative board / HUD label for an owner token. */
+/** Board stub for a Trainer — nameless driver (no vanity handles). */
 export async function resolveTrainerLabel(ownerToken: string): Promise<string> {
   const store = solanaLinks();
   const pubkey = await store.getPubkey(ownerToken);
-  if (!pubkey) return shortOwnerLabel(ownerToken);
-  const name = await store.getName(pubkey);
-  if (name) {
-    await ensureLegacyClaim(store, pubkey, name);
-    return name;
-  }
-  return shortPubkey(pubkey);
+  if (pubkey) return shortPubkey(pubkey);
+  return shortOwnerLabel(ownerToken);
 }
 
 export async function verifyAndLink(opts: {
@@ -315,35 +310,23 @@ export async function verifyAndLink(opts: {
   const ownerToken = restored && existing ? existing : opts.ownerToken;
   if (!restored) await store.link(opts.ownerToken, pubkey);
 
-  let nameError: string | undefined;
-  const incoming = cleanTrainerName(opts.name);
-  if (incoming) {
-    const claimed = await claimNameForPubkey(pubkey, incoming);
-    if (!claimed.ok) nameError = claimed.error;
-  }
-
-  const name = (await store.getName(pubkey)) || null;
-  return { ok: true, pubkey, name, nameError, ownerToken, restored };
+  // Trainers stay nameless — wallet only restores career. Champion names are separate.
+  void opts.name;
+  return { ok: true, pubkey, name: null, ownerToken, restored };
 }
 
 export async function linkedIdentity(ownerToken: string): Promise<{ pubkey: string | null; name: string | null }> {
   const store = solanaLinks();
   const pubkey = await store.getPubkey(ownerToken);
-  if (!pubkey) return { pubkey: null, name: null };
-  const name = await store.getName(pubkey);
-  if (name) await ensureLegacyClaim(store, pubkey, name);
-  return { pubkey, name };
+  return { pubkey, name: null };
 }
 
-/** Persist a unique Trainer name onto the linked key. Requires an active link. */
+/** Vanity Trainer names removed — champions carry Ubuntu-style names instead. */
 export async function setLinkedName(
-  ownerToken: string,
-  rawName: string,
+  _ownerToken: string,
+  _rawName: string,
 ): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
-  const store = solanaLinks();
-  const pubkey = await store.getPubkey(ownerToken);
-  if (!pubkey) return { ok: false, error: "Connect first to lock a name." };
-  return claimNameForPubkey(pubkey, rawName);
+  return { ok: false, error: "Trainer names are not used. Champions get names on the board." };
 }
 
 export async function linkedPubkey(ownerToken: string): Promise<string | null> {

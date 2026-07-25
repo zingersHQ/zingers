@@ -156,7 +156,7 @@ export function MobileRank() {
                     {isMine && <span className="mono" style={{ fontSize: 7.5, color: col, border: `1px solid ${col}`, borderRadius: 4, padding: "1px 4px", flexShrink: 0 }}>YOURS</span>}
                   </div>
                   <div className="mono" style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {forceName(c.type)} · {c.handle || (c.house ? "League" : "anon")}
+                    {forceName(c.type)} · {c.house ? "League" : c.key}
                     {c.brain.provider === "http" && <Plug size={9} strokeWidth={2} style={{ display: "inline", marginLeft: 4, verticalAlign: "-1px" }} />}
                   </div>
                   <div style={{ width: "100%", height: 3, borderRadius: 9, background: "var(--line)", marginTop: 5, overflow: "hidden" }}>

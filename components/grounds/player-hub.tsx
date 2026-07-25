@@ -18,7 +18,6 @@ import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
 import { readerSaga, SAGA } from "@/lib/lore/saga";
 import { HUB_NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
-import { getHandle, setHandle as persistHandle } from "@/lib/owner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { RobotMark } from "@/components/brand/robot-mark";
@@ -40,6 +39,7 @@ export function PlayerHub({
   hudDim,
   highlight,
   onHighlightOpen,
+  onOpen,
   onTakeFlight,
   onOpenControls,
   onOpenSettings,
@@ -59,6 +59,8 @@ export function PlayerHub({
   highlight?: boolean;
   /** Fired when the trainer opens the hub during the objectives coach. */
   onHighlightOpen?: () => void;
+  /** Any time the hub slide-over opens (dismiss orphan toasts above). */
+  onOpen?: () => void;
   /** Jump straight into Flight for the current world (no mountain hunt). */
   onTakeFlight?: () => void;
   onOpenControls: () => void;
@@ -68,14 +70,6 @@ export function PlayerHub({
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const [open, setOpen] = useState(false);
-  const [handle, setHandleState] = useState("");
-  const [nameDraft, setNameDraft] = useState("");
-
-  useEffect(() => {
-    const h = getHandle();
-    setHandleState(h);
-    setNameDraft(h);
-  }, [open]);
 
   const tl = trainerLevel(trainerXp);
   const saga = readerSaga(trainerXp);
@@ -83,20 +77,13 @@ export function PlayerHub({
   const fm = force ? forceMeta(force) : null;
   const rankFrac = Math.max(0.03, Math.min(1, tl.into / tl.span));
 
-  const claimLocalName = () => {
-    const n = nameDraft.trim().slice(0, 24);
-    if (n.length < 2) return;
-    persistHandle(n);
-    setHandleState(n);
-    setNameDraft(n);
-  };
-
   const close = useCallback(() => setOpen(false), []);
 
   const openHub = useCallback(() => {
     setOpen(true);
+    onOpen?.();
     if (highlight) onHighlightOpen?.();
-  }, [highlight, onHighlightOpen]);
+  }, [highlight, onHighlightOpen, onOpen]);
 
   // M toggles the hub; Esc closes it (the grounds screen owns Esc→settings only
   // while the hub is shut).
@@ -115,14 +102,17 @@ export function PlayerHub({
         e.preventDefault();
         setOpen((v) => {
           const next = !v;
-          if (next && highlight) onHighlightOpen?.();
+          if (next) {
+            onOpen?.();
+            if (highlight) onHighlightOpen?.();
+          }
           return next;
         });
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [open, highlight, onHighlightOpen]);
+  }, [open, highlight, onHighlightOpen, onOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -190,12 +180,7 @@ export function PlayerHub({
           <RobotMark size={isMobile ? 17 : 18} />
         </span>
         <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.05, minWidth: 0 }}>
-          {handle ? (
-            <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 800, color: fc, maxWidth: isMobile ? 72 : 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {handle}
-            </span>
-          ) : null}
-          <span style={{ fontSize: handle ? 10 : isMobile ? 13 : 14, fontWeight: handle ? 700 : 800, color: handle ? "var(--muted2)" : fc }}>
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: fc }}>
             Level {tl.level}
           </span>
         </span>
@@ -273,7 +258,7 @@ export function PlayerHub({
                   {force ? EMBLEM[force] : <Shield size={20} strokeWidth={2.2} />}
                 </span>
                 <div style={{ lineHeight: 1.15 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800 }}>{handle || "Trainer"} · Level {tl.level}</div>
+                  <div style={{ fontSize: 17, fontWeight: 800 }}>Trainer · Level {tl.level}</div>
                   <div className="mono" style={{ fontSize: 10, letterSpacing: 0.5, color: "var(--muted)", marginTop: 2 }}>
                     {tl.title.toUpperCase()} · {fm ? fm.name.toUpperCase() : "NO CLAN YET"}
                   </div>
@@ -307,45 +292,6 @@ export function PlayerHub({
                 Take flight{inRegion ? ` · ${regionName}` : ""}
               </button>
             )}
-
-            {/* soft Trainer name — device-local; wallet can lock uniqueness later */}
-            <div style={{ marginTop: 12, padding: "10px 11px", borderRadius: 10, border: "1px solid var(--line)", background: "rgba(255,255,255,.03)" }}>
-              <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: "var(--muted2)", marginBottom: 6 }}>
-                TRAINER NAME
-              </div>
-              <div style={{ display: "flex", gap: 7 }}>
-                <input
-                  value={nameDraft}
-                  onChange={(e) => setNameDraft(e.target.value.slice(0, 24))}
-                  onKeyDown={(e) => { if (e.key === "Enter") claimLocalName(); }}
-                  placeholder="Claim a name"
-                  maxLength={24}
-                  aria-label="Trainer name"
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    background: "var(--panel2)",
-                    border: "1px solid var(--line2)",
-                    borderRadius: 8,
-                    color: "var(--ink)",
-                    padding: "7px 9px",
-                    fontSize: 13,
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={nameDraft.trim().length < 2 || nameDraft.trim() === handle}
-                  onClick={claimLocalName}
-                  style={{ ["--ac" as string]: fc, fontSize: 12, padding: "7px 11px", opacity: nameDraft.trim().length < 2 || nameDraft.trim() === handle ? 0.5 : 1 }}
-                >
-                  {handle ? "Save" : "Claim"}
-                </button>
-              </div>
-              <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                Optional. Shown in your hub — wallet can keep it across devices later.
-              </p>
-            </div>
 
             {/* rank + crowns */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
@@ -512,10 +458,10 @@ export function PlayerHub({
               </button>
             </div>
 
-            {/* ── NAVIGATE ── */}
+            {/* ── NAVIGATE (Learn / Build only — Collection & Rank live under Portfolio) ── */}
             <SectionLabel>Navigate</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {HUB_NAV_GROUPS.filter((g) => g.id !== "play").map((group) => (
+              {HUB_NAV_GROUPS.filter((g) => g.id !== "play" && g.id !== "you").map((group) => (
                 <div key={group.id}>
                   <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>{group.label.toUpperCase()}</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>

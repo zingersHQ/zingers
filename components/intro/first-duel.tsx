@@ -23,7 +23,6 @@ import { FIGHT, READER_COPY } from "@/lib/player-copy";
 import { ReaderSplitBadge } from "@/components/intro/reader-split-badge";
 import { TRAIN_COST, useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
-import { getHandle } from "@/lib/owner";
 import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
 import { ICON, ONBOARDING_BG, forceSigil } from "@/lib/iconography";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
@@ -565,8 +564,6 @@ function cardShareUrl(key: string, champion: Champion) {
     const ar = Math.max(camps, fromBest);
     if (ar > 0) p.set("ar", String(ar));
   }
-  const handle = getHandle();
-  if (handle) p.set("by", handle.slice(0, 24));
   const nick = useChampions.getState().getRecipe(key).nick;
   if (nick) p.set("n", nick.slice(0, 24));
   return `${window.location.origin}/c/${key}?${p.toString()}`;

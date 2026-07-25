@@ -1905,7 +1905,15 @@ export default function CircuitLite({
         <div style={{ position: "absolute", inset: 0, zIndex: 22, pointerEvents: "none", boxShadow: "inset 0 0 90px 12px rgba(255,74,106,.55)", background: "radial-gradient(circle at center, transparent 55%, rgba(255,74,106,.18) 100%)" }} />
       )}
 
-      <FlightTeachToast message={teachMsg} accent={accent} />
+      {/* Teach toast only while flying — never over fail/done/prove sheets */}
+      {phase !== "failed" &&
+        phase !== "done" &&
+        phase !== "continue" &&
+        phase !== "prove" &&
+        phase !== "ceiling" &&
+        phase !== "ranklock" && (
+        <FlightTeachToast message={teachMsg} accent={accent} />
+      )}
 
       {/* Guests: top-right claim (continue). Owned/standalone: leave chrome. */}
       {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && phase !== "ranklock" && (
@@ -1972,8 +1980,12 @@ export default function CircuitLite({
 
       {overtakeToast &&
         phase !== "failed" &&
+        phase !== "done" &&
         phase !== "continue" &&
-        phase !== "prove" && (
+        phase !== "prove" &&
+        phase !== "sector" &&
+        phase !== "ceiling" &&
+        phase !== "ranklock" && (
         <ChallengeOvertakeToast
           name={challenge?.name}
           accent={accent}

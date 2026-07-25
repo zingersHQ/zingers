@@ -17,7 +17,7 @@ import {
   MAX_GAUNTLET_PAYOUTS_PER_DAY,
 } from "@/lib/economy";
 import { getStore } from "@/lib/server/store";
-import { resolveTrainerLabel } from "@/lib/server/solana-link";
+import { shortOwnerLabel } from "@/lib/trainer-label";
 import { track } from "@/lib/server/track";
 
 export type CircuitBody = "thumb" | "flight";
@@ -211,7 +211,7 @@ export async function submitCircuitRun(
   rejected?: string;
 }> {
   const tok = token.slice(0, 128);
-  const handle = (await resolveTrainerLabel(tok)).slice(0, 48);
+  const handle = shortOwnerLabel(tok);
   const s = Math.max(0, Math.min(MAX_SECTORS, Math.floor(sectors)));
   const ms = Math.max(0, Math.min(MAX_MS, Math.floor(totalMs)));
   // Server decides clear — client flag is ignored.
@@ -316,7 +316,7 @@ export async function getPublicCircuitBoard(
   const labelFor = async (tok: string) => {
     const hit = labelCache.get(tok);
     if (hit) return hit;
-    const label = await resolveTrainerLabel(tok);
+    const label = shortOwnerLabel(tok);
     labelCache.set(tok, label);
     return label;
   };

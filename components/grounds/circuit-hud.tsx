@@ -1003,7 +1003,7 @@ function CircuitBoardPanel({
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>…</div>
       ) : named.length === 0 ? (
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.4 }}>
-          no runs yet. Claim a name in Standings
+          no runs yet. Join the standings board to place
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

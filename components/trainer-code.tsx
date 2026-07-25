@@ -51,7 +51,7 @@ export function TrainerCode({ onHandle }: { onHandle?: (name: string | null) => 
         TRAINER
       </div>
       <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 12px" }}>
-        Optional wallet (keeps name + career across devices) and recovery code (backup). Nothing here is required to play.
+        Optional wallet keeps your career across devices; recovery code is the backup. Champions get names on the board. Nothing here is required to play.
       </p>
 
       <SolanaConnect onIdentity={onHandle} />

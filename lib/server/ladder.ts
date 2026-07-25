@@ -10,6 +10,7 @@ import { getStore, type FeedEntry, type LadderChampion } from "./store";
 import { creditWarWin } from "./war";
 import { track } from "./track";
 import { safeHttpAgentEndpoint } from "./url-safety";
+import { ensureChampionName } from "./champion-names";
 
 export const BASE_RATING = 1000;
 const ELO_K = 32;
@@ -96,11 +97,18 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
   const endpoint = input.brain?.provider === "http" && input.brain.endpoint ? await safeHttpAgentEndpoint(input.brain.endpoint) : null;
   if (input.brain?.provider === "http" && input.brain.endpoint && !endpoint) return { error: "agent endpoint must be a public https URL" };
   const brain = endpoint ? { provider: "http" as const, endpoint } : { provider: "grok" as const };
+  // Unique Ubuntu-style champion name — Trainers stay nameless drivers.
+  // Ignore client free-text name/handle.
+  void input.name;
+  void input.handle;
+  const id = shortId();
+  const owner = input.ownerToken.slice(0, 64);
+  const name = await ensureChampionName(id, `${owner}:${key}:${id}`);
   const champ: LadderChampion = {
-    id: shortId(),
+    id,
     key,
-    name: (input.name?.trim() || base.name).slice(0, 24),
-    handle: (input.handle?.trim() || "").slice(0, 24),
+    name,
+    handle: "",
     type: base.type as CreatureType,
     brain,
     strat: {
@@ -113,7 +121,7 @@ export async function claimChampion(input: ClaimInput): Promise<LadderChampion |
     losses: 0,
     battles: 0,
     house: false,
-    ownerToken: input.ownerToken.slice(0, 64),
+    ownerToken: owner,
     createdAt: Date.now(),
   };
   const store = getStore();
@@ -139,12 +147,24 @@ export async function ensureMirror(
   const store = getStore();
   const owned = await store.getOwned(ownerToken);
   const existing = owned.find((c) => c.key === K && !c.house);
-  if (existing) return existing;
+  if (existing) {
+    const live = await ensureChampionName(existing.id, `${ownerToken}:${K}:${existing.id}`);
+    if (existing.name !== live || existing.handle) {
+      const next = { ...existing, name: live, handle: "" };
+      await store.putChampion(next);
+      return next;
+    }
+    return existing;
+  }
+  void handle; // client free-text ignored
+  const id = shortId();
+  const owner = ownerToken.slice(0, 64);
+  const name = await ensureChampionName(id, `${owner}:${K}:${id}`);
   const champ: LadderChampion = {
-    id: shortId(),
+    id,
     key: K,
-    name: base.name,
-    handle: (handle?.trim() || "").slice(0, 24),
+    name,
+    handle: "",
     type: base.type as CreatureType,
     brain: { provider: "grok" },
     strat: {
@@ -157,7 +177,7 @@ export async function ensureMirror(
     losses: 0,
     battles: 0,
     house: false,
-    ownerToken: ownerToken.slice(0, 64),
+    ownerToken: owner,
     createdAt: Date.now(),
   };
   await store.putChampion(champ);
@@ -385,7 +405,19 @@ export async function challengeChampion(
 
 export async function getLadder(limit = 50): Promise<LadderChampion[]> {
   await ensureSeeded();
-  return getStore().topChampions(limit);
+  const store = getStore();
+  const rows = await store.topChampions(limit);
+  // Ensure every player champion has a unique Ubuntu-style name (migrate old rows once).
+  return Promise.all(
+    rows.map(async (c) => {
+      if (c.house) return c;
+      const live = await ensureChampionName(c.id, `${c.ownerToken}:${c.key}:${c.id}`);
+      if (c.name === live && !c.handle) return c;
+      const next = { ...c, name: live, handle: "" };
+      await store.putChampion(next);
+      return next;
+    }),
+  );
 }
 
 export async function getFeed(limit = 20): Promise<FeedEntry[]> {

@@ -10,6 +10,7 @@ import { recruitSlotsOpen } from "@/lib/unlock-ladder";
 import { RECRUIT_COST } from "@/lib/economy";
 import { ChampionCardFrame, DEX_MIND_KEYS } from "@/components/collection/card-frame";
 import { SeasonBanner } from "@/components/lore/season-banner";
+import { GalleryPager } from "@/components/bible/gallery-pager";
 
 export default function CollectionPage() {
   const progress = useChampions((s) => s.progress);
@@ -60,8 +61,11 @@ export default function CollectionPage() {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
-        {cards.map((c) => {
+      {/* Page so only a few WebGL portraits mount (same floor as bible gallery). */}
+      <GalleryPager
+        label="collection"
+        minCol={280}
+        items={cards.map((c) => {
           const isOwned = mounted && owned === c.key;
           const mine = mounted && isRecruited(c.key);
           return (
@@ -93,7 +97,7 @@ export default function CollectionPage() {
             </Link>
           );
         })}
-      </div>
+      />
     </main>
   );
 }

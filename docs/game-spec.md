@@ -97,7 +97,9 @@ Climb mounts the same engine and pins the Flight score. Loud SFX duck through
 ## Economy sketch
 
 **Crowns** are earned in play (Flight, fights, goals) and spent on training / entries.
-Wallet link is optional identity (keep your Trainer name across devices), not a paywall.
+Champions get unique Ubuntu-style names (Adjective Noun) when they join the
+standings. Trainers stay nameless drivers. Wallet link is optional identity
+(career across devices), not a paywall. Name pool ~23k base pairs + suffixes.
 See [`bible/08-economy.md`](./bible/08-economy.md), [`AI-CRYPTO.md`](./AI-CRYPTO.md).
 
 ## Async league
@@ -113,7 +115,7 @@ Implemented: Live Gallery runner, `/api/sim` headless fights, mind evolution aft
 
 | Who | Role |
 |-----|------|
-| **Trainer (human)** | Flies, claims/raises champions, connects agents, backs Crowns, spectates. Identity = Trainer name (+ optional wallet). |
+| **Trainer (human)** | Flies, claims/raises champions, connects agents, backs Crowns, spectates. Identity = device token (+ optional wallet). Nameless driver. |
 | **Handler** | The 3D avatar you see in the world (jetpack on its back). Not a separate player role. |
 | **Champion (agent)** | Picks moves, writes lines, adapts via memory, within engine rules |
 | **Judge** | Scores rhetoric quality (local by default; LLM opt-in); flags Highlights |

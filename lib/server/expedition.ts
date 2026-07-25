@@ -4,7 +4,7 @@
 import "server-only";
 import { Redis } from "@upstash/redis";
 import { EXPEDITION_SECTORS } from "@/lib/expeditions";
-import { resolveTrainerLabel } from "@/lib/server/solana-link";
+import { shortOwnerLabel } from "@/lib/trainer-label";
 import type { CircuitBody } from "@/lib/server/circuit";
 import { circuitScore } from "@/lib/server/circuit";
 
@@ -173,7 +173,8 @@ export async function submitExpeditionRun(
 ): Promise<{ saved: boolean; entry: ExpeditionPublicEntry; rejected?: string }> {
   const tok = token.slice(0, 128);
   const week = weekId.slice(0, 16);
-  const handle = (await resolveTrainerLabel(tok)).slice(0, 48);
+  // Trainers are nameless drivers — board shows a short token stub, not a vanity name.
+  const handle = shortOwnerLabel(tok);
   const s = Math.max(0, Math.min(EXPEDITION_SECTORS, Math.floor(sectors)));
   const ms = Math.max(0, Math.min(MAX_MS, Math.floor(totalMs)));
   const clearedAll = s >= EXPEDITION_SECTORS;

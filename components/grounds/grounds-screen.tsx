@@ -2898,7 +2898,8 @@ export default function GroundsScreen({
   // dialogues and other overlays.
   const cinematicOpen =
     seasonBeat || !!rivalBeat || !!wakeKey || !!flightKey || imprintTease || !!keeperIntroPending || !!companionBeat || !!trialNom || !!clanCeremony;
-  const worldUiBlocked =
+  /** Sheets / cinematics that must own the screen alone — no orphan toasts on top. */
+  const sheetOwnsScreen =
     showMatch ||
     overlay !== "none" ||
     !!gRun ||
@@ -2907,7 +2908,9 @@ export default function GroundsScreen({
     controlsOpen ||
     settingsOpen ||
     clanOpen ||
-    cinematicOpen ||
+    cinematicOpen;
+  const worldUiBlocked =
+    sheetOwnsScreen ||
     !!nodeFlash ||
     !!goalFlash ||
     !!evoFlash ||
@@ -2915,6 +2918,31 @@ export default function GroundsScreen({
   const showCompass = showHud && !worldUiBlocked && owned && !isHub && !inVenue;
   // Reserve bottom space only when the compass is actually visible.
   const compassReserve = showCompass ? (isMobile ? 84 : 104) : 0;
+
+  // Kill ephemeral chrome the moment another surface owns the screen.
+  useEffect(() => {
+    if (!sheetOwnsScreen) return;
+    setModeLockToast(null);
+    setNodeFlash(null);
+    setGoalFlash(null);
+    setEvoFlash(null);
+    setPledgeFlash(null);
+    setCircuitOvertakeToast(false);
+    setCircuitTeachMsg(null);
+    if (nodeFlashTimer.current) clearTimeout(nodeFlashTimer.current);
+    if (goalFlashTimer.current) clearTimeout(goalFlashTimer.current);
+    if (evoFlashTimer.current) clearTimeout(evoFlashTimer.current);
+    if (pledgeFlashTimer.current) clearTimeout(pledgeFlashTimer.current);
+    if (circuitTeachTimer.current != null) {
+      window.clearTimeout(circuitTeachTimer.current);
+      circuitTeachTimer.current = null;
+    }
+  }, [sheetOwnsScreen]);
+  useEffect(() => {
+    if (!modeLockToast) return;
+    const t = window.setTimeout(() => setModeLockToast(null), 4200);
+    return () => window.clearTimeout(t);
+  }, [modeLockToast]);
 
   // Empathy beat: after the Concord coach ends and they land in a region, their
   // champion asks for one Imprint — then a soft raise nudge (not the full Train sheet).
@@ -3408,14 +3436,22 @@ export default function GroundsScreen({
           hudDim={hudDim}
           highlight={goalCoach && !isHub && !inVenue && liveGoals.length > 0}
           onHighlightOpen={dismissGoalCoach}
+          onOpen={() => setModeLockToast(null)}
           onTakeFlight={!inVenue ? goFlight : undefined}
-          onOpenControls={() => setControlsOpen(true)}
-          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenControls={() => {
+            setModeLockToast(null);
+            setControlsOpen(true);
+          }}
+          onOpenSettings={() => {
+            setModeLockToast(null);
+            setSettingsOpen(true);
+          }}
           onOpenClan={() => {
             if (modesLocked) {
               setModeLockToast("Finish your first duel to unlock Clans.");
               return;
             }
+            setModeLockToast(null);
             setClanPreselect(null);
             setClanOpen(true);
           }}
@@ -3505,8 +3541,8 @@ export default function GroundsScreen({
         </div>
       )}
 
-      {/* cache-claimed celebration */}
-      {nodeFlash && (
+      {/* cache-claimed celebration — never over a sheet/modal */}
+      {nodeFlash && !sheetOwnsScreen && (
         <Celebration
           tone="good"
           accent={nodeFlash.fragments > 0 ? "#39e0ff" : "#f0a93a"}
@@ -3614,9 +3650,12 @@ export default function GroundsScreen({
 
       {activeVenue === "circuit" &&
         circuitOvertakeToast &&
+        !sheetOwnsScreen &&
         circuitPhase !== "failed" &&
+        circuitPhase !== "done" &&
         circuitPhase !== "continue" &&
-        circuitPhase !== "prove" && (
+        circuitPhase !== "prove" &&
+        circuitPhase !== "sector" && (
           <ChallengeOvertakeToast
             name={circuitChallenge?.name}
             accent={circuitReach.accent}
@@ -3710,7 +3749,7 @@ export default function GroundsScreen({
         />
       )}
 
-      {goalCoach && owned && !claiming && !isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !worldUiBlocked && liveGoals.length > 0 && readerSplitStep === null && (
+      {goalCoach && owned && !sheetOwnsScreen && !isHub && !inVenue && liveGoals.length > 0 && readerSplitStep === null && (
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
       )}
 
@@ -3741,7 +3780,7 @@ export default function GroundsScreen({
       )}
 
       {/* Quiet first-land coach — one line, lit gate in the world does the rest. */}
-      {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !claimArriveCover && near?.kind !== "gate" && (
+      {concordCoach && guideNudge && readerSplitStep === null && owned && isHub && !inVenue && !sheetOwnsScreen && !inFirstDuelSetup && !claimArriveCover && near?.kind !== "gate" && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div
             className="panel pop"
@@ -3763,7 +3802,7 @@ export default function GroundsScreen({
         </div>
       )}
 
-      {readerSplitStep !== null && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+      {readerSplitStep !== null && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
             {readerSplitStep === 0 ? (
@@ -3794,7 +3833,7 @@ export default function GroundsScreen({
       )}
 
       {/* After Train — send them to the Arena (this region's fight pit), not another menu. */}
-      {arenaFightCoach && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && (
+      {arenaFightCoach && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--good)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--good)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--good)", marginBottom: 6 }}>NEXT · A REAL FIGHT</div>
@@ -3822,7 +3861,7 @@ export default function GroundsScreen({
       )}
 
       {/* First region: after Imprint — one soft raise nudge. No Crowns / pad essay. */}
-      {regionRaiseCoach && !isHub && owned && !showMatch && overlay === "none" && !gRun && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
+      {regionRaiseCoach && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 420, width: "100%", padding: "14px 16px", borderColor: "var(--gold)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>RAISE YOUR CHAMPION</div>
@@ -3851,7 +3890,7 @@ export default function GroundsScreen({
 
       {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
-      {clanInvite && owned && !store.force && !modesLocked && !showMatch && overlay === "none" && !result && !gRun && !clanOpen && (
+      {clanInvite && owned && !store.force && !modesLocked && !sheetOwnsScreen && !result && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
@@ -3865,7 +3904,7 @@ export default function GroundsScreen({
       )}
 
       {/* goal-cleared celebration (peak / depth / secret) */}
-      {goalFlash && (
+      {goalFlash && !sheetOwnsScreen && (
         <Celebration
           tone="epic"
           accent={goalFlash.goalKind === "secret" ? "#c77dff" : goalFlash.goalKind === "depth" ? "#39e0ff" : "#f0a93a"}
@@ -3880,7 +3919,7 @@ export default function GroundsScreen({
       )}
 
       {/* tier-up celebration — your champion's body just evolved a new part */}
-      {evoFlash && (
+      {evoFlash && !sheetOwnsScreen && (
         <Celebration
           tone="epic"
           accent={byKey[evoFlash.key] ? TYPE_COLOR[byKey[evoFlash.key].type] : "var(--gold)"}
@@ -3918,7 +3957,7 @@ export default function GroundsScreen({
       )}
 
       {/* clan-joined celebration — brief after the ceremony (or immediately if reduced motion) */}
-      {pledgeFlash && !clanCeremony && (
+      {pledgeFlash && !sheetOwnsScreen && !clanCeremony && (
         <Celebration
           tone="pledge"
           accent={pledgeFlash.color}
@@ -3970,11 +4009,11 @@ export default function GroundsScreen({
         />
       )}
 
-      {modeLockToast && (
-        <div style={{ position: "absolute", bottom: 120, left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 90, pointerEvents: "none", padding: "0 16px" }}>
+      {modeLockToast && !sheetOwnsScreen && (
+        <div style={{ position: "absolute", bottom: 120, left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 48, pointerEvents: "none", padding: "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", padding: "10px 14px", fontSize: 13, maxWidth: 360, textAlign: "center" }}>
             {modeLockToast}
-            <button onClick={() => setModeLockToast(null)} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, marginLeft: 10, padding: "2px 8px" }}>
+            <button type="button" onClick={() => setModeLockToast(null)} className="btn" style={{ ["--ac" as string]: "var(--line2)", fontSize: 11, marginLeft: 10, padding: "2px 8px" }}>
               OK
             </button>
           </div>

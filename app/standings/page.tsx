@@ -5,7 +5,7 @@ import { Plug, Swords } from "lucide-react";
 import type { CreatureType, RosterEntry } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
-import { getHandle, getOwnerToken, setHandle as persistHandle } from "@/lib/owner";
+import { getOwnerToken } from "@/lib/owner";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { TrainerCode } from "@/components/trainer-code";
 
@@ -44,10 +44,8 @@ export default function StandingsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const tokenRef = useRef("");
 
-  // claim form
+  // claim form — champion name is server-assigned (Ubuntu-style); no free text
   const [pick, setPick] = useState("");
-  const [name, setName] = useState("");
-  const [handle, setHandle] = useState("");
   const [brain, setBrain] = useState<"grok" | "http">("grok");
   const [endpoint, setEndpoint] = useState("");
   const [dials, setDials] = useState({ risk: 50, focus: 50, aggression: 50 });
@@ -71,7 +69,6 @@ export default function StandingsPage() {
 
   useEffect(() => {
     tokenRef.current = getOwnerToken();
-    setHandle(getHandle());
     fetch("/api/roster").then((r) => r.json()).then((d) => {
       setRoster(d.creatures);
       setPick(d.creatures[0]?.key || "");
@@ -90,22 +87,18 @@ export default function StandingsPage() {
   const claim = async () => {
     if (!pick) return;
     setBusy("claim");
-    persistHandle(handle);
     const res = await fetch("/api/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ownerToken: tokenRef.current,
-        handle,
         key: pick,
-        name,
         brain: brain === "http" && endpoint ? { provider: "http", endpoint } : { provider: "grok" },
         strat: dials,
       }),
     }).then((r) => r.json());
     setBusy(null);
     if (res.error) return flash(`Could not claim: ${res.error}`);
-    setName("");
     flash(`${res.champion.name} joined the standings.`);
     await Promise.all([refresh(), loadOwned()]);
   };
@@ -181,7 +174,7 @@ export default function StandingsPage() {
                     {mine && <span className="mono" style={{ fontSize: 8, color: col, border: `1px solid ${col}`, borderRadius: 5, padding: "1px 5px" }}>YOURS</span>}
                   </div>
                   <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {forceName(c.type)} · {c.handle || (c.house ? "League" : "anon")} · {c.brain.provider === "http" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> agent</span> : "House Grok"}
+                    {forceName(c.type)} · {c.house ? "League" : rosterByKey[c.key]?.name || c.key} · {c.brain.provider === "http" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> agent</span> : "House Grok"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 92 }}>
@@ -210,23 +203,20 @@ export default function StandingsPage() {
 
         {/* ── Side: identity + claim + feed ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 76 }}>
-          <TrainerCode onHandle={(n) => { if (n) setHandle(n); }} />
+          <TrainerCode />
 
           {/* claim */}
           <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE BOARD</div>
-            {handle ? (
-              <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px" }}>
-                Entering as <span style={{ color: "var(--ink)" }}>{handle}</span>
-              </p>
-            ) : null}
+            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px", lineHeight: 1.45 }}>
+              They get a unique name when they join. You stay the driver.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <select value={pick} onChange={(e) => setPick(e.target.value)} style={inputStyle}>
                 {roster.map((r) => (
                   <option key={r.key} value={r.key}>{r.name} · {r.type}</option>
                 ))}
               </select>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`champion name (default ${rosterByKey[pick]?.name || "-"})`} maxLength={24} style={inputStyle} />
 
               <div style={{ display: "flex", gap: 6 }}>
                 {(["grok", "http"] as const).map((b) => (
