@@ -320,6 +320,9 @@ export default function World({
   circuitGhostRunStartMs = 0,
   circuitGhostSectorKey = 0,
   circuitGoldIndex,
+  circuitFogNearMult = 1,
+  circuitMoteColor = null,
+  circuitWarm = false,
   ascentReaches = 0,
   ascentSigilAccent,
   worldLife,
@@ -402,6 +405,12 @@ export default function World({
   circuitGhostRunStartMs?: number;
   /** Remount key so the ghost pair resets on sector change. */
   circuitGhostSectorKey?: number;
+  /** Sector modifier fog pull (Duskfall) × Conditions — Climb parity. */
+  circuitFogNearMult?: number;
+  /** Golden Hour / Condition mote tint. */
+  circuitMoteColor?: string | null;
+  /** Golden Hour warm exposure bump. */
+  circuitWarm?: boolean;
   worldLife?: WorldLife;
   trainerXp?: number;
   /** phone / low-power: drop shadows, IBL, bloom — the scene still runs but won't melt the GPU */
@@ -424,6 +433,9 @@ export default function World({
     return theme === "light" ? daylightBiome(skin) : skin;
   }, [inCircuit, venueHostWorldId, theme, biome]);
   const circuitDressTier = gpuLite ? "low" : gfxTier === "low" ? "mid" : gfxTier;
+  const circuitFogNear = Math.max(12, 35 * Math.max(0.35, circuitFogNearMult));
+  const circuitExposure = biome.exposure * (circuitWarm ? 1.08 : 1);
+  const circuitMotes = circuitMoteColor || biome.lights.arenaPoint;
   const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false, bodyReady: false });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
@@ -697,13 +709,13 @@ export default function World({
         });
       }}
     >
-      <ExposureSync exposure={biome.exposure} />
+      <ExposureSync exposure={inCircuit ? circuitExposure : biome.exposure} />
       {/* auto-scale render resolution when the GPU can't keep up, so frame drops
           (which read as movement stutter) self-correct instead of compounding */}
       <PerformanceMonitor />
       <AdaptiveDpr pixelated={false} />
       <color attach="background" args={[biome.bg]} />
-      <fog attach="fog" args={[biome.fog.color, inCircuit ? 35 : biome.fog.near, inCircuit ? 200 : biome.fog.far]} />
+      <fog attach="fog" args={[biome.fog.color, inCircuit ? circuitFogNear : biome.fog.near, inCircuit ? 200 : biome.fog.far]} />
       <AltitudeAdaptive baseFogFar={inCircuit ? 200 : biome.fog.far} />
 
       <SkyDome biome={biome} />
@@ -755,7 +767,7 @@ export default function World({
             />
             <ClimbDriftMotes
               track={circuitTrack}
-              accent={biome.lights.arenaPoint}
+              accent={circuitMotes}
               countScale={climbMoteScale(circuitSectorIdx)}
             />
           </Suspense>

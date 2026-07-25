@@ -37,7 +37,7 @@ export interface ExpeditionPublicBoard {
 
 const BOARD_CAP = 50;
 const MAX_MS = 90 * 60 * 1000;
-const MIN_MS_PER_SECTOR = 250;
+const MIN_MS_PER_SECTOR = 400;
 
 const boardKey = (weekId: string, body: CircuitBody) => `z:expedition:board:${weekId}:${body}`;
 const entryKey = (weekId: string, body: CircuitBody, token: string) =>

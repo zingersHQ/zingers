@@ -178,6 +178,7 @@ import {
 } from "@/lib/climb-campaign";
 import { goldRingCrowns, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
 import { consumeFlightTeach, goldPayoutLine } from "@/components/grounds/climb/flight-teach";
+import { sectorModifier } from "@/components/grounds/climb/modifiers";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -607,7 +608,13 @@ export default function GroundsScreen({
   const scoutUnlocked = scoutRankOpen && !runMods.banScout;
   const wingLivesCap = useRef(CIRCUIT_LIVES);
 
-  const applyWingSession = useCallback((mods: FlightModifiers, refillLives: boolean) => {
+  // Sector spice (Swift / Duskfall / …) — same map as mobile Climb.
+  const circuitModifier = useMemo(
+    () => (activeVenue === "circuit" ? sectorModifier(circuitSectorIdx) : null),
+    [activeVenue, circuitSectorIdx],
+  );
+
+  const applyWingSession = useCallback((mods: FlightModifiers, refillLives: boolean, sectorSpeedMult = 1) => {
     setAscentSessionMods({
       cruiseSink: mods.cruiseSink,
       cruiseGlide: mods.cruiseGlide,
@@ -616,7 +623,7 @@ export default function GroundsScreen({
       stumbleVy: mods.stumbleVy,
       stumbleLockS: mods.stumbleLockS,
       stumbleImmuneS: mods.stumbleImmuneS,
-      cruiseSpeedMult: mods.cruiseSpeedMult,
+      cruiseSpeedMult: mods.cruiseSpeedMult * sectorSpeedMult,
     });
     if (refillLives) {
       circuitLivesRef.current = mods.lives;
@@ -628,8 +635,8 @@ export default function GroundsScreen({
   useEffect(() => {
     if (activeVenue !== "circuit") return;
     const atFull = circuitLivesRef.current >= wingLivesCap.current;
-    applyWingSession(runMods, circuitPhase === "ready" && atFull);
-  }, [runMods, circuitPhase, activeVenue, applyWingSession]);
+    applyWingSession(runMods, circuitPhase === "ready" && atFull, circuitModifier?.speedMult ?? 1);
+  }, [runMods, circuitPhase, activeVenue, applyWingSession, circuitModifier]);
 
   useEffect(() => () => clearAscentSessionMods(), []);
 
@@ -675,11 +682,11 @@ export default function GroundsScreen({
     if (!expeditionOpen && circuitRunMode === "expedition") setCircuitRunMode("ranked");
   }, [expeditionOpen, circuitRunMode]);
 
-  // Condition ambience (Silent run) — parity with Climb's setAmbienceIntensity.
+  // Condition + sector modifier ambience (Silent Sky / Silent run) — Climb parity.
   useEffect(() => {
     if (activeVenue !== "circuit") return;
-    setAmbienceIntensity(runMods.ambience ?? 0.32);
-  }, [activeVenue, runMods.ambience]);
+    setAmbienceIntensity(circuitModifier?.ambience ?? runMods.ambience ?? 0.32);
+  }, [activeVenue, runMods.ambience, circuitModifier]);
   // the same pure-time hazards the mobile Climb fields for this sector (empty in
   // the early Reaches / breather beats) — rendered + collided against on desktop
   const circuitHazards = useMemo(
@@ -911,7 +918,6 @@ export default function GroundsScreen({
     circuitSectorPathsRef.current = [];
     circuitSectorSamplesRef.current = [];
     circuitSampleLastT.current = 0;
-    applyWingSession(runModsRef.current, true);
     setCircuitGhost(null);
     setCircuitGhostRunStartMs(0);
     setCircuitChallengeResult(null);
@@ -921,6 +927,7 @@ export default function GroundsScreen({
     circuitGoldRings.current = 0;
     setCircuitClearSnap(null);
     const start = circuitRunModeRef.current === "scout" ? circuitStartSectorRef.current : 0;
+    applyWingSession(runModsRef.current, true, sectorModifier(start)?.speedMult ?? 1);
     setCircuitSectorIdx(start);
     setCircuitCpPassed(1);
     setCircuitRunMs(0);
@@ -1030,7 +1037,7 @@ export default function GroundsScreen({
       circuitRunStart.current = 0;
       circuitSectorStart.current = 0;
       circuitRunMsRef.current = 0;
-      applyWingSession(runModsRef.current, true);
+      applyWingSession(runModsRef.current, true, sectorModifier(0)?.speedMult ?? 1);
       setCircuitGhost(null);
       setCircuitSectorIdx(0);
       setCircuitCpPassed(1);
@@ -3212,6 +3219,11 @@ export default function GroundsScreen({
               circuitGhostRunStartMs={activeVenue === "circuit" ? circuitGhostRunStartMs : 0}
               circuitGhostSectorKey={activeVenue === "circuit" ? circuitSectorIdx : 0}
               circuitGoldIndex={activeVenue === "circuit" && goldGate >= 0 ? goldGate : undefined}
+              circuitFogNearMult={activeVenue === "circuit" ? (circuitModifier?.fogNearMult ?? 1) * runMods.fogNearMult : 1}
+              circuitMoteColor={
+                activeVenue === "circuit" ? runMods.moteColor ?? circuitModifier?.moteColor ?? null : null
+              }
+              circuitWarm={activeVenue === "circuit" && !!(circuitModifier?.warm || runMods.warm)}
               ascentReaches={activeVenue === "circuit" ? ascentReaches : 0}
               ascentSigilAccent={activeVenue === "circuit" ? ascentSigilAccent : undefined}
               resumeSpawn={!activeVenue ? wildResume : null}
@@ -3532,6 +3544,8 @@ export default function GroundsScreen({
           shareMsg={circuitShareMsg}
           teachMsg={circuitTeachMsg}
           clearSnap={circuitClearSnap}
+          sectorModifierLabel={circuitModifier?.label ?? null}
+          expeditionOpen={expeditionOpen}
           onProve={
             circuitGuest
               ? undefined

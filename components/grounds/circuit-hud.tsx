@@ -99,6 +99,7 @@ function SectorIntro({
   reachName,
   lives,
   maxLives = CIRCUIT_LIVES,
+  modifierLabel = null,
 }: {
   sectorN: number;
   sectorTotal: number;
@@ -106,6 +107,7 @@ function SectorIntro({
   reachName?: string;
   lives: number;
   maxLives?: number;
+  modifierLabel?: string | null;
 }) {
   const [showCard, setShowCard] = useState(true);
 
@@ -146,6 +148,23 @@ function SectorIntro({
                 {lives} {lives === 1 ? "LIFE" : "LIVES"}
               </span>
             </div>
+            {modifierLabel && (
+              <div
+                className="mono"
+                style={{
+                  display: "inline-block",
+                  marginTop: 10,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  border: `1px solid ${accent}`,
+                  color: accent,
+                  fontSize: 9.5,
+                  letterSpacing: 1.5,
+                }}
+              >
+                {modifierLabel}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -176,6 +195,8 @@ export function CircuitHud({
   shareMsg = null,
   teachMsg = null,
   clearSnap = null,
+  sectorModifierLabel = null,
+  expeditionOpen = false,
   onProve,
   onClaim,
   claimName,
@@ -240,6 +261,10 @@ export function CircuitHud({
     mastery: { stumbles: number; goldRings: number; livesLeft: number; maxLives: number };
     firstHundred: boolean;
   } | null;
+  /** Sector modifier banner (Swift / Duskfall / …). */
+  sectorModifierLabel?: string | null;
+  /** Weekly expedition unlocked — show post-Hundred CTA. */
+  expeditionOpen?: boolean;
   /** Open in-place altitude Prove (Reach II gate). */
   onProve?: () => void;
   /** Guest Ascent: open champion selection to claim (not auto-claim the loaner). */
@@ -620,6 +645,7 @@ export function CircuitHud({
           reachName={reachName}
           lives={lives}
           maxLives={maxLives}
+          modifierLabel={sectorModifierLabel}
         />
       )}
 
@@ -748,6 +774,26 @@ export function CircuitHud({
               <Sparkles size={15} strokeWidth={2.2} /> Claim a champion
             </button>
           )}
+          {!guestClaim && onShareChallenge && (
+            <button
+              type="button"
+              className="btn"
+              style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, borderColor: accent, color: accent }}
+              onClick={onShareChallenge}
+            >
+              <Share2 size={15} strokeWidth={2.2} /> Challenge a friend
+            </button>
+          )}
+          {!guestClaim && expeditionOpen && onPickExpedition && (
+            <button
+              type="button"
+              className="btn"
+              style={{ ["--ac" as string]: "var(--line2)", width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              onClick={onPickExpedition}
+            >
+              <Sparkles size={15} strokeWidth={2.2} /> This week&apos;s sky
+            </button>
+          )}
           <button type="button" className="btn btn-primary" style={{ ["--ac" as string]: accent, width: "100%", marginBottom: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
             <Rocket size={16} strokeWidth={2.2} /> Fly cleaner
           </button>
@@ -756,6 +802,9 @@ export function CircuitHud({
               {hubLabel || "To the Hub"}
             </button>
           )}
+          <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "var(--muted2)", marginTop: 4, textAlign: "center" }}>
+            CRAFT BOARD · soft trust
+          </div>
         </CircuitModal>
       )}
 

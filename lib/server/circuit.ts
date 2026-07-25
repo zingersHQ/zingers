@@ -66,8 +66,8 @@ const BOARD_CAP = 50;
 // 90-min ceiling: a desktop 6-DOF full clear is aspirationally 60–90 min. Still
 // < 10M so "one more sector always outranks any time" holds in the packing.
 const MAX_MS = 90 * 60 * 1000;
-/** Soft floor — rejects absurd "100 sectors in 2s" board posts (not proof of play). */
-const MIN_MS_PER_SECTOR = 250;
+/** Soft floor — rejects absurd speed-posts (not proof of play; boards stay soft-trust). */
+const MIN_MS_PER_SECTOR = 400;
 export const MAX_SECTORS = CLIMB_SECTOR_COUNT;
 
 const utcDay = () => Math.floor(Date.now() / 86_400_000);

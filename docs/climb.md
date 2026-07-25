@@ -204,7 +204,9 @@ banner lines, crosswind, star shard. Aspirational menu only.
 ## 5. Modifiers — the 3% spice, distributed on purpose
 
 Modifiers are sector-wide mutations, deterministically assigned (they are part
-of the sector's identity, not a roll). Distribution across the 100:
+of the sector's identity, not a roll). Both bodies apply them (Swift cruise,
+Duskfall fog, Golden Hour motes/warmth, Silent Sky ambience). Distribution
+across the 100:
 
 | Modifier | Effect | Count | Where |
 |---|---|---|---|

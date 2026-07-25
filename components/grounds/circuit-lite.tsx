@@ -1294,6 +1294,7 @@ export default function CircuitLite({
   }, [campsLit]);
 
   const pickExpedition = useCallback(() => {
+    runModeRef.current = "expedition";
     setRunMode("expedition");
     setSector(0);
     setTargetIdx(1);
@@ -2296,10 +2297,10 @@ export default function CircuitLite({
               </div>
             )}
 
-            {/* compact shared leaderboard (depth-then-time) */}
+            {/* compact craft board (depth-then-time) — soft trust until replay */}
             <div style={{ marginBottom: 18, textAlign: "left", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, padding: "10px 12px", background: "rgba(255,255,255,.02)" }}>
               <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2, #6b6785)", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-                <span>ASCENT LEADERBOARD</span>
+                <span>CRAFT BOARD · soft trust</span>
                 <span>{boardLoading ? "…" : `${board.length}`}</span>
               </div>
               {board.length === 0 ? (
@@ -2337,6 +2338,27 @@ export default function CircuitLite({
                   <Sparkles size={16} strokeWidth={2.4} /> Claim {ROSTER[activeKey]?.name ?? "this mind"}
                 </button>
               </>
+            )}
+            {phase === "done" && !guest && (
+              <button
+                type="button"
+                onClick={() => void shareChallenge()}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 12, border: `1.5px solid ${accent}`, background: "transparent", color: accent, fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
+              >
+                <Share2 size={15} strokeWidth={2.4} /> Challenge a friend
+              </button>
+            )}
+            {phase === "done" && !guest && expeditionOpen && (
+              <button
+                type="button"
+                onClick={() => {
+                  pickExpedition();
+                  resetRun();
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 12, border: "1.5px solid rgba(255,255,255,.18)", background: "transparent", color: "rgba(242,238,251,.85)", fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
+              >
+                <Sparkles size={15} strokeWidth={2.4} /> This week&apos;s sky
+              </button>
             )}
             <button
               type="button"

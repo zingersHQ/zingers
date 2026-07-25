@@ -161,29 +161,49 @@ export function StatsScreen() {
       {data && (
         <div style={{ position: "absolute", left: 18, bottom: 18, zIndex: 10, display: "flex", flexDirection: "column", gap: 10, width: "min(330px, 88vw)", pointerEvents: "auto", maxHeight: "48vh", overflowY: "auto" }}>
         <div className="panel" style={{ padding: 14, background: "rgba(8,7,16,.82)" }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)", marginBottom: 10 }}>MOBILE DOOR</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {(data.doorFunnel ?? []).map((s, i, arr) => {
-              const top = Math.max(1, arr[0]?.value ?? 1);
-              const pct = Math.round((s.value / top) * 100);
-              const prev = i > 0 ? arr[i - 1]!.value : 0;
-              const drop = i > 0 && prev > 0 ? Math.round((s.value / prev) * 100) : null;
-              return (
-                <div key={s.key}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12, marginBottom: 3 }}>
-                    <span style={{ fontWeight: 600 }}>{s.label}</span>
-                    <span className="mono" style={{ color: "var(--muted)" }}>
-                      {fmt(s.value)}
-                      {drop !== null && <span style={{ color: "var(--muted2)", marginLeft: 6 }}>{drop}%</span>}
-                    </span>
-                  </div>
-                  <div style={{ height: 7, borderRadius: 9, background: "var(--line)", overflow: "hidden" }}>
-                    <div style={{ width: `${Math.max(2, pct)}%`, height: "100%", background: "linear-gradient(90deg, #39e0ff, #7cf6c8)" }} />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)", marginBottom: 6 }}>MOBILE DOOR</div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, lineHeight: 1.4 }}>
+            Splash → Fly → Guest run → Claim. Launch gate for Flight-First.
           </div>
+          {(data.doorFunnel ?? []).every((s) => (s.value ?? 0) === 0) ? (
+            <div className="mono" style={{ fontSize: 11, color: "var(--gold)", lineHeight: 1.45 }}>
+              No door traffic in this window. Open /ascent on a phone, tap Fly, then check Refresh.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {(data.doorFunnel ?? []).map((s, i, arr) => {
+                const top = Math.max(1, arr[0]?.value ?? 1);
+                const pct = Math.round((s.value / top) * 100);
+                const prev = i > 0 ? arr[i - 1]!.value : 0;
+                const drop = i > 0 && prev > 0 ? Math.round((s.value / prev) * 100) : null;
+                return (
+                  <div key={s.key}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12, marginBottom: 3 }}>
+                      <span style={{ fontWeight: 600 }}>{s.label}</span>
+                      <span className="mono" style={{ color: "var(--muted)" }}>
+                        {fmt(s.value)}
+                        {drop !== null && <span style={{ color: "var(--muted2)", marginLeft: 6 }}>{drop}%</span>}
+                      </span>
+                    </div>
+                    <div style={{ height: 7, borderRadius: 9, background: "var(--line)", overflow: "hidden" }}>
+                      <div style={{ width: `${Math.max(2, pct)}%`, height: "100%", background: "linear-gradient(90deg, #39e0ff, #7cf6c8)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {(() => {
+                const door = data.doorFunnel ?? [];
+                const splash = door[0]?.value ?? 0;
+                const claim = door[door.length - 1]?.value ?? 0;
+                if (splash <= 0) return null;
+                return (
+                  <div className="mono" style={{ fontSize: 10, letterSpacing: 0.8, color: "#7cf6c8", marginTop: 4 }}>
+                    Splash→claim {Math.round((claim / splash) * 100)}%
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
         <div className="panel" style={{ padding: 14, background: "rgba(8,7,16,.82)" }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted2)", marginBottom: 10 }}>ACQUISITION FUNNEL</div>
