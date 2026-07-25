@@ -200,7 +200,7 @@ playtest still asks for a buddy.
 
 ## 6. Gamification / surprise — make the design *land*
 
-Hazards, modifiers, golden ring, Reach cards already exist in code/docs — they
+Hazards, modifiers, Crown caches, Reach cards already exist in code/docs — they
 don’t save a boring corridor. After layout + forward + camera:
 
 1. **Reach I must teach the flap** with a real high/low rhythm (not a flat

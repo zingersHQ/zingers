@@ -60,6 +60,8 @@ import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
 import { sectorFlightBand } from "./climb/flight-cruise";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
+import { crownCacheHits, type CrownCache } from "./climb/crown-cache";
+import { CrownCacheField } from "./climb/crown-cache-field";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import { atCircuitFinishEarly, circuitGatePlaneCross, CIRCUIT_SECTOR_INTRO } from "./circuit";
@@ -319,7 +321,8 @@ export default function World({
   circuitGhostPath = null,
   circuitGhostRunStartMs = 0,
   circuitGhostSectorKey = 0,
-  circuitGoldIndex,
+  circuitCrownCache = null,
+  onCircuitCrownCollect,
   circuitFogNearMult = 1,
   circuitMoteColor = null,
   circuitWarm = false,
@@ -384,8 +387,9 @@ export default function World({
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
   onCircuitStumble?: () => void;
-  /** Golden-ring checkpoint index (altitude detour) — shared with Climb. */
-  circuitGoldIndex?: number;
+  /** Mid-gap Crown cache pickup (optional) — shared with Climb. */
+  circuitCrownCache?: CrownCache | null;
+  onCircuitCrownCollect?: () => void;
   /** Flight sigil glyph count from campsLit (0..10). */
   ascentReaches?: number;
   /** Accent for the sigil halo (Reach theme of deepest lit camp). */
@@ -818,8 +822,10 @@ export default function World({
                 biome={biome}
                 cpNextRef={circuitCpNextRef}
                 showFloor={false}
-                goldIndex={circuitGoldIndex}
               />
+              {(circuitPhase === "ready" || circuitPhase === "running" || circuitPhase === "continue") && (
+                <CrownCacheField cache={circuitCrownCache ?? null} />
+              )}
               {circuitPhase === "running" && circuitHazards.length > 0 && <HazardField hazards={circuitHazards} />}
               {ownedKey &&
                 circuitPhase !== "sector" &&
@@ -1005,6 +1011,8 @@ export default function World({
                 circuitCheckpoints={circuitCheckpoints}
                 circuitCpNextRef={circuitCpNextRef}
                 circuitHazards={circuitPhase === "running" ? circuitHazards : []}
+                circuitCrownCache={circuitPhase === "running" ? circuitCrownCache : null}
+                onCircuitCrownCollect={onCircuitCrownCollect}
                 onCircuitPass={onCircuitPass}
                 onCircuitFail={onCircuitFail}
                 onCircuitStart={onCircuitStart}
@@ -2807,6 +2815,8 @@ function Handler({
   circuitCheckpoints = [],
   circuitCpNextRef,
   circuitHazards = [],
+  circuitCrownCache = null,
+  onCircuitCrownCollect,
   onCircuitPass,
   onCircuitFail,
   onCircuitStart,
@@ -2862,6 +2872,8 @@ function Handler({
   circuitCheckpoints?: { index: number; pos: THREE.Vector3; posTuple: [number, number, number]; radius: number; finish: boolean }[];
   circuitCpNextRef?: React.MutableRefObject<number>;
   circuitHazards?: Hazard[];
+  circuitCrownCache?: CrownCache | null;
+  onCircuitCrownCollect?: () => void;
   onCircuitPass?: (index: number) => void;
   onCircuitFail?: (reason?: CircuitFailReason, pose?: { x: number; y: number; z: number; heading: number }) => void;
   onCircuitStart?: () => void;
@@ -3444,6 +3456,11 @@ function Handler({
           break;
         }
       }
+    }
+
+    // Crown cache — optional mid-gap pickup (never required to clear).
+    if (circuitMode && circuitRunning && circuitCrownCache && crownCacheHits(circuitCrownCache, t.x, t.y, t.z)) {
+      onCircuitCrownCollect?.();
     }
 
     // ── hold-to-fly ──

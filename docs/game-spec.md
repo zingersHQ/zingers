@@ -78,8 +78,8 @@ Live sequencing: **[flight-first-plan.md](./flight-first-plan.md)** and
 - **Challenges:** race another Trainer's ghost mark; share `/ascent/<id>`; overtake toasts
   when you clear past their tip ([`bible/10-ascent.md`](./bible/10-ascent.md)).
 - **Corridor feel:** 4–8 rings per sector; Reach-flavored layouts; hazards read as
-  danger (not loot); gold rings are the only mid-run reward (+Crowns + toast);
-  one-shot teach for first hazard / gold / Gate Trial.
+  danger (not loot); Crown caches mid-gap are the only mid-run reward (+Crowns + toast);
+  one-shot teach for first hazard / cache / Gate Trial.
 - **After the Hundred:** finite summit (not endless). Prestige is cleaner flights,
   friend challenges, and weekly expeditions. Not a cross-body speedrun pitch
   (mobile cruise is fixed; desktop surge stays a quiet craft flex on its board).

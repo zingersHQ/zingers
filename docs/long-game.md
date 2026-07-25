@@ -30,7 +30,7 @@ surface** problem: the content exists and the player never learns it exists.
 An audit of the live code, not the docs, found:
 
 - **Flight:** 100 sectors across 10 Reaches, hazards, camps, first-light chests,
-  gold rings, scout, ghosts, share links, a 2500-Crown Hundred purse.
+  Crown caches, scout, ghosts, share links, a 2500-Crown Hundred purse.
   (`components/grounds/climb/*`, `lib/climb-campaign.ts`)
 - **Champions:** First Minds + baked dex (Stage 6 wave 1), type pentagon, 5 tiers,
   career-derived bodies + phenotype, Saga ledger, Imprints.

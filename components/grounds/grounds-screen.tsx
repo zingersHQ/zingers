@@ -176,9 +176,10 @@ import {
   SCOUT_XP_MULT,
   scoutStartSector,
 } from "@/lib/climb-campaign";
-import { goldRingCrowns, rollGoldRing, withGoldDetour, type GoldGeom } from "@/components/grounds/climb/gold-ring";
+import { crownCacheCrowns, rollCrownCache, type CrownCache } from "@/components/grounds/climb/crown-cache";
 import { consumeFlightTeach, goldPayoutLine } from "@/components/grounds/climb/flight-teach";
 import { sectorModifier } from "@/components/grounds/climb/modifiers";
+import { sectorFlightCruise } from "@/components/grounds/climb/flight-cruise";
 import { ghostPathForSector, ghostPathHasSamples, type ClimbGhostSample, type ClimbGhostSectors } from "@/lib/climb-ghost";
 import {
   desktopCircuitSector,
@@ -640,9 +641,9 @@ export default function GroundsScreen({
 
   useEffect(() => () => clearAscentSessionMods(), []);
 
-  // Golden ring altitude detour (shared with Climb).
-  const [goldGate, setGoldGate] = useState(-1);
-  const [goldGeom, setGoldGeom] = useState<GoldGeom | null>(null);
+  // Crown cache mid-gap pickup (shared with Climb) — optional, never a gate prize.
+  const [crownCache, setCrownCache] = useState<CrownCache | null>(null);
+  const crownCacheRef = useRef<CrownCache | null>(null);
   const bonusCrowns = useRef(0);
   const circuitStumbleCount = useRef(0);
   const circuitGoldRings = useRef(0);
@@ -651,23 +652,21 @@ export default function GroundsScreen({
     firstHundred: boolean;
   } | null>(null);
 
-  const baseCircuitTrack = useMemo(
+  const circuitTrack = useMemo(
     () => desktopCircuitSector(circuitSectorIdx, circuitLayoutSeed),
     [circuitSectorIdx, circuitLayoutSeed],
   );
-  const circuitTrack = useMemo(() => withGoldDetour(baseCircuitTrack, goldGeom), [baseCircuitTrack, goldGeom]);
   const circuitReach = useMemo(() => reachTheme(circuitSectorIdx), [circuitSectorIdx]);
+  const circuitCruise = useMemo(
+    () => sectorFlightCruise(circuitSectorIdx) * (circuitModifier?.speedMult ?? 1),
+    [circuitSectorIdx, circuitModifier],
+  );
 
   useEffect(() => {
-    const g = rollGoldRing(baseCircuitTrack.checkpoints, runModsRef.current.goldOddsMult);
-    if (g) {
-      setGoldGeom(g);
-      setGoldGate(g.idx);
-    } else {
-      setGoldGeom(null);
-      setGoldGate(-1);
-    }
-  }, [baseCircuitTrack]);
+    const g = rollCrownCache(circuitTrack.checkpoints, runModsRef.current.goldOddsMult, circuitCruise);
+    crownCacheRef.current = g;
+    setCrownCache(g);
+  }, [circuitTrack, circuitCruise]);
 
   useEffect(() => {
     if (!scoutUnlocked && circuitRunMode === "scout") {
@@ -717,8 +716,8 @@ export default function GroundsScreen({
   }, [activeVenue, circuitSectorIdx, circuitHazards.length, circuitPhase, flashCircuitTeach]);
   useEffect(() => {
     if (activeVenue !== "circuit") return;
-    if (goldGate >= 0) flashCircuitTeach(consumeFlightTeach("gold"));
-  }, [activeVenue, goldGate, flashCircuitTeach]);
+    if (crownCache) flashCircuitTeach(consumeFlightTeach("gold"));
+  }, [activeVenue, crownCache, flashCircuitTeach]);
   const [circuitStumble, setCircuitStumble] = useState(false);
   const circuitStumbleTimer = useRef<number | null>(null);
   const onCircuitStumble = useCallback(() => {
@@ -728,6 +727,16 @@ export default function GroundsScreen({
     if (circuitStumbleTimer.current != null) window.clearTimeout(circuitStumbleTimer.current);
     circuitStumbleTimer.current = window.setTimeout(() => setCircuitStumble(false), 280);
   }, []);
+  const onCircuitCrownCollect = useCallback(() => {
+    if (!crownCacheRef.current) return;
+    crownCacheRef.current = null;
+    setCrownCache(null);
+    const paid = crownCacheCrowns(runModsRef.current.goldCrownsMult);
+    bonusCrowns.current += paid;
+    circuitGoldRings.current += 1;
+    rewardSfx("big");
+    flashCircuitTeach(goldPayoutLine(paid), 2200);
+  }, [flashCircuitTeach]);
 
   const capturePose = useCallback(() => {
     const p = poseRef.current;
@@ -1408,15 +1417,7 @@ export default function GroundsScreen({
       if (!cp || circuitPhase !== "running") return;
       const now = performance.now();
       setCircuitCpPassed(index + 1);
-      // Golden ring — pay Crowns, clear gold color (geom offset stays).
-      if (!cp.finish && index === goldGate) {
-        const paid = goldRingCrowns(runModsRef.current.goldCrownsMult);
-        bonusCrowns.current += paid;
-        circuitGoldRings.current += 1;
-        setGoldGate(-1);
-        rewardSfx("big");
-        flashCircuitTeach(goldPayoutLine(paid), 2200);
-      } else if (!cp.finish) {
+      if (!cp.finish) {
         // a rising tick each time you thread a ring (the finish keeps its fanfare)
         jumpBeep(Math.min(4, index));
       }
@@ -1467,7 +1468,7 @@ export default function GroundsScreen({
         }
       }
     },
-    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, goldGate, flashCircuitTeach, climbHundred],
+    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, climbHundred],
   );
 
   // Auto-advance after a clear (mobile-like). Brief "sector" phase avoids a soft-lock
@@ -3218,7 +3219,8 @@ export default function GroundsScreen({
               }
               circuitGhostRunStartMs={activeVenue === "circuit" ? circuitGhostRunStartMs : 0}
               circuitGhostSectorKey={activeVenue === "circuit" ? circuitSectorIdx : 0}
-              circuitGoldIndex={activeVenue === "circuit" && goldGate >= 0 ? goldGate : undefined}
+              circuitCrownCache={activeVenue === "circuit" ? crownCache : null}
+              onCircuitCrownCollect={activeVenue === "circuit" ? onCircuitCrownCollect : undefined}
               circuitFogNearMult={activeVenue === "circuit" ? (circuitModifier?.fogNearMult ?? 1) * runMods.fogNearMult : 1}
               circuitMoteColor={
                 activeVenue === "circuit" ? runMods.moteColor ?? circuitModifier?.moteColor ?? null : null

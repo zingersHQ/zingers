@@ -182,7 +182,7 @@ two-second corridor ahead of the champion.
 
 All hazards are **bad**. They stumble you. They are not prizes. Visual law:
 danger reds / magenta / cold spiked cyan. Never treasure gold (that color is
-reserved for golden rings).
+reserved for Crown caches).
 
 | Hazard | Behavior (dodge by altitude timing) | Read |
 |---|---|---|
@@ -263,19 +263,22 @@ in the desktop world. Same daily-index plumbing as imprints/nodes.
 | Beat personal best time-at-depth | — | Crowns `= 3·sectors + 15·(Reaches cleared)` |
 | First time lighting a camp | Saga event + sigil growth + cosmetic | Crowns chest |
 | Clean thread (through inner 50% of a ring) | — | streak counter; ×5 streak = +Crowns ping |
-| Golden ring (§7b) | — | +25 Crowns (wing traits can bump); HUD flashes `+N Crowns` |
+| Crown cache (§7b) | — | +25 Crowns (wing traits can bump); HUD flashes `+N Crowns` |
 | The Hundred (s100 cleared, ranked) | permanent Saga chapter + unique sigil crown | one-time large Crowns purse + board flag `clearedAll` |
 
 Anti-farm rules carry over: rewards gate on *genuine improvement* (existing
 `isCircuitRunBetter` logic), scout runs pay fractional, server-side Crowns stay
 authoritative via `awardGauntlet` clamps.
 
-### 7b. Golden rings (the only mid-corridor reward)
+### 7b. Crown caches (the only mid-corridor reward)
 
-Shipped: ~12.5% chance **per sector** (`gold-ring.ts`) to pull one mid gate off
-the glide line and paint it treasure gold (sparkle halo). Threading it pays
-**+25 Crowns** (not lives, not XP). One-shot teach: "Gold rings pay Crowns.
-Climb for them." Hazards never wear that gold.
+Shipped: ~12.5% chance **per sector** (`crown-cache.ts`) to place one **Crown
+cache** mid-gap between gates, off the glide line (climb or dive to snag it).
+Same gold octahedron language as wilds CROWN CACHE nodes. Collecting pays
+**+25 Crowns** (not lives, not XP). Missing it never fails the sector. Gates on
+the required path are never treasure prizes. One-shot teach: "Crown caches pay
+Crowns. Climb or dive off the line for them." Hazards never wear that gold;
+they stumble (shove + lock), they do not tax Crowns or lives directly.
 
 Aspirational surprises (Keeper watch, meteor shower, rival line) are not in the
 live corridor. Do not teach them until they ship.

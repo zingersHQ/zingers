@@ -41,7 +41,7 @@ export const WING_TRAITS: Record<WingTraitId, WingTraitDef> = {
   gold_eye: {
     id: "gold_eye",
     name: "Gold Eye",
-    gloss: "Golden rings appear more often.",
+    gloss: "Crown caches appear more often.",
     innateType: "CREATIVITY",
   },
   thick_feathers: {

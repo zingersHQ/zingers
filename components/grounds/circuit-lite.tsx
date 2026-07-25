@@ -86,7 +86,8 @@ import {
   saveExpeditionPersonalBest,
   thisWeekExpedition,
 } from "@/lib/expeditions";
-import { goldRingCrowns, rollGoldRing, withGoldDetour } from "./climb/gold-ring";
+import { crownCacheCrowns, crownCacheHits, rollCrownCache, type CrownCache } from "./climb/crown-cache";
+import { CrownCacheField } from "./climb/crown-cache-field";
 import {
   firstLightChestCrowns,
   HUNDRED_CHEST_CROWNS,
@@ -207,6 +208,8 @@ function Flyer({
   track,
   speed,
   hazards,
+  crownCacheRef,
+  onCrownCollect,
   champType,
   ascentReaches,
   accent,
@@ -226,6 +229,8 @@ function Flyer({
   track: CircuitTrackDef;
   speed: number;
   hazards: Hazard[];
+  crownCacheRef: React.MutableRefObject<CrownCache | null>;
+  onCrownCollect: () => void;
   champType: CreatureType;
   ascentReaches: number;
   accent: string;
@@ -395,6 +400,12 @@ function Flyer({
           break;
         }
       }
+    }
+
+    // Crown cache — optional mid-gap pickup. Never required to clear the sector.
+    const cache = crownCacheRef.current;
+    if (cache && crownCacheHits(cache, pos.current.x, pos.current.y, pos.current.z)) {
+      onCrownCollect();
     }
 
     // gate threading — shared plane-cross rule with desktop Circuit (miss = run over)
@@ -771,10 +782,10 @@ export default function CircuitLite({
   }, [champWins]);
   const guestPinged = useRef(false);
 
-  // Golden ring (§7b): rare, pays Crowns, and sits off the racing line so greed
-  // costs altitude commitment — not a free recolor of a straight-through gate.
-  const [goldGate, setGoldGate] = useState(-1);
-  const [goldGeom, setGoldGeom] = useState<{ idx: number; dy: number } | null>(null);
+  // Crown cache (§7b): optional mid-gap pickup off the glide line — never a
+  // required gate prize. Same gold octahedron as wilds CROWN CACHE nodes.
+  const [crownCache, setCrownCache] = useState<CrownCache | null>(null);
+  const crownCacheRef = useRef<CrownCache | null>(null);
   const bonusCrowns = useRef(0);
   const stumbleCountRef = useRef(0);
   const goldRingsRef = useRef(0);
@@ -785,10 +796,7 @@ export default function CircuitLite({
 
   // Same scaled layout as desktop Circuit (bigger rings + gaps) — one Ascent.
   // Expedition passes a weekly seed so the route differs from the Hundred.
-  const baseTrack = useMemo(() => desktopCircuitSector(sector, layoutSeed), [sector, layoutSeed]);
-  // Greedy gold detour baked into the live track (geometry stays after payout so
-  // the ring doesn't snap mid-sector).
-  const track = useMemo(() => withGoldDetour(baseTrack, goldGeom), [baseTrack, goldGeom]);
+  const track = useMemo(() => desktopCircuitSector(sector, layoutSeed), [sector, layoutSeed]);
   // Seed overlap poses before the first ReadyPose frame (ghosts read these).
   useEffect(() => {
     flyerPosRef.current.set(track.spawn[0], PAD_TOP_Y, track.spawn[2]);
@@ -1153,18 +1161,12 @@ export default function CircuitLite({
     const doneT = window.setTimeout(() => dismissReachCard(true), 2000);
     return () => window.clearTimeout(doneT);
   }, [theme.index, dismissReachCard]);
-  // Roll a golden ring per sector (§7b). Non-finish mid gate, pulled off the
-  // glide line so threading it is a deliberate climb/dive.
+  // Roll a Crown cache per sector (§7b) — mid-gap, off the glide line.
   useEffect(() => {
-    const g = rollGoldRing(baseTrack.checkpoints, runModsRef.current.goldOddsMult);
-    if (g) {
-      setGoldGeom(g);
-      setGoldGate(g.idx);
-    } else {
-      setGoldGeom(null);
-      setGoldGate(-1);
-    }
-  }, [baseTrack, runId]);
+    const g = rollCrownCache(track.checkpoints, runModsRef.current.goldOddsMult, speed);
+    crownCacheRef.current = g;
+    setCrownCache(g);
+  }, [track, runId, speed]);
 
   // Flight theme — mobile Climb never hit resolveAmbienceMood; pin the circuit
   // score for the whole run, then soft-land on Concord when the tab closes.
@@ -1191,7 +1193,7 @@ export default function CircuitLite({
     if (teachTimer.current != null) window.clearTimeout(teachTimer.current);
   }, []);
 
-  // One-shot corridor lessons — Gate Trial exam, first hazards, first gold ring.
+  // One-shot corridor lessons — Gate Trial exam, first hazards, first Crown cache.
   useEffect(() => {
     if (phase !== "ready" && phase !== "running") return;
     if (sector === 9) flashTeach(consumeFlightTeach("gateTrial"), 4200);
@@ -1201,8 +1203,8 @@ export default function CircuitLite({
     if (hazards.length > 0) flashTeach(consumeFlightTeach("hazard"));
   }, [sector, hazards.length, phase, flashTeach]);
   useEffect(() => {
-    if (goldGate >= 0) flashTeach(consumeFlightTeach("gold"));
-  }, [goldGate, flashTeach]);
+    if (crownCache) flashTeach(consumeFlightTeach("gold"));
+  }, [crownCache, flashTeach]);
 
   // a hazard hit: flash the screen edges + duck the score under the thud
   const onStumble = useCallback(() => {
@@ -1372,23 +1374,21 @@ export default function CircuitLite({
 
   useEffect(() => () => clearGlWatchdog(), [clearGlWatchdog]);
 
-  const onGate = useCallback(
-    (nextIdx: number) => {
-      setTargetIdx(nextIdx);
-      // the ring just threaded is nextIdx-1 — if it was the golden ring, pay out
-      if (nextIdx - 1 === goldGate) {
-        const paid = goldRingCrowns(runModsRef.current.goldCrownsMult);
-        bonusCrowns.current += paid;
-        goldRingsRef.current += 1;
-        setGoldGate(-1);
-        rewardSfx("big");
-        flashTeach(goldPayoutLine(paid), 2200);
-      } else {
-        rewardSfx("small");
-      }
-    },
-    [goldGate, flashTeach],
-  );
+  const onGate = useCallback((nextIdx: number) => {
+    setTargetIdx(nextIdx);
+    rewardSfx("small");
+  }, []);
+
+  const onCrownCollect = useCallback(() => {
+    if (!crownCacheRef.current) return;
+    crownCacheRef.current = null;
+    setCrownCache(null);
+    const paid = crownCacheCrowns(runModsRef.current.goldCrownsMult);
+    bonusCrowns.current += paid;
+    goldRingsRef.current += 1;
+    rewardSfx("big");
+    flashTeach(goldPayoutLine(paid), 2200);
+  }, [flashTeach]);
 
   const onSectorClear = useCallback(() => {
     // Back to the pad — next sector waits for HOLD (desktop sector-ready beat).
@@ -1628,12 +1628,14 @@ export default function CircuitLite({
             track={track}
             biome={biome}
             highlightIndex={running ? targetIdx : undefined}
-            goldIndex={goldGate >= 0 ? goldGate : undefined}
             cpNextRef={running ? cpNextRef : undefined}
             staticMode
             showFloor={false}
           />
           <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector) * 0.28} />
+          {(phase === "ready" || phase === "continue" || running) && (
+            <CrownCacheField cache={crownCache} />
+          )}
           {running && <HazardField key={`haz-${runId}-${sector}`} hazards={hazards} />}
           {(phase === "ready" || phase === "continue") && (
             <ReadyPose
@@ -1651,6 +1653,8 @@ export default function CircuitLite({
               track={track}
               speed={speed}
               hazards={hazards}
+              crownCacheRef={crownCacheRef}
+              onCrownCollect={onCrownCollect}
               champType={champType}
               ascentReaches={ascentReaches}
               accent={accent}

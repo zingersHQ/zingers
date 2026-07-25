@@ -7,13 +7,13 @@
 // hazards per sector, so per-hazard meshes are cheap.
 //
 // Visual law: DANGER never wears treasure gold. Warm reds / magenta / cold
-// hostile cyan with spikes. Gold rings (circuit-scene) are the only reward read.
+// hostile cyan with spikes. Crown caches (octahedron) are the only reward read.
 import { useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { hazardState, type Hazard } from "./hazards";
 
-/** Hostile palette — never `#f5d020` (Crowns / gold rings). */
+/** Hostile palette — never `#f5d020` (Crowns / Crown caches). */
 export const HAZARD_COLOR: Record<Hazard["kind"], string> = {
   driftCrystal: "#4ec8ff",
   cinderArc: "#ff7a2a",

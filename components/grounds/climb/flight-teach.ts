@@ -1,4 +1,4 @@
-// One-shot Flight teach lines — hazard vs gold clarity for first encounters.
+// One-shot Flight teach lines — hazard vs Crown-cache clarity for first encounters.
 // Latched in localStorage so both bodies (Climb + Circuit) share the same lesson.
 import { STORAGE } from "@/lib/brand";
 
@@ -6,7 +6,7 @@ export type FlightTeachKey = "hazard" | "gold" | "gateTrial";
 
 export const FLIGHT_TEACH: Record<FlightTeachKey, string> = {
   hazard: "Dodge the sparks. They shove you. They are not prizes.",
-  gold: "Gold rings pay Crowns. Climb for them.",
+  gold: "Crown caches pay Crowns. Climb or dive off the line for them.",
   gateTrial: "Gate Trial. Clear this exam, then a new sky opens.",
 };
 
@@ -39,7 +39,7 @@ export function hasFlightTeach(key: FlightTeachKey): boolean {
 
 /**
  * Return the line once, then latch. Subsequent calls return null.
- * Safe to call from effects on sector ready / gold roll.
+ * Safe to call from effects on sector ready / Crown-cache roll.
  */
 export function consumeFlightTeach(key: FlightTeachKey): string | null {
   const cur = readLatch();
@@ -48,7 +48,7 @@ export function consumeFlightTeach(key: FlightTeachKey): string | null {
   return FLIGHT_TEACH[key];
 }
 
-/** Crown payout flash — always shown when a gold ring is threaded. */
+/** Crown payout flash — always shown when a Crown cache is collected. */
 export function goldPayoutLine(crowns: number): string {
   const n = Math.max(1, Math.round(crowns));
   return `+${n} Crowns`;

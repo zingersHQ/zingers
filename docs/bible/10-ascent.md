@@ -112,7 +112,9 @@ climbed is a fact about your Trainer that travels with you everywhere; how *fast
 flew it is a craft that each device scores on its own terms.
 
 Between gates, sparks and bars that shove you are hazards. They are never prizes.
-The only mid-run treasure is a gold ring pulled off the line. Thread it for Crowns.
+They shove and lock thrust; they do not take Crowns or lives on contact.
+The only mid-run treasure is a Crown cache floating off the glide line between
+gates. Climb or dive for it. Missing one never fails the sector.
 Systems detail: [`climb.md`](../climb.md).
 
 Clearing all one hundred sectors is a summit. After that the climb does not become

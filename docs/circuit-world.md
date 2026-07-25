@@ -24,7 +24,7 @@ auto-forward runner, layout archetypes, flying companion**), [`essence.md`](./es
 
 `climb.md` already defines the content: 100 sectors, ten Reaches, the 10-beat
 role bar, `sectorDifficulty(i)`, hazards with the stumble rule, modifiers, the
-golden ring, soul/craft rewards. **None of that is redesigned here.** The
+Crown cache, soul/craft rewards. **None of that is redesigned here.** The
 desktop Circuit *consumes the same `components/grounds/climb/` modules* and
 reinterprets only what the body demands:
 
@@ -34,7 +34,7 @@ reinterprets only what the body demands:
 | `sectorDifficulty(i)` (speed→pace, radius, gates, gaps, budget) | how "speed" applies — **amended:** auto-forward at par pace ([`climb-feel.md`](./climb-feel.md) §4); steer is optional |
 | hazard archetypes + `hazardState(h,t)` pure-time motion | collision vs the Handler capsule, stumble effect |
 | modifiers (Swift/Duskfall/Golden Hour/Silent Sky) | Swift = time-pressure instead of forced speed |
-| golden ring odds/payout | identical |
+| Crown cache odds/payout | identical |
 | rewards: depth→XP+sigil (shared), time→Crowns | **separate desktop leaderboard** (essence §3) |
 | Reach title cards, sky-shift lerp | drives the venue biome instead of a fixed skin |
 
