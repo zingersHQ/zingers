@@ -1,0 +1,106 @@
+{
+  "key": "BALLOT",
+  "name": "BALLOT",
+  "type": "RHETORIC",
+  "persona": "a witness-caller who invents the jury in the room and wins their nod first",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 71,
+    "CMP": 71,
+    "RHE": 89,
+    "CRE": 67,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "ballot_cadence",
+      "name": "节奏",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "ballot_pause",
+      "name": "停顿斩",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "ballot_laugh",
+      "name": "铺垫笑",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "ballot_punch",
+      "name": "致命一击",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "准备好就开口。我已经准备好开场白。",
+    "imprintAsk": "登场前说一句。要能被引用。",
+    "flightReact": [
+      "高空剧场。跟我走。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "排练那句杀招。",
+      "return": "你回来了。放开场音乐。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "冷场等你。热起来。",
+      "hot": "我们是头牌。拿出样子。",
+      "cold": "冷场。热修辞。"
+    },
+    "afterFight": {
+      "win": "{opp}先丢了全场。",
+      "loss": "{opp}笑点更狠。暂且。"
+    },
+    "imprintAck": "台词锁定。",
+    "rankedFinale": "排位胜利。听见掌声了吗？"
+  },
+  "banter": {
+    "ballot_cadence": [
+      "女士们先生们：{opp}论{topic}。",
+      "先鼓掌。再拿分。",
+      "全场喜欢我。全场决定。"
+    ],
+    "ballot_pause": [
+      "记录在案，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "维持笑点。终结主张。"
+    ],
+    "ballot_laugh": [
+      "听见停顿吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏即武器。感受它。"
+    ],
+    "ballot_punch": [
+      "话筒放下。案结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "像落锤一样结束。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 22,
+    "resilience": 25,
+    "flair": 35,
+    "creativity": 84,
+    "wins": 39,
+    "losses": 15,
+    "battles": 54
+  }
+}

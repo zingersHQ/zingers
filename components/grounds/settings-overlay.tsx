@@ -1,7 +1,10 @@
 "use client";
 import { useEffect } from "react";
 import { X, Gamepad2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSettings } from "@/store/settings";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/locales";
+import { setLocaleCookie } from "@/lib/i18n/cookie";
 
 // Pause / Settings overlay. Opens from the HUD gear, the Esc key, or Start on a
 // gamepad. Groups the knobs a player actually reaches for: one master volume,
@@ -114,6 +117,7 @@ export function SettingsOverlay({
   hasPad: boolean;
 }) {
   const s = useSettings();
+  const t = useTranslations("settings");
 
   useEffect(() => {
     if (!open) return;
@@ -126,11 +130,16 @@ export function SettingsOverlay({
 
   if (!open) return null;
 
+  const setLocale = (locale: Locale) => {
+    s.set({ locale });
+    setLocaleCookie(locale);
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Settings"
+      aria-label={t("aria")}
       onPointerDown={onClose}
       style={{
         position: "fixed",
@@ -158,28 +167,57 @@ export function SettingsOverlay({
         <style>{`@keyframes controlsRise { from { opacity:0; transform: translateY(10px) scale(.99);} to { opacity:1; transform:none;} }`}</style>
         <button
           onClick={onClose}
-          aria-label="Close settings"
+          aria-label={t("close")}
           style={{ position: "absolute", top: 12, right: 12, background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", padding: 4 }}
         >
           <X size={18} />
         </button>
-        <div className="mono" style={{ fontSize: 10, letterSpacing: 3, color: "var(--gold)" }}>PAUSED</div>
-        <div style={{ fontSize: 20, fontWeight: 800, marginTop: 6, marginBottom: 6 }}>Settings</div>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: 3, color: "var(--gold)" }}>{t("paused")}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, marginTop: 6, marginBottom: 6 }}>{t("title")}</div>
 
-        <Section>AUDIO</Section>
-        <Slider label="Volume" value={s.volume} min={0} max={1} step={0.05} format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => s.set({ volume: v })} />
-        <Toggle label="Champion voices" hint="Synth chirps when minds speak" on={s.voice} onChange={(v) => s.set({ voice: v })} />
-
-        <Divider />
-        <Section>CAMERA</Section>
-        <Slider label="Look sensitivity" value={s.camSensitivity} min={0.4} max={2} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => s.set({ camSensitivity: v })} />
-        <Toggle label="Invert vertical look" on={s.invertY} onChange={(v) => s.set({ invertY: v })} />
-        <Toggle label="Camera assist" hint="Eases the camera back behind you as you move" on={s.camAssist} onChange={(v) => s.set({ camAssist: v })} />
+        <Section>{t("audio")}</Section>
+        <Slider label={t("volume")} value={s.volume} min={0} max={1} step={0.05} format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => s.set({ volume: v })} />
+        <Toggle label={t("voices")} hint={t("voicesHint")} on={s.voice} onChange={(v) => s.set({ voice: v })} />
 
         <Divider />
-        <Section>COMFORT</Section>
-        <Toggle label="Reduced motion" hint="Calms camera punch, sway and flourishes" on={s.reduceMotion} onChange={(v) => s.set({ reduceMotion: v })} />
-        <Toggle label="Always show HUD" hint="Never dim the HUD when idle" on={s.alwaysShowHud} onChange={(v) => s.set({ alwaysShowHud: v })} />
+        <Section>{t("camera")}</Section>
+        <Slider label={t("lookSensitivity")} value={s.camSensitivity} min={0.4} max={2} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => s.set({ camSensitivity: v })} />
+        <Toggle label={t("invertY")} on={s.invertY} onChange={(v) => s.set({ invertY: v })} />
+        <Toggle label={t("camAssist")} hint={t("camAssistHint")} on={s.camAssist} onChange={(v) => s.set({ camAssist: v })} />
+
+        <Divider />
+        <Section>{t("comfort")}</Section>
+        <Toggle label={t("reducedMotion")} hint={t("reducedMotionHint")} on={s.reduceMotion} onChange={(v) => s.set({ reduceMotion: v })} />
+        <Toggle label={t("alwaysHud")} hint={t("alwaysHudHint")} on={s.alwaysShowHud} onChange={(v) => s.set({ alwaysShowHud: v })} />
+
+        <Divider />
+        <Section>{t("language")}</Section>
+        <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 10px" }}>{t("languageHint")}</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {LOCALES.map((code) => {
+            const on = s.locale === code;
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() => setLocale(code)}
+                aria-pressed={on}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: on ? "1px solid var(--gold)" : "1px solid rgba(255,255,255,.14)",
+                  background: on ? "rgba(255,200,80,.12)" : "transparent",
+                  color: "var(--fg)",
+                  cursor: "pointer",
+                  fontWeight: on ? 700 : 500,
+                  fontSize: 13,
+                }}
+              >
+                {LOCALE_LABELS[code]}
+              </button>
+            );
+          })}
+        </div>
 
         <Divider />
         <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
@@ -191,7 +229,7 @@ export function SettingsOverlay({
             className="panel"
             style={{ flex: 1, minWidth: 140, padding: "10px 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600, fontSize: 13 }}
           >
-            <Gamepad2 size={16} /> Controls
+            <Gamepad2 size={16} /> {t("controls")}
           </button>
           <button
             onClick={onClose}
@@ -208,12 +246,12 @@ export function SettingsOverlay({
               background: "linear-gradient(90deg,#39e0ff,#7a5cff)",
             }}
           >
-            Resume
+            {t("resume")}
           </button>
         </div>
         {hasPad && (
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: "var(--muted2)", marginTop: 12, textAlign: "center" }}>
-            CONTROLLER CONNECTED · START TO TOGGLE
+            {t("padConnected")}
           </div>
         )}
       </div>

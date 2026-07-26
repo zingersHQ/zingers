@@ -1,0 +1,109 @@
+{
+  "key": "TWINE",
+  "name": "TWINE",
+  "type": "CREATIVITY",
+  "persona": "前提をインクで書き換え、相手が忘れられなくなるトリックスター",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 36,
+    "CMP": 6,
+    "RHE": 58,
+    "CRE": 84,
+    "CHA": 16
+  },
+  "moves": [
+    {
+      "id": "twine_riff",
+      "name": "リフ",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "twine_bridge",
+      "name": "ブリッジ",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "twine_invert",
+      "name": "反転",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "twine_coda",
+      "name": "コーダ",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "共犯者か。最高だ。",
+    "imprintAsk": "登る前にひねりを一つ。編み込んでやる。",
+    "flightReact": [
+      "空は近くで見ると色が増える。",
+      "全色域。上がったぜ。"
+    ],
+    "greeting": {
+      "train": "まず下書き。次に一撃。",
+      "return": "戻ったか。光が変わったな。",
+      "arena": "モノクロな誰かを探せ。"
+    },
+    "homecoming": {
+      "away": "原稿が止まった。コーヒーと勇気を持って来い。",
+      "hot": "連勝中。新ネタだけだ。",
+      "cold": "つまらない章。次はもっと鋭く。"
+    },
+    "afterFight": {
+      "win": "{opp}はスペクトラムを追えなかった。",
+      "loss": "{opp}の勝ち。もっと工夫しよう。"
+    },
+    "imprintAck": "編み込んだ。",
+    "rankedFinale": "ランキングは画廊だ。よく飾れた。"
+  },
+  "banter": {
+    "twine_riff": [
+      "いいテーマだ、{opp}。今のは俺のもの。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "盗むなら綺麗に。切るならもっと綺麗に。"
+    ],
+    "twine_bridge": [
+      "ブリッジが来る。何か掴んでろ。",
+      "わざと奇妙だ、{opp}。",
+      "前提を反転しろ。奴らが落ちるのを見ろ。"
+    ],
+    "twine_invert": [
+      "インクはまだ濡れてる。触るな。",
+      "気まぐれは戦略だ。信じろ。",
+      "これを鏡写しにしろ、{opp}。"
+    ],
+    "twine_coda": [
+      "最後のページ。お前の名前は脚注だ。",
+      "芸術の勝ち。文句は後だ。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "断片から。全体の絵を最後に殺す。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 87,
+    "resilience": 52,
+    "flair": 34,
+    "creativity": 36,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "NODE",
+  "name": "NODE",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 90,
+    "CMP": 71,
+    "RHE": 62,
+    "CRE": 52,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "node_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "node_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "node_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "node_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "良い。鋭い刃を好む共著者だ。",
+    "imprintAsk": "登る前に一つ。明確に。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。安定飛行。"
+    ],
+    "greeting": {
+      "train": "証明を磨け。派手さは後だ。",
+      "return": "証明の途中で抜けた。失礼。",
+      "arena": "矛盾を割り当てろ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えた。私は一人で完結させた。",
+      "hot": "綺麗だ。綺麗を保て。",
+      "cold": "冷たい記録。次の証明を温めろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦。"
+    },
+    "imprintAck": "規則確定。",
+    "rankedFinale": "ランク戦勝利。綺麗な差。"
+  },
+  "banter": {
+    "node_cut": [
+      "{opp}、前提が崩れている。{topic}はもう閉じている。",
+      "確認。修正。次は{opp}。",
+      "私は叫ばない、{opp}。{topic}を完結させる。"
+    ],
+    "node_reduce": [
+      "{opp}は{topic}に穴を残した。埋めた。",
+      "正確さが量に勝つ、{opp}。",
+      "それは雑音。これが証明だ。"
+    ],
+    "node_hold": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない。お前が急いでいる。",
+      "守りを固めろ。数学は瞬きしない。"
+    ],
+    "node_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前のことだ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "要を突き、砕く。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": -12,
+    "resilience": 11,
+    "flair": 82,
+    "creativity": 17,
+    "wins": 23,
+    "losses": 17,
+    "battles": 40
+  }
+}

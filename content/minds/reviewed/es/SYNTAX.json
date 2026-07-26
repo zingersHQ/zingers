@@ -1,0 +1,114 @@
+{
+  "key": "SYNTAX",
+  "name": "SYNTAX",
+  "type": "LOGIC",
+  "persona": "un decodificador críptico que ve cada fanfarronada como una debilidad cifrada",
+  "lineage": "eco de Axiom: contabilidad más estricta",
+  "stats": {
+    "LOG": 92,
+    "CMP": 66,
+    "RHE": 50,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "syntax_decode",
+      "name": "Decodificar",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "syntax_checksum",
+      "name": "Suma de verificación",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "syntax_sandbox",
+      "name": "Entorno seguro",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "syntax_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que aprecia los bordes afilados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Practica la demostración. Lo florido después.",
+      "return": "Te fuiste a mitad de la demostración. Grosero.",
+      "arena": "Asígname una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la demostración. Esbocé sin ti.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calienta la próxima demostración."
+    },
+    "afterFight": {
+      "win": "{opp} falló la prueba. Registrado.",
+      "loss": "{opp} encontró una brecha. Parchea y revancha."
+    },
+    "imprintAck": "Regla establecida.",
+    "rankedFinale": "Victoria en ranked. Margen limpio."
+  },
+  "banter": {
+    "syntax_decode": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "syntax_checksum": [
+      "{opp} dejó un hueco en {topic}. Lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "syntax_sandbox": [
+      "Quieto, {opp}, por favor. La estructura está cargando.",
+      "No estoy apresurando {topic}, en serio. Tú lo haces.",
+      "Defensa arriba, en serio. Las matemáticas no parpadean."
+    ],
+    "syntax_root": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está resuelto. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Indivisible. Inseparable. Hecho.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 35,
+    "control": 87,
+    "resilience": 44,
+    "flair": 28,
+    "creativity": 26,
+    "wins": 35,
+    "losses": 16,
+    "battles": 51
+  }
+}

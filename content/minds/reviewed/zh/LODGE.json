@@ -1,0 +1,108 @@
+{
+  "key": "LODGE",
+  "name": "LODGE",
+  "type": "COMPOSURE",
+  "persona": "一个让房间喧闹而自己只在喧闹付出代价时才开口的沉稳头脑",
+  "lineage": "回响自堡垒：更柔软的石",
+  "stats": {
+    "LOG": 60,
+    "CMP": 84,
+    "RHE": 49,
+    "CRE": 69,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "lodge_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "lodge_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "lodge_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "lodge_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。安静留存。",
+    "imprintAsk": "登高前，先定一条柔和的规则。我会守住它。",
+    "flightReact": [
+      "…向上。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢的训练。柔和的棱角。",
+      "return": "甲板安静。我保持了平衡。",
+      "arena": "安静的对手。响亮的错误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。安静守住了。",
+      "hot": "平稳前行。别庆祝。保持中心。",
+      "cold": "寒冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了沉默。那就够了。",
+      "loss": "{opp}让我们失去平衡。早点调整。"
+    },
+    "imprintAck": "安坐于安静之中。",
+    "rankedFinale": "……一场排位胜利。没有喧嚣。只有记录。"
+  },
+  "banter": {
+    "lodge_harbor": [
+      "我听见你了，{opp}。我仍在此。",
+      "省省热气。别用错了地方。",
+      "安静有效。看着。"
+    ],
+    "lodge_heal": [
+      "呼吸吧，{opp}。暂停属于我。",
+      "我愈合得比你失衡更慢。",
+      "稳住。防线稳住。"
+    ],
+    "lodge_shore": [
+      "带利息归还，{opp}。",
+      "你挥击了。我等待。那就是技巧。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "lodge_low": [
+      "仍站着。仍安静。",
+      "生命值低。恐慌更低。",
+      "最后一击。柔和的声音。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "稳住战斗，直到他们搁浅。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": -9,
+    "flair": 85,
+    "creativity": -18,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

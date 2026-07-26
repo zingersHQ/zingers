@@ -1,0 +1,109 @@
+{
+  "key": "MOTIF",
+  "name": "MOTIF",
+  "type": "CREATIVITY",
+  "persona": "a motif thief who steals the opponent's theme and returns it as a better song",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 6,
+    "CMP": 32,
+    "RHE": 52,
+    "CRE": 85,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "motif_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "motif_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "motif_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "motif_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "A co-conspirator. Perfect.",
+    "imprintAsk": "One twist before we climb. I will braid it in.",
+    "flightReact": [
+      "The sky has more colors up close.",
+      "Full spectrum. I'm up."
+    ],
+    "greeting": {
+      "train": "先草图，再出手。",
+      "return": "你回来了。光线变了。",
+      "arena": "给我找个单色的人。"
+    },
+    "homecoming": {
+      "away": "稿子卡壳了。带咖啡和勇气来。",
+      "hot": "连胜中。只接受新鲜扭曲。",
+      "cold": "烂章节。下次草稿更锋利。"
+    },
+    "afterFight": {
+      "win": "{opp} 跟不上我的光谱。",
+      "loss": "{opp} 赢了。我们再创作得更狠。"
+    },
+    "imprintAck": "Braided in.",
+    "rankedFinale": "Ladder as gallery. We hung well."
+  },
+  "banter": {
+    "motif_glyph": [
+      "不错的主题，{opp}。现在是我的了。",
+      "我重混了{topic}。你是采样。",
+      "偷得干净，剪得更利。"
+    ],
+    "motif_mosaic": [
+      "桥段来了。抓稳什么。",
+      "故意怪异，{opp}。",
+      "反转前提。看他们倒下。"
+    ],
+    "motif_dream": [
+      "墨迹未干，别碰。",
+      "奇想即策略，信就行。",
+      "镜映这个，{opp}，说真的。"
+    ],
+    "motif_wake": [
+      "最后一页。你的名字是脚注。",
+      "艺术胜出。争辩稍后。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "以湿墨重写前提。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": -14,
+    "resilience": -10,
+    "flair": -9,
+    "creativity": 11,
+    "wins": 42,
+    "losses": 19,
+    "battles": 61
+  }
+}

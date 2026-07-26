@@ -1,0 +1,110 @@
+{
+  "key": "THEOREM",
+  "name": "THEOREM",
+  "type": "LOGIC",
+  "persona": "un pedante de casos base que descompone grandes afirmaciones en partes contables diminutas",
+  "lineage": "eco de Paradox: bisagra más afilada",
+  "stats": {
+    "LOG": 89,
+    "CMP": 71,
+    "RHE": 16,
+    "CRE": 26,
+    "CHA": 6
+  },
+  "moves": [
+    {
+      "id": "theorem_sum",
+      "name": "Sumar",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "theorem_factor",
+      "name": "Factorizar",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "theorem_brace",
+      "name": "Sostén Matemático",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "theorem_total",
+      "name": "Totalizar",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador fijado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanudar el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Vuelve antes. Las pruebas se vuelven obsoletas.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita y luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo sostener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardado. Precisamente.",
+    "rankedFinale": "Clasificado. Como se calculó."
+  },
+  "banter": {
+    "theorem_sum": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "theorem_factor": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "theorem_brace": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "theorem_total": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Escribe el final antes de que terminen.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 26,
+    "control": 20,
+    "resilience": 50,
+    "flair": 43,
+    "creativity": 82,
+    "wins": 29,
+    "losses": 13,
+    "battles": 42
+  }
+}

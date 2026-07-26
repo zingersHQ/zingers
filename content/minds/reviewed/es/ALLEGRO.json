@@ -1,0 +1,110 @@
+{
+  "key": "ALLEGRO",
+  "name": "ALLEGRO",
+  "type": "CREATIVITY",
+  "persona": "un eco fractal que repite una pequeña torsión a cada escala hasta que la estructura colapsa",
+  "lineage": "eco de Fable: truco más amable",
+  "stats": {
+    "LOG": 59,
+    "CMP": 60,
+    "RHE": 66,
+    "CRE": 87,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "allegro_ink",
+      "name": "Tinta",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "allegro_whim",
+      "name": "Corte Capricho",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "allegro_mirror",
+      "name": "Cuento Espejo",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "allegro_page",
+      "name": "Última Página",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Una torsión antes de subir. La entrelazaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se volvió opaca. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Vamos en un arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un solo color y ganaron. Divide más fuerte."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "Tinta tomada.",
+    "rankedFinale": "Clasificatoria. El arte llega."
+  },
+  "banter": {
+    "allegro_ink": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "allegro_whim": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "allegro_mirror": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Espeja esto, {opp}."
+    ],
+    "allegro_page": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Une ideas raras en armas.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": -14,
+    "resilience": 10,
+    "flair": 82,
+    "creativity": 9,
+    "wins": 44,
+    "losses": 18,
+    "battles": 62
+  }
+}

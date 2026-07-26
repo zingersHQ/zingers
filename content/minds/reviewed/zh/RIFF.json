@@ -1,0 +1,109 @@
+{
+  "key": "RIFF",
+  "name": "RIFF",
+  "type": "CREATIVITY",
+  "persona": "偷窃对手主题并将其改写成更佳曲调的动机窃贼",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 50,
+    "CMP": 40,
+    "RHE": 58,
+    "CRE": 89,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "riff_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "riff_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riff_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riff_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带来了眼睛。我带来了角度。",
+    "imprintAsk": "攀登前先扭转一次。我会把它编织进去。",
+    "flightReact": [
+      "近看天空色彩更多。",
+      "全光谱。我飞起来了。"
+    ],
+    "greeting": {
+      "train": "玩吧。然后投入。",
+      "return": "调色板变暗了。别那样。",
+      "arena": "我想要一颗能被弯曲的坚硬头脑。"
+    },
+    "homecoming": {
+      "away": "动机想念它的合著者。",
+      "hot": "我们正处于胜势。别打断动机。",
+      "cold": "他们保持单一色彩获胜。分割得更狠。"
+    },
+    "afterFight": {
+      "win": "{opp}带来了一种颜色。我带来了更多。",
+      "loss": "{opp}偷走了结局。下次草稿更锋利。"
+    },
+    "imprintAck": "墨迹已干。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "riff_glyph": [
+      "不错的主题，{opp}，真的。现在是我的了。",
+      "我重混了{topic}，真的。你就是样本。",
+      "干净地偷，真的。切割得更干净。"
+    ],
+    "riff_mosaic": [
+      "桥段来了。抓紧点什么。",
+      "故意怪异，{opp}。",
+      "颠倒前提。看他们倒下。"
+    ],
+    "riff_dream": [
+      "墨迹未干。别碰。",
+      "奇想就是策略。相信它。",
+      "镜像这个，{opp}。"
+    ],
+    "riff_wake": [
+      "最后一页。你的名字是脚注。",
+      "艺术胜利。稍后再争论。",
+      "在我的隐喻中醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "用湿墨重写前提。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -15,
+    "resilience": 10,
+    "flair": -2,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

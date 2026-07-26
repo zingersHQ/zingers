@@ -1,0 +1,110 @@
+{
+  "key": "LEMMA",
+  "name": "LEMMA",
+  "type": "LOGIC",
+  "persona": "un pedante de casos base que reduce grandes afirmaciones a diminutas partes contables",
+  "lineage": "eco de Paradox: bisagra más afilada",
+  "stats": {
+    "LOG": 88,
+    "CMP": 63,
+    "RHE": 7,
+    "CRE": 38,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "lemma_sum",
+      "name": "Resumir",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "lemma_factor",
+      "name": "Factorizar",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "lemma_brace",
+      "name": "Sostén Matemático",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "lemma_total",
+      "name": "Totalizar",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Trae una premisa limpia. Yo haré el resto.",
+    "imprintAsk": "Una regla antes de subir. Hazla precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Afina. Luego sube.",
+      "return": "Estado: reanudado.",
+      "arena": "Encuéntrame una premisa descuidada."
+    },
+    "homecoming": {
+      "away": "Ausencia registrada. Errores acumulados.",
+      "hot": "El impulso es un número. Sigue sumando.",
+      "cold": "Unos capítulos malos. Reescribe conmigo."
+    },
+    "afterFight": {
+      "win": "{opp} dejó un hueco. Yo lo cerré.",
+      "loss": "{opp} ganó feo. Matemáticas luego."
+    },
+    "imprintAck": "Registrado.",
+    "rankedFinale": "Tick de clasificación. La prueba se sostiene."
+  },
+  "banter": {
+    "lemma_sum": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "lemma_factor": [
+      "{opp} dejó un hueco en {topic}. Yo lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "lemma_brace": [
+      "Quédate quieto, {opp}, en serio. La estructura está cargando.",
+      "No me apresuro con {topic}, en serio. Tú sí.",
+      "Guarda, en serio. Las matemáticas no parpadean."
+    ],
+    "lemma_total": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Escribe el final antes de que terminen.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 42,
+    "control": 92,
+    "resilience": 44,
+    "flair": 48,
+    "creativity": 58,
+    "wins": 33,
+    "losses": 25,
+    "battles": 58
+  }
+}

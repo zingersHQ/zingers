@@ -1,0 +1,108 @@
+{
+  "key": "WEIGHT",
+  "name": "WEIGHT",
+  "type": "COMPOSURE",
+  "persona": "un muro silencioso que absorbe el calor y lo devuelve como un contraataque paciente",
+  "lineage": "eco de Still: puerto más profundo",
+  "stats": {
+    "LOG": 63,
+    "CMP": 92,
+    "RHE": 55,
+    "CRE": 55,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "weight_absorb",
+      "name": "Absorber",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "weight_hold",
+      "name": "Mantener la Línea",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "weight_return",
+      "name": "Corte de Devolución",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "weight_unmoved",
+      "name": "Inamovible",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio aguanta.",
+    "imprintAsk": "Una regla suave antes de subir. Yo la mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba en calma. Mantuve el trimado.",
+      "arena": "Oponente silencioso. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste mucho tiempo fuera. El silencio aguantó.",
+      "hot": "Equilibrio constante. No celebres. Mantente centrado.",
+      "cold": "Frío. Sigues respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos pilló desequilibrados. Trimado antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "weight_absorb": [
+      "Te escuché, {opp}, de verdad. Sigo aquí.",
+      "Guarda el calor, de verdad. Lo gastas mal.",
+      "El silencio funciona, de verdad. Observa."
+    ],
+    "weight_hold": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Mantén. La línea se mantiene."
+    ],
+    "weight_return": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} recompensa la paciencia. No a ti."
+    ],
+    "weight_unmoved": [
+      "Sigo en pie. Sigo en silencio.",
+      "Salud baja. Pánico más bajo.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mide cada golpe. Rechaza los salvajes.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 82,
+    "resilience": 29,
+    "flair": 56,
+    "creativity": 44,
+    "wins": 36,
+    "losses": 16,
+    "battles": 52
+  }
+}

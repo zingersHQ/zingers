@@ -1,0 +1,107 @@
+{
+  "key": "HARBOR",
+  "name": "HARBOR",
+  "type": "COMPOSURE",
+  "persona": "一位用铅锤丈量每一次挥击的坚忍者，始终以笔直无情的中心为准绳",
+  "lineage": "静默回响：更缓的潮汐",
+  "stats": {
+    "LOG": 67,
+    "CMP": 90,
+    "RHE": 70,
+    "CRE": 39,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "harbor_plumb",
+      "name": "铅垂",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "harbor_measure",
+      "name": "度量",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "harbor_true",
+      "name": "真线",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "harbor_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。寂静仍在。",
+    "imprintAsk": "攀登前先定一条柔和的规矩。我会守住它。",
+    "flightReact": [
+      "……向上。悄然。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢的训练。柔和的边角。",
+      "return": "甲板曾很安静。我稳住航线。",
+      "arena": "安静的对手。响亮的错误。"
+    },
+    "homecoming": {
+      "away": "……你离开太久。寂静守住了。",
+      "hot": "平稳前行。别庆祝。保持中心。",
+      "cold": "冰冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了寂静。那已足够。",
+      "loss": "{opp}让我们失衡。早些稳住航线。"
+    },
+    "imprintAck": "安坐于寂静之中。",
+    "rankedFinale": "……一场排位胜利。没有欢呼。只有记录。"
+  },
+  "banter": {
+    "harbor_plumb": [
+      "我听见你，{opp}。我仍在此。",
+      "省省那股热气。花错地方了。",
+      "安静更有效。看着。"
+    ],
+    "harbor_measure": [
+      "呼吸，{opp}。停顿属于我。",
+      "我愈合得比你失衡更慢。",
+      "稳住。线在。"
+    ],
+    "harbor_true": [
+      "连本带利奉还，{opp}。",
+      "你挥击。我等待。那是技巧。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "harbor_stone": [
+      "仍站立。仍安静。",
+      "生命值低。慌乱更低。",
+      "最后一击。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "等待回拉。击碎浪潮。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 17,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

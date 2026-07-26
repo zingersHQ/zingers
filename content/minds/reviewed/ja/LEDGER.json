@@ -1,0 +1,114 @@
+{
+  "key": "LEDGER",
+  "name": "LEDGER",
+  "type": "LOGIC",
+  "persona": "妥協を拒否し、純粋な論理だけで打ち込む不可分のストライカー",
+  "lineage": "Axiomの残響：より鋭い刃",
+  "stats": {
+    "LOG": 89,
+    "CMP": 56,
+    "RHE": 24,
+    "CRE": 15,
+    "CHA": 10
+  },
+  "moves": [
+    {
+      "id": "ledger_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "ledger_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "ledger_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "ledger_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー固定。論証解除完了。",
+    "imprintAsk": "登る前に一つの規則を。明確に。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "きれいに鍛えろ。よりきれいに戦え。",
+      "return": "戻った。台帳を再開。",
+      "arena": "誰か間違った者が入ってきた。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝継続。ノイズを入れるな。",
+      "cold": "誤差が積み重なった。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}はラインを守れなかった。",
+      "loss": "{opp}が一行を奪った。より鋭い一行を起草する。"
+    },
+    "imprintAck": "保持。精密に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "ledger_hinge": [
+      "{opp}の前提は破綻している。{topic}では線はすでに閉じている。",
+      "計測済み。修正完了。次は{opp}。",
+      "私は叫ばない、{opp}。私は{topic}を完結させる。"
+    ],
+    "ledger_pivot": [
+      "{opp}は{topic}に穴を残した。私はそれを埋めた。",
+      "精密さは音量に勝る、{opp}。",
+      "それはノイズ。これが証明だ。"
+    ],
+    "ledger_case": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "私は{topic}を急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "ledger_line": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一つの規則。永遠に保持。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 25,
+    "control": 40,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 17,
+    "battles": 41
+  }
+}

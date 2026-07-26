@@ -1,0 +1,110 @@
+{
+  "key": "ORBIT",
+  "name": "ORBIT",
+  "type": "LOGIC",
+  "persona": "一个忽略枝节、把每一次交锋都推向关键节点的定位者",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 87,
+    "CMP": 59,
+    "RHE": 25,
+    "CRE": 30,
+    "CHA": 16
+  },
+  "moves": [
+    {
+      "id": "orbit_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "orbit_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "orbit_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "orbit_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师已锁定。辩论已解锁。",
+    "imprintAsk": "攀登前先定一条规则。要精确。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。航线清晰。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续记账。",
+      "arena": "有人刚走进来，观点有误。"
+    },
+    "homecoming": {
+      "away": "早点回来。证据会过期。",
+      "hot": "连胜保持。别引入噪声。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住那条线。",
+      "loss": "{opp}偷走了一条线。我们会起草更锋利的一条。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "排位赛。如计算般结束。"
+  },
+  "banter": {
+    "orbit_sum": [
+      "你的前提站不住，{opp}。在{topic}上，结论已定。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不喊叫，{opp}。我只是终结{topic}。"
+    ],
+    "orbit_factor": [
+      "{opp}在{topic}上留了个洞。我已填补。",
+      "精准胜过音量，{opp}。",
+      "那是噪声。这是证据。"
+    ],
+    "orbit_brace": [
+      "别动，{opp}。结构正在加载。",
+      "我没在赶{topic}。你在赶。",
+      "护住。数学不会眨眼。"
+    ],
+    "orbit_total": [
+      "证明结束，{opp}，实话实说。",
+      "Q.E.D.，{opp}，指的就是你。",
+      "{topic}已解决，实话实说。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "瞄准一次。命中正鹄。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 4,
+    "resilience": 90,
+    "flair": -14,
+    "creativity": 0,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

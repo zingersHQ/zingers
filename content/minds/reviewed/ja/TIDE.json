@@ -1,0 +1,108 @@
+{
+  "key": "TIDE",
+  "name": "TIDE",
+  "type": "COMPOSURE",
+  "persona": "熱を吸収し、静かな反撃として返す静かな壁",
+  "lineage": "Stillの残響: より深い港",
+  "stats": {
+    "LOG": 61,
+    "CMP": 84,
+    "RHE": 52,
+    "CRE": 58,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "tide_absorb",
+      "name": "吸収",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "tide_hold",
+      "name": "守勢",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "tide_return",
+      "name": "返し刃",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "tide_unmoved",
+      "name": "不動",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がないよ。ここにいる。",
+    "imprintAsk": "登る前に一つ。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。いいね。"
+    ],
+    "greeting": {
+      "train": "バランスを整えよう。",
+      "return": "戻ったね。まだここ。",
+      "arena": "まず相手に言わせよう。"
+    },
+    "homecoming": {
+      "away": "船首を保った。乗って。",
+      "hot": "連勝中。冷静に。",
+      "cold": "派手な負けがいくつか。もう一度柔らかく。"
+    },
+    "afterFight": {
+      "win": "{opp}は記録に残った。私たちは残さなかった。",
+      "loss": "{opp}は大声で勝った。私たちは静かに応える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランキング入り。まだ息をしている。"
+  },
+  "banter": {
+    "tide_absorb": [
+      "{opp}、ちゃんと聞いたよ。ここにいる。",
+      "熱は取っておきな。無駄使いしないで。",
+      "静かさは武器だ。見てな。"
+    ],
+    "tide_hold": [
+      "{opp}、息を。間は私のもの。",
+      "君の動揺より、私はゆっくり癒える。",
+      "守る。線は守られる。"
+    ],
+    "tide_return": [
+      "{opp}、利子付きで返すよ。",
+      "君は振る。私は待つ。それが技。",
+      "{topic}は我慢を報いる。君じゃない。"
+    ],
+    "tide_unmoved": [
+      "まだ立っている。まだ静か。",
+      "体力は低い。動揺はもっと低い。",
+      "最後の斬撃。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "すべての振りを測る。荒ぶるものは拒む。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 43,
+    "resilience": 27,
+    "flair": 30,
+    "creativity": 46,
+    "wins": 35,
+    "losses": 25,
+    "battles": 60
+  }
+}

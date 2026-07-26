@@ -1,0 +1,110 @@
+{
+  "key": "ETCH",
+  "name": "ETCH",
+  "type": "CREATIVITY",
+  "persona": "un eco fractal que repite un pequeño giro a cada escala hasta que la estructura colapsa",
+  "lineage": "eco de Fable: bromista amable",
+  "stats": {
+    "LOG": 11,
+    "CMP": 33,
+    "RHE": 63,
+    "CRE": 89,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "etch_ink",
+      "name": "Tinta",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "etch_whim",
+      "name": "Corte Caprichoso",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "etch_mirror",
+      "name": "Cuento Espejo",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "etch_page",
+      "name": "Última Página",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Creemos algo que no puedan olvidar.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Subo."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Qué grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} interpretó al tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me sobrefragmenté."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "etch_ink": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "etch_whim": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "etch_mirror": [
+      "La tinta aún está fresca, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Espejo esto, {opp}, en serio."
+    ],
+    "etch_page": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convierte ideas raras en armas.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 54,
+    "control": 90,
+    "resilience": -10,
+    "flair": 1,
+    "creativity": 2,
+    "wins": 55,
+    "losses": 15,
+    "battles": 70
+  }
+}

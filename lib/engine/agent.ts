@@ -6,6 +6,21 @@ import "server-only";
 import { chatWith, chatRawWith, houseCfg, parseJson, type ChatCfg, type RawMessage, type ToolFunctionSpec } from "./xai";
 import type { AgentConfig, Strat, ToolStep } from "@/lib/types";
 import { safeHttpAgentEndpoint } from "@/lib/server/url-safety";
+import {
+  DEFAULT_LOCALE,
+  isLocale,
+  LINE_LIMIT,
+  LOCALE_LANGUAGE,
+  type Locale,
+} from "@/lib/i18n/locales";
+
+function viewLocale(v: AgentView): Locale {
+  return isLocale(v.locale) ? v.locale : DEFAULT_LOCALE;
+}
+
+function lineLimitPrompt(locale: Locale): string {
+  return LINE_LIMIT[locale].prompt;
+}
 
 export interface AgentMoveView {
   id: string;
@@ -17,6 +32,8 @@ export interface AgentView {
   topic: string;
   round: number;
   arena: string;
+  /** Player locale — trash-talk bar language. */
+  locale?: string;
   you: { name: string; type: string; persona: string; stance: string; hp: number; max: number; statuses: string };
   opponent: { name: string; type: string; hp: number; max: number; statuses: string; lastLine: string };
   legalMoves: AgentMoveView[];
@@ -94,11 +111,15 @@ export function describeStrat(s: Strat): string {
 }
 
 function buildSystem(v: AgentView): string {
+  const locale = viewLocale(v);
+  const lang = LOCALE_LANGUAGE[locale];
   const memory = v.memory.length ? ` What you've learned from past fights (use it): ${v.memory.join("; ")}.` : "";
   return (
     `You are ${v.you.name}, ${v.you.persona}. You are in ${v.arena}. ` +
     `The proposition is: "${v.topic}". You argue ${v.you.stance.toUpperCase()} it. ` +
-    `Stay sharply in character, stay on the proposition, be witty and punchy. ${describeStrat(v.strat)}${memory}`
+    `Stay sharply in character, stay on the proposition, be witty and punchy. ` +
+    `Write your trash-talk bar in ${lang}. ` +
+    `${describeStrat(v.strat)}${memory}`
   );
 }
 
@@ -116,14 +137,17 @@ const TACTICS =
   "exploit the opponent's statuses, and vary your tactics instead of repeating one move. ";
 
 function buildMessages(v: AgentView) {
+  const locale = viewLocale(v);
+  const lang = LOCALE_LANGUAGE[locale];
+  const lim = lineLimitPrompt(locale);
   const usr =
     buildState(v) +
     TACTICS +
     "Pick the SMARTEST move for this game state, then deliver your line. " +
-    "Your line is a TRASH-TALK BAR: ONE punchy sentence, MAX 14 words, made to be read on a phone. " +
+    `Your line is a TRASH-TALK BAR in ${lang}: ONE punchy sentence, ${lim}, made to be read on a phone. ` +
     'Reply ONLY as JSON: {"move":"<id>","intent":"<max 5 word tactic>",' +
-    '"line":"<the bar: ONE sentence, MAX 14 words, in character, turn the opponent\'s last words against them>",' +
-    '"why":"<max 18 words, plain English: why this move/line is smart right now>"}';
+    `"line":"<the bar in ${lang}: ONE sentence, ${lim}, in character, turn the opponent's last words against them>",` +
+    '"why":"<max 18 words: why this move/line is smart right now>"}';
   return [
     { role: "system" as const, content: buildSystem(v) },
     { role: "user" as const, content: usr },
@@ -178,7 +202,7 @@ const COMMIT_TOOL: ToolFunctionSpec = {
       properties: {
         move: { type: "string", description: "a legal move id" },
         intent: { type: "string", description: "max 5 word tactic" },
-        line: { type: "string", description: "the bar: ONE sentence, MAX 14 words, in character, turn their words against them" },
+        line: { type: "string", description: "the bar: ONE punchy sentence in the requested language, in character, turn their words against them" },
         why: { type: "string", description: "max 18 words, plain English: why this move/line is smart right now" },
       },
       required: ["move", "line"],
@@ -214,7 +238,7 @@ async function runToolLoop(cfg: ChatCfg, v: AgentView, ctx: AgentTurnCtx): Promi
       content:
         buildState(v) +
         TACTICS +
-        "Optionally simulate_move once on your top candidate, then commit_move with the smartest move and a TRASH-TALK BAR: ONE punchy sentence, MAX 14 words, turning their last words against them. Do NOT reply in plain text — call a tool.",
+        "Optionally simulate_move once on your top candidate, then commit_move with the smartest move and a TRASH-TALK BAR in the language required by the system prompt, turning their last words against them. Do NOT reply in plain text — call a tool.",
     },
   ];
 

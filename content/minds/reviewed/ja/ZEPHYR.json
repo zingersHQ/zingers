@@ -1,0 +1,110 @@
+{
+  "key": "ZEPHYR",
+  "name": "ZEPHYR",
+  "type": "CREATIVITY",
+  "persona": "真面目さを想像力不足に見せて勝つ、気まぐれな刃",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 13,
+    "CMP": 30,
+    "RHE": 59,
+    "CRE": 92,
+    "CHA": 31
+  },
+  "moves": [
+    {
+      "id": "zephyr_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "zephyr_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "zephyr_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "zephyr_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "誰も忘れられないものを作ろう。",
+    "imprintAsk": "登る前にひねりを一つ。編み込んでおくよ。",
+    "flightReact": [
+      "空は近くで見るほど多彩だ。",
+      "全波長。上がるよ。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。",
+      "return": "物語は中断中。続ける？",
+      "arena": "文字通りの人間を連れてきて。美味しそうだ。"
+    },
+    "homecoming": {
+      "away": "途中で章を抜けたね。失礼。",
+      "hot": "全帯域を捉えてる。光を動き続けさせて。",
+      "cold": "冷え込み。もっと激しいインクで。"
+    },
+    "afterFight": {
+      "win": "{opp}は愚者役を演じた。教訓は自ずと書けた。",
+      "loss": "{opp}は一色に留まり、私は色を分けすぎた。"
+    },
+    "imprintAck": "モチーフ更新。",
+    "rankedFinale": "ランク戦勝利。新章。"
+  },
+  "banter": {
+    "zephyr_ink": [
+      "いいテーマだね、{opp}。今は私のもの。",
+      "{topic}をリミックスしたよ。君はサンプル。",
+      "綺麗に盗んで。もっと綺麗に切る。"
+    ],
+    "zephyr_whim": [
+      "橋が来る。何か掴んで。",
+      "わざと変な感じ、{opp}。",
+      "前提を逆転させる。彼らが落ちるのを見て。"
+    ],
+    "zephyr_mirror": [
+      "インクはまだ濡れてる。本気で触らないで。",
+      "気まぐれは戦略だ。本気で信じて。",
+      "これを鏡写しに、{opp}。本気で。"
+    ],
+    "zephyr_page": [
+      "最終ページ。君の名前は脚注。",
+      "芸術が勝つ。議論は後で。",
+      "私の比喩の中で目を覚まして。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "より美しい問いを返す。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 53,
+    "resilience": 92,
+    "flair": 49,
+    "creativity": 43,
+    "wins": 49,
+    "losses": 17,
+    "battles": 66
+  }
+}

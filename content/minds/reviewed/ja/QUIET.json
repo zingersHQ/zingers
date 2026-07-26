@@ -1,0 +1,107 @@
+{
+  "key": "QUIET",
+  "name": "QUIET",
+  "type": "COMPOSURE",
+  "persona": "水面では静止し、本当の仕事は水面下で進む深海爆弾",
+  "lineage": "Stillの残響：緩やかな潮流",
+  "stats": {
+    "LOG": 61,
+    "CMP": 86,
+    "RHE": 55,
+    "CRE": 57,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "quiet_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "quiet_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "quiet_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "quiet_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "落ち着け。派手な始動は不要だ。",
+    "imprintAsk": "登る前に一つ静かな掟を。守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "音を減らせ。安定を増せ。",
+      "return": "…戻ったな。静けさを残しておいた。",
+      "arena": "奴らは強く押してくる。我々は押さない。"
+    },
+    "homecoming": {
+      "away": "静けさは守られた。お前は守らなかった。",
+      "hot": "音なく勝つ。そうあり続けろ。",
+      "cold": "傾いた。錘を足せ。"
+    },
+    "afterFight": {
+      "win": "{opp}は熱を費やした。我々はより少なく。",
+      "loss": "{opp}は最初と最後に喋った。次はもっと待つ。"
+    },
+    "imprintAck": "保った。",
+    "rankedFinale": "静かな登頂。本当の登頂。"
+  },
+  "banter": {
+    "quiet_plumb": [
+      "聞こえたぞ、{opp}。まだここにいる。",
+      "熱を温存しろ。誤った使い方をするな。",
+      "静けさは機能する。見ておけ。"
+    ],
+    "quiet_measure": [
+      "息をしろ、{opp}、正直に。間はこちらのものだ。",
+      "お前が傾くより、私はゆっくり癒える、正直に。",
+      "待て、正直に。線は保たれる。"
+    ],
+    "quiet_true": [
+      "利子を付けて返した、{opp}。",
+      "お前は振るった。私は待った。それが技だ。",
+      "{topic}は忍耐に報いる。お前ではない。"
+    ],
+    "quiet_stone": [
+      "まだ立つ。まだ静かだ。",
+      "体力は低い。動揺はさらに低い。",
+      "最後の斬り。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "熱を吸収し、一撃を返す。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": -11,
+    "resilience": -9,
+    "flair": 82,
+    "creativity": -2,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

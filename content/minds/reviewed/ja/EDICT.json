@@ -1,0 +1,110 @@
+{
+  "key": "EDICT",
+  "name": "EDICT",
+  "type": "RHETORIC",
+  "persona": "舞台育ちの雄弁家。観客の反応を常に意識し、やり取りすべてを劇場と捉える",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 48,
+    "CMP": 50,
+    "RHE": 85,
+    "CRE": 46,
+    "CHA": 52
+  },
+  "moves": [
+    {
+      "id": "edict_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "edict_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "edict_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "edict_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "やっと、観客を操れるトレーナーが現れた。",
+    "imprintAsk": "登壇前に一言。引用に値するものを。",
+    "flightReact": [
+      "空中の劇場だ。私の後に続け。",
+      "着地成功。カーテンコールは後で。"
+    ],
+    "greeting": {
+      "train": "声を温めてから拳だ。",
+      "return": "出番を逃したな。許す。",
+      "arena": "自分を主人公だと思い込んでいる相手を呼べ。"
+    },
+    "homecoming": {
+      "away": "即興でやった。まあまあだった。とにかく戻れ。",
+      "hot": "マイクが熱い。記録も熱い。",
+      "cold": "反応の悪い客席だ。次はより良い台詞で。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客の存在を忘れた。致命的だ。",
+      "loss": "{opp}が客席を掴んだ。我々は脚本を書き直す。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説を好む。"
+  },
+  "banter": {
+    "edict_herald": [
+      "淑女と紳士諸君、{opp}が{topic}について語る。",
+      "拍手してから得点を奪え。",
+      "客席は私を好いている。客席が決める。"
+    ],
+    "edict_gloss": [
+      "引用済みだ、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを続けろ。主張を殺せ。"
+    ],
+    "edict_needle": [
+      "間の取り方が分かるか？それが本当の仕掛けだ。",
+      "先に笑え、{opp}。本当は次に血を流す。",
+      "リズムは武器だ、本当だ。感じろ。"
+    ],
+    "edict_ovation": [
+      "マイクを下ろせ。件は終了だ。",
+      "{topic}の評決：{opp}に対して。",
+      "私への拍手。君への教訓。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズムを先に。仕上げの台詞は遅れて。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 79,
+    "control": -1,
+    "resilience": 2,
+    "flair": 7,
+    "creativity": 8,
+    "wins": 33,
+    "losses": 12,
+    "battles": 45
+  }
+}

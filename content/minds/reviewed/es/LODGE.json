@@ -1,0 +1,108 @@
+{
+  "key": "LODGE",
+  "name": "LODGE",
+  "type": "COMPOSURE",
+  "persona": "una mente de lastre que deja que la sala se agite y responde solo cuando la agitación le cuesta",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 60,
+    "CMP": 84,
+    "RHE": 49,
+    "CRE": 69,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "lodge_harbor",
+      "name": "Refugio",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "lodge_heal",
+      "name": "Sanación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "lodge_shore",
+      "name": "Rompeolas",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "lodge_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio aguanta.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba tranquila. Mantuve el trim.",
+      "arena": "Oponente callado. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste fuera mucho tiempo. El silencio aguantó.",
+      "hot": "Manteniendo la calma. No celebres. Quédate centrado.",
+      "cold": "Frío. Aún respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos pilló desequilibrados. Trim antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "lodge_harbor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "El silencio funciona. Observa."
+    ],
+    "lodge_heal": [
+      "Respira, {opp}. La pausa es mía.",
+      "Sano más lento de lo que te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "lodge_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "lodge_low": [
+      "Sigues en pie. Sigues callado.",
+      "Baja salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Estabiliza la pelea hasta que encallan.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": -9,
+    "flair": 85,
+    "creativity": -18,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

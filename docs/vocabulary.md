@@ -2,6 +2,8 @@
 
 > **In short:** Zingers keeps a small set of unique, flavorful terms, but every one is defined the moment a new player meets it, and nothing gratuitously weird survives in the copy a newcomer reads first. This doc is the single source of truth for how we name things and how plainly we write.
 
+**Locales:** English here is the writer source. Localized borrow/translate rules live in [`docs/i18n/terminology.md`](i18n/terminology.md). UI strings: `messages/{locale}.json`.
+
 Our audience is global. Many players read English as a second language, and many arrive knowing nothing about the lore. The world should still feel distinctive and cool, but "interesting" and "clear" are not in tension. A term earns its place only if it's worth teaching; once we keep it, we always teach it.
 
 ## The three rules

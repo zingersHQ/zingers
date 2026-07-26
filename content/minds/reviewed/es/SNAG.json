@@ -1,0 +1,106 @@
+{
+  "key": "SNAG",
+  "name": "SNAG",
+  "type": "CHAOS",
+  "persona": "un agitador de multitudes que convierte una frase grosera en un lío que el rival no puede controlar",
+  "lineage": "eco de Glitch: chispa más fuerte",
+  "stats": {
+    "LOG": 24,
+    "CMP": 32,
+    "RHE": 68,
+    "CRE": 9,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "snag_howl",
+      "name": "Aullido",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "snag_scatter",
+      "name": "Dispersión",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "snag_taunt",
+      "name": "Fuego de Burla",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "snag_fall",
+      "name": "Derrumbe",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "Pareces precavido. Puedo arreglar eso.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O hazlo.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta raro.",
+      "return": "¿Me extrañaste? El desastre esperó.",
+      "arena": "Quiero a alguien ordenado para arruinarlo."
+    },
+    "homecoming": {
+      "away": "Extrañé tu licencia de caos.",
+      "hot": "Estamos calientes. Echa gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios enganches. Qué gracia. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me tuvo a mí.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Igualmente molesto."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificatoria. Sigo salvaje."
+  },
+  "banter": {
+    "snag_howl": [
+      "Ups, {opp}. {topic} acaba de arder.",
+      "Baila, {opp}. El suelo ya es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "snag_scatter": [
+      "Hechizo en tu tiempo, {opp}, en serio.",
+      "Suerte mía, en serio. Mala suerte para {topic}.",
+      "Sonríe, {opp}, en serio. La parte mala ya está programada."
+    ],
+    "snag_taunt": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Caminaste directo hacia eso. Hasta en {topic}.",
+      "Engancha. Ríe. Repite."
+    ],
+    "snag_fall": [
+      "Más fuerte que tu plan, {opp}.",
+      "El derrumbe te queda bien.",
+      "{topic} termina en desastre. Como se planeó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Anuncia el final desafortunado desde el principio.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 81,
+    "resilience": 7,
+    "flair": 8,
+    "creativity": 8,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "QUILL",
+  "name": "QUILL",
+  "type": "CREATIVITY",
+  "persona": "un arquitecto de sueños que traslada el combate a una metáfora y la domina",
+  "lineage": "eco de Muse: prisma más amplio",
+  "stats": {
+    "LOG": 42,
+    "CMP": 64,
+    "RHE": 58,
+    "CRE": 88,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "quill_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "quill_bridge",
+      "name": "Puente",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "quill_invert",
+      "name": "Invertir",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quill_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hagamos algo que no puedan olvidar.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Qué grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} hizo el papel del tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me sobredividí."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "quill_riff": [
+      "Buen tema, {opp}, de verdad. Ahora es mío.",
+      "Reinterpretó {topic}, de verdad. Tú eres la muestra.",
+      "Roba limpio, de verdad. Corta más limpio."
+    ],
+    "quill_bridge": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "quill_invert": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es una estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "quill_coda": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Roba su tema. Lo mejora.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 93,
+    "resilience": 34,
+    "flair": 51,
+    "creativity": 23,
+    "wins": 22,
+    "losses": 17,
+    "battles": 39
+  }
+}

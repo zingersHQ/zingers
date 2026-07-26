@@ -1,0 +1,109 @@
+{
+  "key": "MOTIF",
+  "name": "MOTIF",
+  "type": "CREATIVITY",
+  "persona": "相手のテーマを盗み、より優れた曲として返すモチーフ泥棒",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 6,
+    "CMP": 32,
+    "RHE": 52,
+    "CRE": 85,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "motif_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "motif_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "motif_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "motif_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "共犯者だ。完璧だ。",
+    "imprintAsk": "登る前に一ひねり。編み込んでやる。",
+    "flightReact": [
+      "空は近くでより色鮮やかだ。",
+      "フルスペクトラム。上昇中。"
+    ],
+    "greeting": {
+      "train": "まずスケッチ。次に一撃。",
+      "return": "戻ったな。光が変わった。",
+      "arena": "モノクロな誰かを探せ。"
+    },
+    "homecoming": {
+      "away": "下書きが行き詰まった。コーヒーと勇気を持って来い。",
+      "hot": "連勝中。新鮮なひねりだけ。",
+      "cold": "不出来な章。次はより鋭い下書きで。"
+    },
+    "afterFight": {
+      "win": "{opp}はスペクトラムを追えなかった。",
+      "loss": "{opp}の勝ち。より上手く発明しよう。"
+    },
+    "imprintAck": "編み込んだ。",
+    "rankedFinale": "ランキングはギャラリー。うまく飾れた。"
+  },
+  "banter": {
+    "motif_glyph": [
+      "いいテーマだね、{opp}。今は俺のもの。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "綺麗に盗んで、より綺麗に切る。"
+    ],
+    "motif_mosaic": [
+      "ブリッジが来る。何か掴んでおけ。",
+      "わざと変な感じだよ、{opp}。",
+      "前提を逆転させて。奴らが落ちるのを見ろ。"
+    ],
+    "motif_dream": [
+      "正直、インクはまだ乾いてない。触るな。",
+      "正直、気まぐれは戦略だ。信じろ。",
+      "これを映せ、{opp}、正直に。"
+    ],
+    "motif_wake": [
+      "最後のページ。お前の名前は脚注だ。",
+      "芸術が勝つ。文句は後で。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "濡れたインクで前提を書き換える。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": -14,
+    "resilience": -10,
+    "flair": -9,
+    "creativity": 11,
+    "wins": 42,
+    "losses": 19,
+    "battles": 61
+  }
+}

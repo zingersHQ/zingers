@@ -19,6 +19,9 @@ import { buildJudgePrompt, clampQuality, mockJudge } from "./judge";
 import { banterLine } from "./banter";
 import { makeAgent, type Agent, type AgentTools, type AgentTurnCtx, type AgentView, type ScoutResult, type SimResult } from "./agent";
 import { DEFAULT_STRAT, type AgentConfig, type BattleEvent, type BattleHighlight, type CreatureType, type FighterPub, type ResolveInfo, type Strat, type ToolStep } from "@/lib/types";
+import { setActiveLocale } from "@/lib/i18n/locale-context";
+import { localizeTopic } from "@/lib/i18n/topics";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
 
 // A force-bias map: per-type damage multiplier the arena applies (favoured ↑,
 // punished ↓). Defaults to the arena's own bias when a bout doesn't override it.
@@ -141,12 +144,13 @@ function stratScore(m: Move, att: Fighter, opp: Fighter): number {
   return s;
 }
 
-function buildView(att: Fighter, opp: Fighter, topic: string, rnd: number): AgentView {
+function buildView(att: Fighter, opp: Fighter, topic: string, rnd: number, locale: Locale): AgentView {
   const moves = legalMoves(att, opp);
   return {
     topic,
     round: rnd,
     arena: `${ARENA.name} (${ARENA.desc})`,
+    locale,
     you: { name: att.name, type: att.type, persona: att.persona, stance: att.stance, hp: att.hp, max: HP_MAX, statuses: statusStr(att) },
     opponent: {
       name: opp.name,
@@ -178,7 +182,15 @@ function houseLine(att: Fighter, opp: Fighter, moveId: string, topic: string, rn
 
 // One turn: ask the side's Agent to decide, validate, and fall back to the
 // trained-doctrine heuristic if the agent fails or returns an illegal move.
-async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number, rng: Rng, bias: ForceBias): Promise<AgentChoice> {
+async function agentTurn(
+  att: Fighter,
+  opp: Fighter,
+  topic: string,
+  rnd: number,
+  rng: Rng,
+  bias: ForceBias,
+  locale: Locale,
+): Promise<AgentChoice> {
   const moves = legalMoves(att, opp);
   const valid = Object.fromEntries(moves.map((m) => [m.id, m]));
   const trace: ToolStep[] = [];
@@ -188,7 +200,7 @@ async function agentTurn(att: Fighter, opp: Fighter, topic: string, rnd: number,
       if (trace.length < 8) trace.push(s);
     },
   };
-  const out = await att.agent.act(buildView(att, opp, topic, rnd), ctx);
+  const out = await att.agent.act(buildView(att, opp, topic, rnd, locale), ctx);
   if (out && out.move && valid[out.move]) {
     return {
       move: valid[out.move],
@@ -416,6 +428,8 @@ export interface BattleOpts {
   // The arena's force-bias for THIS bout (scenario-driven). Defaults to the
   // arena's own bias (ARENA.mult) when a scenario doesn't override it.
   forceBias?: ForceBias;
+  /** Player locale for trash-talk bars, banter banks, and agent prompts. */
+  locale?: string;
 }
 
 export async function* battleEvents(
@@ -428,6 +442,12 @@ export async function* battleEvents(
   cfgB: SideConfig = {},
   opts: BattleOpts = {},
 ): AsyncGenerator<BattleEvent> {
+  const locale: Locale = isLocale(opts.locale) ? opts.locale : DEFAULT_LOCALE;
+  setActiveLocale(locale);
+  // Ensure locale banter banks are loaded (falls back to English if missing).
+  const { getBaked } = await import("@/lib/minds/baked");
+  await getBaked(locale);
+  const topicLocal = localizeTopic(topic, locale);
   const rng = makeRng(seed);
   const stanceA = opts.stanceA ?? "for";
   const stanceB: "for" | "against" = stanceA === "for" ? "against" : "for";
@@ -437,7 +457,7 @@ export async function* battleEvents(
   // same creature on both sides (e.g. your VOX vs a ladder agent on VOX) — give B a
   // distinct actor id so turn events, punches, and HP attribution don't collapse.
   if (aKey === bKey) b.key = `${bKey}:opp`;
-  yield { type: "start", topic, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
+  yield { type: "start", topic: topicLocal, arena: ARENA.name, arena_desc: ARENA.desc, a: fighterPub(a), b: fighterPub(b) };
   let mvp = { dmg: 0, line: "", round: 0, actor_name: "" };
   let lastHl = -10;
   const order = [a, b];
@@ -454,9 +474,9 @@ export async function* battleEvents(
     rnd += 1;
     const att = order[(rnd - 1) % 2];
     const opp = order[rnd % 2];
-    const { move, intent, line, why, trace } = await agentTurn(att, opp, topic, rnd, rng, bias);
+    const { move, intent, line, why, trace } = await agentTurn(att, opp, topicLocal, rnd, rng, bias, locale);
     att.lines.push(line);
-    let [q, hl, ruling] = await judge(att, opp, move, line, topic, mock, rng);
+    let [q, hl, ruling] = await judge(att, opp, move, line, topicLocal, mock, rng);
     if (hl) {
       if (rnd - lastHl < 3 || rng.random() < 0.5) q = Math.min(q, 1.28);
       else lastHl = rnd;

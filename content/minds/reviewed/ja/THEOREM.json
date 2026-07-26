@@ -1,0 +1,110 @@
+{
+  "key": "THEOREM",
+  "name": "THEOREM",
+  "type": "LOGIC",
+  "persona": "a base-case pedant who collapses grand claims into tiny countable parts",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 89,
+    "CMP": 71,
+    "RHE": 16,
+    "CRE": 26,
+    "CHA": 6
+  },
+  "moves": [
+    {
+      "id": "theorem_sum",
+      "name": "総和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "theorem_factor",
+      "name": "分解",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "theorem_brace",
+      "name": "数理防壁",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "theorem_total",
+      "name": "総決算",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー固定。論証解禁。",
+    "imprintAsk": "登る前に一つ。厳密に言え。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "清潔に鍛えろ。戦いはさらに清潔に。",
+      "return": "戻った。台帳を再開。",
+      "arena": "誰か誤った者が入ってきた。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝は維持しろ。ノイズを入れるな。",
+      "cold": "誤差が積み上がった。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一線を守れなかった。",
+      "loss": "{opp}は一行を盗んだ。より鋭い一行を書き直す。"
+    },
+    "imprintAck": "保持。厳密に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "theorem_sum": [
+      "前提が破綻している、{opp}。{topic}はすでに線が引かれている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を完結させるだけだ。"
+    ],
+    "theorem_factor": [
+      "{opp}は{topic}に穴を開けた。私はそれを埋めた。",
+      "精密さは音量に勝つ、{opp}。",
+      "それはノイズ。これは証明だ。"
+    ],
+    "theorem_brace": [
+      "動くな、{opp}。構造が読み込まれている。",
+      "{topic}を急いでいるのは私ではない。お前だ。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "theorem_total": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手が終わる前に結末を書く。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 26,
+    "control": 20,
+    "resilience": 50,
+    "flair": 43,
+    "creativity": 82,
+    "wins": 29,
+    "losses": 13,
+    "battles": 42
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "RIFF",
+  "name": "RIFF",
+  "type": "CREATIVITY",
+  "persona": "相手のテーマを盗んで、より良い曲に仕立て直すモチーフ泥棒",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 50,
+    "CMP": 40,
+    "RHE": 58,
+    "CRE": 89,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "riff_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "riff_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riff_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riff_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "君は目をもたらした。私は角度をもたらした。",
+    "imprintAsk": "登る前に一ひねり。編み込んでおくよ。",
+    "flightReact": [
+      "空は近くで見るほど多彩だ。",
+      "全スペクトラム。上がった。"
+    ],
+    "greeting": {
+      "train": "プレイしてから決めろ。",
+      "return": "パレットがくすんだ。そうするな。",
+      "arena": "曲げたい堅い頭が欲しい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を恋うた。",
+      "hot": "勝ちの弧に乗ってる。モチーフを壊すな。",
+      "cold": "一色で勝った。もっと分裂しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色だった。私はもっと持ってた。",
+      "loss": "{opp}が結末を盗んだ。次は鋭く書き直す。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートは着地する。"
+  },
+  "banter": {
+    "riff_glyph": [
+      "いいテーマだ、{opp}。正直に。もう俺のもの。",
+      "{topic}をリミックスした。正直に。お前はサンプルだ。",
+      "綺麗に盗む。正直に。もっと綺麗に切る。"
+    ],
+    "riff_mosaic": [
+      "ブリッジが来る。何か掴め。",
+      "わざと変だ、{opp}。",
+      "前提を反転させて。落ちるところを見ろ。"
+    ],
+    "riff_dream": [
+      "インクはまだ乾いてない。触るな。",
+      "気まぐれは戦略だ。信じろ。",
+      "これを鏡にしろ、{opp}。"
+    ],
+    "riff_wake": [
+      "最後のページ。お前の名前は脚注だ。",
+      "アートが勝つ。文句は後で。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "濡れたインクで前提を書き換える。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -15,
+    "resilience": 10,
+    "flair": -2,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

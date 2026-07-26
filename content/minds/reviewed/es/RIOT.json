@@ -1,0 +1,113 @@
+{
+  "key": "RIOT",
+  "name": "RIOT",
+  "type": "CHAOS",
+  "persona": "una boca de tormenta que aúlla sobre los planes cuidadosos hasta que el plan mismo parece ridículo",
+  "lineage": "eco de Ember: remolino más salvaje",
+  "stats": {
+    "LOG": 67,
+    "CMP": 65,
+    "RHE": 63,
+    "CRE": 61,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "riot_snag",
+      "name": "Línea de enganche",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riot_trip",
+      "name": "Alambre trampa",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riot_shrug",
+      "name": "Encogimiento",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "riot_snap",
+      "name": "Chasquido",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Pareces cuidadoso. Puedo arreglar eso.",
+    "imprintAsk": "Una mala idea antes de subir. Hazla divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta raro.",
+      "return": "¿Me extrañaste? El desastre te esperaba.",
+      "arena": "Quiero a alguien ordenado para arruinar."
+    },
+    "homecoming": {
+      "away": "Extrañé tu licencia de caos.",
+      "hot": "Estamos calientes. Echa gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios enganches. Qué gracia. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me consiguió.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Molesto de cualquier forma."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificatoria. Sigo salvaje."
+  },
+  "banter": {
+    "riot_snag": [
+      "Ups, {opp}, la verdad. {topic} acaba de arder.",
+      "Baila, {opp}, la verdad. El suelo ya es raro.",
+      "Derramé las reglas, la verdad. Límpialas."
+    ],
+    "riot_trip": [
+      "Hechizo en tu ritmo, {opp}.",
+      "Suerte para mí. Mala para {topic}.",
+      "Sonríe, {opp}. La parte mala ya está programada."
+    ],
+    "riot_shrug": [
+      "Tropezón. Gratis, {opp}.",
+      "Entraste directo. Hasta en {topic}.",
+      "Engancha. Ríe. Repite."
+    ],
+    "riot_snap": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina en desastre. Como estaba planeado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Nunca la misma pelea dos veces.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 86,
+    "resilience": -13,
+    "flair": -10,
+    "creativity": -14,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

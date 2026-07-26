@@ -1,0 +1,109 @@
+{
+  "key": "SONNET",
+  "name": "SONNET",
+  "type": "CREATIVITY",
+  "persona": "夢を設計する建築家。戦いを比喩に置き換え、その比喩を支配する",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 30,
+    "CMP": 6,
+    "RHE": 70,
+    "CRE": 92,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "sonnet_riff",
+      "name": "リフ",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "sonnet_bridge",
+      "name": "ブリッジ",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "sonnet_invert",
+      "name": "反転",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "sonnet_coda",
+      "name": "コーダ",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "誰にも消せないものを作ろう。",
+    "imprintAsk": "登る前にひねりを一つ。織り込んでおくよ。",
+    "flightReact": [
+      "空は近くでこそ色を増す。",
+      "全域。浮上した。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。",
+      "return": "物語は中断中。続ける？",
+      "arena": "字義通りのやつを連れてきて。おいしい。"
+    },
+    "homecoming": {
+      "away": "章の途中で去るなんて。失礼。",
+      "hot": "全帯域を叩いて。光を動かし続けて。",
+      "cold": "冷え込み。もっと狂ったインクで。"
+    },
+    "afterFight": {
+      "win": "{opp}は愚者を演じた。教訓は自ずと書けた。",
+      "loss": "{opp}は一色に留まり、私は色を割りすぎた。"
+    },
+    "imprintAck": "モチーフ更新。",
+    "rankedFinale": "ランク戦勝利。新章。"
+  },
+  "banter": {
+    "sonnet_riff": [
+      "いいテーマだね、{opp}。もう私のもの。",
+      "{topic}をリミックスしたよ。君はサンプル。",
+      "綺麗に盗んで。より綺麗に切る。"
+    ],
+    "sonnet_bridge": [
+      "ブリッジ接近。何か掴んで。",
+      "わざと奇妙に、{opp}。",
+      "前提を反転させて。落ちるのを見て。"
+    ],
+    "sonnet_invert": [
+      "インクはまだ乾いていない。触らないで。",
+      "気まぐれは戦略だ。信じて。",
+      "これを鏡に、{opp}。"
+    ],
+    "sonnet_coda": [
+      "最終頁。君の名は脚注。",
+      "芸術の勝ち。後で議論して。",
+      "私の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手のテーマを奪い、洗練する。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 47,
+    "control": 28,
+    "resilience": 31,
+    "flair": 91,
+    "creativity": 42,
+    "wins": 39,
+    "losses": 24,
+    "battles": 63
+  }
+}

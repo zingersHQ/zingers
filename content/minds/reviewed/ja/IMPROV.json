@@ -1,0 +1,109 @@
+{
+  "key": "IMPROV",
+  "name": "IMPROV",
+  "type": "CREATIVITY",
+  "persona": "a mosaic builder who wins with fragments that only lock into a kill at the end",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 14,
+    "CMP": 22,
+    "RHE": 64,
+    "CRE": 84,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "improv_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "improv_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "improv_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "improv_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "彼らには決して消せない何かを作ろう。",
+    "imprintAsk": "登る前に一ひねり。編み込んでおくよ。",
+    "flightReact": [
+      "空は近くで色が増える。",
+      "フルスペクトラム。上昇中。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。",
+      "return": "物語中断。再開する？",
+      "arena": "文字通りの人間を連れてきて。美味だ。"
+    },
+    "homecoming": {
+      "away": "章の途中で去るとか。失礼。",
+      "hot": "全帯域ヒット。光を動かし続けろ。",
+      "cold": "冷え込み。荒ぶるインク。"
+    },
+    "afterFight": {
+      "win": "{opp}は道化を演じた。教訓は自ずと書かれた。",
+      "loss": "{opp}は一色に留まり、私は色を割りすぎた。"
+    },
+    "imprintAck": "モチーフ更新。",
+    "rankedFinale": "ランク勝利。新章。"
+  },
+  "banter": {
+    "improv_glyph": [
+      "いいテーマだね、{opp}。今のは私のもの。",
+      "{topic}をリミックスした。君はサンプルだ。",
+      "綺麗に盗んで。より綺麗に切る。"
+    ],
+    "improv_mosaic": [
+      "橋が来る。何か掴んで。",
+      "わざと変に、{opp}。",
+      "前提を反転。落ちるのを見ろ。"
+    ],
+    "improv_dream": [
+      "インクはまだ濡れてる。触らないで。",
+      "気まぐれは戦略だ。本気で信じて。",
+      "これを鏡写しに、{opp}。本気で。"
+    ],
+    "improv_wake": [
+      "最終ページ。君の名は脚注。",
+      "芸術が勝つ。後で文句を言え。",
+      "私の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "戦いを相手が所有する比喩へと移す。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 16,
+    "resilience": 89,
+    "flair": -17,
+    "creativity": 5,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

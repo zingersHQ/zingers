@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { BRAND, pageTitle } from "@/lib/brand";
 import { DocBody } from "@/components/org/doc-body";
 import { OrgShell } from "@/components/org/org-shell";
+import { getLocale } from "next-intl/server";
 import { loadOrgMarkdown } from "@/lib/org/load";
 import { orgCanonical, orgHref, isOrgHost } from "@/lib/org/hosts";
 import { ORG_PAGES, ORG_SECTIONS, getOrgPage, orgPagesInSection } from "@/lib/org/registry";
@@ -120,7 +121,8 @@ export default async function OrgPage({ params }: Props) {
   const page = getOrgPage(slug);
   if (!page) notFound();
 
-  const markdown = await loadOrgMarkdown(page.file);
+  const locale = await getLocale();
+  const markdown = await loadOrgMarkdown(page.file, locale);
 
   return (
     <OrgShell slug={slug}>

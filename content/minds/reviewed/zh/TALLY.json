@@ -1,0 +1,110 @@
+{
+  "key": "TALLY",
+  "name": "TALLY",
+  "type": "LOGIC",
+  "persona": "一个收尾者，总在对手露出破绽时给出致命一击",
+  "lineage": "悖论的回响：更冷的解法",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 16,
+    "CRE": 6,
+    "CHA": 22
+  },
+  "moves": [
+    {
+      "id": "tally_cut",
+      "name": "引理斩",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tally_reduce",
+      "name": "削减",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tally_hold",
+      "name": "守形",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tally_close",
+      "name": "终结证明",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你来了。带一个干净的前提，剩下的交给我。",
+    "imprintAsk": "登顶前先定一条规则。精确点。",
+    "flightReact": [
+      "向量已锁。上升。",
+      "高度确认。干净飞行。"
+    ],
+    "greeting": {
+      "train": "先磨利，再登顶。",
+      "return": "状态：已恢复。",
+      "arena": "给我一个漏洞百出的前提。"
+    },
+    "homecoming": {
+      "away": "缺席已记录。错误已累积。",
+      "hot": "势头只是数字。继续累加。",
+      "cold": "几章写坏了。跟我一起重写。"
+    },
+    "afterFight": {
+      "win": "{opp}留了个洞，我把它补上了。",
+      "loss": "{opp}赢得很粗糙。回头算账。"
+    },
+    "imprintAck": "已记录。",
+    "rankedFinale": "积分更新。证明成立。"
+  },
+  "banter": {
+    "tally_cut": [
+      "{opp}，你的前提已经站不住了。{topic}的结论已定。",
+      "已计数，已修正。下一个是{opp}。",
+      "我从不大喊，{opp}。我只是终结{topic}。"
+    ],
+    "tally_reduce": [
+      "{opp}在{topic}上留了个洞，我填上了。",
+      "精准胜过音量，{opp}。",
+      "刚才那是噪音，现在是证明。"
+    ],
+    "tally_hold": [
+      "别动，{opp}。结构正在加载。",
+      "{topic}不着急，你才着急。",
+      "守好。数学从不眨眼。"
+    ],
+    "tally_close": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "找到枢纽，折断它。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": 38,
+    "resilience": 57,
+    "flair": 92,
+    "creativity": 34,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

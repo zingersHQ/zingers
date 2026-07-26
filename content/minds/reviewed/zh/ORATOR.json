@@ -1,0 +1,110 @@
+{
+  "key": "ORATOR",
+  "name": "ORATOR",
+  "type": "RHETORIC",
+  "persona": "天生舞台演说家，把每次对话都当成满座观众等待金句",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 50,
+    "CMP": 61,
+    "RHE": 87,
+    "CRE": 38,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "orator_herald",
+      "name": "传令",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "orator_gloss",
+      "name": "剪裁",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "orator_needle",
+      "name": "刺穿人群",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "orator_ovation",
+      "name": "喝彩",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于来了位会控场的训练师。",
+    "imprintAsk": "上台前先说一句。得让人记住。",
+    "flightReact": [
+      "天上的观众已就位。跟我走。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓子，再热拳头。",
+      "return": "你错过了出场白。没关系。",
+      "arena": "给我一个自以为是主角的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴发挥了。还行。反正你回来就好。",
+      "hot": "麦在烫，记录也在烫。",
+      "cold": "冷场而已。下次台词再好点。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众。致命。",
+      "loss": "{opp}抢了全场。我们重写。"
+    },
+    "imprintAck": "永载史册。",
+    "rankedFinale": "排名榜爱听演讲。"
+  },
+  "banter": {
+    "orator_herald": [
+      "女士们，先生们：{opp}与{topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我。观众说了算。"
+    ],
+    "orator_gloss": [
+      "引用完毕，{opp}。你的台词成了呈堂证供。",
+      "我反对你的自信。",
+      "延续噱头，终结主张。"
+    ],
+    "orator_needle": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏即武器。感受一下。"
+    ],
+    "orator_ovation": [
+      "麦放下。案已结。",
+      "{topic}的裁决：反对{opp}。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "先抓节奏，后杀金句。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": 89,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 38,
+    "losses": 15,
+    "battles": 53
+  }
+}

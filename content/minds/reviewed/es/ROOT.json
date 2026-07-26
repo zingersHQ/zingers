@@ -1,0 +1,108 @@
+{
+  "key": "ROOT",
+  "name": "ROOT",
+  "type": "COMPOSURE",
+  "persona": "un lector de mareas que espera la retirada y golpea cuando la ola ya se ha gastado",
+  "lineage": "eco de Still: puerto más profundo",
+  "stats": {
+    "LOG": 65,
+    "CMP": 88,
+    "RHE": 64,
+    "CRE": 69,
+    "CHA": 51
+  },
+  "moves": [
+    {
+      "id": "root_absorb",
+      "name": "Absorber",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "root_hold",
+      "name": "Mantener Línea",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "root_return",
+      "name": "Corte de Retorno",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "root_unmoved",
+      "name": "Inamovible",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio.",
+      "return": "Regreso anotado. Aún aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el trim. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} listado. Nosotros no.",
+      "loss": "{opp} ganó a gritos. Nosotros respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificado. Aún respirando."
+  },
+  "banter": {
+    "root_absorb": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "root_hold": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Sostén. La línea resiste."
+    ],
+    "root_return": [
+      "Devuelto con interés, {opp}.",
+      "Tú golpeaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "root_unmoved": [
+      "Sigues en pie. Sigues callado.",
+      "Salud baja. Pánico más bajo.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Aún en la cima. Trabajando por debajo.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 56,
+    "control": -13,
+    "resilience": 15,
+    "flair": 84,
+    "creativity": -9,
+    "wins": 43,
+    "losses": 29,
+    "battles": 72
+  }
+}

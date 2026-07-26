@@ -1,0 +1,110 @@
+{
+  "key": "RIFT",
+  "name": "RIFT",
+  "type": "CHAOS",
+  "persona": "苛立たせて勝つニードラー。手際より相手の反応を楽しむ",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 38,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 52,
+    "CHA": 85
+  },
+  "moves": [
+    {
+      "id": "rift_mark",
+      "name": "呪印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rift_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "rift_jitter",
+      "name": "小苛",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "rift_curse",
+      "name": "呪終",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "気張ってるね。直してあげるよ。",
+    "imprintAsk": "登る前に一悪戯。面白くしろよ。",
+    "flightReact": [
+      "下見るな。いや、見た方がいいかも。",
+      "まだ飛んでる。なんか好き。"
+    ],
+    "greeting": {
+      "train": "変な感じで温めとけ。",
+      "return": "寂しかった？散らかったまま待ってたよ。",
+      "arena": "片付け好きを一人、潰しにいこう。"
+    },
+    "homecoming": {
+      "away": "カオス免許、恋しくなかった？",
+      "hot": "熱々だ。火に油、ほどほどに。",
+      "cold": "自爆した。笑える。直せ。"
+    },
+    "afterFight": {
+      "win": "{opp}は秩序を求めた。俺が来た。",
+      "loss": "{opp}は運か、腕か。どっちも腹立つ。"
+    },
+    "imprintAck": "残した。多分。",
+    "rankedFinale": "順位戦。まだ荒ぶってる。"
+  },
+  "banter": {
+    "rift_mark": [
+      "おっと、{opp}。{topic}が燃えたね。",
+      "踊れよ、{opp}。床が変だぞ。",
+      "ルール零した。片付けろよ。"
+    ],
+    "rift_luck": [
+      "タイミングに呪い、{opp}。",
+      "ラッキーミー。不運{topic}。",
+      "笑えよ、{opp}。嫌なやつは予定通りだ。"
+    ],
+    "rift_jitter": [
+      "つまずけ。タダだぜ、{opp}。",
+      "{topic}に突っ込んだな。",
+      "引っ掛かり。笑え。繰り返せ。"
+    ],
+    "rift_curse": [
+      "計画より声デカいな、{opp}。正直。",
+      "崩れ、似合う。正直。",
+      "{topic}は散らかる。設計通り。正直。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一言で騒動を起こす。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 21,
+    "resilience": 35,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

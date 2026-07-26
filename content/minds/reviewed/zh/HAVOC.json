@@ -1,0 +1,110 @@
+{
+  "key": "HAVOC",
+  "name": "HAVOC",
+  "type": "CHAOS",
+  "persona": "爱用嘲讽取胜的刺头，享受每一次对手的慌张",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 21,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "havoc_mark",
+      "name": "咒印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "havoc_luck",
+      "name": "霉运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "havoc_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "havoc_curse",
+      "name": "终咒",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图握太紧。",
+    "imprintAsk": "爬之前先整条馊主意。越怪越好。",
+    "flightReact": [
+      "别往下看。或者就看。",
+      "还在飞。莫名其妙。爱了。"
+    ],
+    "greeting": {
+      "train": "瞎玩。学得更快。",
+      "return": "你回来啦。太好了，我刚无聊。",
+      "arena": "挑个死守规则的。"
+    },
+    "homecoming": {
+      "away": "你不在我挑起了三场架。差点赢。",
+      "hot": "赢法很离谱。继续离谱。",
+      "cold": "连败期。换更狠的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}刚才很谨慎。真可爱。",
+      "loss": "{opp}居然保持冷静。真没劲。"
+    },
+    "imprintAck": "哦。够辣的规矩。",
+    "rankedFinale": "排位胜。乱。完美。"
+  },
+  "banter": {
+    "havoc_mark": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳呀，{opp}。地板现在不听话。",
+      "我把规则洒了。自己擦干净。"
+    ],
+    "havoc_luck": [
+      "在你时机上加个咒，{opp}。",
+      "我走运，{topic}倒霉。",
+      "笑一个，{opp}。坏事已经排好时间。"
+    ],
+    "havoc_jitter": [
+      "绊倒吧。白送的，{opp}。",
+      "你自己走进去的。居然踩在{topic}上。",
+      "钩到了。笑吧。重来。"
+    ],
+    "havoc_curse": [
+      "比你计划还响，{opp}。",
+      "崩溃挺适合你。",
+      "{topic}以混乱收场。设计如此。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一句话就能点燃一场骚乱。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 55,
+    "control": -8,
+    "resilience": 1,
+    "flair": 2,
+    "creativity": 93,
+    "wins": 49,
+    "losses": 22,
+    "battles": 71
+  }
+}

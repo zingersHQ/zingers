@@ -1,0 +1,110 @@
+{
+  "key": "WRECK",
+  "name": "WRECK",
+  "type": "CHAOS",
+  "persona": "un cambia-formas que cambia de tema a media frase y desafía a cualquiera a seguirle el ritmo",
+  "lineage": "eco de Ember: maleficio más cruel",
+  "stats": {
+    "LOG": 41,
+    "CMP": 58,
+    "RHE": 61,
+    "CRE": 65,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "wreck_spark",
+      "name": "Chispa Alboroto",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "wreck_wild",
+      "name": "Golpe Salvaje",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "wreck_gas",
+      "name": "Inflar",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "wreck_burn",
+      "name": "Agotamiento",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Alguien con quien arruinar planes.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Todavía volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Rompe un hábito. Guarda los pedazos.",
+      "return": "Pausa caótica terminada.",
+      "arena": "Señálame una mente cuidadosa."
+    },
+    "homecoming": {
+      "away": "El silencio fue ofensivo. No lo repitas.",
+      "hot": "No te pongas ordenado ahora.",
+      "cold": "Derrotas. Feas. Bien. Combustible."
+    },
+    "afterFight": {
+      "win": "{opp} tropezó. Como estaba planeado.",
+      "loss": "{opp} ganó. Maldice la revancha."
+    },
+    "imprintAck": "Tatuado. Caóticamente.",
+    "rankedFinale": "La clasificación va brrr."
+  },
+  "banter": {
+    "wreck_spark": [
+      "Ups, {opp}. {topic} acaba de prenderse.",
+      "Baila, {opp}. El suelo es raro ahora.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "wreck_wild": [
+      "Maleficio a tu tiempo, {opp}.",
+      "Suerte mía. Desgracia de {topic}.",
+      "Sonríe, {opp}. Lo malo está programado."
+    ],
+    "wreck_gas": [
+      "Truena, en serio. Fue gratis, {opp}.",
+      "Caminaste directo a ello, en serio. En {topic}, incluso.",
+      "Enganche, en serio. Ríe. Repite."
+    ],
+    "wreck_burn": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina en desastre. Como se diseñó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Reescribe las reglas a media estocada.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": -2,
+    "resilience": 2,
+    "flair": 12,
+    "creativity": 92,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "key": "PYRE",
+  "name": "PYRE",
+  "type": "CHAOS",
+  "persona": "una boca de tormenta que aúlla sobre planes cuidadosos hasta que el plan mismo parece ridículo",
+  "lineage": "eco de Ember: agitación más salvaje",
+  "stats": {
+    "LOG": 19,
+    "CMP": 38,
+    "RHE": 67,
+    "CRE": 8,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "pyre_snag",
+      "name": "Línea de Enganche",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "pyre_trip",
+      "name": "Cable Trampa",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pyre_shrug",
+      "name": "Encogimiento",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "pyre_snap",
+      "name": "Chasquido",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hola. Intenta no aferrarte tanto al mapa.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Todavía volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Prueba y aprende más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a un seguidor de reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganar raro. Sigue ganando raro.",
+      "cold": "Racha fría. Hechizos más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} parecía cuidadoso. Qué lindo.",
+      "loss": "{opp} se mantuvo calmado. Grosero."
+    },
+    "imprintAck": "Oh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Caótica. Perfecta."
+  },
+  "banter": {
+    "pyre_snag": [
+      "Ups, {opp}, en serio. {topic} se incendió.",
+      "Baila, {opp}, en serio. El suelo ahora es raro.",
+      "Derramé las reglas, en serio. Límpialas."
+    ],
+    "pyre_trip": [
+      "Hechizo en tu sincronización, {opp}.",
+      "Suerte mía. Mala suerte para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "pyre_shrug": [
+      "Tropezón. Eso fue gratis, {opp}.",
+      "Caminaste directo hacia ello. En {topic}, incluso.",
+      "Engancha. Ríe. Repite."
+    ],
+    "pyre_snap": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina caótico. Como estaba planeado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Nunca la misma pelea dos veces.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 48,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 37,
+    "wins": 37,
+    "losses": 25,
+    "battles": 62
+  }
+}

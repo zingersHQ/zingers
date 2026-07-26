@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost, orgHref } from "@/lib/org/hosts";
 import { ORG_SECTIONS, orgPagesInSection } from "@/lib/org/registry";
+import { OrgLangSwitch } from "@/components/org/org-lang-switch";
 
 export async function OrgShell({ slug, children }: { slug?: string; children: ReactNode }) {
   const host = (await headers()).get("host")?.split(":")[0] ?? "";
   const orgHost = BRAND.siteTech.replace("https://", "");
-  const href = (s: string) => orgHref(s, host);
+  const locale = await getLocale();
+  const href = (s: string) => orgHref(s, host, locale);
+  const t = await getTranslations("org");
 
   return (
     <div className="org-layout">
@@ -19,16 +23,21 @@ export async function OrgShell({ slug, children }: { slug?: string; children: Re
             <span className="org-sidebar__title">Docs &amp; Canon</span>
           </Link>
           <p className="org-sidebar__blurb">
-            Flight-First pitches, lore bible, agent protocol, and combat specs — one source of truth for humans and generators.
+            Flight-First pitches, lore bible, agent protocol, and combat specs. One source of truth for humans and generators.
           </p>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginTop: 12 }}>
+            {t("language")}
+          </div>
+          <OrgLangSwitch />
         </div>
 
         <nav className="org-sidebar__nav">
           {ORG_SECTIONS.map((section) => {
             const pages = orgPagesInSection(section.id);
+            const titleKey = `${section.id}` as "bible" | "protocol" | "design" | "product";
             return (
               <div key={section.id} className="org-sidebar__group">
-                <div className="org-sidebar__group-title mono">{section.title}</div>
+                <div className="org-sidebar__group-title mono">{t(`sections.${titleKey}`)}</div>
                 <ul className="org-sidebar__list">
                   {pages.map((page) => {
                     const active = slug === page.slug;

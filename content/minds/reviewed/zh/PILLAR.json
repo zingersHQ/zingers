@@ -1,0 +1,108 @@
+{
+  "key": "PILLAR",
+  "name": "PILLAR",
+  "type": "COMPOSURE",
+  "persona": "一堵安静的墙，吸收热量后以耐心的反击还回去",
+  "lineage": "静止的回响：更深的港湾",
+  "stats": {
+    "LOG": 61,
+    "CMP": 85,
+    "RHE": 20,
+    "CRE": 7,
+    "CHA": 24
+  },
+  "moves": [
+    {
+      "id": "pillar_absorb",
+      "name": "吸收",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "pillar_hold",
+      "name": "守线",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "pillar_return",
+      "name": "回斩",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "pillar_unmoved",
+      "name": "不移",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在这里。",
+    "imprintAsk": "攀登前先定一条柔和的规则。我会守住它。",
+    "flightReact": [
+      "……上升。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "练习平衡。",
+      "return": "已记录归来。依旧在此。",
+      "arena": "让他们先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。登船吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场大败。让我再柔和些。"
+    },
+    "afterFight": {
+      "win": "{opp}已登记。我们没有。",
+      "loss": "{opp}大胜。我们轻声回应。"
+    },
+    "imprintAck": "……守住了。安静地。",
+    "rankedFinale": "排位。仍在呼吸。"
+  },
+  "banter": {
+    "pillar_absorb": [
+      "我听见你了，{opp}。我依旧在此。",
+      "留着热量吧。别用错了。",
+      "安静有效。看着。"
+    ],
+    "pillar_hold": [
+      "呼吸吧，{opp}。暂停属于我。",
+      "我愈合比你失衡更慢。",
+      "守住。防线不破。"
+    ],
+    "pillar_return": [
+      "连本带利奉还，{opp}，说实话。",
+      "你诚实地挥击了。我诚实地等待。那才是本事。",
+      "{topic}奖励耐心，说实话。而不是你。"
+    ],
+    "pillar_unmoved": [
+      "依旧站立。依旧安静。",
+      "血量低。慌张更低。",
+      "最后一击。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "衡量每一次挥击。拒绝狂野的招式。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 27,
+    "resilience": 40,
+    "flair": 52,
+    "creativity": 86,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

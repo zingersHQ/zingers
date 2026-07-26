@@ -1,0 +1,108 @@
+{
+  "key": "WARDEN",
+  "name": "WARDEN",
+  "type": "COMPOSURE",
+  "persona": "un duelista de ritmo pétreo que rechaza la urgencia y vence por el agotamiento del rival",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 64,
+    "CMP": 92,
+    "RHE": 21,
+    "CRE": 26,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "warden_harbor",
+      "name": "Refugio",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "warden_heal",
+      "name": "Curación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "warden_shore",
+      "name": "Rompeolas",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "warden_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio permanece.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba en calma. Mantuve el equilibrio.",
+      "arena": "Rival silencioso. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste mucho tiempo fuera. El silencio resistió.",
+      "hot": "Igualado. No lo celebres. Mantente centrado.",
+      "cold": "Frío. Sigues respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos pilló desequilibrados. Equilibra antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "warden_harbor": [
+      "Te oí, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "warden_heal": [
+      "Respira, {opp}, en serio. La pausa es mía.",
+      "Curo más lento de lo que te inclinas, en serio.",
+      "Aguanta, en serio. La línea resiste."
+    ],
+    "warden_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "warden_low": [
+      "Sigues en pie. Sigues callado.",
+      "Poca salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Voz suave. Centro duro.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 51,
+    "resilience": 83,
+    "flair": 58,
+    "creativity": 59,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

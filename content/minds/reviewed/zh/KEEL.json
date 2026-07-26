@@ -1,0 +1,114 @@
+{
+  "key": "KEEL",
+  "name": "KEEL",
+  "type": "COMPOSURE",
+  "persona": "一名以稳重为本的平衡者，总在争论倾斜时将其扶正。不张扬，始终笔直",
+  "lineage": "Bastion的回响：平衡而非壁垒",
+  "stats": {
+    "CMP": 86,
+    "LOG": 68,
+    "RHE": 52,
+    "CHA": 48,
+    "CRE": 38
+  },
+  "moves": [
+    {
+      "id": "right_ship",
+      "name": "扶正航船",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        9,
+        2
+      ]
+    },
+    {
+      "id": "ballast",
+      "name": "压舱",
+      "stat": "CMP",
+      "base": 0,
+      "heal": 12,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "trim",
+      "name": "修剪",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "deep_keel",
+      "name": "深龙骨",
+      "stat": "CMP",
+      "base": 25,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你是训练师。我会让我们保持直立。别为了好玩把船弄翻。",
+    "imprintAsk": "攀登前先上一堂压舱课。能稳住的东西。",
+    "flightReact": [
+      "稳住。别晃。",
+      "……水平。飞行良好。"
+    ],
+    "greeting": {
+      "train": "操练平衡。花哨可以等等。",
+      "return": "回到甲板。倾斜程度如何？",
+      "arena": "他们会猛力倾轧。我们不。"
+    },
+    "homecoming": {
+      "away": "你不在时甲板很安静。我稳住了平衡。",
+      "hot": "我们保持平稳。别庆祝。保持中心。",
+      "cold": "我们倾斜了几次。加压舱。然后再来。"
+    },
+    "afterFight": {
+      "win": "{opp}倾斜了。我们没有。这就是整段航程。",
+      "loss": "{opp}让我们失去平衡。下次我们早点修剪。"
+    },
+    "imprintAck": "收纳完毕。我会在水面更低处航行。",
+    "rankedFinale": "排位胜利。平稳龙骨。日志上没有戏剧。"
+  },
+  "banter": {
+    "right_ship": [
+      "你在倾斜，{opp}。我是修正。",
+      "扶正航船。{topic}已经在让你倾斜。",
+      "现在稳住，{opp}。你的论点在摇晃。"
+    ],
+    "ballast": [
+      "重心放在该放的地方。你带来了烟火，{opp}。",
+      "我不退缩就能治愈。试试看，{opp}。",
+      "压舱入。恐慌出。你对{topic}的下一步。"
+    ],
+    "trim": [
+      "切掉多余，{opp}。{topic}剩下的已经很薄了。",
+      "我修剪了你最好的线路。看。底下有光。",
+      "暴露了。龙骨能看见你隐藏的一切。"
+    ],
+    "deep_keel": [
+      "深水区，{opp}。你还在浅滩。",
+      "伤害不会让我倾斜。它会沉掉你的机会。",
+      "深龙骨。{topic}无法摇动这艘船体。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "保持战斗直立。惩罚任何倾斜的人。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 18,
+    "control": 88,
+    "resilience": 85,
+    "flair": 16,
+    "creativity": 20,
+    "wins": 41,
+    "losses": 10,
+    "battles": 51
+  }
+}

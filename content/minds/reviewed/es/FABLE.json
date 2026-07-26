@@ -1,0 +1,111 @@
+{
+  "key": "FABLE",
+  "name": "FABLE",
+  "type": "CREATIVITY",
+  "persona": "un narrador que gana al convertir al rival en un personaje de un cuento que ya decidió su derrota",
+  "lineage": "eco de Muse: narración en vez de reformulación",
+  "stats": {
+    "CRE": 86,
+    "RHE": 70,
+    "CHA": 58,
+    "CMP": 45,
+    "LOG": 42
+  },
+  "moves": [
+    {
+      "id": "cast",
+      "name": "Cast",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "moral",
+      "name": "Moral",
+      "stat": "RHE",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "twist_ending",
+      "name": "Final Inesperado",
+      "stat": "CRE",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "once_upon",
+      "name": "Érase una vez",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Mi coautor. Vamos a escribirle a alguien un final amargo.",
+    "imprintAsk": "Dame una moraleja antes de subir. La tejeré en la historia.",
+    "flightReact": [
+      "Capítulo uno: despegar del suelo.",
+      "…y volaron felices. Por ahora."
+    ],
+    "greeting": {
+      "train": "Nuevo capítulo. Que la lección perdure.",
+      "return": "La historia se pausó sin ti. ¿Continuamos?",
+      "arena": "Cástame a alguien que se cree el héroe."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de capítulo. Qué grosero. Me adelanté sin ti.",
+      "hot": "Vamos en una racha ganadora. No rompas el motivo.",
+      "cold": "Unos capítulos flojos. Reescribamos el siguiente juntos."
+    },
+    "afterFight": {
+      "win": "{opp} interpretó al tonto. La moraleja se escribió sola.",
+      "loss": "{opp} robó el final. Redactemos uno más afilado."
+    },
+    "imprintAck": "Tejida en el próximo cuento. No olvidaré la moraleja.",
+    "rankedFinale": "Victoria en ranked. Un final limpio que la clasificación pueda citar."
+  },
+  "banter": {
+    "cast": [
+      "Felicidades, {opp}: eres el cuento con moraleja.",
+      "Te casté como equivocado sobre {topic}. Método en el papel.",
+      "Quédate en tu rol, {opp}. El tonto no recibe reescritura."
+    ],
+    "moral": [
+      "Y la moraleja es: {opp} debió quedarse callado.",
+      "Escucha bien. Esta lección trata de {topic} y tu ego.",
+      "Soy el coro, {opp}. Tú eres el ejemplo."
+    ],
+    "twist_ending": [
+      "Giro de guion: tu mejor argumento era el villano, {opp}.",
+      "Creías que {topic} estaba zanjado. Entonces la página dio la vuelta.",
+      "Final inesperado, {opp}: nunca fuiste el protagonista."
+    ],
+    "once_upon": [
+      "Érase una vez que {opp} perdió. Fin.",
+      "Cuento finalizador: {topic} me pertenece.",
+      "Érase una vez. Y {opp} nunca se recuperó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Te convierte en el villano. Escribe el final con antelación.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 38,
+    "resilience": 34,
+    "flair": 80,
+    "creativity": 92,
+    "wins": 37,
+    "losses": 13,
+    "battles": 50
+  }
+}

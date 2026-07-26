@@ -1,0 +1,106 @@
+{
+  "key": "INVECTIVE",
+  "name": "INVECTIVE",
+  "type": "RHETORIC",
+  "persona": "a jest-blade who smiles through the cut and makes the wound feel like a joke",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 48,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 48,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "invective_gavel",
+      "name": "法槌",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "invective_cite",
+      "name": "引证",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "invective_sustain",
+      "name": "续力",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "invective_verdict",
+      "name": "裁决",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "准备好就开口。我已备好开场白。",
+    "imprintAsk": "登场前说一句。要能被引用。",
+    "flightReact": [
+      "空中之屋。跟紧我的节奏。",
+      "落地成功。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "排练必杀台词。",
+      "return": "你回来了。入口音乐准备。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "没有你，屋子冰冷。来暖场。",
+      "hot": "我们是头牌。拿出样子。",
+      "cold": "屋子冰冷。修辞来暖。"
+    },
+    "afterFight": {
+      "win": "{opp}先丢了全场。",
+      "loss": "{opp}笑点更狠。暂且。"
+    },
+    "imprintAck": "台词锁定。",
+    "rankedFinale": "排位胜利。听那欢呼？"
+  },
+  "banter": {
+    "invective_gavel": [
+      "女士们先生们：{opp}论{topic}，实话实说。",
+      "鼓掌吧，实话实说。然后拿下分数。",
+      "全场爱我，实话实说。全场决定。"
+    ],
+    "invective_cite": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "续力笑点。终结主张。"
+    ],
+    "invective_sustain": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏是武器。感受它。"
+    ],
+    "invective_verdict": [
+      "话筒放下。事项终结。",
+      "{topic}裁决：{opp}败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "取悦全场。赢得点头。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 10,
+    "resilience": -2,
+    "flair": 12,
+    "creativity": 81,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "ANCHOR",
+  "name": "ANCHOR",
+  "type": "COMPOSURE",
+  "persona": "un duelista de ritmo pétreo que rechaza la urgencia y gana con el agotamiento del rival",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 21,
+    "CRE": 13,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "anchor_harbor",
+      "name": "Puerto",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "anchor_heal",
+      "name": "Sanación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "anchor_shore",
+      "name": "Rompeolas",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "anchor_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Firme. No empezamos ruidosos.",
+    "imprintAsk": "Una regla suave antes de ascender. La mantendré.",
+    "flightReact": [
+      "…arriba. Sin estruendo.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Menos ruido. Más agarre.",
+      "return": "…volviste. Te guardé un poco de silencio.",
+      "arena": "Presionarán fuerte. Nosotros no."
+    },
+    "homecoming": {
+      "away": "La quietud se mantuvo. Tú no.",
+      "hot": "Victorias sin ruido. Sigue así.",
+      "cold": "Hicimos la lista. Añade lastre."
+    },
+    "afterFight": {
+      "win": "{opp} gastó calor. Nosotros gastamos menos.",
+      "loss": "{opp} habló primero y último. La próxima esperaré más."
+    },
+    "imprintAck": "Sostenido.",
+    "rankedFinale": "Ascenso silencioso. Ascenso real."
+  },
+  "banter": {
+    "anchor_harbor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo malgastarás.",
+      "Lo callado funciona. Mira."
+    ],
+    "anchor_heal": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Sujeta. La línea sujeta."
+    ],
+    "anchor_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "anchor_low": [
+      "Sigues en pie. Sigues callado.",
+      "Poca salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Voz suave. Centro duro.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 5,
+    "resilience": -2,
+    "flair": 81,
+    "creativity": -7,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "TEMPER",
+  "name": "TEMPER",
+  "type": "COMPOSURE",
+  "persona": "一位步调如石的决斗者，拒绝一切急躁，靠对手耗尽自己而取胜",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 48,
+    "CRE": 62,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "temper_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "temper_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "temper_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "temper_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不着急。我会一直在这里。",
+    "imprintAsk": "攀登前，先定一条柔和的规矩。我会遵守。",
+    "flightReact": [
+      "……向上。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "操练平衡。",
+      "return": "已记录归来。我还在这里。",
+      "arena": "让他们先开口。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场喧嚣的失利。让我再柔和些。"
+    },
+    "afterFight": {
+      "win": "{opp}已列入。我们没有。",
+      "loss": "{opp}赢得很响。我们轻声回应。"
+    },
+    "imprintAck": "……遵守了。安静地。",
+    "rankedFinale": "排位赛。仍在呼吸。"
+  },
+  "banter": {
+    "temper_harbor": [
+      "我听见你了，{opp}。我还在这里。",
+      "收起那股热气。用错地方。",
+      "安静才有效。看着。"
+    ],
+    "temper_heal": [
+      "呼吸吧，{opp}。停顿是我的。",
+      "我愈合得比你失衡慢。",
+      "坚持。防线还在。"
+    ],
+    "temper_shore": [
+      "连本带利奉还，{opp}。",
+      "你挥击了。我等待。那就是技巧。",
+      "{topic}奖励耐心。不奖励你。"
+    ],
+    "temper_low": [
+      "还站着，实话。还安静。",
+      "血量低，实话。恐慌更低。",
+      "最后一击，实话。声音柔和。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "柔声。硬核。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 42,
+    "resilience": 52,
+    "flair": 93,
+    "creativity": 34,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

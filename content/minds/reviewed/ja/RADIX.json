@@ -1,0 +1,110 @@
+{
+  "key": "RADIX",
+  "name": "RADIX",
+  "type": "LOGIC",
+  "persona": "a directional analyst who refuses to fight until the angle of attack is clean",
+  "lineage": "Paradoxの残響：より冷たい角度",
+  "stats": {
+    "LOG": 87,
+    "CMP": 69,
+    "RHE": 42,
+    "CRE": 43,
+    "CHA": 44
+  },
+  "moves": [
+    {
+      "id": "radix_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "radix_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "radix_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "radix_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "良い。鋭い切っ先を好む共著者だ。",
+    "imprintAsk": "登る前に一つ。精密に定めろ。",
+    "flightReact": [
+      "ベクトル固定。上昇開始。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "証明を叩き込め。派手さは後回し。",
+      "return": "証明の途中で抜けた。失礼だ。",
+      "arena": "矛盾を割り当てろ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えた。勝手にまとめた。",
+      "hot": "クリーンだ。そのままいけ。",
+      "cold": "冷たい記録。次の証明は温めてこい。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦だ。"
+    },
+    "imprintAck": "規則、登録完了。",
+    "rankedFinale": "ランク戦勝利。誤差ゼロ。"
+  },
+  "banter": {
+    "radix_cut": [
+      "前提が破綻している、{opp}。{topic}は既に閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を完結させる。"
+    ],
+    "radix_reduce": [
+      "{opp}は{topic}に穴を残した。埋めた。",
+      "精度は音量に勝る、{opp}。",
+      "それはノイズ。これは証明だ。"
+    ],
+    "radix_hold": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬かない。"
+    ],
+    "radix_close": [
+      "証明終了、{opp}。正直に。",
+      "Q、E.D.は{opp}を指す。",
+      "{topic}は決着した。正直に。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "根から始まり、議論を終える。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 51,
+    "resilience": 86,
+    "flair": 36,
+    "creativity": 47,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

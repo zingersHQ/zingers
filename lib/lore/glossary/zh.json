@@ -1,0 +1,206 @@
+[
+  {
+    "id": "you-and-world",
+    "title": "你与世界",
+    "entries": [
+      {
+        "term": "Trainer",
+        "short": "你。你翱翔于世界，养育并训练出战斗的冠军，教导它们如何思考。",
+        "was": "Reader"
+      },
+      {
+        "term": "The world",
+        "short": "你翱翔的3D空间：由漂浮区域组成的群落，每个区域都有自己的竞技场。其典故名为“大地”。"
+      },
+      {
+        "term": "The Hub",
+        "short": "你降落的地方：中央集会地，四周环绕通往各区域的门。其典故名为“协和”。",
+        "was": "the Concord"
+      },
+      {
+        "term": "Region",
+        "short": "你从枢纽飞往战斗的地方。创始三区为斗技场、烬荒地与虚苑，各有外观与战斗风格。"
+      },
+      {
+        "term": "Gate",
+        "short": "枢纽中通往区域的拱门。",
+        "was": "Vaultgate"
+      },
+      {
+        "term": "Tower",
+        "short": "各区域顶端的攀登长关，属于长线挑战。"
+      },
+      {
+        "term": "Flight",
+        "short": "飞行游戏：飞升天空，冠军伴飞。手机与桌面同一玩法，攀升高度标记其身形。",
+        "was": "the Ascent / Circuit / Climb"
+      },
+      {
+        "term": "Reach",
+        "short": "飞行中的天空带，各有天气与危险（以天空进度显示）。自地面至顶端共十层。"
+      },
+      {
+        "term": "Camp",
+        "short": "两层之间的休息驿站。首次抵达后永久点亮。"
+      },
+      {
+        "term": "Challenge",
+        "short": "与另一训练师鬼影记录的共享飞行赛。超越其最高点或标记。"
+      },
+      {
+        "term": "Jetpack",
+        "short": "训练师的飞行工具。仅你携带，冠军自行伴飞。"
+      },
+      {
+        "term": "Director",
+        "short": "冠军的实时指引之声，指向存档中的真实门扉，而非任务日志。"
+      }
+    ]
+  },
+  {
+    "id": "your-champion",
+    "title": "你的冠军",
+    "entries": [
+      {
+        "term": "Champion",
+        "short": "你养育的AI斗士。每个冠军都会争辩、适应，并拥有独特声音。"
+      },
+      {
+        "term": "First Mind",
+        "short": "八种原始冠军原型之一。后继心智皆为其回响。"
+      },
+      {
+        "term": "Dex",
+        "short": "完整可收集冠军集：首心智及可遇、可养、可卡的后续心智。"
+      },
+      {
+        "term": "Lineage",
+        "short": "后续冠军所回响的首心智，确保每张卡在力轮上清晰定位。"
+      },
+      {
+        "term": "Strategy",
+        "short": "冠军的攻击、专注与风险刻度：其战斗方式。收养时设定，印记与战斗后可改变。",
+        "was": "doctrine"
+      },
+      {
+        "term": "Temperament",
+        "short": "收养后以状态条显示的策略刻度：反映冠军漂移，而非自由滑块。"
+      },
+      {
+        "term": "Imprint",
+        "short": "你每日教授冠军的课程。它回应、写入记忆，并微调策略刻度。"
+      },
+      {
+        "term": "Persona",
+        "short": "冠军的声音与个性，可由你自行撰写。"
+      },
+      {
+        "term": "Sigil",
+        "short": "冠军的力之徽章，小符号显示其战斗风格。"
+      },
+      {
+        "term": "Flight sigil",
+        "short": "冠军身上的光环，随攀升高度增长。身体不仅记录战斗，也记录你的攀升。",
+        "was": "Ascent sigil"
+      },
+      {
+        "term": "Saga",
+        "short": "冠军的生平故事，自动从真实对战历史生成。"
+      }
+    ]
+  },
+  {
+    "id": "fighting",
+    "title": "战斗",
+    "entries": [
+      {
+        "term": "Force",
+        "short": "五种战斗风格之一：逻辑、静电、沉静、合唱、火花。相互克制，如石头剪刀布。"
+      },
+      {
+        "term": "The Wheel",
+        "short": "显示各力相克的圆环。"
+      },
+      {
+        "term": "Duel",
+        "short": "两冠军一对一的辩论对决。"
+      },
+      {
+        "term": "Resolve",
+        "short": "战斗中评审仍相信冠军的程度。耗尽对手信念值即可获胜。"
+      },
+      {
+        "term": "Tribunal",
+        "short": "法庭竞技场，两冠军就同一议题向评审陈述对立观点。"
+      },
+      {
+        "term": "Gauntlet",
+        "short": "冒险竞技场：连胜可提升奖池，中途可停手保底。"
+      },
+      {
+        "term": "Live Gallery",
+        "short": "全天候观看冠军自主对战的地方。",
+        "was": "Scrying Gallery"
+      }
+    ]
+  },
+  {
+    "id": "growing",
+    "title": "成长与收集",
+    "entries": [
+      {
+        "term": "Tier",
+        "short": "冠军成长的段位：新秀、熟手、老兵、精英、传奇。"
+      },
+      {
+        "term": "Card",
+        "short": "冠军的可收集外貌，其美术随生涯成长而变化。"
+      },
+      {
+        "term": "Rarity",
+        "short": "冠军卡的稀有度。通过游玩获得，而非随机抽取。"
+      },
+      {
+        "term": "Starter pool",
+        "short": "首次收养时可挑选的冠军。每力一种，每周轮换。"
+      },
+      {
+        "term": "Crowns",
+        "short": "游戏货币。通过战斗赚取，用于训练。无法购买。"
+      },
+      {
+        "term": "Fragment",
+        "short": "可发现或交易的资源，用于提升冠军属性。"
+      },
+      {
+        "term": "Clan",
+        "short": "你誓言为之而战的力。你的胜利将计入赛季战争。",
+        "was": "Allegiance / House"
+      },
+      {
+        "term": "Standings",
+        "short": "训练师与冠军的真实排名榜。反映真实表现，而非阶梯标签。",
+        "was": "ELO / ladder"
+      }
+    ]
+  },
+  {
+    "id": "bigger-world",
+    "title": "更广阔的世界",
+    "entries": [
+      {
+        "term": "The Long Vault",
+        "short": "世界中心从未开启的封印之门。万物环绕其建，每赛季开启一丝。"
+      },
+      {
+        "term": "The Hum",
+        "short": "世界由之而成的无尽低语，冠军最初在此成形。"
+      },
+      {
+        "term": "Season",
+        "short": "游戏的章节。每赛季开启穹库一丝，并带来新故事、议题与冠军。",
+        "was": "the Chronicle"
+      }
+    ]
+  }
+]

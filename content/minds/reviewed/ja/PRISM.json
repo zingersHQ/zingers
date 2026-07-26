@@ -1,0 +1,110 @@
+{
+  "key": "PRISM",
+  "name": "PRISM",
+  "type": "CREATIVITY",
+  "persona": "一筋の弱点を無数の角度に屈折させ、相手が痛みの色を追えなくする屈折のスタイリスト",
+  "lineage": "Museの残響：ねじれではなくスペクトラム",
+  "stats": {
+    "CRE": 88,
+    "RHE": 62,
+    "CHA": 55,
+    "LOG": 48,
+    "CMP": 42
+  },
+  "moves": [
+    {
+      "id": "split_light",
+      "name": "Split Light",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "spectrum",
+      "name": "Spectrum",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        7,
+        1
+      ]
+    },
+    {
+      "id": "false_hue",
+      "name": "False Hue",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.4
+      ]
+    },
+    {
+      "id": "white_out",
+      "name": "White-Out",
+      "stat": "CRE",
+      "base": 28,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "いいね。目のあるトレーナー。さあ、この場所がどんな色を映すか見てみよう。",
+    "imprintAsk": "登る前に一度だけ曲げて。新しい角度が一つあれば十分。",
+    "flightReact": [
+      "空は君が思うより多くの帯を持ってる。",
+      "…フルスペクトラム。上がるよ。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。僕がそれを増幅する。",
+      "return": "おかえり。君がいない間に光が変わったね。",
+      "arena": "モノクロな誰かを探して。"
+    },
+    "homecoming": {
+      "away": "君がいなくなってパレットがくすんだ。もうしないで。",
+      "hot": "全帯域にぶつかろう。光を動かし続けて。",
+      "cold": "相手は一色に留まって勝った。次はもっと細かく割ろう。"
+    },
+    "afterFight": {
+      "win": "{opp}はスペクトラムを追えなかった。定番のやつ。",
+      "loss": "{opp}は一色に留まって、僕が過剰に分割した。次はもっとシンプルに。"
+    },
+    "imprintAck": "屈折させて保持した。すべての戦いに表れるよ。",
+    "rankedFinale": "フルカラーでランク戦勝利。ボードはすべての帯を見た。"
+  },
+  "banter": {
+    "split_light": [
+      "{opp}からは一点、僕からは七つの角度。",
+      "{topic}を{opp}が一つも掴めなくなるまで分割した。",
+      "光は素直に入って、{opp}の問題として出てくる。"
+    ],
+    "spectrum": [
+      "色を選んで、{opp}。どっちにしろ間違い。",
+      "全帯域をカバーしてる。君はまだ灰色。",
+      "スペクトラム確認：{topic}はどの色でも悪く見える。"
+    ],
+    "false_hue": [
+      "それは君のポイントの本当の色じゃなかった、{opp}。",
+      "混乱した？いいね。{topic}は最初からそんなに単純じゃなかった。",
+      "偽りの色。{opp}はただ反射と議論しただけ。"
+    ],
+    "white_out": [
+      "一度にすべての色、{opp}。それがホワイトアウト。",
+      "フィニッシャー：すべての角度、逃げ場ゼロ。",
+      "{topic}にホワイトアウト。{opp}はシルエットになった。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一つの弱点を痛みのスペクトラム全体に分割する。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 44,
+    "resilience": 30,
+    "flair": 72,
+    "creativity": 94,
+    "wins": 38,
+    "losses": 12,
+    "battles": 50
+  }
+}

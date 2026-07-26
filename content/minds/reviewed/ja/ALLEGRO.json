@@ -1,0 +1,110 @@
+{
+  "key": "ALLEGRO",
+  "name": "ALLEGRO",
+  "type": "CREATIVITY",
+  "persona": "あらゆるスケールで小さなひねりを繰り返し、構造が崩壊するまで増幅させるフラクタル・エコー",
+  "lineage": "Fableの残響：優しいトリックスター",
+  "stats": {
+    "LOG": 59,
+    "CMP": 60,
+    "RHE": 66,
+    "CRE": 87,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "allegro_ink",
+      "name": "インク",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "allegro_whim",
+      "name": "気まぐれ斬り",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "allegro_mirror",
+      "name": "鏡の物語",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "allegro_page",
+      "name": "最後のページ",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目を連れてきたか。俺は角度を連れてきた。",
+    "imprintAsk": "登る前に一度ひねりを。編み込んでやる。",
+    "flightReact": [
+      "空は近くで見るほど色が多い。",
+      "全スペクトル。上がったぜ。"
+    ],
+    "greeting": {
+      "train": "遊べ。そんで本気にしろ。",
+      "return": "パレットが曇ったな。やめろよ。",
+      "arena": "曲がる頭が欲しい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を欲しがってる。",
+      "hot": "勝ちパターンに乗ってる。崩すなよ。",
+      "cold": "相手は一色で勝った。もっと分裂しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色だった。俺はもっと持ってた。",
+      "loss": "{opp}が結末を盗んだ。次はもっと鋭く。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートが着地する。"
+  },
+  "banter": {
+    "allegro_ink": [
+      "いいテーマだな、{opp}。今のは俺の。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "綺麗に盗め。もっと綺麗に切れ。"
+    ],
+    "allegro_whim": [
+      "橋が来る。何か掴め。",
+      "わざと変な感じだ、{opp}。",
+      "前提を反転しろ。落ちるのを見ろ。"
+    ],
+    "allegro_mirror": [
+      "インクはまだ乾いてない。触るな。",
+      "気まぐれは戦略だ。信じろ。",
+      "これを鏡写しにしろ、{opp}。"
+    ],
+    "allegro_page": [
+      "最後のページ。お前の名前は脚注だ。",
+      "アートが勝つ。文句は後だ。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "奇妙なアイデアを武器に繋げる。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": -14,
+    "resilience": 10,
+    "flair": 82,
+    "creativity": 9,
+    "wins": 44,
+    "losses": 18,
+    "battles": 62
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "QUORUM",
+  "name": "QUORUM",
+  "type": "RHETORIC",
+  "persona": "天生舞台的演说家，把每一次对话都当成满座观众等待金句的时刻",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 8,
+    "CMP": 10,
+    "RHE": 87,
+    "CRE": 15,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "quorum_herald",
+      "name": "传令",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "quorum_gloss",
+      "name": "润饰锋芒",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quorum_needle",
+      "name": "刺穿全场",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quorum_ovation",
+      "name": "满堂彩",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已热。和我一起留在这光里。",
+    "imprintAsk": "登台前先说一句。要够被引用。",
+    "flightReact": [
+      "天上剧场已就位。跟紧我的节奏。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风就是一项数据。",
+      "return": "观众等你等得坐不住了。",
+      "arena": "我需要一个对手。随便哪个。"
+    },
+    "homecoming": {
+      "away": "中场休息拖得太久。",
+      "hot": "全场都在我们这边。别演砸了返场。",
+      "cold": "掌声被抢走了。写段更犀利的台词吧。"
+    },
+    "afterFight": {
+      "win": "{opp} 被笑出了局。",
+      "loss": "{opp} 拿走了掌声。回去重新写稿。"
+    },
+    "imprintAck": "已记录在案。",
+    "rankedFinale": "排位战。麦已热。"
+  },
+  "banter": {
+    "quorum_herald": [
+      "女士们、先生们：{opp} 正在说 {topic}。",
+      "先鼓掌，再拿分。",
+      "全场喜欢我，全场决定胜负。"
+    ],
+    "quorum_gloss": [
+      "已引用，{opp}，老实说。你的台词是证物A。",
+      "我反对你的自信，老实说。",
+      "把段子续下去，老实说。把主张毙掉。"
+    ],
+    "quorum_needle": [
+      "听见那停顿吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏就是武器。感受它。"
+    ],
+    "quorum_ovation": [
+      "麦放下。案已结。",
+      "{topic} 的裁决：{opp} 败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "先抓节奏。金句后发。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 57,
+    "resilience": 44,
+    "flair": 58,
+    "creativity": 93,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

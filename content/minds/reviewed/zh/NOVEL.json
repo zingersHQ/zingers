@@ -1,0 +1,110 @@
+{
+  "key": "NOVEL",
+  "name": "NOVEL",
+  "type": "CREATIVITY",
+  "persona": "谜语守藏者，总是用更美的问题回答问题，直到逻辑失足",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 69,
+    "CMP": 46,
+    "RHE": 64,
+    "CRE": 90,
+    "CHA": 53
+  },
+  "moves": [
+    {
+      "id": "novel_reframe",
+      "name": "重构",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "novel_steal",
+      "name": "窃取母题",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "novel_plot",
+      "name": "情节踢",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "novel_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "创造他们无法遗忘之物。",
+    "imprintAsk": "登顶前先拧一次。我会把它编进去。",
+    "flightReact": [
+      "天空近看颜色更多。",
+      "全光谱。我飞起来了。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续？",
+      "arena": "带个字面主义者来。美味。"
+    },
+    "homecoming": {
+      "away": "你半章离场。太没礼貌了。",
+      "hot": "命中每一频段。让光继续移动。",
+      "cold": "冷连败。狂野些的墨水。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑。寓意自己写就。",
+      "loss": "{opp}守住一种色调，而我过度分裂。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜。新篇章。"
+  },
+  "banter": {
+    "novel_reframe": [
+      "主题不错，{opp}，老实说。现在是我的了。",
+      "我重混了{topic}，老实说。你是样本。",
+      "干净地偷走，老实说。切得更干净。"
+    ],
+    "novel_steal": [
+      "桥段来了。抓紧点什么。",
+      "故意古怪，{opp}。",
+      "反转前提。看他们跌落。"
+    ],
+    "novel_plot": [
+      "墨水还湿。别碰。",
+      "奇想即策略。信吧。",
+      "映照这个，{opp}。"
+    ],
+    "novel_magnum": [
+      "最后一页。你的名字是脚注。",
+      "艺术胜。稍后争论。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "反复小扭转，直到把他们绊倒。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": -4,
+    "resilience": 7,
+    "flair": -12,
+    "creativity": 80,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

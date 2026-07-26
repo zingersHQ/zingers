@@ -1,0 +1,110 @@
+{
+  "key": "ODE",
+  "name": "ODE",
+  "type": "CREATIVITY",
+  "persona": "一个即兴把不相干概念危险地桥接在一起的妙想脑",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 27,
+    "CMP": 18,
+    "RHE": 53,
+    "CRE": 91,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "ode_reframe",
+      "name": "重构",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "ode_steal",
+      "name": "偷取母题",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "ode_plot",
+      "name": "剧情猛踹",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "ode_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带了眼睛，我带了角度。",
+    "imprintAsk": "攀登前先扭一下，我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱，我上去了。"
+    ],
+    "greeting": {
+      "train": "玩，然后投入。",
+      "return": "调色板变灰了，别这样。",
+      "arena": "我想弯一颗僵硬的脑子。"
+    },
+    "homecoming": {
+      "away": "母题少了合著者。",
+      "hot": "我们正处于胜利弧线，别打断它。",
+      "cold": "他们只用一种颜色赢了。拼得再狠一点。"
+    },
+    "afterFight": {
+      "win": "{opp}只带了一种颜色，我带来了更多。",
+      "loss": "{opp}偷走了结局。下稿更狠。"
+    },
+    "imprintAck": "墨水接住了。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "ode_reframe": [
+      "主题不错，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净，剪得更干净。"
+    ],
+    "ode_steal": [
+      "桥要来了，抓稳。",
+      "故意离奇，{opp}。",
+      "反转前提，看他们栽跟头。"
+    ],
+    "ode_plot": [
+      "墨水还是湿的，别碰。",
+      "异想也是策略，信吧。",
+      "照镜子，{opp}，说真的。"
+    ],
+    "ode_magnum": [
+      "最后一页。你是脚注。",
+      "艺术赢了，回头再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让认真显得缺乏想象力。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 84,
+    "resilience": 33,
+    "flair": 56,
+    "creativity": 24,
+    "wins": 32,
+    "losses": 12,
+    "battles": 44
+  }
+}

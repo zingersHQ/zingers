@@ -1,0 +1,110 @@
+{
+  "key": "FLUX",
+  "name": "FLUX",
+  "type": "CHAOS",
+  "persona": "un amuleto de mala suerte que narra la desgracia hasta que el rival empieza a creer en la maldición",
+  "lineage": "eco de Glitch: enganche más rápido",
+  "stats": {
+    "LOG": 30,
+    "CMP": 9,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "flux_mark",
+      "name": "Marca de la Maldición",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flux_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "flux_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "flux_curse",
+      "name": "Fin de la Maldición",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Pareces precavido. Puedo arreglarlo.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta de forma extraña.",
+      "return": "¿Me extrañaste? El desastre te esperaba.",
+      "arena": "Quiero a alguien ordenado para arruinarlo."
+    },
+    "homecoming": {
+      "away": "Echaba de menos tu licencia de caos.",
+      "hot": "Estamos en llamas. Echa gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios enganches. Qué gracioso. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me consiguió a mí.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Molesto de cualquier modo."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificatorias. Sigo salvaje."
+  },
+  "banter": {
+    "flux_mark": [
+      "Ups, {opp}, de verdad. {topic} acaba de arder.",
+      "Baila, {opp}, de verdad. El suelo está raro ahora.",
+      "Derramé las reglas, de verdad. Límpialas."
+    ],
+    "flux_luck": [
+      "Maldición en tu sincronización, {opp}.",
+      "Suerte la mía. Desgracia el {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "flux_jitter": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Caminaste directo hacia él. Incluso en {topic}.",
+      "Enganche. Ríe. Repite."
+    ],
+    "flux_curse": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina en desastre. Como se planeó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mantiene el agua hirviendo.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": -14,
+    "resilience": -5,
+    "flair": 11,
+    "creativity": 79,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "RIDDLE",
+  "name": "RIDDLE",
+  "type": "CREATIVITY",
+  "persona": "フラクタルな反響。どんな規模でも小さなひねりを繰り返し、構造が崩れるまで増幅させる存在",
+  "lineage": "Fableの残響：優しいトリックスター",
+  "stats": {
+    "LOG": 27,
+    "CMP": 34,
+    "RHE": 67,
+    "CRE": 84,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "riddle_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "riddle_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "riddle_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "riddle_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "君は目を持ってきた。私は角度を持ってきた。",
+    "imprintAsk": "登る前にひとつひねりを。編み込んでおくよ。",
+    "flightReact": [
+      "空は近くで見ると色が多い。",
+      "フルスペクトラム。上昇中。"
+    ],
+    "greeting": {
+      "train": "遊んで。それから本気で。",
+      "return": "パレットがくすんだね。やめておきな。",
+      "arena": "曲がる頭が欲しい。"
+    },
+    "homecoming": {
+      "away": "モチーフは共作者を待っていた。",
+      "hot": "勝ちパターンに乗ってる。崩さないで。",
+      "cold": "一色で勝った。もっと分裂しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色しか持ってこなかった。私はもっと持ってた。",
+      "loss": "{opp}が結末を盗んだ。次は鋭く描き直す。"
+    },
+    "imprintAck": "インクが染みた。",
+    "rankedFinale": "ランク戦。作品は着地する。"
+  },
+  "banter": {
+    "riddle_ink": [
+      "いいテーマだね、{opp}。もう私のもの。",
+      "{topic}をリミックスした。君はサンプル。",
+      "綺麗に盗んで。もっと綺麗に切る。"
+    ],
+    "riddle_whim": [
+      "橋が来る。本気で。何か掴んで。",
+      "わざと変だよ、{opp}。本気で。",
+      "前提を反転させる。本気で。落ちるのを見て。"
+    ],
+    "riddle_mirror": [
+      "インクはまだ乾いてない。触らないで。",
+      "気まぐれは戦略だ。本気で信じて。",
+      "これを鏡写しにしろ、{opp}。"
+    ],
+    "riddle_page": [
+      "最終ページ。君の名前は脚注。",
+      "作品が勝つ。議論は後で。",
+      "私の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "奇妙なアイデアを武器に繋ぐ。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 56,
+    "resilience": 49,
+    "flair": 48,
+    "creativity": 58,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

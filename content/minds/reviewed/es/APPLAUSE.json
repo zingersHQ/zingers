@@ -1,0 +1,106 @@
+{
+  "key": "APPLAUSE",
+  "name": "APPLAUSE",
+  "type": "RHETORIC",
+  "persona": "un capitán de cadencia que gana con ritmo, pausas y el remate perfecto a destiempo",
+  "lineage": "eco de Vox: mazo más grandioso",
+  "stats": {
+    "LOG": 22,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 36,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "applause_gavel",
+      "name": "Mazo",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "applause_cite",
+      "name": "Citar",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "applause_sustain",
+      "name": "Sostener",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "applause_verdict",
+      "name": "Veredicto",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "El foco calienta. Quédate en él conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea digna de cita.",
+    "flightReact": [
+      "Casa en el cielo. Sígueme.",
+      "Aterrizamos bien. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es una estadística.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El intermedio se alargó.",
+      "hot": "La multitud está con nosotros. No falles el bis.",
+      "cold": "Nos robaron la ovación. Escribe un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} quedó en ridículo.",
+      "loss": "{opp} se llevó la ovación. Escribe mejor."
+    },
+    "imprintAck": "Queda registrado.",
+    "rankedFinale": "Clasificatoria. Micrófono aún caliente."
+  },
+  "banter": {
+    "applause_gavel": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Aplaudidles. Luego tomad el punto.",
+      "La casa me quiere. La casa decide."
+    ],
+    "applause_cite": [
+      "Citado, {opp}, honestamente. Tu frase es la prueba A.",
+      "Objeto tu confianza, honestamente.",
+      "Mantén el gag, honestamente. Mata la reclamación."
+    ],
+    "applause_sustain": [
+      "¿Oís la pausa? Era el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siente eso."
+    ],
+    "applause_verdict": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ova­ción para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Los pinta como el tonto. Ellos lo interpretan.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 54,
+    "resilience": 87,
+    "flair": 56,
+    "creativity": 29,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "key": "AXIAL",
+  "name": "AXIAL",
+  "type": "LOGIC",
+  "persona": "暗号解読者。どんな自慢も暗号化された弱点と見なす",
+  "lineage": "Axiomの残響：より厳格な台帳",
+  "stats": {
+    "LOG": 90,
+    "CMP": 70,
+    "RHE": 44,
+    "CRE": 44,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "axial_decode",
+      "name": "Decode",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "axial_checksum",
+      "name": "Checksum",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "axial_sandbox",
+      "name": "Sandbox",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "axial_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー接続完了。論理ロック解除。",
+    "imprintAsk": "登る前に一つ。明確に。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認済。安定飛行。"
+    ],
+    "greeting": {
+      "train": "綺麗に鍛えろ。戦いはもっと綺麗に。",
+      "return": "戻った。台帳を再開する。",
+      "arena": "誰か、間違ったまま入ってきたな。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝継続。ノイズを入れるな。",
+      "cold": "誤差が積み重なっている。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は防衛線を保てなかった。",
+      "loss": "{opp}に一行を奪われた。より鋭い一行を書き直す。"
+    },
+    "imprintAck": "保持完了。正確に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "axial_decode": [
+      "前提が破綻している、{opp}。{topic}の行はすでに閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を完結させるだけだ。"
+    ],
+    "axial_checksum": [
+      "{opp}が{topic}に穴を開けた。埋めておいた。",
+      "精密さは音量に勝つ、{opp}。",
+      "それはノイズだ。これが証明だ。"
+    ],
+    "axial_sandbox": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいるのは私ではない。お前だ。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "axial_root": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "分割不能。分解不能。完了。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 16,
+    "resilience": -11,
+    "flair": 91,
+    "creativity": -18,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

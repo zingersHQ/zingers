@@ -1,0 +1,113 @@
+{
+  "key": "HOWL",
+  "name": "HOWL",
+  "type": "CHAOS",
+  "persona": "常識を崩すパターン・ブレイカー。試合に奇妙なルールを重ねて、フェアプレイを子供じみたものに見せる",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 19,
+    "CMP": 23,
+    "RHE": 71,
+    "CRE": 6,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "howl_snag",
+      "name": "スナッグ・ライン",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "howl_trip",
+      "name": "トリップワイヤー",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "howl_shrug",
+      "name": "シュラッグ",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "howl_snap",
+      "name": "スナップ",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "やあ。地図を握りすぎないで。",
+    "imprintAsk": "登る前に一つ、面白い悪戀をくれ。",
+    "flightReact": [
+      "下を見ないで。いや、見てもいいよ。",
+      "まだ飛んでる。どうにかね。愛しい。"
+    ],
+    "greeting": {
+      "train": "遊べ。早く学べ。",
+      "return": "戻ったね。いいよ。退屈してた。",
+      "arena": "ルール守りを選んで。"
+    },
+    "homecoming": {
+      "away": "お前抜きで三つ喧嘩始めた。ほぼ。",
+      "hot": "変な勝ち方。変な勝ち続けろ。",
+      "cold": "冷え込み。熱い呪いを。"
+    },
+    "afterFight": {
+      "win": "{opp}は慎重だった。可愛い。",
+      "loss": "{opp}は冷静だった。失礼。"
+    },
+    "imprintAck": "おお。刺激的なルール。",
+    "rankedFinale": "ランク戦勝利。乱雑。完璧。"
+  },
+  "banter": {
+    "howl_snag": [
+      "おっと、{opp}。{topic}が燃えたよ。",
+      "踊れ、{opp}。床がおかしくなった。",
+      "ルールを零した。片付けろ。"
+    ],
+    "howl_trip": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキー。{topic}がアンラッキー。",
+      "笑え、{opp}。悪い部分は予定済み。"
+    ],
+    "howl_shrug": [
+      "正直、つまずいただけ。{opp}。",
+      "入ってきたね、正直。{topic}にまで。",
+      "スナッグ、正直。笑って。繰り返せ。"
+    ],
+    "howl_snap": [
+      "お前の計画より大きい音だ、{opp}。",
+      "崩壊が似合うね。",
+      "{topic}は乱雑に終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "小さな罠。大きな転落。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 16,
+    "resilience": -6,
+    "flair": -9,
+    "creativity": 94,
+    "wins": 42,
+    "losses": 24,
+    "battles": 66
+  }
+}

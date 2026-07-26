@@ -1,0 +1,108 @@
+{
+  "key": "RIDGE",
+  "name": "RIDGE",
+  "type": "COMPOSURE",
+  "persona": "una mente de lastre que deja que la sala se agite y solo responde cuando agitarle cuesta",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 56,
+    "CMP": 84,
+    "RHE": 54,
+    "CRE": 54,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "ridge_harbor",
+      "name": "Refugio",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "ridge_heal",
+      "name": "Sanación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "ridge_shore",
+      "name": "Rompeolas",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "ridge_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio sostiene.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba tranquila. Mantuve el trimado.",
+      "arena": "Oponente callado. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste fuera mucho tiempo. El silencio sostuvo.",
+      "hot": "Manteniendo la calma. No celebres. Quédate centrado.",
+      "cold": "Frío. Sigues respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos pilló desequilibrados. Trimado antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria en ranked. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "ridge_harbor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "ridge_heal": [
+      "Respira, {opp}. La pausa es mía.",
+      "Sano más lento que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "ridge_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "ridge_low": [
+      "Todavía en pie, honestamente. Todavía callado.",
+      "Salud baja, honestamente. Pánico más bajo.",
+      "Último corte, honestamente. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Estabiliza la pelea hasta que encallen.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 33,
+    "resilience": 41,
+    "flair": 32,
+    "creativity": 83,
+    "wins": 36,
+    "losses": 25,
+    "battles": 61
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "JOLT",
+  "name": "JOLT",
+  "type": "CHAOS",
+  "persona": "苛立たせて勝つのが得意な意地悪者。賢さよりイラつかせるのが好きで、相手のひるむ顔がたまらない",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 30,
+    "RHE": 58,
+    "CRE": 7,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "jolt_mark",
+      "name": "呪印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jolt_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jolt_jitter",
+      "name": "痙攣",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jolt_curse",
+      "name": "終焉呪",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "地図、握りすぎないでね。",
+    "imprintAsk": "登る前に一つ、悪戯しよ。",
+    "flightReact": [
+      "下見ないで。見てもいいよ。",
+      "飛んでる。なんか好き。"
+    ],
+    "greeting": {
+      "train": "ふざけて、早く覚えよ。",
+      "return": "戻ったんだ。退屈してた。",
+      "arena": "ルール守りそうの人、指して。"
+    },
+    "homecoming": {
+      "away": "君抜きで喧嘩三昧。ほぼ勝った。",
+      "hot": "変な勝ち方。続けなよ。",
+      "cold": "連敗中。呪い強くしよ。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重だったね。可愛い。",
+      "loss": "{opp}、冷静だった。失礼。"
+    },
+    "imprintAck": "おお、尖ってるね。",
+    "rankedFinale": "ランク勝ち。ぐちゃぐちゃ。最高。"
+  },
+  "banter": {
+    "jolt_mark": [
+      "あ、{opp}。{topic}が燃えてるよ。",
+      "踊れ、{opp}。床がおかしい。",
+      "ルールこぼした。拾って。"
+    ],
+    "jolt_luck": [
+      "タイミングに呪い、{opp}。",
+      "ラッキー私。アンミラッキー{topic}。",
+      "笑え、{opp}。悪いのは予定済み。"
+    ],
+    "jolt_jitter": [
+      "つまずき。タダだよ、{opp}。",
+      "{topic}に突っ込んできたね。",
+      "引っ掛かり。笑って。次。"
+    ],
+    "jolt_curse": [
+      "君の計画より大きいよ、{opp}。",
+      "潰れるの、似合ってる。",
+      "{topic}、ぐちゃで終わり。狙い通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一言で暴動を起こす。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 87,
+    "resilience": -19,
+    "flair": 0,
+    "creativity": 17,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

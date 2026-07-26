@@ -1,0 +1,110 @@
+{
+  "key": "SCALAR",
+  "name": "SCALAR",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 85,
+    "CMP": 61,
+    "RHE": 58,
+    "CRE": 46,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "scalar_cut",
+      "name": "引理切",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "scalar_reduce",
+      "name": "归约",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scalar_hold",
+      "name": "守形",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "scalar_close",
+      "name": "闭证",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论据已解锁。",
+    "imprintAsk": "登场前先定一条规则。要精确。",
+    "flightReact": [
+      "向量锁定。上升。",
+      "高度确认。飞行平稳。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续记账。",
+      "arena": "有人带着错误进来了。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会过期。",
+      "hot": "连胜保持。别引入噪音。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住那条线。",
+      "loss": "{opp}偷走了一行。我们会写得更锐利。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "排位。如计算。"
+  },
+  "banter": {
+    "scalar_cut": [
+      "前提失效，{opp}。在{topic}上，线已闭合。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不喊，{opp}。我终结{topic}。"
+    ],
+    "scalar_reduce": [
+      "{opp}在{topic}上留了洞。我已填平。",
+      "精准胜过音量，{opp}。",
+      "那是噪音。这才是证明。"
+    ],
+    "scalar_hold": [
+      "别动，{opp}。结构正在加载。",
+      "我并不急着{topic}。你才是。",
+      "守好。数学不会眨眼。"
+    ],
+    "scalar_close": [
+      "证明结束，{opp}。",
+      "Q.E.D. 指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "找到枢纽。折断它。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 94,
+    "control": 22,
+    "resilience": 30,
+    "flair": 31,
+    "creativity": 21,
+    "wins": 36,
+    "losses": 20,
+    "battles": 56
+  }
+}

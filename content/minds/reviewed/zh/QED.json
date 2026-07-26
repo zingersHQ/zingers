@@ -1,0 +1,110 @@
+{
+  "key": "QED",
+  "name": "QED",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 85,
+    "CMP": 53,
+    "RHE": 9,
+    "CRE": 17,
+    "CHA": 32
+  },
+  "moves": [
+    {
+      "id": "qed_cut",
+      "name": "引理斩",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "qed_reduce",
+      "name": "归约",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "qed_hold",
+      "name": "守形",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "qed_close",
+      "name": "证毕",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论点解锁。",
+    "imprintAsk": "攀登前先定一条规则。要精确。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。飞行无误。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续记账。",
+      "arena": "有人带着错误走进来。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会变质。",
+      "hot": "连胜保持。别引入噪声。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住防线。",
+      "loss": "{opp}偷走一行。我们会起草更锐利的一行。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "排位。如计算。"
+  },
+  "banter": {
+    "qed_cut": [
+      "{opp}，你的前提已失效。在{topic}上，线已合拢。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不会喊叫，{opp}。我会终结{topic}。"
+    ],
+    "qed_reduce": [
+      "{opp}在{topic}上留了洞。我已填补。",
+      "精确胜过音量，{opp}。",
+      "那是噪声。这是证明。"
+    ],
+    "qed_hold": [
+      "站稳，{opp}，诚实点。结构正在加载。",
+      "我并不急于{topic}，诚实说。你才急。",
+      "护住，诚实点。数学不会眨眼。"
+    ],
+    "qed_close": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定案。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "找到枢纽。折断它。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 90,
+    "resilience": 29,
+    "flair": 41,
+    "creativity": 57,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

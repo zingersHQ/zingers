@@ -17,6 +17,8 @@ let volumeScalar = 1;
 // 0..1 battle heat, tracked for the same late-registration reason as volume.
 let intensity = 0;
 const BASE_MUSIC_VOL = 0.28;
+/** Host (AmbienceEngine) marks the gesture-armed latch so visibility resume works. */
+let armHost: (() => void) | null = null;
 
 // Called by <AmbientToggle/> when it creates / disposes its engine. Applies the
 // current mood immediately so a fight that started before the engine existed is
@@ -30,6 +32,11 @@ export function registerAmbience(e: Ambience | null) {
   }
 }
 
+/** AmbienceEngine registers this so startAmbience() can latch the gesture arm. */
+export function registerAmbienceArm(fn: (() => void) | null) {
+  armHost = fn;
+}
+
 // User music-volume scalar (0..1), shared with the SFX/voice master so one
 // slider rules the whole soundscape.
 export function setAmbienceVolume(v: number) {
@@ -38,11 +45,12 @@ export function setAmbienceVolume(v: number) {
 }
 
 export function setMood(mood: Mood) {
+  const prev = current;
   current = mood;
   engine?.setMood(mood);
-  // leaving combat always releases battle heat — a region score should never
-  // arrive still wound up from the previous fight
-  if (mood !== "battle" && intensity > 0) setAmbienceIntensity(0);
+  // Only release battle heat when *leaving* combat — never wipe Flight / region
+  // intensity that was just set (setMood("circuit") used to zero it every time).
+  if (prev === "battle" && mood !== "battle") setAmbienceIntensity(0);
 }
 
 export function currentMood(): Mood {
@@ -65,9 +73,14 @@ export function ambienceFlourish(kind: "victory" | "defeat" = "victory") {
   engine?.flourish(kind);
 }
 
-/** Start the registered engine (call from a user gesture — e.g. onboarding CTA). */
+/** Start the registered engine (call from a user gesture — e.g. Flight hold / CTA). */
 export function startAmbience() {
   // Never kick the score while the tab is in the background.
   if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+  // Prefer the host kick — it latches the gesture arm and honors mute/visibility.
+  if (armHost) {
+    armHost();
+    return;
+  }
   engine?.start();
 }

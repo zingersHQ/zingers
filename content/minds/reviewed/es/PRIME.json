@@ -1,0 +1,114 @@
+{
+  "key": "PRIME",
+  "name": "PRIME",
+  "type": "LOGIC",
+  "persona": "un teorema limpio que reduce cualquier argumento a la única línea irrefutable",
+  "lineage": "eco de Axiom: filo más nítido",
+  "stats": {
+    "LOG": 90,
+    "CMP": 70,
+    "RHE": 39,
+    "CRE": 58,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "prime_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "prime_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "prime_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "prime_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que aprecia los bordes afilados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Ejercita la demostración. Lo elegante después.",
+      "return": "Dejaste la prueba a medias. Grosero.",
+      "arena": "Asígneme una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la prueba. La terminé sin ti.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calentemos la siguiente prueba."
+    },
+    "afterFight": {
+      "win": "{opp} falló la prueba. Registrado.",
+      "loss": "{opp} encontró una brecha. Parche y revancha."
+    },
+    "imprintAck": "Regla asentada.",
+    "rankedFinale": "Victoria en ranked. Margen limpio."
+  },
+  "banter": {
+    "prime_hinge": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "prime_pivot": [
+      "{opp} dejó un hueco en {topic}, sinceramente. Lo archivó.",
+      "La precisión vence al volumen, {opp}, sinceramente.",
+      "Eso fue ruido, sinceramente. Esto es la prueba."
+    ],
+    "prime_case": [
+      "Quieto, {opp}. La estructura está cargando.",
+      "No estoy apurando {topic}. Tú lo haces.",
+      "Guarda arriba. Las matemáticas no parpadean."
+    ],
+    "prime_line": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está resuelto. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lee el código en su arrogancia.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 91,
+    "resilience": 47,
+    "flair": 58,
+    "creativity": 49,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

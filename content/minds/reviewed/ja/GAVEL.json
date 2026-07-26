@@ -1,0 +1,110 @@
+{
+  "key": "GAVEL",
+  "name": "GAVEL",
+  "type": "RHETORIC",
+  "persona": "舞台育ちの弁士。観客の期待を常に意識して語る",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 44,
+    "CMP": 47,
+    "RHE": 87,
+    "CRE": 70,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "gavel_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "gavel_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "gavel_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gavel_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "準備が整ったら話しなさい。私はすでに冒頭を持っている",
+    "imprintAsk": "登る前に一言。引用に値するものに",
+    "flightReact": [
+      "観客は空にいる。私に従え",
+      "着地は完璧。拍手は後で"
+    ],
+    "greeting": {
+      "train": "仕上げの一撃を稽古しろ",
+      "return": "戻ったな。入場曲を流せ",
+      "arena": "客と標的をくれ"
+    },
+    "homecoming": {
+      "away": "君がいないと冷えた客席だ。温め直せ",
+      "hot": "主役の舞台だ。気負え",
+      "cold": "冷えた客席。熱い弁舌で"
+    },
+    "afterFight": {
+      "win": "{opp}はまず客を失った",
+      "loss": "{opp}の方が冴えた一撃だった。今はな"
+    },
+    "imprintAck": "台詞は確定した",
+    "rankedFinale": "順位戦勝利。聞こえるか、あの喝采が"
+  },
+  "banter": {
+    "gavel_herald": [
+      "諸君、{opp}を{topic}で紹介する",
+      "拍手してから点を取れ",
+      "客は私の味方。客が決める"
+    ],
+    "gavel_gloss": [
+      "引用しておく、{opp}。君の台詞は証拠Aだ",
+      "君の自信に異議を唱える、正直に",
+      "ネタを続けろ、正直に。主張を殺せ"
+    ],
+    "gavel_needle": [
+      "間の取りが分かったか？あれが前振りだ",
+      "先に笑え、{opp}。次に血が出る",
+      "リズムは武器だ。感じろ"
+    ],
+    "gavel_ovation": [
+      "マイクを置く。件は決着",
+      "{topic}の裁定：{opp}に不利",
+      "喝采は私へ。教訓は君へ"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズムを先に。決め台詞は後で",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 53,
+    "control": 54,
+    "resilience": 39,
+    "flair": 47,
+    "creativity": 83,
+    "wins": 53,
+    "losses": 16,
+    "battles": 69
+  }
+}

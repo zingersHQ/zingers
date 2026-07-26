@@ -557,10 +557,21 @@ export const useChampions = create<ChampionStore>()(
         let live = false;
         try {
           const token = getOwnerToken();
+          const { useSettings } = await import("@/store/settings");
+          const locale = useSettings.getState().locale;
           const res = await fetch("/api/imprint", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ownerToken: token, key, lessonId, lesson: lesson?.label, persona: recipe.persona, memory: recipe.memory, strat: recipe.strat }),
+            body: JSON.stringify({
+              ownerToken: token,
+              key,
+              lessonId,
+              lesson: lesson?.label,
+              persona: recipe.persona,
+              memory: recipe.memory,
+              strat: recipe.strat,
+              locale,
+            }),
           });
           if (res.ok) {
             const dta = (await res.json()) as { reply?: string; note?: string; dial?: Partial<Strat>; live?: boolean };

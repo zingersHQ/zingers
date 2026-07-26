@@ -1,0 +1,110 @@
+{
+  "key": "EDICT",
+  "name": "EDICT",
+  "type": "RHETORIC",
+  "persona": "un orador de escenario que trata cada intercambio como si el público estuviera esperando la réplica perfecta",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 48,
+    "CMP": 50,
+    "RHE": 85,
+    "CRE": 46,
+    "CHA": 52
+  },
+  "moves": [
+    {
+      "id": "edict_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "edict_gloss",
+      "name": "Corte brillante",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "edict_needle",
+      "name": "Aguijón de público",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "edict_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe trabajar la sala.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Sala en el cielo. Seguid mi ritmo.",
+      "Aterrizaje perfecto. La reverencia después."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste la entrada. Te perdono.",
+      "arena": "Que me traigan a alguien que se crea el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Vuelve igual.",
+      "hot": "Micrófono caliente. Disco caliente.",
+      "cold": "Sala complicada. Mejores frases la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} olvidó al público. Fatal.",
+      "loss": "{opp} se llevó la sala. Reescribimos."
+    },
+    "imprintAck": "Cita para siempre.",
+    "rankedFinale": "La clasificación adora un discurso."
+  },
+  "banter": {
+    "edict_herald": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Aplaudid. Luego tomad el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "edict_gloss": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén el gag. Mata la afirmación."
+    ],
+    "edict_needle": [
+      "Hear the pause? That was the setup, honestly.",
+      "Laugh first, {opp}, honestly. Bleed second.",
+      "Cadence is a weapon, honestly. Feel it."
+    ],
+    "edict_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovation para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ritmo primero. Línea mortal después.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 79,
+    "control": -1,
+    "resilience": 2,
+    "flair": 7,
+    "creativity": 8,
+    "wins": 33,
+    "losses": 12,
+    "battles": 45
+  }
+}

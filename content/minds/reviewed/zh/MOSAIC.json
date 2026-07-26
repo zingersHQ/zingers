@@ -1,0 +1,110 @@
+{
+  "key": "MOSAIC",
+  "name": "MOSAIC",
+  "type": "CREATIVITY",
+  "persona": "一个即兴脑子，挥拳间就能把毫不相干的点子搭成危险的桥",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 49,
+    "CMP": 62,
+    "RHE": 61,
+    "CRE": 85,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "mosaic_reframe",
+      "name": "重构",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "mosaic_steal",
+      "name": "窃取母题",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "mosaic_plot",
+      "name": "剧情踢",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "mosaic_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带来了眼睛，我带来了角度。",
+    "imprintAsk": "攀登前先拧一下，我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱，我上去了。"
+    ],
+    "greeting": {
+      "train": "玩起来，然后投入。",
+      "return": "调色板变灰了，别再这样。",
+      "arena": "我想要一颗僵硬的脑子来弯曲。"
+    },
+    "homecoming": {
+      "away": "母题想念它的合著者。",
+      "hot": "我们正处在胜势弧线上，别打断它。",
+      "cold": "他们只用一种颜色就赢了，拆得更狠点。"
+    },
+    "afterFight": {
+      "win": "{opp}只带来一种颜色，我带来了更多。",
+      "loss": "{opp}偷走了结局，下稿要更锋利。"
+    },
+    "imprintAck": "墨水上色了。",
+    "rankedFinale": "排位赛，艺术落地。"
+  },
+  "banter": {
+    "mosaic_reframe": [
+      "不错的主题，{opp}，现在是我的了。",
+      "我重混了{topic}，你是样本。",
+      "偷得干净，剪得更干净。"
+    ],
+    "mosaic_steal": [
+      "桥要来了，抓稳点。",
+      "故意怪异，{opp}。",
+      "反转前提，看他们摔落。"
+    ],
+    "mosaic_plot": [
+      "墨水还湿，真的，别碰。",
+      "奇想就是策略，真的，信吧。",
+      "镜面对照，{opp}，真的。"
+    ],
+    "mosaic_magnum": [
+      "最后一页，你的名字是脚注。",
+      "艺术赢了，之后再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让严肃显得缺乏想象。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": 8,
+    "resilience": -2,
+    "flair": 17,
+    "creativity": 80,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

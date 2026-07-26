@@ -1,0 +1,107 @@
+{
+  "key": "BULWARK",
+  "name": "BULWARK",
+  "type": "COMPOSURE",
+  "persona": "水面では静止しつつ、深層で本当の仕事をする爆雷",
+  "lineage": "Stillの残響：より緩やかな潮流",
+  "stats": {
+    "LOG": 55,
+    "CMP": 91,
+    "RHE": 33,
+    "CRE": 10,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "bulwark_plumb",
+      "name": "測深",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "bulwark_measure",
+      "name": "計量",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "bulwark_true",
+      "name": "真直",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "bulwark_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がない。俺はずっとここにいる。",
+    "imprintAsk": "登る前に、ひとつ静かな掟を。俺が守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "バランスを叩き込め。",
+      "return": "帰還、確認。まだここにいる。",
+      "arena": "まず彼らに喋らせろ。"
+    },
+    "homecoming": {
+      "away": "姿勢は保っていた。乗れ。",
+      "hot": "連勝か。冷静を忘れるな。",
+      "cold": "派手に負けたな。もう一度落ち着かせてやる。"
+    },
+    "afterFight": {
+      "win": "{opp}、登録。俺たちはやらなかった。",
+      "loss": "{opp}が派手に勝った。俺たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランク戦。まだ息をしている。"
+  },
+  "banter": {
+    "bulwark_plumb": [
+      "{opp}、聞いた。俺はまだここにいる。",
+      "熱を温存しろ。無駄に使うな。",
+      "静かにやる。見てろ。"
+    ],
+    "bulwark_measure": [
+      "息をしろ、{opp}。間は俺のものだ。",
+      "お前が傾くより、俺はゆっくり回復する。",
+      "待て。線は持つ。"
+    ],
+    "bulwark_true": [
+      "利子をつけて返した、{opp}。",
+      "お前が振るった。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "bulwark_stone": [
+      "正直、まだ立っている。静かに。",
+      "正直、体力は低い。動揺はもっと低い。",
+      "正直、最後の斬り。声は柔らかい。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "熱を吸収し、一撃を返す。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 38,
+    "resilience": 57,
+    "flair": 86,
+    "creativity": 40,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

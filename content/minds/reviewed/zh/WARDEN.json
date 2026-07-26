@@ -1,0 +1,108 @@
+{
+  "key": "WARDEN",
+  "name": "WARDEN",
+  "type": "COMPOSURE",
+  "persona": "步调沉稳的决斗者，拒绝仓促，靠对手耗尽体力取胜",
+  "lineage": "堡垒的回响：更柔的石",
+  "stats": {
+    "LOG": 64,
+    "CMP": 92,
+    "RHE": 21,
+    "CRE": 26,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "warden_harbor",
+      "name": "港湾",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "warden_heal",
+      "name": "静愈",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "warden_shore",
+      "name": "岸崩",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "warden_low",
+      "name": "低潮",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。安静留存。",
+    "imprintAsk": "登顶前先定一条柔和的规矩。我会遵守。",
+    "flightReact": [
+      "……向上。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢训练。柔和边缘。",
+      "return": "甲板寂静。我守住了航线。",
+      "arena": "安静的对手。响亮的失误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。安静留存。",
+      "hot": "平稳航行。别庆祝。保持中心。",
+      "cold": "寒冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了沉默。那已足够。",
+      "loss": "{opp}打乱了我们的平衡。早点修正航线。"
+    },
+    "imprintAck": "安坐于寂静之中。",
+    "rankedFinale": "……一场排位胜利。没有鼓号。只有记录。"
+  },
+  "banter": {
+    "warden_harbor": [
+      "我听见你了，{opp}。我仍在此。",
+      "留住热量。别用错。",
+      "安静有效。看着。"
+    ],
+    "warden_heal": [
+      "呼吸吧，{opp}，真的。停顿是我的。",
+      "我愈合比你失衡更慢，真的。",
+      "守住，真的。防线稳住。"
+    ],
+    "warden_shore": [
+      "连本带利，{opp}。",
+      "你挥击。我等待。那才是技艺。",
+      "{topic}奖赏耐心。不是你。"
+    ],
+    "warden_low": [
+      "仍站立。仍安静。",
+      "生命值低。慌乱更低。",
+      "最后一击。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "柔声。硬核。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 51,
+    "resilience": 83,
+    "flair": 58,
+    "creativity": 59,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

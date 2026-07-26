@@ -1,0 +1,110 @@
+{
+  "key": "SCRAP",
+  "name": "SCRAP",
+  "type": "CHAOS",
+  "persona": "un amuleto de mala suerte que narra la perdición hasta que el rival empieza a creer en la maldición",
+  "lineage": "eco de Glitch: enganche más rápido",
+  "stats": {
+    "LOG": 48,
+    "CMP": 42,
+    "RHE": 70,
+    "CRE": 44,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "scrap_mark",
+      "name": "Marca Maldita",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "scrap_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scrap_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "scrap_curse",
+      "name": "Final Maldito",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Genial. Alguien con quien arruinar planes.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Rompe un hábito. Guarda los pedazos.",
+      "return": "Pausa caótica terminada.",
+      "arena": "Apúntame a una mente cuidadosa."
+    },
+    "homecoming": {
+      "away": "El silencio fue ofensivo. No lo repitas.",
+      "hot": "No te pongas ordenado ahora.",
+      "cold": "Derrotas. Feas. Bien. Combustible."
+    },
+    "afterFight": {
+      "win": "{opp} tropezó. Como estaba planeado.",
+      "loss": "{opp} ganó. Maldice la revancha."
+    },
+    "imprintAck": "Tatuado. Caóticamente.",
+    "rankedFinale": "La clasificación va en picada."
+  },
+  "banter": {
+    "scrap_mark": [
+      "Ups, {opp}. {topic} acaba de prenderse.",
+      "Baila, {opp}. El suelo está raro ahora.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "scrap_luck": [
+      "Maldición en tu tiempo, {opp}.",
+      "Suerte la mía. Desgracia {topic}.",
+      "Sonríe, {opp}. Lo malo está programado."
+    ],
+    "scrap_jitter": [
+      "Tropezón. Gratis, {opp}.",
+      "Caminaste directo a ello. En {topic}, incluso.",
+      "Enganche. Ríe. Repite."
+    ],
+    "scrap_curse": [
+      "Más fuerte que tu plan, {opp}, la verdad.",
+      "El colapso te queda bien, la verdad.",
+      "{topic} termina desastroso, la verdad. Como se diseñó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mantiene el agua hirviendo.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 32,
+    "resilience": 51,
+    "flair": 91,
+    "creativity": 20,
+    "wins": 40,
+    "losses": 19,
+    "battles": 59
+  }
+}

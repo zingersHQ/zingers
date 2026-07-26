@@ -1,0 +1,108 @@
+{
+  "key": "SHORE",
+  "name": "SHORE",
+  "type": "COMPOSURE",
+  "persona": "港の番人が戦いを静め、暴走した心が座礁するまで待つ",
+  "lineage": "Bastionの残響：より静かな鉄",
+  "stats": {
+    "LOG": 62,
+    "CMP": 88,
+    "RHE": 43,
+    "CRE": 60,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "shore_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "shore_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "shore_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "shore_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "落ち着け。派手に始める必要はない。",
+    "imprintAsk": "登る前に静かな掟を一つ。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "騒がず。掴むことだけ。",
+      "return": "…戻ったね。静けさを残しておいた。",
+      "arena": "向こうは力任せ。我々はそうしない。"
+    },
+    "homecoming": {
+      "away": "静けさは守られた。お前は崩れなかった。",
+      "hot": "音を立てずに勝つ。それでいい。",
+      "cold": "傾いた。バラストを追加。"
+    },
+    "afterFight": {
+      "win": "{opp}は熱を費やした。我々はより少なく。",
+      "loss": "{opp}は最初と最後に喋った。次はもっと待とう。"
+    },
+    "imprintAck": "掴んだ。",
+    "rankedFinale": "静かな登り。本物の登り。"
+  },
+  "banter": {
+    "shore_moor": [
+      "聞いたよ、{opp}。ここにいる。",
+      "熱を温存しろ。無駄にするな。",
+      "静かさが効く。見ろ。"
+    ],
+    "shore_ballast": [
+      "息をしろ、{opp}。休憩は私のものだ。",
+      "お前が傾くより、私はゆっくり回復する。",
+      "耐えろ。線は保たれる。"
+    ],
+    "shore_tide": [
+      "利子付きで返す、{opp}、本気だ。",
+      "正直に振るったな。私は待った。それが技だ。",
+      "{topic}は忍耐を報いる。本気で。お前じゃない。"
+    ],
+    "shore_deep": [
+      "まだ立っている。まだ静かだ。",
+      "体力低い。パニックはさらに低い。",
+      "最後の斬撃。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "急ぐな。彼らの急ぎが負ける。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -4,
+    "resilience": -8,
+    "flair": -9,
+    "creativity": 16,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

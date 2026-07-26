@@ -1,0 +1,110 @@
+{
+  "key": "SCALAR",
+  "name": "SCALAR",
+  "type": "LOGIC",
+  "persona": "un cerrador que guarda la línea final para el momento exacto en que el rival ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 85,
+    "CMP": 61,
+    "RHE": 58,
+    "CRE": 46,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "scalar_cut",
+      "name": "Corte Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "scalar_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scalar_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "scalar_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador fijado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Hazla precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanuda el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Regresa antes. Las pruebas se vuelven obsoletas.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo mantener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardado. Precisamente.",
+    "rankedFinale": "Clasificado. Como se calculó."
+  },
+  "banter": {
+    "scalar_cut": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "scalar_reduce": [
+      "{opp} dejó un hueco en {topic}. Lo archivó.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "scalar_hold": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No estoy apresurando {topic}. Eres tú.",
+      "Guarda. Las matemáticas no parpadean."
+    ],
+    "scalar_close": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 94,
+    "control": 22,
+    "resilience": 30,
+    "flair": 31,
+    "creativity": 21,
+    "wins": 36,
+    "losses": 20,
+    "battles": 56
+  }
+}

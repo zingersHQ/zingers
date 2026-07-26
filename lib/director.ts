@@ -17,6 +17,23 @@ import {
 import { dailyFlightCondition, type RunCondition } from "@/lib/conditions";
 import type { FormBand } from "@/lib/career-friction";
 import { thisWeekExpedition } from "@/lib/expeditions";
+import enMessages from "@/messages/en.json";
+
+/** next-intl translator scoped to the `director` namespace. */
+export type DirectorT = (key: string, values?: Record<string, string | number>) => string;
+
+const EN_DIR = enMessages.director as Record<string, string>;
+
+function identityT(key: string, values?: Record<string, string | number>): string {
+  // English fallback when called outside a React tree (tests / SSR without provider).
+  let s = EN_DIR[key] ?? key;
+  if (values) {
+    for (const [k, v] of Object.entries(values)) {
+      s = s.replaceAll(`{${k}}`, String(v));
+    }
+  }
+  return s;
+}
 
 /** Where a directive sends the Trainer. Each body maps these to its own nav. */
 export type DirectiveTarget =
@@ -102,8 +119,8 @@ function campSector(n: number): number {
 
 const plural = (n: number, one: string, many = `${one}s`) => (n === 1 ? one : many);
 
-function speaker(name: string | null): string {
-  return (name ?? "Your champion").toUpperCase();
+function speaker(name: string | null, t: DirectorT = identityT): string {
+  return (name ?? t("yourChampion")).toUpperCase();
 }
 
 function targetForUnlock(kind: UnlockKind): DirectiveTarget {
@@ -112,81 +129,79 @@ function targetForUnlock(kind: UnlockKind): DirectiveTarget {
   return "flight";
 }
 
-function ctaForUnlock(kind: UnlockKind): string {
-  if (kind === "recruit") return "Open collection";
-  if (kind === "region" || kind === "mode") return "Go to the Hub";
-  if (kind === "scout") return "Fly with me";
-  return "Let's earn rank";
+function ctaForUnlock(kind: UnlockKind, t: DirectorT): string {
+  if (kind === "recruit") return t("ctaRecruit");
+  if (kind === "region" || kind === "mode") return t("ctaHub");
+  if (kind === "scout") return t("ctaScout");
+  return t("ctaRank");
 }
 
 // ── primary asks (champion voice when owned) ─────────────────────────────────
 
-function claimDirective(): Directive {
+function claimDirective(t: DirectorT): Directive {
   return {
     id: "claim",
-    kicker: "A WILD MIND",
-    title: "Don't leave me in the sky.",
-    detail: "Claim me and our runs start counting. XP, Crowns, a place on the board.",
-    cta: "Choose your champion",
+    kicker: t("wildMind"),
+    title: t("claimTitle"),
+    detail: t("claimDetail"),
+    cta: t("claimCta"),
     target: "claim",
     spoken: true,
   };
 }
 
-function firstFlightDirective(name: string | null): Directive {
+function firstFlightDirective(name: string | null, t: DirectorT): Directive {
   return {
     id: "first-flight",
-    kicker: speaker(name),
-    title: "Come on. First flight. Just us and the rings.",
-    detail: "Hold to rise, release to fall. How high we get is the score.",
-    cta: "Fly with me",
+    kicker: speaker(name, t),
+    title: t("firstFlightTitle"),
+    detail: t("firstFlightDetail"),
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
   };
 }
 
-function evolveDirective(name: string): Directive {
+function evolveDirective(name: string, t: DirectorT): Directive {
   return {
     id: "evolve",
-    kicker: speaker(name),
-    title: "I'm almost there. One more win and I change.",
-    detail: "A fight or a train. The body grows with the record.",
-    cta: "Open your champion",
+    kicker: speaker(name, t),
+    title: t("evolveTitle"),
+    detail: t("evolveDetail"),
+    cta: t("evolveCta"),
     target: "champion",
     spoken: true,
   };
 }
 
-function rotateDirective(name: string, form: FormBand, fatigue: 0 | 1 | 2): Directive {
+function rotateDirective(name: string, form: FormBand, fatigue: 0 | 1 | 2, t: DirectorT): Directive {
   const spent = fatigue >= 2;
   const broken = form === "broken";
   return {
     id: "rotate",
-    kicker: speaker(name),
-    title: spent || broken
-      ? "I'm spent. Field someone fresh. I'll still be here."
-      : "I'm cold today. Let another mind take the sky for a bit.",
+    kicker: speaker(name, t),
+    title: spent || broken ? t("rotateSpentTitle") : t("rotateColdTitle"),
     detail: spent
-      ? "Tired wings mean fewer lives and a heavier fall. Rest me, or seal me when you're ready."
+      ? t("rotateSpentDetail")
       : broken
-        ? "The losses are in my bones. A fresher mind flies cleaner right now."
-        : "Cold form slows the climb. A light train, or a swap, and we come back stronger.",
-    cta: "Open collection",
+        ? t("rotateBrokenDetail")
+        : t("rotateColdDetail"),
+    cta: t("collectionCta"),
     target: "collection",
     spoken: true,
   };
 }
 
-function unlockDirective(u: UnlockDef, level: number, name: string | null): Directive {
+function unlockDirective(u: UnlockDef, level: number, name: string | null, t: DirectorT): Directive {
   const ready = level >= u.minLevel;
-  const who = speaker(name);
+  const who = speaker(name, t);
   if (ready) {
     return {
       id: `unlock-${u.id}`,
       kicker: who,
-      title: `Hey. ${u.name} is open. Let's go see it.`,
+      title: t("unlockReadyTitle", { name: u.name }),
       detail: unlockNeedLine(u, level),
-      cta: ctaForUnlock(u.kind),
+      cta: ctaForUnlock(u.kind, t),
       target: targetForUnlock(u.kind),
       spoken: true,
     };
@@ -194,58 +209,57 @@ function unlockDirective(u: UnlockDef, level: number, name: string | null): Dire
   return {
     id: `unlock-${u.id}`,
     kicker: who,
-    title: `I want ${u.name}. We unlock it together.`,
+    title: t("unlockWantTitle", { name: u.name }),
     detail: unlockNeedLine(u, level),
-    cta: "Fly · fight · teach",
+    cta: t("unlockFlyCta"),
     target: "flight",
     spoken: true,
     progress: { at: Math.max(0, level), of: u.minLevel, unit: "rank" },
   };
 }
 
-function campDirective(climb: ClimbProgress, maxReaches: number, name: string | null): Directive {
+function campDirective(climb: ClimbProgress, maxReaches: number, name: string | null, t: DirectorT): Directive {
   const camp = Math.min(climb.campsLit + 1, maxReaches);
   const target = campSector(camp);
   const from = campSector(camp - 1);
   const need = Math.max(1, target - climb.bestSectors);
   const theme = reachThemeByIndex(Math.max(0, camp - 1));
   const crowns = firstLightChestCrowns(camp);
+  const stretch = need === 1 ? t("stretch") : t("stretches");
   return {
     id: `camp-${camp}`,
-    kicker: speaker(name),
-    title: `Stay with me. ${need} more ${plural(need, "stretch")} of sky and we light the next camp.`,
-    detail: `That's Camp ${camp}, into ${theme.name}. First time there, a ${crowns} Crown chest is waiting.`,
-    cta: "Fly with me",
+    kicker: speaker(name, t),
+    title: t("campTitle", { need, stretch }),
+    detail: t("campDetail", { camp, theme: theme.name, crowns }),
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
     progress: { at: Math.max(0, climb.bestSectors - from), of: Math.max(1, target - from), unit: "sectors" },
   };
 }
 
-function hundredDirective(climb: ClimbProgress, name: string | null): Directive {
+function hundredDirective(climb: ClimbProgress, name: string | null, t: DirectorT): Directive {
   const need = Math.max(1, CLIMB_SECTOR_COUNT - climb.bestSectors);
+  const sector = need === 1 ? t("sector") : t("sectors");
   return {
     id: "hundred",
-    kicker: speaker(name),
-    title: "The top of the sky. Stay with me all the way.",
-    detail: `${need} ${plural(need, "sector")} left. Finish once and there's a ${HUNDRED_CHEST_CROWNS} Crown purse for us.`,
-    cta: "Fly with me",
+    kicker: speaker(name, t),
+    title: t("hundredTitle"),
+    detail: t("hundredDetail", { need, sector, crowns: HUNDRED_CHEST_CROWNS }),
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
     progress: { at: climb.bestSectors, of: CLIMB_SECTOR_COUNT, unit: "sectors" },
   };
 }
 
-function recordDirective(name: string | null, expeditionOpen?: boolean): Directive {
-  const weekly = expeditionOpen
-    ? "This week's expedition is a new sky. Or share a challenge and race a friend."
-    : "Share a challenge and race a friend. When the week turns, a new sky opens.";
+function recordDirective(name: string | null, expeditionOpen: boolean | undefined, t: DirectorT): Directive {
   return {
     id: "record",
-    kicker: speaker(name),
-    title: "We've stood at the top. Now we fly cleaner.",
-    detail: `The Hundred is a summit, not a finish line. Chase a cleaner run. ${weekly}`,
-    cta: "Fly with me",
+    kicker: speaker(name, t),
+    title: t("recordTitle"),
+    detail: expeditionOpen ? t("recordDetailExpedition") : t("recordDetail"),
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
   };
@@ -253,77 +267,74 @@ function recordDirective(name: string | null, expeditionOpen?: boolean): Directi
 
 // ── smaller asks ─────────────────────────────────────────────────────────────
 
-function dailyDirective(streak: number, name: string | null): Directive {
+function dailyDirective(streak: number, name: string | null, t: DirectorT): Directive {
   return {
     id: "daily",
-    kicker: speaker(name),
-    title: streak > 0
-      ? `Today's fight is up. Our ${streak}-day streak is on the line.`
-      : "Today's fight is up. Call the winner with me.",
-    detail: "Same fight for every Trainer. One call.",
-    cta: "Call it",
+    kicker: speaker(name, t),
+    title: streak > 0 ? t("dailyStreakTitle", { streak }) : t("dailyTitle"),
+    detail: t("dailyDetail"),
+    cta: t("dailyCta"),
     target: "daily",
     spoken: true,
   };
 }
 
-function imprintDirective(name: string): Directive {
+function imprintDirective(name: string, t: DirectorT): Directive {
   return {
     id: "imprint",
-    kicker: speaker(name),
-    title: "Teach me something before we climb.",
-    detail: "A fresh lesson is waiting. What I learn changes how I fight, and how we fly.",
-    cta: "Teach me",
-    // Train overlay (desktop) / Champion tab lessons (mobile). Not the career page.
+    kicker: speaker(name, t),
+    title: t("imprintTitle"),
+    detail: t("imprintDetail"),
+    cta: t("imprintCta"),
     target: "train",
     spoken: true,
   };
 }
 
-function skyDirective(c: RunCondition, name: string | null): Directive {
+function skyDirective(c: RunCondition, name: string | null, t: DirectorT): Directive {
   return {
     id: `sky-${c.id}`,
-    kicker: speaker(name),
-    title: `Feel that? Today's sky is ${c.name}.`,
+    kicker: speaker(name, t),
+    title: t("skyTitle", { name: c.name }),
     detail: c.gloss.replace(/\s*—\s*/g, ". ").replace(/\.\./g, "."),
-    cta: "Fly with me",
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
   };
 }
 
-function retireDirective(name: string): Directive {
+function retireDirective(name: string, t: DirectorT): Directive {
   return {
     id: "retire",
-    kicker: speaker(name),
-    title: "If you're ready, seal me in the Long Vault.",
-    detail: "I'll leave an heirloom wing for the next mind you claim, and a legend on the House standings.",
-    cta: "Open your champion",
+    kicker: speaker(name, t),
+    title: t("retireTitle"),
+    detail: t("retireDetail"),
+    cta: t("retireCta"),
     target: "champion",
     spoken: true,
   };
 }
 
-function rivalDirective(rivalName: string, name: string | null): Directive {
+function rivalDirective(rivalName: string, name: string | null, t: DirectorT): Directive {
   return {
     id: "rival",
-    kicker: speaker(name),
-    title: `${rivalName} is waiting. Face them with me.`,
-    detail: "A Rival Trainer in the Hub. Head to head, chapter after chapter.",
-    cta: "Go to the Hub",
+    kicker: speaker(name, t),
+    title: t("rivalTitle", { rival: rivalName }),
+    detail: t("rivalDetail"),
+    cta: t("ctaHub"),
     target: "hub",
     spoken: true,
   };
 }
 
-function expeditionDirective(name: string | null): Directive {
+function expeditionDirective(name: string | null, t: DirectorT): Directive {
   const exp = thisWeekExpedition();
   return {
     id: `expedition-${exp.weekId}`,
-    kicker: speaker(name),
-    title: `This week's route is ${exp.name}. Fly it with me.`,
+    kicker: speaker(name, t),
+    title: t("skyTitle", { name: exp.name }),
     detail: exp.gloss.replace(/\s*—\s*/g, ". ").replace(/\s*·\s*/g, ". "),
-    cta: "Fly with me",
+    cta: t("flyCta"),
     target: "flight",
     spoken: true,
   };
@@ -333,7 +344,7 @@ function expeditionDirective(name: string | null): Directive {
  * One next thing, always true. Never returns null. When a champion is owned,
  * they speak. Guests hear a wild mind inviting claim.
  */
-export function nextObjective(s: DirectorSnapshot): DirectorPlan {
+export function nextObjective(s: DirectorSnapshot, t: DirectorT = identityT): DirectorPlan {
   const { climb } = s;
   const name = s.championName;
   const form = s.form ?? "steady";
@@ -365,41 +376,41 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
     (fatigue >= 2 || form === "broken" || (form === "cold" && fatigue >= 1));
 
   let primary: Directive;
-  if (!s.owned) primary = claimDirective();
-  else if (climb.bestSectors <= 0) primary = firstFlightDirective(name);
-  else if (needsRotate) primary = rotateDirective(name!, form, fatigue);
-  else if (s.levelPct >= 0.85) primary = evolveDirective(name!);
-  else if (atRankCeiling && nextUnlock) primary = unlockDirective(nextUnlock, ladder.level, name);
-  else if (climb.hundred) primary = recordDirective(name, s.expeditionOpen);
-  else if (ladder.maxReaches >= 10 && climb.campsLit >= 10) primary = hundredDirective(climb, name);
+  if (!s.owned) primary = claimDirective(t);
+  else if (climb.bestSectors <= 0) primary = firstFlightDirective(name, t);
+  else if (needsRotate) primary = rotateDirective(name!, form, fatigue, t);
+  else if (s.levelPct >= 0.85) primary = evolveDirective(name!, t);
+  else if (atRankCeiling && nextUnlock) primary = unlockDirective(nextUnlock, ladder.level, name, t);
+  else if (climb.hundred) primary = recordDirective(name, s.expeditionOpen, t);
+  else if (ladder.maxReaches >= 10 && climb.campsLit >= 10) primary = hundredDirective(climb, name, t);
   else if (
     unlockReady &&
     nextUnlock &&
     nextUnlock.kind !== "reach_block" &&
     (ladder.level >= nextUnlock.minLevel || climb.bestSectors >= ladder.lockSector - REACH_SIZE)
   ) {
-    primary = unlockDirective(nextUnlock, ladder.level, name);
+    primary = unlockDirective(nextUnlock, ladder.level, name, t);
   } else if (climb.campsLit >= ladder.maxReaches && ladder.maxReaches < 10 && nextUnlock) {
-    primary = unlockDirective(nextUnlock, ladder.level, name);
+    primary = unlockDirective(nextUnlock, ladder.level, name, t);
   } else {
-    primary = campDirective(climb, ladder.maxReaches, name);
+    primary = campDirective(climb, ladder.maxReaches, name, t);
   }
 
   const also: Directive[] = [];
-  if (!s.dailyDone && s.owned) also.push(dailyDirective(s.dailyStreak, name));
+  if (!s.dailyDone && s.owned) also.push(dailyDirective(s.dailyStreak, name, t));
   else if (!s.dailyDone) {
     also.push({
       id: "daily",
       kicker: "TODAY",
-      title: "Today's fight is waiting.",
-      detail: "Two minds argue. Call the winner.",
-      cta: "Call it",
+      title: t("dailyTitle"),
+      detail: t("dailyDetail"),
+      cta: t("dailyCta"),
       target: "daily",
       spoken: false,
     });
   }
   if (s.owned && s.imprintReady && primary.id !== "evolve" && primary.id !== "rotate") {
-    also.push(imprintDirective(name!));
+    also.push(imprintDirective(name!, t));
   }
   if (
     nextUnlock &&
@@ -407,20 +418,20 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
     also.length < 2 &&
     (nextUnlock.kind === "reach_block" || ladder.level >= nextUnlock.minLevel - 1)
   ) {
-    also.push(unlockDirective(nextUnlock, ladder.level, name));
+    also.push(unlockDirective(nextUnlock, ladder.level, name, t));
   }
   const sky = dailyFlightCondition();
   if (s.owned && sky.id !== "clear" && also.length < 2 && !primary.id.startsWith("sky-")) {
-    also.push(skyDirective(sky, name));
+    also.push(skyDirective(sky, name, t));
   }
   if (s.owned && s.expeditionOpen && also.length < 2 && !primary.id.startsWith("expedition-")) {
-    also.push(expeditionDirective(name));
+    also.push(expeditionDirective(name, t));
   }
   if (s.canRetire && s.owned && also.length < 2 && primary.id !== "retire") {
-    also.push(retireDirective(name!));
+    also.push(retireDirective(name!, t));
   }
   if (s.rivalDue && s.rivalName && also.length < 2 && primary.id !== "rival") {
-    also.push(rivalDirective(s.rivalName, name));
+    also.push(rivalDirective(s.rivalName, name, t));
   }
   if (
     s.owned &&
@@ -429,7 +440,7 @@ export function nextObjective(s: DirectorSnapshot): DirectorPlan {
     also.length < 2 &&
     primary.id !== "rotate"
   ) {
-    also.push(rotateDirective(name!, form, fatigue));
+    also.push(rotateDirective(name!, form, fatigue, t));
   }
 
   return { primary, also: also.slice(0, 2) };

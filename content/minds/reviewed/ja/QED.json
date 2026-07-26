@@ -1,0 +1,110 @@
+{
+  "key": "QED",
+  "name": "QED",
+  "type": "LOGIC",
+  "persona": "相手がすでに露呈した瞬間に止めを刺すクローザー",
+  "lineage": "Paradoxの残響：より冷たい角度",
+  "stats": {
+    "LOG": 85,
+    "CMP": 53,
+    "RHE": 9,
+    "CRE": 17,
+    "CHA": 32
+  },
+  "moves": [
+    {
+      "id": "qed_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "qed_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "qed_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "qed_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー接続完了。論理が解禁された。",
+    "imprintAsk": "登る前に一つ。厳密に言え。",
+    "flightReact": [
+      "ベクトル固定。上昇開始。",
+      "高度確認済。軌道は綺麗だ。"
+    ],
+    "greeting": {
+      "train": "綺麗に鍛えろ。より綺麗に戦え。",
+      "return": "戻った。台帳を再開する。",
+      "arena": "誰かが間違えて入ってきたようだ。"
+    },
+    "homecoming": {
+      "away": "もっと早く戻れ。証明は古びる。",
+      "hot": "連勝は保たれている。ノイズを入れるな。",
+      "cold": "誤差が積み重なっている。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}はラインを保てなかった。",
+      "loss": "{opp}に一行を盗まれた。より鋭いものを書き直す。"
+    },
+    "imprintAck": "保持。厳密に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "qed_cut": [
+      "前提が崩れている、{opp}。{topic}ではもう線は閉じている。",
+      "確認。修正。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を完結させる。"
+    ],
+    "qed_reduce": [
+      "{opp}は{topic}に穴を残した。埋めておいた。",
+      "精密さは音量に勝る、{opp}。",
+      "それはノイズだ。これが証明だ。"
+    ],
+    "qed_hold": [
+      "動くな、{opp}。正直に。構造が読み込まれている。",
+      "{topic}を急いでいない。正直に。急いでいるのは君だ。",
+      "防御を上げろ。正直に。数学は瞬きしない。"
+    ],
+    "qed_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.とは君のことだ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "蝶番を見つける。そして壊す。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 90,
+    "resilience": 29,
+    "flair": 41,
+    "creativity": 57,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "VISTA",
+  "name": "VISTA",
+  "type": "CREATIVITY",
+  "persona": "un pícaro de la pluma que reescribe la premisa en tinta que el rival no puede dejar de ver",
+  "lineage": "eco de la Musa: prisma más amplio",
+  "stats": {
+    "LOG": 50,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 91,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "vista_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "vista_bridge",
+      "name": "Puente",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "vista_invert",
+      "name": "Inversión",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vista_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Una cómplice. Perfecto.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Boceto primero. Golpe después.",
+      "return": "Regresaste. La luz cambió.",
+      "arena": "Encuéntrame a alguien monocromo."
+    },
+    "homecoming": {
+      "away": "Borrador atascado. Trae café y valor.",
+      "hot": "Racha caliente. Solo giros frescos.",
+      "cold": "Malos capítulos. Borrador más afilado la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo seguir el espectro.",
+      "loss": "{opp} ganó. Inventaremos más duro."
+    },
+    "imprintAck": "Entretelado.",
+    "rankedFinale": "Clasificación como galería. Colgamos bien."
+  },
+  "banter": {
+    "vista_riff": [
+      "Bonito tema, {opp}, honestamente. Ahora es mío.",
+      "Remixé {topic}, honestamente. Tú eres la muestra.",
+      "Roba limpio, honestamente. Corta más limpio."
+    ],
+    "vista_bridge": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "vista_invert": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "vista_coda": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Fragmentos primero. Mata la imagen al final.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 0,
+    "resilience": -8,
+    "flair": 95,
+    "creativity": 8,
+    "wins": 46,
+    "losses": 13,
+    "battles": 59
+  }
+}

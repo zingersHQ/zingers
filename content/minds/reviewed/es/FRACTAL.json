@@ -1,0 +1,109 @@
+{
+  "key": "FRACTAL",
+  "name": "FRACTAL",
+  "type": "CREATIVITY",
+  "persona": "un pícaro de la pluma que reescribe la premisa con tinta que el rival no puede ignorar",
+  "lineage": "eco de la Musa: prisma más ancho",
+  "stats": {
+    "LOG": 16,
+    "CMP": 28,
+    "RHE": 62,
+    "CRE": 89,
+    "CHA": 13
+  },
+  "moves": [
+    {
+      "id": "fractal_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "fractal_bridge",
+      "name": "Puente",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "fractal_invert",
+      "name": "Invertir",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "fractal_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejo.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro total. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo echó de menos a su coautor.",
+      "hot": "Vamos en arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un color y ganaron. Divídete más."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "Tinta aceptada.",
+    "rankedFinale": "Clasificatoria. El arte aterriza."
+  },
+  "banter": {
+    "fractal_riff": [
+      "Buen tema, {opp}. Mío ahora.",
+      "Reinterpretó {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "fractal_bridge": [
+      "Puente en camino. Agárrate a algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "fractal_invert": [
+      "Ink is still wet. Do not touch.",
+      "Whim is a strategy. Believe it.",
+      "Mirror this, {opp}."
+    ],
+    "fractal_coda": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Fragmentos primero. Mata la imagen al final.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 89,
+    "control": 9,
+    "resilience": -17,
+    "flair": 15,
+    "creativity": 19,
+    "wins": 30,
+    "losses": 21,
+    "battles": 51
+  }
+}

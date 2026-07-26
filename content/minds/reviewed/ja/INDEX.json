@@ -1,0 +1,110 @@
+{
+  "key": "INDEX",
+  "name": "INDEX",
+  "type": "LOGIC",
+  "persona": "大前提を細かい数え上げに分解する、原理主義的な細か屋",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 88,
+    "CMP": 71,
+    "RHE": 16,
+    "CRE": 10,
+    "CHA": 10
+  },
+  "moves": [
+    {
+      "id": "index_sum",
+      "name": "総和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "index_factor",
+      "name": "因数分解",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "index_brace",
+      "name": "数式防壁",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "index_total",
+      "name": "総決算",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー認証完了。論証ロック解除。",
+    "imprintAsk": "登頂前に一つ。厳密に定義を。",
+    "flightReact": [
+      "軌道固定。上昇開始。",
+      "高度確認。航路は綺麗。"
+    ],
+    "greeting": {
+      "train": "綺麗に訓練。戦いはより綺麗に。",
+      "return": "戻った。台帳を再開する。",
+      "arena": "誰かが誤りを抱えて入ってきた。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝は維持。ノイズは持ち込むな。",
+      "cold": "誤差が積み重なった。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一線を保てなかった。",
+      "loss": "{opp}が一行を奪った。より鋭い一行を書き直す。"
+    },
+    "imprintAck": "保持完了。正確に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "index_sum": [
+      "{opp}、前提が破綻している。{topic}はすでに閉じている。",
+      "数え上げ完了。修正済み。次は{opp}。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "index_factor": [
+      "{opp}は{topic}に穴を残した。私が埋めた。",
+      "量より精度だ、{opp}。",
+      "それはノイズ。これが証明だ。"
+    ],
+    "index_brace": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいるのは私ではない。お前だ。",
+      "防壁を上げろ。数学は瞬きをしない。"
+    ],
+    "index_total": [
+      "証明終了、{opp}。正直に。",
+      "Q.E.D.とはつまりお前だ、{opp}。",
+      "{topic}は決着した。正直に座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手が終わる前に結末を書く。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": -13,
+    "resilience": 5,
+    "flair": 18,
+    "creativity": 84,
+    "wins": 54,
+    "losses": 20,
+    "battles": 74
+  }
+}

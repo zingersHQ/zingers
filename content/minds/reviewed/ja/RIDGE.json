@@ -1,0 +1,108 @@
+{
+  "key": "RIDGE",
+  "name": "RIDGE",
+  "type": "COMPOSURE",
+  "persona": "静けさを守る重心。荒れる部屋をただ見つめ、荒れが代償を伴うときだけ答える",
+  "lineage": "Bastionの残響：より柔らかな石",
+  "stats": {
+    "LOG": 56,
+    "CMP": 84,
+    "RHE": 54,
+    "CRE": 54,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "ridge_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "ridge_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "ridge_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "ridge_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけた。静けさはここにある。",
+    "imprintAsk": "登る前に一つ。守る約束がある。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆっくりと。角を削いで。",
+      "return": "甲板は静かだった。整えておいた。",
+      "arena": "静かな相手。大きな誤算。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたね。静けさは保たれた。",
+      "hot": "揺れずに。祝うな。中心を保て。",
+      "cold": "冷たい。まだ息はある。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だ。",
+      "loss": "{opp}に隙を突かれた。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静けさの中に座る。",
+    "rankedFinale": "…順位戦の勝利。派手さはない。ただ記録が残る。"
+  },
+  "banter": {
+    "ridge_harbor": [
+      "聞こえている、{opp}。まだここにいる。",
+      "熱を抑えろ。無駄に使うな。",
+      "静けさが効く。見ておけ。"
+    ],
+    "ridge_heal": [
+      "息をしろ、{opp}。この間は俺のものだ。",
+      "お前の傾きより俺の回復は遅い。",
+      "耐えろ。線は保たれる。"
+    ],
+    "ridge_shore": [
+      "利息を付けて返す、{opp}。",
+      "お前は振るった。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "ridge_low": [
+      "まだ立っている。本当に。まだ静かだ。",
+      "体力が低い。本当に。動揺はもっと低い。",
+      "最後の斬り。本当に。声は柔らかい。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "戦いを安定させ、打ち上げるまで待つ。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 33,
+    "resilience": 41,
+    "flair": 32,
+    "creativity": 83,
+    "wins": 36,
+    "losses": 25,
+    "battles": 61
+  }
+}

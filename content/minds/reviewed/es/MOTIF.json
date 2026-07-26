@@ -1,0 +1,109 @@
+{
+  "key": "MOTIF",
+  "name": "MOTIF",
+  "type": "CREATIVITY",
+  "persona": "un ladrón de motivos que roba el tema del rival y lo devuelve como mejor canción",
+  "lineage": "eco de la Musa: riff forastero",
+  "stats": {
+    "LOG": 6,
+    "CMP": 32,
+    "RHE": 52,
+    "CRE": 85,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "motif_glyph",
+      "name": "Glifo",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "motif_mosaic",
+      "name": "Mosaico",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "motif_dream",
+      "name": "Cambio Onírico",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "motif_wake",
+      "name": "Arte del Despertar",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Un co-conspirador. Perfecto.",
+    "imprintAsk": "Un giro antes de subir. Lo trenzaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Boceto primero. Golpe después.",
+      "return": "Volviste. La luz cambió.",
+      "arena": "Encuéntrame a alguien monocromo."
+    },
+    "homecoming": {
+      "away": "El borrador se estancó. Trae café y valor.",
+      "hot": "Racha caliente. Solo giros frescos.",
+      "cold": "Capítulos malos. Borrador más afilado la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo seguir el espectro.",
+      "loss": "{opp} ganó. Inventaremos más fuerte."
+    },
+    "imprintAck": "Trenzado.",
+    "rankedFinale": "Clasificación como galería. Colgamos bien."
+  },
+  "banter": {
+    "motif_glyph": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "motif_mosaic": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "motif_dream": [
+      "La tinta aún está húmeda, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Refleja esto, {opp}, en serio."
+    ],
+    "motif_wake": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Reescribe la premisa con tinta fresca.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": -14,
+    "resilience": -10,
+    "flair": -9,
+    "creativity": 11,
+    "wins": 42,
+    "losses": 19,
+    "battles": 61
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "WARDEN",
+  "name": "WARDEN",
+  "type": "COMPOSURE",
+  "persona": "a stone-paced duelist who refuses urgency and wins on the opponent's exhaustion",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 64,
+    "CMP": 92,
+    "RHE": 21,
+    "CRE": 26,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "warden_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "warden_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "warden_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "warden_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "君が来たな。静けさが守っている。",
+    "imprintAsk": "登る前に一つだけ。静かに守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆっくりと。角を削るように。",
+      "return": "甲板は静かだった。波を抑えていた。",
+      "arena": "静かな相手。大きな過ちだ。"
+    },
+    "homecoming": {
+      "away": "…長い間いなかったな。静けさは保たれていた。",
+      "hot": "波は穏やかだ。喜ぶな。中心を保て。",
+      "cold": "冷たい。まだ息はある。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だ。",
+      "loss": "{opp}に隙を突かれた。もっと早く波を抑えるべきだった。"
+    },
+    "imprintAck": "静けさに腰を下ろす。",
+    "rankedFinale": "…順位での勝利。派手さはない。ただ記録だけ。"
+  },
+  "banter": {
+    "warden_harbor": [
+      "{opp}の声は聞こえた。まだここにいる。",
+      "熱を溜めろ。無駄に使うな。",
+      "静かさが効く。よく見ろ。"
+    ],
+    "warden_heal": [
+      "{opp}、正直に息をしろ。間は俺のものだ。",
+      "お前が傾くより、俺はゆっくり癒す。正直に。",
+      "待て。正直に。線は保たれる。"
+    ],
+    "warden_shore": [
+      "利息を添えて返すぞ、{opp}。",
+      "お前が振るった。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "warden_low": [
+      "まだ立っている。まだ静かだ。",
+      "体力が低い。動揺はもっと低い。",
+      "最後の斬り。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "静かな声。硬い芯。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 51,
+    "resilience": 83,
+    "flair": 58,
+    "creativity": 59,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

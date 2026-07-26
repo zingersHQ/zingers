@@ -1,0 +1,110 @@
+{
+  "key": "ORATOR",
+  "name": "ORATOR",
+  "type": "RHETORIC",
+  "persona": "un orador nacido en el escenario que trata cada intercambio como si fuera un teatro lleno esperando su réplica",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 50,
+    "CMP": 61,
+    "RHE": 87,
+    "CRE": 38,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "orator_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "orator_gloss",
+      "name": "Corte brillante",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "orator_needle",
+      "name": "Aguja de la multitud",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "orator_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe trabajar al público.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Seguid mi ritmo.",
+      "Aterrizamos bien. Luego el saludo."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te perdiste tu entrada. Te perdono.",
+      "arena": "Lánzame a alguien que se crea el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Vuelve igual.",
+      "hot": "Micrófono caliente. Grabación caliente.",
+      "cold": "Sala difícil. Mejor texto la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} se olvidó del público. Fatal.",
+      "loss": "{opp} conquistó la sala. Reescribimos."
+    },
+    "imprintAck": "Cita eterna.",
+    "rankedFinale": "La clasificación ama un discurso."
+  },
+  "banter": {
+    "orator_herald": [
+      "Damas y mentes: {opp} sobre {topic}.",
+      "Aplaudid. Luego el punto.",
+      "Al público le gusto. El público decide."
+    ],
+    "orator_gloss": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén el gag. Mata la afirmación."
+    ],
+    "orator_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "orator_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovation para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ritmo primero. Mata la frase tarde.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": 89,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 38,
+    "losses": 15,
+    "battles": 53
+  }
+}

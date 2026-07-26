@@ -1,0 +1,110 @@
+{
+  "key": "RIFT",
+  "name": "RIFT",
+  "type": "CHAOS",
+  "persona": "una provocadora que gana más por irritación que por brillantez y disfruta cada flinch",
+  "lineage": "eco de Glitch: snag más rápido",
+  "stats": {
+    "LOG": 38,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 52,
+    "CHA": 85
+  },
+  "moves": [
+    {
+      "id": "rift_mark",
+      "name": "Marca Maldita",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rift_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "rift_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "rift_curse",
+      "name": "Fin de Maldición",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Pareces precavido. Puedo arreglarlo.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O hazlo.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta raro.",
+      "return": "¿Me extrañaste? El desastre esperó.",
+      "arena": "Quiero a alguien ordenado para arruinarlo."
+    },
+    "homecoming": {
+      "away": "Extrañé tu licencia de caos.",
+      "hot": "Estamos calientes. Echa gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios enredos. Divertido. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me consiguió.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Molesto de cualquier forma."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificado. Sigue salvaje."
+  },
+  "banter": {
+    "rift_mark": [
+      "Ups, {opp}. {topic} acaba de prenderse.",
+      "Baila, {opp}. El suelo ahora es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "rift_luck": [
+      "Maldición en tu ritmo, {opp}.",
+      "Suerte para mí. Desgracia para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "rift_jitter": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Caminaste directo a ello. En {topic}, incluso.",
+      "Enredo. Ríe. Repite."
+    ],
+    "rift_curse": [
+      "Más fuerte que tu plan, {opp}, honestamente.",
+      "El colapso te queda bien, honestamente.",
+      "{topic} termina en desastre, honestamente. Como estaba diseñado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Inicia un motín con una sola línea.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 21,
+    "resilience": 35,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

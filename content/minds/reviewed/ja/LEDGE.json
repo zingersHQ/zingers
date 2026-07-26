@@ -1,0 +1,108 @@
+{
+  "key": "LEDGE",
+  "name": "LEDGE",
+  "type": "COMPOSURE",
+  "persona": "低く柔らかな声で決して大きくならない。叫びそのものを無力に見せる鉄の静けさ",
+  "lineage": "Bastionの残響：より静かな鉄",
+  "stats": {
+    "LOG": 62,
+    "CMP": 92,
+    "RHE": 54,
+    "CRE": 55,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "ledge_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "ledge_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "ledge_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "ledge_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がなくていい。私はここにいる。",
+    "imprintAsk": "登る前に、静かな掟を一つ。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "バランスを鍛えよう。",
+      "return": "帰還を確認。まだここにいる。",
+      "arena": "先に喋らせる。"
+    },
+    "homecoming": {
+      "away": "姿勢は保った。乗ってくれ。",
+      "hot": "連勝か。冷静に。",
+      "cold": "大声の敗北がいくつか。もう一度落ち着かせて。"
+    },
+    "afterFight": {
+      "win": "{opp}は記録された。私たちは動かなかった。",
+      "loss": "{opp}が大声で勝った。私たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランク戦。まだ息をしている。"
+  },
+  "banter": {
+    "ledge_moor": [
+      "聞こえたよ、{opp}。私はまだここにいる。",
+      "熱は取っておけ。無駄に使うな。",
+      "静かさが効く。見てろ。"
+    ],
+    "ledge_ballast": [
+      "息をしろ、{opp}。この間は私のものだ。",
+      "私が癒えるより早くお前は傾く。",
+      "待て。線はまだ持つ。"
+    ],
+    "ledge_tide": [
+      "利子を付けて返すよ、{opp}。",
+      "お前は振るった。私は待った。それが技だ。",
+      "{topic}は我慢に報いる。お前にはない。"
+    ],
+    "ledge_deep": [
+      "正直、まだ立ってる。まだ静かだ。",
+      "正直、体力は低い。動揺はもっと低い。",
+      "正直、最後の切り札。柔らかな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "暴れさせる。そしていつも静かに答える。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 47,
+    "control": 23,
+    "resilience": 85,
+    "flair": 55,
+    "creativity": 34,
+    "wins": 39,
+    "losses": 24,
+    "battles": 63
+  }
+}

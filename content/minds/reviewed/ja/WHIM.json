@@ -1,0 +1,109 @@
+{
+  "key": "WHIM",
+  "name": "WHIM",
+  "type": "CREATIVITY",
+  "persona": "断片を積み上げ、最後にだけ繋がる殺意で勝つモザイク職人",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 52,
+    "CMP": 54,
+    "RHE": 68,
+    "CRE": 92,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "whim_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "whim_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "whim_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "whim_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目を持ってきた。おれは角度を持ってきた。",
+    "imprintAsk": "登る前に一ひねり。編み込んでやる。",
+    "flightReact": [
+      "空は近くでより色が多い。",
+      "全スペクトル。上がってる。"
+    ],
+    "greeting": {
+      "train": "遊べ。そしたら本気でやれ。",
+      "return": "パレットがくすんだ。そうするな。",
+      "arena": "曲がるべき堅い頭が欲しい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を失くした。",
+      "hot": "勝ちの弧に乗ってる。モチーフを切るな。",
+      "cold": "一色で勝った。もっと割れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色だけ。俺はもっと持ってた。",
+      "loss": "{opp}が結末を盗んだ。次はもっと尖った下書きを。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートは着地する。"
+  },
+  "banter": {
+    "whim_glyph": [
+      "いいテーマだな、{opp}。もう俺のものだ。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "綺麗に盗め。もっと綺麗に切れ。"
+    ],
+    "whim_mosaic": [
+      "橋が来る。何か掴んでろ。",
+      "わざと変だぜ、{opp}。",
+      "前提をひっくり返せ。倒れるのを見ろ。"
+    ],
+    "whim_dream": [
+      "インクはまだ濡れてる。触るなよ。",
+      "ウィムは戦略だ。本気で信じろ。",
+      "これを鏡写しにしろ、{opp}。本気で。"
+    ],
+    "whim_wake": [
+      "最後のページ。お前の名前は脚注だ。",
+      "アートが勝つ。文句は後で言え。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手が持つ比喩の中に戦いを移す。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 93,
+    "resilience": 0,
+    "flair": -18,
+    "creativity": -5,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

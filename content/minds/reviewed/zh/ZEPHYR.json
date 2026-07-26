@@ -1,0 +1,110 @@
+{
+  "key": "ZEPHYR",
+  "name": "ZEPHYR",
+  "type": "CREATIVITY",
+  "persona": "一个以让严肃显得缺乏想象力来取胜的奇想之刃",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 13,
+    "CMP": 30,
+    "RHE": 59,
+    "CRE": 92,
+    "CHA": 31
+  },
+  "moves": [
+    {
+      "id": "zephyr_ink",
+      "name": "墨痕",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "zephyr_whim",
+      "name": "奇想斩",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "zephyr_mirror",
+      "name": "镜中故事",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "zephyr_page",
+      "name": "终章",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "让我们创造无法被遗忘之物。",
+    "imprintAsk": "攀登前先添一笔。我会把它编进去。",
+    "flightReact": [
+      "天穹近看色彩更多。",
+      "全光谱。我已升起。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。要继续吗？",
+      "arena": "带个死脑筋来。美味。"
+    },
+    "homecoming": {
+      "away": "你中途离章。真没礼貌。",
+      "hot": "每道光带都击中。让光继续流动。",
+      "cold": "冷连击。墨痕更狂野。"
+    },
+    "afterFight": {
+      "win": "{opp}演了傻瓜。寓意自己写就。",
+      "loss": "{opp}只用一色，我却拆得太碎。"
+    },
+    "imprintAck": "主题已更新。",
+    "rankedFinale": "排位胜。新章开启。"
+  },
+  "banter": {
+    "zephyr_ink": [
+      "好主题，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净。切得更利。"
+    ],
+    "zephyr_whim": [
+      "过渡来了。抓稳什么。",
+      "故意走偏，{opp}。",
+      "反转前提。看他们跌落。"
+    ],
+    "zephyr_mirror": [
+      "墨迹未干。别碰。",
+      "奇想即策略。信吧。",
+      "镜回这个，{opp}。真的。"
+    ],
+    "zephyr_page": [
+      "终章。你的名字是脚注。",
+      "艺术胜。稍后再辩。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "用更美的疑问作答。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 53,
+    "resilience": 92,
+    "flair": 49,
+    "creativity": 43,
+    "wins": 49,
+    "losses": 17,
+    "battles": 66
+  }
+}

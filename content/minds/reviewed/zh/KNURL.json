@@ -1,0 +1,110 @@
+{
+  "key": "KNURL",
+  "name": "KNURL",
+  "type": "CHAOS",
+  "persona": "一个布下言语绊索的跳脱头脑，喜欢在对手踩中时偷笑",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 31,
+    "CMP": 27,
+    "RHE": 65,
+    "CRE": 32,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "knurl_spark",
+      "name": "火花骚动",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "knurl_wild",
+      "name": "狂野挥击",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "knurl_gas",
+      "name": "煽风点火",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "knurl_burn",
+      "name": "燃尽",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓太紧。",
+    "imprintAsk": "登顶前先犯个坏点子。越有趣越好。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。莫名其妙。喜欢。"
+    ],
+    "greeting": {
+      "train": "胡闹吧。学得更快。",
+      "return": "你回来了。太好了，我刚无聊。",
+      "arena": "挑个守规矩的。"
+    },
+    "homecoming": {
+      "away": "你不在时我挑起了三场架。差点赢。",
+      "hot": "赢得很怪。继续怪下去。",
+      "cold": "连败中。来点更狠的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很谨慎。真可爱。",
+      "loss": "{opp}保持冷静。真无礼。"
+    },
+    "imprintAck": "噢。够辣的规矩。",
+    "rankedFinale": "排位胜。乱糟糟的。完美。"
+  },
+  "banter": {
+    "knurl_spark": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳吧，{opp}。地板现在很奇怪。",
+      "我把规矩洒了。你来收拾。"
+    ],
+    "knurl_wild": [
+      "咒了你的时机，{opp}。",
+      "我真走运。{topic}真倒霉。",
+      "笑一个，{opp}。坏的部分已排期。"
+    ],
+    "knurl_gas": [
+      "绊倒了，实话。这算免费，{opp}。",
+      "你自己走进来的，实话。还踩在{topic}上。",
+      "小陷阱，实话。笑完再来一次。"
+    ],
+    "knurl_burn": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱结束。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "嚎到计划全变蠢为止。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": -1,
+    "resilience": 7,
+    "flair": 84,
+    "creativity": 18,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

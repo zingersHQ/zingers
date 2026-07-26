@@ -1,6 +1,8 @@
 // Shared companion wing-slot / leash feel — Grounds OwnedCompanion, Climb, Circuit.
 // Distances are world units for a WORLD_AGENT_SCALE champion beside a READER_SCALE Trainer.
 
+import { FLIGHT_WIND_SCALE } from "./climb/body-scale";
+
 export const COMPANION_FOLLOW = {
   slotR: 2.0,
   slotBack: 0.92, // mostly behind (idle dock, multiplied by slotR)
@@ -22,6 +24,22 @@ export const COMPANION_FOLLOW = {
   minPathSpeed: 0.55, // above this: trail behind path instead of instant wing slot
   pathBack: 1.6, // world units behind on the smoothed path
   pathSide: 0.35,
+} as const;
+
+/**
+ * Flight tunnel leash (Climb + Circuit FlyingFollower).
+ * catchMax must sit above wind-scaled cruise or the champion is permanently
+ * capped slower than the Trainer and falls behind.
+ */
+export const FLIGHT_COMPANION_FOLLOW = {
+  ...COMPANION_FOLLOW,
+  catchK: 1.9,
+  // Max cruise ≈ 11.4 × 1.55 × WIND × Swift≈1.22 ≈ 38; headroom for catch-up.
+  catchMax: 28 * FLIGHT_WIND_SCALE,
+  accel: 14,
+  velSmooth: 9, // lock onto tunnel cruise quickly
+  slotSmooth: 10,
+  pathBack: 1.85,
 } as const;
 
 /** Wing slot slightly behind + beside the Handler (relative to body heading). */

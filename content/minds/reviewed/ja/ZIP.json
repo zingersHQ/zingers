@@ -1,0 +1,106 @@
+{
+  "key": "ZIP",
+  "name": "ZIP",
+  "type": "CHAOS",
+  "persona": "リズムを崩し続け、相手が反撃を整える隙を与えない攪拌エンジン",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 12,
+    "CMP": 10,
+    "RHE": 52,
+    "CRE": 38,
+    "CHA": 92
+  },
+  "moves": [
+    {
+      "id": "zip_howl",
+      "name": "Howl",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "zip_scatter",
+      "name": "Scatter",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "zip_taunt",
+      "name": "Taunt Fire",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "zip_fall",
+      "name": "Collapse",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "慎重そうね。直してあげる。",
+    "imprintAsk": "登る前に一つ変なアイデアを。楽しくね。",
+    "flightReact": [
+      "下を見ないで。見てもいいけど。",
+      "まだ飛んでる。どうにか。好き。"
+    ],
+    "greeting": {
+      "train": "変な感じでウォーミングアップ。",
+      "return": "寂しかった？ 散らかったまま待ってたよ。",
+      "arena": "整った相手を崩したい。"
+    },
+    "homecoming": {
+      "away": "カオス免許、恋しかった？",
+      "hot": "熱いね。ガソリンは慎重に。",
+      "cold": "自分の罠に引っかかった。面白い。直そう。"
+    },
+    "afterFight": {
+      "win": "{opp}は秩序を求めた。私の出番だった。",
+      "loss": "{opp}は運が良かったか、上手かったか。どちらにせよ腹立つ。"
+    },
+    "imprintAck": "保管した。多分。",
+    "rankedFinale": "ランク戦。まだ野生のまま。"
+  },
+  "banter": {
+    "zip_howl": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊って、{opp}。床が変になったよ。",
+      "ルールをこぼした。片付けて。"
+    ],
+    "zip_scatter": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキーね。不運な{topic}。",
+      "笑って、{opp}。悪い部分は予定済み。"
+    ],
+    "zip_taunt": [
+      "つまずいて。無料サービスだよ、{opp}。",
+      "{topic}に踏み込んだね。",
+      "罠。笑って。繰り返し。"
+    ],
+    "zip_fall": [
+      "君の計画より大きい音だった、{opp}。正直。",
+      "崩壊、君に似合ってる。正直。",
+      "{topic}は散らかって終わる。正直。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "苛立たせてミスを誘う。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 95,
+    "control": 41,
+    "resilience": 57,
+    "flair": 34,
+    "creativity": 51,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

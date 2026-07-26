@@ -1,0 +1,108 @@
+{
+  "key": "ANCHOR",
+  "name": "ANCHOR",
+  "type": "COMPOSURE",
+  "persona": "一个以石沉之姿拒绝对抗急躁、靠对手耗尽而取胜的决斗者",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 21,
+    "CRE": 13,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "anchor_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "anchor_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "anchor_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "anchor_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "沉稳。我们不张扬开局。",
+    "imprintAsk": "攀登前先定一条柔则。我会守住。",
+    "flightReact": [
+      "…向上。静。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "少些喧嚣。多些守持。",
+      "return": "……你回来了。我为你留了一片静。",
+      "arena": "他们会猛攻。我们不会。"
+    },
+    "homecoming": {
+      "away": "沉静守住。你未曾动摇。",
+      "hot": "无喧取胜。继续如此。",
+      "cold": "我们已清点。加固压舱。"
+    },
+    "afterFight": {
+      "win": "{opp}耗尽热量。我们消耗更少。",
+      "loss": "{opp}先说后说。下次我等得更久。"
+    },
+    "imprintAck": "守住。",
+    "rankedFinale": "静默攀升。真实攀升。"
+  },
+  "banter": {
+    "anchor_harbor": [
+      "我听见你，{opp}。我仍在此。",
+      "省下热量。别用错。",
+      "静默有效。看着。"
+    ],
+    "anchor_heal": [
+      "呼吸，{opp}。暂停权在我。",
+      "我疗愈比你失衡更慢。",
+      "守住。防线不破。"
+    ],
+    "anchor_shore": [
+      "连本带利，{opp}。",
+      "你攻我候。此即技艺。",
+      "{topic}奖耐，不奖你。"
+    ],
+    "anchor_low": [
+      "仍立。仍静。",
+      "血低。慌更低。",
+      "最后一击。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "柔声。硬核。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 5,
+    "resilience": -2,
+    "flair": 81,
+    "creativity": -7,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

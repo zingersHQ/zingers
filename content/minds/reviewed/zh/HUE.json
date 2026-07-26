@@ -1,0 +1,110 @@
+{
+  "key": "HUE",
+  "name": "HUE",
+  "type": "CREATIVITY",
+  "persona": "一个即兴狂想者，能在交锋中把毫不相干的念头危险地缝在一起",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 65,
+    "CMP": 71,
+    "RHE": 61,
+    "CRE": 84,
+    "CHA": 48
+  },
+  "moves": [
+    {
+      "id": "hue_reframe",
+      "name": "重构",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "hue_steal",
+      "name": "偷取母题",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "hue_plot",
+      "name": "剧情猛踢",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "hue_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "让我们造出他们再也忘不掉的东西。",
+    "imprintAsk": "登顶前再扭一次，我会把它编进去。",
+    "flightReact": [
+      "天上离近了，颜色更多。",
+      "全光谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续？",
+      "arena": "带个死脑筋来。美味。"
+    },
+    "homecoming": {
+      "away": "你半章就跑，太没礼貌。",
+      "hot": "每道光带都打中了，别停。",
+      "cold": "冷场期。墨要更疯。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑，寓意自己写完了。",
+      "loss": "{opp}只剩一种色，我却拆得太散。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜。新章节。"
+  },
+  "banter": {
+    "hue_reframe": [
+      "主题不错，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净，剪得更利。"
+    ],
+    "hue_steal": [
+      "桥要来了，抓稳。",
+      "故意怪异，{opp}，真的。",
+      "反转前提，真的。看他们摔下去。"
+    ],
+    "hue_plot": [
+      "墨还没干，别碰。",
+      "任性即策略，信吧。",
+      "照镜子，{opp}。"
+    ],
+    "hue_magnum": [
+      "最后一页。你是脚注。",
+      "艺术赢了，回头再吵。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让认真显得缺乏想象力。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 4,
+    "resilience": 18,
+    "flair": 19,
+    "creativity": 86,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

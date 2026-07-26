@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { Ambience } from "@/lib/ambience";
-import { registerAmbience } from "@/lib/ambience-bus";
+import { registerAmbience, registerAmbienceArm } from "@/lib/ambience-bus";
 import { setSfxEnabled } from "@/lib/sfx";
 import { setCreatureVoiceEnabled } from "@/lib/creature-voice";
 import { STORAGE } from "@/lib/brand";
@@ -91,6 +91,12 @@ function setSoundOn(next: boolean) {
 
 function addHost() {
   hosts++;
+  // startAmbience() from Flight hold / CTAs must latch armed + run applyEngine
+  // (respects mute + visibility) so we never bypass STORAGE.sound=off.
+  registerAmbienceArm(() => {
+    armed = true;
+    applyEngine();
+  });
   applyEngine();
 }
 function removeHost() {
@@ -98,6 +104,7 @@ function removeHost() {
   if (hosts === 0) {
     engine?.stop();
     registerAmbience(null);
+    registerAmbienceArm(null);
     engine?.dispose();
     engine = null;
     armed = false;

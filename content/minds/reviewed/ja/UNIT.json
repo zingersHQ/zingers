@@ -1,0 +1,110 @@
+{
+  "key": "UNIT",
+  "name": "UNIT",
+  "type": "LOGIC",
+  "persona": "要点だけを突き、余計な枝葉を切り捨てて決着点へ直行する論理家",
+  "lineage": "Paradoxの残響: より鋭い分岐点",
+  "stats": {
+    "LOG": 89,
+    "CMP": 67,
+    "RHE": 44,
+    "CRE": 47,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "unit_sum",
+      "name": "総括",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "unit_factor",
+      "name": "因数分解",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "unit_brace",
+      "name": "数式防御",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "unit_total",
+      "name": "総和",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "了解。鋭い刃を好む共同作業者だ。",
+    "imprintAsk": "登る前に一つ。簡潔に。",
+    "flightReact": [
+      "軌道固定。上昇開始。",
+      "高度確定。飛行は安定。"
+    ],
+    "greeting": {
+      "train": "証明を演習しよう。余興は後回し。",
+      "return": "証明の途中で離脱とは失礼だ。",
+      "arena": "矛盾を提示しろ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えたな。俺は一人で完結させた。",
+      "hot": "清浄だ。清浄を保て。",
+      "cold": "冷たい記録だ。次は温めて挑め。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦だ。"
+    },
+    "imprintAck": "規則は確定した。",
+    "rankedFinale": "順位戦勝利。余裕の差。"
+  },
+  "banter": {
+    "unit_sum": [
+      "{opp}、前提が崩れている。{topic}はすでに決着済みだ。",
+      "計算完了。訂正完了。次は{opp}だ。",
+      "{opp}に叫ぶ必要はない。{topic}を終わらせるだけだ。"
+    ],
+    "unit_factor": [
+      "{opp}の{topic}に穴がある。埋めた。",
+      "精度は量に勝る、{opp}。",
+      "それは雑音。こちらは証明だ。"
+    ],
+    "unit_brace": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいるのはそちらだ。",
+      "防御を固めろ。数式は瞬きしない。"
+    ],
+    "unit_total": [
+      "証明終了、{opp}。正直なところ。",
+      "Q.E.D.は{opp}のことだ、正直なところ。",
+      "{topic}は決着済みだ。正直に席を外せ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一度狙えば、必ず当てる。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 22,
+    "control": 92,
+    "resilience": 29,
+    "flair": 31,
+    "creativity": 56,
+    "wins": 21,
+    "losses": 17,
+    "battles": 38
+  }
+}

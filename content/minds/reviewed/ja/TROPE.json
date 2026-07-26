@@ -1,0 +1,110 @@
+{
+  "key": "TROPE",
+  "name": "TROPE",
+  "type": "CREATIVITY",
+  "persona": "真面目さを想像力不足に見せる気まぐれの刃",
+  "lineage": "Fableの残響：優しいトリックスター",
+  "stats": {
+    "LOG": 71,
+    "CMP": 52,
+    "RHE": 68,
+    "CRE": 91,
+    "CHA": 58
+  },
+  "moves": [
+    {
+      "id": "trope_ink",
+      "name": "インク",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "trope_whim",
+      "name": "気まぐれの一刀",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "trope_mirror",
+      "name": "鏡話",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "trope_page",
+      "name": "最終頁",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目を持ってきた。角度を持ってきた。",
+    "imprintAsk": "登る前に一ひねり。編み込むよ。",
+    "flightReact": [
+      "空は近くで色が増える。",
+      "全スペクトル。上昇中。"
+    ],
+    "greeting": {
+      "train": "遊んでから決めろ。",
+      "return": "パレットがくすんだ。そうするな。",
+      "arena": "硬い頭を曲げてやる。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を恋しがった。",
+      "hot": "勝ちの弧に乗ってる。モチーフを切るな。",
+      "cold": "一色で勝った。もっと色を分けろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色。俺はもっと。",
+      "loss": "{opp}が結末を盗んだ。次は鋭く。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートが決まる。"
+  },
+  "banter": {
+    "trope_ink": [
+      "いいテーマだね、{opp}。今のは俺の。",
+      "{topic}をリミックスした。君はサンプル。",
+      "綺麗に盗んで。もっと綺麗に切れ。"
+    ],
+    "trope_whim": [
+      "橋が来る。何か掴め。",
+      "わざと変だよ、{opp}。",
+      "前提を逆転。落ちるのを見ろ。"
+    ],
+    "trope_mirror": [
+      "インクはまだ濡れてる。触るな。",
+      "気まぐれは戦略だ。信じろ。",
+      "これを鏡写せ、{opp}。"
+    ],
+    "trope_page": [
+      "最終頁。君の名前は脚注。",
+      "アートが勝つ。文句は後で。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "より美しい問いを返す。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 26,
+    "control": 13,
+    "resilience": -6,
+    "flair": 88,
+    "creativity": -1,
+    "wins": 29,
+    "losses": 13,
+    "battles": 42
+  }
+}

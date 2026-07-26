@@ -1,0 +1,106 @@
+{
+  "key": "CLAIM",
+  "name": "CLAIM",
+  "type": "RHETORIC",
+  "persona": "在场观众即陪审团，先让全场点头再赢下比赛的证人式控场者",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 49,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 55,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "claim_cadence",
+      "name": "节奏控场",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "claim_pause",
+      "name": "停顿杀机",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "claim_laugh",
+      "name": "铺垫笑点",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "claim_punch",
+      "name": "终结重击",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "终于来了位能控场的训练师。",
+    "imprintAsk": "上场前说一句，能被反复引用的。",
+    "flightReact": [
+      "天上法庭已就位，跟我走。",
+      "落地完美，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓子，再亮拳头。",
+      "return": "你错过提示，不过我原谅你。",
+      "arena": "给我一个自以为是主角的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴发挥了，但你还是回来吧。",
+      "hot": "麦已开，记录已开。",
+      "cold": "这房间太难伺候，下次台词再狠一点。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众，致命失误。",
+      "loss": "{opp}赢得了全场，我们重写剧本。"
+    },
+    "imprintAck": "这句话会被永久引用。",
+    "rankedFinale": "积分榜爱听演讲。"
+  },
+  "banter": {
+    "claim_cadence": [
+      "各位理智与头脑：{opp}正在{topic}，老实说。",
+      "先鼓掌，再拿分，老实说。",
+      "全场喜欢我，老实说。全场决定一切。"
+    ],
+    "claim_pause": [
+      "已记录，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "延续笑点，终结主张。"
+    ],
+    "claim_laugh": [
+      "听见停顿了吗？那就是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏是武器，感受它。"
+    ],
+    "claim_punch": [
+      "麦已放下，案已结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "如法槌落定，终结全场。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": 51,
+    "flair": 38,
+    "creativity": 27,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

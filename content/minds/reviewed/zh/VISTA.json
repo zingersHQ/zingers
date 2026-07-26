@@ -1,0 +1,109 @@
+{
+  "key": "VISTA",
+  "name": "VISTA",
+  "type": "CREATIVITY",
+  "persona": "一支羽毛笔的诡辩家，用墨水改写前提，让对手无法视而不见",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 50,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 91,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "vista_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "vista_bridge",
+      "name": "Bridge",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "vista_invert",
+      "name": "Invert",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vista_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "同谋合作。正好。",
+    "imprintAsk": "登顶前先拧一道。我来编进。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱。我已升起。"
+    ],
+    "greeting": {
+      "train": "先起稿，后出击。",
+      "return": "你回来了。光线变了。",
+      "arena": "给我找个单色的对手。"
+    },
+    "homecoming": {
+      "away": "草稿卡住。带咖啡和勇气来。",
+      "hot": "连胜中。只换新花样。",
+      "cold": "烂章节。下稿更锋利。"
+    },
+    "afterFight": {
+      "win": "{opp}跟不上光谱。",
+      "loss": "{opp}赢了。我们再造更狠的。"
+    },
+    "imprintAck": "已编入。",
+    "rankedFinale": "排名榜如画廊。我们挂得漂亮。"
+  },
+  "banter": {
+    "vista_riff": [
+      "主题不错，{opp}，老实说。现在归我。",
+      "我重混了{topic}，老实说。你就是样本。",
+      "偷得干净，老实说。剪得更利。"
+    ],
+    "vista_bridge": [
+      "桥段来了。抓稳什么。",
+      "故意怪异，{opp}。",
+      "反转前提。看他们坠落。"
+    ],
+    "vista_invert": [
+      "墨迹未干。别碰。",
+      "奇想就是策略。信吧。",
+      "镜映这个，{opp}。"
+    ],
+    "vista_coda": [
+      "末页。你的名字是脚注。",
+      "艺术胜。稍后争辩。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "先碎块。后杀画面。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 0,
+    "resilience": -8,
+    "flair": 95,
+    "creativity": 8,
+    "wins": 46,
+    "losses": 13,
+    "battles": 59
+  }
+}

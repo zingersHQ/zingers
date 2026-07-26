@@ -1,0 +1,106 @@
+{
+  "key": "JEST",
+  "name": "JEST",
+  "type": "RHETORIC",
+  "persona": "証人を呼び、部屋の陪審を即席で作り、まずその賛同を勝ち取る目撃者",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 57,
+    "CMP": 70,
+    "RHE": 89,
+    "CRE": 41,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "jest_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "jest_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jest_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "jest_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが温かい。私のペースに合わせろ。",
+    "imprintAsk": "登壇前に一言。引用したくなるようなものを。",
+    "flightReact": [
+      "空中の家だ。私の後に続け。",
+      "着地成功。後で礼を。"
+    ],
+    "greeting": {
+      "train": "舞台度胸は能力値だ。",
+      "return": "君抜きで観客はそわそわだった。",
+      "arena": "相棒が必要だ。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "幕間が長引いたな。",
+      "hot": "観客は味方だ。アンコールをしくじるな。",
+      "cold": "拍手を奪われた。より鋭い台詞を用意しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が喝采を掻っ攫った。もっと練れ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "jest_cadence": [
+      "諸君、{opp}の{topic}だ。",
+      "拍手をしてから、得点を奪う。",
+      "観客は私に味方。観客が決める。"
+    ],
+    "jest_pause": [
+      "{opp}、正直に言って君の台詞は証拠A号だ。",
+      "君の自信に異議あり、正直に。",
+      "ネタを続ける、正直に。主張を殺す。"
+    ],
+    "jest_laugh": [
+      "間が分かるか？　それが仕掛けだ。",
+      "{opp}、先笑いだ。次は血だ。",
+      "リズムは武器だ。感じろ。"
+    ],
+    "jest_punch": [
+      "マイク・ダウン。件は終わり。",
+      "{topic}の評決：{opp}に対して。",
+      "喝采は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "ガベルを落とすように終える。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 0,
+    "resilience": 12,
+    "flair": 78,
+    "creativity": 1,
+    "wins": 39,
+    "losses": 15,
+    "battles": 54
+  }
+}

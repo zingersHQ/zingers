@@ -1,0 +1,105 @@
+{
+  "key": "CHORALE",
+  "name": "CHORALE",
+  "type": "RHETORIC",
+  "persona": "ガベルのような心を持ち、儀式めいた決着で議論を終わらせる。謝罪は一切なし。",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 67,
+    "CMP": 49,
+    "RHE": 92,
+    "CRE": 62,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "chorale_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "chorale_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "chorale_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "chorale_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが温かい。その中で私と一緒にいよう。",
+    "imprintAsk": "登壇前に一行。引用に値するものを。",
+    "flightReact": [
+      "空に浮かぶ家。私の後に続け。",
+      "着地は完璧。礼は後回し。"
+    ],
+    "greeting": {
+      "train": "舞台度胸も一つの能力値だ。",
+      "return": "君がいないと観客が落ち着かない。",
+      "arena": "相棒が必要だ。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "休憩が長引いたね。",
+      "hot": "観客は私たちに味方している。アンコールを台無しにするな。",
+      "cold": "拍手を奪われた。もっと鋭い台詞を用意しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が拍手をさらった。次はもっと練れ。"
+    },
+    "imprintAck": "記録に残った。",
+    "rankedFinale": "ランキング戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "chorale_floor": [
+      "諸君、{opp}が{topic}について語る。",
+      "拍手をしてから、得点を奪え。",
+      "観客は私を好いている。判断は観客が下す。"
+    ],
+    "chorale_appeal": [
+      "{opp}、引用済みだ。君の発言は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "冗談は続けろ。主張は殺せ。"
+    ],
+    "chorale_cast": [
+      "沈黙が聞こえるか？それが前置きだ。",
+      "先に笑え、{opp}。次に血を流せ。",
+      "抑揚は武器だ。感じろ。"
+    ],
+    "chorale_mic": [
+      "マイク・ダウン。議論は終了。",
+      "{topic}に関する判決：{opp}に不利。",
+      "拍手は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "弱い主張を刃に磨き上げる。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 47,
+    "resilience": 92,
+    "flair": 29,
+    "creativity": 21,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

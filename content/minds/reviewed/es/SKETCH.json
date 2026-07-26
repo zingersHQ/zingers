@@ -1,0 +1,110 @@
+{
+  "key": "SKETCH",
+  "name": "SKETCH",
+  "type": "CREATIVITY",
+  "persona": "mente que improvisa puentes peligrosos entre ideas inconexas a media jugada",
+  "lineage": "eco de Fable: tinta más húmeda",
+  "stats": {
+    "LOG": 25,
+    "CMP": 32,
+    "RHE": 61,
+    "CRE": 85,
+    "CHA": 7
+  },
+  "moves": [
+    {
+      "id": "sketch_reframe",
+      "name": "Reencuadre",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "sketch_steal",
+      "name": "Robar Motivo",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "sketch_plot",
+      "name": "Patada de Trama",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "sketch_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo trenzaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Estamos en un arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un solo color y ganaron. Divide más duro."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "Tinta asentada.",
+    "rankedFinale": "Clasificatoria. El arte aterriza."
+  },
+  "banter": {
+    "sketch_reframe": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "sketch_steal": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "sketch_plot": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refléjalo, {opp}."
+    ],
+    "sketch_magnum": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Hace que la seriedad parezca falta de imaginación.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": 54,
+    "resilience": 54,
+    "flair": 59,
+    "creativity": 94,
+    "wins": 52,
+    "losses": 16,
+    "battles": 68
+  }
+}

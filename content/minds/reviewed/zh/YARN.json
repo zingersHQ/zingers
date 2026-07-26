@@ -1,0 +1,110 @@
+{
+  "key": "YARN",
+  "name": "YARN",
+  "type": "CREATIVITY",
+  "persona": "一个用奇思妙想把严肃变成缺想象力的奇想利刃",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 53,
+    "CMP": 70,
+    "RHE": 71,
+    "CRE": 92,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "yarn_ink",
+      "name": "墨迹",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "yarn_whim",
+      "name": "奇想斩",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "yarn_mirror",
+      "name": "镜中故事",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "yarn_page",
+      "name": "终章",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带来了眼睛，我带来了角度。",
+    "imprintAsk": "攀登前先来个转折，我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱，我已升空。"
+    ],
+    "greeting": {
+      "train": "玩起来，然后投入。",
+      "return": "调色板变灰了，别这样。",
+      "arena": "我想弯曲一颗僵硬的头脑。"
+    },
+    "homecoming": {
+      "away": "主旋律少了合作者。",
+      "hot": "我们正走在胜势弧线上，别打断。",
+      "cold": "他们只用一种颜色就赢了，下次要更狠地拆解。"
+    },
+    "afterFight": {
+      "win": "{opp}只带了一种颜色，我带来了更多。",
+      "loss": "{opp}偷走了结局。下次草稿要更锐利。"
+    },
+    "imprintAck": "墨迹已落。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "yarn_ink": [
+      "不错的主题，{opp}，现在是我的了。",
+      "我重混了{topic}，你是样本。",
+      "偷得干净，剪得更利。"
+    ],
+    "yarn_whim": [
+      "桥要来了，抓稳什么。",
+      "故意怪异，{opp}。",
+      "颠倒前提，看他们跌落。"
+    ],
+    "yarn_mirror": [
+      "墨迹未干，别碰。",
+      "奇想就是策略，相信它。",
+      "镜映这个，{opp}。"
+    ],
+    "yarn_page": [
+      "终章了，老实说，你的名字是脚注。",
+      "艺术赢了，老实说，稍后再争。",
+      "在我的隐喻里醒来，老实说。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "用更漂亮的问题回答。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": 10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

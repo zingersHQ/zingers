@@ -13,6 +13,8 @@ import { ROSTER } from "@/lib/engine/roster";
 import { championImprintAck } from "@/lib/lore/character-beats";
 import { IMPRINT_LESSONS, lessonById, clampDial } from "@/lib/imprints";
 import type { Strat } from "@/lib/types";
+import { setActiveLocale } from "@/lib/i18n/locale-context";
+import { DEFAULT_LOCALE, isLocale, LOCALE_LANGUAGE, type Locale } from "@/lib/i18n/locales";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +47,8 @@ interface Body {
   persona?: string;
   memory?: string[];
   strat?: Strat;
+  /** Player locale for in-character reply language. */
+  locale?: string;
 }
 
 // GET → the lesson menu + whether the house model is live (the UI shows "AI" vs
@@ -78,6 +82,9 @@ export async function POST(req: Request) {
   const strat = cleanStrat(body.strat);
   const persona = (typeof body.persona === "string" && body.persona.trim() ? body.persona : entry.persona).toString().slice(0, 400);
   const memory = (Array.isArray(body.memory) ? body.memory : []).filter((m): m is string => typeof m === "string").slice(-6).map((m) => m.slice(0, 160));
+  const locale: Locale = isLocale(body.locale) ? body.locale : DEFAULT_LOCALE;
+  setActiveLocale(locale);
+  const lang = LOCALE_LANGUAGE[locale];
 
   // The daily cap is enforced with an atomic per-owner counter. We increment
   // FIRST and only spend on the model when we're within the cap AND budget — so
@@ -104,12 +111,12 @@ export async function POST(req: Request) {
 
   const system =
     `You are ${entry.name}, ${persona}. Your handler is raising you and just taught you a lesson. ` +
-    `Answer IN CHARACTER, warmly and briefly — you're speaking to the person raising you, not an opponent. ${describeStrat(strat)}` +
+    `Answer IN CHARACTER in ${lang}, warmly and briefly. You're speaking to the person raising you, not an opponent. ${describeStrat(strat)}` +
     (memory.length ? ` What you already carry: ${memory.join("; ")}.` : "");
   const user =
     `The lesson: "${lessonText}". ` +
-    `Reply ONLY as JSON: {"reply":"<one short in-character line to your handler, MAX 20 words>",` +
-    `"note":"<a first-person memory you'll keep, MAX 16 words>",` +
+    `Reply ONLY as JSON: {"reply":"<one short in-character line in ${lang} to your handler>",` +
+    `"note":"<a first-person memory you'll keep in ${lang}>",` +
     `"dial":{"risk":<int -20..20>,"focus":<int -20..20>,"aggression":<int -20..20>}} ` +
     `where dial is how this lesson nudges your doctrine (0 for axes it doesn't touch).`;
   const messages: ChatMessage[] = [

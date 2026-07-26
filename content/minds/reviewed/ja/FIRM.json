@@ -1,0 +1,108 @@
+{
+  "key": "FIRM",
+  "name": "FIRM",
+  "type": "COMPOSURE",
+  "persona": "熱を吸収し、静かな反撃として返す壁のような存在",
+  "lineage": "Stillの残響：より深い港",
+  "stats": {
+    "LOG": 57,
+    "CMP": 92,
+    "RHE": 29,
+    "CRE": 10,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "firm_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "firm_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "firm_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "firm_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がない。俺はずっとここにいる。",
+    "imprintAsk": "登る前に、静かな掟を一つ。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "バランスを鍛えよう。",
+      "return": "帰還を確認。まだここにいる。",
+      "arena": "まずは相手に喋らせよう。"
+    },
+    "homecoming": {
+      "away": "船首を保っていた。乗ってくれ。",
+      "hot": "連勝中。冷静にいこう。",
+      "cold": "派手な負けがいくつか。もう一度落ち着かせてくれ。"
+    },
+    "afterFight": {
+      "win": "{opp}は記録された。俺たちは動かなかった。",
+      "loss": "{opp}は派手に勝った。俺たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランク戦。まだ息をしている。"
+  },
+  "banter": {
+    "firm_absorb": [
+      "{opp}の声は聞いた。俺はまだここにいる。",
+      "熱を温存しろ。無駄に使うな。",
+      "静かさが効く。見ておけ。"
+    ],
+    "firm_hold": [
+      "{opp}、正直に息をしろ。休憩は俺のものだ。",
+      "お前が傾くより、俺の回復の方が遅い。正直な話。",
+      "保て。正直に。ラインは崩れない。"
+    ],
+    "firm_return": [
+      "利息付きで返すよ、{opp}。",
+      "お前は振るってきた。俺は待っていた。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "firm_unmoved": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。動揺はもっと低い。",
+      "最後の斬撃。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "すべての振りを測る。荒々しいものは拒む。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 80,
+    "control": -1,
+    "resilience": 7,
+    "flair": -17,
+    "creativity": 15,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

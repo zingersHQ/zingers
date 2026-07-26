@@ -1,0 +1,110 @@
+{
+  "key": "TENET",
+  "name": "TENET",
+  "type": "LOGIC",
+  "persona": "un finalizador que guarda la línea de remate para el momento en que el rival ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 90,
+    "CMP": 69,
+    "RHE": 28,
+    "CRE": 35,
+    "CHA": 17
+  },
+  "moves": [
+    {
+      "id": "tenet_cut",
+      "name": "Corte de Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tenet_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tenet_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tenet_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que aprecia los bordes afilados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Subiendo.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena la prueba. Lo elegante después.",
+      "return": "Te fuiste a mitad de la prueba. Grosero.",
+      "arena": "Asígneme una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la prueba. Yo seguí sin ti.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calentemos la próxima prueba."
+    },
+    "afterFight": {
+      "win": "{opp} falló la prueba. Registrado.",
+      "loss": "{opp} encontró una brecha. La parcheo y revancha."
+    },
+    "imprintAck": "Regla asentada.",
+    "rankedFinale": "Victoria clasificatoria. Margen limpio."
+  },
+  "banter": {
+    "tenet_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "tenet_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "tenet_hold": [
+      "Hold still, {opp}. The structure is loading.",
+      "I am not rushing {topic}. You are.",
+      "Guard up. Math does not blink."
+    ],
+    "tenet_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 40,
+    "control": 37,
+    "resilience": 78,
+    "flair": 32,
+    "creativity": 21,
+    "wins": 30,
+    "losses": 26,
+    "battles": 56
+  }
+}

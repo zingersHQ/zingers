@@ -1,0 +1,108 @@
+{
+  "key": "ANCHOR",
+  "name": "ANCHOR",
+  "type": "COMPOSURE",
+  "persona": "石のようにゆっくりと動き、相手の消耗を待って勝つ決闘者",
+  "lineage": "echo of Bastion: softer stone",
+  "stats": {
+    "LOG": 60,
+    "CMP": 89,
+    "RHE": 21,
+    "CRE": 13,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "anchor_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "anchor_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "anchor_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "anchor_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "落ち着け。派手に始める必要はない。",
+    "imprintAsk": "登る前に一つだけ静かな約束を。守る。",
+    "flightReact": [
+      "…上る。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "余計な音は要らない。ただ耐えろ。",
+      "return": "…戻ったな。静けさを残しておいた。",
+      "arena": "向こうは熱くなる。我々はならない。"
+    },
+    "homecoming": {
+      "away": "静けさは守られた。お前は守らなかった。",
+      "hot": "音なく勝つ。それでいい。",
+      "cold": "我々は記録した。重しを増やせ。"
+    },
+    "afterFight": {
+      "win": "{opp}は熱を費やした。我々はより少なく。",
+      "loss": "{opp}は最初に、かつ最後に喋った。次はより長く待つ。"
+    },
+    "imprintAck": "保った。",
+    "rankedFinale": "静かな登頂。本物の登頂。"
+  },
+  "banter": {
+    "anchor_harbor": [
+      "{opp}、聞いた。まだここにいる。",
+      "熱を温存しろ。無駄に使うな。",
+      "静けさは効く。見ていろ。"
+    ],
+    "anchor_heal": [
+      "息をしろ、{opp}。この間は私のものだ。",
+      "お前が傾くより、私はゆっくり癒す。",
+      "耐えろ。線は保たれる。"
+    ],
+    "anchor_shore": [
+      "利息を付けて返したぞ、{opp}。",
+      "お前は振るった。私は待った。それが技だ。",
+      "{topic}は我慢を報いる。お前ではない。"
+    ],
+    "anchor_low": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。焦りはさらに低い。",
+      "最後の斬り。声は柔らかく。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "柔らかな声。硬い芯。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 5,
+    "resilience": -2,
+    "flair": 81,
+    "creativity": -7,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

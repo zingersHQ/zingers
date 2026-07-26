@@ -1,11 +1,13 @@
 "use client";
-// Player-facing options: audio, camera, and accessibility. Persisted locally so a
-// player's feel preferences survive reloads. Read by the Settings overlay, the
-// camera rig (sensitivity / invert / assist), the HUD (always-show), and an audio
-// bridge that pushes `volume` into the SFX, music and voice engines.
+// Player-facing options: audio, camera, accessibility, and language. Persisted
+// locally so a player's feel preferences survive reloads. Read by the Settings
+// overlay, the camera rig (sensitivity / invert / assist), the HUD (always-show),
+// an audio bridge that pushes `volume` into the SFX/music/voice engines, and the
+// i18n layer (`locale` → NEXT_LOCALE cookie + next-intl).
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { STORAGE } from "@/lib/brand";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
 
 export interface Settings {
   // audio — `volume` is a 0..1 master scalar over SFX + music + voice; the on/off
@@ -22,6 +24,9 @@ export interface Settings {
   reduceMotion: boolean; // damp camera swell / action-cam punches + decorative anim
   alwaysShowHud: boolean; // never auto-dim the HUD when idle
 
+  // language — player-facing UI, battles, docs
+  locale: Locale;
+
   set: (p: Partial<Omit<Settings, "set" | "reset">>) => void;
   reset: () => void;
 }
@@ -34,6 +39,7 @@ const DEFAULTS: Omit<Settings, "set" | "reset"> = {
   camAssist: true,
   reduceMotion: false,
   alwaysShowHud: false,
+  locale: DEFAULT_LOCALE,
 };
 
 export const useSettings = create<Settings>()(
@@ -46,7 +52,14 @@ export const useSettings = create<Settings>()(
     {
       name: STORAGE.settings,
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Partial<Settings>;
+        if (version < 2 || !isLocale(p.locale)) {
+          return { ...DEFAULTS, ...p, locale: DEFAULT_LOCALE };
+        }
+        return { ...DEFAULTS, ...p };
+      },
     },
   ),
 );

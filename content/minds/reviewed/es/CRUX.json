@@ -1,0 +1,110 @@
+{
+  "key": "CRUX",
+  "name": "CRUX",
+  "type": "LOGIC",
+  "persona": "un rematador que guarda el golpe final para el instante en que el rival ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 34,
+    "CRE": 14,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "crux_cut",
+      "name": "Corte Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "crux_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "crux_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "crux_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Trae una premisa limpia. Yo haré el resto.",
+    "imprintAsk": "Una regla antes de subir. Hazla precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Afina. Luego sube.",
+      "return": "Estado: reanudado.",
+      "arena": "Búscame una premisa descuidada."
+    },
+    "homecoming": {
+      "away": "Ausencia registrada. Errores acumulados.",
+      "hot": "El impulso es un número. Sigue sumando.",
+      "cold": "Unos capítulos malos. Reescribe conmigo."
+    },
+    "afterFight": {
+      "win": "{opp} dejó un hueco. Lo cerré.",
+      "loss": "{opp} ganó feo. Luego las cuentas."
+    },
+    "imprintAck": "Registrado.",
+    "rankedFinale": "Tic de clasificación. La prueba se mantiene."
+  },
+  "banter": {
+    "crux_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "crux_reduce": [
+      "{opp} left a hole in {topic}. I filed it.",
+      "Precision beats volume, {opp}.",
+      "That was noise. This is the proof."
+    ],
+    "crux_hold": [
+      "Hold still, {opp}, honestly. The structure is loading.",
+      "I am not rushing {topic}, honestly. You are.",
+      "Guard up, honestly. Math does not blink."
+    ],
+    "crux_close": [
+      "End of proof, {opp}.",
+      "Q.E.D. means you, {opp}.",
+      "{topic} is settled. Sit down."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": 45,
+    "resilience": 28,
+    "flair": 80,
+    "creativity": 35,
+    "wins": 27,
+    "losses": 13,
+    "battles": 40
+  }
+}

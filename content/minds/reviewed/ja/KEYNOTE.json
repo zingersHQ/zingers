@@ -1,0 +1,110 @@
+{
+  "key": "KEYNOTE",
+  "name": "KEYNOTE",
+  "type": "RHETORIC",
+  "persona": "ステージ育ちの弁士。どんなやり取りも満員の客席が次のセリフを待つ舞台だと思っている",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 18,
+    "CMP": 26,
+    "RHE": 88,
+    "CRE": 12,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "keynote_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "keynote_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "keynote_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "keynote_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。ついてこい。",
+    "imprintAsk": "登壇前に一行。引用に値するものを。",
+    "flightReact": [
+      "空中の劇場だ。俺に続け。",
+      "着地は決まった。あとは拍手。"
+    ],
+    "greeting": {
+      "train": "存在感もステータスだ。",
+      "return": "君抜きで客がそわそわしてた。",
+      "arena": "相棒が要る。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "幕間が長引いた。",
+      "hot": "観客は味方だ。アンコールでしくじるな。",
+      "cold": "大拍手を持っていかれた。次は鋭い台詞で奪え。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が拍手を取った。次はもっと練れ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦だ。マイクはまだ熱い。"
+  },
+  "banter": {
+    "keynote_herald": [
+      "諸君、{opp}が{topic}を語る。",
+      "拍手してから奪え。",
+      "客は俺の味方。決定権も俺だ。"
+    ],
+    "keynote_gloss": [
+      "引用完了、{opp}。君の台詞は証拠品だ。",
+      "君の自信に異議あり。",
+      "ネタを続けろ。主張は殺す。"
+    ],
+    "keynote_needle": [
+      "間の沈黙が聞こえるか？それが前振りだ。",
+      "{opp}、先に笑え。次に血を流すのは君だ。",
+      "リズムは武器だ。味わえ。"
+    ],
+    "keynote_ovation": [
+      "マイクを置く。議論は終わり。",
+      "{topic}の判決：{opp}に不利。",
+      "拍手は俺へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズムを先に。決め台詞は最後に。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 42,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

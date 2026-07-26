@@ -282,10 +282,12 @@ function Battle({
     setInput("");
     setPending(true);
     try {
+      const { useSettings } = await import("@/store/settings");
+      const locale = useSettings.getState().locale;
       const res = await fetch("/api/guardian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level: g.level, message: text, history, tactics }),
+        body: JSON.stringify({ level: g.level, message: text, history, tactics, locale }),
       });
       const d = (await res.json()) as GuardianReply;
       if ((d as { error?: string }).error) throw new Error((d as { error?: string }).error);

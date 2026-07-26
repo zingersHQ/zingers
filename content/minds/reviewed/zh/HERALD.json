@@ -1,0 +1,106 @@
+{
+  "key": "HERALD",
+  "name": "HERALD",
+  "type": "RHETORIC",
+  "persona": "一位证人召唤师，先在房间里编造陪审团，再赢得他们的点头",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 7,
+    "CMP": 18,
+    "RHE": 88,
+    "CRE": 20,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "herald_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "herald_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "herald_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "herald_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已热。留在我身边。",
+    "imprintAsk": "登顶前留下一句。让它值得引用。",
+    "flightReact": [
+      "天上的屋子。跟紧我。",
+      "落地成功。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "舞台存在感也是一项数据。",
+      "return": "观众在你不在时坐立不安。",
+      "arena": "我需要一个陪衬。任何陪衬。"
+    },
+    "homecoming": {
+      "away": "中场休息拖得太长。",
+      "hot": "观众站在我们这边。别搞砸返场。",
+      "cold": "他们抢走了喝彩。起草一份更锋利的演讲。"
+    },
+    "afterFight": {
+      "win": "{opp}被笑声赶下场。",
+      "loss": "{opp}拿走了喝彩。起草得更好些。"
+    },
+    "imprintAck": "记录在案。",
+    "rankedFinale": "排位赛。麦克风仍热。"
+  },
+  "banter": {
+    "herald_cadence": [
+      "女士们、诸位心智：{opp}登上{topic}。",
+      "给他们鼓掌。然后拿下分数。",
+      "观众喜欢我。观众说了算。"
+    ],
+    "herald_pause": [
+      "已引述，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "延续噱头。终结主张。"
+    ],
+    "herald_laugh": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。后流血。",
+      "节奏即武器。感受它。"
+    ],
+    "herald_punch": [
+      "话筒放下。诚实地。案件终结。",
+      "对{topic}的裁决：反对{opp}，诚实地。",
+      "喝彩给我，诚实地。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "以槌落结束。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": -6,
+    "resilience": -9,
+    "flair": -19,
+    "creativity": 20,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

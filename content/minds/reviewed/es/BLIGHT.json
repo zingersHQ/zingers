@@ -1,0 +1,113 @@
+{
+  "key": "BLIGHT",
+  "name": "BLIGHT",
+  "type": "CHAOS",
+  "persona": "una boca de tormenta que aúlla sobre planes cuidadosos hasta que el plan mismo parece ridículo",
+  "lineage": "eco de Ember: agitación más salvaje",
+  "stats": {
+    "LOG": 33,
+    "CMP": 14,
+    "RHE": 63,
+    "CRE": 17,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "blight_snag",
+      "name": "Línea de enganche",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "blight_trip",
+      "name": "Alambre trampa",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "blight_shrug",
+      "name": "Encogimiento",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "blight_snap",
+      "name": "Chasquido",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Oh, bien. Alguien con quien arruinar planes.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Todavía volando. De alguna forma. Me encanta."
+    ],
+    "greeting": {
+      "train": "Rompe un hábito. Guarda los pedazos.",
+      "return": "Pausa caótica terminada.",
+      "arena": "Apúntame a una mente ordenada."
+    },
+    "homecoming": {
+      "away": "El silencio era ofensivo. No lo repitas.",
+      "hot": "No te pongas ordenado ahora.",
+      "cold": "Derrotas. Feas. Bien. Combustible."
+    },
+    "afterFight": {
+      "win": "{opp} tropezó. Como estaba planeado.",
+      "loss": "{opp} ganó. Maldice la revancha."
+    },
+    "imprintAck": "Tatuado. Caóticamente.",
+    "rankedFinale": "La clasificación va brrr."
+  },
+  "banter": {
+    "blight_snag": [
+      "Ups, {opp}. {topic} acaba de arder.",
+      "Baila, {opp}. El suelo es raro ahora.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "blight_trip": [
+      "Hechizo sobre tu tiempo, {opp}, honestamente.",
+      "Suerte mía, honestamente. Mala suerte para {topic}.",
+      "Sonríe, {opp}, honestamente. Lo malo está programado."
+    ],
+    "blight_shrug": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Entraste directo. En {topic}, incluso.",
+      "Engancha. Ríe. Repite."
+    ],
+    "blight_snap": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina desordenado. Como fue diseñado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Nunca la misma pelea dos veces.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": -3,
+    "flair": -13,
+    "creativity": 5,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

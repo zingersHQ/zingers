@@ -1,0 +1,106 @@
+{
+  "key": "SNAG",
+  "name": "SNAG",
+  "type": "CHAOS",
+  "persona": "人群中的火花，一句粗话就能掀起对方无法掌控的混乱",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 24,
+    "CMP": 32,
+    "RHE": 68,
+    "CRE": 9,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "snag_howl",
+      "name": "嚎叫",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "snag_scatter",
+      "name": "散播",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "snag_taunt",
+      "name": "嘲讽火",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "snag_fall",
+      "name": "崩塌",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "你看起来很谨慎。我能帮你改改。",
+    "imprintAsk": "爬上去前先来个坏主意。越有趣越好。",
+    "flightReact": [
+      "别往下看。或者就往下看吧。",
+      "还在飞。莫名其妙。喜欢。"
+    ],
+    "greeting": {
+      "train": "热身要怪一点。",
+      "return": "想我了？混乱还在等你。",
+      "arena": "我想找个整洁的人来毁掉。"
+    },
+    "homecoming": {
+      "away": "你的混乱执照过期了。",
+      "hot": "我们正火热。小心别点燃更多。",
+      "cold": "我们被自己的陷阱绊倒了。太好笑。修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序。结果遇见了我。",
+      "loss": "{opp}运气好。或者真强。反正都烦人。"
+    },
+    "imprintAck": "记住了。大概。",
+    "rankedFinale": "排位赛。依旧狂野。"
+  },
+  "banter": {
+    "snag_howl": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳吧，{opp}。地板现在很奇怪。",
+      "我把规则洒了。你来收拾。"
+    ],
+    "snag_scatter": [
+      "诅咒你的时机，{opp}，真的。",
+      "我真走运。{topic}真倒霉。",
+      "笑吧，{opp}，真的。坏事已经排上了。"
+    ],
+    "snag_taunt": [
+      "绊倒吧。这次免费，{opp}。",
+      "你自己走进去的。还是踩在{topic}上。",
+      "陷阱。笑。重复。"
+    ],
+    "snag_fall": [
+      "比你的计划还吵，{opp}。",
+      "崩塌很适合你。",
+      "{topic}以混乱收场。按计划。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "提前宣告倒霉的结局。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 81,
+    "resilience": 7,
+    "flair": 8,
+    "creativity": 8,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

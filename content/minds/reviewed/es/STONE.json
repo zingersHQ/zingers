@@ -1,0 +1,108 @@
+{
+  "key": "STONE",
+  "name": "STONE",
+  "type": "COMPOSURE",
+  "persona": "un guardián del puerto que mantiene la pelea estable hasta que las mentes imprudentes encallan",
+  "lineage": "eco de Bastion: hierro más silencioso",
+  "stats": {
+    "LOG": 54,
+    "CMP": 90,
+    "RHE": 66,
+    "CRE": 50,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "stone_moor",
+      "name": "Amarre",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "stone_ballast",
+      "name": "Lastre",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "stone_tide",
+      "name": "Contramarea",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "stone_deep",
+      "name": "Calma Profunda",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio.",
+      "return": "Regreso registrado. Sigo aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el trimado. A bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas derrotas ruidosas. Suavízame de nuevo."
+    },
+    "afterFight": {
+      "win": "{opp} anotado. No lo hicimos.",
+      "loss": "{opp} ganó a gritos. Respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificatorias. Sigo respirando."
+  },
+  "banter": {
+    "stone_moor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "stone_ballast": [
+      "Respira, {opp}, en serio. La pausa es mía.",
+      "Curo más lento que tú te inclinas, en serio.",
+      "Aguanta, en serio. La línea aguanta."
+    ],
+    "stone_tide": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "stone_deep": [
+      "Sigo de pie. Sigo callado.",
+      "Salud baja. Pánico aún más bajo.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Sin prisa. Su prisa pierde.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 49,
+    "resilience": 81,
+    "flair": 51,
+    "creativity": 48,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "UNIT",
+  "name": "UNIT",
+  "type": "LOGIC",
+  "persona": "一个直奔关键点的角色，忽略支线，把每次交锋都推向决定性节点",
+  "lineage": "悖论回响：更锋利的节点",
+  "stats": {
+    "LOG": 89,
+    "CMP": 67,
+    "RHE": 44,
+    "CRE": 47,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "unit_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "unit_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "unit_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "unit_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "很好。喜欢锋利边的共同作者。",
+    "imprintAsk": "攀登前先定一条规则。要精确。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。干净飞行。"
+    ],
+    "greeting": {
+      "train": "先演练证明。花哨的事以后再说。",
+      "return": "你证明做到一半就走了。不礼貌。",
+      "arena": "给我一个矛盾。"
+    },
+    "homecoming": {
+      "away": "你证明做到一半就消失了。我自己写完了。",
+      "hot": "我们干净。保持干净。",
+      "cold": "冷记录。把下一条证明暖起来。"
+    },
+    "afterFight": {
+      "win": "{opp} 没通过证明。已记录。",
+      "loss": "{opp} 抓到缺口。修补后重赛。"
+    },
+    "imprintAck": "规则已就位。",
+    "rankedFinale": "排位胜利。干净的差距。"
+  },
+  "banter": {
+    "unit_sum": [
+      "你的前提站不住，{opp}。在{topic}上，结论已定。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不喊叫，{opp}。我只是完成{topic}。"
+    ],
+    "unit_factor": [
+      "{opp} 在{topic}上留了个洞。我已填上。",
+      "精确胜过音量，{opp}。",
+      "那是噪音。这才是证明。"
+    ],
+    "unit_brace": [
+      "别动，{opp}。结构正在加载。",
+      "我没在赶{topic}，你在赶。",
+      "守好。数学不会眨眼。"
+    ],
+    "unit_total": [
+      "证明结束，{opp}，实话实说。",
+      "Q.E.D.，实话实说。指的就是你，{opp}。",
+      "{topic} 已定，实话实说。坐好。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "瞄准一次。命中要害。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 22,
+    "control": 92,
+    "resilience": 29,
+    "flair": 31,
+    "creativity": 56,
+    "wins": 21,
+    "losses": 17,
+    "battles": 38
+  }
+}

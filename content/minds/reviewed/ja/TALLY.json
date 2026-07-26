@@ -1,0 +1,110 @@
+{
+  "key": "TALLY",
+  "name": "TALLY",
+  "type": "LOGIC",
+  "persona": "相手の隙が完全に露わになった瞬間にトドメを刺す、決着役",
+  "lineage": "Paradoxの残響：より冷徹な角度",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 16,
+    "CRE": 6,
+    "CHA": 22
+  },
+  "moves": [
+    {
+      "id": "tally_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tally_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tally_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tally_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "そこにいたか。綺麗な前提を持ってこい。あとは私がやる。",
+    "imprintAsk": "登る前に一つ。はっきりしたルールを。",
+    "flightReact": [
+      "ベクトル固定。上昇開始。",
+      "高度確認済み。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "研ぎ澄まして。それから登れ。",
+      "return": "状態：再開。",
+      "arena": "隙だらけの前提を探せ。"
+    },
+    "homecoming": {
+      "away": "不在を記録。蓄積した誤差あり。",
+      "hot": "勢いも数値。足し続けろ。",
+      "cold": "悪い章がいくつか。共に書き直せ。"
+    },
+    "afterFight": {
+      "win": "{opp}が穴を残した。私が塞いだ。",
+      "loss": "{opp}は汚く勝った。あとで計算する。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "順位更新。証明は成立。"
+  },
+  "banter": {
+    "tally_cut": [
+      "{opp}、前提が破綻している。{topic}はもう閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "tally_reduce": [
+      "{opp}は{topic}に穴を残した。私が埋めた。",
+      "量より精度、{opp}。",
+      "それは雑音。これは証明だ。"
+    ],
+    "tally_hold": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}は急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "tally_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "要となる箇所を見つけ、壊す。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": 38,
+    "resilience": 57,
+    "flair": 92,
+    "creativity": 34,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

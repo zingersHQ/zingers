@@ -1,0 +1,107 @@
+{
+  "key": "BULWARK",
+  "name": "BULWARK",
+  "type": "COMPOSURE",
+  "persona": "一枚深水炸弹，表面静止不动，真正的工作在水下进行",
+  "lineage": "Still的回响：更慢的潮汐",
+  "stats": {
+    "LOG": 55,
+    "CMP": 91,
+    "RHE": 33,
+    "CRE": 10,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "bulwark_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "bulwark_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "bulwark_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "bulwark_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在这里。",
+    "imprintAsk": "攀登前，先定一条柔软的规则。我会遵守。",
+    "flightReact": [
+      "……上升。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "练习平衡。",
+      "return": "已记录返回。仍然在此。",
+      "arena": "让他们先开口。"
+    },
+    "homecoming": {
+      "away": "我保持了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场喧嚣的失利。让我重新柔和。"
+    },
+    "afterFight": {
+      "win": "{opp}已记录。我们没有。",
+      "loss": "{opp}赢得很响亮。我们柔声回应。"
+    },
+    "imprintAck": "……遵守了。安静地。",
+    "rankedFinale": "排位赛。仍在呼吸。"
+  },
+  "banter": {
+    "bulwark_plumb": [
+      "我听见你了，{opp}。我还在这里。",
+      "别发热。用错地方。",
+      "安静有效。看着。"
+    ],
+    "bulwark_measure": [
+      "呼吸，{opp}。暂停是我的。",
+      "我愈合得比你倾斜得慢。",
+      "坚持。防线会守住。"
+    ],
+    "bulwark_true": [
+      "连本带利奉还，{opp}。",
+      "你挥拳。我等待。那就是技巧。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "bulwark_stone": [
+      "仍然站立，诚实。仍然安静。",
+      "生命值低，诚实。恐慌更低。",
+      "最后一击，诚实。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "吸收热量。返还一击。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 38,
+    "resilience": 57,
+    "flair": 86,
+    "creativity": 40,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

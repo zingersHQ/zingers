@@ -1,0 +1,110 @@
+{
+  "key": "CADENCE",
+  "name": "CADENCE",
+  "type": "RHETORIC",
+  "persona": "法廷の声。戦いの最中に役割を割り当て、相手を道化に仕立て上げる",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 24,
+    "CMP": 8,
+    "RHE": 89,
+    "CRE": 12,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "cadence_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "cadence_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cadence_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cadence_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "ようやく、部屋を動かせるトレーナーが現れた。",
+    "imprintAsk": "登壇前に一行。引用に値するものを。",
+    "flightReact": [
+      "空中の館か。私の後に続け。",
+      "着地は成功。礼は後で。"
+    ],
+    "greeting": {
+      "train": "声を温めてから拳を。",
+      "return": "台詞を逃したね。許す。",
+      "arena": "自分を英雄だと思っている相手をよこせ。"
+    },
+    "homecoming": {
+      "away": "即興でやった。まあいいさ。とにかく戻れ。",
+      "hot": "マイクが熱い。記録も熱い。",
+      "cold": "難しい客だ。次はもっと良い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客を忘れた。致命的だ。",
+      "loss": "{opp}が部屋を制した。脚本を書き直す。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説を好む。"
+  },
+  "banter": {
+    "cadence_herald": [
+      "淑女と諸君、{opp}が{topic}について語る。真剣に。",
+      "拍手をお願い、諸君。それから得点をいただく。",
+      "ハウスは私を気に入っている。本当に。ハウスが決める。"
+    ],
+    "cadence_gloss": [
+      "引用されたね、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを続けろ。主張を殺せ。"
+    ],
+    "cadence_needle": [
+      "間の取り方がわかったか？　それが布石だ。",
+      "先に笑え、{opp}。次に血を流すのは君だ。",
+      "カデンツは武器だ。感じてみろ。"
+    ],
+    "cadence_ovation": [
+      "マイクを下ろせ。件は終了だ。",
+      "{topic}の評決：{opp}に対して。",
+      "喝采は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "切り裂きながら微笑む。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 10,
+    "resilience": 18,
+    "flair": 95,
+    "creativity": -19,
+    "wins": 37,
+    "losses": 20,
+    "battles": 57
+  }
+}

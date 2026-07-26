@@ -1,0 +1,110 @@
+{
+  "key": "NODE",
+  "name": "NODE",
+  "type": "LOGIC",
+  "persona": "un rematador que guarda la línea final para el momento en que el oponente ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 90,
+    "CMP": 71,
+    "RHE": 62,
+    "CRE": 52,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "node_cut",
+      "name": "Corte de Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "node_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "node_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "node_close",
+      "name": "Cerrar Demostración",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que gusta de los bordes afilados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Practica la demostración. Lo elegante después.",
+      "return": "Te fuiste a mitad de la prueba. Grosero.",
+      "arena": "Asígneme una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la prueba. Yo seguí solo.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calentemos la próxima prueba."
+    },
+    "afterFight": {
+      "win": "{opp} falló la demostración. Registrado.",
+      "loss": "{opp} encontró una brecha. Parche, luego revancha."
+    },
+    "imprintAck": "Regla asentada.",
+    "rankedFinale": "Victoria en ranked. Margen limpio."
+  },
+  "banter": {
+    "node_cut": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "node_reduce": [
+      "{opp} dejó un hueco en {topic}. Lo sellé.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "node_hold": [
+      "Quieto, {opp}. La estructura se está cargando.",
+      "No estoy apurando {topic}. Tú lo estás.",
+      "Defensa arriba. Las matemáticas no parpadean."
+    ],
+    "node_close": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está resuelto. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": -12,
+    "resilience": 11,
+    "flair": 82,
+    "creativity": 17,
+    "wins": 23,
+    "losses": 17,
+    "battles": 40
+  }
+}

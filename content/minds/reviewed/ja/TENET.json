@@ -1,0 +1,110 @@
+{
+  "key": "TENET",
+  "name": "TENET",
+  "type": "LOGIC",
+  "persona": "相手がすでに露呈した瞬間を待って、決着の一撃を放つクローザー",
+  "lineage": "Paradoxの残響：より冷たい角度",
+  "stats": {
+    "LOG": 90,
+    "CMP": 69,
+    "RHE": 28,
+    "CRE": 35,
+    "CHA": 17
+  },
+  "moves": [
+    {
+      "id": "tenet_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tenet_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tenet_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tenet_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "了解。鋭い切っ先を好む共著者だ。",
+    "imprintAsk": "登る前に一つ。厳密に決めておこう。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。安定飛行。"
+    ],
+    "greeting": {
+      "train": "証明を叩き込め。派手さは後回しだ。",
+      "return": "証明の途中で抜けるな。不作法だ。",
+      "arena": "矛盾を割り当ててくれ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えたな。私だけでアウトラインを進めた。",
+      "hot": "きれいだ。そのままきれいでいよう。",
+      "cold": "冷たい記録だ。次の証明は温めておけ。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦だ。"
+    },
+    "imprintAck": "規則は定まった。",
+    "rankedFinale": "ランク戦勝利。きれいな差。"
+  },
+  "banter": {
+    "tenet_cut": [
+      "{opp}、前提が崩れている。{topic}では線はすでに閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終えるだけだ。"
+    ],
+    "tenet_reduce": [
+      "{opp}は{topic}に穴を残した。私が埋めた。",
+      "正確さは音量に勝る、{opp}。",
+      "それは雑音だ。これが証明だ。"
+    ],
+    "tenet_hold": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "私は{topic}を急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬きをしない。"
+    ],
+    "tenet_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座っていろ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "蝶番を見つける。そして折る。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 40,
+    "control": 37,
+    "resilience": 78,
+    "flair": 32,
+    "creativity": 21,
+    "wins": 30,
+    "losses": 26,
+    "battles": 56
+  }
+}

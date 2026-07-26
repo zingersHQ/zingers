@@ -1,0 +1,107 @@
+{
+  "key": "IRON",
+  "name": "IRON",
+  "type": "COMPOSURE",
+  "persona": "un estoico a plomo que mide cada golpe contra un centro recto e implacable",
+  "lineage": "eco de Still: marea más lenta",
+  "stats": {
+    "LOG": 55,
+    "CMP": 88,
+    "RHE": 19,
+    "CRE": 27,
+    "CHA": 7
+  },
+  "moves": [
+    {
+      "id": "iron_plumb",
+      "name": "Plomada",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "iron_measure",
+      "name": "Medida",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "iron_true",
+      "name": "Línea Recta",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "iron_stone",
+      "name": "Piedra Firme",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio aguanta.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba en calma. Mantuve el trimado.",
+      "arena": "Oponente silencioso. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste mucho tiempo fuera. El silencio resistió.",
+      "hot": "Avanzando parejo. No celebres. Mantén el centro.",
+      "cold": "Frío. Aún respiro. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos pilló desequilibrados. Trimado antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "iron_plumb": [
+      "Te escuché, {opp}, sinceramente. Sigo aquí.",
+      "Guarda el calor, sinceramente. Lo gastas mal.",
+      "El silencio funciona, sinceramente. Observa."
+    ],
+    "iron_measure": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Sostén. La línea sostiene."
+    ],
+    "iron_true": [
+      "Devuelto con interés, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "iron_stone": [
+      "Sigo en pie. Sigo callado.",
+      "Salud baja. Pánico aún más bajo.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Espera el retroceso. Golpea olas gastadas.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 1,
+    "resilience": -8,
+    "flair": 84,
+    "creativity": 6,
+    "wins": 36,
+    "losses": 30,
+    "battles": 66
+  }
+}

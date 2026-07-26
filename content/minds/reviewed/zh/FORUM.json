@@ -1,0 +1,106 @@
+{
+  "key": "FORUM",
+  "name": "FORUM",
+  "type": "RHETORIC",
+  "persona": "a jest-blade who smiles through the cut and makes the wound feel like a joke",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 58,
+    "CMP": 39,
+    "RHE": 86,
+    "CRE": 40,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "forum_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "forum_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "forum_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "forum_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "准备好就开口。我已准备开场。",
+    "imprintAsk": "攀登前先说一句。让它值得引用。",
+    "flightReact": [
+      "空中之屋。随我而行。",
+      "落地成功。谢礼稍后。"
+    ],
+    "greeting": {
+      "train": "排练杀招台词。",
+      "return": "你回来了。切入场音乐。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "没有你在，冷场。来暖场。",
+      "hot": "我们是头牌。拿出头牌的样子。",
+      "cold": "冷场。热修辞。"
+    },
+    "afterFight": {
+      "win": "{opp}先丢了全场。",
+      "loss": "{opp}笑点更狠。暂且。"
+    },
+    "imprintAck": "台词锁定。",
+    "rankedFinale": "排位胜。听见掌声了吗？"
+  },
+  "banter": {
+    "forum_gavel": [
+      "女士们、诸位脑瓜：{opp}谈{topic}，真诚。",
+      "给他们鼓掌，真诚。然后拿分。",
+      "全场爱我，真诚。全场决定。"
+    ],
+    "forum_cite": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "延续笑点。终结主张。"
+    ],
+    "forum_sustain": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。后流血。",
+      "节奏是武器。感受它。"
+    ],
+    "forum_verdict": [
+      "落麦。事已定。",
+      "关于{topic}的裁决：驳回{opp}。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "为全场而演。赢得点头。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 43,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 40,
+    "wins": 51,
+    "losses": 12,
+    "battles": 63
+  }
+}

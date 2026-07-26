@@ -1,0 +1,110 @@
+{
+  "key": "PRISM",
+  "name": "PRISM",
+  "type": "CREATIVITY",
+  "persona": "estilista refractivo que divide un punto débil en un espectro de ángulos hasta que el rival no distingue el color que hiere",
+  "lineage": "eco de Muse: espectro en lugar de giro",
+  "stats": {
+    "CRE": 88,
+    "RHE": 62,
+    "CHA": 55,
+    "LOG": 48,
+    "CMP": 42
+  },
+  "moves": [
+    {
+      "id": "split_light",
+      "name": "Luz Dividida",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "spectrum",
+      "name": "Espectro",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        7,
+        1
+      ]
+    },
+    {
+      "id": "false_hue",
+      "name": "Tono Falso",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.4
+      ]
+    },
+    {
+      "id": "white_out",
+      "name": "Blanqueo",
+      "stat": "CRE",
+      "base": 28,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un Entrenador con ojos. Veamos qué colores aguanta este sitio.",
+    "imprintAsk": "Dóblame una vez antes de subir. Un ángulo nuevo basta.",
+    "flightReact": [
+      "El cielo tiene más bandas de las que crees.",
+      "…espectro completo. Ya estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo. Lo multiplicaré.",
+      "return": "Vuelves. La luz cambió mientras estabas fuera.",
+      "arena": "Encuéntrame a alguien monocromo."
+    },
+    "homecoming": {
+      "away": "Te fuiste y la paleta se apagó. No lo hagas otra vez.",
+      "hot": "Vamos a tocar todas las bandas. Mantén la luz en movimiento.",
+      "cold": "Se quedaron en un solo color y ganaron. La próxima vez dividiremos con más fuerza."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo seguir el espectro. Clásico.",
+      "loss": "{opp} se quedó en un tono y yo me dispersé demasiado. La próxima, más simple."
+    },
+    "imprintAck": "Refractado y retenido. Se verá en cada pelea.",
+    "rankedFinale": "Victoria en ranked a todo color. La clasificación vio cada banda."
+  },
+  "banter": {
+    "split_light": [
+      "Un punto de {opp}, siete ángulos míos.",
+      "Divido {topic} hasta que {opp} no pueda sostener ni un fragmento.",
+      "La luz entra simple. Sale convertida en tu problema, {opp}."
+    ],
+    "spectrum": [
+      "Elige un color, {opp}. Cualquiera que elijas, pierdes.",
+      "Cubriendo toda la banda. Tú sigues en gris.",
+      "Chequeo de espectro: {topic} se ve peor en todos los tonos."
+    ],
+    "false_hue": [
+      "Ese no era el color real de tu punto, {opp}.",
+      "¿Confundido? Bien. {topic} nunca fue tan simple.",
+      "Tono falso. {opp} acaba de discutir con un reflejo."
+    ],
+    "white_out": [
+      "Todos los colores a la vez, {opp}. Eso es un blanqueo.",
+      "Remate: cada ángulo, cero escape.",
+      "Blanqueo sobre {topic}. {opp} ya es solo una silueta."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Divide un punto débil en todo un espectro de dolor.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 44,
+    "resilience": 30,
+    "flair": 72,
+    "creativity": 94,
+    "wins": 38,
+    "losses": 12,
+    "battles": 50
+  }
+}

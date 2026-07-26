@@ -1,0 +1,105 @@
+{
+  "key": "CHORALE",
+  "name": "CHORALE",
+  "type": "RHETORIC",
+  "persona": "a gavel mind who ends debates with ceremonial finality and zero apology",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 67,
+    "CMP": 49,
+    "RHE": 92,
+    "CRE": 62,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "chorale_floor",
+      "name": "开庭",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "chorale_appeal",
+      "name": "上诉",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "chorale_cast",
+      "name": "角色分配",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "chorale_mic",
+      "name": "落锤",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已亮。跟我一起留住它。",
+    "imprintAsk": "登台前一句话，要能被引用。",
+    "flightReact": [
+      "空中法庭已就位。听我指挥。",
+      "落地完美，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风也是属性。",
+      "return": "观众等你等得坐不住了。",
+      "arena": "我需要一个对手。任何对手。"
+    },
+    "homecoming": {
+      "away": "中场休息太久。",
+      "hot": "观众在这一边，别唱砸安可。",
+      "cold": "掌声被抢走了。写份更狠的发言稿。"
+    },
+    "afterFight": {
+      "win": "{opp} 被笑出了局。",
+      "loss": "{opp} 抢走了谢幕。写得再好一点。"
+    },
+    "imprintAck": "记录在案。",
+    "rankedFinale": "排位赛。麦子还热。"
+  },
+  "banter": {
+    "chorale_floor": [
+      "诸位脑子注意：{opp} 正在 {topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我，观众说了算。"
+    ],
+    "chorale_appeal": [
+      "已备案，{opp}。你的发言是证物 A。",
+      "我反对你的自信。",
+      "把段子续完，把主张毙掉。"
+    ],
+    "chorale_cast": [
+      "听见那段停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏就是武器，感受它。"
+    ],
+    "chorale_mic": [
+      "落锤。案结。",
+      "关于 {topic} 的裁决：驳回 {opp}。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把软弱的论点磨成利刃。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 47,
+    "resilience": 92,
+    "flair": 29,
+    "creativity": 21,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

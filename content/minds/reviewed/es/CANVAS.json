@@ -1,0 +1,110 @@
+{
+  "key": "CANVAS",
+  "name": "CANVAS",
+  "type": "CREATIVITY",
+  "persona": "una mente riff que improvisa puentes peligrosos entre ideas inconexas a mitad de golpe",
+  "lineage": "eco de Fable: tinta más húmeda",
+  "stats": {
+    "LOG": 45,
+    "CMP": 43,
+    "RHE": 57,
+    "CRE": 84,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "canvas_reframe",
+      "name": "Reencuadre",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "canvas_steal",
+      "name": "Robar Motivo",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "canvas_plot",
+      "name": "Patada de Trama",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "canvas_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hagamos algo que no puedan dejar de ver.",
+    "imprintAsk": "Una torsión antes de subir. La trenzaré dentro.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia en pausa. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Qué grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} interpretó al tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me sobredividí."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "canvas_reframe": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "canvas_steal": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "canvas_plot": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "canvas_magnum": [
+      "Última página, honestamente. Tu nombre es nota al pie.",
+      "El arte gana, honestamente. Discute después.",
+      "Despierta dentro de mi metáfora, honestamente."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Hace que lo serio parezca poco imaginativo.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": -7,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

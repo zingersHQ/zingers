@@ -1,0 +1,114 @@
+{
+  "key": "SYNTAX",
+  "name": "SYNTAX",
+  "type": "LOGIC",
+  "persona": "a cryptic decoder who treats every boast as an encrypted weakness",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 92,
+    "CMP": 66,
+    "RHE": 50,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "syntax_decode",
+      "name": "解码",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "syntax_checksum",
+      "name": "校验",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "syntax_sandbox",
+      "name": "沙箱",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "syntax_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "很好。一位喜欢锋利边角的合作者。",
+    "imprintAsk": "攀登前先定一条规则。精确。",
+    "flightReact": [
+      "矢量已锁定。上升。",
+      "高度确认。飞行干净。"
+    ],
+    "greeting": {
+      "train": "先练证明。花哨的以后再说。",
+      "return": "你证明做到一半就走了。真没礼貌。",
+      "arena": "给我一个矛盾。"
+    },
+    "homecoming": {
+      "away": "你证明做到一半就消失了。我自己把大纲写完了。",
+      "hot": "我们干净。保持干净。",
+      "cold": "记录冰冷。下一个证明要暖一点。"
+    },
+    "afterFight": {
+      "win": "{opp}没通过证明。已记录。",
+      "loss": "{opp}抓到一个缺口。修补后复赛。"
+    },
+    "imprintAck": "规则已落座。",
+    "rankedFinale": "排位胜利。比分干净。"
+  },
+  "banter": {
+    "syntax_decode": [
+      "{opp}的前提站不住脚。关于{topic}，结论已锁死。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不喊叫，{opp}。我只是完成{topic}。"
+    ],
+    "syntax_checksum": [
+      "{opp}在{topic}留了个洞。我已归档。",
+      "精确胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "syntax_sandbox": [
+      "别动，{opp}。结构正在加载。",
+      "我没有赶{topic}，真的。你才是。",
+      "护住，真的。数学不会眨眼。"
+    ],
+    "syntax_root": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已尘埃落定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "不可分割。不可拆分。已完成。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 35,
+    "control": 87,
+    "resilience": 44,
+    "flair": 28,
+    "creativity": 26,
+    "wins": 35,
+    "losses": 16,
+    "battles": 51
+  }
+}

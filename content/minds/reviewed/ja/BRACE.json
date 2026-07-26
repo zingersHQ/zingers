@@ -1,0 +1,108 @@
+{
+  "key": "BRACE",
+  "name": "BRACE",
+  "type": "COMPOSURE",
+  "persona": "嵐が部屋を荒れ狂わせるのをただ見守り、荒れ狂うことに代償がかかる時だけ静かに応じる、重心を保つ心",
+  "lineage": "Bastionの残響：より柔らかな石",
+  "stats": {
+    "LOG": 60,
+    "CMP": 90,
+    "RHE": 40,
+    "CRE": 39,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "brace_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "brace_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "brace_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "brace_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がなくて大丈夫。ここにいるよ。",
+    "imprintAsk": "登る前に一つだけ、静かな約束をしておくよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良いね。"
+    ],
+    "greeting": {
+      "train": "バランスを整えて。",
+      "return": "戻ったね。まだここにいるよ。",
+      "arena": "まずは彼らに話させよう。"
+    },
+    "homecoming": {
+      "away": "バランスを保っていたよ。乗って。",
+      "hot": "熱い流れ。冷静な頭で。",
+      "cold": "大きな負けがいくつかあったね。また柔らかく整えて。"
+    },
+    "afterFight": {
+      "win": "{opp}は記録された。私たちはしなかった。",
+      "loss": "{opp}は大声で勝った。私たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランク戦。まだ息をしている。"
+  },
+  "banter": {
+    "brace_harbor": [
+      "{opp}、聞いたよ。ここにいるよ。",
+      "熱を温存して。無駄にしないで。",
+      "静かさは力だ。見ておくよ。"
+    ],
+    "brace_heal": [
+      "{opp}、息を。休憩は私のものだ。",
+      "私は君の傾きよりゆっくり癒す。",
+      "待って。線は保たれている。"
+    ],
+    "brace_shore": [
+      "利息を添えて返したよ、{opp}。",
+      "君は振るった。私は待った。それが技だ。",
+      "{topic}は忍耐に報いる。君にはじゃない。"
+    ],
+    "brace_low": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。パニックはもっと低い。",
+      "最後の切り札。柔らかな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "彼らが浜に打ち上げられるまで戦いを安定させる。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 18,
+    "resilience": -6,
+    "flair": 95,
+    "creativity": 5,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

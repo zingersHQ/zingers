@@ -1,0 +1,108 @@
+{
+  "key": "MOOR",
+  "name": "MOOR",
+  "type": "COMPOSURE",
+  "persona": "un duelista de ritmo pétreo que rechaza la urgencia y vence con el agotamiento del rival",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 56,
+    "CMP": 88,
+    "RHE": 22,
+    "CRE": 14,
+    "CHA": 17
+  },
+  "moves": [
+    {
+      "id": "moor_harbor",
+      "name": "Puerto",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "moor_heal",
+      "name": "Sanación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "moor_shore",
+      "name": "Ruptura Costera",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "moor_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Ejercita el equilibrio.",
+      "return": "Regreso anotado. Sigo aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve la línea. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas derrotas ruidosas. Suavízame otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} registrado. No nosotros.",
+      "loss": "{opp} ganó a gritos. Nosotros respondemos en voz baja."
+    },
+    "imprintAck": "…cumplido. En silencio.",
+    "rankedFinale": "Clasificatorio. Aún respiro."
+  },
+  "banter": {
+    "moor_harbor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "moor_heal": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "moor_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "moor_low": [
+      "Todavía en pie, honestamente. Todavía callado.",
+      "Poca salud, honestamente. Menos pánico.",
+      "Último corte, honestamente. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Voz suave. Centro duro.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 41,
+    "resilience": 47,
+    "flair": 23,
+    "creativity": 87,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

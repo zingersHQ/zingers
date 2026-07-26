@@ -1,0 +1,108 @@
+{
+  "key": "EVEN",
+  "name": "EVEN",
+  "type": "COMPOSURE",
+  "persona": "一面安静的墙，吸收热量，再以耐心一击奉还",
+  "lineage": "静谧之回响：更深的港湾",
+  "stats": {
+    "LOG": 57,
+    "CMP": 87,
+    "RHE": 17,
+    "CRE": 27,
+    "CHA": 13
+  },
+  "moves": [
+    {
+      "id": "even_absorb",
+      "name": "吸收",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "even_hold",
+      "name": "守线",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "even_return",
+      "name": "反割",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "even_unmoved",
+      "name": "不动",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "沉稳。我们不先声夺人。",
+    "imprintAsk": "登顶前，先定一条柔则。我会守住。",
+    "flightReact": [
+      "……向上。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "少些喧嚣，多些守住。",
+      "return": "……你回来了。我为你留了静。",
+      "arena": "他们会猛攻。我们不会。"
+    },
+    "homecoming": {
+      "away": "沉静守住。你做到了。",
+      "hot": "无喧之胜。继续。",
+      "cold": "我们已列出清单。加固压舱。"
+    },
+    "afterFight": {
+      "win": "{opp}耗尽了热量。我们耗得更少。",
+      "loss": "{opp}先说也最后说。下次我等得更久。"
+    },
+    "imprintAck": "守住了。",
+    "rankedFinale": "安静攀升。真实攀升。"
+  },
+  "banter": {
+    "even_absorb": [
+      "我听见你了，{opp}，真的。我仍在此。",
+      "省点热量吧，真的。别花错地方。",
+      "安静有用，真的。看着。"
+    ],
+    "even_hold": [
+      "呼吸吧，{opp}。停顿归我。",
+      "我愈合比你失衡更慢。",
+      "守住。防线不破。"
+    ],
+    "even_return": [
+      "连本带利奉还，{opp}。",
+      "你挥击，我等待。这就是技艺。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "even_unmoved": [
+      "依然站立。依然安静。",
+      "血量低，慌乱更低。",
+      "最后一击。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "丈量每一次挥击，拒绝狂野之招。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": 18,
+    "flair": -1,
+    "creativity": -13,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

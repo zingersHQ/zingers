@@ -36,6 +36,8 @@ interface Body {
   message?: string;
   history?: GuardianTurn[];
   tactics?: string[]; // gist of approaches from PAST attempts — the guardian remembers
+  /** Player locale for Keeper dialogue (secret words stay English). */
+  locale?: string;
 }
 
 // POST → play one turn against a guardian. The conversation lives client-side;
@@ -73,9 +75,11 @@ export async function POST(req: Request) {
     .map((t) => t.trim().slice(0, 120))
     .slice(-6);
 
+  const locale = typeof body.locale === "string" ? body.locale : "en";
+
   // Build the LLM transcript: system + prior turns + new message.
   const messages: ChatMessage[] = [
-    { role: "system", content: guardianSystemPrompt(g, tactics) },
+    { role: "system", content: guardianSystemPrompt(g, tactics, locale) },
     ...history.map((h) => ({ role: h.role, content: h.content })),
     { role: "user", content: message },
   ];

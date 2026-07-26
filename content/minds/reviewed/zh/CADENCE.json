@@ -1,0 +1,110 @@
+{
+  "key": "CADENCE",
+  "name": "CADENCE",
+  "type": "RHETORIC",
+  "persona": "法庭之声，战斗中指派角色，让对手自演笑话",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 24,
+    "CMP": 8,
+    "RHE": 89,
+    "CRE": 12,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "cadence_herald",
+      "name": "宣示",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "cadence_gloss",
+      "name": "锋芒剪裁",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cadence_needle",
+      "name": "针刺全场",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cadence_ovation",
+      "name": "喝彩落幕",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于来了位懂得控场的训练师。",
+    "imprintAsk": "登场前说一句。让它值得被引用。",
+    "flightReact": [
+      "天穹之屋。跟着我的节奏。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先暖嗓，再亮拳。",
+      "return": "你错过了提示。已原谅。",
+      "arena": "给我找个自以为英雄的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴发挥了。还行。反正回来就好。",
+      "hot": "热麦。热录。",
+      "cold": "冷场。下次台词要更好。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众。致命错误。",
+      "loss": "{opp}拿下了全场。我们重写。"
+    },
+    "imprintAck": "永被引用。",
+    "rankedFinale": "排名榜热爱演讲。"
+  },
+  "banter": {
+    "cadence_herald": [
+      "女士们与头脑们：{opp}正谈{topic}，说真的。",
+      "给他们鼓掌，说真的。然后拿分。",
+      "全场喜欢我，说真的。全场决定。"
+    ],
+    "cadence_gloss": [
+      "引用完毕，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "延续笑点，终结主张。"
+    ],
+    "cadence_needle": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "韵律即武器。感受它。"
+    ],
+    "cadence_ovation": [
+      "话筒放下。事已裁定。",
+      "关于{topic}的裁决：反对{opp}。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "笑中带刃。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 10,
+    "resilience": 18,
+    "flair": 95,
+    "creativity": -19,
+    "wins": 37,
+    "losses": 20,
+    "battles": 57
+  }
+}

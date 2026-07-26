@@ -136,6 +136,7 @@ export async function GET(req: Request) {
   const fav = asForce(q.get("fav"));
   const pun = asForce(q.get("pun"));
   if (fav && pun) opts.forceBias = forceBiasMap(fav, pun);
+  opts.locale = q.get("lang") || undefined;
 
   let gen = battleEvents(aKey, bKey, topic, mock, seed, sideA, sideB, opts);
 

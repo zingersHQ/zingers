@@ -1,0 +1,108 @@
+{
+  "key": "HALT",
+  "name": "HALT",
+  "type": "COMPOSURE",
+  "persona": "港の番人。荒ぶる心が浅瀬に乗り上げるまで、戦いを静かに抑える。",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 62,
+    "CMP": 92,
+    "RHE": 13,
+    "CRE": 21,
+    "CHA": 19
+  },
+  "moves": [
+    {
+      "id": "halt_moor",
+      "name": "繋留",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "halt_ballast",
+      "name": "船底石",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "halt_tide",
+      "name": "逆潮",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "halt_deep",
+      "name": "深淵の静",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "君は私を見つけた。静けさが保たれている。",
+    "imprintAsk": "登る前に、柔らかな掟を一つ。守ってみせる。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆっくりとした訓練。柔らかな刃先。",
+      "return": "甲板は静かだった。整えていた。",
+      "arena": "静かな相手。大声の過ち。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長い間いなかったね。静けさは保たれていた。",
+      "hot": "均等に乗っている。祝うな。中心を保て。",
+      "cold": "冷たい。まだ息をしている。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を満たした。それで十分だった。",
+      "loss": "{opp}に平衡を崩された。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静けさに腰を下ろす。",
+    "rankedFinale": "…順位戦の勝利。派手さはない。ただ記録だけ。"
+  },
+  "banter": {
+    "halt_moor": [
+      "{opp}、声は聞こえた。私はまだここにいる。",
+      "熱を溜めろ。使い方を誤るな。",
+      "静けさは効く。見ておけ。"
+    ],
+    "halt_ballast": [
+      "{opp}、正直に息をしろ。休止は私のものだ。",
+      "君が傾くより、私はゆっくり癒える。正直に。",
+      "留まれ。正直に。線は保たれている。"
+    ],
+    "halt_tide": [
+      "利息を付けて返した、{opp}。",
+      "君は振るってきた。私は待った。それが技だ。",
+      "{topic}は忍耐を報いる。君ではない。"
+    ],
+    "halt_deep": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。パニックはさらに低い。",
+      "最後の斬撃。柔らかな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "急ぐな。彼らの焦りが負ける。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -19,
+    "resilience": 0,
+    "flair": -13,
+    "creativity": 20,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "key": "TWIST",
+  "name": "TWIST",
+  "type": "CHAOS",
+  "persona": "una chispa de multitud que convierte una frase grosera en un lío que el rival no puede controlar",
+  "lineage": "eco de Glitch: chispa más alta",
+  "stats": {
+    "LOG": 6,
+    "CMP": 37,
+    "RHE": 56,
+    "CRE": 6,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "twist_howl",
+      "name": "Aullido",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "twist_scatter",
+      "name": "Dispersión",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "twist_taunt",
+      "name": "Fuego de Burla",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "twist_fall",
+      "name": "Colapso",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "Hola. Intenta no sujetar el mapa tan fuerte.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Todavía volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Juguetea. Aprendes más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a un seguidor de reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganar raro. Sigue ganando raro.",
+      "cold": "Racha fría. Hexes más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} parecía precavido. Qué tierno.",
+      "loss": "{opp} se mantuvo calmado. Grosero."
+    },
+    "imprintAck": "Oooh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Caótica. Perfecta."
+  },
+  "banter": {
+    "twist_howl": [
+      "Ups, {opp}. {topic} acaba de incendiarse.",
+      "Baila, {opp}. El suelo ahora es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "twist_scatter": [
+      "Hex en tu tiempo, {opp}.",
+      "Suerte mía. Desgracia para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "twist_taunt": [
+      "Tropezón. Eso fue gratis, {opp}.",
+      "Caminaste directo hacia eso. En {topic}, incluso.",
+      "Enganche. Ríe. Repite."
+    ],
+    "twist_fall": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina en desorden. Como se diseñó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Nombra el final desafortunado desde temprano.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 3,
+    "resilience": 17,
+    "flair": 9,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "key": "DECREE",
+  "name": "DECREE",
+  "type": "RHETORIC",
+  "persona": "相手の弱点を突く演説を組み立てる基調講演の捕食者",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 35,
+    "CMP": 8,
+    "RHE": 88,
+    "CRE": 26,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "decree_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "decree_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "decree_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "decree_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。一緒にその中に留まろう。",
+    "imprintAsk": "登壇前に一言。引用に値するものを。",
+    "flightReact": [
+      "空中の家。私の導きに従え。",
+      "着地は成功した。あとで礼を。"
+    ],
+    "greeting": {
+      "train": "存在感はステータスだ。",
+      "return": "君がいないと観客がそわそわしていた。",
+      "arena": "私は相棒が必要だ。どんな相棒でも。"
+    },
+    "homecoming": {
+      "away": "休憩が長引いた。",
+      "hot": "観客は味方だ。アンコールをしくじるな。",
+      "cold": "喝采を奪われた。より鋭い演説を練れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が喝采をさらった。もっと良いものを用意しろ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランキング戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "decree_floor": [
+      "淑女と紳士諸君、{opp}が{topic}について。",
+      "拍手をしてから得点を取ろう。",
+      "観客は私を好いている。観客が決める。"
+    ],
+    "decree_appeal": [
+      "引用されたね、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを続けろ。主張を殺せ。"
+    ],
+    "decree_cast": [
+      "間の取り方が聞こえるか？それが仕掛けだ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "リズムは武器だ。感じろ。"
+    ],
+    "decree_mic": [
+      "マイクを置く。件は決着。",
+      "{topic}の評決：{opp}に対して。",
+      "喝采は私に。教訓は君に。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "陪審を召集し、評決を集める。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 78,
+    "control": 43,
+    "resilience": 52,
+    "flair": 39,
+    "creativity": 32,
+    "wins": 46,
+    "losses": 18,
+    "battles": 64
+  }
+}

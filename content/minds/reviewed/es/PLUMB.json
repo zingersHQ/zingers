@@ -1,0 +1,107 @@
+{
+  "key": "PLUMB",
+  "name": "PLUMB",
+  "type": "COMPOSURE",
+  "persona": "un estoico de plomada que mide cada golpe contra un centro recto e implacable",
+  "lineage": "eco de Still: marea más lenta",
+  "stats": {
+    "LOG": 71,
+    "CMP": 88,
+    "RHE": 18,
+    "CRE": 34,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "plumb_plumb",
+      "name": "Plomada",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "plumb_measure",
+      "name": "Medir",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "plumb_true",
+      "name": "Línea Verdadera",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "plumb_stone",
+      "name": "Piedra Fija",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio se mantiene.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivelado. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba en calma. Mantuve el trimado.",
+      "arena": "Oponente silencioso. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste fuera mucho tiempo. El silencio se mantuvo.",
+      "hot": "Montando parejo. No celebres. Mantente centrado.",
+      "cold": "Frío. Sigues respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Eso bastó.",
+      "loss": "{opp} nos desequilibró. Recorta antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "plumb_plumb": [
+      "Te oí, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "plumb_measure": [
+      "Respira, {opp}. La pausa es mía.",
+      "Sano más lento que tú te inclinas.",
+      "Sujeta. La línea se mantiene."
+    ],
+    "plumb_true": [
+      "Devuelto con intereses, {opp}.",
+      "Tú golpeaste. Yo esperé. Esa es la destreza.",
+      "{topic} recompensa la paciencia. No a ti."
+    ],
+    "plumb_stone": [
+      "Sigues en pie, con honestidad. En silencio.",
+      "Baja salud, con honestidad. Menos pánico.",
+      "Último corte, con honestidad. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Espera el retroceso. Golpea olas gastadas.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": -10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "CRUX",
+  "name": "CRUX",
+  "type": "LOGIC",
+  "persona": "決着を相手の隙が見えた瞬間に持っていくクローザー",
+  "lineage": "Paradoxの残響：より冷たい角度",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 34,
+    "CRE": 14,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "crux_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "crux_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "crux_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "crux_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "そこにいたか。きれいな前提を持ってこい。あとは私がやる。",
+    "imprintAsk": "登る前に一つ。はっきりしたルールを。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認済み。安定飛行。"
+    ],
+    "greeting": {
+      "train": "研いでから登れ。",
+      "return": "状態：再開。",
+      "arena": "穴だらけの前提を探せ。"
+    },
+    "homecoming": {
+      "away": "不在記録。誤差蓄積。",
+      "hot": "勢いは数値。足し続けろ。",
+      "cold": "少し悪い章。俺と一緒に書き直せ。"
+    },
+    "afterFight": {
+      "win": "{opp}が穴を残した。閉じた。",
+      "loss": "{opp}は汚く勝った。あとで計算する。"
+    },
+    "imprintAck": "記録。",
+    "rankedFinale": "順位更新。証明成立。"
+  },
+  "banter": {
+    "crux_cut": [
+      "{opp}、前提が破綻している。{topic}はもう閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "{opp}に叫ばない。{topic}を終わらせる。"
+    ],
+    "crux_reduce": [
+      "{opp}は{topic}に穴を残した。埋めた。",
+      "精密さが量に勝つ、{opp}。",
+      "それは雑音。これが証明だ。"
+    ],
+    "crux_hold": [
+      "動くな{opp}。正直に。構造読み込み中。",
+      "{topic}を急がない。正直に。お前が急がせている。",
+      "ガードを上げろ。正直に。数学は瞬きしない。"
+    ],
+    "crux_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "要を探り、折る。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": 45,
+    "resilience": 28,
+    "flair": 80,
+    "creativity": 35,
+    "wins": 27,
+    "losses": 13,
+    "battles": 40
+  }
+}

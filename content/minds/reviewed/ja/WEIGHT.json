@@ -1,0 +1,108 @@
+{
+  "key": "WEIGHT",
+  "name": "WEIGHT",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 63,
+    "CMP": 92,
+    "RHE": 55,
+    "CRE": 55,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "weight_absorb",
+      "name": "アブソーブ",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "weight_hold",
+      "name": "ホールドライン",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "weight_return",
+      "name": "リターンカット",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "weight_unmoved",
+      "name": "アンムーブド",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたか。静けさが待っていた。",
+    "imprintAsk": "登る前に一つ。守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆったりと。角を削ぐ。",
+      "return": "甲板は静か。整えていた。",
+      "arena": "静かな相手。大きな誤り。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたな。静けさは保たれていた。",
+      "hot": "波は穏やか。祝うな。中心を保て。",
+      "cold": "冷たい。まだ息はある。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だ。",
+      "loss": "{opp}に崩された。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静けさに座る。",
+    "rankedFinale": "…順位戦の勝利。派手さはない。ただ記録だけ。"
+  },
+  "banter": {
+    "weight_absorb": [
+      "{opp}、確かに聞いた。まだここにいる。",
+      "熱は取っておけ。使い方を誤る。",
+      "静けさは効く。本当に。見ろ。"
+    ],
+    "weight_hold": [
+      "息をしろ、{opp}。間は俺のものだ。",
+      "お前が傾くより、俺はゆっくり癒す。",
+      "保て。ラインは保たれる。"
+    ],
+    "weight_return": [
+      "利子をつけて返す、{opp}。",
+      "お前は振る。俺は待つ。それが技だ。",
+      "{topic}は辛抱を報いる。お前ではない。"
+    ],
+    "weight_unmoved": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。動揺はさらに低い。",
+      "最後の斬撃。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "すべての振りを測り、荒ぶるものは退ける。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 82,
+    "resilience": 29,
+    "flair": 56,
+    "creativity": 44,
+    "wins": 36,
+    "losses": 16,
+    "battles": 52
+  }
+}

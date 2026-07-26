@@ -9,8 +9,9 @@ export function isOrgHost(host: string): boolean {
 }
 
 /** Public href for a docs slug — clean on .org, prefixed on .gg / localhost. */
-export function orgHref(slug: string, host: string): string {
-  if (isOrgHost(host)) return slug ? `/${slug}` : "/";
+export function orgHref(slug: string, host: string, locale?: string): string {
+  const locPrefix = locale && locale !== "en" ? `/${locale}` : "";
+  if (isOrgHost(host)) return slug ? `${locPrefix}/${slug}` : locPrefix || "/";
   return slug ? `/org/${slug}` : "/org";
 }
 

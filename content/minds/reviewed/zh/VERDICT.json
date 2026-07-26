@@ -1,0 +1,106 @@
+{
+  "key": "VERDICT",
+  "name": "VERDICT",
+  "type": "RHETORIC",
+  "persona": "a jest-blade who smiles through the cut and makes the wound feel like a joke",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 50,
+    "CMP": 43,
+    "RHE": 89,
+    "CRE": 54,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "verdict_gavel",
+      "name": "法槌",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "verdict_cite",
+      "name": "引证",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "verdict_sustain",
+      "name": "维持",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "verdict_verdict",
+      "name": "裁决",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于有位训练师懂得掌控全场。",
+    "imprintAsk": "登场前说一句，让它成为名言。",
+    "flightReact": [
+      "高空之屋。跟着我。",
+      "落地完美，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓子，再热拳头。",
+      "return": "错过你的提示。已原谅。",
+      "arena": "给我一个自认主角的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴发挥了。还行。反正回来就好。",
+      "hot": "麦克风发烫，录音也烫。",
+      "cold": "气氛冷场。下次台词更好。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众。致命失误。",
+      "loss": "{opp}赢得了全场。我们重写。"
+    },
+    "imprintAck": "永载史册。",
+    "rankedFinale": "排名榜爱听演讲。"
+  },
+  "banter": {
+    "verdict_gavel": [
+      "女士们、先生们：{opp}论{topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我。观众说了算。"
+    ],
+    "verdict_cite": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "维持段子，终结主张。"
+    ],
+    "verdict_sustain": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。后流血。",
+      "节奏即武器。感受它。"
+    ],
+    "verdict_verdict": [
+      "话筒放下。案件终结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "演给全场，赢得认可。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 83,
+    "control": 35,
+    "resilience": 41,
+    "flair": 57,
+    "creativity": 39,
+    "wins": 30,
+    "losses": 9,
+    "battles": 39
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "MODULO",
+  "name": "MODULO",
+  "type": "LOGIC",
+  "persona": "一个只找切入点的逻辑主义者，忽略枝节，直击胜负手",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 84,
+    "CMP": 55,
+    "RHE": 46,
+    "CRE": 44,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "modulo_sum",
+      "name": "总和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "modulo_factor",
+      "name": "因子",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "modulo_brace",
+      "name": "算式护甲",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "modulo_total",
+      "name": "全算",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你来了。给我一个干净的前提，剩下交给我。",
+    "imprintAsk": "上场前先立一条规则，务必精确。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。航迹清晰。"
+    ],
+    "greeting": {
+      "train": "先打磨，再攀登。",
+      "return": "状态：已恢复。",
+      "arena": "给我一个漏洞百出的前提。"
+    },
+    "homecoming": {
+      "away": "缺席已记录，错误已累积。",
+      "hot": "势头只是数字。继续相加。",
+      "cold": "几章写得糟糕。和我一起重写。"
+    },
+    "afterFight": {
+      "win": "{opp}留下了一个洞，我已补上。",
+      "loss": "{opp}赢得很糙。事后验算。"
+    },
+    "imprintAck": "已记录。",
+    "rankedFinale": "排名更新。证明成立。"
+  },
+  "banter": {
+    "modulo_sum": [
+      "{opp}，你的前提在{topic}上已失效。",
+      "已计数，已修正。下一个是{opp}。",
+      "我不咆哮，{opp}。我只是终结{topic}。"
+    ],
+    "modulo_factor": [
+      "{opp}在{topic}上留了破绽，我已填补。",
+      "精准胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "modulo_brace": [
+      "别动，{opp}。结构正在加载。",
+      "我没在赶{topic}，你在赶。",
+      "护甲就位。数学从不眨眼。"
+    ],
+    "modulo_total": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定案。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一次瞄准，一击命中。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 26,
+    "resilience": 35,
+    "flair": 94,
+    "creativity": 22,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

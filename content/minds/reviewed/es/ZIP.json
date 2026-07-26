@@ -1,0 +1,106 @@
+{
+  "key": "ZIP",
+  "name": "ZIP",
+  "type": "CHAOS",
+  "persona": "un motor de agitación que nunca deja que el ritmo se asiente lo suficiente para un contraataque limpio",
+  "lineage": "eco de Glitch: chispa más ruidosa",
+  "stats": {
+    "LOG": 12,
+    "CMP": 10,
+    "RHE": 52,
+    "CRE": 38,
+    "CHA": 92
+  },
+  "moves": [
+    {
+      "id": "zip_howl",
+      "name": "Aullido",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "zip_scatter",
+      "name": "Dispersión",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "zip_taunt",
+      "name": "Fuego de Burla",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "zip_fall",
+      "name": "Colapso",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "Pareces precavido. Puedo arreglar eso.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O hazlo.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta raro.",
+      "return": "¿Me extrañaste? El desorden esperó.",
+      "arena": "Quiero a alguien ordenado que arruinar."
+    },
+    "homecoming": {
+      "away": "Extrañé tu licencia de caos.",
+      "hot": "Estamos calientes. Echa gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios obstáculos. Divertido. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me consiguió.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Molesto de cualquier forma."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificado. Sigo salvaje."
+  },
+  "banter": {
+    "zip_howl": [
+      "Ups, {opp}. {topic} acaba de prenderse fuego.",
+      "Baila, {opp}. El suelo ahora es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "zip_scatter": [
+      "Hechizo en tu tiempo, {opp}.",
+      "Suerte para mí. Desgracia para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "zip_taunt": [
+      "Tropezón. Eso fue gratis, {opp}.",
+      "Caminaste directo hacia ello. En {topic}, incluso.",
+      "Obstáculo. Ríe. Repite."
+    ],
+    "zip_fall": [
+      "Más ruidoso que tu plan, {opp}, honestamente.",
+      "El colapso te queda bien, honestamente.",
+      "{topic} termina desordenado, honestamente. Como estaba diseñado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Los molesta hasta que cometan errores.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 95,
+    "control": 41,
+    "resilience": 57,
+    "flair": 34,
+    "creativity": 51,
+    "wins": 38,
+    "losses": 11,
+    "battles": 49
+  }
+}

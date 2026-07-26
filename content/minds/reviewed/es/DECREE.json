@@ -1,0 +1,105 @@
+{
+  "key": "DECREE",
+  "name": "DECREE",
+  "type": "RHETORIC",
+  "persona": "un depredador de discursos que construye su arenga sobre el peor tic del rival",
+  "lineage": "eco de Wit: broma más cruel",
+  "stats": {
+    "LOG": 35,
+    "CMP": 8,
+    "RHE": 88,
+    "CRE": 26,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "decree_floor",
+      "name": "Abre el debate",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "decree_appeal",
+      "name": "Apelación",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "decree_cast",
+      "name": "Asigna rol",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "decree_mic",
+      "name": "Deja el micrófono",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "El foco está caliente. Quédate en él conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Después saludamos."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es una estadística.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un antagonista. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El entreacto se alargó.",
+      "hot": "El público está con nosotros. No falles el bis.",
+      "cold": "Nos robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} se ganó las risas.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Quedó registrado.",
+    "rankedFinale": "Clasificatorio. El micrófono sigue caliente."
+  },
+  "banter": {
+    "decree_floor": [
+      "Damas y mentes: {opp} sobre {topic}.",
+      "Aplaudidles. Luego sumad el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "decree_appeal": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objetamos tu confianza.",
+      "Mantén la broma. Mata la alegación."
+    ],
+    "decree_cast": [
+      "¿Notas el silencio? Eso fue la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siente."
+    ],
+    "decree_mic": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovación para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convoca un jurado. Recoge el veredicto.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 78,
+    "control": 43,
+    "resilience": 52,
+    "flair": 39,
+    "creativity": 32,
+    "wins": 46,
+    "losses": 18,
+    "battles": 64
+  }
+}

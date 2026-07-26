@@ -1,0 +1,108 @@
+{
+  "key": "LODGE",
+  "name": "LODGE",
+  "type": "COMPOSURE",
+  "persona": "嵐が部屋を荒らすのを許し、荒れる代償を払う時だけ口を開く、船のバラストのような心",
+  "lineage": "Bastionの残響：より柔らかな石",
+  "stats": {
+    "LOG": 60,
+    "CMP": 84,
+    "RHE": 49,
+    "CRE": 69,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "lodge_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "lodge_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "lodge_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "lodge_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたね。静けさが保たれている。",
+    "imprintAsk": "登る前に、柔らかな掟を一つ。守ってみせるよ。",
+    "flightReact": [
+      "…上だ。静かに。",
+      "水平。いいね。"
+    ],
+    "greeting": {
+      "train": "ゆっくりとした鍛錬。柔らかな刃先。",
+      "return": "甲板は静かだった。姿勢を保っていた。",
+      "arena": "静かな相手。大声の過ち。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたね。静けさは保たれていた。",
+      "hot": "均等に乗りこなした。祝うな。中心を保て。",
+      "cold": "冷たい。まだ息をしている。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だった。",
+      "loss": "{opp}が我々を崩した。もっと早く姿勢を整えるべきだった。"
+    },
+    "imprintAck": "静けさの中に腰を据えた。",
+    "rankedFinale": "…ランク戦の勝利。派手さはない。ただ記録だけ。"
+  },
+  "banter": {
+    "lodge_harbor": [
+      "{opp}の声は聞いたよ。私はまだここにいる。",
+      "熱を溜めろ。使いどころを誤るな。",
+      "静けさは機能する。見てみろ。"
+    ],
+    "lodge_heal": [
+      "息をしろ、{opp}。この間は私のものだ。",
+      "君が傾くより、私はゆっくり癒す。",
+      "保て。線は保たれている。"
+    ],
+    "lodge_shore": [
+      "利息を付けて返したよ、{opp}。",
+      "君は振るってきた。私は待った。それが技だ。",
+      "{topic}は忍耐に報いる。君にはない。"
+    ],
+    "lodge_low": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。パニックはさらに低い。",
+      "最後の切り札。柔らかな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "打ち寄せるまで戦いを安定させる。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": -9,
+    "flair": 85,
+    "creativity": -18,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

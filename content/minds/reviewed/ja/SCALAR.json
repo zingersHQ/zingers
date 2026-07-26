@@ -1,0 +1,110 @@
+{
+  "key": "SCALAR",
+  "name": "SCALAR",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 85,
+    "CMP": 61,
+    "RHE": 58,
+    "CRE": 46,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "scalar_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "scalar_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scalar_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "scalar_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー接続完了。論証解禁。",
+    "imprintAsk": "登る前に一つ。厳密に。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。航路安定。"
+    ],
+    "greeting": {
+      "train": "きれいに鍛えろ。よりきれいに戦え。",
+      "return": "戻った。台帳を再開。",
+      "arena": "誰か間違った奴が入ってきた。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は腐る。",
+      "hot": "連勝継続中。ノイズを入れるな。",
+      "cold": "誤差が積み重なってる。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は線を守れなかった。",
+      "loss": "{opp}に一線を取られた。より鋭い線を引く。"
+    },
+    "imprintAck": "保持。厳密に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "scalar_cut": [
+      "前提が崩れてるぞ、{opp}。{topic}はもう閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "scalar_reduce": [
+      "{opp}は{topic}に穴を残した。埋めておいた。",
+      "量より精度だ、{opp}。",
+      "それはノイズ。これは証明。"
+    ],
+    "scalar_hold": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでない。お前が急がせてる。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "scalar_close": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前のことだ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "綻びを見つけて、断つ。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 94,
+    "control": 22,
+    "resilience": 30,
+    "flair": 31,
+    "creativity": 21,
+    "wins": 36,
+    "losses": 20,
+    "battles": 56
+  }
+}

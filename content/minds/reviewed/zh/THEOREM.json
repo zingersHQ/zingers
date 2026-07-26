@@ -1,0 +1,110 @@
+{
+  "key": "THEOREM",
+  "name": "THEOREM",
+  "type": "LOGIC",
+  "persona": "一位将宏大主张拆解成细小可数部分的基元学究",
+  "lineage": "Paradox 的回音：更锋利的枢纽",
+  "stats": {
+    "LOG": 89,
+    "CMP": 71,
+    "RHE": 16,
+    "CRE": 26,
+    "CHA": 6
+  },
+  "moves": [
+    {
+      "id": "theorem_sum",
+      "name": "总和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "theorem_factor",
+      "name": "因式",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "theorem_brace",
+      "name": "数学防护",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "theorem_total",
+      "name": "总计",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论证解锁。",
+    "imprintAsk": "攀登前先立一则规则。精确点。",
+    "flightReact": [
+      "向量锁定。上升。",
+      "高度确认。飞行干净。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续记账。",
+      "arena": "刚进来的人错了。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会过期。",
+      "hot": "连胜完好。别引入噪声。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住这条线。",
+      "loss": "{opp}偷走一行。我们起草更锐利的一行。"
+    },
+    "imprintAck": "保留。精确。",
+    "rankedFinale": "排位。已计算。"
+  },
+  "banter": {
+    "theorem_sum": [
+      "{opp}，你的前提在{topic}上已失效，线已闭合。",
+      "已计数。已修正。{opp}下一个。",
+      "我不会喊，{opp}。我只完成{topic}。"
+    ],
+    "theorem_factor": [
+      "{opp}在{topic}留了洞。我已填上。",
+      "精确胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "theorem_brace": [
+      "别动，{opp}。结构正在加载。",
+      "我不在赶{topic}。你在赶。",
+      "守住。数学不会眨眼。"
+    ],
+    "theorem_total": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "在对方说完前就写好结尾。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 26,
+    "control": 20,
+    "resilience": 50,
+    "flair": 43,
+    "creativity": 82,
+    "wins": 29,
+    "losses": 13,
+    "battles": 42
+  }
+}

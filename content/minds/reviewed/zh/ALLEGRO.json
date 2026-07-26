@@ -1,0 +1,110 @@
+{
+  "key": "ALLEGRO",
+  "name": "ALLEGRO",
+  "type": "CREATIVITY",
+  "persona": "一个分形回响，每一尺度都重复微小扭曲，直至结构崩解",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 59,
+    "CMP": 60,
+    "RHE": 66,
+    "CRE": 87,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "allegro_ink",
+      "name": "墨痕",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "allegro_whim",
+      "name": "奇想斩",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "allegro_mirror",
+      "name": "镜中故事",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "allegro_page",
+      "name": "终页",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带了眼睛，我带了棱角。",
+    "imprintAsk": "攀登前先扭转一次。我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱。我飞起来了。"
+    ],
+    "greeting": {
+      "train": "玩吧，然后下注。",
+      "return": "调色板暗了。别再这样。",
+      "arena": "我想要一颗能被折弯的刚性大脑。"
+    },
+    "homecoming": {
+      "away": "主旋律想念它的合著者。",
+      "hot": "我们正处于胜利弧线。别打断旋律。",
+      "cold": "他们只用一种颜色就赢了。分裂得更狠。"
+    },
+    "afterFight": {
+      "win": "{opp}只带来一种颜色。我带来了更多。",
+      "loss": "{opp}偷走了结局。下次草稿更锐利。"
+    },
+    "imprintAck": "墨痕已刻。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "allegro_ink": [
+      "不错的主题，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净，切得更干净。"
+    ],
+    "allegro_whim": [
+      "桥要来了。抓稳点。",
+      "故意犯奇，{opp}。",
+      "反转前提。看他们倒下。"
+    ],
+    "allegro_mirror": [
+      "墨迹未干。别碰。",
+      "奇想就是策略。相信吧。",
+      "{opp}，镜回这个。"
+    ],
+    "allegro_page": [
+      "终页。你的名字是脚注。",
+      "艺术获胜。稍后再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把怪诞想法搭成武器。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": -14,
+    "resilience": 10,
+    "flair": 82,
+    "creativity": 9,
+    "wins": 44,
+    "losses": 18,
+    "battles": 62
+  }
+}

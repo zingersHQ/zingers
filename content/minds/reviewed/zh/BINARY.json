@@ -1,0 +1,114 @@
+{
+  "key": "BINARY",
+  "name": "BINARY",
+  "type": "LOGIC",
+  "persona": "一个拒绝妥协的不可分割打击者，只用纯粹的理性出击",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 85,
+    "CMP": 62,
+    "RHE": 57,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "binary_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "binary_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "binary_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "binary_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论证解锁。",
+    "imprintAsk": "攀登前先定一条规则。要精确。",
+    "flightReact": [
+      "向量锁定。上升。",
+      "高度确认。干净飞行。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续记账。",
+      "arena": "有人带着错误走进来。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会过期。",
+      "hot": "连胜完好。别引入噪声。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住那条线。",
+      "loss": "{opp}偷走了一条线。我们会起草更锋利的一条。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "排位赛。如计算。"
+  },
+  "banter": {
+    "binary_hinge": [
+      "{opp}，你的前提站不住脚，坦白说。关于{topic}，那条线已经闭合。",
+      "已计数，坦白说。已修正。下一个是{opp}。",
+      "我不喊叫，{opp}，坦白说。我终结{topic}。"
+    ],
+    "binary_pivot": [
+      "{opp}在{topic}上留了一个洞。我已归档。",
+      "精准胜过音量，{opp}。",
+      "那是噪声。这是证明。"
+    ],
+    "binary_case": [
+      "站好，{opp}。结构正在加载。",
+      "我没有在赶{topic}。你在赶。",
+      "护盾拉起。数学不会眨眼。"
+    ],
+    "binary_line": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已解决。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一条规则。永远持有。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 6,
+    "resilience": 8,
+    "flair": -2,
+    "creativity": 95,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

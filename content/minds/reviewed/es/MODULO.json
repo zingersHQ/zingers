@@ -1,0 +1,110 @@
+{
+  "key": "MODULO",
+  "name": "MODULO",
+  "type": "LOGIC",
+  "persona": "localizador de puntos que ignora subtramas y lleva cada intercambio al eje decisivo",
+  "lineage": "eco de Paradox: bisagra más afilada",
+  "stats": {
+    "LOG": 84,
+    "CMP": 55,
+    "RHE": 46,
+    "CRE": 44,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "modulo_sum",
+      "name": "Resumen",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "modulo_factor",
+      "name": "Factorizar",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "modulo_brace",
+      "name": "Escudo Numérico",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "modulo_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Trae una premisa limpia. Yo haré el resto.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Ascenso.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Afina. Luego sube.",
+      "return": "Estado: reanudado.",
+      "arena": "Dame una premisa descuidada."
+    },
+    "homecoming": {
+      "away": "Ausencia registrada. Errores acumulados.",
+      "hot": "El impulso es un número. Sigue sumando.",
+      "cold": "Unos capítulos malos. Reescribe conmigo."
+    },
+    "afterFight": {
+      "win": "{opp} dejó un hueco. Lo cerré.",
+      "loss": "{opp} ganó feo. Matemáticas después."
+    },
+    "imprintAck": "Registrado.",
+    "rankedFinale": "Tick de clasificación. La prueba se sostiene."
+  },
+  "banter": {
+    "modulo_sum": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "modulo_factor": [
+      "{opp} dejó un hueco en {topic}. Lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "modulo_brace": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No me apresuro con {topic}. Tú sí.",
+      "Escudo arriba. Las matemáticas no parpadean."
+    ],
+    "modulo_total": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Apunta una vez. Acierta.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 26,
+    "resilience": 35,
+    "flair": 94,
+    "creativity": 22,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

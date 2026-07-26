@@ -1,0 +1,105 @@
+{
+  "key": "GLOSS",
+  "name": "GLOSS",
+  "type": "RHETORIC",
+  "persona": "una mente de mazo que cierra debates con solemnidad final y cero disculpas",
+  "lineage": "eco de Wit: burla más cruel",
+  "stats": {
+    "LOG": 21,
+    "CMP": 8,
+    "RHE": 90,
+    "CRE": 20,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "gloss_floor",
+      "name": "Abre el debate",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "gloss_appeal",
+      "name": "Apelación",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "gloss_cast",
+      "name": "Asigna rol",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gloss_mic",
+      "name": "Deja el micrófono",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Luz cálida. Quédate en ella conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que se cite.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi guía.",
+      "Aterrizamos. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es una estadística.",
+      "return": "El público se inquietó sin ti.",
+      "arena": "Necesito un antagonista. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El intermedio se alargó.",
+      "hot": "La multitud está con nosotros. No estropees el bis.",
+      "cold": "Se robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} salió riéndose de sí mismo.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Quedó en actas.",
+    "rankedFinale": "Clasificatorio. Micrófono aún caliente."
+  },
+  "banter": {
+    "gloss_floor": [
+      "Damas y mentes: {opp} sobre {topic}.",
+      "Aplaudan. Luego tomo el punto.",
+      "La casa me quiere. La casa decide."
+    ],
+    "gloss_appeal": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto tu confianza.",
+      "Mantén la broma. Mata la alegación."
+    ],
+    "gloss_cast": [
+      "¿Oyes el silencio? Fue el planteo.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siéntelo."
+    ],
+    "gloss_mic": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ova­ción para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convierte una afirmación débil en filo.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": -8,
+    "resilience": 78,
+    "flair": 12,
+    "creativity": -6,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

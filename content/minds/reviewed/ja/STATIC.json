@@ -1,0 +1,113 @@
+{
+  "key": "STATIC",
+  "name": "STATIC",
+  "type": "CHAOS",
+  "persona": "試合に奇妙なルールを重ねて、フェアプレイを幼稚に見せる秩序破壊者",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 33,
+    "CMP": 37,
+    "RHE": 63,
+    "CRE": 29,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "static_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "static_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "static_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "static_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "慎重そうね。直してあげる。",
+    "imprintAsk": "登る前に一つ、面白い悪戀이を。",
+    "flightReact": [
+      "下を見ないで。見てもいいけど。",
+      "まだ飛んでる。どうにか。好き。"
+    ],
+    "greeting": {
+      "train": "変に温めよう。",
+      "return": "寂しかった？　散らかったまま待ってたよ。",
+      "arena": "綺麗な誰かを台無しにしたい。"
+    },
+    "homecoming": {
+      "away": "カオス免許、恋しくなかった？",
+      "hot": "熱いね。ガスは慎重に注いで。",
+      "cold": "自分の罠に自分で引っかかった。笑える。直そう。"
+    },
+    "afterFight": {
+      "win": "{opp}は秩序を望んだ。私が来た。",
+      "loss": "{opp}は運が良かったか、上手かったか。どっちにしろ腹立つ。"
+    },
+    "imprintAck": "保管。たぶん。",
+    "rankedFinale": "ランク戦。まだ野生のまま。"
+  },
+  "banter": {
+    "static_snag": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊って、{opp}。床が変になったよ。",
+      "ルールをこぼした。片付けて。"
+    ],
+    "static_trip": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキーね。不運な{topic}。",
+      "笑って、{opp}。悪い部分は予定済み。"
+    ],
+    "static_shrug": [
+      "つまずき。タダだったよ、{opp}。",
+      "自分で踏み込んだね。{topic}にまで。",
+      "引っ掛かり。笑い。繰り返し。"
+    ],
+    "static_snap": [
+      "君の計画より大きい音だったよ、{opp}。正直。",
+      "崩壊、お似合い。正直。",
+      "{topic}は散らかって終わる。正直。意図通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "小さな罠。大きな転落。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": 82,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 32,
+    "wins": 61,
+    "losses": 13,
+    "battles": 74
+  }
+}

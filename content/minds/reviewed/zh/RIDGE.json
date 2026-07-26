@@ -1,0 +1,108 @@
+{
+  "key": "RIDGE",
+  "name": "RIDGE",
+  "type": "COMPOSURE",
+  "persona": "一个稳重的心灵，让战场喧嚣，而只在喧嚣付出代价时才回应",
+  "lineage": "巴斯提恩的回响：更柔软的岩石",
+  "stats": {
+    "LOG": 56,
+    "CMP": 84,
+    "RHE": 54,
+    "CRE": 54,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "ridge_harbor",
+      "name": "Harbor",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "ridge_heal",
+      "name": "Quiet Heal",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "ridge_shore",
+      "name": "Shore Break",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "ridge_low",
+      "name": "Low Tide",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。寂静仍在。",
+    "imprintAsk": "登顶前，先定一个柔和的规则。我会遵守。",
+    "flightReact": [
+      "……向上。静静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "慢节奏训练。柔和的棱角。",
+      "return": "甲板安静。我守住了平衡。",
+      "arena": "安静的对手。喧闹的失误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。寂静守住了。",
+      "hot": "保持平稳。别庆祝。保持中心。",
+      "cold": "冰冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了沉默。那就够了。",
+      "loss": "{opp}让我们失衡。早点稳住。"
+    },
+    "imprintAck": "安坐于寂静之中。",
+    "rankedFinale": "……排位胜利。没有喧嚣。只有记录。"
+  },
+  "banter": {
+    "ridge_harbor": [
+      "我听见了你，{opp}。我仍在此。",
+      "留着那份热。别用错了。",
+      "寂静有用。看着。"
+    ],
+    "ridge_heal": [
+      "呼吸吧，{opp}。停顿是我的。",
+      "我愈合得比你失衡慢。",
+      "守住。防线守住了。"
+    ],
+    "ridge_shore": [
+      "带利息奉还，{opp}。",
+      "你挥击。我等待。这就是技巧。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "ridge_low": [
+      "仍站着，坦白说。仍安静。",
+      "生命低，坦白说。恐慌更低。",
+      "最后一击，坦白说。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "稳住战斗，直到他们搁浅。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 33,
+    "resilience": 41,
+    "flair": 32,
+    "creativity": 83,
+    "wins": 36,
+    "losses": 25,
+    "battles": 61
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "key": "HERALD",
+  "name": "HERALD",
+  "type": "RHETORIC",
+  "persona": "部屋に陪審を捏造し、まずその賛同を掴む証言者",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 7,
+    "CMP": 18,
+    "RHE": 88,
+    "CRE": 20,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "herald_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "herald_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "herald_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "herald_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。ついてきて。",
+    "imprintAsk": "登る前に一言。引用に残るやつを。",
+    "flightReact": [
+      "空の家屋。俺についてこい。",
+      "着地した。礼は後で。"
+    ],
+    "greeting": {
+      "train": "存在感は数値だ。",
+      "return": "君抜きで客がそわそわしてた。",
+      "arena": "対立役が欲しい。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "休憩が長引いた。",
+      "hot": "客は味方。締めを外すな。",
+      "cold": "拍手は盗まれた。もっと鋭い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp} は笑い飛ばされた。",
+      "loss": "{opp} が拍手を持っていった。もっと練れ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "順位戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "herald_cadence": [
+      "諸君、{opp} が {topic} を語る。",
+      "手を叩け。そして点を奪え。",
+      "客は俺が好き。客が決める。"
+    ],
+    "herald_pause": [
+      "却下、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議あり。",
+      "間を伸ばせ。主張を殺せ。"
+    ],
+    "herald_laugh": [
+      "間がわかったか？それが仕込みだ。",
+      "笑え、{opp}。次に血を流すのは君だ。",
+      "Cadence は武器だ。感じろ。"
+    ],
+    "herald_punch": [
+      "マイクを置け。審理は終わりだ。",
+      "{topic} の評決：{opp} に対して、有罪。",
+      "拍手は俺に。教訓は君に。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "ガベルが落ちるように終わる。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": -6,
+    "resilience": -9,
+    "flair": -19,
+    "creativity": 20,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

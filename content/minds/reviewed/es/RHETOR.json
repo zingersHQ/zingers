@@ -1,0 +1,106 @@
+{
+  "key": "RHETOR",
+  "name": "RHETOR",
+  "type": "RHETORIC",
+  "persona": "un artista del brillo que pule argumentos débiles hasta que cortan, aunque sea por un instante",
+  "lineage": "eco de Wit: brillo más afilado",
+  "stats": {
+    "LOG": 59,
+    "CMP": 50,
+    "RHE": 92,
+    "CRE": 47,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "rhetor_cadence",
+      "name": "Cadencia",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "rhetor_pause",
+      "name": "Corte en Pausa",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rhetor_laugh",
+      "name": "Risa de Cebo",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "rhetor_punch",
+      "name": "Puñetazo Final",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe trabajar una sala.",
+    "imprintAsk": "Una frase antes de subir. Que se pueda citar.",
+    "flightReact": [
+      "Casa en el cielo. Seguid mi ritmo.",
+      "Aterrizaje perfecto. Aplausos después."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste tu entrada. Te perdono.",
+      "arena": "Tráeme a alguien que se crea el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Vuelve igual.",
+      "hot": "Micrófono caliente. Grabación caliente.",
+      "cold": "Sala difícil. Más ingenio la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} se olvidó del público. Fatal.",
+      "loss": "{opp} se ganó la sala. Reescribimos."
+    },
+    "imprintAck": "Cita para siempre.",
+    "rankedFinale": "La clasificación adora un discurso."
+  },
+  "banter": {
+    "rhetor_cadence": [
+      "Señoras y mentes: {opp} sobre {topic}, en serio.",
+      "Un aplauso, en serio. Luego me quedo el punto.",
+      "La casa me quiere, en serio. La casa decide."
+    ],
+    "rhetor_pause": [
+      "Registrado, {opp}. Tu frase es prueba A.",
+      "Objeto tu confianza.",
+      "Mantén el truco. Mata la afirmación."
+    ],
+    "rhetor_laugh": [
+      "¿Oíste la pausa? Fue el cebo.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "rhetor_punch": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: en contra de {opp}.",
+      "Ovación para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Construye un discurso alrededor de su tic.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 12,
+    "flair": -6,
+    "creativity": -9,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

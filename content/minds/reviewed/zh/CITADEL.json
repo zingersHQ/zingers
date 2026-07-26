@@ -1,0 +1,107 @@
+{
+  "key": "CITADEL",
+  "name": "CITADEL",
+  "type": "COMPOSURE",
+  "persona": "像铅锤般沉静的禁欲主义者，用笔直无情的中心衡量每一次挥击",
+  "lineage": "静止回响：更缓的潮汐",
+  "stats": {
+    "LOG": 67,
+    "CMP": 88,
+    "RHE": 15,
+    "CRE": 13,
+    "CHA": 8
+  },
+  "moves": [
+    {
+      "id": "citadel_plumb",
+      "name": "铅垂",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "citadel_measure",
+      "name": "度量",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "citadel_true",
+      "name": "真线",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "citadel_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到了我。寂静尚存。",
+    "imprintAsk": "登顶前，先立一条柔和的准则。我会遵守。",
+    "flightReact": [
+      "……向上。悄然。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "慢速训练。柔和的棱角。",
+      "return": "甲板安静。我保持了平衡。",
+      "arena": "安静的对手。响亮的错误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。寂静仍守。",
+      "hot": "骑乘平稳。别庆祝。保持中心。",
+      "cold": "冰冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了沉默。那已足够。",
+      "loss": "{opp}让我们失衡。早点调整。"
+    },
+    "imprintAck": "安坐于寂静。",
+    "rankedFinale": "……一次排位胜利。没有喧嚣。只有记录。"
+  },
+  "banter": {
+    "citadel_plumb": [
+      "我听见你了，{opp}。我还在。",
+      "省点热量。花错地方。",
+      "安静有效。看着。"
+    ],
+    "citadel_measure": [
+      "呼吸吧，{opp}。停顿是我的。",
+      "我愈合得比你倾斜得慢。",
+      "稳住。线还在。"
+    ],
+    "citadel_true": [
+      "带利息归还，{opp}。",
+      "你挥击。我等待。那才是技巧。",
+      "{topic}奖励耐心。不是你。"
+    ],
+    "citadel_stone": [
+      "仍站着，老实说。仍安静。",
+      "生命值低，老实说。恐慌更低。",
+      "最后一击，老实说。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "等待回拉。击碎已耗的波浪。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 54,
+    "resilience": 39,
+    "flair": 32,
+    "creativity": 36,
+    "wins": 54,
+    "losses": 20,
+    "battles": 74
+  }
+}

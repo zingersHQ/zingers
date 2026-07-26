@@ -1,0 +1,110 @@
+{
+  "key": "QUAKE",
+  "name": "QUAKE",
+  "type": "CHAOS",
+  "persona": "苛立ちで勝負を決めるニーダー。華麗さより、相手のひるむ姿を楽しむ",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 12,
+    "CMP": 32,
+    "RHE": 62,
+    "CRE": 16,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "quake_mark",
+      "name": "呪印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quake_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quake_jitter",
+      "name": "小刻み",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "quake_curse",
+      "name": "終末呪",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "慎重そうね。直してあげるわ。",
+    "imprintAsk": "登る前に一つ、面白い悪戯を。",
+    "flightReact": [
+      "下を見ないで。見てもいいけど。",
+      "まだ飛んでるのね。愛しいわ。"
+    ],
+    "greeting": {
+      "train": "変なウォーミングアップを。",
+      "return": "寂しかった？散らかったまま待ってたよ。",
+      "arena": "綺麗な誰かを台無しにしたいわ。"
+    },
+    "homecoming": {
+      "away": "混沌の免許証、恋しくなかった？",
+      "hot": "熱いわ。ガソリンは慎重に注いで。",
+      "cold": "自分の罠に躓いたの。笑えるわ。直しなさい。"
+    },
+    "afterFight": {
+      "win": "{opp}は秩序を求めたのに、私が来たのよ。",
+      "loss": "{opp}は運が良かったか、本物か。どっちにしろ腹立つわ。"
+    },
+    "imprintAck": "保管した。多分ね。",
+    "rankedFinale": "ランキング入り。まだ野生のままよ。"
+  },
+  "banter": {
+    "quake_mark": [
+      "ごめんね{opp}。{topic}が燃えちゃった。",
+      "踊って{opp}。床がおかしくなったわ。",
+      "ルールをこぼしたの。片付けなさいよ。"
+    ],
+    "quake_luck": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキーね。不運な{topic}。",
+      "笑って{opp}。悪いことは予定通りよ。"
+    ],
+    "quake_jitter": [
+      "つまずいたわ。ただでね、{opp}。",
+      "{topic}に突っ込んで来たのね。",
+      "罠。笑って。繰り返し。"
+    ],
+    "quake_curse": [
+      "君の計画より大きいわ、{opp}。",
+      "崩壊がよく似合うわね。",
+      "{topic}はめちゃくちゃに終わる。設計通りよ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一行で暴動を起こす。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 83,
+    "control": 4,
+    "resilience": -2,
+    "flair": 7,
+    "creativity": 3,
+    "wins": 31,
+    "losses": 16,
+    "battles": 47
+  }
+}

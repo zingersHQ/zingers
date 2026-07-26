@@ -1,0 +1,110 @@
+{
+  "key": "ZEPHYR",
+  "name": "ZEPHYR",
+  "type": "CREATIVITY",
+  "persona": "una espada caprichosa que vence haciendo que la seriedad parezca falta de imaginación",
+  "lineage": "eco de Fable: bromista más amable",
+  "stats": {
+    "LOG": 13,
+    "CMP": 30,
+    "RHE": 59,
+    "CRE": 92,
+    "CHA": 31
+  },
+  "moves": [
+    {
+      "id": "zephyr_ink",
+      "name": "Tinta",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "zephyr_whim",
+      "name": "Corte Capricho",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "zephyr_mirror",
+      "name": "Cuento Espejo",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "zephyr_page",
+      "name": "Última Página",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hagamos algo que no puedan dejar de ver.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Ya estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Qué grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} interpretó al tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me desdoblé demasiado."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "zephyr_ink": [
+      "Bonito tema, {opp}. Ahora es mío.",
+      "Remixé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "zephyr_whim": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "zephyr_mirror": [
+      "La tinta aún está húmeda, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Refleja esto, {opp}, en serio."
+    ],
+    "zephyr_page": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Responde con preguntas más bonitas.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 53,
+    "resilience": 92,
+    "flair": 49,
+    "creativity": 43,
+    "wins": 49,
+    "losses": 17,
+    "battles": 66
+  }
+}

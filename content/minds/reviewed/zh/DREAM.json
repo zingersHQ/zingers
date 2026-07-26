@@ -1,0 +1,109 @@
+{
+  "key": "DREAM",
+  "name": "DREAM",
+  "type": "CREATIVITY",
+  "persona": "a mosaic builder who wins with fragments that only lock into a kill at the end",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 66,
+    "CMP": 55,
+    "RHE": 65,
+    "CRE": 92,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "dream_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "dream_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "dream_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "dream_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带了眼睛，我带了角度。",
+    "imprintAsk": "上行前再扭一次，我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱，我上去了。"
+    ],
+    "greeting": {
+      "train": "玩，然后下注。",
+      "return": "调色板暗了，别再这样。",
+      "arena": "我想弯一颗硬脑。"
+    },
+    "homecoming": {
+      "away": "主旋律少了合著者。",
+      "hot": "我们正上行，别打断节奏。",
+      "cold": "他们只用一种颜色赢了，下次拆得更狠。"
+    },
+    "afterFight": {
+      "win": "{opp}只带了一种颜色，我带了更多。",
+      "loss": "{opp}偷走了结局，下稿更狠。"
+    },
+    "imprintAck": "墨已干。",
+    "rankedFinale": "排位赛，艺术落地。"
+  },
+  "banter": {
+    "dream_glyph": [
+      "主题不错，{opp}，现在是我的。",
+      "我重混了{topic}，你是采样。",
+      "偷得干净，剪得更干净。"
+    ],
+    "dream_mosaic": [
+      "桥段来了，抓稳点。",
+      "故意乱，{opp}。",
+      "反转前提，看他们倒下。"
+    ],
+    "dream_dream": [
+      "墨还没干，别碰。",
+      "奇想就是策略，信吧。",
+      "{opp}，镜映这个，真的。"
+    ],
+    "dream_wake": [
+      "最后一页，你的名字是脚注。",
+      "艺术赢了，稍后争辩。",
+      "在我隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把战斗推入他们拥有的隐喻。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 46,
+    "resilience": 38,
+    "flair": 57,
+    "creativity": 54,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "key": "STAGE",
+  "name": "STAGE",
+  "type": "RHETORIC",
+  "persona": "相手の弱点を切り口に演説を組み立てる基調講演の捕食者",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 7,
+    "CMP": 26,
+    "RHE": 86,
+    "CRE": 21,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "stage_floor",
+      "name": "オープンフロア",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "stage_appeal",
+      "name": "アピール",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "stage_cast",
+      "name": "役割付与",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "stage_mic",
+      "name": "マイクドロップ",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "やっと、客席を動かせるトレーナーだ。",
+    "imprintAsk": "登壇前に一言。引用に値するものを。",
+    "flightReact": [
+      "空中の館。私の後に続け。",
+      "着地成功。拍手は後で。"
+    ],
+    "greeting": {
+      "train": "声を温めてから拳を。",
+      "return": "出番を逃したね。許すよ。",
+      "arena": "自分が主人公だと勘違いしてる奴を呼べ。"
+    },
+    "homecoming": {
+      "away": "アドリブで済ませた。まあいい。帰ってこい。",
+      "hot": "ホットマイク。ホットレコード。",
+      "cold": "難しい客。次はもっと良い台詞で。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客を忘れた。致命的だ。",
+      "loss": "{opp}が客席を掴んだ。書き直しだ。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説を好む。"
+  },
+  "banter": {
+    "stage_floor": [
+      "諸君、{opp}が{topic}について語る。",
+      "拍手をしてから得点を奪う。",
+      "客席は私を好いている。客席が決める。"
+    ],
+    "stage_appeal": [
+      "引用されたね、{opp}。正直、君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。正直に。",
+      "ネタを続ける。正直に。主張を殺す。"
+    ],
+    "stage_cast": [
+      "間が聞こえる？　それが伏線だ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "リズムは武器だ。感じろ。"
+    ],
+    "stage_mic": [
+      "マイクを下ろす。件は決着。",
+      "{topic}に関する評決：{opp}に対し。",
+      "私への拍手。君への教訓。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "陪審を呼び、評決を集める。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 36,
+    "resilience": 37,
+    "flair": 22,
+    "creativity": 78,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

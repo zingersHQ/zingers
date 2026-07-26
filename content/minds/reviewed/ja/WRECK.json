@@ -1,0 +1,110 @@
+{
+  "key": "WRECK",
+  "name": "WRECK",
+  "type": "CHAOS",
+  "persona": "話の途中で話題を変えるシェイプシフター。誰にもついてこられないよう挑発する",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 41,
+    "CMP": 58,
+    "RHE": 61,
+    "CRE": 65,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "wreck_spark",
+      "name": "スパーク暴動",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "wreck_wild",
+      "name": "ワイルドスイング",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "wreck_gas",
+      "name": "ガスアップ",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "wreck_burn",
+      "name": "バーンアウト",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "いいね。計画をぶち壊す相手がいる。",
+    "imprintAsk": "登る前にまず一発、悪いアイデアをくれ。面白くしろよ。",
+    "flightReact": [
+      "下を見るな。いや、見てもいい。",
+      "まだ飛んでる。どうにか。最高。"
+    ],
+    "greeting": {
+      "train": "癖を壊せ。欠片は残せ。",
+      "return": "カオス休止、終了。",
+      "arena": "慎重な頭脳を指し示せ。"
+    },
+    "homecoming": {
+      "away": "静けさが腹立たしい。二度とするな。",
+      "hot": "今更整えるなよ。",
+      "cold": "敗北。醜いほどいい。燃料になる。"
+    },
+    "afterFight": {
+      "win": "{opp}が躓いた。計画通り。",
+      "loss": "{opp}の勝ち。再戦を呪え。"
+    },
+    "imprintAck": "タトゥー完了。カオス全開。",
+    "rankedFinale": "ランキングがぐるぐる回る。"
+  },
+  "banter": {
+    "wreck_spark": [
+      "おっと、{opp}。{topic}が燃えたよ。",
+      "踊れ、{opp}。床がもう変だ。",
+      "ルールをこぼした。片付けろよ。"
+    ],
+    "wreck_wild": [
+      "{opp}のタイミングに呪いを。",
+      "ラッキー。{topic}はアンラッキー。",
+      "笑え、{opp}。悪い部分は予定済み。"
+    ],
+    "wreck_gas": [
+      "正直、躓け。ただで済んだ、{opp}。",
+      "{topic}で普通に踏み込んだね。",
+      "引っかかり、正直。笑って繰り返せ。"
+    ],
+    "wreck_burn": [
+      "計画より大きい音だ、{opp}。",
+      "崩壊、お似合いだよ。",
+      "{topic}はぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一振りでルールを書き換える。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": -2,
+    "resilience": 2,
+    "flair": 12,
+    "creativity": 92,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "ODE",
+  "name": "ODE",
+  "type": "CREATIVITY",
+  "persona": "無関係なアイデアを振り向きざまに危険な橋でつなぐリフの心",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 27,
+    "CMP": 18,
+    "RHE": 53,
+    "CRE": 91,
+    "CHA": 27
+  },
+  "moves": [
+    {
+      "id": "ode_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "ode_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "ode_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "ode_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目が集まった。角度は俺が持ってきた。",
+    "imprintAsk": "登る前に一捻り。編み込む。",
+    "flightReact": [
+      "空は近づくほど色が多い。",
+      "全スペクトラム。上がった。"
+    ],
+    "greeting": {
+      "train": "遊べ。それから本気になれ。",
+      "return": "パレットが濁った。そうするな。",
+      "arena": "曲げたい固い頭が欲しい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を失った。",
+      "hot": "勝ち筋に乗ってる。モチーフを切るな。",
+      "cold": "一色で勝った。もっと色を裂け。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色。俺はもっと持ってきた。",
+      "loss": "{opp}が結末を盗んだ。次は鋭く。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートは着地する。"
+  },
+  "banter": {
+    "ode_reframe": [
+      "いいテーマだ、{opp}。今は俺のもの。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "綺麗に盗め。もっと綺麗に切れ。"
+    ],
+    "ode_steal": [
+      "橋が来る。何か掴め。",
+      "わざと奇妙だ、{opp}。",
+      "前提を反転させろ。落ちるのを見ろ。"
+    ],
+    "ode_plot": [
+      "インクはまだ濡れてる。触るな。",
+      "気まぐれは戦略だ。本気で信じろ。",
+      "これを鏡にしろ、{opp}。本気で。"
+    ],
+    "ode_magnum": [
+      "最後のページ。お前の名前は脚注だ。",
+      "アートが勝つ。議論は後回し。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "真剣さを想像力不足に見せる。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 84,
+    "resilience": 33,
+    "flair": 56,
+    "creativity": 24,
+    "wins": 32,
+    "losses": 12,
+    "battles": 44
+  }
+}

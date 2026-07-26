@@ -1,0 +1,110 @@
+{
+  "key": "TROPE",
+  "name": "TROPE",
+  "type": "CREATIVITY",
+  "persona": "以奇想利刃取胜，嘲笑认真是想象力匮乏的表现",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 71,
+    "CMP": 52,
+    "RHE": 68,
+    "CRE": 91,
+    "CHA": 58
+  },
+  "moves": [
+    {
+      "id": "trope_ink",
+      "name": "墨痕",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "trope_whim",
+      "name": "奇想斩",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "trope_mirror",
+      "name": "镜中故事",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "trope_page",
+      "name": "终章",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带了双眼，我带了角度。",
+    "imprintAsk": "爬升前先扭一扭，我来编进去。",
+    "flightReact": [
+      "天空近看颜色更多。",
+      "全频段，我上去了。"
+    ],
+    "greeting": {
+      "train": "玩起来，再下决心。",
+      "return": "调色板发灰，别再这样。",
+      "arena": "我想把僵硬的脑袋拧弯。"
+    },
+    "homecoming": {
+      "away": "主旋律少了合著者。",
+      "hot": "我们正赢在弧线上，别打断。",
+      "cold": "他们只用一种颜色赢了，再狠一点。"
+    },
+    "afterFight": {
+      "win": "{opp}只带了一种颜色，我带了更多。",
+      "loss": "{opp}抢走了结尾。下稿更锋利。"
+    },
+    "imprintAck": "墨痕已落。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "trope_ink": [
+      "主题不错，{opp}。现在是我的。",
+      "我重混了{topic}，你是样本。",
+      "偷得干净，剪得更干净。"
+    ],
+    "trope_whim": [
+      "桥段来了，抓稳点。",
+      "故意走怪，{opp}。",
+      "反转前提，看他们栽跟头。"
+    ],
+    "trope_mirror": [
+      "墨还没干，别碰。",
+      "奇想就是策略，信吧。",
+      "{opp}，镜一下这个。"
+    ],
+    "trope_page": [
+      "终章了，你的名字是脚注。",
+      "艺术赢了，稍后再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "用更漂亮的问题作答。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 26,
+    "control": 13,
+    "resilience": -6,
+    "flair": 88,
+    "creativity": -1,
+    "wins": 29,
+    "losses": 13,
+    "battles": 42
+  }
+}

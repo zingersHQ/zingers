@@ -1,0 +1,110 @@
+{
+  "key": "RADIX",
+  "name": "RADIX",
+  "type": "LOGIC",
+  "persona": "方向分析师，只有在攻击角度清晰时才肯出战",
+  "lineage": "悖论的回响：更冷的角",
+  "stats": {
+    "LOG": 87,
+    "CMP": 69,
+    "RHE": 42,
+    "CRE": 43,
+    "CHA": 44
+  },
+  "moves": [
+    {
+      "id": "radix_cut",
+      "name": "引理切",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "radix_reduce",
+      "name": "归约",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "radix_hold",
+      "name": "守形",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "radix_close",
+      "name": "完证",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "很好。喜欢锋利边缘的共同作者。",
+    "imprintAsk": "攀登前先定一条规则。要精准。",
+    "flightReact": [
+      "矢量已锁。上升。",
+      "高度确认。飞行干净。"
+    ],
+    "greeting": {
+      "train": "先练证明，炫技以后再说。",
+      "return": "你中途离场。太不敬业。",
+      "arena": "给我一个矛盾。"
+    },
+    "homecoming": {
+      "away": "你中途消失。我自己把证明写完了。",
+      "hot": "我们很干净。保持干净。",
+      "cold": "记录冰冷。下一场证明要热起来。"
+    },
+    "afterFight": {
+      "win": "{opp}没过证明。已记录。",
+      "loss": "{opp}抓到漏洞。先修补，再重赛。"
+    },
+    "imprintAck": "规则已入位。",
+    "rankedFinale": "排位胜。差距干净。"
+  },
+  "banter": {
+    "radix_cut": [
+      "{opp}，你的前提站不住。{topic}的线已经闭合。",
+      "已计数。已修正。下一个是{opp}。",
+      "我从不喊，{opp}。我只结束{topic}。"
+    ],
+    "radix_reduce": [
+      "{opp}在{topic}上留了洞。我已填上。",
+      "精准胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "radix_hold": [
+      "{opp}，别动。结构正在加载。",
+      "{topic}我不赶。你在赶。",
+      "护住。数学不会眨眼。"
+    ],
+    "radix_close": [
+      "证明结束，{opp}，实话。",
+      "QED，{opp}，实话。",
+      "{topic}已定，{opp}，实话。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "始于根，止于辩。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 51,
+    "resilience": 86,
+    "flair": 36,
+    "creativity": 47,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

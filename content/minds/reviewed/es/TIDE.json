@@ -1,0 +1,108 @@
+{
+  "key": "TIDE",
+  "name": "TIDE",
+  "type": "COMPOSURE",
+  "persona": "una pared silenciosa que absorbe el calor y lo devuelve en un solo contraataque paciente",
+  "lineage": "eco de Still: puerto más profundo",
+  "stats": {
+    "LOG": 61,
+    "CMP": 84,
+    "RHE": 52,
+    "CRE": 58,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "tide_absorb",
+      "name": "Absorber",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "tide_hold",
+      "name": "Mantener la Línea",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "tide_return",
+      "name": "Corte Devuelto",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "tide_unmoved",
+      "name": "Inmóvil",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La guardaré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio.",
+      "return": "Regreso anotado. Sigo aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el trimado. A bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas derrotas ruidosas. Suavízame de nuevo."
+    },
+    "afterFight": {
+      "win": "{opp} registrado. No lo hicimos.",
+      "loss": "{opp} ganó fuerte. Respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificado. Sigo respirando."
+  },
+  "banter": {
+    "tide_absorb": [
+      "Te escuché, {opp}, de verdad. Sigo aquí.",
+      "Guarda el calor, de verdad. Gástalo mal.",
+      "Lo callado funciona, de verdad. Observa."
+    ],
+    "tide_hold": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Mantén. La línea se mantiene."
+    ],
+    "tide_return": [
+      "Devuelto con interés, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "tide_unmoved": [
+      "Siguiendo en pie. Siguiendo callado.",
+      "Baja salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mide cada golpe. Rechaza los descontrolados.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 43,
+    "resilience": 27,
+    "flair": 30,
+    "creativity": 46,
+    "wins": 35,
+    "losses": 25,
+    "battles": 60
+  }
+}

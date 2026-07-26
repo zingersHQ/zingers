@@ -1,0 +1,110 @@
+{
+  "key": "LITANY",
+  "name": "LITANY",
+  "type": "RHETORIC",
+  "persona": "舞台育ちの雄弁家。どんなやり取りも満員の客席が次の台詞を待つ場のように扱う",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 26,
+    "CMP": 31,
+    "RHE": 89,
+    "CRE": 19,
+    "CHA": 52
+  },
+  "moves": [
+    {
+      "id": "litany_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "litany_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "litany_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "litany_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。流れに乗って。",
+    "imprintAsk": "一言。引用に値するものを。",
+    "flightReact": [
+      "空中の客席。私のリードについてきて。",
+      "着地は決まった。あとで礼を。"
+    ],
+    "greeting": {
+      "train": "存在感も能力値だ。",
+      "return": "君抜きで客がそわそわしていた。",
+      "arena": "相手が必要だ。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "幕間が長引いた。",
+      "hot": "客は味方だ。アンコールでしくじるな。",
+      "cold": "拍手を奪われた。もっと鋭い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp} は笑い飛ばされた。",
+      "loss": "{opp} が拍手をさらった。台詞を練り直せ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "litany_herald": [
+      "諸君、{opp} が {topic} を語る。",
+      "拍手をしてから点をもらう。",
+      "客は私の味方。客が決める。"
+    ],
+    "litany_gloss": [
+      "引用したぞ、{opp}。君の発言が証拠だ。",
+      "君の自信に異議を唱える。",
+      "ネタを続けろ。主張を殺す。"
+    ],
+    "litany_needle": [
+      "間の取りが聞こえるか？　それが前振りだ。",
+      "{opp}、先に笑え。次は流血だ。",
+      "リズムは武器だ。味わえ。"
+    ],
+    "litany_ovation": [
+      "マイクを下ろす。決着だ。",
+      "{topic} の評決：{opp} 敗訴。",
+      "拍手は私へ。君への教訓だ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズム優先。決め台詞は最後に。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -4,
+    "resilience": -13,
+    "flair": -5,
+    "creativity": -14,
+    "wins": 42,
+    "losses": 19,
+    "battles": 61
+  }
+}

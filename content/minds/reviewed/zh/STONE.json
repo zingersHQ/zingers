@@ -1,0 +1,108 @@
+{
+  "key": "STONE",
+  "name": "STONE",
+  "type": "COMPOSURE",
+  "persona": "a harbor keeper who steadies the fight until reckless minds beach themselves",
+  "lineage": "Bastion 的回音：更沉寂的铁",
+  "stats": {
+    "LOG": 54,
+    "CMP": 90,
+    "RHE": 66,
+    "CRE": 50,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "stone_moor",
+      "name": "泊锚",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "stone_ballast",
+      "name": "压舱",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "stone_tide",
+      "name": "逆潮",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "stone_deep",
+      "name": "深静",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在。",
+    "imprintAsk": "登场前先定一条柔和的规则。我会守住。",
+    "flightReact": [
+      "……起飞。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "练习平衡。",
+      "return": "已记录归来。我还在。",
+      "arena": "让他们先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场大声的失利。让我再柔和些。"
+    },
+    "afterFight": {
+      "win": "{opp} 已在名单。我们没有。",
+      "loss": "{opp} 大声赢了。我们轻声回应。"
+    },
+    "imprintAck": "……守住了。安静地。",
+    "rankedFinale": "排位赛。仍在呼吸。"
+  },
+  "banter": {
+    "stone_moor": [
+      "我听见你了，{opp}。我还在。",
+      "省省那股热劲。花错地方了。",
+      "安静才管用。看着。"
+    ],
+    "stone_ballast": [
+      "呼吸吧，{opp}，说真的。停顿是我的。",
+      "我愈合得比你失衡慢，说真的。",
+      "稳住，说真的。防线稳着。"
+    ],
+    "stone_tide": [
+      "连本带利奉还，{opp}。",
+      "你挥了。我等了。这就是本事。",
+      "{topic} 奖励耐心。而非你。"
+    ],
+    "stone_deep": [
+      "仍站着。仍安静。",
+      "血量低。慌张更低。",
+      "最后一击。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "不急。他们的急会输。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 49,
+    "resilience": 81,
+    "flair": 51,
+    "creativity": 48,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

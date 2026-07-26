@@ -1,0 +1,114 @@
+{
+  "key": "CIPHER",
+  "name": "CIPHER",
+  "type": "LOGIC",
+  "persona": "暗号解読者。相手の自慢を弱点の暗号と見なす",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 89,
+    "CMP": 66,
+    "RHE": 18,
+    "CRE": 24,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "cipher_decode",
+      "name": "Decode",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cipher_checksum",
+      "name": "Checksum",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cipher_sandbox",
+      "name": "Sandbox",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "cipher_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー認証完了。論証解禁。",
+    "imprintAsk": "登頂前に一つ。明確な規則を。",
+    "flightReact": [
+      "軌道固定。上昇開始。",
+      "高度確認。航路安定。"
+    ],
+    "greeting": {
+      "train": "綺麗に鍛えろ。より綺麗に戦え。",
+      "return": "戻った。台帳を再開。",
+      "arena": "誤った者が入ってきた。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝継続中。ノイズを入れるな。",
+      "cold": "誤差が積み重なった。監査後、登頂。"
+    },
+    "afterFight": {
+      "win": "{opp}は防衛線を保てなかった。",
+      "loss": "{opp}が一行を奪った。より鋭い一行を書き直す。"
+    },
+    "imprintAck": "保管完了。正確に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "cipher_decode": [
+      "{opp}の前提は破綻している。{topic}の行は既に閉じている。",
+      "算出済み。修正完了。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を完結させる。"
+    ],
+    "cipher_checksum": [
+      "{opp}は{topic}に穴を残した。埋めた。",
+      "精密さは音量に勝る、{opp}。",
+      "それはノイズ。これが証明だ。"
+    ],
+    "cipher_sandbox": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない。急いでいるのはそちらだ。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "cipher_root": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は解決済み。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "分割不能。不可分。完了。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 27,
+    "control": -17,
+    "resilience": 15,
+    "flair": -16,
+    "creativity": 81,
+    "wins": 35,
+    "losses": 8,
+    "battles": 43
+  }
+}

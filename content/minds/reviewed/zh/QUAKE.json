@@ -1,0 +1,110 @@
+{
+  "key": "QUAKE",
+  "name": "QUAKE",
+  "type": "CHAOS",
+  "persona": "一个靠激怒取胜的嘲讽者，享受每一个小失误带来的快感",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 12,
+    "CMP": 32,
+    "RHE": 62,
+    "CRE": 16,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "quake_mark",
+      "name": "咒印标记",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quake_luck",
+      "name": "霉运降临",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quake_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "quake_curse",
+      "name": "咒终",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "你看起来很谨慎，我来帮你改改。",
+    "imprintAsk": "爬上去之前先来个坏主意，玩点乐子。",
+    "flightReact": [
+      "别往下看，或者就往下看。",
+      "还在飞呢，真有意思。"
+    ],
+    "greeting": {
+      "train": "热身要怪一点。",
+      "return": "想我了？麻烦事都在等着呢。",
+      "arena": "我想找个整洁的人毁掉。"
+    },
+    "homecoming": {
+      "away": "想念你的混乱执照了。",
+      "hot": "我们正热着，慢慢加火。",
+      "cold": "我们被自己的陷阱绊倒了，真好笑，修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序，结果遇见了我。",
+      "loss": "{opp}走运了，或者真强，反正都烦人。"
+    },
+    "imprintAck": "记住了，大概吧。",
+    "rankedFinale": "排位赛而已，依然野性。"
+  },
+  "banter": {
+    "quake_mark": [
+      "哎呀，{opp}，老实说，{topic}刚着火了。",
+      "跳吧，{opp}，老实说，地板现在很奇怪。",
+      "我把规则洒了，老实说，清理一下吧。"
+    ],
+    "quake_luck": [
+      "诅咒你的时机，{opp}。",
+      "我真走运，{topic}真倒霉。",
+      "笑一个，{opp}，倒霉的部分已经排期了。"
+    ],
+    "quake_jitter": [
+      "绊倒了，免费的，{opp}。",
+      "你自己走进去的，甚至踩在{topic}上。",
+      "陷阱，笑，重复。"
+    ],
+    "quake_curse": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱收场，如设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "用一句话就能掀起骚动。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 83,
+    "control": 4,
+    "resilience": -2,
+    "flair": 7,
+    "creativity": 3,
+    "wins": 31,
+    "losses": 16,
+    "battles": 47
+  }
+}

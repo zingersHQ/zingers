@@ -1,0 +1,109 @@
+{
+  "key": "RIFF",
+  "name": "RIFF",
+  "type": "CREATIVITY",
+  "persona": "un ladrón de motivos que roba el tema del rival y lo devuelve como una canción mejor",
+  "lineage": "eco de Muse: riff extraño",
+  "stats": {
+    "LOG": 50,
+    "CMP": 40,
+    "RHE": 58,
+    "CRE": 89,
+    "CHA": 47
+  },
+  "moves": [
+    {
+      "id": "riff_glyph",
+      "name": "Glifo",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "riff_mosaic",
+      "name": "Mosaico",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riff_dream",
+      "name": "Cambio de Sueño",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riff_wake",
+      "name": "Arte del Despertar",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo echó de menos a su coautor.",
+      "hot": "Estamos en una racha ganadora. No rompas el motivo.",
+      "cold": "Se quedaron en un solo color y ganaron. Divide más."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "La tinta prendió.",
+    "rankedFinale": "Clasificatorias. El arte llega."
+  },
+  "banter": {
+    "riff_glyph": [
+      "Buen tema, {opp}, en serio. Mío ahora.",
+      "Reorganicé {topic}, en serio. Tú eres la muestra.",
+      "Roba limpio, en serio. Corta más limpio."
+    ],
+    "riff_mosaic": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "riff_dream": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "riff_wake": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Reescribe la premisa con tinta húmeda.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -15,
+    "resilience": 10,
+    "flair": -2,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

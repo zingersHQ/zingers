@@ -1,0 +1,114 @@
+{
+  "key": "PRIME",
+  "name": "PRIME",
+  "type": "LOGIC",
+  "persona": "a tidy theorem-hunter who trims arguments down to the one line that cannot be denied",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 90,
+    "CMP": 70,
+    "RHE": 39,
+    "CRE": 58,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "prime_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "prime_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "prime_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "prime_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "很好。合作者喜欢锋利的边缘。",
+    "imprintAsk": "攀登前先定一条规则。精确点。",
+    "flightReact": [
+      "向量锁定。上升。",
+      "高度确认。干净的飞行。"
+    ],
+    "greeting": {
+      "train": "先练证明。花哨的以后再说。",
+      "return": "你中途离开证明了。没礼貌。",
+      "arena": "给我一个矛盾。"
+    },
+    "homecoming": {
+      "away": "你消失在证明中。我独自完成了提纲。",
+      "hot": "我们很干净。保持干净。",
+      "cold": "冷记录。把下个证明热身。"
+    },
+    "afterFight": {
+      "win": "{opp}没通过证明。已记录。",
+      "loss": "{opp}抓到漏洞。先修补，再重赛。"
+    },
+    "imprintAck": "规则已落座。",
+    "rankedFinale": "排位胜。干净的差距。"
+  },
+  "banter": {
+    "prime_hinge": [
+      "你的前提站不住，{opp}。在{topic}上，线已闭合。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不喊叫，{opp}。我只完成{topic}。"
+    ],
+    "prime_pivot": [
+      "{opp}在{topic}上留了个洞，老实说。我已归档。",
+      "精准胜过音量，{opp}，老实说。",
+      "那是噪音，老实说。这才是证明。"
+    ],
+    "prime_case": [
+      "别动，{opp}。结构正在加载。",
+      "我没在赶{topic}。你在赶。",
+      "护盾拉起。数学不会眨眼。"
+    ],
+    "prime_line": [
+      "证明结束，{opp}。",
+      "Q.E.D. 指的就是你，{opp}。",
+      "{topic}已定案。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "从他们的气势中读取代码。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 91,
+    "resilience": 47,
+    "flair": 58,
+    "creativity": 49,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

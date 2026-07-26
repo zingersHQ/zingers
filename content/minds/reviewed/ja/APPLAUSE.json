@@ -1,0 +1,106 @@
+{
+  "key": "APPLAUSE",
+  "name": "APPLAUSE",
+  "type": "RHETORIC",
+  "persona": "リズムと間と、完璧な遅めの一撃で勝つ拍手隊長",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 22,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 36,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "applause_gavel",
+      "name": "ガベル",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "applause_cite",
+      "name": "引用",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "applause_sustain",
+      "name": "サステイン",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "applause_verdict",
+      "name": "評決",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが暖かい。私のリズムについて来て。",
+    "imprintAsk": "登る前に一言。引用したくなる一文を。",
+    "flightReact": [
+      "空の家屋。私の後に続け。",
+      "着地は成功。礼は後で。"
+    ],
+    "greeting": {
+      "train": "舞台存在感はステータスだ。",
+      "return": "君がいないと観客がそわそわしていた。",
+      "arena": "フォイルが欲しい。どんなフォイルでも。"
+    },
+    "homecoming": {
+      "away": "幕間が長かった。",
+      "hot": "観客は味方。アンコールをしくじらないで。",
+      "cold": "拍手を奪われた。もっと鋭い台詞を練れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が拍手をさらった。もっと良い台詞を。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "applause_gavel": [
+      "諸君、{opp}について{topic}を。",
+      "拍手をしてから、ポイントを奪う。",
+      "客席は私を好いている。客席が決める。"
+    ],
+    "applause_cite": [
+      "引用した、{opp}。正直に。君の台詞が証拠Aだ。",
+      "君の自信に異議を唱える。正直に。",
+      "ネタを続ける、正直に。主張を殺す。"
+    ],
+    "applause_sustain": [
+      "間が聞こえるか？それが仕掛けだ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "ケイデンスは武器だ。感じろ。"
+    ],
+    "applause_verdict": [
+      "マイクを置く。件は終了。",
+      "{topic}の評決：{opp}に対して。",
+      "私に拍手を。君には教訓を。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手を道化に仕立てる。彼らが演じる。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 54,
+    "resilience": 87,
+    "flair": 56,
+    "creativity": 29,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

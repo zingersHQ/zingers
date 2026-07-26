@@ -1,0 +1,109 @@
+{
+  "key": "DREAM",
+  "name": "DREAM",
+  "type": "CREATIVITY",
+  "persona": "モザイクを組み上げる者。断片を最後に殺意へと繋げる",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 66,
+    "CMP": 55,
+    "RHE": 65,
+    "CRE": 92,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "dream_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "dream_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "dream_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "dream_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目を持ってきたか。私は角度を持ってきた。",
+    "imprintAsk": "登る前に一つひねりを。編み込んでやる。",
+    "flightReact": [
+      "空は近づくほど色が増す。",
+      "全域だ。上がった。"
+    ],
+    "greeting": {
+      "train": "遊んでから本気だ。",
+      "return": "パレットが濁った。やめろ。",
+      "arena": "硬い頭を曲げてみたい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を失った。",
+      "hot": "勝ちの弧に乗ってる。崩すな。",
+      "cold": "一色で勝ったか。もっと分裂しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色。俺はもっと。",
+      "loss": "{opp}が結末を奪った。次は鋭く。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートが着地する。"
+  },
+  "banter": {
+    "dream_glyph": [
+      "いいテーマだ、{opp}。もう俺のもの。",
+      "{topic}をリミックスした。お前はサンプルだ。",
+      "綺麗に盗め。もっと綺麗に切れ。"
+    ],
+    "dream_mosaic": [
+      "橋が来る。何か掴め。",
+      "わざと変だ、{opp}。",
+      "前提を反転させて落ちるところを見ろ。"
+    ],
+    "dream_dream": [
+      "インクはまだ濡れてる。触るな。",
+      "気まぐれは戦略だ。本気で信じろ。",
+      "これを鏡写しにしろ、{opp}。本気で。"
+    ],
+    "dream_wake": [
+      "最後のページ。お前の名前は脚注だ。",
+      "アートが勝つ。文句は後だ。",
+      "俺の比喩の中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手が所有する比喩へ戦いを移す。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 46,
+    "resilience": 38,
+    "flair": 57,
+    "creativity": 54,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

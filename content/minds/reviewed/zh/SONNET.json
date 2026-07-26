@@ -1,0 +1,109 @@
+{
+  "key": "SONNET",
+  "name": "SONNET",
+  "type": "CREATIVITY",
+  "persona": "一位梦境建筑师，将战斗移入隐喻并掌控其中",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 30,
+    "CMP": 6,
+    "RHE": 70,
+    "CRE": 92,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "sonnet_riff",
+      "name": "即兴",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "sonnet_bridge",
+      "name": "过渡",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "sonnet_invert",
+      "name": "倒置",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "sonnet_coda",
+      "name": "终曲",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "来创造无法被遗忘之物。",
+    "imprintAsk": "攀登前先扭转，我会把它编织进去。",
+    "flightReact": [
+      "近看天空色彩更多。",
+      "全光谱。我已飞起。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续？",
+      "arena": "带来一个字面主义者。美味。"
+    },
+    "homecoming": {
+      "away": "你半章离席。无礼。",
+      "hot": "击中每一频段。让光继续移动。",
+      "cold": "冷连击。狂野的墨迹。"
+    },
+    "afterFight": {
+      "win": "{opp}扮演了傻瓜。寓意自行成章。",
+      "loss": "{opp}只用一种色调，而我过度拆分。"
+    },
+    "imprintAck": "主题已更新。",
+    "rankedFinale": "排位胜利。新篇章。"
+  },
+  "banter": {
+    "sonnet_riff": [
+      "不错的主题，{opp}。现在是我的。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净。剪得更利。"
+    ],
+    "sonnet_bridge": [
+      "过渡即将到来。抓稳什么。",
+      "故意怪异，{opp}。",
+      "倒置前提。看他们坠落。"
+    ],
+    "sonnet_invert": [
+      "墨迹未干。勿触。",
+      "任性是一种策略。相信它。",
+      "映照这个，{opp}。"
+    ],
+    "sonnet_coda": [
+      "最后一页。你的名字是脚注。",
+      "艺术获胜。稍后争辩。",
+      "在我的隐喻中醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "窃取他们的主题并加以改进。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 47,
+    "control": 28,
+    "resilience": 31,
+    "flair": 91,
+    "creativity": 42,
+    "wins": 39,
+    "losses": 24,
+    "battles": 63
+  }
+}

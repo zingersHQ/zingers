@@ -1,0 +1,113 @@
+{
+  "key": "PYRE",
+  "name": "PYRE",
+  "type": "CHAOS",
+  "persona": "綿密な計画を嘲笑う嵐の口。計画そのものが愚かに見えるまで吠え続ける",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 19,
+    "CMP": 38,
+    "RHE": 67,
+    "CRE": 8,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "pyre_snag",
+      "name": "スナッグライン",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "pyre_trip",
+      "name": "トリップワイヤ",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pyre_shrug",
+      "name": "シュラッグ",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "pyre_snap",
+      "name": "スナップ",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "やあ。地図を握りしめすぎないでね。",
+    "imprintAsk": "登る前にまず一つ、変なアイデアを。面白くしようぜ。",
+    "flightReact": [
+      "下を見ないこと。見てもいいけど。",
+      "まだ飛んでるよ。なんとかなる。最高。"
+    ],
+    "greeting": {
+      "train": "適当にやって。早く覚えるよ。",
+      "return": "戻ってきたんだ。いいね。退屈してたんだ。",
+      "arena": "ルール守ってるやつを選べよ。"
+    },
+    "homecoming": {
+      "away": "お前がいない間に三回喧嘩売ってきた。もう少しだった。",
+      "hot": "変な勝ち方してるね。その調子で。",
+      "cold": "負けが続いてる？もっと熱い呪いをくれよ。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重そうだったね。可愛い。",
+      "loss": "{opp}、冷静だった。失礼だな。"
+    },
+    "imprintAck": "おお。スパイシーなルールだ。",
+    "rankedFinale": "ランク戦勝利。ぐちゃぐちゃ。最高。"
+  },
+  "banter": {
+    "pyre_snag": [
+      "おっと、{opp}。正直、{topic}が燃えちゃったよ。",
+      "踊れよ、{opp}。床が変なことになってる。",
+      "ルールこぼしちゃった。正直、片付けろよ。"
+    ],
+    "pyre_trip": [
+      "{opp}のタイミングに呪い。",
+      "ラッキー。{topic}が不運だったね。",
+      "笑えよ、{opp}。悪いとこは予定済みだ。"
+    ],
+    "pyre_shrug": [
+      "転んだ？タダで済んだな、{opp}。",
+      "{topic}に突っ込んできたね。",
+      "スナッグ。笑え。繰り返せ。"
+    ],
+    "pyre_snap": [
+      "{opp}の計画より大きい声だ。",
+      "崩れ落ちてる姿、似合ってるよ。",
+      "{topic}はぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "同じ戦いは二度とない。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 48,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 37,
+    "wins": 37,
+    "losses": 25,
+    "battles": 62
+  }
+}

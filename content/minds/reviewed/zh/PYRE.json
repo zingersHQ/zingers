@@ -1,0 +1,113 @@
+{
+  "key": "PYRE",
+  "name": "PYRE",
+  "type": "CHAOS",
+  "persona": "风暴之口，专爱嘲笑小心翼翼的计划，直到计划本身显得荒唐",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 19,
+    "CMP": 38,
+    "RHE": 67,
+    "CRE": 8,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "pyre_snag",
+      "name": "钩线",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "pyre_trip",
+      "name": "绊索",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pyre_shrug",
+      "name": "耸肩",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "pyre_snap",
+      "name": "爆裂",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓太紧。",
+    "imprintAsk": "爬山前先来个坏主意。最好好玩。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。莫名其妙。爱死。"
+    ],
+    "greeting": {
+      "train": "乱试。学得更快。",
+      "return": "你回来了。太好了。我刚才无聊死了。",
+      "arena": "挑个守规则的。"
+    },
+    "homecoming": {
+      "away": "我趁你不在挑起了三场架。差点儿。",
+      "hot": "赢得很怪。继续怪下去。",
+      "cold": "连败。来点更猛的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很小心。真可爱。",
+      "loss": "{opp}保持冷静。真无礼。"
+    },
+    "imprintAck": "噢。辣规则。",
+    "rankedFinale": "排位胜。乱糟糟。完美。"
+  },
+  "banter": {
+    "pyre_snag": [
+      "哎呀，{opp}，老实说。{topic}刚着火了。",
+      "跳啊，{opp}，老实说。地板现在很奇怪。",
+      "我把规则洒了，老实说。你收拾吧。"
+    ],
+    "pyre_trip": [
+      "咒你节奏，{opp}。",
+      "我走运。{topic}倒霉。",
+      "笑吧，{opp}。坏事排上了。"
+    ],
+    "pyre_shrug": [
+      "绊。免费的，{opp}。",
+      "你自己踩进去了。还是在{topic}上。",
+      "钩。笑。重复。"
+    ],
+    "pyre_snap": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱结束。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "没有一战相同。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 48,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 37,
+    "wins": 37,
+    "losses": 25,
+    "battles": 62
+  }
+}

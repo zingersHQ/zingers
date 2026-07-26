@@ -1,0 +1,105 @@
+{
+  "key": "HOMILY",
+  "name": "HOMILY",
+  "type": "RHETORIC",
+  "persona": "一个用礼仪式终结辩论、绝不道歉的锤判式头脑",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 57,
+    "CMP": 67,
+    "RHE": 91,
+    "CRE": 71,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "homily_floor",
+      "name": "开放讲台",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "homily_appeal",
+      "name": "援引陈词",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "homily_cast",
+      "name": "角色定位",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "homily_mic",
+      "name": "落麦收场",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "准备发言吧。我已经准备好开场白。",
+    "imprintAsk": "上场前说一句。要能被引用。",
+    "flightReact": [
+      "空中殿堂。跟上我的节奏。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "排练那句杀招台词。",
+      "return": "你回来了。放开场音乐。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "没有你的屋子冰冷。来点热场。",
+      "hot": "我们是头牌。拿出气场。",
+      "cold": "屋子冰冷。热场靠修辞。"
+    },
+    "afterFight": {
+      "win": "{opp} 先丢了全场。",
+      "loss": "{opp} 笑点更狠。暂时。"
+    },
+    "imprintAck": "台词锁定。",
+    "rankedFinale": "排位胜利。听见掌声了吗？"
+  },
+  "banter": {
+    "homily_floor": [
+      "女士们、头脑们：{opp} 登场，主题 {topic}。",
+      "先鼓掌，再拿分。",
+      "全场喜欢我。全场说了算。"
+    ],
+    "homily_appeal": [
+      "{opp}，引用已录。你的台词是证物 A。",
+      "我反对你的自信，实话实说。",
+      "继续演，实话实说。杀掉论点。"
+    ],
+    "homily_cast": [
+      "听见停顿吗？那是铺垫。",
+      "{opp} 先笑，第二幕再流血。",
+      "节奏即武器。感受它。"
+    ],
+    "homily_mic": [
+      "麦落。案结。",
+      "关于 {topic} 的裁决：{opp} 败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把软弱论点打磨成利刃。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 10,
+    "resilience": 3,
+    "flair": -3,
+    "creativity": 78,
+    "wins": 31,
+    "losses": 21,
+    "battles": 52
+  }
+}

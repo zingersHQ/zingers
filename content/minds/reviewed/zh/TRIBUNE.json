@@ -1,0 +1,106 @@
+{
+  "key": "TRIBUNE",
+  "name": "TRIBUNE",
+  "type": "RHETORIC",
+  "persona": "a jest-blade who smiles through the cut and makes the wound feel like a joke",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 24,
+    "CMP": 31,
+    "RHE": 87,
+    "CRE": 8,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "tribune_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "tribune_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tribune_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "tribune_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯暖了。陪我一起站住。",
+    "imprintAsk": "上台前一句话，要能被引用。",
+    "flightReact": [
+      "天上也有舞台。跟上我。",
+      "落地稳了，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风也是属性。",
+      "return": "观众等你等得坐不住了。",
+      "arena": "我缺个对手。谁都行。"
+    },
+    "homecoming": {
+      "away": "中场太长。",
+      "hot": "全场都在我们这边，别唱走调。",
+      "cold": "掌声被抢了，写段更狠的。"
+    },
+    "afterFight": {
+      "win": "{opp} 被笑出局。",
+      "loss": "{opp} 抢了全场。写得再好点。"
+    },
+    "imprintAck": "记录在案。",
+    "rankedFinale": "排位赛。麦还热着。"
+  },
+  "banter": {
+    "tribune_gavel": [
+      "女士们先生们：{opp} 谈{topic}。",
+      "先鼓掌，再拿分。",
+      "观众爱我，观众决定。"
+    ],
+    "tribune_cite": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "把段子撑住，把论点毙掉。"
+    ],
+    "tribune_sustain": [
+      "听见停顿吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏是武器，感受它。"
+    ],
+    "tribune_verdict": [
+      "话筒放下，案结。",
+      "关于{topic}的裁决：驳回{opp}。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "演给全场看，拿下全场点头。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 25,
+    "resilience": 55,
+    "flair": 49,
+    "creativity": 79,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

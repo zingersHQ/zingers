@@ -1,0 +1,110 @@
+{
+  "key": "RADIX",
+  "name": "RADIX",
+  "type": "LOGIC",
+  "persona": "analista direccional que se niega a pelear hasta que el ángulo de ataque esté limpio",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 87,
+    "CMP": 69,
+    "RHE": 42,
+    "CRE": 43,
+    "CHA": 44
+  },
+  "moves": [
+    {
+      "id": "radix_cut",
+      "name": "Corte Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "radix_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "radix_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "radix_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que aprecia los bordes afilados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Practica la prueba. Lo elegante después.",
+      "return": "Te fuiste a mitad de la prueba. Grosero.",
+      "arena": "Asígneme una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la prueba. Yo continué sin ti.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calienta la próxima prueba."
+    },
+    "afterFight": {
+      "win": "{opp} falló la prueba. Registrado.",
+      "loss": "{opp} encontró una brecha. Parchea, luego revancha."
+    },
+    "imprintAck": "Regla aceptada.",
+    "rankedFinale": "Victoria en clasificatorias. Margen limpio."
+  },
+  "banter": {
+    "radix_cut": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "radix_reduce": [
+      "{opp} dejó un agujero en {topic}. Yo lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "radix_hold": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No estoy apresurando {topic}. Tú sí.",
+      "Guardia arriba. La matemática no parpadea."
+    ],
+    "radix_close": [
+      "Fin de la prueba, {opp}, honestamente.",
+      "Q, honestamente.E.D. significa tú, {opp}.",
+      "{topic} está resuelto, honestamente. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Empieza en la raíz. Termina el debate.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 51,
+    "resilience": 86,
+    "flair": 36,
+    "creativity": 47,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

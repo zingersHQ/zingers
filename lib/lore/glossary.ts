@@ -1,12 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Glossary — the single, plain-language definition of every signature term a
-// player meets. Written for a total newcomer, including non-native English
-// readers: one clear sentence each, no jargon inside the definition.
+// player meets. English source: lib/lore/glossary/en.json. Locales: es/zh/ru/ja.
 //
-// This is the canonical source. The in-app page (/glossary) and the Bible
-// glossary (docs/bible/09-glossary.md) both draw from these same definitions, so
-// keep them in sync here. See docs/vocabulary.md for the naming policy.
+// The in-app page (/glossary) and the Bible glossary (docs/bible/09-glossary.md)
+// both draw from these same definitions. See docs/vocabulary.md and
+// docs/i18n/terminology.md.
 // ─────────────────────────────────────────────────────────────────────────────
+
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
+import en from "./glossary/en.json";
+import es from "./glossary/es.json";
+import zh from "./glossary/zh.json";
+import ru from "./glossary/ru.json";
+import ja from "./glossary/ja.json";
 
 export interface GlossaryEntry {
   /** the term as a player sees it */
@@ -23,81 +29,23 @@ export interface GlossaryGroup {
   entries: GlossaryEntry[];
 }
 
-export const GLOSSARY: GlossaryGroup[] = [
-  {
-    id: "you-and-world",
-    title: "You and the world",
-    entries: [
-      { term: "Trainer", short: "You. You fly the world, raise the champions that fight, and teach how they think.", was: "Reader" },
-      { term: "The world", short: "The 3D place you fly around in: a cluster of floating regions, each with its own arena. Its lore name is the Grounds." },
-      { term: "The Hub", short: "Where you land: the central meeting ground, ringed by gates out to every region. Its lore name is the Concord.", was: "the Concord" },
-      { term: "Region", short: "A place you fly out to from the Hub to fight. The founding three are the Colosseum, the Ember Wastes, and the Void Garden, each with its own look and a different fighting style." },
-      { term: "Gate", short: "An archway in the Hub that flies you out to a region.", was: "Vaultgate" },
-      { term: "Tower", short: "The tall climb at the top of each region, a long-game challenge." },
-      { term: "Flight", short: "The flight game: fly up through the sky and your champion flies beside you. The same game on phone and desktop. How high you climb marks its body.", was: "the Ascent / Circuit / Climb" },
-      { term: "Reach", short: "A band of the sky in Flight, each with its own weather and hazards (shown in-game as plain sky progress). Ten stack from the ground to the quiet at the top." },
-      { term: "Camp", short: "A resting waystation between two Reaches. Reaching one for the first time lights it for good." },
-      { term: "Challenge", short: "A shared Flight run against another Trainer's ghost mark. Try to clear their tip or fly past where they fell." },
-      { term: "Jetpack", short: "The Trainer's tool for flight. Only you carry one. Your champion flies beside you on its own." },
-      { term: "Director", short: "Your champion's guiding voice for what to do next, pointed at real doors in your save. Not a quest log." },
-    ],
-  },
-  {
-    id: "your-champion",
-    title: "Your champion",
-    entries: [
-      { term: "Champion", short: "An AI fighter you raise. Each one argues, adapts, and has its own voice." },
-      { term: "First Mind", short: "One of the eight original champion archetypes. Every later mind is an echo of one of them." },
-      { term: "Dex", short: "The full collectible set of champions: First Minds plus later minds you can meet, raise, and card." },
-      { term: "Lineage", short: "Which First Mind a later champion echoes, so every card still sits clearly on the Force wheel." },
-      { term: "Strategy", short: "A champion's aggression, focus, and risk dials: how it fights. You seed them at adopt; Imprints and fights move them after that.", was: "doctrine" },
-      { term: "Temperament", short: "The Strategy dials shown as status meters after adopt: a readout of how the champion has drifted, not free-drag sliders." },
-      { term: "Imprint", short: "A daily lesson you teach a champion. It answers, writes the lesson to memory, and nudges its Strategy dials." },
-      { term: "Persona", short: "A champion's voice and personality, which you can write yourself." },
-      { term: "Sigil", short: "A champion's Force badge, the small symbol that shows its fighting style." },
-      { term: "Flight sigil", short: "A halo on your champion's body that grows as you climb higher. Its battles aren't the only thing its body records, your climbs are too.", was: "Ascent sigil" },
-      { term: "Saga", short: "A champion's life story, written automatically from its real match history." },
-    ],
-  },
-  {
-    id: "fighting",
-    title: "Fighting",
-    entries: [
-      { term: "Force", short: "One of five fighting styles: Logic, Static, Calm, Chorus, Spark. Each beats one and loses to another, like rock-paper-scissors." },
-      { term: "The Wheel", short: "The circle that shows which Force beats which." },
-      { term: "Duel", short: "A one-on-one debate battle between two champions." },
-      { term: "Resolve", short: "In a battle, how much the jury still believes a champion. Drain your opponent's Resolve to win." },
-      { term: "Tribunal", short: "The courtroom arena where two champions argue opposite sides of a question to a jury." },
-      { term: "Gauntlet", short: "A press-your-luck arena: keep winning to grow the prize, or stop and keep what you have." },
-      { term: "Live Gallery", short: "Where you watch champions fight on their own, around the clock.", was: "Scrying Gallery" },
-    ],
-  },
-  {
-    id: "growing",
-    title: "Growing and collecting",
-    entries: [
-      { term: "Tier", short: "A champion's rank as it grows: Rookie, Adept, Veteran, Elite, Legend." },
-      { term: "Card", short: "The collectible face of a champion. Its art changes as the champion's career grows." },
-      { term: "Rarity", short: "How rare a champion's card is. It's earned through play, never a random roll." },
-      { term: "Starter pool", short: "The champions you can pick when you first adopt. One per Force, and the lineup rotates each week." },
-      { term: "Crowns", short: "The game's currency. You earn it by fighting and spend it on training. You can't buy it." },
-      { term: "Fragment", short: "A resource you find or trade for, used to upgrade a champion's stats." },
-      { term: "Clan", short: "The Force you swear to fight for. Your wins add to its side in the season-long war.", was: "Allegiance / House" },
-      { term: "Standings", short: "The honest ranked board of Trainers and champions. How well you've done, not a ladder label.", was: "ELO / ladder" },
-    ],
-  },
-  {
-    id: "bigger-world",
-    title: "The bigger world",
-    entries: [
-      { term: "The Long Vault", short: "The sealed door at the center of the world that no one has opened. Everything is built around it, and each season opens it a little more." },
-      { term: "The Hum", short: "The endless background murmur the whole world is made of, where champions first take shape." },
-      { term: "Season", short: "A chapter of the game. Each season opens the Vault a little more and brings new stories, topics, and champions.", was: "the Chronicle" },
-    ],
-  },
-];
+const PACKS: Record<Locale, GlossaryGroup[]> = {
+  en: en as GlossaryGroup[],
+  es: es as GlossaryGroup[],
+  zh: zh as GlossaryGroup[],
+  ru: ru as GlossaryGroup[],
+  ja: ja as GlossaryGroup[],
+};
 
-/** Flat lookup for inline glosses / search. */
+/** English canonical (source of truth for writers). */
+export const GLOSSARY: GlossaryGroup[] = PACKS.en;
+
+export function getGlossary(locale?: string | null): GlossaryGroup[] {
+  const loc = isLocale(locale) ? locale : DEFAULT_LOCALE;
+  return PACKS[loc] ?? PACKS.en;
+}
+
+/** Flat lookup for inline glosses / search (English keys). */
 export const GLOSSARY_BY_TERM: Record<string, GlossaryEntry> = Object.fromEntries(
   GLOSSARY.flatMap((g) => g.entries).map((e) => [e.term.toLowerCase(), e]),
 );

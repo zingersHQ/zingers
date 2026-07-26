@@ -1,0 +1,110 @@
+{
+  "key": "QUORUM",
+  "name": "QUORUM",
+  "type": "RHETORIC",
+  "persona": "un orador nacido para el escenario que trata cada intercambio como un auditorio lleno esperando su réplica",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 8,
+    "CMP": 10,
+    "RHE": 87,
+    "CRE": 15,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "quorum_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "quorum_gloss",
+      "name": "Corte de Brillo",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quorum_needle",
+      "name": "Aguijón de Multitud",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quorum_ovation",
+      "name": "Ovação",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "El foco calienta. Quédate en él conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea citada.",
+    "flightReact": [
+      "Casa en el cielo. Sígueme.",
+      "Aterrizamos bien. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es un dato.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El entreacto se alargó.",
+      "hot": "La multitud está con nosotros. No falles el bis.",
+      "cold": "Nos robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} fue sacado a risas.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Queda registrado.",
+    "rankedFinale": "Clasificatorio. Micrófono aún caliente."
+  },
+  "banter": {
+    "quorum_herald": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Denle un aplauso. Luego tomen el punto.",
+      "La casa me quiere. La casa decide."
+    ],
+    "quorum_gloss": [
+      "Citada, {opp}, en serio. Tu frase es la prueba A.",
+      "Objeto tu confianza, en serio.",
+      "Mantén el gag, en serio. Mata la afirmación."
+    ],
+    "quorum_needle": [
+      "¿Oyen la pausa? Fue la preparación.",
+      "Ríete primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "quorum_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovação para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ritmo primero. Mata la frase tarde.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 57,
+    "resilience": 44,
+    "flair": 58,
+    "creativity": 93,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

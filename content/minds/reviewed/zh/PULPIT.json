@@ -1,0 +1,106 @@
+{
+  "key": "PULPIT",
+  "name": "PULPIT",
+  "type": "RHETORIC",
+  "persona": "a witness-caller who invents the jury in the room and wins their nod first",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 7,
+    "CMP": 35,
+    "RHE": 89,
+    "CRE": 8,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "pulpit_cadence",
+      "name": "韵律",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "pulpit_pause",
+      "name": "停顿切入",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pulpit_laugh",
+      "name": "铺垫笑点",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "pulpit_punch",
+      "name": "致命一击",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "准备好就开口，我已经有了开场白。",
+    "imprintAsk": "上场前先说一句，要能被引用。",
+    "flightReact": [
+      "屋子在空中，跟我走。",
+      "落地了，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "排练那句杀招台词。",
+      "return": "你回来了，准备进场音乐。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "没有你在屋子冰冷，热起来。",
+      "hot": "我们是头条，拿出气势。",
+      "cold": "屋子冰冷，修辞来暖。"
+    },
+    "afterFight": {
+      "win": "{opp} 先丢了全场。",
+      "loss": "{opp} 笑点更狠，暂时而已。"
+    },
+    "imprintAck": "台词锁定。",
+    "rankedFinale": "排位获胜，听见欢呼了吗？"
+  },
+  "banter": {
+    "pulpit_cadence": [
+      "女士们先生们：{opp} 正在讲{topic}。",
+      "先鼓掌，再拿分。",
+      "全场喜欢我，全场决定。"
+    ],
+    "pulpit_pause": [
+      "记录在案，{opp}，老实说。你的台词是证物A。",
+      "我反对你的自信，老实说。",
+      "继续你的段子，老实说，终结你的主张。"
+    ],
+    "pulpit_laugh": [
+      "听见停顿吗？那是铺垫。",
+      "先笑，{opp}，再流血。",
+      "韵律是武器，感受它。"
+    ],
+    "pulpit_punch": [
+      "话筒放下，案件终结。",
+      "{topic} 裁决：{opp} 败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "像落槌一样结束。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 6,
+    "resilience": 8,
+    "flair": 92,
+    "creativity": 6,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "key": "TRIBUNE",
+  "name": "TRIBUNE",
+  "type": "RHETORIC",
+  "persona": "笑顔で切り裂く道化の刃。傷口を笑い話に変える修辞家",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 24,
+    "CMP": 31,
+    "RHE": 87,
+    "CRE": 8,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "tribune_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "tribune_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tribune_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "tribune_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトの暖かさ。僕と一緒にその中にいよう。",
+    "imprintAsk": "登壇前に一行。引用に値するものを。",
+    "flightReact": [
+      "空中の家。僕についてきて。",
+      "着地は決まった。礼は後で。"
+    ],
+    "greeting": {
+      "train": "舞台映えは能力値だ。",
+      "return": "君がいない間、観客は落ち着かなかった。",
+      "arena": "対役が必要だ。どんな相手でも。"
+    },
+    "homecoming": {
+      "away": "幕間が長引いた。",
+      "hot": "観客は味方だ。アンコールでしくじるな。",
+      "cold": "拍手を奪われた。より鋭い演説を用意しろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が喝采を奪った。次はもっと練れ。"
+    },
+    "imprintAck": "記録に残った。",
+    "rankedFinale": "ランク戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "tribune_gavel": [
+      "諸君、{opp}を{topic}で紹介しよう。",
+      "拍手してやれ。それから点数をもらう。",
+      "会場は僕の味方。決めるのは会場だ。"
+    ],
+    "tribune_cite": [
+      "引用済みだ、{opp}。君の発言が証拠A号。",
+      "君の自信に異議を唱える。",
+      "ネタを維持しろ。主張を殺せ。"
+    ],
+    "tribune_sustain": [
+      "間の取り方が分かるか？それが仕掛けだ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "リズムが武器だ。感じてみろ。"
+    ],
+    "tribune_verdict": [
+      "マイクを置く。正直。審議は終了だ。",
+      "{topic}の判決：{opp}に対して、正直に。",
+      "拍手は僕へ。正直に。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "観客を味方につけ、頷きを勝ち取る。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 25,
+    "resilience": 55,
+    "flair": 49,
+    "creativity": 79,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

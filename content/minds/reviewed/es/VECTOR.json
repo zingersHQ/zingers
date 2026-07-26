@@ -1,0 +1,114 @@
+{
+  "key": "VECTOR",
+  "name": "VECTOR",
+  "type": "LOGIC",
+  "persona": "un decodificador críptico que ve cada fanfarronada como una debilidad cifrada",
+  "lineage": "eco de Axiom: contabilidad más estricta",
+  "stats": {
+    "LOG": 91,
+    "CMP": 58,
+    "RHE": 46,
+    "CRE": 66,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "vector_decode",
+      "name": "Decodificar",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vector_checksum",
+      "name": "Suma de verificación",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vector_sandbox",
+      "name": "Entorno aislado",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "vector_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador bloqueado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector bloqueado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanudar el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Regresa antes. Las pruebas se estropean.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo mantener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardado. Con precisión.",
+    "rankedFinale": "Clasificado. Como se calculó."
+  },
+  "banter": {
+    "vector_decode": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "vector_checksum": [
+      "{opp} dejó un hueco en {topic}. Lo registré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "vector_sandbox": [
+      "Quédate quieto, {opp}. La estructura carga.",
+      "No apuro {topic}. Tú lo haces.",
+      "Escudo arriba. Las matemáticas no parpadean."
+    ],
+    "vector_root": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. eres tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Indivisible. Indivisible. Terminado.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 79,
+    "resilience": 57,
+    "flair": 44,
+    "creativity": 48,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

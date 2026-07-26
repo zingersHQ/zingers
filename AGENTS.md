@@ -14,6 +14,16 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Copy, not code**: change visible strings/JSX/aria text only; never rename identifiers, props, keys, or URL params to match a copy change.
 - **Org docs sync**: zingers.org is this repo (`docs/` + `lib/org/registry.ts`). Any change to narrative, concept, core loop, mechanics, or mechanisms must update the matching public docs. Follow the **`org-docs-sync`** skill (`.cursor/skills/org-docs-sync/SKILL.md`).
 
+# Internationalization (added 2026-07)
+
+- **Locales:** `en` (source), `es`, `zh` (Simplified), `ru`, `ja`. Preference: `settings.locale` + `NEXT_LOCALE` cookie. No locale URL prefixes on the game host.
+- **UI chrome:** `messages/{locale}.json` via `next-intl`. New player-facing strings land in `messages/en.json` first, then sibling locale files.
+- **Terminology:** [`docs/i18n/terminology.md`](docs/i18n/terminology.md) governs borrow vs translate. Native rewrite for banter/wit; no MT dumps.
+- **Minds / banter:** English in `content/minds/reviewed/*.json`; locales in `content/minds/reviewed/{locale}/` → `npm run bake:minds -- --locale <code>` → `lib/minds/baked/{locale}.ts`. Draft via `npm run i18n:draft-minds`.
+- **Battles:** clients pass `lang` (automatic in `useBout`). Agent prompts + banter banks honor locale. Guardian **secret words stay English**.
+- **Org docs:** `docs/i18n/{locale}/…` with English fallback; optional `/es|/zh|/ru|/ja` prefix on zingers.org.
+- **Check:** `npm run i18n:check` for message key parity.
+
 # Game-feel conventions (added 2026-07)
 
 - **Flight parity (mobile + desktop)**: Flight is one soul, two bodies (`docs/essence.md`). Any change to rings/gates, hazards, camps, scout, gold rings, Flight sigil, rewards, or Prove must land on **both** `circuit-lite.tsx` (mobile) and desktop Circuit (`grounds-screen` / `world` / `circuit-hud`), preferably via shared `components/grounds/climb/*` helpers. Input/camera/perf may differ; missing features may not. Follow the **`flight-parity`** skill (`.cursor/skills/flight-parity/SKILL.md`).

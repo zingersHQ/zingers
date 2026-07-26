@@ -1,0 +1,106 @@
+{
+  "key": "CLAIM",
+  "name": "CLAIM",
+  "type": "RHETORIC",
+  "persona": "陪審員をその場で召喚し、先に頷かせる証言者",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 49,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 55,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "claim_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "claim_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "claim_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "claim_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "ようやく、部屋を動かせるトレーナーだ。",
+    "imprintAsk": "登る前に一言。引用に値するものを。",
+    "flightReact": [
+      "空中の家。私の後に続け。",
+      "着地成功。礼は後で。"
+    ],
+    "greeting": {
+      "train": "声帯を温めて。それから拳だ。",
+      "return": "台詞を外した。許す。",
+      "arena": "自分を英雄だと思ってる誰かを呼べ。"
+    },
+    "homecoming": {
+      "away": "即興でしのいだ。まあいい。とにかく戻れ。",
+      "hot": "ホットマイク。ホットレコード。",
+      "cold": "厳しい客。次はもっと良い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客を忘れた。致命的だ。",
+      "loss": "{opp}が部屋を制した。書き直す。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説を好む。"
+  },
+  "banter": {
+    "claim_cadence": [
+      "諸君、{opp}が{topic}について語る。正直に。",
+      "拍手してやれ、正直に。それから点をもらう。",
+      "観客は私の味方だ、正直に。観客が決める。"
+    ],
+    "claim_pause": [
+      "引用済みだ、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "間を持て。主張を殺せ。"
+    ],
+    "claim_laugh": [
+      "間がわかったか？それが仕掛けだ。",
+      "先に笑え、{opp}。次に血を流せ。",
+      "リズムは武器だ。感じろ。"
+    ],
+    "claim_punch": [
+      "マイクを置け。件は終了だ。",
+      "{topic}の評決：{opp}に不利。",
+      "喝采は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "ガベルを落とすように締めくくる。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": 51,
+    "flair": 38,
+    "creativity": 27,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

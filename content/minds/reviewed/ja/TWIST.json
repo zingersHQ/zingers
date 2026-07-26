@@ -1,0 +1,106 @@
+{
+  "key": "TWIST",
+  "name": "TWIST",
+  "type": "CHAOS",
+  "persona": "a crowd-spark who turns one rude line into a scramble the opponent cannot steer",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 6,
+    "CMP": 37,
+    "RHE": 56,
+    "CRE": 6,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "twist_howl",
+      "name": "Howl",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "twist_scatter",
+      "name": "Scatter",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "twist_taunt",
+      "name": "Taunt Fire",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "twist_fall",
+      "name": "Collapse",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "こん。地図は握りすぎないで。",
+    "imprintAsk": "登る前に一つ、悪いアイデアちょうだい。面白くして。",
+    "flightReact": [
+      "下見ないで。見てもいいよ。",
+      "まだ飛んでる。なんか。好き。"
+    ],
+    "greeting": {
+      "train": "適当にやろう。早く覚えるよ。",
+      "return": "戻ってきたね。よかった。退屈してた。",
+      "arena": "ルール守り屋を選んで。"
+    },
+    "homecoming": {
+      "away": "君がいない間に三つ喧嘩売ってきた。ほぼ。",
+      "hot": "変な勝ち方。変な勝ち方続けよう。",
+      "cold": "負け続き。もっと熱い術で。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重そうだった。可愛い。",
+      "loss": "{opp}、冷静だった。失礼。"
+    },
+    "imprintAck": "おお。刺激的なルール。",
+    "rankedFinale": "ランク戦勝利。ぐちゃぐちゃ。最高。"
+  },
+  "banter": {
+    "twist_howl": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊れ、{opp}。床がもう変だよ。",
+      "ルールをこぼした。片付けて。"
+    ],
+    "twist_scatter": [
+      "{opp}のタイミングに呪いを。",
+      "ラッキー。{topic}はアンハッピー。",
+      "笑え、{opp}。悪いところは予定済み。"
+    ],
+    "twist_taunt": [
+      "つまずけ。ただのサービス、{opp}。",
+      "{topic}に突っ込んで来たね。",
+      "引っ掛けて。笑って。繰り返し。"
+    ],
+    "twist_fall": [
+      "君の計画より大きい音だ、{opp}。",
+      "崩壊、君に似合う。",
+      "{topic}は散らかる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "不運な結末を先に名付ける。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 3,
+    "resilience": 17,
+    "flair": 9,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

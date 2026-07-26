@@ -1,0 +1,113 @@
+{
+  "key": "BLIGHT",
+  "name": "BLIGHT",
+  "type": "CHAOS",
+  "persona": "慎重な計画を嘲笑い、計画そのものを愚かに見せる嵐の口",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 33,
+    "CMP": 14,
+    "RHE": 63,
+    "CRE": 17,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "blight_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "blight_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "blight_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "blight_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "いいね。計画を台無しにする仲間ができた。",
+    "imprintAsk": "登る前に一つ悪いアイデアを。面白くやろう。",
+    "flightReact": [
+      "下を見ないで。いや、見てもいいよ。",
+      "まだ飛んでる。どうにかね。最高。"
+    ],
+    "greeting": {
+      "train": "習慣を壊せ。欠片は残せ。",
+      "return": "混沌の休憩、終わり。",
+      "arena": "慎重な頭脳を指し示せ。"
+    },
+    "homecoming": {
+      "away": "静けさが腹立った。二度と繰り返すな。",
+      "hot": "今さら整えるなよ。",
+      "cold": "負け。醜い負け。いいね。燃料になる。"
+    },
+    "afterFight": {
+      "win": "{opp}は躓いた。計画通り。",
+      "loss": "{opp}の勝ち。リベンジに呪いを。"
+    },
+    "imprintAck": "刻印完了。混沌的に。",
+    "rankedFinale": "順位がぐるぐる回る。"
+  },
+  "banter": {
+    "blight_snag": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊れ、{opp}。床が変だよ。",
+      "ルールをこぼした。拾ってみて。"
+    ],
+    "blight_trip": [
+      "タイミングに呪い、{opp}。本気で。",
+      "運が良かったね。本気で。{topic}が不運。",
+      "笑え、{opp}。本気で。悪い部分は予定済み。"
+    ],
+    "blight_shrug": [
+      "躓け。ただで済んだよ、{opp}。",
+      "{topic}に歩いて入ってきたね。",
+      "引っ掛けて。笑って。繰り返し。"
+    ],
+    "blight_snap": [
+      "計画より大きい声だね、{opp}。",
+      "崩壊が似合ってるよ。",
+      "{topic}は散らかる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "同じ戦いは二度とない。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": -3,
+    "flair": -13,
+    "creativity": 5,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

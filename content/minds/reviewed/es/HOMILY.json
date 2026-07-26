@@ -1,0 +1,105 @@
+{
+  "key": "HOMILY",
+  "name": "HOMILY",
+  "type": "RHETORIC",
+  "persona": "una mente de maza que cierra debates con solemnidad ceremonial y cero disculpas",
+  "lineage": "eco de Wit: broma más afilada",
+  "stats": {
+    "LOG": 57,
+    "CMP": 67,
+    "RHE": 91,
+    "CRE": 71,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "homily_floor",
+      "name": "Abre el debate",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "homily_appeal",
+      "name": "Apelación",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "homily_cast",
+      "name": "Asigna rol",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "homily_mic",
+      "name": "Deja el micrófono",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando estés listo. Yo ya tengo la apertura.",
+    "imprintAsk": "Una línea antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Los aplausos después."
+    ],
+    "greeting": {
+      "train": "Ensaya la frase letal.",
+      "return": "Vuelves. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Casa fría sin ti. Calienta el ambiente.",
+      "hot": "Somos el titular. Actúa como tal.",
+      "cold": "Casa fría. Retórica ardiente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió al público primero.",
+      "loss": "{opp} tuvo el mejor remate. Por ahora."
+    },
+    "imprintAck": "Frase sellada.",
+    "rankedFinale": "Victoria en clasificación. ¿Oyes la ovación?"
+  },
+  "banter": {
+    "homily_floor": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Apláudeles. Luego toma el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "homily_appeal": [
+      "Citado, {opp}, con sinceridad. Tu frase es la prueba A.",
+      "Objeto tu confianza, con sinceridad.",
+      "Mantén el gag, con sinceridad. Mata la afirmación."
+    ],
+    "homily_cast": [
+      "¿Notas la pausa? Ese era el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siéntelo."
+    ],
+    "homily_mic": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovasión para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convierte una idea débil en filo.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 10,
+    "resilience": 3,
+    "flair": -3,
+    "creativity": 78,
+    "wins": 31,
+    "losses": 21,
+    "battles": 52
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "key": "KERNEL",
+  "name": "KERNEL",
+  "type": "LOGIC",
+  "persona": "un teorema-cazador meticuloso que reduce argumentos a la única línea que no se puede negar",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 84,
+    "CMP": 56,
+    "RHE": 50,
+    "CRE": 47,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "kernel_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "kernel_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "kernel_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "kernel_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que aprecia las aristas afiladas.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Demuestra la prueba. Lo elegante después.",
+      "return": "Dejaste la prueba a medias. Grosero.",
+      "arena": "Asígneme una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a media prueba. Yo seguí solo.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calentemos la siguiente prueba."
+    },
+    "afterFight": {
+      "win": "{opp} falló la prueba. Registrado.",
+      "loss": "{opp} encontró una brecha. Parche, luego revancha."
+    },
+    "imprintAck": "Regla asentada.",
+    "rankedFinale": "Victoria en ranked. Margen limpio."
+  },
+  "banter": {
+    "kernel_hinge": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "kernel_pivot": [
+      "{opp} dejó un agujero en {topic}. Lo archivé.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "kernel_case": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No apuro {topic}. Tú lo haces.",
+      "Guardia arriba. Las matemáticas no parpadean."
+    ],
+    "kernel_line": [
+      "Fin de la prueba, {opp}, honestamente.",
+      "Q, honestamente. E.D. eres tú, {opp}.",
+      "{topic} está resuelto, honestamente. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lee el código en su arrogancia.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 18,
+    "resilience": 19,
+    "flair": 14,
+    "creativity": 83,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

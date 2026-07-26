@@ -1,0 +1,110 @@
+{
+  "key": "HEX",
+  "name": "HEX",
+  "type": "CHAOS",
+  "persona": "un talismán de mala suerte que narra la perdición hasta que el rival empieza a creer en la maldición",
+  "lineage": "eco de Glitch: snag más rápido",
+  "stats": {
+    "LOG": 36,
+    "CMP": 27,
+    "RHE": 66,
+    "CRE": 36,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "hex_mark",
+      "name": "Marca Maldita",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "hex_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "hex_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "hex_curse",
+      "name": "Fin de la Maldición",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Genial. Alguien con quien arruinar planes.",
+    "imprintAsk": "Una idea mala antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Rompe un hábito. Guarda los pedazos.",
+      "return": "Pausa caótica terminada.",
+      "arena": "Apúntame a una mente cuidadosa."
+    },
+    "homecoming": {
+      "away": "El silencio fue ofensivo. No lo repitas.",
+      "hot": "No te pongas ordenado ahora.",
+      "cold": "Derrotas. Feas. Bien. Combustible."
+    },
+    "afterFight": {
+      "win": "{opp} tropezó. Como estaba planeado.",
+      "loss": "{opp} ganó. Maldice la revancha."
+    },
+    "imprintAck": "Tatuado. Caóticamente.",
+    "rankedFinale": "La clasificación va brrr."
+  },
+  "banter": {
+    "hex_mark": [
+      "Ups, {opp}, de verdad. {topic} acaba de arder.",
+      "Baila, {opp}, de verdad. El suelo está raro ahora.",
+      "Derramé las reglas, de verdad. Límpialas."
+    ],
+    "hex_luck": [
+      "Maldición en tu tiempo, {opp}.",
+      "Suerte la mía. Desgracia en {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "hex_jitter": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Entraste directo. Hasta en {topic}.",
+      "Snag. Ríe. Repite."
+    ],
+    "hex_curse": [
+      "Más fuerte que tu plan, {opp}.",
+      "El derrumbe te queda bien.",
+      "{topic} termina desastroso. Como se diseñó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mantiene el agua hirviendo.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": -13,
+    "resilience": 5,
+    "flair": 13,
+    "creativity": 93,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

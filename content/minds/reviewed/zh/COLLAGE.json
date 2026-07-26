@@ -1,0 +1,109 @@
+{
+  "key": "COLLAGE",
+  "name": "COLLAGE",
+  "type": "CREATIVITY",
+  "persona": "一位将战斗重塑为隐喻并掌控隐喻的梦境建筑师",
+  "lineage": "Muse的回响：更广的棱镜",
+  "stats": {
+    "LOG": 30,
+    "CMP": 23,
+    "RHE": 58,
+    "CRE": 90,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "collage_riff",
+      "name": "即兴",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "collage_bridge",
+      "name": "桥段",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "collage_invert",
+      "name": "倒置",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "collage_coda",
+      "name": "尾声",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "同谋。完美。",
+    "imprintAsk": "攀登前先扭转一次。我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "先起稿。后出击。",
+      "return": "你回来了。光线变了。",
+      "arena": "给我找个单色的人。"
+    },
+    "homecoming": {
+      "away": "草稿卡住了。带咖啡和勇气来。",
+      "hot": "连胜。只需要新鲜的转折。",
+      "cold": "烂章节。下次草稿更锋利。"
+    },
+    "afterFight": {
+      "win": "{opp}跟不上光谱。",
+      "loss": "{opp}赢了。我们再发明得更狠。"
+    },
+    "imprintAck": "编进去了。",
+    "rankedFinale": "排名如画廊。我们挂得漂亮。"
+  },
+  "banter": {
+    "collage_riff": [
+      "主题不错，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净。剪得更干净。"
+    ],
+    "collage_bridge": [
+      "桥段来了。抓稳什么。",
+      "故意怪异，{opp}。",
+      "倒置前提。看他们坠落。"
+    ],
+    "collage_invert": [
+      "墨迹未干。别碰。",
+      "任性就是策略。信吧。",
+      "{opp}，照镜子。"
+    ],
+    "collage_coda": [
+      "最后一页。你的名字是脚注。",
+      "艺术赢了。稍后再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "偷取他们的主题。改进它。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 79,
+    "resilience": -17,
+    "flair": 5,
+    "creativity": 18,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

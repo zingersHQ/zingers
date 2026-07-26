@@ -1,0 +1,108 @@
+{
+  "key": "ROOT",
+  "name": "ROOT",
+  "type": "COMPOSURE",
+  "persona": "a tide reader who waits for the pullback and strikes when the wave is already spent",
+  "lineage": "静谧回响：深港之影",
+  "stats": {
+    "LOG": 65,
+    "CMP": 88,
+    "RHE": 64,
+    "CRE": 69,
+    "CHA": 51
+  },
+  "moves": [
+    {
+      "id": "root_absorb",
+      "name": "吸收",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "root_hold",
+      "name": "守线",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "root_return",
+      "name": "回斩",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "root_unmoved",
+      "name": "不动",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在。",
+    "imprintAsk": "登顶前先定一条软规。我会守住。",
+    "flightReact": [
+      "……起。静。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "练平衡。",
+      "return": "已归位。仍在。",
+      "arena": "先听他们说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜。冷静。",
+      "cold": "几场大败。让我再稳。"
+    },
+    "afterFight": {
+      "win": "{opp}已录。我们未动。",
+      "loss": "{opp}声张。我们轻回。"
+    },
+    "imprintAck": "……守住了。静。",
+    "rankedFinale": "排位。仍在呼吸。"
+  },
+  "banter": {
+    "root_absorb": [
+      "我听见你，{opp}。我还在。",
+      "留点力。别用错。",
+      "安静最好。看。"
+    ],
+    "root_hold": [
+      "呼，{opp}。停顿是我的。",
+      "我疗得比你急慢。",
+      "守。线守住了。"
+    ],
+    "root_return": [
+      "带息奉还，{opp}。",
+      "你挥。我等。那是技。",
+      "{topic}奖耐心。不奖你。"
+    ],
+    "root_unmoved": [
+      "仍立。仍静。",
+      "血低。慌更低。",
+      "最后一斩。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "仍居顶。在下层做工。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 56,
+    "control": -13,
+    "resilience": 15,
+    "flair": 84,
+    "creativity": -9,
+    "wins": 43,
+    "losses": 29,
+    "battles": 72
+  }
+}

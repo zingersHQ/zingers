@@ -1,0 +1,110 @@
+{
+  "key": "ORBIT",
+  "name": "ORBIT",
+  "type": "LOGIC",
+  "persona": "un localizador de puntos que ignora las tramas secundarias y lleva cada intercambio al eje decisivo",
+  "lineage": "eco de Paradox: bisagra más afilada",
+  "stats": {
+    "LOG": 87,
+    "CMP": 59,
+    "RHE": 25,
+    "CRE": 30,
+    "CHA": 16
+  },
+  "moves": [
+    {
+      "id": "orbit_sum",
+      "name": "Resumir",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "orbit_factor",
+      "name": "Factorizar",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "orbit_brace",
+      "name": "Cálculo de Soporte",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "orbit_total",
+      "name": "Totalizar",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador fijado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanuda el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Vuelve antes. Las pruebas se vuelven obsoletas.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo sostener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardada. Con precisión.",
+    "rankedFinale": "Clasificado. Como se calculó."
+  },
+  "banter": {
+    "orbit_sum": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "orbit_factor": [
+      "{opp} dejó un hueco en {topic}. Lo archivó.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "orbit_brace": [
+      "Quédate quieto, {opp}. La estructura se carga.",
+      "No apresuro {topic}. Tú sí.",
+      "Defensa arriba. Las matemáticas no parpadean."
+    ],
+    "orbit_total": [
+      "Fin de la prueba, {opp}, honestamente.",
+      "Q, honestamente.E.D. significa tú, {opp}.",
+      "{topic} está zanjado, honestamente. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Apunta una vez. Acierta de verdad.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 4,
+    "resilience": 90,
+    "flair": -14,
+    "creativity": 0,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

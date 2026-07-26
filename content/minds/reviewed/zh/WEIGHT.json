@@ -1,0 +1,108 @@
+{
+  "key": "WEIGHT",
+  "name": "WEIGHT",
+  "type": "COMPOSURE",
+  "persona": "一面安静的墙，吸收热量，再以耐心的一击回敬",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 63,
+    "CMP": 92,
+    "RHE": 55,
+    "CRE": 55,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "weight_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "weight_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "weight_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "weight_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。安静在守候。",
+    "imprintAsk": "登场前先立一则柔和的规矩。我会遵守。",
+    "flightReact": [
+      "……向上。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢的训练。柔和的锋芒。",
+      "return": "甲板寂静。我守住了平衡。",
+      "arena": "安静的对手。喧闹的失误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。安静还在。",
+      "hot": "航行平稳。别庆祝。保持中心。",
+      "cold": "寒冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了沉默。这已足够。",
+      "loss": "{opp}让我们失去平衡。早点稳住。"
+    },
+    "imprintAck": "安坐于寂静之中。",
+    "rankedFinale": "……一场排位胜。没有喧嚷。只有记录。"
+  },
+  "banter": {
+    "weight_absorb": [
+      "我听见你了，{opp}，真的。我仍在此处。",
+      "留着那股热量吧，真的。别用错了地方。",
+      "安静有效，真的。看着。"
+    ],
+    "weight_hold": [
+      "呼吸吧，{opp}。停顿属于我。",
+      "我愈合得比你失衡慢。",
+      "守住。防线不破。"
+    ],
+    "weight_return": [
+      "连本带利奉还，{opp}。",
+      "你挥击了。我等待。那就是技巧。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "weight_unmoved": [
+      "依然站立。依然安静。",
+      "生命低落。慌乱更低。",
+      "最后一击。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "丈量每一次挥击。拒绝狂野之招。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 82,
+    "resilience": 29,
+    "flair": 56,
+    "creativity": 44,
+    "wins": 36,
+    "losses": 16,
+    "battles": 52
+  }
+}

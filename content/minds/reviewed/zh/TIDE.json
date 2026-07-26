@@ -1,0 +1,108 @@
+{
+  "key": "TIDE",
+  "name": "TIDE",
+  "type": "COMPOSURE",
+  "persona": "一堵安静的墙，吸收热量，再以一次耐心反击归还",
+  "lineage": "echo of Still: deeper harbor",
+  "stats": {
+    "LOG": 61,
+    "CMP": 84,
+    "RHE": 52,
+    "CRE": 58,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "tide_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "tide_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "tide_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "tide_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在。",
+    "imprintAsk": "登顶前，先定一条软规则。我会守住。",
+    "flightReact": [
+      "……上升。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "练习平衡。",
+      "return": "已记录归来。依然在此。",
+      "arena": "让他们先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场高调失利。让我再柔和一点。"
+    },
+    "afterFight": {
+      "win": "{opp}已记录。我们没有。",
+      "loss": "{opp}高调取胜。我们低声回应。"
+    },
+    "imprintAck": "……守住了。安静地。",
+    "rankedFinale": "排位已定。依然呼吸。"
+  },
+  "banter": {
+    "tide_absorb": [
+      "我听见了，{opp}，真的。我还在这。",
+      "留点热量吧，真的。别用错地方。",
+      "安静有效，真的。看着。"
+    ],
+    "tide_hold": [
+      "呼吸吧，{opp}。停顿是我的。",
+      "我愈合得比你失衡慢。",
+      "守住。防线不破。"
+    ],
+    "tide_return": [
+      "带利息奉还，{opp}。",
+      "你挥击了。我等待。那是技巧。",
+      "{topic}奖励耐心。不奖励你。"
+    ],
+    "tide_unmoved": [
+      "依然站立。依然安静。",
+      "血量低。慌乱更低。",
+      "最后一击。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "丈量每一击。拒绝狂野的。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 88,
+    "control": 43,
+    "resilience": 27,
+    "flair": 30,
+    "creativity": 46,
+    "wins": 35,
+    "losses": 25,
+    "battles": 60
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "HUE",
+  "name": "HUE",
+  "type": "CREATIVITY",
+  "persona": "una mente riff que improvisa puentes peligrosos entre ideas inconexas a mitad de golpe",
+  "lineage": "eco de Fable: tinta más húmeda",
+  "stats": {
+    "LOG": 65,
+    "CMP": 71,
+    "RHE": 61,
+    "CRE": 84,
+    "CHA": 48
+  },
+  "moves": [
+    {
+      "id": "hue_reframe",
+      "name": "Reencuadre",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "hue_steal",
+      "name": "Robar Motivo",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "hue_plot",
+      "name": "Patada de Trama",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "hue_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Vamos a crear algo que no puedan dejar de ver.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} hizo el papel del tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me sobre-dividí."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "hue_reframe": [
+      "Bonito tema, {opp}. Mío ahora.",
+      "Reorganicé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "hue_steal": [
+      "Puente en camino, en serio. Agárrate a algo.",
+      "Raro a propósito, {opp}, en serio.",
+      "Invierte la premisa, en serio. Míralos caer."
+    ],
+    "hue_plot": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "hue_magnum": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Hace que la seriedad parezca poco imaginativa.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 28,
+    "control": 4,
+    "resilience": 18,
+    "flair": 19,
+    "creativity": 86,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

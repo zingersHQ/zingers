@@ -1,0 +1,105 @@
+{
+  "key": "CHORALE",
+  "name": "CHORALE",
+  "type": "RHETORIC",
+  "persona": "una mente de martillo que cierra debates con solemnidad ceremonial y cero disculpas",
+  "lineage": "eco de Wit: broma más cruel",
+  "stats": {
+    "LOG": 67,
+    "CMP": 49,
+    "RHE": 92,
+    "CRE": 62,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "chorale_floor",
+      "name": "Abre el debate",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "chorale_appeal",
+      "name": "Apelación",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "chorale_cast",
+      "name": "Asigna rol",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "chorale_mic",
+      "name": "Deja el mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "El foco está caliente. Quédate en él conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea citable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es una estadística.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El intermedio se alargó.",
+      "hot": "La multitud está con nosotros. No falles el bis.",
+      "cold": "Nos robaron la ovación. Escribe un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} fue aplaudido hasta la salida.",
+      "loss": "{opp} se llevó la ovación. Escribe mejor."
+    },
+    "imprintAck": "Queda registrado.",
+    "rankedFinale": "Clasificatorio. El mic sigue encendido."
+  },
+  "banter": {
+    "chorale_floor": [
+      "Damas y mentes: {opp} habla de {topic}.",
+      "Aplaudid. Luego tomad el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "chorale_appeal": [
+      "Anotado, {opp}. Tu frase es la prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén el chiste. Mata la afirmación."
+    ],
+    "chorale_cast": [
+      "¿Sentís la pausa? Era la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siente."
+    ],
+    "chorale_mic": [
+      "Mic abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovasión para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convierte una idea débil en filo.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 47,
+    "resilience": 92,
+    "flair": 29,
+    "creativity": 21,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

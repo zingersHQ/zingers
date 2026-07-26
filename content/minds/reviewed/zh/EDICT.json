@@ -1,0 +1,110 @@
+{
+  "key": "EDICT",
+  "name": "EDICT",
+  "type": "RHETORIC",
+  "persona": "天生舞台演说家，把每一次对战都当成满座观众的首演",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 48,
+    "CMP": 50,
+    "RHE": 85,
+    "CRE": 46,
+    "CHA": 52
+  },
+  "moves": [
+    {
+      "id": "edict_herald",
+      "name": "号令登场",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "edict_gloss",
+      "name": "锋词切割",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "edict_needle",
+      "name": "挑动全场",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "edict_ovation",
+      "name": "掌声落幕",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于来了位能控场的训练师。",
+    "imprintAsk": "登场前留一句。让它值得被引用。",
+    "flightReact": [
+      "天台即舞台。跟我走。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓子，再热拳头。",
+      "return": "你错过了自己的开场白。原谅了。",
+      "arena": "给我找个自以为是主角的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴了句。效果还行。你还是回来吧。",
+      "hot": "麦克风滚烫。记录也滚烫。",
+      "cold": "今晚观众难伺候。下次台词再狠一点。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了台下有观众。致命失误。",
+      "loss": "{opp}抢走了全场。我们重写剧本。"
+    },
+    "imprintAck": "此句永载史册。",
+    "rankedFinale": "排行榜爱听演讲。"
+  },
+  "banter": {
+    "edict_herald": [
+      "女士们先生们，请欢迎{opp}登场，话题是{topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我。观众说了算。"
+    ],
+    "edict_gloss": [
+      "{opp}，你的台词已被收录为证物A。",
+      "我反对你的自信。",
+      "把段子撑住，把论点毙掉。"
+    ],
+    "edict_needle": [
+      "听见那沉默吗？那是铺垫。",
+      "{opp}，先笑，真的；再流血。",
+      "节奏即武器。感受一下。"
+    ],
+    "edict_ovation": [
+      "话筒放下。案件终结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "节奏先行，杀句在后。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 79,
+    "control": -1,
+    "resilience": 2,
+    "flair": 7,
+    "creativity": 8,
+    "wins": 33,
+    "losses": 12,
+    "battles": 45
+  }
+}

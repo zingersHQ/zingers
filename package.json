@@ -14,6 +14,11 @@
     "generate:minds": "node scripts/generate-minds.mjs",
     "forge:dex": "node scripts/forge-dex.mjs",
     "bake:minds": "node scripts/bake-minds.mjs",
+    "i18n:check": "node scripts/i18n/check.mjs",
+    "i18n:draft-minds": "node scripts/i18n/draft-minds.mjs",
+    "i18n:promote-minds": "node scripts/i18n/promote-minds.mjs",
+    "i18n:draft-docs": "node scripts/i18n/draft-docs.mjs",
+    "i18n:draft-glossary": "node scripts/i18n/draft-glossary.mjs",
     "mcp": "node mcp/zingers-mcp.mjs"
   },
   "dependencies": {
@@ -27,6 +32,7 @@
     "bs58": "^6.0.0",
     "lucide-react": "^1.20.0",
     "next": "16.2.9",
+    "next-intl": "^4.13.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",

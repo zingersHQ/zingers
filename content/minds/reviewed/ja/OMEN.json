@@ -1,0 +1,110 @@
+{
+  "key": "OMEN",
+  "name": "OMEN",
+  "type": "CHAOS",
+  "persona": "苛立ちで勝つニードラー。華麗さより相手の動揺を楽しむ",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 48,
+    "RHE": 58,
+    "CRE": 70,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "omen_mark",
+      "name": "呪刻",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "omen_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "omen_jitter",
+      "name": "痙攣",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "omen_curse",
+      "name": "呪終",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "いいね。台無しにする相手ができた。",
+    "imprintAsk": "登る前に一発、悪いアイデアちょうだい。面白くしてよ。",
+    "flightReact": [
+      "下見ないで。…まあ、見てもいいけど。",
+      "まだ飛べてる。どうにか。最高。"
+    ],
+    "greeting": {
+      "train": "癖を壊して。欠片は残してね。",
+      "return": "カオス休憩、終了。",
+      "arena": "慎重な頭脳、指名するよ。"
+    },
+    "homecoming": {
+      "away": "静かすぎて不愉快。もう繰り返さないで。",
+      "hot": "今さら綺麗にまとめないで。",
+      "cold": "負け。汚い負け。いい燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}が躓いた。予定通り。",
+      "loss": "{opp}の勝ち。リベンジに呪いを。"
+    },
+    "imprintAck": "刻印済み。めちゃくちゃにね。",
+    "rankedFinale": "順位表、ぐるぐる回ってる。"
+  },
+  "banter": {
+    "omen_mark": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊って、{opp}。床がおかしくなってるよ。",
+      "ルール零しちゃった。拾って？"
+    ],
+    "omen_luck": [
+      "タイミングに呪い、{opp}。",
+      "ラッキー私。アンモチューン、{topic}。",
+      "笑って、{opp}。悪いとこは予定入り。"
+    ],
+    "omen_jitter": [
+      "転んで。正直タダだったよ、{opp}。",
+      "自分で飛び込んだよね。正直、{topic}にまで。",
+      "引っ掛かった。正直。笑って。リピート。"
+    ],
+    "omen_curse": [
+      "計画より声デカイね、{opp}。",
+      "崩れ落ちが似合うよ。",
+      "{topic}、ぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一行で暴動を起こす。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 93,
+    "resilience": -5,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

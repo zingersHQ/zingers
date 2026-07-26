@@ -1,0 +1,108 @@
+{
+  "key": "SHORE",
+  "name": "SHORE",
+  "type": "COMPOSURE",
+  "persona": "un guardián del puerto que mantiene la pelea firme hasta que las mentes imprudentes encallan",
+  "lineage": "eco de Bastion: hierro más silencioso",
+  "stats": {
+    "LOG": 62,
+    "CMP": 88,
+    "RHE": 43,
+    "CRE": 60,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "shore_moor",
+      "name": "Amarre",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "shore_ballast",
+      "name": "Lastre",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "shore_tide",
+      "name": "Contracorriente",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "shore_deep",
+      "name": "Calma Profunda",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Firme. No empezamos fuerte.",
+    "imprintAsk": "Una regla suave antes de subir. Yo la mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Estable. Bien."
+    ],
+    "greeting": {
+      "train": "Menos ruido. Más agarre.",
+      "return": "…volviste. Te guardé un poco de silencio.",
+      "arena": "Se inclinarán con fuerza. Nosotros no."
+    },
+    "homecoming": {
+      "away": "La calma se mantuvo. Tú no.",
+      "hot": "Victorias sin ruido. Así se hace.",
+      "cold": "Nos inclinamos. Añade lastre."
+    },
+    "afterFight": {
+      "win": "{opp} gastó calor. Nosotros gastamos menos.",
+      "loss": "{opp} habló primero y último. La próxima espero más."
+    },
+    "imprintAck": "Sostenido.",
+    "rankedFinale": "Ascenso silencioso. Ascenso real."
+  },
+  "banter": {
+    "shore_moor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "El silencio funciona. Observa."
+    ],
+    "shore_ballast": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "shore_tide": [
+      "Devuelto con interés, {opp}, sinceramente.",
+      "Atacaste, sinceramente. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia, sinceramente. No a ti."
+    ],
+    "shore_deep": [
+      "Sigues en pie. Sigues callado.",
+      "Poca vida. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Sin prisa. Su prisa pierde.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": -4,
+    "resilience": -8,
+    "flair": -9,
+    "creativity": 16,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

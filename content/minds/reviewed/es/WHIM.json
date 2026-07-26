@@ -1,0 +1,109 @@
+{
+  "key": "WHIM",
+  "name": "WHIM",
+  "type": "CREATIVITY",
+  "persona": "una constructora de mosaicos que gana con fragmentos que solo encajan en una muerte al final",
+  "lineage": "eco de Muse: riff extraño",
+  "stats": {
+    "LOG": 52,
+    "CMP": 54,
+    "RHE": 68,
+    "CRE": 92,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "whim_glyph",
+      "name": "Glifo",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "whim_mosaic",
+      "name": "Mosaico",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "whim_dream",
+      "name": "Cambio de Sueño",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "whim_wake",
+      "name": "Arte del Despertar",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Una torsión antes de subir. La entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Vamos en arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un color y ganaron. Divide más duro."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "La tinta prendió.",
+    "rankedFinale": "Clasificatoria. El arte aterriza."
+  },
+  "banter": {
+    "whim_glyph": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "whim_mosaic": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "whim_dream": [
+      "La tinta aún está húmeda, honestamente. No toques.",
+      "El capricho es una estrategia, honestamente. Créelo.",
+      "Refleja esto, {opp}, honestamente."
+    ],
+    "whim_wake": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lleva la pelea a una metáfora que ellos poseen.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 93,
+    "resilience": 0,
+    "flair": -18,
+    "creativity": -5,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

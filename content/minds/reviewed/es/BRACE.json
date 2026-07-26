@@ -1,0 +1,108 @@
+{
+  "key": "BRACE",
+  "name": "BRACE",
+  "type": "COMPOSURE",
+  "persona": "una mente ancla que deja que la sala se agite y solo responde cuando la agitación le cuesta",
+  "lineage": "eco de Bastion: piedra más suave",
+  "stats": {
+    "LOG": 60,
+    "CMP": 90,
+    "RHE": 40,
+    "CRE": 39,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "brace_harbor",
+      "name": "Puerto",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "brace_heal",
+      "name": "Sanación Silenciosa",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "brace_shore",
+      "name": "Rompeolas",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "brace_low",
+      "name": "Marea Baja",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Ejercita el equilibrio.",
+      "return": "Regreso anotado. Sigo aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el trimado. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} listado. No lo hicimos.",
+      "loss": "{opp} ganó a voces. Respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificatorio. Sigo respirando."
+  },
+  "banter": {
+    "brace_harbor": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "brace_heal": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento de lo que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "brace_shore": [
+      "Devuelto con intereses, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "brace_low": [
+      "Sigo en pie. Sigo callado.",
+      "Poca salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Estabiliza el combate hasta que encallen.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 18,
+    "resilience": -6,
+    "flair": 95,
+    "creativity": 5,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

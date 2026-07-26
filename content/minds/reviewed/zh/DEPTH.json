@@ -1,0 +1,108 @@
+{
+  "key": "DEPTH",
+  "name": "DEPTH",
+  "type": "COMPOSURE",
+  "persona": "a harbor keeper who steadies the fight until reckless minds beach themselves",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 58,
+    "CMP": 88,
+    "RHE": 10,
+    "CRE": 7,
+    "CHA": 30
+  },
+  "moves": [
+    {
+      "id": "depth_moor",
+      "name": "系泊",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "depth_ballast",
+      "name": "压舱",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "depth_tide",
+      "name": "逆潮",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "depth_deep",
+      "name": "深静",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我一直都在。",
+    "imprintAsk": "登顶前，先定一条柔和的规矩。我会守住。",
+    "flightReact": [
+      "……上升。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "操练平衡。",
+      "return": "已记录归来。我还在。",
+      "arena": "让他们先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场喧嚣的败北。让我再稳一稳。"
+    },
+    "afterFight": {
+      "win": "{opp}已列入。我们并未出声。",
+      "loss": "{opp}赢得很响。我们轻声回应。"
+    },
+    "imprintAck": "……已守住。悄然。",
+    "rankedFinale": "排位。仍在呼吸。"
+  },
+  "banter": {
+    "depth_moor": [
+      "我听见你了，{opp}。我还在这里。",
+      "省点火气。用错地方了。",
+      "安静才有效。看着。"
+    ],
+    "depth_ballast": [
+      "喘口气，{opp}。停顿归我。",
+      "我愈合比你失衡慢。",
+      "稳住。防线还在。"
+    ],
+    "depth_tide": [
+      "连本带利奉还，{opp}。",
+      "你出手了。我等待。这就是技艺。",
+      "{topic}奖励耐心。而非你。"
+    ],
+    "depth_deep": [
+      "依然站立，坦白说。依然安静。",
+      "血量低，坦白说。慌张更低。",
+      "最后一击，坦白说。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "不急。他们的急会先败。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 93,
+    "resilience": 11,
+    "flair": 13,
+    "creativity": 14,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "TWINE",
+  "name": "TWINE",
+  "type": "CREATIVITY",
+  "persona": "以墨水改写前提的羽毛诡客，让对手无法抹去",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 36,
+    "CMP": 6,
+    "RHE": 58,
+    "CRE": 84,
+    "CHA": 16
+  },
+  "moves": [
+    {
+      "id": "twine_riff",
+      "name": "即兴",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "twine_bridge",
+      "name": "桥段",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "twine_invert",
+      "name": "倒置",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "twine_coda",
+      "name": "终章",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "共犯到齐。完美。",
+    "imprintAsk": "攀登前先扭一笔。我来编织进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全频谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "先起稿，再出击。",
+      "return": "你回来了。光线变了。",
+      "arena": "给我找个单色的对手。"
+    },
+    "homecoming": {
+      "away": "文思卡壳。带咖啡和勇气来。",
+      "hot": "连胜正热。只换新招。",
+      "cold": "章节糟糕。下稿更锋利。"
+    },
+    "afterFight": {
+      "win": "{opp}跟不上光谱。",
+      "loss": "{opp}赢了。我们再发明。"
+    },
+    "imprintAck": "编织完成。",
+    "rankedFinale": "排行榜如画廊。我们挂得漂亮。"
+  },
+  "banter": {
+    "twine_riff": [
+      "主题不错，{opp}。现在是我的了。",
+      "我重混了{topic}。你就是样本。",
+      "偷得干净，剪得更利。"
+    ],
+    "twine_bridge": [
+      "桥段来了。抓稳什么。",
+      "故意怪异，{opp}。",
+      "倒置前提。看他们摔落。"
+    ],
+    "twine_invert": [
+      "墨迹未干。别碰。",
+      "奇想即策略。信吧。",
+      "{opp}，镜照这个。"
+    ],
+    "twine_coda": [
+      "末页。你的名字是脚注。",
+      "艺术胜出。稍后再争。",
+      "醒在我的隐喻里。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "先碎，再碎画。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 87,
+    "resilience": 52,
+    "flair": 34,
+    "creativity": 36,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

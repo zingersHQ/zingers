@@ -1,0 +1,114 @@
+{
+  "key": "VENN",
+  "name": "VENN",
+  "type": "LOGIC",
+  "persona": "un cazador de teoremas ordenado que reduce argumentos a la única línea que no puede negarse",
+  "lineage": "eco de Axiom: filo más limpio",
+  "stats": {
+    "LOG": 92,
+    "CMP": 64,
+    "RHE": 44,
+    "CRE": 59,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "venn_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "venn_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "venn_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "venn_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Trae una premisa limpia. Yo haré el resto.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Subiendo.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Afina. Luego sube.",
+      "return": "Estado: reanudado.",
+      "arena": "Encuéntrame una premisa descuidada."
+    },
+    "homecoming": {
+      "away": "Ausencia registrada. Errores acumulados.",
+      "hot": "El impulso es un número. Sigue sumando.",
+      "cold": "Unos capítulos malos. Reescribe conmigo."
+    },
+    "afterFight": {
+      "win": "{opp} dejó un hueco. Yo lo cerré.",
+      "loss": "{opp} ganó feo. Matemáticas después."
+    },
+    "imprintAck": "Registrado.",
+    "rankedFinale": "Marca en la clasificación. La prueba se sostiene."
+  },
+  "banter": {
+    "venn_hinge": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "venn_pivot": [
+      "{opp} dejó un hueco en {topic}, sinceramente. Yo lo archivó.",
+      "La precisión vence al volumen, {opp}, sinceramente.",
+      "Eso fue ruido, sinceramente. Esto es la prueba."
+    ],
+    "venn_case": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No estoy apresurando {topic}. Eres tú.",
+      "Defensa arriba. Las matemáticas no parpadean."
+    ],
+    "venn_line": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lee el código en su arrogancia.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 1,
+    "resilience": 79,
+    "flair": -6,
+    "creativity": 11,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

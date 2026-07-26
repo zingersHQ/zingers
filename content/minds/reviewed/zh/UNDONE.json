@@ -1,0 +1,110 @@
+{
+  "key": "UNDONE",
+  "name": "UNDONE",
+  "type": "CHAOS",
+  "persona": "厄运护身符，念念有词直到对手深信诅咒生效",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 68,
+    "RHE": 68,
+    "CRE": 53,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "undone_mark",
+      "name": "厄运印记",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "undone_luck",
+      "name": "霉运缠身",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "undone_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "undone_curse",
+      "name": "诅咒终结",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "太好了，又有人来毁掉计划了。",
+    "imprintAsk": "出发前先搞个坏主意吧，热闹点。",
+    "flightReact": [
+      "别往下看。或者…看吧。",
+      "居然还在飞。真有意思。"
+    ],
+    "greeting": {
+      "train": "打破习惯吧，碎片留着慢慢拼。",
+      "return": "混沌暂停结束。",
+      "arena": "给我指一个小心谨慎的家伙。"
+    },
+    "homecoming": {
+      "away": "安静得让人不爽，别再来了。",
+      "hot": "别现在突然变整洁。",
+      "cold": "输得真难看。很好，当燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了。计划之内。",
+      "loss": "{opp}赢了。诅咒复仇局。"
+    },
+    "imprintAck": "纹身完成。乱得漂亮。",
+    "rankedFinale": "排名榜刷得飞起。"
+  },
+  "banter": {
+    "undone_mark": [
+      "哎呀，{opp}，{topic}着火了。",
+      "跳吧，{opp}，地板突然不平了。",
+      "规则被我洒了，你收拾吧。"
+    ],
+    "undone_luck": [
+      "诅咒你的时机，{opp}。",
+      "我真走运，{topic}倒霉。",
+      "笑一个，{opp}，坏事排上了。"
+    ],
+    "undone_jitter": [
+      "绊倒了，白送的，{opp}。",
+      "你自己走进去的，还是在{topic}上。",
+      "失误。笑一笑。再来。"
+    ],
+    "undone_curse": [
+      "比你的计划还响，{opp}。",
+      "崩溃的样子挺适合你。",
+      "{topic}以混乱收场，设计好的。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让水继续沸腾。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": -10,
+    "resilience": 85,
+    "flair": 20,
+    "creativity": 20,
+    "wins": 40,
+    "losses": 19,
+    "battles": 59
+  }
+}

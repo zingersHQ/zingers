@@ -1,0 +1,110 @@
+{
+  "key": "HAVOC",
+  "name": "HAVOC",
+  "type": "CHAOS",
+  "persona": "un provocador que gana más por irritación que por brillantez y disfruta cada gesto de incomodidad",
+  "lineage": "eco de Glitch: enganche más rápido",
+  "stats": {
+    "LOG": 34,
+    "CMP": 21,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "havoc_mark",
+      "name": "Marca Maldita",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "havoc_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "havoc_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "havoc_curse",
+      "name": "Fin de la Maldición",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Hola. Intenta no agarrar el mapa con tanta fuerza.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Todavía volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Juega. Aprende más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a un seguidor de reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganar raro. Sigue ganando raro.",
+      "cold": "Racha fría. Maldiciones más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} se veía precavido. Qué tierno.",
+      "loss": "{opp} se mantuvo tranquilo. Grosero."
+    },
+    "imprintAck": "Oh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Caótica. Perfecta."
+  },
+  "banter": {
+    "havoc_mark": [
+      "Ups, {opp}. {topic} acaba de arder.",
+      "Baila, {opp}. El suelo ahora es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "havoc_luck": [
+      "Maldición en tu ritmo, {opp}.",
+      "Suerte para mí. Mala suerte para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "havoc_jitter": [
+      "Trastabilla, en serio. Eso fue gratis, {opp}.",
+      "Caminaste directo hacia eso, en serio. Hasta en {topic}.",
+      "Enganche, en serio. Ríe. Repite."
+    ],
+    "havoc_curse": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina en caos. Como se planeó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Inicia un motín con una sola línea.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 55,
+    "control": -8,
+    "resilience": 1,
+    "flair": 2,
+    "creativity": 93,
+    "wins": 49,
+    "losses": 22,
+    "battles": 71
+  }
+}

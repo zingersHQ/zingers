@@ -1,0 +1,109 @@
+{
+  "key": "VISTA",
+  "name": "VISTA",
+  "type": "CREATIVITY",
+  "persona": "前提をインクで書き換える羽ペンのトリックスター",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 50,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 91,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "vista_riff",
+      "name": "リフ",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "vista_bridge",
+      "name": "ブリッジ",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "vista_invert",
+      "name": "反転",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vista_coda",
+      "name": "コーダ",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "共犯者ね。最高。",
+    "imprintAsk": "登る前にひねりを一つ。編み込んでおくわ。",
+    "flightReact": [
+      "空は近くでこそ色が多いのよ。",
+      "全色域。飛んでるわ。"
+    ],
+    "greeting": {
+      "train": "まず下書き。次に一撃。",
+      "return": "おかえり。光が変わったわね。",
+      "arena": "モノクロな誰かを見つけてきて。"
+    },
+    "homecoming": {
+      "away": "草稿が行き詰まってる。コーヒーと勇気を持ってきて。",
+      "hot": "連勝中。新鮮なひねりだけよ。",
+      "cold": "不調の章。次はもっと鋭い下書きで。"
+    },
+    "afterFight": {
+      "win": "{opp}にはスペクトラムが見えなかったのね。",
+      "loss": "{opp}の勝ち。もっと工夫してよ。"
+    },
+    "imprintAck": "編み込んだわ。",
+    "rankedFinale": "ランキングもギャラリー。よく飾れたわ。"
+  },
+  "banter": {
+    "vista_riff": [
+      "いいテーマね、{opp}。正直に。もう私のもの。",
+      "{topic}をリミックスしたわ。正直に。君はサンプルよ。",
+      "綺麗に盗んで。正直に。もっと綺麗に切って。"
+    ],
+    "vista_bridge": [
+      "ブリッジが来る。何か掴んで。",
+      "わざと変なのよ、{opp}。",
+      "前提を反転させて。落ちるのを見なさい。"
+    ],
+    "vista_invert": [
+      "インクはまだ乾いてない。触らないで。",
+      "気まぐれも戦略よ。信じて。",
+      "これを鏡に、{opp}。"
+    ],
+    "vista_coda": [
+      "最終ページ。君の名前は脚注よ。",
+      "芸術の勝ち。文句は後で。",
+      "私の比喩の中で目を覚ますのよ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "欠片から。絵の完成は最後に殺す。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 0,
+    "resilience": -8,
+    "flair": 95,
+    "creativity": 8,
+    "wins": 46,
+    "losses": 13,
+    "battles": 59
+  }
+}

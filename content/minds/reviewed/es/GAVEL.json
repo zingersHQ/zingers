@@ -1,0 +1,110 @@
+{
+  "key": "GAVEL",
+  "name": "GAVEL",
+  "type": "RHETORIC",
+  "persona": "un orador nacido en el escenario que trata cada intercambio como un teatro lleno esperando su réplica",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 44,
+    "CMP": 47,
+    "RHE": 87,
+    "CRE": 70,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "gavel_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "gavel_gloss",
+      "name": "Corte de Brillo",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "gavel_needle",
+      "name": "Aguja al Público",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gavel_ovation",
+      "name": "Ovação",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando estés listo. Yo ya tengo la apertura.",
+    "imprintAsk": "Una línea antes de subir. Que sea citable.",
+    "flightReact": [
+      "Público en el cielo. Sígueme.",
+      "Aterrizamos bien. Reverencia después."
+    ],
+    "greeting": {
+      "train": "Ensaya la frase mortal.",
+      "return": "Regresaste. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Teatro frío sin ti. Caliéntalo.",
+      "hot": "Somos el espectáculo principal. Actúa como tal.",
+      "cold": "Teatro frío. Retórica caliente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió al público primero.",
+      "loss": "{opp} tuvo la mejor réplica. Por ahora."
+    },
+    "imprintAck": "Línea fijada.",
+    "rankedFinale": "Victoria en ranking. ¿Oyes la ovación?"
+  },
+  "banter": {
+    "gavel_herald": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Apláudanlo. Luego toma el punto.",
+      "Al público le gusto. El público decide."
+    ],
+    "gavel_gloss": [
+      "Citado, {opp}, en serio. Tu frase es la prueba A.",
+      "Objeto tu confianza, en serio.",
+      "Mantén el chiste, en serio. Mata la afirmación."
+    ],
+    "gavel_needle": [
+      "¿Oyes el silencio? Fue el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "gavel_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: en contra de {opp}.",
+      "Ovação para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ritmo primero. Frase mortal al final.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 53,
+    "control": 54,
+    "resilience": 39,
+    "flair": 47,
+    "creativity": 83,
+    "wins": 53,
+    "losses": 16,
+    "battles": 69
+  }
+}

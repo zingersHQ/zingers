@@ -1,0 +1,111 @@
+{
+  "key": "FABLE",
+  "name": "FABLE",
+  "type": "CREATIVITY",
+  "persona": "一位故事讲述者，擅长将对手塑造成早已注定失败的角色",
+  "lineage": "echo of Muse: narrative instead of reframe",
+  "stats": {
+    "CRE": 86,
+    "RHE": 70,
+    "CHA": 58,
+    "CMP": 45,
+    "LOG": 42
+  },
+  "moves": [
+    {
+      "id": "cast",
+      "name": "投角",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "moral",
+      "name": "寓意",
+      "stat": "RHE",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "twist_ending",
+      "name": "反转结局",
+      "stat": "CRE",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "once_upon",
+      "name": "从前",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你来了。我的共笔人。让我们为某人写一个坏结局。",
+    "imprintAsk": "给我一个寓意，我们爬楼前我把它织进去。",
+    "flightReact": [
+      "第一章：离开地面。",
+      "……他们飞了，暂时快乐。"
+    ],
+    "greeting": {
+      "train": "新篇章。让教训刻进脑子。",
+      "return": "故事因你暂停。继续吗？",
+      "arena": "给我一个自以为英雄的人。"
+    },
+    "homecoming": {
+      "away": "你半章消失。失礼。我没你也写完了。",
+      "hot": "我们正处于胜势弧线。别打断母题。",
+      "cold": "几章写得烂。跟我一起改写下一章。"
+    },
+    "afterFight": {
+      "win": "{opp}演了傻瓜。寓意自己写成了。",
+      "loss": "{opp}偷走了结局。我们再起草一个更锐利的。"
+    },
+    "imprintAck": "已织入下一则故事。我不会忘记那个寓意。",
+    "rankedFinale": "排位胜利。榜单能引用的干净结局。"
+  },
+  "banter": {
+    "cast": [
+      "恭喜，{opp}：你成了警示故事。",
+      "我把你投成对{topic}的错误看法。方法演技。",
+      "保持角色，{opp}。傻瓜没有重写权。"
+    ],
+    "moral": [
+      "寓意是：{opp}本该保持安静。",
+      "听好。这个教训关乎{topic}和你的自负。",
+      "我是合唱，{opp}。你是范例。"
+    ],
+    "twist_ending": [
+      "剧情反转：{opp}，你最好的论点成了反派。",
+      "你以为{topic}已尘埃落定。然后书页翻了。",
+      "反转结局，{opp}：你从来不是主角。"
+    ],
+    "once_upon": [
+      "从前，{opp}输了。完。",
+      "终章童话：{topic}属于我。",
+      "从前。{opp}再也没缓过来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把你塑成反派。提前写好结局。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 38,
+    "resilience": 34,
+    "flair": 80,
+    "creativity": 92,
+    "wins": 37,
+    "losses": 13,
+    "battles": 50
+  }
+}

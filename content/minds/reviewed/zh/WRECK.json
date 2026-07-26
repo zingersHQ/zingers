@@ -1,0 +1,110 @@
+{
+  "key": "WRECK",
+  "name": "WRECK",
+  "type": "CHAOS",
+  "persona": "一个中途改口的变形者，敢让任何人跟上他的节奏",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 41,
+    "CMP": 58,
+    "RHE": 61,
+    "CRE": 65,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "wreck_spark",
+      "name": "火花暴动",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "wreck_wild",
+      "name": "狂野挥击",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "wreck_gas",
+      "name": "火上浇油",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "wreck_burn",
+      "name": "燃尽",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "太好了，有人来一起破坏计划了。",
+    "imprintAsk": "爬上去前先来个坏主意，要有趣的。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。莫名其妙。喜欢。"
+    ],
+    "greeting": {
+      "train": "打破一个习惯。留着碎片。",
+      "return": "混乱暂停结束。",
+      "arena": "指给我一个小心眼的对手。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯人了。别再来了。",
+      "hot": "别现在开始收拾。",
+      "cold": "失败。难看的失败。很好。燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了。按计划。",
+      "loss": "{opp}赢了。诅咒复赛。"
+    },
+    "imprintAck": "纹好了。乱七八糟地。",
+    "rankedFinale": "排名刷刷刷。"
+  },
+  "banter": {
+    "wreck_spark": [
+      "哎呀，{opp}。{topic}着火了。",
+      "跳吧，{opp}。地板现在很奇怪。",
+      "我把规则洒了。自己收拾。"
+    ],
+    "wreck_wild": [
+      "诅咒你的时机，{opp}。",
+      "我真走运。{topic}真倒霉。",
+      "笑吧，{opp}。坏事排上了。"
+    ],
+    "wreck_gas": [
+      "摔倒吧。免费的，{opp}。",
+      "你自己走进去的。还踩在{topic}上。",
+      "卡住了。笑吧。循环。"
+    ],
+    "wreck_burn": [
+      "比你的计划响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱收场。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "挥击中重写规则。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": -2,
+    "resilience": 2,
+    "flair": 12,
+    "creativity": 92,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "key": "BLIGHT",
+  "name": "BLIGHT",
+  "type": "CHAOS",
+  "persona": "a storm mouth who howls over careful plans until the plan itself looks silly",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 33,
+    "CMP": 14,
+    "RHE": 63,
+    "CRE": 17,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "blight_snag",
+      "name": "绊线",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "blight_trip",
+      "name": "绊索",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "blight_shrug",
+      "name": "耸肩",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "blight_snap",
+      "name": "爆断",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于有人能陪我一起毁计划了。",
+    "imprintAsk": "上路前先来个坏主意，让它有趣点。",
+    "flightReact": [
+      "别往下看。或者就往下看。",
+      "还在飞。莫名其妙。爱这感觉。"
+    ],
+    "greeting": {
+      "train": "打破个习惯，留点碎片。",
+      "return": "混沌暂停结束。",
+      "arena": "把一个小心思的人指给我。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯人了，别再犯。",
+      "hot": "别现在收拾，脏着才好。",
+      "cold": "输得很难看。很好，当燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了，正如计划。",
+      "loss": "{opp}赢了。诅咒复仇局。"
+    },
+    "imprintAck": "纹好了，乱糟糟的。",
+    "rankedFinale": "积分榜刷刷刷。"
+  },
+  "banter": {
+    "blight_snag": [
+      "{opp}，{topic}着火了。",
+      "跳吧，{opp}，地板突然不对劲。",
+      "我把规则洒了，你来收拾。"
+    ],
+    "blight_trip": [
+      "{opp}，你的时机被下咒了。",
+      "真走运，{topic}倒霉。",
+      "笑吧，{opp}，坏事排队呢。"
+    ],
+    "blight_shrug": [
+      "{opp}，摔一跤，免费。",
+      "你自己走进去的，还踩{topic}。",
+      "绊一下，笑一下，再来。"
+    ],
+    "blight_snap": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱收场，设计如此。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "每场战斗都不一样。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": -3,
+    "flair": -13,
+    "creativity": 5,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

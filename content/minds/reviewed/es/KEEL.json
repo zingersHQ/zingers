@@ -1,0 +1,114 @@
+{
+  "key": "KEEL",
+  "name": "KEEL",
+  "type": "COMPOSURE",
+  "persona": "un estabilizador centrado que endereza el argumento cuando se inclina. Nunca llamativo, siempre firme",
+  "lineage": "eco de Bastion: equilibrio en vez de muro",
+  "stats": {
+    "CMP": 86,
+    "LOG": 68,
+    "RHE": 52,
+    "CHA": 48,
+    "CRE": 38
+  },
+  "moves": [
+    {
+      "id": "right_ship",
+      "name": "Endereza el barco",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        9,
+        2
+      ]
+    },
+    {
+      "id": "ballast",
+      "name": "Lastrar",
+      "stat": "CMP",
+      "base": 0,
+      "heal": 12,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "trim",
+      "name": "Recortar",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "deep_keel",
+      "name": "Quilla profunda",
+      "stat": "CMP",
+      "base": 25,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Eres el Entrenador. Yo mantengo el equilibrio. No hagas zozobrar el barco por diversión.",
+    "imprintAsk": "Una lección de lastre antes de subir. Algo que mantenga el rumbo.",
+    "flightReact": [
+      "Firme. No lo balancees.",
+      "…nivelado. Buen vuelo."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio. Lo llamativo puede esperar.",
+      "return": "De vuelta a bordo. ¿Cómo va la inclinación?",
+      "arena": "Se inclinarán fuerte. Nosotros no."
+    },
+    "homecoming": {
+      "away": "La cubierta estuvo callada sin ti. Mantuve el trimado.",
+      "hot": "Vamos parejos. No lo celebres. Mantente centrado.",
+      "cold": "Nos inclinamos un par de veces. Añade lastre. Luego otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} se inclinó. Nosotros no. Ese es todo el viaje.",
+      "loss": "{opp} nos pilló desequilibrados. La próxima recortamos antes."
+    },
+    "imprintAck": "Guardado. Navegaré más bajo en el agua.",
+    "rankedFinale": "Victoria en clasificatorias. Quilla firme. Sin drama en el registro."
+  },
+  "banter": {
+    "right_ship": [
+      "Te inclinas, {opp}. Yo soy la corrección.",
+      "Endereza el barco. {topic} ya te estaba volcando.",
+      "Firme ahora, {opp}. Tu argumento ya rodaba."
+    ],
+    "ballast": [
+      "Weight where it counts. You brought fireworks, {opp}.",
+      "I heal by not flinching. Try it, {opp}.",
+      "Ballast in. Panic out. Your move on {topic}."
+    ],
+    "trim": [
+      "Corta el exceso, {opp}. Lo que queda de {topic} está delgado.",
+      "Recorté tu mejor línea. Mira. Luz debajo.",
+      "Expuesto. La quilla ve todo lo que escondiste."
+    ],
+    "deep_keel": [
+      "Agua profunda, {opp}. Sigues en bajíos.",
+      "El daño no me vuelca. Hunde tu oportunidad.",
+      "Quilla profunda. {topic} no puede rodar este casco."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mantiene el combate erguido. Castiga a quien se inclina.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 18,
+    "control": 88,
+    "resilience": 85,
+    "flair": 16,
+    "creativity": 20,
+    "wins": 41,
+    "losses": 10,
+    "battles": 51
+  }
+}

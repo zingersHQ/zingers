@@ -22,7 +22,11 @@ import { Jetpack } from "./jetpack";
 import { blank, TYPE_COLOR } from "@/lib/evolve/progression";
 import { GOLD, readerPalette } from "@/lib/render/palette";
 import type { Champion, CreatureType } from "@/lib/types";
-import { COMPANION_FOLLOW, companionDockSlot, companionPathSlot } from "./companion-follow";
+import {
+  FLIGHT_COMPANION_FOLLOW,
+  companionDockSlot,
+  companionPathSlot,
+} from "./companion-follow";
 import { useSettings } from "@/store/settings";
 
 // Pilot ground-rings — same language as Handler in world.tsx: detach + sink while
@@ -38,10 +42,9 @@ const PILOT_RING_EASE = 8;
 const _pilotFlatQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
 const _pilotParentQ = new THREE.Quaternion();
 
-// Flight leash mirrors Grounds OwnedCompanion's *moving* branch: inherit the
-// pilot's path velocity, then close the wing-slot gap (catchK). Without the
-// inherited velocity, Climb's ~8–12 u/s cruise leaves the champion lagging
-// many units behind the authored pathBack.
+// Flight leash (FLIGHT_COMPANION_FOLLOW): inherit pilot path velocity, then close
+// the wing-slot gap. catchMax is wind-scaled so tunnel cruise never permanently
+// outruns the champion.
 const EXTRA_GRAV = 1.35;
 const VERT_SPRING = 8; // same Y spring OwnedCompanion uses while flying
 
@@ -302,7 +305,7 @@ export function FlyingFollower({
     const dt = Math.min(0.05, dtRaw);
     const th = headingRef?.current ?? 0;
     const { wingDrop, catchK, catchMax, accel, velSmooth, slotSmooth, rigHeadingSmooth, minPathSpeed } =
-      COMPANION_FOLLOW;
+      FLIGHT_COMPANION_FOLLOW;
 
     // Boot at the pedestal (if given) so chase starts as a real takeoff, not a pop-in.
     if (!booted.current) {

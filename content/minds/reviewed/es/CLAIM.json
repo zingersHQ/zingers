@@ -1,0 +1,106 @@
+{
+  "key": "CLAIM",
+  "name": "CLAIM",
+  "type": "RHETORIC",
+  "persona": "un testigo que convoca al jurado en la sala y logra su asentimiento primero",
+  "lineage": "eco de Wit: brillo más afilado",
+  "stats": {
+    "LOG": 49,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 55,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "claim_cadence",
+      "name": "Cadencia",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "claim_pause",
+      "name": "Corte en Pausa",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "claim_laugh",
+      "name": "Risa de Preparación",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "claim_punch",
+      "name": "Puñetazo Final",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que domina la sala.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Seguidme.",
+      "Aterrizaje perfecto. Reverencia después."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste tu entrada. Te perdono.",
+      "arena": "Dame a alguien que se crea el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Vuelve de todos modos.",
+      "hot": "Micrófono caliente. Grabación caliente.",
+      "cold": "Sala difícil. Mejores frases la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} olvidó al público. Fatal.",
+      "loss": "{opp} ganó la sala. Reescribimos."
+    },
+    "imprintAck": "Citada para siempre.",
+    "rankedFinale": "La clasificación ama un discurso."
+  },
+  "banter": {
+    "claim_cadence": [
+      "Señoras y mentes: {opp} sobre {topic}, honestamente.",
+      "Aplaudid, honestamente. Luego tomad el punto.",
+      "La sala me quiere, honestamente. La sala decide."
+    ],
+    "claim_pause": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén el gag. Mata la afirmación."
+    ],
+    "claim_laugh": [
+      "¿Oís la pausa? Era la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siente su peso."
+    ],
+    "claim_punch": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovación para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Termina como un golpe de maza.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 80,
+    "resilience": 51,
+    "flair": 38,
+    "creativity": 27,
+    "wins": 34,
+    "losses": 20,
+    "battles": 54
+  }
+}

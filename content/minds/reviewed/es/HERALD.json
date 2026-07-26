@@ -1,0 +1,106 @@
+{
+  "key": "HERALD",
+  "name": "HERALD",
+  "type": "RHETORIC",
+  "persona": "un testigo que convoca al jurado en la sala y gana su aprobación primero",
+  "lineage": "eco de Wit: glosa más afilada",
+  "stats": {
+    "LOG": 7,
+    "CMP": 18,
+    "RHE": 88,
+    "CRE": 20,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "herald_cadence",
+      "name": "Cadencia",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "herald_pause",
+      "name": "Corte de Pausa",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "herald_laugh",
+      "name": "Risa de Preparación",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "herald_punch",
+      "name": "Puñetazo Letal",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "El foco calienta. Quédate en él conmigo.",
+    "imprintAsk": "Una línea antes de subir. Que sea citable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es un atributo.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El intermedio se alargó.",
+      "hot": "El público está con nosotros. No falles el bis.",
+      "cold": "Se robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} fue sacado entre risas.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Queda registrado.",
+    "rankedFinale": "Clasificatorio. Micrófono aún caliente."
+  },
+  "banter": {
+    "herald_cadence": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Apláudanle. Luego tomen el punto.",
+      "La casa me quiere. La casa decide."
+    ],
+    "herald_pause": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Objeto tu confianza.",
+      "Mantén la broma. Mata la afirmación."
+    ],
+    "herald_laugh": [
+      "¿Oyen la pausa? Eso fue la preparación.",
+      "Ríete primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "herald_punch": [
+      "Micrófono abajo, honestamente. Asunto cerrado.",
+      "Veredicto sobre {topic}: en contra de {opp}, honestamente.",
+      "Ováción para mí, honestamente. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Termina como un golpe de maza.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": -6,
+    "resilience": -9,
+    "flair": -19,
+    "creativity": 20,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "DREAM",
+  "name": "DREAM",
+  "type": "CREATIVITY",
+  "persona": "un constructor de mosaicos que gana con fragmentos que solo encajan en la muerte al final",
+  "lineage": "eco de Muse: riff extraño",
+  "stats": {
+    "LOG": 66,
+    "CMP": 55,
+    "RHE": 65,
+    "CRE": 92,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "dream_glyph",
+      "name": "Glifo",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "dream_mosaic",
+      "name": "Mosaico",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "dream_dream",
+      "name": "Cambio Onírico",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "dream_wake",
+      "name": "Arte Despertar",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo trenzaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida para doblarla."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Estamos en un arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un solo color y ganaron. Divide más fuerte."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "La tinta prendió.",
+    "rankedFinale": "Clasificatoria. El arte aterriza."
+  },
+  "banter": {
+    "dream_glyph": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "dream_mosaic": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "dream_dream": [
+      "La tinta aún está húmeda, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Refleja esto, {opp}, en serio."
+    ],
+    "dream_wake": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mueve la pelea a una metáfora que ellos poseen.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 46,
+    "resilience": 38,
+    "flair": 57,
+    "creativity": 54,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

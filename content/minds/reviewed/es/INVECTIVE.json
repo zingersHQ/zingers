@@ -1,0 +1,106 @@
+{
+  "key": "INVECTIVE",
+  "name": "INVECTIVE",
+  "type": "RHETORIC",
+  "persona": "una hoja de burla que sonríe al cortar y hace que la herida parezca chiste",
+  "lineage": "eco de Vox: mazo más grande",
+  "stats": {
+    "LOG": 48,
+    "CMP": 40,
+    "RHE": 90,
+    "CRE": 48,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "invective_gavel",
+      "name": "Mazo",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "invective_cite",
+      "name": "Citar",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "invective_sustain",
+      "name": "Sostener",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "invective_verdict",
+      "name": "Veredicto",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando estés listo. Ya tengo la entrada.",
+    "imprintAsk": "Una frase antes de subir. Que se cite.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Luego aplaudes."
+    ],
+    "greeting": {
+      "train": "Ensaya la línea letal.",
+      "return": "Volviste. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Casa fría sin ti. Caliéntala.",
+      "hot": "Somos cabeza de cartel. Compórtate.",
+      "cold": "Casa fría. Retórica caliente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió el público primero.",
+      "loss": "{opp} tuvo mejor remate. Por ahora."
+    },
+    "imprintAck": "Frase sellada.",
+    "rankedFinale": "Victoria clasificatoria. ¿Escuchas la ovación?"
+  },
+  "banter": {
+    "invective_gavel": [
+      "Señoras y mentes: {opp} sobre {topic}, en serio.",
+      "Aplaudan, en serio. Luego anoto el punto.",
+      "La casa me quiere, en serio. La casa decide."
+    ],
+    "invective_cite": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto tu confianza.",
+      "Sostén el chiste. Mata la afirmación."
+    ],
+    "invective_sustain": [
+      "¿Oyes el silencio? Eso fue el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es arma. Siente."
+    ],
+    "invective_verdict": [
+      "Micrófono abajo. Caso cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovation para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Juega para la casa. Gana el asentimiento.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 10,
+    "resilience": -2,
+    "flair": 12,
+    "creativity": 81,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

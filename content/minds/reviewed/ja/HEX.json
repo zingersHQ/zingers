@@ -1,0 +1,110 @@
+{
+  "key": "HEX",
+  "name": "HEX",
+  "type": "CHAOS",
+  "persona": "不幸のお守り。相手が呪いを本気で信じるまで破滅を語り続ける",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 36,
+    "CMP": 27,
+    "RHE": 66,
+    "CRE": 36,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "hex_mark",
+      "name": "呪刻",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "hex_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "hex_jitter",
+      "name": "小乱",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "hex_curse",
+      "name": "終呪",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "よし。計画を台無しにする相手が来た。",
+    "imprintAsk": "登る前にひとつ悪戯を。楽しくやろう。",
+    "flightReact": [
+      "下を見ないこと。いや、見てもいい。",
+      "まだ飛んでる。まあ、いいけど。"
+    ],
+    "greeting": {
+      "train": "癖を壊せ。欠片は残せ。",
+      "return": "混沌の休憩、終わり。",
+      "arena": "慎重な頭脳を指差せ。"
+    },
+    "homecoming": {
+      "away": "静けさが不愉快だった。繰り返すな。",
+      "hot": "今更整えるなよ。",
+      "cold": "負け。醜い負け。いい燃料だ。"
+    },
+    "afterFight": {
+      "win": "{opp}が転んだ。計画通り。",
+      "loss": "{opp}の勝ち。リベンジに呪いを。"
+    },
+    "imprintAck": "刻まれた。混沌まみれで。",
+    "rankedFinale": "順位がぐるぐる回る。"
+  },
+  "banter": {
+    "hex_mark": [
+      "おっと、{opp}。正直。{topic}が燃えたよ。",
+      "踊れ、{opp}。正直。床がおかしくなってる。",
+      "ルールをこぼした。正直。拾ってみてよ。"
+    ],
+    "hex_luck": [
+      "{opp}のタイミングに呪い。",
+      "ラッキーなのは私。不運は{topic}。",
+      "笑え、{opp}。悪い部分は予定済み。"
+    ],
+    "hex_jitter": [
+      "つまずけ。ただのサービスだ、{opp}。",
+      "{topic}で踏み込んだね。",
+      "引っ掛かり。笑い。繰り返し。"
+    ],
+    "hex_curse": [
+      "計画より大きい声だ、{opp}。",
+      "崩れ顔が映える。",
+      "{topic}は散らかる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "湯を沸かし続ける。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": -13,
+    "resilience": 5,
+    "flair": 13,
+    "creativity": 93,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

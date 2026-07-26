@@ -1,0 +1,110 @@
+{
+  "key": "JOLT",
+  "name": "JOLT",
+  "type": "CHAOS",
+  "persona": "un aguijoneador que gana más por irritación que por brillantez y disfruta cada flinch",
+  "lineage": "eco de Glitch: snag más rápido",
+  "stats": {
+    "LOG": 34,
+    "CMP": 30,
+    "RHE": 58,
+    "CRE": 7,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "jolt_mark",
+      "name": "Marca Maldita",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jolt_luck",
+      "name": "Mala Suerte",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jolt_jitter",
+      "name": "Temblor",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jolt_curse",
+      "name": "Fin de la Maldición",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "Hola. Intenta no agarrar el mapa tan fuerte.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De alguna forma. Me encanta."
+    ],
+    "greeting": {
+      "train": "Juega y aprende más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a alguien que siga las reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganando raro. Sigue ganando raro.",
+      "cold": "Racha fría. Hex más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} parecía precavido. Qué tierno.",
+      "loss": "{opp} se mantuvo calmado. Grosero."
+    },
+    "imprintAck": "Ooh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Desordenada. Perfecta."
+  },
+  "banter": {
+    "jolt_mark": [
+      "Ups, {opp}. {topic} acaba de arder.",
+      "Baila, {opp}. El suelo ya es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "jolt_luck": [
+      "Hechizo en tu timing, {opp}.",
+      "Suerte mía. Mala suerte para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "jolt_jitter": [
+      "Tropezaste. Eso fue gratis, {opp}.",
+      "Caminaste directo hacia eso. Hasta en {topic}.",
+      "Snag. Ríe. Repite."
+    ],
+    "jolt_curse": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina desordenado. Como se planeó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Inicia un motín con una sola frase.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 87,
+    "resilience": -19,
+    "flair": 0,
+    "creativity": 17,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

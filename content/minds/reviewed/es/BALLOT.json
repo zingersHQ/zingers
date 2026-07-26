@@ -1,0 +1,106 @@
+{
+  "key": "BALLOT",
+  "name": "BALLOT",
+  "type": "RHETORIC",
+  "persona": "un testigo que convoca al jurado en la sala y se gana su asentimiento primero",
+  "lineage": "eco del Ingenio: más filo y brillo",
+  "stats": {
+    "LOG": 71,
+    "CMP": 71,
+    "RHE": 89,
+    "CRE": 67,
+    "CHA": 71
+  },
+  "moves": [
+    {
+      "id": "ballot_cadence",
+      "name": "Cadencia",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "ballot_pause",
+      "name": "Corte de Pausa",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "ballot_laugh",
+      "name": "Risa de Preparación",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "ballot_punch",
+      "name": "Puñetazo Final",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando quieras. Yo ya tengo la entrada.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Aplausos después."
+    ],
+    "greeting": {
+      "train": "Ensaya la frase que mata.",
+      "return": "Volviste. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Sala fría sin ti. Caliéntala.",
+      "hot": "Somos cabeza de cartel. Compórtate como tal.",
+      "cold": "Sala fría. Retórica caliente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió la sala primero.",
+      "loss": "{opp} tuvo el remate mejor. Por ahora."
+    },
+    "imprintAck": "Frase sellada.",
+    "rankedFinale": "Victoria en ranking. ¿Escuchan esa ovación?"
+  },
+  "banter": {
+    "ballot_cadence": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Aplaudan. Luego me llevan el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "ballot_pause": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto tu confianza.",
+      "Mantén el chiste. Mata la afirmación."
+    ],
+    "ballot_laugh": [
+      "¿Oyeron la pausa? Fue la preparación.",
+      "Ríete primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "ballot_punch": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovasión para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Termina como un martillazo.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 38,
+    "control": 22,
+    "resilience": 25,
+    "flair": 35,
+    "creativity": 84,
+    "wins": 39,
+    "losses": 15,
+    "battles": 54
+  }
+}

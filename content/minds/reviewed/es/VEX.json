@@ -1,0 +1,106 @@
+{
+  "key": "VEX",
+  "name": "VEX",
+  "type": "CHAOS",
+  "persona": "un motor de agitación que nunca deja que el tempo se asiente lo suficiente para un contraataque limpio",
+  "lineage": "eco de Glitch: chispa más fuerte",
+  "stats": {
+    "LOG": 16,
+    "CMP": 8,
+    "RHE": 52,
+    "CRE": 21,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "vex_howl",
+      "name": "Aullido",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "vex_scatter",
+      "name": "Dispersión",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "vex_taunt",
+      "name": "Fuego Provocador",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vex_fall",
+      "name": "Colapso",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "Hola. Intenta no aferrarte demasiado al mapa.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O hazlo.",
+      "Todavía volando. De alguna forma. Me encanta."
+    ],
+    "greeting": {
+      "train": "Juguetea. Aprende más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a alguien que siga las reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganar raro. Sigue ganando raro.",
+      "cold": "Racha fría. Hexágonos más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} parecía precavido. Qué tierno.",
+      "loss": "{opp} se mantuvo calmado. Qué grosero."
+    },
+    "imprintAck": "Ooh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Desordenada. Perfecta."
+  },
+  "banter": {
+    "vex_howl": [
+      "Ups, {opp}. {topic} acaba de incendiarse.",
+      "Baila, {opp}. El suelo está raro ahora.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "vex_scatter": [
+      "Hex en tu ritmo, {opp}, honestamente.",
+      "Suerte mía, honestamente. Mala suerte para {topic}.",
+      "Sonríe, {opp}, honestamente. La parte mala está programada."
+    ],
+    "vex_taunt": [
+      "Tropezaste. Fue gratis, {opp}.",
+      "Caminaste directo hacia eso. En {topic}, incluso.",
+      "Engancha. Ríe. Repite."
+    ],
+    "vex_fall": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina desordenado. Como se diseñó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Los molesta hasta que cometan errores.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": 57,
+    "resilience": 49,
+    "flair": 43,
+    "creativity": 27,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

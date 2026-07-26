@@ -1,0 +1,106 @@
+{
+  "key": "TRIBUNE",
+  "name": "TRIBUNE",
+  "type": "RHETORIC",
+  "persona": "un cuchillo de broma que sonríe al cortar y hace que la herida parezca chiste",
+  "lineage": "eco de Vox: mazo más grande",
+  "stats": {
+    "LOG": 24,
+    "CMP": 31,
+    "RHE": 87,
+    "CRE": 8,
+    "CHA": 66
+  },
+  "moves": [
+    {
+      "id": "tribune_gavel",
+      "name": "Mazo",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "tribune_cite",
+      "name": "Citar",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tribune_sustain",
+      "name": "Sostener",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "tribune_verdict",
+      "name": "Veredicto",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "El foco calienta. Quédate en él conmigo.",
+    "imprintAsk": "Una línea antes de subir. Que sea citable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi señal.",
+      "Aterrizamos bien. Saludos después."
+    ],
+    "greeting": {
+      "train": "La presencia en escena es una estadística.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El entreacto se alargó.",
+      "hot": "La multitud está con nosotros. No falles el bis.",
+      "cold": "Se robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} se rió fuera de escena.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Quedó en actas.",
+    "rankedFinale": "Clasificatorio. Micrófono aún caliente."
+  },
+  "banter": {
+    "tribune_gavel": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Aplaudan. Luego tomo el punto.",
+      "La casa me quiere. La casa decide."
+    ],
+    "tribune_cite": [
+      "Citado, {opp}. Tu frase es prueba A.",
+      "Objeto tu confianza.",
+      "Sostén el chiste. Mata la afirmación."
+    ],
+    "tribune_sustain": [
+      "¿Oyen la pausa? Fue el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siéntelo."
+    ],
+    "tribune_verdict": [
+      "Micrófono abajo, honestamente. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}, honestamente.",
+      "Ováción para mí, honestamente. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Juega para la casa. Gana el asentimiento.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 25,
+    "resilience": 55,
+    "flair": 49,
+    "creativity": 79,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

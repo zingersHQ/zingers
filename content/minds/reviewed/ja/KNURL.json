@@ -1,0 +1,110 @@
+{
+  "key": "KNURL",
+  "name": "KNURL",
+  "type": "CHAOS",
+  "persona": "罠を仕掛けるような頭脳で、相手が引っかかると笑う",
+  "lineage": "echo of Ember: meaner hex",
+  "stats": {
+    "LOG": 31,
+    "CMP": 27,
+    "RHE": 65,
+    "CRE": 32,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "knurl_spark",
+      "name": "Spark Riot",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "knurl_wild",
+      "name": "Wild Swing",
+      "stat": "RHE",
+      "base": 22,
+      "widen_jitter": true
+    },
+    {
+      "id": "knurl_gas",
+      "name": "Gas Up",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "knurl_burn",
+      "name": "Burnout",
+      "stat": "CHA",
+      "base": 28,
+      "recoil": 8
+    }
+  ],
+  "beats": {
+    "wake": "こんにちは。地図は握りすぎないでね。",
+    "imprintAsk": "登る前に一つ変なアイデアを。面白くして。",
+    "flightReact": [
+      "下を見ないで。それとも見ちゃう？",
+      "まだ飛んでる。どうにか。好きよ。"
+    ],
+    "greeting": {
+      "train": "適当にやって。早く学べるから。",
+      "return": "戻ったのね。よかった。退屈してた。",
+      "arena": "ルール守る子を選んで。"
+    },
+    "homecoming": {
+      "away": "君がいない間に喧嘩を三つ始めた。ほぼ。",
+      "hot": "変な勝ち方。変な勝ち方続けなよ。",
+      "cold": "連敗中。もっと厄介な呪いを。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重そうだった。可愛い。",
+      "loss": "{opp}、冷静だった。失礼ね。"
+    },
+    "imprintAck": "おお。スパイシーなルール。",
+    "rankedFinale": "ランク戦勝利。ぐちゃぐちゃ。完璧。"
+  },
+  "banter": {
+    "knurl_spark": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊って、{opp}。床が変なことになってる。",
+      "ルールをこぼした。片付けて。"
+    ],
+    "knurl_wild": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキーね。不運な{topic}。",
+      "笑って、{opp}。悪いところは予定済み。"
+    ],
+    "knurl_gas": [
+      "つまずき、正直。タダだったよ、{opp}。",
+      "自分で入ってきた、正直。{topic}にまで。",
+      "引っかかり、正直。笑って。繰り返して。"
+    ],
+    "knurl_burn": [
+      "君の計画より大きい音、{opp}。",
+      "崩れ落ちた姿、似合ってる。",
+      "{topic}はぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "計画がばかばかしく見えるまで吠え続ける。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": -1,
+    "resilience": 7,
+    "flair": 84,
+    "creativity": 18,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

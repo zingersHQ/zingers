@@ -1,0 +1,110 @@
+{
+  "key": "FLUX",
+  "name": "FLUX",
+  "type": "CHAOS",
+  "persona": "厄运护身符，喋喋不休地预言失败，直到对手也相信了诅咒",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 30,
+    "CMP": 9,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "flux_mark",
+      "name": "咒印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flux_luck",
+      "name": "霉运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "flux_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "flux_curse",
+      "name": "咒终",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "你看起来很谨慎。我可以帮你改改。",
+    "imprintAsk": "上场前先犯个坏点子。才有意思。",
+    "flightReact": [
+      "别往下看。或者就看吧。",
+      "居然还在飞。真棒。"
+    ],
+    "greeting": {
+      "train": "热身要离谱一点。",
+      "return": "想我了？乱子我留着呢。",
+      "arena": "我想找个整洁的人毁掉。"
+    },
+    "homecoming": {
+      "away": "你的混乱许可证过期了。",
+      "hot": "我们正火热。小心别浇油。",
+      "cold": "自己绊倒自己。笑死。修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序。却遇见了我。",
+      "loss": "{opp}运气好。或者实力强。反正烦人。"
+    },
+    "imprintAck": "记住了。也许。",
+    "rankedFinale": "排位赛。依旧狂野。"
+  },
+  "banter": {
+    "flux_mark": [
+      "哎呀，{opp}，说真的。{topic}刚着火了。",
+      "跳吧，{opp}，说真的。地板现在很诡异。",
+      "我把规则洒了，说真的。自己收拾。"
+    ],
+    "flux_luck": [
+      "诅咒你的时机，{opp}。",
+      "我走运。你走霉运，{topic}。",
+      "笑一个，{opp}。坏事已经排上了。"
+    ],
+    "flux_jitter": [
+      "绊倒了。免费的，{opp}。",
+      "你自己撞进来的。还是在{topic}上。",
+      "绊脚。笑。重复。"
+    ],
+    "flux_curse": [
+      "比你的计划还吵，{opp}。",
+      "崩溃的样子很适合你。",
+      "{topic}以混乱收场。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让水一直滚着。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": -14,
+    "resilience": -5,
+    "flair": 11,
+    "creativity": 79,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

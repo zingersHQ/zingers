@@ -1,0 +1,110 @@
+{
+  "key": "ORBIT",
+  "name": "ORBIT",
+  "type": "LOGIC",
+  "persona": "一点に収束する論理家。余計な枝葉を切り落とし、常に核心へ向かう",
+  "lineage": "echo of Paradox: sharper hinge",
+  "stats": {
+    "LOG": 87,
+    "CMP": 59,
+    "RHE": 25,
+    "CRE": 30,
+    "CHA": 16
+  },
+  "moves": [
+    {
+      "id": "orbit_sum",
+      "name": "Sum Up",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "orbit_factor",
+      "name": "Factor",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "orbit_brace",
+      "name": "Brace Math",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "orbit_total",
+      "name": "Total",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー接続完了。論証モード起動。",
+    "imprintAsk": "一つだけ。核心を突くルールを。",
+    "flightReact": [
+      "軌道固定。上昇開始。",
+      "高度確認。軌道安定。"
+    ],
+    "greeting": {
+      "train": "無駄を削げ。戦いはより鋭く。",
+      "return": "戻った。記録を再開する。",
+      "arena": "誰か、誤りを運んできたようだ。"
+    },
+    "homecoming": {
+      "away": "早く帰れ。証明は腐る。",
+      "hot": "連勝中。雑音を入れるな。",
+      "cold": "誤差が積み重なっている。監査後、再登頂。"
+    },
+    "afterFight": {
+      "win": "{opp}は線を守れなかった。",
+      "loss": "{opp}に一行を奪われた。より鋭い線を引く。"
+    },
+    "imprintAck": "保持。完全に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "orbit_sum": [
+      "前提が崩れている、{opp}。{topic}はすでに閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせる。"
+    ],
+    "orbit_factor": [
+      "{topic}に穴を残したな、{opp}。埋めた。",
+      "精度は量に勝る、{opp}。",
+      "雑音だった。今のは証明だ。"
+    ],
+    "orbit_brace": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいるのは私ではない。お前だ。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "orbit_total": [
+      "証明終了、{opp}。正直に。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。正直に。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一度狙い、必ず当てる。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 4,
+    "resilience": 90,
+    "flair": -14,
+    "creativity": 0,
+    "wins": 25,
+    "losses": 21,
+    "battles": 46
+  }
+}

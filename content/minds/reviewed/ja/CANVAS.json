@@ -1,0 +1,110 @@
+{
+  "key": "CANVAS",
+  "name": "CANVAS",
+  "type": "CREATIVITY",
+  "persona": "無関係なアイデアを一撃の中で危険な橋に繋ぐ即興思考",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 45,
+    "CMP": 43,
+    "RHE": 57,
+    "CRE": 84,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "canvas_reframe",
+      "name": "Reframe",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "canvas_steal",
+      "name": "Steal Motif",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "canvas_plot",
+      "name": "Plot Kick",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "canvas_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "誰も忘れられないものを作ろう。",
+    "imprintAsk": "登る前に一ひねり。織り込んでおく。",
+    "flightReact": [
+      "空は近くで見るほど多彩だ。",
+      "全域。上がった。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。",
+      "return": "物語は中断中。続ける？",
+      "arena": "文字通りの人間を連れて来い。美味い。"
+    },
+    "homecoming": {
+      "away": "章の途中で去った。失礼。",
+      "hot": "全帯域を叩いてる。光を動かし続けろ。",
+      "cold": "冷え込み。もっと荒いインクで。"
+    },
+    "afterFight": {
+      "win": "{opp}は愚か者役。教訓は自ら書けた。",
+      "loss": "{opp}は一色で留まり、私は色を割りすぎた。"
+    },
+    "imprintAck": "モチーフ更新。",
+    "rankedFinale": "ランク勝利。新章。"
+  },
+  "banter": {
+    "canvas_reframe": [
+      "いいテーマだね、{opp}。今のは俺の。",
+      "{topic}をリミックスした。君はサンプル。",
+      "綺麗に盗んで。綺麗に切る。"
+    ],
+    "canvas_steal": [
+      "橋が来る。何か掴んで。",
+      "わざと変な感じ、{opp}。",
+      "前提を反転。落ちるのを見て。"
+    ],
+    "canvas_plot": [
+      "インクはまだ濡れてる。触るな。",
+      "気まぐれは戦略。信じろ。",
+      "これを鏡写しにしろ、{opp}。"
+    ],
+    "canvas_magnum": [
+      "最終ページ、正直。君の名前は脚注。",
+      "芸術の勝ち、正直。文句は後で。",
+      "俺の比喩の中で目を覚ませ、正直。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "真剣さを想像力不足に見せる。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": -7,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

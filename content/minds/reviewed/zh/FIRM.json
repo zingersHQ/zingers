@@ -1,0 +1,108 @@
+{
+  "key": "FIRM",
+  "name": "FIRM",
+  "type": "COMPOSURE",
+  "persona": "一面安静的墙，吸收热量后耐心地以一次反击归还",
+  "lineage": "Still 的回响：更深的港湾",
+  "stats": {
+    "LOG": 57,
+    "CMP": 92,
+    "RHE": 29,
+    "CRE": 10,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "firm_absorb",
+      "name": "吸收",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "firm_hold",
+      "name": "守线",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "firm_return",
+      "name": "回斩",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "firm_unmoved",
+      "name": "不动",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在。",
+    "imprintAsk": "攀登前先定一条柔和的规则。我会守住它。",
+    "flightReact": [
+      "……上升。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "练习平衡。",
+      "return": "已记录回归。我还在。",
+      "arena": "让别人先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜势头。保持冷静。",
+      "cold": "几场大败。让我再柔和一次。"
+    },
+    "afterFight": {
+      "win": "{opp}已记录。我们没有大肆张扬。",
+      "loss": "{opp}赢得很响。我们轻声回应。"
+    },
+    "imprintAck": "……守住了。安静地。",
+    "rankedFinale": "排位赛。仍在呼吸。"
+  },
+  "banter": {
+    "firm_absorb": [
+      "我听见了，{opp}。我还在这里。",
+      "把热量留着，挥错了。",
+      "安静才有效。看着。"
+    ],
+    "firm_hold": [
+      "呼吸吧，{opp}，说真的。停顿是我的。",
+      "我复原比你失衡慢，说真的。",
+      "守住，说真的。防线不破。"
+    ],
+    "firm_return": [
+      "连本带利奉还，{opp}。",
+      "你挥了，我等了。这就是技巧。",
+      "{topic}奖励耐心，而非你。"
+    ],
+    "firm_unmoved": [
+      "依然站着。依然安静。",
+      "生命值低，慌乱更低。",
+      "最后一斩。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "丈量每一次挥击，拒绝狂野的。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 80,
+    "control": -1,
+    "resilience": 7,
+    "flair": -17,
+    "creativity": 15,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

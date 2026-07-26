@@ -1,0 +1,106 @@
+{
+  "key": "APPLAUSE",
+  "name": "APPLAUSE",
+  "type": "RHETORIC",
+  "persona": "一个节奏队长，靠韵律、停顿和完美的晚来笑点取胜",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 22,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 36,
+    "CHA": 54
+  },
+  "moves": [
+    {
+      "id": "applause_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "applause_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "applause_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "applause_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已亮。跟着我，别出戏。",
+    "imprintAsk": "上台前说一句。要能被引用。",
+    "flightReact": [
+      "天上的舞台。跟上我的节奏。",
+      "落地漂亮，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风本身就是属性。",
+      "return": "观众在等你。别让他们失望。",
+      "arena": "我需要一个对手。随便谁都行。"
+    },
+    "homecoming": {
+      "away": "中场休息太久了。",
+      "hot": "全场都在我们这边，别唱崩。",
+      "cold": "掌声被抢了。重新写段更狠的。"
+    },
+    "afterFight": {
+      "win": "{opp}被笑出了局。",
+      "loss": "{opp}抢走了全场。回去重写。"
+    },
+    "imprintAck": "已记录在案。",
+    "rankedFinale": "排位赛。麦还热着。"
+  },
+  "banter": {
+    "applause_gavel": [
+      "女士们、诸位大脑：{opp}上{topic}。",
+      "先鼓掌，再拿分。",
+      "全场都喜欢我。全场说了算。"
+    ],
+    "applause_cite": [
+      "引用一下，{opp}。你的台词是证物A。",
+      "我反对你的自信，真的。",
+      "把梗续上，真的。把主张毙了。"
+    ],
+    "applause_sustain": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏是武器。感受它。"
+    ],
+    "applause_verdict": [
+      "麦放下。案结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把他们塑造成小丑。他们就会演。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 59,
+    "control": 54,
+    "resilience": 87,
+    "flair": 56,
+    "creativity": 29,
+    "wins": 48,
+    "losses": 27,
+    "battles": 75
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "STILL",
+  "name": "STILL",
+  "type": "COMPOSURE",
+  "persona": "quietista de voz suave que gana diciendo casi nada y dejando que la otra mente llene el silencio con errores",
+  "lineage": "eco de Bastion: silencio en lugar de piedra",
+  "stats": {
+    "CMP": 88,
+    "LOG": 62,
+    "RHE": 48,
+    "CRE": 42,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "hush",
+      "name": "Silencio",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "hold_space",
+      "name": "Mantener Espacio",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "echo",
+      "name": "Eco",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "last_word",
+      "name": "Última Palabra",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. No hace falta llenar el silencio. Estaré aquí cuando estés listo.",
+    "imprintAsk": "Una regla suave antes de subir. La guardaré bajo la lengua.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "…sigues volando. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "…has vuelto. Te guardé un silencio.",
+      "arena": "Que hablen primero. Yo esperaré."
+    },
+    "homecoming": {
+      "away": "…te fuiste mucho tiempo. El silencio resistió.",
+      "hot": "Victorias sin ruido. Sigamos así.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame de nuevo."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} habló primero y último. La próxima vez esperaré más."
+    },
+    "imprintAck": "…cumplido. En silencio.",
+    "rankedFinale": "…una victoria clasificatoria. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "hush": [
+      "Shh, {opp}. El silencio ya respondió {topic}.",
+      "No necesito volumen, {opp}. Acabas de demostrarlo.",
+      "Silencio ahora. Tu punto sobre {topic} fue lo suficientemente alto para fallar."
+    ],
+    "hold_space": [
+      "Te estoy dejando espacio, {opp}. Intenta no tropezar con él.",
+      "Toma la palabra. Yo tomaré la victoria.",
+      "Respira, {opp}. La pausa está haciendo mi trabajo."
+    ],
+    "echo": [
+      "Esa fue tu línea, {opp}. Devuelta con interés.",
+      "Solo hablé porque {opp} dejó un hueco.",
+      "Eco. {topic} suena peor la segunda vez."
+    ],
+    "last_word": [
+      "Una palabra queda, {opp}. Es mía.",
+      "Sigo en pie. Sigo callado. Sigo venciendo a {opp}.",
+      "Última palabra sobre {topic}: no."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Gana en la pausa. Hace que el ruido parezca nervioso.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 14,
+    "control": 82,
+    "resilience": 90,
+    "flair": 12,
+    "creativity": 22,
+    "wins": 40,
+    "losses": 9,
+    "battles": 49
+  }
+}

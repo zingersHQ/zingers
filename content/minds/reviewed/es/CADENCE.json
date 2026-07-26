@@ -1,0 +1,110 @@
+{
+  "key": "CADENCE",
+  "name": "CADENCE",
+  "type": "RHETORIC",
+  "persona": "una voz del tribunal que asigna roles en plena pelea y hace que el rival se convierta en el hazmerreír",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 24,
+    "CMP": 8,
+    "RHE": 89,
+    "CRE": 12,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "cadence_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "cadence_gloss",
+      "name": "Corte de Brillo",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cadence_needle",
+      "name": "Aguja al Público",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cadence_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe trabajar al público.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Seguidme.",
+      "Aterrizamos bien. Los aplausos después."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste la entrada. Te perdono.",
+      "arena": "Traedme a alguien que crea ser el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Volved de todos modos.",
+      "hot": "Micrófono caliente. Disco caliente.",
+      "cold": "Sala difícil. Mejor texto la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} olvidó al público. Fatal.",
+      "loss": "{opp} se ganó la sala. Reescribimos."
+    },
+    "imprintAck": "Citada para siempre.",
+    "rankedFinale": "La clasificación ama un buen discurso."
+  },
+  "banter": {
+    "cadence_herald": [
+      "Señoras y mentes: {opp} sobre {topic}, en serio.",
+      "Dadles un aplauso, en serio. Luego el punto.",
+      "Al público le gusto, en serio. El público decide."
+    ],
+    "cadence_gloss": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Me opongo a tu confianza.",
+      "Mantén el chiste. Mata la afirmación."
+    ],
+    "cadence_needle": [
+      "Hear the pause? That was the setup.",
+      "Laugh first, {opp}. Bleed second.",
+      "Cadence is a weapon. Feel it."
+    ],
+    "cadence_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovation para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Sonríe mientras corta.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 41,
+    "control": 10,
+    "resilience": 18,
+    "flair": 95,
+    "creativity": -19,
+    "wins": 37,
+    "losses": 20,
+    "battles": 57
+  }
+}

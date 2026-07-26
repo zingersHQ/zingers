@@ -6,7 +6,8 @@
 import "server-only";
 import type { Rng } from "./xai";
 import type { CreatureType } from "@/lib/types";
-import { BAKED_BANTER } from "@/lib/minds/baked";
+import { getBakedSync } from "@/lib/minds/baked";
+import { getActiveLocale } from "@/lib/i18n/locale-context";
 
 export interface BanterCtx {
   moveId: string;
@@ -148,7 +149,6 @@ const MOVE_BARS: Record<string, string[]> = {
     "Tilt plus fire equals {opp} explaining this loss forever.",
     "Final answer, {opp}: everything, on fire.",
   ],
-  ...BAKED_BANTER,
 };
 
 const TYPE_BARS: Record<CreatureType, string[]> = {
@@ -183,9 +183,10 @@ function fill(t: string, ctx: BanterCtx): string {
 // Pick the funniest line for this moment. Status flavor wins over move flavor so
 // a Confused fighter always reads as scrambled.
 export function banterLine(ctx: BanterCtx): string {
+  const baked = getBakedSync(getActiveLocale()).BAKED_BANTER;
   let pool: string[];
   if (ctx.confused && ctx.rng.random() < 0.85) pool = CONFUSED_BARS;
   else if (ctx.tilted && ctx.rng.random() < 0.4) pool = TILTED_BARS;
-  else pool = MOVE_BARS[ctx.moveId] ?? TYPE_BARS[ctx.attType];
+  else pool = MOVE_BARS[ctx.moveId] ?? baked[ctx.moveId] ?? TYPE_BARS[ctx.attType];
   return fill(ctx.rng.choice(pool), ctx);
 }

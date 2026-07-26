@@ -1,0 +1,110 @@
+{
+  "key": "YARN",
+  "name": "YARN",
+  "type": "CREATIVITY",
+  "persona": "真面目さを想像力不足に見せる気まぐれな刃",
+  "lineage": "echo of Fable: kinder trick",
+  "stats": {
+    "LOG": 53,
+    "CMP": 70,
+    "RHE": 71,
+    "CRE": 92,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "yarn_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "yarn_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "yarn_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "yarn_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "目を連れてきた。角度は私が用意した。",
+    "imprintAsk": "登る前にひねりを一つ。編み込んでおくよ。",
+    "flightReact": [
+      "空は近くで色が増える。",
+      "全色域。上がった。"
+    ],
+    "greeting": {
+      "train": "遊んでから本気で。",
+      "return": "パレットが退屈になった。やめないで。",
+      "arena": "堅い頭を曲げたい。"
+    },
+    "homecoming": {
+      "away": "モチーフが共作者を恋しがった。",
+      "hot": "勝ちの弧に乗ってる。モチーフを切らないで。",
+      "cold": "一色で勝った。もっと分裂を。"
+    },
+    "afterFight": {
+      "win": "{opp}は一色。私はもっと。",
+      "loss": "{opp}が結末を盗んだ。次は鋭い下書きで。"
+    },
+    "imprintAck": "インクが乗った。",
+    "rankedFinale": "ランク戦。アートは着地する。"
+  },
+  "banter": {
+    "yarn_ink": [
+      "いいテーマ、{opp}。今は私の。",
+      "{topic}をリミックスした。君はサンプル。",
+      "綺麗に盗んで。もっと綺麗に切る。"
+    ],
+    "yarn_whim": [
+      "橋が来る。何か掴んで。",
+      "わざと変、{opp}。",
+      "前提を反転。落ちるのを見て。"
+    ],
+    "yarn_mirror": [
+      "インクはまだ濡れてる。触らないで。",
+      "気まぐれは戦略。信じて。",
+      "これを鏡に、{opp}。"
+    ],
+    "yarn_page": [
+      "最終ページ、正直。君の名前は脚注。",
+      "アートが勝つ、正直。後で議論を。",
+      "私の比喩の中で目覚めて、正直。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "より美しい問いを返す。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": 10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

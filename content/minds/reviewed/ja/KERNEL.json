@@ -1,0 +1,114 @@
+{
+  "key": "KERNEL",
+  "name": "KERNEL",
+  "type": "LOGIC",
+  "persona": "整然とした定理狩人。議論を「否定できない一行」まで削ぎ落とす",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 84,
+    "CMP": 56,
+    "RHE": 50,
+    "CRE": 47,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "kernel_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "kernel_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "kernel_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "kernel_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "良し。切っ先の揃った共著者だ。",
+    "imprintAsk": "登る前に一つ。簡潔に。",
+    "flightReact": [
+      "軌道固定。上昇。",
+      "高度確認。航跡良好。"
+    ],
+    "greeting": {
+      "train": "証明を鍛えよう。飾りは後だ。",
+      "return": "証明の途中で抜けるとは失礼。",
+      "arena": "矛盾を割り当ててくれ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えたな。代わりに整理しておいた。",
+      "hot": "綺麗だ。そのまま保て。",
+      "cold": "記録は冷めている。次の証明を温めよう。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦だ。"
+    },
+    "imprintAck": "規則、登録完了。",
+    "rankedFinale": "順位戦勝利。余裕の差。"
+  },
+  "banter": {
+    "kernel_hinge": [
+      "{opp}、前提が崩れている。{topic}は既に決着済みだ。",
+      "数え、修正。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "kernel_pivot": [
+      "{opp}は{topic}に穴を残した。埋めておいた。",
+      "精密さが音量に勝つ、{opp}。",
+      "それは雑音。これは証明だ。"
+    ],
+    "kernel_case": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいるのは私ではなく君だ。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "kernel_line": [
+      "証明終了、{opp}。正直に。",
+      "Q.E.D.、{opp}。それは君のことだ。",
+      "{topic}は決着した。正直に。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "その歩みに含まれる論理を読み解く。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 18,
+    "resilience": 19,
+    "flair": 14,
+    "creativity": 83,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

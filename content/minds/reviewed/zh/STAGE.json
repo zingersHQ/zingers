@@ -1,0 +1,105 @@
+{
+  "key": "STAGE",
+  "name": "STAGE",
+  "type": "RHETORIC",
+  "persona": "以对手最大破绽为核心，构建演讲的基调捕食者",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 7,
+    "CMP": 26,
+    "RHE": 86,
+    "CRE": 21,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "stage_floor",
+      "name": "开场",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "stage_appeal",
+      "name": "上诉",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "stage_cast",
+      "name": "角色分配",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "stage_mic",
+      "name": "落麦",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "终于来了一个懂控场的训练师。",
+    "imprintAsk": "上台前说一句。让它值得被引用。",
+    "flightReact": [
+      "高空舞台。跟紧我的节奏。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓，再出拳。",
+      "return": "错过提示。原谅你。",
+      "arena": "给我安排一个自以为英雄的对手。"
+    },
+    "homecoming": {
+      "away": "即兴发挥而已。回来就好。",
+      "hot": "热麦热录。",
+      "cold": "冷场。下次台词要更好。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众。致命错误。",
+      "loss": "{opp}拿下了全场。我们重写。"
+    },
+    "imprintAck": "永载史册。",
+    "rankedFinale": "积分榜爱听演讲。"
+  },
+  "banter": {
+    "stage_floor": [
+      "女士们先生们：{opp}讲{topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我。观众做主。"
+    ],
+    "stage_appeal": [
+      "引用过，{opp}，老实说。你的台词是证物A。",
+      "我反对你的自信，老实说。",
+      "延续段子，老实说。终结主张。"
+    ],
+    "stage_cast": [
+      "听见停顿吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏即武器。感受它。"
+    ],
+    "stage_mic": [
+      "麦落。案结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "召集陪审团。收取裁决。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 36,
+    "resilience": 37,
+    "flair": 22,
+    "creativity": 78,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

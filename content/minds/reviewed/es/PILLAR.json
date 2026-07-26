@@ -1,0 +1,108 @@
+{
+  "key": "PILLAR",
+  "name": "PILLAR",
+  "type": "COMPOSURE",
+  "persona": "una pared silenciosa que absorbe el calor y lo devuelve en un solo contraataque paciente",
+  "lineage": "eco de Still: puerto más profundo",
+  "stats": {
+    "LOG": 61,
+    "CMP": 85,
+    "RHE": 20,
+    "CRE": 7,
+    "CHA": 24
+  },
+  "moves": [
+    {
+      "id": "pillar_absorb",
+      "name": "Absorber",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "pillar_hold",
+      "name": "Mantener Línea",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "pillar_return",
+      "name": "Corte de Devolución",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "pillar_unmoved",
+      "name": "Inamovible",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Trabaja el equilibrio.",
+      "return": "Regreso anotado. Sigo aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el rumbo. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame de nuevo."
+    },
+    "afterFight": {
+      "win": "{opp} registrado. No lo hicimos.",
+      "loss": "{opp} ganó a gritos. Nosotros respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificatorio. Sigo respirando."
+  },
+  "banter": {
+    "pillar_absorb": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Gástalo mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "pillar_hold": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Mantén. La línea se mantiene."
+    ],
+    "pillar_return": [
+      "Devuelto con interés, {opp}, honestamente.",
+      "Atacaste, honestamente. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia, honestamente. No a ti."
+    ],
+    "pillar_unmoved": [
+      "Sigo en pie. Sigo callado.",
+      "Baja salud. Menor pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mide cada golpe. Rechaza los salvajes.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 27,
+    "resilience": 40,
+    "flair": 52,
+    "creativity": 86,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

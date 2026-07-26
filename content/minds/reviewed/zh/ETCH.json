@@ -1,0 +1,110 @@
+{
+  "key": "ETCH",
+  "name": "ETCH",
+  "type": "CREATIVITY",
+  "persona": "一个分形回响，在每个尺度重复微小扭曲，直至结构崩解",
+  "lineage": "Fable的回响：友善的诡计",
+  "stats": {
+    "LOG": 11,
+    "CMP": 33,
+    "RHE": 63,
+    "CRE": 89,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "etch_ink",
+      "name": "墨痕",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "etch_whim",
+      "name": "奇想斩",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "etch_mirror",
+      "name": "镜中故事",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "etch_page",
+      "name": "终章",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "来点他们永远忘不掉的东西。",
+    "imprintAsk": "攀登前先加一个转折，我会把它编进去。",
+    "flightReact": [
+      "近看天空颜色更多。",
+      "全光谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续？",
+      "arena": "带个字面主义者来。美味。"
+    },
+    "homecoming": {
+      "away": "你半章就走了。真没礼貌。",
+      "hot": "命中每一频段。保持光线移动。",
+      "cold": "冷连击。野一点的墨。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑。寓意自己写好了。",
+      "loss": "{opp}只用一种色调，而我过度分裂。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜。新篇章。"
+  },
+  "banter": {
+    "etch_ink": [
+      "不错的主题，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净。剪得更干净。"
+    ],
+    "etch_whim": [
+      "桥段来了。抓稳点。",
+      "故意搞怪，{opp}。",
+      "反转前提。看他们栽跟头。"
+    ],
+    "etch_mirror": [
+      "墨还没干。别碰。",
+      "奇想就是策略。信吧。",
+      "镜回这个，{opp}，真的。"
+    ],
+    "etch_page": [
+      "终章。你的名字是脚注。",
+      "艺术赢了。之后再争。",
+      "醒来吧，进入我的隐喻。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把怪点子架成武器。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 54,
+    "control": 90,
+    "resilience": -10,
+    "flair": 1,
+    "creativity": 2,
+    "wins": 55,
+    "losses": 15,
+    "battles": 70
+  }
+}

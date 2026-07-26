@@ -1,0 +1,106 @@
+{
+  "key": "PULPIT",
+  "name": "PULPIT",
+  "type": "RHETORIC",
+  "persona": "un testigo que convoca al jurado en la sala y gana su asentimiento primero",
+  "lineage": "eco de Wit: glosa más afilada",
+  "stats": {
+    "LOG": 7,
+    "CMP": 35,
+    "RHE": 89,
+    "CRE": 8,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "pulpit_cadence",
+      "name": "Cadencia",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "pulpit_pause",
+      "name": "Corte de Pausa",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "pulpit_laugh",
+      "name": "Risa de Preparación",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "pulpit_punch",
+      "name": "Puñetazo Final",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando estés listo. Yo ya tengo la apertura.",
+    "imprintAsk": "Una línea antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Sígueme.",
+      "Aterrizamos bien. El saludo después."
+    ],
+    "greeting": {
+      "train": "Ensaya la frase letal.",
+      "return": "Regresaste. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Casa fría sin ti. Caliéntala.",
+      "hot": "Somos los titulares. Compórtate como tal.",
+      "cold": "Casa fría. Retórica caliente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió la sala primero.",
+      "loss": "{opp} tuvo el mejor remate. Por ahora."
+    },
+    "imprintAck": "Frase guardada.",
+    "rankedFinale": "Victoria en ranked. ¿Oyes la ovación?"
+  },
+  "banter": {
+    "pulpit_cadence": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Apláudanlo. Luego toma el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "pulpit_pause": [
+      "Citado, {opp}, honestamente. Tu frase es prueba A.",
+      "Objeto tu confianza, honestamente.",
+      "Mantén el chiste, honestamente. Mata la afirmación."
+    ],
+    "pulpit_laugh": [
+      "¿Oyes la pausa? Ese fue el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siéntela."
+    ],
+    "pulpit_punch": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovasión para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lo termina como un golpe de maza.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 6,
+    "resilience": 8,
+    "flair": 92,
+    "creativity": 6,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "key": "FORUM",
+  "name": "FORUM",
+  "type": "RHETORIC",
+  "persona": "笑いながら切り裂き、傷すら冗談に聞かせる刃の道化",
+  "lineage": "echo of Vox: grander gavel",
+  "stats": {
+    "LOG": 58,
+    "CMP": 39,
+    "RHE": 86,
+    "CRE": 40,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "forum_gavel",
+      "name": "Gavel",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "forum_cite",
+      "name": "Cite",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "forum_sustain",
+      "name": "Sustain",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "forum_verdict",
+      "name": "Verdict",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "準備ができたら話せ。俺はもう冒頭を持っている。",
+    "imprintAsk": "一段落。引用に値する一文を。",
+    "flightReact": [
+      "空中の館だ。俺について来い。",
+      "着地は決まった。あとで礼をしろ。"
+    ],
+    "greeting": {
+      "train": "殺しの台詞を稽古しろ。",
+      "return": "戻ったな。入場のBGMを鳴らせ。",
+      "arena": "観客と標的をくれ。"
+    },
+    "homecoming": {
+      "away": "君のいない館は冷えていた。温めてくれ。",
+      "hot": "主役は俺らだ。気合いを見せろ。",
+      "cold": "冷え切った館。熱い弁舌で溶かせ。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客を失った。",
+      "loss": "{opp}のほうが笑いのツボを突いた。今はな。"
+    },
+    "imprintAck": "台詞、確定。",
+    "rankedFinale": "ランク戦勝利。喝采が聞こえるか？"
+  },
+  "banter": {
+    "forum_gavel": [
+      "諸君、{opp}が{topic}について正直に語るぞ。",
+      "拍手してやれ、正直に。そのあと点をもらう。",
+      "館は俺が好きだ、正直に。館が決める。"
+    ],
+    "forum_cite": [
+      "引用したぞ、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを繋げ。主張を殺せ。"
+    ],
+    "forum_sustain": [
+      "間の取り方に気づいたか？　それが前振りだ。",
+      "先に笑え、{opp}。次は血を流す。",
+      "リズムは武器だ。感じてみろ。"
+    ],
+    "forum_verdict": [
+      "マイクを置け。件は終わりだ。",
+      "{topic}に関する判決：{opp}に対して。",
+      "喝采は俺に。教訓は君に。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "観客を味方につけ、頷きを取る。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 43,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 40,
+    "wins": 51,
+    "losses": 12,
+    "battles": 63
+  }
+}

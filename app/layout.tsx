@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { PlayerSync } from "@/components/player-sync";
 import { SessionPing } from "@/components/session-ping";
 import { ChunkReloadGuard } from "@/components/chunk-reload-guard";
+import { LocaleProvider } from "@/lib/i18n/locale-provider";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
 import { BRAND, pageTitle, STORAGE } from "@/lib/brand";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", weight: ["400", "500", "700"] });
@@ -34,18 +37,25 @@ export const viewport: Viewport = {
 // never flashes the dark palette. Kept tiny + inline; mirrors lib/theme.ts.
 const themeBoot = `(function(){try{var t=localStorage.getItem("${STORAGE.theme}");document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){}})();`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const raw = await getLocale();
+  const locale: Locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const messages = await getMessages();
+  const htmlLang = locale === "zh" ? "zh-Hans" : locale;
+
   return (
-    <html lang="en" data-theme="dark">
+    <html lang={htmlLang} data-theme="dark">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body className={`${grotesk.variable} ${mono.variable}`}>
-        <ChunkReloadGuard />
-        <PlayerSync />
-        <SessionPing />
-        <Nav />
-        {children}
+        <LocaleProvider locale={locale} messages={messages}>
+          <ChunkReloadGuard />
+          <PlayerSync />
+          <SessionPing />
+          <Nav />
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

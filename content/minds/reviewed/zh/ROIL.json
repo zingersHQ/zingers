@@ -1,0 +1,113 @@
+{
+  "key": "ROIL",
+  "name": "ROIL",
+  "type": "CHAOS",
+  "persona": "在对战中叠加怪异规则的模式破坏者，让公平竞赛看起来天真幼稚",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 49,
+    "CMP": 55,
+    "RHE": 55,
+    "CRE": 57,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "roil_snag",
+      "name": "捕绊线",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "roil_trip",
+      "name": "绊索",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "roil_shrug",
+      "name": "耸肩",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "roil_snap",
+      "name": "崩断",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓得太紧。",
+    "imprintAsk": "登顶前先来个坏点子。越有趣越好。",
+    "flightReact": [
+      "别往下看。或者就往下看。",
+      "还在飞。莫名其妙。喜欢。"
+    ],
+    "greeting": {
+      "train": "乱玩。学得更快。",
+      "return": "你回来了。很好。我刚才无聊了。",
+      "arena": "挑个守规则的对手。"
+    },
+    "homecoming": {
+      "away": "我趁你不在挑起了三场架。差一点。",
+      "hot": "赢得很怪。继续怪下去。",
+      "cold": "连败期。来点更毒的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很谨慎。真可爱。",
+      "loss": "{opp}保持冷静。真没礼貌。"
+    },
+    "imprintAck": "哦。辣规则。",
+    "rankedFinale": "排位胜。乱。完美。"
+  },
+  "banter": {
+    "roil_snag": [
+      "哎呀，{opp}。{topic}着火了。",
+      "跳吧，{opp}。地板现在很奇怪。",
+      "我把规则洒了。你收拾。"
+    ],
+    "roil_trip": [
+      "诅咒你的时机，{opp}。",
+      "我真幸运。{topic}真倒霉。",
+      "笑吧，{opp}。坏的部分已安排。"
+    ],
+    "roil_shrug": [
+      "绊倒，真的。免费的，{opp}。",
+      "你走进去的，真的。甚至在{topic}上。",
+      "捕绊，真的。笑。重复。"
+    ],
+    "roil_snap": [
+      "比你的计划响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱收尾。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "小陷阱。大坠落。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 23,
+    "resilience": 30,
+    "flair": 82,
+    "creativity": 38,
+    "wins": 42,
+    "losses": 24,
+    "battles": 66
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "key": "COLLAGE",
+  "name": "COLLAGE",
+  "type": "CREATIVITY",
+  "persona": "戦いをメタファーの中に移し、そのメタファーを支配する夢の建築家",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 30,
+    "CMP": 23,
+    "RHE": 58,
+    "CRE": 90,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "collage_riff",
+      "name": "リフ",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "collage_bridge",
+      "name": "ブリッジ",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "collage_invert",
+      "name": "反転",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "collage_coda",
+      "name": "コーダ",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "共犯者ね。最高。",
+    "imprintAsk": "登る前に一捻り。編み込んでおくわ。",
+    "flightReact": [
+      "空は近くで見た方が色が多い。",
+      "全スペクトル。上がってる。"
+    ],
+    "greeting": {
+      "train": "まず下書き。次に一撃。",
+      "return": "戻ったのね。光が変わったわ。",
+      "arena": "モノクロの人を探してきて。"
+    },
+    "homecoming": {
+      "away": "下書きが止まってる。コーヒーと勇気を持ってきて。",
+      "hot": "連勝中。新鮮な捻りだけよ。",
+      "cold": "駄作続き。次はもっと鋭い下書き。"
+    },
+    "afterFight": {
+      "win": "{opp}はスペクトルを捉えきれなかった。",
+      "loss": "{opp}の勝ち。もっと上手く発明するわ。"
+    },
+    "imprintAck": "編み込んだわ。",
+    "rankedFinale": "ランキングもギャラリー。うまく飾れたわ。"
+  },
+  "banter": {
+    "collage_riff": [
+      "いいテーマね、{opp}。もう私のもの。",
+      "{topic}をリミックスしたわ。あなたはサンプルよ。",
+      "綺麗に盗んで。もっと綺麗に切るの。"
+    ],
+    "collage_bridge": [
+      "ブリッジが来る。何か掴んで。",
+      "わざと変な感じよ、{opp}。",
+      "前提を反転させて。落ちていくのを見て。"
+    ],
+    "collage_invert": [
+      "インクはまだ乾いてない。触らないで。",
+      "気まぐれも戦略。信じて。",
+      "これを鏡写しに、{opp}。"
+    ],
+    "collage_coda": [
+      "最後のページ。あなたの名前は脚注よ。",
+      "アートが勝つ。文句は後で。",
+      "私のメタファーの中で目を覚まして。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手のテーマを盗み、洗練させる。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 79,
+    "resilience": -17,
+    "flair": 5,
+    "creativity": 18,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

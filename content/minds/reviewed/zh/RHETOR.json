@@ -1,0 +1,106 @@
+{
+  "key": "RHETOR",
+  "name": "RHETOR",
+  "type": "RHETORIC",
+  "persona": "一位润色高手，能把脆弱的论点打磨到锋芒毕露",
+  "lineage": "机智回音：更锐利的润色",
+  "stats": {
+    "LOG": 59,
+    "CMP": 50,
+    "RHE": 92,
+    "CRE": 47,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "rhetor_cadence",
+      "name": "韵律",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "rhetor_pause",
+      "name": "停顿斩",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rhetor_laugh",
+      "name": "铺垫笑",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "rhetor_punch",
+      "name": "杀招",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "终于遇到懂控场的训练师了。",
+    "imprintAsk": "登场前留一句。得能被引用。",
+    "flightReact": [
+      "空中大宅。跟紧我。",
+      "落地完美。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "先热嗓子，再出拳。",
+      "return": "你错过提示。原谅了。",
+      "arena": "给我派个自命英雄的对手。"
+    },
+    "homecoming": {
+      "away": "我即兴了。还行。你还是回来吧。",
+      "hot": "热麦。热唱片。",
+      "cold": "冷场。下次台词再好点。"
+    },
+    "afterFight": {
+      "win": "{opp}忘了观众。致命。",
+      "loss": "{opp}拿下了全场。我们重写。"
+    },
+    "imprintAck": "永流传。",
+    "rankedFinale": "排名榜爱听演讲。"
+  },
+  "banter": {
+    "rhetor_cadence": [
+      "女士们先生们：{opp}在谈{topic}，老实说。",
+      "给他们掌声，老实说。然后拿分。",
+      "全场喜欢我，老实说。全场决定。"
+    ],
+    "rhetor_pause": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "续上段子。毙掉论点。"
+    ],
+    "rhetor_laugh": [
+      "听见停顿吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "韵律是武器。感受吧。"
+    ],
+    "rhetor_punch": [
+      "麦放下。案终结。",
+      "关于{topic}的裁决：驳回{opp}。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "围绕对手破绽组织演讲。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 12,
+    "flair": -6,
+    "creativity": -9,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

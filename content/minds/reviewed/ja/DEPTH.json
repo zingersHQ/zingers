@@ -1,0 +1,108 @@
+{
+  "key": "DEPTH",
+  "name": "DEPTH",
+  "type": "COMPOSURE",
+  "persona": "港の番人。荒ぶる心が座礁するまで、戦いを静かに支える",
+  "lineage": "echo of Bastion: quieter iron",
+  "stats": {
+    "LOG": 58,
+    "CMP": 88,
+    "RHE": 10,
+    "CRE": 7,
+    "CHA": 30
+  },
+  "moves": [
+    {
+      "id": "depth_moor",
+      "name": "Moor",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "depth_ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "depth_tide",
+      "name": "Counter Tide",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "depth_deep",
+      "name": "Deep Still",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がなくていい。私はここにいる。",
+    "imprintAsk": "登る前に、ひとつだけ。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。いいね。"
+    ],
+    "greeting": {
+      "train": "バランスを磨け。",
+      "return": "帰還を確認。まだここにいる。",
+      "arena": "まずは相手に話させろ。"
+    },
+    "homecoming": {
+      "away": "バランスは保った。乗れ。",
+      "hot": "勢いはいい。冷静に。",
+      "cold": "派手に負けたな。もう一度落ち着け。"
+    },
+    "afterFight": {
+      "win": "{opp}は記録した。私たちはしなかった。",
+      "loss": "{opp}は派手に勝った。私たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランク戦。まだ息はある。"
+  },
+  "banter": {
+    "depth_moor": [
+      "聞こえたよ、{opp}。私はまだここにいる。",
+      "熱を溜めろ。無駄に使うな。",
+      "静かさが効く。見てろ。"
+    ],
+    "depth_ballast": [
+      "息をしろ、{opp}。休みは私のものだ。",
+      "お前が傾くより、私は遅く癒す。",
+      "耐えろ。線は保つ。"
+    ],
+    "depth_tide": [
+      "利息付きで返す、{opp}。",
+      "お前は振る。私は待つ。それが技だ。",
+      "{topic}は忍耐を報いる。お前じゃない。"
+    ],
+    "depth_deep": [
+      "正直、まだ立ってる。静かだ。",
+      "正直、体力は低い。焦りはもっと低い。",
+      "正直、最後のひと太刀。声は柔らかく。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "急がなくていい。彼らの焦りが負ける。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 93,
+    "resilience": 11,
+    "flair": 13,
+    "creativity": 14,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

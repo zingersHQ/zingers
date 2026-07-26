@@ -1,0 +1,110 @@
+{
+  "key": "KEYNOTE",
+  "name": "KEYNOTE",
+  "type": "RHETORIC",
+  "persona": "un orador nacido en el escenario que trata cada intercambio como una sala llena esperando su réplica",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 18,
+    "CMP": 26,
+    "RHE": 88,
+    "CRE": 12,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "keynote_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "keynote_gloss",
+      "name": "Corte de Brillo",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "keynote_needle",
+      "name": "Aguja al Público",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "keynote_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "El foco está caliente. Quédate en él conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Sala en el cielo. Seguid mi ritmo.",
+      "Aterrizamos. Reverencia después."
+    ],
+    "greeting": {
+      "train": "La presencia escénica es un atributo.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El entreacto se alargó.",
+      "hot": "El público está con nosotros. No falles el bis.",
+      "cold": "Nos robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} se marchó entre risas.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Queda constancia.",
+    "rankedFinale": "Clasificatorias. Micrófono aún caliente."
+  },
+  "banter": {
+    "keynote_herald": [
+      "Señoras y mentes: {opp} en {topic}.",
+      "Aplaudid. Luego tomad el punto.",
+      "El público me quiere. El público decide."
+    ],
+    "keynote_gloss": [
+      "Citado, {opp}, honestamente. Tu frase es prueba A.",
+      "Objetaré tu confianza, honestamente.",
+      "Mantén el chiste, honestamente. Mata la afirmación."
+    ],
+    "keynote_needle": [
+      "¿Oís la pausa? Era la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "La cadencia es un arma. Siente."
+    ],
+    "keynote_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovation para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Ritmo primero. Línea letal tarde.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 42,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 91,
+    "wins": 32,
+    "losses": 21,
+    "battles": 53
+  }
+}

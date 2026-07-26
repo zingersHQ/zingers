@@ -18,6 +18,7 @@ import { Home, Eye, Shield, Rocket, Trophy, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CircuitLite from "@/components/grounds/circuit-lite";
 import { AmbienceEngine } from "@/components/grounds/ambience";
+import { startAmbience } from "@/lib/ambience-bus";
 import MobileToday from "@/components/mobile/mobile-today";
 import MobileWatch from "@/components/mobile/mobile-watch";
 import MobileChampion from "@/components/mobile/mobile-champion";
@@ -69,6 +70,8 @@ export function MobileShell() {
 
   const selectTab = useCallback(
     (id: TabId) => {
+      // Tab taps are user gestures — arm the score before Flight mounts mood.
+      startAmbience();
       setPrevTab(tab);
       setTab(id);
     },
@@ -152,11 +155,14 @@ export function MobileShell() {
     setSplashGate("shell");
   }, []);
   const splashFly = useCallback(() => {
+    // Same gesture that opens Flight — resume the procedural score (autoplay policy).
+    startAmbience();
     dismissSplash();
     setPrevTab("today");
     setTab("climb");
   }, [dismissSplash]);
   const splashEnter = useCallback(() => {
+    startAmbience();
     dismissSplash();
     setTab("today");
   }, [dismissSplash]);

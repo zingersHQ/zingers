@@ -1,0 +1,110 @@
+{
+  "key": "JOLT",
+  "name": "JOLT",
+  "type": "CHAOS",
+  "persona": "一个靠挑衅取胜的嘲讽者，享受每一次对手的退缩",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 30,
+    "RHE": 58,
+    "CRE": 7,
+    "CHA": 84
+  },
+  "moves": [
+    {
+      "id": "jolt_mark",
+      "name": "咒印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jolt_luck",
+      "name": "霉运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jolt_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jolt_curse",
+      "name": "终咒",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓太紧。",
+    "imprintAsk": "爬之前先来个坏主意。得有趣。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。总算。真棒。"
+    ],
+    "greeting": {
+      "train": "胡闹。学得更快。",
+      "return": "你回来了。很好。我闷了。",
+      "arena": "挑个守规矩的。"
+    },
+    "homecoming": {
+      "away": "没你我已经挑起三场架。差一点。",
+      "hot": "赢得很怪。继续怪下去。",
+      "cold": "连败。咒术更烫。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很小心。真可爱。",
+      "loss": "{opp}保持冷静。真没礼貌。"
+    },
+    "imprintAck": "哦。辣规则。",
+    "rankedFinale": "排位胜。乱。完美。"
+  },
+  "banter": {
+    "jolt_mark": [
+      "哎呀，{opp}。{topic}着火了。",
+      "跳吧，{opp}。地板现在很怪。",
+      "我把规则洒了。自己收拾。"
+    ],
+    "jolt_luck": [
+      "在你时机上加咒，{opp}。",
+      "我走运。你倒霉，{topic}。",
+      "笑吧，{opp}。坏的部分排上了。"
+    ],
+    "jolt_jitter": [
+      "绊倒。免费的，{opp}。",
+      "你走进去的。甚至踩在{topic}上。",
+      "绊住。笑。重复。"
+    ],
+    "jolt_curse": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}结束得很乱。如设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一句话就能挑起一场骚乱。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 87,
+    "resilience": -19,
+    "flair": 0,
+    "creativity": 17,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

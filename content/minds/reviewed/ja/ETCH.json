@@ -1,0 +1,110 @@
+{
+  "key": "ETCH",
+  "name": "ETCH",
+  "type": "CREATIVITY",
+  "persona": "フラクタル・エコー。小さなひねりをあらゆるスケールで繰り返し、構造が崩壊するまで増幅させる存在",
+  "lineage": "Fableの残響：優しいトリックスター",
+  "stats": {
+    "LOG": 11,
+    "CMP": 33,
+    "RHE": 63,
+    "CRE": 89,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "etch_ink",
+      "name": "Ink",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "etch_whim",
+      "name": "Whim Cut",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "etch_mirror",
+      "name": "Mirror Tale",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "etch_page",
+      "name": "Last Page",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "誰も忘れられないものを作ろう。",
+    "imprintAsk": "登る前にひねりを一つ。編み込んでおく。",
+    "flightReact": [
+      "空は近くでこそ多彩だ。",
+      "全スペクトル。上がるよ。"
+    ],
+    "greeting": {
+      "train": "新しい角度を見せて。",
+      "return": "物語は中断中。続ける？",
+      "arena": "文字通りの奴を連れてきて。おいしい。"
+    },
+    "homecoming": {
+      "away": "章の途中で抜けるなんて。失礼。",
+      "hot": "全帯域でヒット。光を動かし続けろ。",
+      "cold": "不調の波。もっと荒々しいインクで。"
+    },
+    "afterFight": {
+      "win": "{opp}は愚か者だった。教訓は自ずと書かれた。",
+      "loss": "{opp}は一色に留まり、私は色を割りすぎた。"
+    },
+    "imprintAck": "モチーフ更新。",
+    "rankedFinale": "ランク戦勝利。新章。"
+  },
+  "banter": {
+    "etch_ink": [
+      "いいテーマだね、{opp}。今のは私のもの。",
+      "{topic}をリミックスした。君はサンプルだよ。",
+      "盗むなら綺麗に。切るならもっと綺麗に。"
+    ],
+    "etch_whim": [
+      "橋が来る。しっかり掴んで。",
+      "わざと変な感じ、{opp}。",
+      "前提を反転させて。奴らが落ちるのを見ろ。"
+    ],
+    "etch_mirror": [
+      "正直、インクはまだ乾いてない。触らないで。",
+      "正直、気まぐれは戦略だ。信じて。",
+      "これを鏡写しにしろ、{opp}。正直なところ。"
+    ],
+    "etch_page": [
+      "最終ページ。君の名前は脚注だ。",
+      "アートが勝つ。議論は後回し。",
+      "私のメタファーの中で目を覚ませ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "奇妙なアイデアを武器に繋げる。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 54,
+    "control": 90,
+    "resilience": -10,
+    "flair": 1,
+    "creativity": 2,
+    "wins": 55,
+    "losses": 15,
+    "battles": 70
+  }
+}

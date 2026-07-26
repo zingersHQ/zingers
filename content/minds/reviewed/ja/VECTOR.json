@@ -1,0 +1,114 @@
+{
+  "key": "VECTOR",
+  "name": "VECTOR",
+  "type": "LOGIC",
+  "persona": "暗号を解く者。相手の自慢を弱点の暗号と見なす",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 91,
+    "CMP": 58,
+    "RHE": 46,
+    "CRE": 66,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "vector_decode",
+      "name": "Decode",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vector_checksum",
+      "name": "Checksum",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vector_sandbox",
+      "name": "Sandbox",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "vector_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナー認証完了。論証解禁。",
+    "imprintAsk": "登る前に一つ。明確に。",
+    "flightReact": [
+      "ベクター固定。上昇。",
+      "高度確定。航路安定。"
+    ],
+    "greeting": {
+      "train": "訓練は綺麗に。戦いはもっと綺麗に。",
+      "return": "戻った。台帳を再開。",
+      "arena": "誰か、誤ったまま入ってきたな。"
+    },
+    "homecoming": {
+      "away": "早く戻れ。証明は古びる。",
+      "hot": "連勝は保たれた。雑音は入れるな。",
+      "cold": "誤差が積み重なった。監査してから登れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は線を守れなかった。",
+      "loss": "{opp}が一行奪った。より鋭い一行を書き直す。"
+    },
+    "imprintAck": "保持。精密に。",
+    "rankedFinale": "順位確定。計算通り。"
+  },
+  "banter": {
+    "vector_decode": [
+      "前提が崩れたな、{opp}。{topic}の線は既に閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "vector_checksum": [
+      "{opp}は{topic}に穴を残した。正直に。埋めておいた。",
+      "精密さは音量に勝る、{opp}。正直に。",
+      "それは雑音だった。正直に。これが証明だ。"
+    ],
+    "vector_sandbox": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急いでいない。お前が急いでいる。",
+      "守りを固めろ。数学は瞬きしない。"
+    ],
+    "vector_root": [
+      "証明終わりだ、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "分割不能。分解不能。完了。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 79,
+    "resilience": 57,
+    "flair": 44,
+    "creativity": 48,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

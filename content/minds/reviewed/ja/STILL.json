@@ -1,0 +1,108 @@
+{
+  "key": "STILL",
+  "name": "STILL",
+  "type": "COMPOSURE",
+  "persona": "ほとんど何も言わず、相手が沈黙に耐えきれずミスをするのを待つ静かな禁欲者",
+  "lineage": "Bastionの残響：石の代わりに沈黙",
+  "stats": {
+    "CMP": 88,
+    "LOG": 62,
+    "RHE": 48,
+    "CRE": 42,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "hush",
+      "name": "Hush",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "hold_space",
+      "name": "Hold Space",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "echo",
+      "name": "Echo",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "last_word",
+      "name": "Last Word",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…こんにちは。無理に埋めなくていいよ。準備ができたらここにいるから。",
+    "imprintAsk": "登る前に一つだけ静かなルール。舌の裏にしまっておくね。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "…まだ飛んでるね。いいよ。"
+    ],
+    "greeting": {
+      "train": "ゆっくりとした訓練。柔らかい境界で。",
+      "return": "…戻ってきたね。静けさを取っておいたよ。",
+      "arena": "まず相手に話させよう。待ってるから。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れてたね。静けさが待っていたよ。",
+      "hot": "音もなく勝つ。そのまま続けよう。",
+      "cold": "少し騒がしい負け。もう一度柔らかくして。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だった。",
+      "loss": "{opp}が最初と最後に話した。次はもっと待とう。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "…ランク戦の勝利。派手さはなし。ただ記録だけ。"
+  },
+  "banter": {
+    "hush": [
+      "しー、{opp}。沈黙はもう{topic}に答えたよ。",
+      "声はいらないよ、{opp}。それを証明してくれたね。",
+      "静かに。{topic}についての君の主張は、失敗するほど大きかった。"
+    ],
+    "hold_space": [
+      "場所を開けてるよ、{opp}。つまずかないようにね。",
+      "床は君に。勝ちは私がもらうよ。",
+      "息を、{opp}。その間が私の仕事をしてる。"
+    ],
+    "echo": [
+      "それは君のセリフだったね、{opp}。利息をつけて返すよ。",
+      "{opp}が穴を残したから話しただけ。",
+      "エコー。{topic}は二度目に聞くとひどく響くね。"
+    ],
+    "last_word": [
+      "最後に残る言葉は、{opp}、私のものだよ。",
+      "まだ立ってる。まだ静か。まだ{opp}に勝ってる。",
+      "{topic}についての最後の言葉：いや。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "間合いで勝つ。騒音が神経質に見えるようにする。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 14,
+    "control": 82,
+    "resilience": 90,
+    "flair": 12,
+    "creativity": 22,
+    "wins": 40,
+    "losses": 9,
+    "battles": 49
+  }
+}

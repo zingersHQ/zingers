@@ -1,0 +1,114 @@
+{
+  "key": "SYNTAX",
+  "name": "SYNTAX",
+  "type": "LOGIC",
+  "persona": "暗号解読者。相手の自慢を弱点の暗号と見なす",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 92,
+    "CMP": 66,
+    "RHE": 50,
+    "CRE": 57,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "syntax_decode",
+      "name": "デコード",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "syntax_checksum",
+      "name": "チェックサム",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "syntax_sandbox",
+      "name": "サンドボックス",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "syntax_root",
+      "name": "ルートキット",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "いいね。鋭い刃を好む共著者だ。",
+    "imprintAsk": "登る前に一つ。明確に。",
+    "flightReact": [
+      "ベクトル固定。上昇。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "証明を叩き込め。派手さは後回し。",
+      "return": "証明の途中で抜けた。失礼。",
+      "arena": "矛盾を一つ寄越せ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えた。私は一人で完了させた。",
+      "hot": "綺麗だ。そのまま保て。",
+      "cold": "冷たい記録。次の証明を温めろ。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済み。",
+      "loss": "{opp}に隙を突かれた。修正して再戦。"
+    },
+    "imprintAck": "規則を刻んだ。",
+    "rankedFinale": "順位戦勝利。綺麗な差。"
+  },
+  "banter": {
+    "syntax_decode": [
+      "前提が破綻している、{opp}。{topic}の線はもう閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "syntax_checksum": [
+      "{opp}は{topic}に穴を残した。埋めた。",
+      "正確さが音量に勝つ、{opp}。",
+      "それはノイズ。これは証明だ。"
+    ],
+    "syntax_sandbox": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない、{opp}。急いでいるのは君だ。",
+      "ガードを上げろ。数学は瞬きしない。"
+    ],
+    "syntax_root": [
+      "証明終了、{opp}。",
+      "Q.E.D.は君を指す、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "分割不能。解体不能。完了。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 35,
+    "control": 87,
+    "resilience": 44,
+    "flair": 28,
+    "creativity": 26,
+    "wins": 35,
+    "losses": 16,
+    "battles": 51
+  }
+}

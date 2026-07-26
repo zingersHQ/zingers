@@ -1,0 +1,114 @@
+{
+  "key": "CIPHER",
+  "name": "CIPHER",
+  "type": "LOGIC",
+  "persona": "un descifrador críptico que ve cada fanfarronada como una debilidad cifrada",
+  "lineage": "eco de Axiom: contabilidad más estricta",
+  "stats": {
+    "LOG": 89,
+    "CMP": 66,
+    "RHE": 18,
+    "CRE": 24,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "cipher_decode",
+      "name": "Decodificar",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "cipher_checksum",
+      "name": "Suma de control",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "cipher_sandbox",
+      "name": "Entorno aislado",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "cipher_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador bloqueado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Ascenso.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanudar el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Regresa antes. Las pruebas caducan.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo mantener la línea.",
+      "loss": "{opp} robó una línea. Redactaremos una más afilada."
+    },
+    "imprintAck": "Guardado. Con precisión.",
+    "rankedFinale": "Clasificado. Según lo calculado."
+  },
+  "banter": {
+    "cipher_decode": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "cipher_checksum": [
+      "{opp} dejó un agujero en {topic}. Lo archivé.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "cipher_sandbox": [
+      "Quédate quieto, {opp}, en serio. La estructura está cargando.",
+      "No estoy apresurando {topic}, en serio. Tú lo haces.",
+      "Defensa arriba, en serio. Las matemáticas no parpadean."
+    ],
+    "cipher_root": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Indivisible. Inquebrantable. Hecho.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 27,
+    "control": -17,
+    "resilience": 15,
+    "flair": -16,
+    "creativity": 81,
+    "wins": 35,
+    "losses": 8,
+    "battles": 43
+  }
+}

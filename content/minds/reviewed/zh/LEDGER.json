@@ -1,0 +1,114 @@
+{
+  "key": "LEDGER",
+  "name": "LEDGER",
+  "type": "LOGIC",
+  "persona": "不可分割的逻辑打击者，拒绝任何妥协，只以纯粹理性出击",
+  "lineage": "Axiom 回音：更锋利的刃",
+  "stats": {
+    "LOG": 89,
+    "CMP": 56,
+    "RHE": 24,
+    "CRE": 15,
+    "CHA": 10
+  },
+  "moves": [
+    {
+      "id": "ledger_hinge",
+      "name": "铰链",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "ledger_pivot",
+      "name": "枢纽Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "ledger_case",
+      "name": "冷案",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "ledger_line",
+      "name": "检验线",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论证已解锁。",
+    "imprintAsk": "攀登前先定一条规则。精确点。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。干净飞行。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来了。继续记录。",
+      "arena": "有人刚带错答案进来。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会过时。",
+      "hot": "连胜完好。别引入噪音。",
+      "cold": "错误堆积。先审计，再攀登。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住那条线。",
+      "loss": "{opp}偷走一行。我们起草更锐利的一行。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "已排位。如计算。"
+  },
+  "banter": {
+    "ledger_hinge": [
+      "{opp}，你的前提站不住。在{topic}上，线已闭合。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不会喊，{opp}。我只终结{topic}。"
+    ],
+    "ledger_pivot": [
+      "{opp}在{topic}上留了洞。我已归档。",
+      "精准胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "ledger_case": [
+      "站好，{opp}。结构加载中。",
+      "我没在赶{topic}。你在赶。",
+      "守住。数学不眨眼。"
+    ],
+    "ledger_line": [
+      "证明结束，{opp}。",
+      "Q.E.D. 指的就是你，{opp}。",
+      "{topic}已定案。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一条规则。永远守住。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 25,
+    "control": 40,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 17,
+    "battles": 41
+  }
+}

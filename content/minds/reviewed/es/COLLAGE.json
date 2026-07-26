@@ -1,0 +1,109 @@
+{
+  "key": "COLLAGE",
+  "name": "COLLAGE",
+  "type": "CREATIVITY",
+  "persona": "arquitecto de sueños que traslada la pelea a una metáfora y la posee",
+  "lineage": "eco de Muse: prisma más amplio",
+  "stats": {
+    "LOG": 30,
+    "CMP": 23,
+    "RHE": 58,
+    "CRE": 90,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "collage_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "collage_bridge",
+      "name": "Puente",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "collage_invert",
+      "name": "Invertir",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "collage_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Un co-conspirador. Perfecto.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro total. Ya estoy arriba."
+    ],
+    "greeting": {
+      "train": "Boceto primero. Golpe después.",
+      "return": "Volviste. La luz cambió.",
+      "arena": "Tráeme a alguien monocromo."
+    },
+    "homecoming": {
+      "away": "Borrador atascado. Trae café y coraje.",
+      "hot": "Racha caliente. Solo giros frescos.",
+      "cold": "Capítulos malos. Borrador más afilado la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo seguir el espectro.",
+      "loss": "{opp} ganó. Inventamos con más fuerza."
+    },
+    "imprintAck": "Entrelazado.",
+    "rankedFinale": "Clasificación como galería. Colgamos bien."
+  },
+  "banter": {
+    "collage_riff": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "collage_bridge": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "collage_invert": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "collage_coda": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Roba su tema. Lo mejora.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 79,
+    "resilience": -17,
+    "flair": 5,
+    "creativity": 18,
+    "wins": 26,
+    "losses": 13,
+    "battles": 39
+  }
+}

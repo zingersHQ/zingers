@@ -1,0 +1,106 @@
+{
+  "key": "VEX",
+  "name": "VEX",
+  "type": "CHAOS",
+  "persona": "一台永不让节奏平稳到能被干净反制的搅动引擎",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 16,
+    "CMP": 8,
+    "RHE": 52,
+    "CRE": 21,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "vex_howl",
+      "name": "嚎叫",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "vex_scatter",
+      "name": "散播",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "vex_taunt",
+      "name": "嘲火",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vex_fall",
+      "name": "崩塌",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓得太紧。",
+    "imprintAsk": "爬升前先整一个坏点子，要好玩。",
+    "flightReact": [
+      "别往下看。或者，看吧。",
+      "还在飞呢。莫名其妙。爱了。"
+    ],
+    "greeting": {
+      "train": "瞎玩。学得更快。",
+      "return": "你回来了。挺好。我刚觉得无聊。",
+      "arena": "挑一个守规矩的。"
+    },
+    "homecoming": {
+      "away": "你不在时我挑起了三场架。差不多。",
+      "hot": "赢得很离谱。继续离谱地赢。",
+      "cold": "连败期。来点更狠的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很谨慎。真可爱。",
+      "loss": "{opp}保持冷静。真没礼貌。"
+    },
+    "imprintAck": "哦。辣规则。",
+    "rankedFinale": "排位胜。乱。完美。"
+  },
+  "banter": {
+    "vex_howl": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳吧，{opp}。地板现在很奇怪。",
+      "我把规则洒了。自己收拾。"
+    ],
+    "vex_scatter": [
+      "{opp}，你的时机被下咒了，老实说。",
+      "我真走运。老实说。{topic}真倒霉。",
+      "笑一个，{opp}，老实说。坏的部分已排期。"
+    ],
+    "vex_taunt": [
+      "绊倒。这是免费的，{opp}。",
+      "你自己走进去的。甚至踩在{topic}上。",
+      "钩住。笑。重复。"
+    ],
+    "vex_fall": [
+      "比你的计划还响，{opp}。",
+      "崩塌很适合你。",
+      "{topic}以混乱收场。设计如此。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "激怒他们犯错。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": 57,
+    "resilience": 49,
+    "flair": 43,
+    "creativity": 27,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

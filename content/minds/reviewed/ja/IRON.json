@@ -1,0 +1,107 @@
+{
+  "key": "IRON",
+  "name": "IRON",
+  "type": "COMPOSURE",
+  "persona": "一本の重錘付き直線のように、すべての振る舞いを容赦のない中心線で測るストイック",
+  "lineage": "Stillの残響：緩やかな潮",
+  "stats": {
+    "LOG": 55,
+    "CMP": 88,
+    "RHE": 19,
+    "CRE": 27,
+    "CHA": 7
+  },
+  "moves": [
+    {
+      "id": "iron_plumb",
+      "name": "直垂",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "iron_measure",
+      "name": "測線",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "iron_true",
+      "name": "真線",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "iron_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたな。静寂が保たれている。",
+    "imprintAsk": "登る前に一つ。静かな掟を守る。",
+    "flightReact": [
+      "…上昇。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "緩やかな鍛錬。柔らかい縁。",
+      "return": "甲板は静かだった。整えていた。",
+      "arena": "静かな相手。大げさな過ち。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたな。静寂は保たれていた。",
+      "hot": "均等に乗る。祝うな。中心を保て。",
+      "cold": "冷たい。それでも息をしている。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を満たした。それで十分だ。",
+      "loss": "{opp}が我らの均衡を崩した。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静寂の中に座す。",
+    "rankedFinale": "…順位付きの勝ち。派手なことは何もない。ただ記録が残るだけ。"
+  },
+  "banter": {
+    "iron_plumb": [
+      "{opp}、確かに聞いた。正直に。それでも私はここにいる。",
+      "熱を溜め込むな、正直に。使い方を誤る。",
+      "静寂が効く、正直に。それを見ろ。"
+    ],
+    "iron_measure": [
+      "息をしろ、{opp}。間は私のものだ。",
+      "お前が傾くより、私はゆっくり癒える。",
+      "止まれ。線は保たれている。"
+    ],
+    "iron_true": [
+      "利息を添えて返したぞ、{opp}。",
+      "お前は振るった。私は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "iron_stone": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。動揺はさらに低い。",
+      "最後の斬り。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "引き戻しを待ち、費えた波を打つ。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 1,
+    "resilience": -8,
+    "flair": 84,
+    "creativity": 6,
+    "wins": 36,
+    "losses": 30,
+    "battles": 66
+  }
+}

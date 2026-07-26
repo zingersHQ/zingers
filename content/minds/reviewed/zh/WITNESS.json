@@ -1,0 +1,110 @@
+{
+  "key": "WITNESS",
+  "name": "WITNESS",
+  "type": "RHETORIC",
+  "persona": "a tribunal voice who assigns roles mid-fight and makes the rival play the fool",
+  "lineage": "Vox之回响：更紧凑的节奏",
+  "stats": {
+    "LOG": 32,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 32,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "witness_herald",
+      "name": "传令",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "witness_gloss",
+      "name": "裁剪",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "witness_needle",
+      "name": "挑动人群",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "witness_ovation",
+      "name": "喝彩",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已热。跟我一起站稳。",
+    "imprintAsk": "上场前留一句。让它能被引用。",
+    "flightReact": [
+      "空中之屋。跟上我的步调。",
+      "我们落地了。谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风也是数据。",
+      "return": "观众等你等得发慌。",
+      "arena": "我需要一个衬托。随便谁都行。"
+    },
+    "homecoming": {
+      "away": "中场休息太久。",
+      "hot": "观众跟我们。别演砸了。",
+      "cold": "他们抢走了掌声。重新写稿。"
+    },
+    "afterFight": {
+      "win": "{opp}被笑出局。",
+      "loss": "{opp}拿走了喝彩。写得更好点。"
+    },
+    "imprintAck": "已记录在案。",
+    "rankedFinale": "排位赛。麦还在热。"
+  },
+  "banter": {
+    "witness_herald": [
+      "女士们先生们：{opp}论{topic}。",
+      "先鼓掌，再拿分。",
+      "观众喜欢我。观众做决定。"
+    ],
+    "witness_gloss": [
+      "已引用，{opp}。你的台词是证据A。",
+      "我反对你的自信。",
+      "把段子拖下去，把主张毙掉。"
+    ],
+    "witness_needle": [
+      "听见停顿了吗？那是铺垫。",
+      "{opp}，先笑，后流血。",
+      "节奏是武器。感受它。"
+    ],
+    "witness_ovation": [
+      "麦放下。案结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "微笑穿过刀口。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 56,
+    "resilience": 29,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

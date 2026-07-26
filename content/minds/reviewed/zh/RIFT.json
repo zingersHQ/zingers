@@ -1,0 +1,110 @@
+{
+  "key": "RIFT",
+  "name": "RIFT",
+  "type": "CHAOS",
+  "persona": "一个靠嘲讽取胜而非靠天赋的刺头，享受每一次对手的慌乱",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 38,
+    "CMP": 58,
+    "RHE": 70,
+    "CRE": 52,
+    "CHA": 85
+  },
+  "moves": [
+    {
+      "id": "rift_mark",
+      "name": "咒印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rift_luck",
+      "name": "厄运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "rift_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "rift_curse",
+      "name": "咒终",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "你看起来太谨慎了，我来帮你改改。",
+    "imprintAsk": "爬之前先犯个错，乐一乐。",
+    "flightReact": [
+      "别往下看，或者就往下看吧。",
+      "还在飞呢。真有意思。"
+    ],
+    "greeting": {
+      "train": "热身要带点怪味。",
+      "return": "想我了？垃圾我留给你。",
+      "arena": "我喜欢把整洁的人弄乱。"
+    },
+    "homecoming": {
+      "away": "又见你这张混乱通行证。",
+      "hot": "我们正热，慢慢浇油。",
+      "cold": "自己绊自己，笑死。修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序，遇到了我。",
+      "loss": "{opp}运气好，或者实力强，反正烦人。"
+    },
+    "imprintAck": "记下了，大概。",
+    "rankedFinale": "排位赛而已，照样野。"
+  },
+  "banter": {
+    "rift_mark": [
+      "哎呀，{opp}，{topic}着火了。",
+      "跳吧，{opp}，地板现在很奇怪。",
+      "我把规则洒了，你来收拾。"
+    ],
+    "rift_luck": [
+      "{opp}，你的时机被诅咒了。",
+      "我走运，{topic}倒霉。",
+      "笑一个，{opp}，坏事排队呢。"
+    ],
+    "rift_jitter": [
+      "绊一下，免费的，{opp}。",
+      "你自己走进去的，还踩在{topic}上。",
+      "一绊一笑，再来。"
+    ],
+    "rift_curse": [
+      "{opp}，比你的计划还吵。",
+      "崩溃很适合你。",
+      "{topic}以混乱收场，按计划。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一句话就能掀起一场骚乱。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 31,
+    "control": 21,
+    "resilience": 35,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 35,
+    "losses": 12,
+    "battles": 47
+  }
+}

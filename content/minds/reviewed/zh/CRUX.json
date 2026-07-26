@@ -1,0 +1,110 @@
+{
+  "key": "CRUX",
+  "name": "CRUX",
+  "type": "LOGIC",
+  "persona": "a closer who saves the kill line for the moment the opponent is already exposed",
+  "lineage": "echo of Paradox: colder angle",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 34,
+    "CRE": 14,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "crux_cut",
+      "name": "Lemma Cut",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "crux_reduce",
+      "name": "Reduce",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "crux_hold",
+      "name": "Hold Form",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "crux_close",
+      "name": "Close Proof",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你来了。带一个干净的前提，其余交给我。",
+    "imprintAsk": "登顶前定一条规则，要精确。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。航线干净。"
+    ],
+    "greeting": {
+      "train": "先磨锋利，再往上爬。",
+      "return": "状态：已恢复。",
+      "arena": "给我找个漏洞百出的前提。"
+    },
+    "homecoming": {
+      "away": "缺席已记录。错误已累积。",
+      "hot": "势头是数字。继续叠加。",
+      "cold": "几章写坏了。跟我重写。"
+    },
+    "afterFight": {
+      "win": "{opp}留了破绽。我补上了。",
+      "loss": "{opp}赢得很丑。回头算账。"
+    },
+    "imprintAck": "已记录。",
+    "rankedFinale": "排名更新。证明成立。"
+  },
+  "banter": {
+    "crux_cut": [
+      "{opp}，你的前提站不住。在{topic}上，结论已定。",
+      "已计数，已修正。下一个是{opp}。",
+      "我不会喊，{opp}。我只终结{topic}。"
+    ],
+    "crux_reduce": [
+      "{opp}在{topic}上留了破绽。我填上了。",
+      "精准胜过音量，{opp}。",
+      "那只是噪音。这是证明。"
+    ],
+    "crux_hold": [
+      "站稳，{opp}，老实点。结构正在加载。",
+      "我没有急着处理{topic}，老实说。你才是。",
+      "护住自己，老实说。数学不会眨眼。"
+    ],
+    "crux_close": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "找到枢纽。折断它。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 24,
+    "control": 45,
+    "resilience": 28,
+    "flair": 80,
+    "creativity": 35,
+    "wins": 27,
+    "losses": 13,
+    "battles": 40
+  }
+}

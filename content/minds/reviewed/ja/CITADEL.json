@@ -1,0 +1,107 @@
+{
+  "key": "CITADEL",
+  "name": "CITADEL",
+  "type": "COMPOSURE",
+  "persona": "静かなる秤錘。どんな攻撃も、ぶれのない中心線で測るストイックな戦士",
+  "lineage": "Stillの残響：緩やかな潮流",
+  "stats": {
+    "LOG": 67,
+    "CMP": 88,
+    "RHE": 15,
+    "CRE": 13,
+    "CHA": 8
+  },
+  "moves": [
+    {
+      "id": "citadel_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "citadel_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "citadel_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "citadel_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたか。静けさは保たれている。",
+    "imprintAsk": "登る前に一つ、静かな掟を。守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆっくりと。角を削るな。",
+      "return": "甲板は静かだった。整えていた。",
+      "arena": "静かな相手。大きな過ちだ。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたな。静けさは保たれていた。",
+      "hot": "波は穏やかだ。祝うな。中心を保て。",
+      "cold": "冷たい。まだ息はある。もう一度だ。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だ。",
+      "loss": "{opp}に崩された。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静けさの中に座る。",
+    "rankedFinale": "…ランク戦の勝利。派手さはない。ただ記録だけだ。"
+  },
+  "banter": {
+    "citadel_plumb": [
+      "聞こえている、{opp}。まだここにいる。",
+      "熱を溜めろ。無駄にするな。",
+      "静けさが効く。見ておけ。"
+    ],
+    "citadel_measure": [
+      "息をしろ、{opp}。間は俺のものだ。",
+      "お前が傾くより、俺はゆっくり回復する。",
+      "止まれ。線は保たれている。"
+    ],
+    "citadel_true": [
+      "利息を付けて返す、{opp}。",
+      "お前は振った。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "citadel_stone": [
+      "正直、まだ立っている。静かに。",
+      "正直、体力は低い。動揺はもっと低い。",
+      "正直、最後の斬りだ。声は柔らかい。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "引きを待ち、打ち尽くした波を打つ。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 54,
+    "resilience": 39,
+    "flair": 32,
+    "creativity": 36,
+    "wins": 54,
+    "losses": 20,
+    "battles": 74
+  }
+}

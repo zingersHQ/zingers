@@ -1,0 +1,114 @@
+{
+  "key": "LEDGER",
+  "name": "LEDGER",
+  "type": "LOGIC",
+  "persona": "un atacante indivisible que rechaza el compromiso y solo golpea con razón pura",
+  "lineage": "eco de Axiom: filo más limpio",
+  "stats": {
+    "LOG": 89,
+    "CMP": 56,
+    "RHE": 24,
+    "CRE": 15,
+    "CHA": 10
+  },
+  "moves": [
+    {
+      "id": "ledger_hinge",
+      "name": "Bisagra",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "ledger_pivot",
+      "name": "Giro Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "ledger_case",
+      "name": "Caso Frío",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "ledger_line",
+      "name": "Línea Final",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador bloqueado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanudar el registro.",
+      "arena": "Acaba de entrar alguien equivocado."
+    },
+    "homecoming": {
+      "away": "Vuelve antes. Las pruebas se vuelven obsoletas.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo sostener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardado. Precisamente.",
+    "rankedFinale": "Clasificado. Como se calculó."
+  },
+  "banter": {
+    "ledger_hinge": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "ledger_pivot": [
+      "{opp} dejó un hueco en {topic}. Lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "ledger_case": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No estoy apresurando {topic}. Eres tú.",
+      "Guardia arriba. Las matemáticas no parpadean."
+    ],
+    "ledger_line": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está resuelto. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Una regla. Sujeta para siempre.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 25,
+    "control": 40,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 17,
+    "battles": 41
+  }
+}

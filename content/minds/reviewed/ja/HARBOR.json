@@ -1,0 +1,107 @@
+{
+  "key": "HARBOR",
+  "name": "HARBOR",
+  "type": "COMPOSURE",
+  "persona": "一本の垂直線を心に刻む沈着な者。どんな揺れもその線で測り、決して崩さない",
+  "lineage": "echo of Still: slower tide",
+  "stats": {
+    "LOG": 67,
+    "CMP": 90,
+    "RHE": 70,
+    "CRE": 39,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "harbor_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "harbor_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "harbor_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "harbor_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたな。静けさが保たれている。",
+    "imprintAsk": "登る前に一つ。守るべき静かな掟がある。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "ゆっくりと。角を丸めて。",
+      "return": "甲板は静かだった。バランスを保っていた。",
+      "arena": "静かな相手。大げさな過ちだ。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く離れていたな。静けさは保たれていた。",
+      "hot": "揺れはなかった。喜ぶな。中心を保て。",
+      "cold": "冷たい。それでも息はある。再び。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だ。",
+      "loss": "{opp}に崩された。もっと早く整えるべきだった。"
+    },
+    "imprintAck": "静けさの中に座る。",
+    "rankedFinale": "…順位戦の勝利。派手さはない。ただ記録が残るだけ。"
+  },
+  "banter": {
+    "harbor_plumb": [
+      "{opp}の声は聞こえた。俺はまだここにいる。",
+      "熱を溜めろ。使いどころを誤るな。",
+      "静かさが効く。よく見ろ。"
+    ],
+    "harbor_measure": [
+      "息をしろ、{opp}。間は俺のものだ。",
+      "お前の傾きより、俺の回復は遅い。",
+      "止まれ。線はまだ持つ。"
+    ],
+    "harbor_true": [
+      "利息を添えて返すぞ、{opp}。",
+      "お前は振った。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "harbor_stone": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。動揺はさらに低い。",
+      "最後の斬り。声は柔らかく。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "引きの瞬間を待ち、打ち尽くした波を打つ。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 17,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

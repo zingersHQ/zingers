@@ -1,0 +1,108 @@
+{
+  "key": "FIRM",
+  "name": "FIRM",
+  "type": "COMPOSURE",
+  "persona": "una pared silenciosa que absorbe el calor y lo devuelve en un solo contraataque paciente",
+  "lineage": "eco de Still: puerto más profundo",
+  "stats": {
+    "LOG": 57,
+    "CMP": 92,
+    "RHE": 29,
+    "CRE": 10,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "firm_absorb",
+      "name": "Absorber",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "firm_hold",
+      "name": "Mantener Línea",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "firm_return",
+      "name": "Corte Devuelto",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "firm_unmoved",
+      "name": "Inmóvil",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio.",
+      "return": "Regreso anotado. Aún aquí.",
+      "arena": "Que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el rumbo. Bienvenido a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} listado. No lo hicimos.",
+      "loss": "{opp} ganó ruidoso. Respondemos suave."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificado. Aún respiro."
+  },
+  "banter": {
+    "firm_absorb": [
+      "Te escuché, {opp}. Aún estoy aquí.",
+      "Guarda el calor. Gástalo mal.",
+      "Lo silencioso funciona. Observa."
+    ],
+    "firm_hold": [
+      "Respira, {opp}, honestamente. La pausa es mía.",
+      "Curo más lento que tú te inclinas, honestamente.",
+      "Mantén, honestamente. La línea se mantiene."
+    ],
+    "firm_return": [
+      "Devuelto con interés, {opp}.",
+      "Atacaste. Esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "firm_unmoved": [
+      "Aún de pie. Aún en silencio.",
+      "Baja salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Mide cada golpe. Rechaza los salvajes.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 80,
+    "control": -1,
+    "resilience": 7,
+    "flair": -17,
+    "creativity": 15,
+    "wins": 27,
+    "losses": 17,
+    "battles": 44
+  }
+}

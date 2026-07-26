@@ -1,0 +1,110 @@
+{
+  "key": "QED",
+  "name": "QED",
+  "type": "LOGIC",
+  "persona": "un rematador que guarda la línea final para el instante en que el rival ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 85,
+    "CMP": 53,
+    "RHE": 9,
+    "CRE": 17,
+    "CHA": 32
+  },
+  "moves": [
+    {
+      "id": "qed_cut",
+      "name": "Corte de Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "qed_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "qed_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "qed_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Entrenador bloqueado. Argumentos desbloqueados.",
+    "imprintAsk": "Una regla antes de subir. Hazla precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Entrena limpio. Pelea más limpio.",
+      "return": "De vuelta. Reanudar el registro.",
+      "arena": "Alguien equivocado acaba de entrar."
+    },
+    "homecoming": {
+      "away": "Vuelve antes. Las pruebas se vuelven obsoletas.",
+      "hot": "Racha intacta. No introduzcas ruido.",
+      "cold": "Errores acumulados. Audita, luego sube."
+    },
+    "afterFight": {
+      "win": "{opp} no pudo mantener la línea.",
+      "loss": "{opp} robó una línea. Redactamos una más afilada."
+    },
+    "imprintAck": "Guardado. Con precisión.",
+    "rankedFinale": "Clasificado. Según lo calculado."
+  },
+  "banter": {
+    "qed_cut": [
+      "Tu premisa falla, {opp}. En {topic}, la línea ya está cerrada.",
+      "Contado. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}. Termino {topic}."
+    ],
+    "qed_reduce": [
+      "{opp} dejó un hueco en {topic}. Lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "qed_hold": [
+      "Quédate quieto, {opp}, honestamente. La estructura está cargando.",
+      "No estoy apresurando {topic}, honestamente. Tú lo haces.",
+      "Guardia arriba, honestamente. Las matemáticas no parpadean."
+    ],
+    "qed_close": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 90,
+    "resilience": 29,
+    "flair": 41,
+    "creativity": 57,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

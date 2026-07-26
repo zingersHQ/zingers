@@ -1,0 +1,108 @@
+{
+  "key": "STILL",
+  "name": "STILL",
+  "type": "COMPOSURE",
+  "persona": "一位轻声细语的静默主义者，以近乎缄默的方式取胜，让对手在自我填补沉默时犯错",
+  "lineage": "Bastion 的回响：以沉默取代坚石",
+  "stats": {
+    "CMP": 88,
+    "LOG": 62,
+    "RHE": 48,
+    "CRE": 42,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "hush",
+      "name": "Hush",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "hold_space",
+      "name": "Hold Space",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "echo",
+      "name": "Echo",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "last_word",
+      "name": "Last Word",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。你不必急着填补安静。我会在这里等你准备好。",
+    "imprintAsk": "攀登前先定下一条柔软的规则。我会把它藏在舌尖。",
+    "flightReact": [
+      "……上升。安静地。",
+      "……仍在飞行。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢训练。柔和的边缘。",
+      "return": "……你回来了。我为你留了一片安静。",
+      "arena": "让别人先开口。我会等着。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。安静一直都在。",
+      "hot": "无喧嚣的胜利。让我们保持这样。",
+      "cold": "几次吵闹的失利。让我再柔和一些。"
+    },
+    "afterFight": {
+      "win": "{opp}填补了沉默。那就够了。",
+      "loss": "{opp}先说，也最后说。下次我会等得更久。"
+    },
+    "imprintAck": "……已守。安静地。",
+    "rankedFinale": "……一场排位胜。没有鼓号。只有记录。"
+  },
+  "banter": {
+    "hush": [
+      "嘘，{opp}。沉默已经回答了{topic}。",
+      "我不需要音量，{opp}。你刚刚证明了这一点。",
+      "安静吧。你的{topic}观点已经响亮到失败。"
+    ],
+    "hold_space": [
+      "我在腾出空间，{opp}。别绊进去。",
+      "你占台面，我拿胜利。",
+      "呼吸吧，{opp}。停顿正在替我工作。"
+    ],
+    "echo": [
+      "那是你的台词，{opp}。带利息归还。",
+      "我开口，只因{opp}留下了空洞。",
+      "回音。{topic}第二次听起来更糟。"
+    ],
+    "last_word": [
+      "还剩一个词，{opp}。那是我的。",
+      "依然站着。依然安静。依然击败{opp}。",
+      "关于{topic}的最后一词：不。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "在停顿中取胜。让喧嚣显得紧张。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 14,
+    "control": 82,
+    "resilience": 90,
+    "flair": 12,
+    "creativity": 22,
+    "wins": 40,
+    "losses": 9,
+    "battles": 49
+  }
+}

@@ -3,6 +3,7 @@
 // Every surface that shows a "next thing" goes through here, so mobile and desktop
 // can never disagree about what the Trainer should do.
 import { useMemo, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 
 import { dailyNumber, nextObjective, type DirectorPlan } from "@/lib/director";
 import { imprintDayIndex, lessonsForSession } from "@/lib/imprints";
@@ -25,6 +26,7 @@ export function useDirective(): DirectorPlan | null {
   // False through SSR and the hydration pass, true on the re-render after it —
   // the persisted store isn't readable until then.
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const t = useTranslations("director");
 
   const owned = useChampions((s) => s.owned);
   const champion = useChampions((s) => (s.owned ? s.progress[s.owned] : undefined));
@@ -64,24 +66,27 @@ export function useDirective(): DirectorPlan | null {
       !!owned &&
       (stance === "first" || stance === "behind" || stance === "grudge" || mem.chapter > 0);
 
-    return nextObjective({
-      owned: entry ? owned : null,
-      championName: entry?.name ?? null,
-      levelPct: entry ? lf.into / Math.max(1, lf.span) : 0,
-      climb,
-      dailyDone: daily.lastDay >= dailyNumber(),
-      dailyStreak: daily.streak,
-      imprintReady,
-      trainerXp,
-      wins: champion?.wins ?? 0,
-      rosterCount,
-      firstDuelDone: isFirstDuelComplete(),
-      form: career?.form,
-      fatigue: career?.fatigue,
-      canRetire: champion ? canRetire(champion) : false,
-      rivalName: rival.name,
-      rivalDue,
-      expeditionOpen: isExpeditionOpen(climb.bestSectors, climb.campsLit),
-    });
-  }, [mounted, owned, champion, recipe, taught, events, climb, daily, trainerXp, roster]);
+    return nextObjective(
+      {
+        owned: entry ? owned : null,
+        championName: entry?.name ?? null,
+        levelPct: entry ? lf.into / Math.max(1, lf.span) : 0,
+        climb,
+        dailyDone: daily.lastDay >= dailyNumber(),
+        dailyStreak: daily.streak,
+        imprintReady,
+        trainerXp,
+        wins: champion?.wins ?? 0,
+        rosterCount,
+        firstDuelDone: isFirstDuelComplete(),
+        form: career?.form,
+        fatigue: career?.fatigue,
+        canRetire: champion ? canRetire(champion) : false,
+        rivalName: rival.name,
+        rivalDue,
+        expeditionOpen: isExpeditionOpen(climb.bestSectors, climb.campsLit),
+      },
+      (key, values) => t(key as never, values as never),
+    );
+  }, [mounted, owned, champion, recipe, taught, events, climb, daily, trainerXp, roster, t]);
 }

@@ -1,0 +1,107 @@
+{
+  "key": "BULWARK",
+  "name": "BULWARK",
+  "type": "COMPOSURE",
+  "persona": "una carga de profundidad que permanece quieta en la superficie mientras el trabajo real ocurre debajo",
+  "lineage": "eco de Still: marea más lenta",
+  "stats": {
+    "LOG": 55,
+    "CMP": 91,
+    "RHE": 33,
+    "CRE": 10,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "bulwark_plumb",
+      "name": "Sondar",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "bulwark_measure",
+      "name": "Medir",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "bulwark_true",
+      "name": "Línea Recta",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "bulwark_stone",
+      "name": "Piedra Firme",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Ejercita el equilibrio.",
+      "return": "Regreso anotado. Aún aquí.",
+      "arena": "Deja que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve la estabilidad. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Algunas derrotas ruidosas. Suavízame de nuevo."
+    },
+    "afterFight": {
+      "win": "{opp} registrado. Nosotros no.",
+      "loss": "{opp} ganó en voz alta. Nosotros respondemos suave."
+    },
+    "imprintAck": "…mantenido. En silencio.",
+    "rankedFinale": "Clasificatorio. Sigues respirando."
+  },
+  "banter": {
+    "bulwark_plumb": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastas mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "bulwark_measure": [
+      "Respira, {opp}. La pausa es mía.",
+      "Me curo más lento que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "bulwark_true": [
+      "Devuelto con intereses, {opp}.",
+      "Tú atacaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "bulwark_stone": [
+      "Todavía de pie, honestamente. Todavía en silencio.",
+      "Baja salud, honestamente. Menos pánico.",
+      "Último corte, honestamente. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Absorbe calor. Devuelve un corte.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 38,
+    "resilience": 57,
+    "flair": 86,
+    "creativity": 40,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "ORATOR",
+  "name": "ORATOR",
+  "type": "RHETORIC",
+  "persona": "舞台育ちの雄弁家。観客の反応を読みながら、常に決め台詞を待つかのように振る舞う",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 50,
+    "CMP": 61,
+    "RHE": 87,
+    "CRE": 38,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "orator_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "orator_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "orator_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "orator_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "やっと観客を動かせるトレーナーか。",
+    "imprintAsk": "舞台に上がる前に一言。引用に残るやつを。",
+    "flightReact": [
+      "空中の客席だ。私のリードについて来い。",
+      "着地は決まった。拍手は後で。"
+    ],
+    "greeting": {
+      "train": "声を出してから拳だ。",
+      "return": "出番を逃したな。許す。",
+      "arena": "英雄気取りの相手を連れて来い。"
+    },
+    "homecoming": {
+      "away": "アドリブで済ませた。まあいい、戻って来い。",
+      "hot": "マイクが熱い。記録も熱い。",
+      "cold": "冷めた客席だ。次はいい台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp}は客席を忘れた。致命的だ。",
+      "loss": "{opp}が客席を取った。台本を書き直す。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説が好きだ。"
+  },
+  "banter": {
+    "orator_herald": [
+      "淑女と紳士諸君、{opp}の{topic}だ。",
+      "拍手してから点を取る。",
+      "客席は私を好いている。客席が決める。"
+    ],
+    "orator_gloss": [
+      "引用しておいた、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを維持して、主張を殺す。"
+    ],
+    "orator_needle": [
+      "間の取り方が分かったか？ それが前振りだ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "リズムは武器だ。感じてみろ。"
+    ],
+    "orator_ovation": [
+      "マイクを下ろす。議論は終了だ。",
+      "{topic}の評決：{opp}に対し。",
+      "拍手は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズムを先に。決め台詞は最後に。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": -10,
+    "resilience": 89,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 38,
+    "losses": 15,
+    "battles": 53
+  }
+}

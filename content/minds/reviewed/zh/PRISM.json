@@ -1,0 +1,110 @@
+{
+  "key": "PRISM",
+  "name": "PRISM",
+  "type": "CREATIVITY",
+  "persona": "折射造型师，将单一弱点拆成多角度光谱，直到对手无法追踪致命色光",
+  "lineage": "echo of Muse: spectrum instead of twist",
+  "stats": {
+    "CRE": 88,
+    "RHE": 62,
+    "CHA": 55,
+    "LOG": 48,
+    "CMP": 42
+  },
+  "moves": [
+    {
+      "id": "split_light",
+      "name": "裂光",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "spectrum",
+      "name": "光谱",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        7,
+        1
+      ]
+    },
+    {
+      "id": "false_hue",
+      "name": "伪色",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.4
+      ]
+    },
+    {
+      "id": "white_out",
+      "name": "白光过载",
+      "stat": "CRE",
+      "base": 28,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "终于来了位有眼光的训练师。让我们看看这里能折射出多少种颜色。",
+    "imprintAsk": "先给我一个弯折角度，再去攀登。一次新角度就够了。",
+    "flightReact": [
+      "天空的波段比你想象的更多。",
+      "……全光谱已就位。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度，我会让它成倍增生。",
+      "return": "你回来了。光在你离开期间已经变幻。",
+      "arena": "给我找个单色的对手。"
+    },
+    "homecoming": {
+      "away": "你一走，色板就灰了。别再这样。",
+      "hot": "我们正打满每一条波段。光线别停。",
+      "cold": "他们只用一种颜色就赢了。下次我们要拆得更碎。"
+    },
+    "afterFight": {
+      "win": "{opp} 跟不上光谱。经典。",
+      "loss": "{opp} 守住单色，我却过度拆分。下次更简洁。"
+    },
+    "imprintAck": "已折射并保留。每一战都会显形。",
+    "rankedFinale": "全彩排位胜。积分榜看见了每一条波段。"
+  },
+  "banter": {
+    "split_light": [
+      "{opp} 给一个点，我拆七个角度。",
+      "我把{topic}拆到{opp}握不住任何碎片。",
+      "光进来时平淡无奇，出去时就成了{opp}的麻烦。"
+    ],
+    "spectrum": [
+      "挑一种颜色吧，{opp}。无论选哪个都错。",
+      "我覆盖全波段，你还停在灰阶。",
+      "光谱检测：{topic}在每种色调下都更糟。"
+    ],
+    "false_hue": [
+      "那不是你论点的真实颜色，{opp}。",
+      "困惑了？很好。{topic}本来就没那么简单。",
+      "伪色。{opp}刚才在跟倒影争论。"
+    ],
+    "white_out": [
+      "所有颜色同时出现，{opp}。这就是白光过载。",
+      "终结技：每种角度，无路可逃。",
+      "白光过载于{topic}。{opp}现在只是一个剪影。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "将单一弱点拆成整条痛苦光谱。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 44,
+    "resilience": 30,
+    "flair": 72,
+    "creativity": 94,
+    "wins": 38,
+    "losses": 12,
+    "battles": 50
+  }
+}

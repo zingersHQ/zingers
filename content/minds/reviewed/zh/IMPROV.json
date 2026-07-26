@@ -1,0 +1,109 @@
+{
+  "key": "IMPROV",
+  "name": "IMPROV",
+  "type": "CREATIVITY",
+  "persona": "一个马赛克拼图师，用碎片取胜，只在终局才拼出致命一击",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 14,
+    "CMP": 22,
+    "RHE": 64,
+    "CRE": 84,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "improv_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "improv_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "improv_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "improv_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "让我们造出他们无法忘却的景象。",
+    "imprintAsk": "再来一个转折，我会把它编进去。",
+    "flightReact": [
+      "天色近了，颜色更多。",
+      "全光谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停，继续吗？",
+      "arena": "带个字面派来，真美味。"
+    },
+    "homecoming": {
+      "away": "你中途跑了。真没礼貌。",
+      "hot": "命中每一色带，别让光停。",
+      "cold": "冷场了。换更野的墨。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑。寓意自己写好了。",
+      "loss": "{opp}只用一色，我却拆得太多。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜。新章节。"
+  },
+  "banter": {
+    "improv_glyph": [
+      "好主题，{opp}。现在是我的了。",
+      "我重混了{topic}。你是样本。",
+      "偷得干净，剪得更利。"
+    ],
+    "improv_mosaic": [
+      "桥段来了。抓稳点什么。",
+      "故意走偏，{opp}。",
+      "反转前提。看他们倒。"
+    ],
+    "improv_dream": [
+      "墨还没干，别碰。",
+      "奇想即策略，信吧。",
+      "映照这个，{opp}，真的。"
+    ],
+    "improv_wake": [
+      "最后一页。你是脚注。",
+      "艺术赢了。以后再争。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把战斗变成他们自己的隐喻。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 16,
+    "resilience": 89,
+    "flair": -17,
+    "creativity": 5,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

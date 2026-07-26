@@ -1,0 +1,107 @@
+{
+  "key": "QUIET",
+  "name": "QUIET",
+  "type": "COMPOSURE",
+  "persona": "una carga de profundidad que permanece inmóvil en la superficie mientras el trabajo real sucede debajo",
+  "lineage": "eco de Still: marea más lenta",
+  "stats": {
+    "LOG": 61,
+    "CMP": 86,
+    "RHE": 55,
+    "CRE": 57,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "quiet_plumb",
+      "name": "Sonda",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "quiet_measure",
+      "name": "Medida",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "quiet_true",
+      "name": "Línea Certa",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "quiet_stone",
+      "name": "Piedra Fija",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Firme. No empezamos con estruendo.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivelado. Bien."
+    ],
+    "greeting": {
+      "train": "Menos ruido. Más firmeza.",
+      "return": "…volviste. Te guardé un silencio.",
+      "arena": "Empujarán fuerte. Nosotros no."
+    },
+    "homecoming": {
+      "away": "La quietud se mantuvo. Tú no.",
+      "hot": "Victorias sin ruido. Así se hace.",
+      "cold": "Nos inclinamos. Añade lastre."
+    },
+    "afterFight": {
+      "win": "{opp} gastó calor. Nosotros gastamos menos.",
+      "loss": "{opp} habló primero y último. La próxima espero más."
+    },
+    "imprintAck": "Sostenido.",
+    "rankedFinale": "Ascenso silencioso. Ascenso real."
+  },
+  "banter": {
+    "quiet_plumb": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo malgastarás.",
+      "Lo silencioso funciona. Mira."
+    ],
+    "quiet_measure": [
+      "Respira, {opp}, con honestidad. La pausa es mía.",
+      "Curo más lento que tú te inclinas, con honestidad.",
+      "Aguanta, con honestidad. La línea aguanta."
+    ],
+    "quiet_true": [
+      "Devuelto con interés, {opp}.",
+      "Tú atacaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "quiet_stone": [
+      "Sigo en pie. Sigo callado.",
+      "Poca vida. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Absorbe calor. Devuelve un corte.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": -11,
+    "resilience": -9,
+    "flair": 82,
+    "creativity": -2,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

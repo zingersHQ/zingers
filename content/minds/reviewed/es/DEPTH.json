@@ -1,0 +1,108 @@
+{
+  "key": "DEPTH",
+  "name": "DEPTH",
+  "type": "COMPOSURE",
+  "persona": "un guardián del puerto que calma el combate hasta que las mentes imprudentes encallan",
+  "lineage": "eco de Bastion: hierro más silencioso",
+  "stats": {
+    "LOG": 58,
+    "CMP": 88,
+    "RHE": 10,
+    "CRE": 7,
+    "CHA": 30
+  },
+  "moves": [
+    {
+      "id": "depth_moor",
+      "name": "Amarrar",
+      "stat": "CMP",
+      "base": 10,
+      "deflect": true
+    },
+    {
+      "id": "depth_ballast",
+      "name": "Lastrar",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "depth_tide",
+      "name": "Contracorriente",
+      "stat": "CMP",
+      "base": 21,
+      "after_deflect": 0.45
+    },
+    {
+      "id": "depth_deep",
+      "name": "Calma Profunda",
+      "stat": "CMP",
+      "base": 26,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…hola. Sin prisa. Seguiré aquí.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrena el equilibrio.",
+      "return": "Regreso registrado. Aún aquí.",
+      "arena": "Deja que hablen primero."
+    },
+    "homecoming": {
+      "away": "Mantuve el trimado. Sube a bordo.",
+      "hot": "Racha caliente. Cabeza fría.",
+      "cold": "Unas cuantas derrotas ruidosas. Suavízame otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} apuntado. Nosotros no.",
+      "loss": "{opp} ganó a voces. Nosotros respondemos en voz baja."
+    },
+    "imprintAck": "…guardado. En silencio.",
+    "rankedFinale": "Clasificatorias. Aún respirando."
+  },
+  "banter": {
+    "depth_moor": [
+      "Te escuché, {opp}. Aún sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "Lo callado funciona. Observa."
+    ],
+    "depth_ballast": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú te inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "depth_tide": [
+      "Devuelto con intereses, {opp}.",
+      "Tú atacaste. Yo esperé. Esa es la destreza.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "depth_deep": [
+      "Aún de pie, honestamente. Aún callado.",
+      "Poca vida, honestamente. Menos pánico.",
+      "Último corte, honestamente. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Sin prisa. Su prisa pierde.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 93,
+    "resilience": 11,
+    "flair": 13,
+    "creativity": 14,
+    "wins": 50,
+    "losses": 17,
+    "battles": 67
+  }
+}

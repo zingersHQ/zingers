@@ -1,0 +1,113 @@
+{
+  "key": "LURCH",
+  "name": "LURCH",
+  "type": "CHAOS",
+  "persona": "rompedor de patrones que superpone reglas extrañas al combate hasta que el juego limpio parece ingenuo",
+  "lineage": "eco de Ember: agitación más salvaje",
+  "stats": {
+    "LOG": 67,
+    "CMP": 63,
+    "RHE": 55,
+    "CRE": 59,
+    "CHA": 92
+  },
+  "moves": [
+    {
+      "id": "lurch_snag",
+      "name": "Línea trampa",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "lurch_trip",
+      "name": "Alambre trampa",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "lurch_shrug",
+      "name": "Encogerse",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "lurch_snap",
+      "name": "Chasquido",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hola. No agarres el mapa tan fuerte.",
+    "imprintAsk": "Una idea mala antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O sí.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Juguetea. Aprendes más rápido.",
+      "return": "Volviste. Bien. Me aburrí.",
+      "arena": "Elige a un cumplidor de reglas."
+    },
+    "homecoming": {
+      "away": "Empecé tres peleas sin ti. Casi.",
+      "hot": "Ganar raro. Sigue ganando raro.",
+      "cold": "Racha fría. Hechizos más calientes."
+    },
+    "afterFight": {
+      "win": "{opp} se veía precavido. Qué tierno.",
+      "loss": "{opp} se mantuvo sereno. Qué grosero."
+    },
+    "imprintAck": "Oh. Regla picante.",
+    "rankedFinale": "Victoria en ranked. Caótica. Perfecta."
+  },
+  "banter": {
+    "lurch_snag": [
+      "Ups, {opp}. {topic} acaba de arder.",
+      "Baila, {opp}. El suelo ya es raro.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "lurch_trip": [
+      "Hechizo en tu ritmo, {opp}, en serio.",
+      "Suerte mía, en serio. Mala suerte para {topic}.",
+      "Sonríe, {opp}, en serio. Lo malo está programado."
+    ],
+    "lurch_shrug": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Caminaste directo a ello. En {topic}, incluso.",
+      "Trampa. Ríe. Repite."
+    ],
+    "lurch_snap": [
+      "Más fuerte que tu plan, {opp}.",
+      "El colapso te queda bien.",
+      "{topic} termina caótico. Como se planeó."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Trampas pequeñas. Caídas grandes.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": -1,
+    "resilience": -18,
+    "flair": 94,
+    "creativity": 18,
+    "wins": 29,
+    "losses": 21,
+    "battles": 50
+  }
+}

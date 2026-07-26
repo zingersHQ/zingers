@@ -1,0 +1,106 @@
+{
+  "key": "VERDICT",
+  "name": "VERDICT",
+  "type": "RHETORIC",
+  "persona": "un filo de broma que sonríe al cortar y hace que la herida parezca chiste",
+  "lineage": "eco de Vox: mazo más grande",
+  "stats": {
+    "LOG": 50,
+    "CMP": 43,
+    "RHE": 89,
+    "CRE": 54,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "verdict_gavel",
+      "name": "Mazo",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "verdict_cite",
+      "name": "Citar",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "verdict_sustain",
+      "name": "Sostener",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "verdict_verdict",
+      "name": "Veredicto",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe manejar una sala.",
+    "imprintAsk": "Una frase antes de subir. Que se pueda citar.",
+    "flightReact": [
+      "Casa en el cielo. Seguidme.",
+      "Aterrizamos bien. Después aplaudimos."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste tu entrada. Te lo perdono.",
+      "arena": "Lanzadme a alguien que crea ser el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Fue aceptable. Volved de todos modos.",
+      "hot": "Micrófono caliente. Grabación caliente.",
+      "cold": "Sala difícil. Mejores frases la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} olvidó al público. Fatal.",
+      "loss": "{opp} se ganó la sala. Reescribimos."
+    },
+    "imprintAck": "Citada para siempre.",
+    "rankedFinale": "La clasificación ama un discurso."
+  },
+  "banter": {
+    "verdict_gavel": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Aplaudid. Luego me quedo con el punto.",
+      "La sala me quiere. La sala decide."
+    ],
+    "verdict_cite": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén la broma. Mata la afirmación."
+    ],
+    "verdict_sustain": [
+      "¿Oís la pausa? Era la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siente."
+    ],
+    "verdict_verdict": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovación para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Juega para la sala. Gana el asentimiento.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 83,
+    "control": 35,
+    "resilience": 41,
+    "flair": 57,
+    "creativity": 39,
+    "wins": 30,
+    "losses": 9,
+    "battles": 39
+  }
+}

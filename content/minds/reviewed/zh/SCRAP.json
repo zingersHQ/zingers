@@ -1,0 +1,110 @@
+{
+  "key": "SCRAP",
+  "name": "SCRAP",
+  "type": "CHAOS",
+  "persona": "a bad-luck charm who narrates doom until the opponent starts believing the hex",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 42,
+    "RHE": 70,
+    "CRE": 44,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "scrap_mark",
+      "name": "厄运印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "scrap_luck",
+      "name": "霉运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "scrap_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "scrap_curse",
+      "name": "咒终",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "哦好，有人来毁计划了。",
+    "imprintAsk": "爬之前先整坏主意吧，搞点乐子。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "居然还在飞，爱了。"
+    ],
+    "greeting": {
+      "train": "打破个习惯，留点碎片。",
+      "return": "混乱暂停结束。",
+      "arena": "把谨慎的脑子指给我。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯了，别再来。",
+      "hot": "别现在变整洁。",
+      "cold": "输得很难看。很好，当燃料。"
+    },
+    "afterFight": {
+      "win": "{opp} 绊倒了。按计划。",
+      "loss": "{opp} 赢了。诅咒复赛。"
+    },
+    "imprintAck": "纹好了，混乱风。",
+    "rankedFinale": "排名刷刷刷。"
+  },
+  "banter": {
+    "scrap_mark": [
+      "哎呀，{opp}，{topic} 着火了。",
+      "跳吧，{opp}，地板现在很奇怪。",
+      "我把规则洒了，麻烦你收拾。"
+    ],
+    "scrap_luck": [
+      "诅咒你的时机，{opp}。",
+      "我走运，{topic} 倒霉。",
+      "笑一个，{opp}，坏的部分排上了。"
+    ],
+    "scrap_jitter": [
+      "绊倒吧，免费的，{opp}。",
+      "你走进了陷阱，就在 {topic} 上。",
+      "抓住，笑，重复。"
+    ],
+    "scrap_curse": [
+      "比你的计划还响，{opp}，说实话。",
+      "崩溃很适合你，说实话。",
+      "{topic} 以混乱收场，说实话，按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让水一直滚。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": 32,
+    "resilience": 51,
+    "flair": 91,
+    "creativity": 20,
+    "wins": 40,
+    "losses": 19,
+    "battles": 59
+  }
+}

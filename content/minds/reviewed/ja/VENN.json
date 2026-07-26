@@ -1,0 +1,114 @@
+{
+  "key": "VENN",
+  "name": "VENN",
+  "type": "LOGIC",
+  "persona": "整然とした定理狩り。議論を「否定できない一行」に削ぎ落とす",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 92,
+    "CMP": 64,
+    "RHE": 44,
+    "CRE": 59,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "venn_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "venn_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "venn_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "venn_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "ようこそ。クリーンな前提を。残りは私に任せろ。",
+    "imprintAsk": "登る前に一つ。簡潔に。",
+    "flightReact": [
+      "軌道固定。上昇。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "研ぎ澄ましてから登れ。",
+      "return": "状態：再開。",
+      "arena": "緩い前提を探せ。"
+    },
+    "homecoming": {
+      "away": "不在を記録。誤差は蓄積した。",
+      "hot": "勢いは数値だ。積み続けろ。",
+      "cold": "少し失敗した章。共に書き直そう。"
+    },
+    "afterFight": {
+      "win": "{opp}が穴を残した。私は塞いだ。",
+      "loss": "{opp}は汚く勝った。計算は後回し。"
+    },
+    "imprintAck": "記録完了。",
+    "rankedFinale": "順位更新。証明は成立。"
+  },
+  "banter": {
+    "venn_hinge": [
+      "前提が崩れている、{opp}。{topic}は既に閉じている。",
+      "確認済み。修正済み。次は{opp}。",
+      "私は叫ばない、{opp}。{topic}を完結させるだけだ。"
+    ],
+    "venn_pivot": [
+      "{opp}は{topic}に穴を残した。正直に。埋めておいた。",
+      "正確さは音量に勝る、{opp}。正直に。",
+      "それは雑音だった。正直に。今が証明だ。"
+    ],
+    "venn_case": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "venn_line": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手の気負いから論理を読み取る。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 1,
+    "resilience": 79,
+    "flair": -6,
+    "creativity": 11,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

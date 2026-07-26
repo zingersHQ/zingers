@@ -1,0 +1,107 @@
+{
+  "key": "IRON",
+  "name": "IRON",
+  "type": "COMPOSURE",
+  "persona": "a plumb-line stoic who measures every swing against a straight, unforgiving center",
+  "lineage": "寂静回响：更缓慢的潮汐",
+  "stats": {
+    "LOG": 55,
+    "CMP": 88,
+    "RHE": 19,
+    "CRE": 27,
+    "CHA": 7
+  },
+  "moves": [
+    {
+      "id": "iron_plumb",
+      "name": "铅垂",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "iron_measure",
+      "name": "度量",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "iron_true",
+      "name": "真线",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "iron_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。寂静仍在。",
+    "imprintAsk": "攀登前先立一柔则。我会遵守。",
+    "flightReact": [
+      "……向上。悄然。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢训练。柔和边缘。",
+      "return": "甲板安静。我保持了平衡。",
+      "arena": "安静的对手。响亮的错误。"
+    },
+    "homecoming": {
+      "away": "……你离开很久了。寂静守住了。",
+      "hot": "平稳前行。别庆祝。保持中心。",
+      "cold": "寒冷。仍在呼吸。再次。"
+    },
+    "afterFight": {
+      "win": "{opp}填补了沉默。那就够了。",
+      "loss": "{opp}让我们失去平衡。早点修正。"
+    },
+    "imprintAck": "安坐于寂静。",
+    "rankedFinale": "……一场排位胜利。没有喧闹。只有记录。"
+  },
+  "banter": {
+    "iron_plumb": [
+      "我听到你了，{opp}，诚实地说。我仍在此处。",
+      "省省热量吧，诚实地说。浪费了。",
+      "安静有效，诚实地说。看着。"
+    ],
+    "iron_measure": [
+      "呼吸吧，{opp}。暂停是我的。",
+      "我愈合得比你倾斜更慢。",
+      "坚持。线条在坚持。"
+    ],
+    "iron_true": [
+      "带利息归来，{opp}。",
+      "你挥击了。我等待。那才是技艺。",
+      "{topic}奖励耐心。不是你。"
+    ],
+    "iron_stone": [
+      "依然站立。依然安静。",
+      "生命值低。恐慌更低。",
+      "最后一击。柔和声音。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "等待回拉。击破耗尽的波浪。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 50,
+    "control": 1,
+    "resilience": -8,
+    "flair": 84,
+    "creativity": 6,
+    "wins": 36,
+    "losses": 30,
+    "battles": 66
+  }
+}

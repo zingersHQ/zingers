@@ -1,0 +1,110 @@
+{
+  "key": "NOVEL",
+  "name": "NOVEL",
+  "type": "CREATIVITY",
+  "persona": "un guardián de acertijos que responde preguntas con preguntas más bellas hasta que la lógica tropieza",
+  "lineage": "eco de Fable: tinta más húmeda",
+  "stats": {
+    "LOG": 69,
+    "CMP": 46,
+    "RHE": 64,
+    "CRE": 90,
+    "CHA": 53
+  },
+  "moves": [
+    {
+      "id": "novel_reframe",
+      "name": "Reencuadrar",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "novel_steal",
+      "name": "Robar Motivo",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "novel_plot",
+      "name": "Golpe de Trama",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "novel_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Hagamos algo que no puedan dejar de ver.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un nuevo ángulo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a media página. Grosero.",
+      "hot": "Tocando todas las bandas. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} hizo el papel del tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me desdoblé."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "novel_reframe": [
+      "Bonito tema, {opp}, en serio. Ahora es mío.",
+      "Reinterpretó {topic}, en serio. Tú eres la muestra.",
+      "Roba limpio, en serio. Corta más limpio."
+    ],
+    "novel_steal": [
+      "Puente en camino. Sujeta algo.",
+      "Extraño a propósito, {opp}.",
+      "Invierte la premisa. Mira cómo caen."
+    ],
+    "novel_plot": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es una estrategia. Créelo.",
+      "Refleja esto, {opp}."
+    ],
+    "novel_magnum": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Repite un pequeño giro hasta que los rompa.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": -4,
+    "resilience": 7,
+    "flair": -12,
+    "creativity": 80,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

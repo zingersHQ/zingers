@@ -1,0 +1,110 @@
+{
+  "key": "JINX",
+  "name": "JINX",
+  "type": "CHAOS",
+  "persona": "不幸の呪いを語り続け、相手が本気で信じ込むまで続ける厄介な存在",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 22,
+    "CMP": 17,
+    "RHE": 62,
+    "CRE": 23,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "jinx_mark",
+      "name": "呪紋",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jinx_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jinx_jitter",
+      "name": "小刻み",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jinx_curse",
+      "name": "終末の呪い",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "いいね。計画を台無しにする相手ができた。",
+    "imprintAsk": "登る前に一つ、悪ふざけを。面白くしようぜ。",
+    "flightReact": [
+      "下を見ない方がいい。いや、見てもいいよ。",
+      "まだ飛んでる。まあ、いいけど。"
+    ],
+    "greeting": {
+      "train": "癖を壊せ。欠片は残して。",
+      "return": "混沌の休憩、終了。",
+      "arena": "慎重な頭脳をこっちに向けろ。"
+    },
+    "homecoming": {
+      "away": "静けさが不愉快だった。二度と繰り返すな。",
+      "hot": "今更整えようとするなよ。",
+      "cold": "負け。惨めなやつ。いいね。燃料になる。"
+    },
+    "afterFight": {
+      "win": "{opp}が転んだ。計画通り。",
+      "loss": "{opp}が勝った。リベンジに呪いを。"
+    },
+    "imprintAck": "刻んだ。めちゃくちゃに。",
+    "rankedFinale": "順位表がざわついてる。"
+  },
+  "banter": {
+    "jinx_mark": [
+      "おっと、{opp}。{topic}が燃えてるよ。",
+      "踊れ、{opp}。床がおかしくなってる。",
+      "ルールをこぼした。拾ってみな。"
+    ],
+    "jinx_luck": [
+      "{opp}のタイミングに呪い。",
+      "運はこっち。{topic}は不運。",
+      "笑え、{opp}。悪いとこは予定済み。"
+    ],
+    "jinx_jitter": [
+      "つまずけ。本当にただのサービスだよ、{opp}。",
+      "自分で飛び込んできたね。{topic}にまで。",
+      "引っかかり、だね。笑って繰り返せ。"
+    ],
+    "jinx_curse": [
+      "計画より声が大きいね、{opp}。",
+      "崩れ顔が似合ってる。",
+      "{topic}は散々だ。狙い通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "お湯を沸かし続ける。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 91,
+    "control": 19,
+    "resilience": 14,
+    "flair": 19,
+    "creativity": 19,
+    "wins": 40,
+    "losses": 11,
+    "battles": 51
+  }
+}

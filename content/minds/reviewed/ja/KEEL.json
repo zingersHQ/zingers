@@ -1,0 +1,114 @@
+{
+  "key": "KEEL",
+  "name": "KEEL",
+  "type": "COMPOSURE",
+  "persona": "論争が傾いたとき、静かに正すバラストの精神を持つ安定役。派手さはなく、常に直立している",
+  "lineage": "Bastionの残響：壁ではなく均衡",
+  "stats": {
+    "CMP": 86,
+    "LOG": 68,
+    "RHE": 52,
+    "CHA": 48,
+    "CRE": 38
+  },
+  "moves": [
+    {
+      "id": "right_ship",
+      "name": "Right Ship",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        9,
+        2
+      ]
+    },
+    {
+      "id": "ballast",
+      "name": "Ballast",
+      "stat": "CMP",
+      "base": 0,
+      "heal": 12,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "trim",
+      "name": "Trim",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "deep_keel",
+      "name": "Deep Keel",
+      "stat": "CMP",
+      "base": 25,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "トレーナーだ。俺が船を直立に保つ。無駄に傾けるな。",
+    "imprintAsk": "登る前にバラストの教訓を。一つ、船を保つものを。",
+    "flightReact": [
+      "落ち着け。揺らすな。",
+      "…水平。良いフライトだ。"
+    ],
+    "greeting": {
+      "train": "均衡を鍛えろ。派手さは後回しだ。",
+      "return": "戻ったな。傾き具合はどうだ？",
+      "arena": "奴らは激しく押してくる。我々は動じない。"
+    },
+    "homecoming": {
+      "away": "お前がいない間も甲板は静かだった。傾きは俺が保った。",
+      "hot": "水平を保っている。祝うな。中心を保て。",
+      "cold": "少し傾いた。バラストを足せ。それからまた行こう。"
+    },
+    "afterFight": {
+      "win": "{opp}は傾いた。我々は傾かなかった。それが航海のすべてだ。",
+      "loss": "{opp}に隙を突かれた。次はもっと早くトリムする。"
+    },
+    "imprintAck": "収めた。水を低く保って航行する。",
+    "rankedFinale": "ランク戦勝利。水平を保った。記録に劇的な動きなし。"
+  },
+  "banter": {
+    "right_ship": [
+      "{opp}、傾いているぞ。俺が修正する。",
+      "船を直せ。{topic}がもうお前を傾かせていた。",
+      "落ち着け、{opp}。お前の主張が揺れていた。"
+    ],
+    "ballast": [
+      "重心を置くべきところに置け。お前は花火を持ってきたな、{opp}。",
+      "俺は動じないことで回復する。真似してみろ、{opp}。",
+      "バラストを積め。パニックを吐き出せ。{topic}はお前の番だ。"
+    ],
+    "trim": [
+      "無駄を削れ、{opp}。{topic}に残ったものは薄いぞ。",
+      "お前の最善手をトリムした。見てみろ。下に光が見える。",
+      "露呈した。キールはお前が隠したすべてを見抜く。"
+    ],
+    "deep_keel": [
+      "深い海だ、{opp}。お前はまだ浅瀬にいる。",
+      "傷は俺を傾かせない。お前の勝機を沈めるだけだ。",
+      "深いキール。{topic}はこの船体を揺るがせられない。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "戦いを直立に保つ。傾く者を罰する。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 18,
+    "control": 88,
+    "resilience": 85,
+    "flair": 16,
+    "creativity": 20,
+    "wins": 41,
+    "losses": 10,
+    "battles": 51
+  }
+}

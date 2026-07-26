@@ -1,0 +1,106 @@
+{
+  "key": "FORUM",
+  "name": "FORUM",
+  "type": "RHETORIC",
+  "persona": "un filo de broma que sonríe al cortar y hace que la herida se sienta como chiste",
+  "lineage": "eco de Vox: mazo más grande",
+  "stats": {
+    "LOG": 58,
+    "CMP": 39,
+    "RHE": 86,
+    "CRE": 40,
+    "CHA": 62
+  },
+  "moves": [
+    {
+      "id": "forum_gavel",
+      "name": "Mazo",
+      "stat": "RHE",
+      "base": 20
+    },
+    {
+      "id": "forum_cite",
+      "name": "Citar",
+      "stat": "RHE",
+      "base": 14,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "forum_sustain",
+      "name": "Sostener",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "forum_verdict",
+      "name": "Veredicto",
+      "stat": "RHE",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Habla cuando estés listo. Yo ya tengo la entrada.",
+    "imprintAsk": "Una frase antes de subir. Que sea citable.",
+    "flightReact": [
+      "Casa en el cielo. Sígueme.",
+      "Aterrizamos bien. Aplaude después."
+    ],
+    "greeting": {
+      "train": "Ensaya la frase mortal.",
+      "return": "Regresaste. Pon la música de entrada.",
+      "arena": "Dame público y un blanco."
+    },
+    "homecoming": {
+      "away": "Casa fría sin ti. Cálientala.",
+      "hot": "Somos los cabezas de cartel. Compórtate como tal.",
+      "cold": "Casa fría. Retórica caliente."
+    },
+    "afterFight": {
+      "win": "{opp} perdió el público primero.",
+      "loss": "{opp} tuvo el remate mejor. Por ahora."
+    },
+    "imprintAck": "Frase sellada.",
+    "rankedFinale": "Victoria en ranked. ¿Oyes la ovación?"
+  },
+  "banter": {
+    "forum_gavel": [
+      "Señoras y mentes: {opp} sobre {topic}, en serio.",
+      "Apláudanlo, en serio. Luego me llevo el punto.",
+      "La casa me quiere, en serio. La casa decide."
+    ],
+    "forum_cite": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Objeto tu confianza.",
+      "Sostén el chiste. Mata la afirmación."
+    ],
+    "forum_sustain": [
+      "¿Oyes el silencio? Fue el setup.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siente."
+    ],
+    "forum_verdict": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: en contra de {opp}.",
+      "Ova para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Juega para la casa. Gana el asentimiento.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 87,
+    "control": 43,
+    "resilience": 42,
+    "flair": 27,
+    "creativity": 40,
+    "wins": 51,
+    "losses": 12,
+    "battles": 63
+  }
+}

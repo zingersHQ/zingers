@@ -1,9 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { BRAND } from "@/lib/brand";
 import { isGamePath, isOrgHost, isPublicAsset, ORG_DOC_ROOTS } from "@/lib/org/hosts";
+import { LOCALE_COOKIE, isLocale } from "@/lib/i18n/locales";
 
 const ORG_ORIGIN = BRAND.siteTech.replace(/\/$/, "");
 const GAME_ORIGIN = BRAND.site.replace(/\/$/, "");
+const ORG_LOCALES = new Set(["es", "zh", "ru", "ja"]);
+
+function withLocaleCookie(res: NextResponse, locale: string) {
+  if (isLocale(locale)) {
+    res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  }
+  return res;
+}
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -15,6 +24,15 @@ export function middleware(request: NextRequest) {
   if (isOrgHost(host)) {
     if (pathname.startsWith("/api/")) {
       return new NextResponse("Not found", { status: 404 });
+    }
+
+    // Locale-prefixed docs: /es/bible/… → cookie + rewrite to /org/bible/…
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments[0] && ORG_LOCALES.has(segments[0])) {
+      const locale = segments[0];
+      const rest = segments.slice(1).join("/");
+      const destPath = rest ? `/org/${rest}` : "/org";
+      return withLocaleCookie(NextResponse.rewrite(new URL(`${destPath}${search}`, request.url)), locale);
     }
 
     // Legacy /org/* URLs → clean canonical paths

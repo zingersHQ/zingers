@@ -1,0 +1,113 @@
+{
+  "key": "LURCH",
+  "name": "LURCH",
+  "type": "CHAOS",
+  "persona": "奇妙なルールを重ねて、フェアプレイを幼稚に見せるパターン・ブレイカー",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 67,
+    "CMP": 63,
+    "RHE": 55,
+    "CRE": 59,
+    "CHA": 92
+  },
+  "moves": [
+    {
+      "id": "lurch_snag",
+      "name": "スナッグ・ライン",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "lurch_trip",
+      "name": "トリップワイヤー",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "lurch_shrug",
+      "name": "シュラッグ",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "lurch_snap",
+      "name": "スナップ",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "やあ。地図を握りすぎないで。",
+    "imprintAsk": "登る前にまず変なアイデアを。面白くしてよ。",
+    "flightReact": [
+      "下を見ないで。見てもいいけど。",
+      "まだ飛んでる。どうにかね。いいね。"
+    ],
+    "greeting": {
+      "train": "遊んで。早く覚えるよ。",
+      "return": "戻ったね。よかった。退屈してた。",
+      "arena": "ルール守り屋を選んで。"
+    },
+    "homecoming": {
+      "away": "お前抜きで三回戦を始めた。ほぼ。",
+      "hot": "変な勝ち方。変な勝ち続けろ。",
+      "cold": "連敗中。もっと熱い呪いを。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重だった。可愛い。",
+      "loss": "{opp}、冷静だった。失礼。"
+    },
+    "imprintAck": "おお。刺激的なルール。",
+    "rankedFinale": "ランク戦勝利。ぐちゃぐちゃ。最高。"
+  },
+  "banter": {
+    "lurch_snag": [
+      "おっと、{opp}。{topic}が燃えちゃった。",
+      "踊れ、{opp}。床が変だよ。",
+      "ルールをこぼした。拾って。"
+    ],
+    "lurch_trip": [
+      "タイミングに呪い、{opp}。本気で。",
+      "ラッキーだね、正直。{topic}はアンラッキー。",
+      "笑え、{opp}。悪いのは予定済み。"
+    ],
+    "lurch_shrug": [
+      "転んだ。タダだよ、{opp}。",
+      "{topic}にそのまま突っ込んだね。",
+      "スナッグ。笑って。繰り返し。"
+    ],
+    "lurch_snap": [
+      "計画より大きい音だ、{opp}。",
+      "崩壊、似合ってるよ。",
+      "{topic}はぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": -1,
+    "resilience": -18,
+    "flair": 94,
+    "creativity": 18,
+    "wins": 29,
+    "losses": 21,
+    "battles": 50
+  },
+  "firstDuel": {
+    "originAxis": "flair",
+    "hook": "Tiny traps. Big falls."
+  }
+}

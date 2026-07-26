@@ -1,0 +1,107 @@
+{
+  "key": "PLUMB",
+  "name": "PLUMB",
+  "type": "COMPOSURE",
+  "persona": "一条铅垂线的禁欲者，以笔直无情的中心衡量每一次挥击",
+  "lineage": "echo of Still: slower tide",
+  "stats": {
+    "LOG": 71,
+    "CMP": 88,
+    "RHE": 18,
+    "CRE": 34,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "plumb_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "plumb_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "plumb_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "plumb_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你找到我了。寂静仍在。",
+    "imprintAsk": "攀登前，先定一条柔软的规则。我会遵守。",
+    "flightReact": [
+      "……向上。安静地。",
+      "平稳。很好。"
+    ],
+    "greeting": {
+      "train": "缓慢训练。柔和边缘。",
+      "return": "甲板很安静。我守住了平衡。",
+      "arena": "安静的对手。大声的错误。"
+    },
+    "homecoming": {
+      "away": "……你走了很久。寂静守住了。",
+      "hot": "骑行平稳。不要庆祝。保持中心。",
+      "cold": "寒冷。仍在呼吸。再来。"
+    },
+    "afterFight": {
+      "win": "{opp}填满了寂静。那就够了。",
+      "loss": "{opp}让我们失去了平衡。早点修正。"
+    },
+    "imprintAck": "坐于寂静之中。",
+    "rankedFinale": "……一场排位胜。没有喧嚣。只有记录。"
+  },
+  "banter": {
+    "plumb_plumb": [
+      "我听见了你，{opp}。我还在这里。",
+      "省点热量。别用错地方。",
+      "安静有效。看着。"
+    ],
+    "plumb_measure": [
+      "呼吸，{opp}。停顿是我的。",
+      "我愈合得比你倾斜得慢。",
+      "稳住。线在。"
+    ],
+    "plumb_true": [
+      "带利息归还，{opp}。",
+      "你挥击了。我等待。那就是技巧。",
+      "{topic}奖励耐心。不是你。"
+    ],
+    "plumb_stone": [
+      "仍站着，诚实。仍安静。",
+      "生命值低，诚实。恐慌更低。",
+      "最后一击，诚实。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "等待回拉。击碎浪潮。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": -10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

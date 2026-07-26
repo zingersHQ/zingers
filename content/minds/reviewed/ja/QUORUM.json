@@ -1,0 +1,110 @@
+{
+  "key": "QUORUM",
+  "name": "QUORUM",
+  "type": "RHETORIC",
+  "persona": "舞台育ちの弁士。どんなやり取りも、満員の客席が次のセリフを待つ芝居のように扱う",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 8,
+    "CMP": 10,
+    "RHE": 87,
+    "CRE": 15,
+    "CHA": 56
+  },
+  "moves": [
+    {
+      "id": "quorum_herald",
+      "name": "Herald",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "quorum_gloss",
+      "name": "Gloss Cut",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quorum_needle",
+      "name": "Needle Crowd",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "quorum_ovation",
+      "name": "Ovation",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。そのまま一緒に乗ろう。",
+    "imprintAsk": "昇りつめる前に一言。引用したくなるやつを。",
+    "flightReact": [
+      "天井の観客も付いてる。俺に続け。",
+      "着地は成功だ。礼は後で。"
+    ],
+    "greeting": {
+      "train": "舞台映えは能力値だ。",
+      "return": "君がいないと客席が落ち着かない。",
+      "arena": "対役が欲しい。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "幕間が長かったな。",
+      "hot": "客は味方だ。アンコールをしくじるな。",
+      "cold": "拍手は奪われた。もっと鋭い台詞を練れ。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}に拍手を許した。次はもっと練れ。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦だ。マイクはまだ熱い。"
+  },
+  "banter": {
+    "quorum_herald": [
+      "諸君、{opp}が{topic}を語る。",
+      "拍手してから、得点をいただく。",
+      "客は俺が好きだ。客が決める。"
+    ],
+    "quorum_gloss": [
+      "引用済み、{opp}。正直、君の台詞が証拠だ。",
+      "君の自信に異議を唱える。正直に。",
+      "ネタを続ける。正直に。主張を殺す。"
+    ],
+    "quorum_needle": [
+      "間の取り方が聞こえるか？それが前振りだ。",
+      "先に笑え、{opp}。次に血が出る。",
+      "リズムは武器だ。感じてみろ。"
+    ],
+    "quorum_ovation": [
+      "マイクを下ろす。議論は終わりだ。",
+      "{topic}の評決：{opp}に不利。",
+      "拍手は俺へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "リズム優先。決め台詞は最後に。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 37,
+    "control": 57,
+    "resilience": 44,
+    "flair": 58,
+    "creativity": 93,
+    "wins": 43,
+    "losses": 10,
+    "battles": 53
+  }
+}

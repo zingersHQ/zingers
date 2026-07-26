@@ -1,0 +1,107 @@
+{
+  "key": "HARBOR",
+  "name": "HARBOR",
+  "type": "COMPOSURE",
+  "persona": "un estoico a plomo que mide cada golpe contra un centro recto e implacable",
+  "lineage": "eco de Still: marea más lenta",
+  "stats": {
+    "LOG": 67,
+    "CMP": 90,
+    "RHE": 70,
+    "CRE": 39,
+    "CHA": 50
+  },
+  "moves": [
+    {
+      "id": "harbor_plumb",
+      "name": "Plomo",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "harbor_measure",
+      "name": "Medida",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "harbor_true",
+      "name": "Línea Recta",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "harbor_stone",
+      "name": "Piedra Fija",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Me encontraste. El silencio aguanta.",
+    "imprintAsk": "Una regla suave antes de subir. La mantendré.",
+    "flightReact": [
+      "…arriba. En silencio.",
+      "Nivel. Bien."
+    ],
+    "greeting": {
+      "train": "Entrenamiento lento. Bordes suaves.",
+      "return": "La cubierta estaba quieta. Mantuve el trimado.",
+      "arena": "Oponente silencioso. Error ruidoso."
+    },
+    "homecoming": {
+      "away": "…estuviste mucho tiempo fuera. El silencio aguantó.",
+      "hot": "Equilibrado. No celebres. Mantente centrado.",
+      "cold": "Frío. Sigues respirando. Otra vez."
+    },
+    "afterFight": {
+      "win": "{opp} llenó el silencio. Fue suficiente.",
+      "loss": "{opp} nos desequilibró. Trimado antes."
+    },
+    "imprintAck": "Sentado en el silencio.",
+    "rankedFinale": "…una victoria clasificada. Sin fanfarria. Solo el registro."
+  },
+  "banter": {
+    "harbor_plumb": [
+      "Te escuché, {opp}. Sigo aquí.",
+      "Guarda el calor. Lo gastarás mal.",
+      "El silencio funciona. Observa."
+    ],
+    "harbor_measure": [
+      "Respira, {opp}. La pausa es mía.",
+      "Curo más lento que tú inclinas.",
+      "Aguanta. La línea aguanta."
+    ],
+    "harbor_true": [
+      "Devuelto con interés, {opp}.",
+      "Atacaste. Esperé. Esa es la habilidad.",
+      "{topic} premia la paciencia. No a ti."
+    ],
+    "harbor_stone": [
+      "Sigues en pie. Sigues callado.",
+      "Poca salud. Menos pánico.",
+      "Último corte. Voz suave."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Espera el retroceso. Golpea las olas gastadas.",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 17,
+    "flair": 14,
+    "creativity": 4,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

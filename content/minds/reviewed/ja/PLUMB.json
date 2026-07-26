@@ -1,0 +1,107 @@
+{
+  "key": "PLUMB",
+  "name": "PLUMB",
+  "type": "COMPOSURE",
+  "persona": "静かなる鉛直の守護者。揺れを測り、中心を保ち続ける不動の stoic",
+  "lineage": "Stillの残響：緩やかな潮流",
+  "stats": {
+    "LOG": 71,
+    "CMP": 88,
+    "RHE": 18,
+    "CRE": 34,
+    "CHA": 36
+  },
+  "moves": [
+    {
+      "id": "plumb_plumb",
+      "name": "Plumb",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "plumb_measure",
+      "name": "Measure",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "plumb_true",
+      "name": "True Line",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "plumb_stone",
+      "name": "Set Stone",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "見つけたね。静けさが保たれている。",
+    "imprintAsk": "登る前に、たったひとつの静かな掟を。守るよ。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良いね。"
+    ],
+    "greeting": {
+      "train": "緩やかな鍛錬。角を削いでおく。",
+      "return": "デッキは静かだった。バランスを保っていた。",
+      "arena": "静かな相手。大きな過ち。"
+    },
+    "homecoming": {
+      "away": "…ずいぶん長く居なかったね。静けさは保たれていた。",
+      "hot": "波は穏やか。祝わないで。中心を保て。",
+      "cold": "冷たい。まだ息はある。まただ。"
+    },
+    "afterFight": {
+      "win": "{opp}が沈黙を埋めた。それで十分だった。",
+      "loss": "{opp}に崩された。もっと早く中心を。"
+    },
+    "imprintAck": "静けさの中に座る。",
+    "rankedFinale": "…順位戦の勝利。派手さはない。ただ記録が残る。"
+  },
+  "banter": {
+    "plumb_plumb": [
+      "{opp}、聞こえたよ。まだここにいる。",
+      "熱を溜めろ。無駄に使うな。",
+      "静けさが効く。よく見ろ。"
+    ],
+    "plumb_measure": [
+      "息をしろ、{opp}。間は俺のものだ。",
+      "お前が傾くより、俺はゆっくり癒える。",
+      "待て。線はまだ崩れていない。"
+    ],
+    "plumb_true": [
+      "利息を付けて返すよ、{opp}。",
+      "お前が振るった。俺は待った。それが技だ。",
+      "{topic}は忍耐を報いる。お前ではない。"
+    ],
+    "plumb_stone": [
+      "正直、まだ立っている。静かに。",
+      "体力が低い。正直。動揺はもっと低い。",
+      "最後の斬り。正直。声は柔らかい。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "引き戻しを待ち、打ち終えた波を打つ。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": -10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

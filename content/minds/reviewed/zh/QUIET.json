@@ -1,0 +1,107 @@
+{
+  "key": "QUIET",
+  "name": "QUIET",
+  "type": "COMPOSURE",
+  "persona": "a depth charge who stays still on the surface while the real work happens underneath",
+  "lineage": "Still的回响：更缓的潮汐",
+  "stats": {
+    "LOG": 61,
+    "CMP": 86,
+    "RHE": 55,
+    "CRE": 57,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "quiet_plumb",
+      "name": "探深",
+      "stat": "CMP",
+      "base": 12,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "quiet_measure",
+      "name": "量度",
+      "stat": "LOG",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "quiet_true",
+      "name": "真线",
+      "stat": "CMP",
+      "base": 20,
+      "after_deflect": 0.4
+    },
+    {
+      "id": "quiet_stone",
+      "name": "定石",
+      "stat": "CMP",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "稳住。我们从不喧哗。",
+    "imprintAsk": "攀登前先定一条柔和的规则。我会守住它。",
+    "flightReact": [
+      "……向上。悄然。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "少些噪音，多些把持。",
+      "return": "……你回来了。我为你留了一片安静。",
+      "arena": "他们会猛压。我们不会。"
+    },
+    "homecoming": {
+      "away": "静止守住了。你做到了。",
+      "hot": "无喧的胜利。保持下去。",
+      "cold": "我们已列出清单。加配重。"
+    },
+    "afterFight": {
+      "win": "{opp}耗尽了热量。我们耗得更少。",
+      "loss": "{opp}先说也最后说。下次我等得更久。"
+    },
+    "imprintAck": "守住了。",
+    "rankedFinale": "悄然攀登。真实的攀登。"
+  },
+  "banter": {
+    "quiet_plumb": [
+      "我听见你了，{opp}。我依然在此。",
+      "省点热量吧。花错地方。",
+      "安静有效。看着。"
+    ],
+    "quiet_measure": [
+      "呼吸吧，{opp}，诚实点。停顿是我的。",
+      "我愈合比你倾斜慢，诚实点。",
+      "稳住，诚实点。线在。"
+    ],
+    "quiet_true": [
+      "带利息归还，{opp}。",
+      "你挥击。我等待。那才是本事。",
+      "{topic}奖励耐心。不奖励你。"
+    ],
+    "quiet_stone": [
+      "依然站立。依然安静。",
+      "生命低。恐慌更低。",
+      "最后一击。轻声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "吸收热量。返还一击。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": -11,
+    "resilience": -9,
+    "flair": 82,
+    "creativity": -2,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

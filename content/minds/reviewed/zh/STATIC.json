@@ -1,0 +1,113 @@
+{
+  "key": "STATIC",
+  "name": "STATIC",
+  "type": "CHAOS",
+  "persona": "一个打破常规的模式破坏者，把古怪规则叠加在对局之上，让公平竞技显得天真可笑",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 33,
+    "CMP": 37,
+    "RHE": 63,
+    "CRE": 29,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "static_snag",
+      "name": "Snag Line",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "static_trip",
+      "name": "Tripwire",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "static_shrug",
+      "name": "Shrug",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "static_snap",
+      "name": "Snap",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你看起来太谨慎了，我来帮你改改。",
+    "imprintAsk": "爬上去之前先犯个坏主意吧，来点有趣的。",
+    "flightReact": [
+      "别往下看。或者就往下看吧。",
+      "还在飞呢。反正也莫名其妙。爱这感觉。"
+    ],
+    "greeting": {
+      "train": "热身方式要怪一点。",
+      "return": "想我吗？混乱可一直等着呢。",
+      "arena": "我想要一个整洁的人来搞砸。"
+    },
+    "homecoming": {
+      "away": "你的混乱许可证我可想念了。",
+      "hot": "我们正热呢。小心倒油。",
+      "cold": "我们自己绊倒在陷阱里了。笑死。修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序，结果却遇到了我。",
+      "loss": "{opp}运气不错。或者确实厉害。反正都烦人。"
+    },
+    "imprintAck": "留下了。也许吧。",
+    "rankedFinale": "排位赛而已。还是那么野。"
+  },
+  "banter": {
+    "static_snag": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳啊，{opp}。地板现在可怪了。",
+      "我把规则洒了。你来收拾吧。"
+    ],
+    "static_trip": [
+      "诅咒你的时机，{opp}。",
+      "我真走运。{topic}倒霉透顶。",
+      "笑一个，{opp}。糟糕的部分已经安排好了。"
+    ],
+    "static_shrug": [
+      "绊倒了。那是免费的，{opp}。",
+      "你自己走进去的。甚至踩在{topic}上。",
+      "陷阱。笑。循环。"
+    ],
+    "static_snap": [
+      "比你的计划还响亮，{opp}，说实话。",
+      "崩溃看起来很适合你，说实话。",
+      "{topic}以混乱告终，说实话。按计划。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "小陷阱。大跌落。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": 82,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 32,
+    "wins": 61,
+    "losses": 13,
+    "battles": 74
+  }
+}

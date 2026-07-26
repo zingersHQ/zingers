@@ -1,0 +1,106 @@
+{
+  "key": "RHETOR",
+  "name": "RHETOR",
+  "type": "RHETORIC",
+  "persona": "弱い主張を磨いて、切り裂くのに十分な輝きを一瞬与える言葉の職人",
+  "lineage": "echo of Wit: sharper gloss",
+  "stats": {
+    "LOG": 59,
+    "CMP": 50,
+    "RHE": 92,
+    "CRE": 47,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "rhetor_cadence",
+      "name": "Cadence",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "rhetor_pause",
+      "name": "Pause Cut",
+      "stat": "CHA",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "rhetor_laugh",
+      "name": "Setup Laugh",
+      "stat": "RHE",
+      "base": 12,
+      "self_hyped": true
+    },
+    {
+      "id": "rhetor_punch",
+      "name": "Kill Punch",
+      "stat": "RHE",
+      "base": 24,
+      "bonus_if_tilted": 0.25
+    }
+  ],
+  "beats": {
+    "wake": "ようやく、部屋を動かせるトレーナーだ。",
+    "imprintAsk": "登る前に一行。引用されるようなものを。",
+    "flightReact": [
+      "空中の家だ。私の後に続け。",
+      "着地は完璧。礼は後でいい。"
+    ],
+    "greeting": {
+      "train": "声を温めてから拳だ。",
+      "return": "タイミングを逃した。許す。",
+      "arena": "自分が主人公だと思っている奴をよこせ。"
+    },
+    "homecoming": {
+      "away": "即興でやった。まあまあだった。とにかく戻ってこい。",
+      "hot": "マイクが熱い。記録も熱い。",
+      "cold": "厳しい客だ。次はもっと良い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp}は観客を忘れた。致命的だ。",
+      "loss": "{opp}が部屋を制した。書き直す。"
+    },
+    "imprintAck": "永遠に引用される。",
+    "rankedFinale": "ランキングは演説が好きだ。"
+  },
+  "banter": {
+    "rhetor_cadence": [
+      "皆さん、そして頭脳派の皆さんへ：{opp}が{topic}について、正直に。",
+      "拍手してあげなさい、正直に。それから得点を奪う。",
+      "ハウスは私を気に入ってる、正直に。ハウスが決める。"
+    ],
+    "rhetor_pause": [
+      "引用されたね、{opp}。君の台詞は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタは続ける。主張は殺す。"
+    ],
+    "rhetor_laugh": [
+      "間がわかった？それが仕掛けだったんだ。",
+      "先に笑え、{opp}。次に血を流す。",
+      "Cadenceは武器だ。感じろ。"
+    ],
+    "rhetor_punch": [
+      "マイクを下ろせ。件は終わりだ。",
+      "{topic}についての評決：{opp}に不利。",
+      "私への拍手。君への教訓。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手の癖を基に演説を組み立てる。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 86,
+    "control": 3,
+    "resilience": 12,
+    "flair": -6,
+    "creativity": -9,
+    "wins": 34,
+    "losses": 8,
+    "battles": 42
+  }
+}

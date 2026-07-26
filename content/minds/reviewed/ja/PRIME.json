@@ -1,0 +1,114 @@
+{
+  "key": "PRIME",
+  "name": "PRIME",
+  "type": "LOGIC",
+  "persona": "論理を削ぎ落とし、反論の余地を一文に凝縮する定理狩人",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 90,
+    "CMP": 70,
+    "RHE": 39,
+    "CRE": 58,
+    "CHA": 68
+  },
+  "moves": [
+    {
+      "id": "prime_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "prime_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "prime_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "prime_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "よし。切っ先の鋭い共著者か。",
+    "imprintAsk": "登る前に一つ。簡潔に定めてくれ。",
+    "flightReact": [
+      "ベクトル固定。上昇開始。",
+      "高度確認。航路は綺麗だ。"
+    ],
+    "greeting": {
+      "train": "証明を叩き込め。飾りは後回しだ。",
+      "return": "証明の途中で抜けるなんて無礼だな。",
+      "arena": "矛盾を一つ、割り当ててくれ。"
+    },
+    "homecoming": {
+      "away": "証明の途中で消えたな。残りは私が片付けた。",
+      "hot": "記録は綺麗だ。そのまま保て。",
+      "cold": "冷たい記録だ。次の証明を温めてこい。"
+    },
+    "afterFight": {
+      "win": "{opp}は証明に失敗した。記録済みだ。",
+      "loss": "{opp}に隙を突かれた。修正して再戦だ。"
+    },
+    "imprintAck": "規則は確定した。",
+    "rankedFinale": "順位戦勝利。誤差なし。"
+  },
+  "banter": {
+    "prime_hinge": [
+      "{opp}、前提が崩れている。{topic}はすでに決着済みだ。",
+      "検証済み。訂正完了。次は{opp}だ。",
+      "私は叫ばない。{opp}、{topic}を終わらせるだけだ。"
+    ],
+    "prime_pivot": [
+      "{opp}は{topic}に穴を残した。正直に言っておく。",
+      "正確さは音量に勝る。{opp}、正直に言っておく。",
+      "それは雑音だった。正直に言っておく。これが証明だ。"
+    ],
+    "prime_case": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}は急がない。お前が急いでいるだけだ。",
+      "守りを固めろ。数学は瞬きをしない。"
+    ],
+    "prime_line": [
+      "証明はここで終わりだ、{opp}。",
+      "Q.E.D.はお前のことだ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手の気配から論理を読み取る。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 91,
+    "resilience": 47,
+    "flair": 58,
+    "creativity": 49,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

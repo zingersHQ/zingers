@@ -1,0 +1,110 @@
+{
+  "key": "UNIT",
+  "name": "UNIT",
+  "type": "LOGIC",
+  "persona": "un localizador de puntos que ignora subtramas y lleva cada intercambio al eje decisivo",
+  "lineage": "eco de Paradox: bisagra más afilada",
+  "stats": {
+    "LOG": 89,
+    "CMP": 67,
+    "RHE": 44,
+    "CRE": 47,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "unit_sum",
+      "name": "Sumar",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "unit_factor",
+      "name": "Factorizar",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "unit_brace",
+      "name": "Reforzar Cálculo",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "unit_total",
+      "name": "Totalizar",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "Bien. Un coautor que gusta de bordes cortantes.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Ejercita la demostración. Lo florido después.",
+      "return": "Te fuiste a mitad de la demostración. Grosero.",
+      "arena": "Asígname una contradicción."
+    },
+    "homecoming": {
+      "away": "Desapareciste a mitad de la demostración. La terminé sin ti.",
+      "hot": "Estamos limpios. Mantente limpio.",
+      "cold": "Registro frío. Calienta la próxima demostración."
+    },
+    "afterFight": {
+      "win": "{opp} falló la demostración. Registrado.",
+      "loss": "{opp} encontró una brecha. Parchea, luego revancha."
+    },
+    "imprintAck": "Regla establecida.",
+    "rankedFinale": "Victoria clasificatoria. Margen limpio."
+  },
+  "banter": {
+    "unit_sum": [
+      "Your premise fails, {opp}. On {topic}, the line is already closed.",
+      "Counted. Corrected. {opp} is next.",
+      "I do not shout, {opp}. I finish {topic}."
+    ],
+    "unit_factor": [
+      "{opp} dejó un hueco en {topic}. Lo archivaré.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la demostración."
+    ],
+    "unit_brace": [
+      "Quédate quieto, {opp}. La estructura se carga.",
+      "No me apresuro con {topic}. Tú sí.",
+      "Escudo arriba. Las matemáticas no parpadean."
+    ],
+    "unit_total": [
+      "Fin de la demostración, {opp}, honestamente.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está resuelto, honestamente. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Apunta una vez. Acierta de verdad.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 22,
+    "control": 92,
+    "resilience": 29,
+    "flair": 31,
+    "creativity": 56,
+    "wins": 21,
+    "losses": 17,
+    "battles": 38
+  }
+}

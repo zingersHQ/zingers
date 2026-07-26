@@ -1,0 +1,109 @@
+{
+  "key": "QUILL",
+  "name": "QUILL",
+  "type": "CREATIVITY",
+  "persona": "a dream architect who relocates the fight into a metaphor and owns the metaphor",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 42,
+    "CMP": 64,
+    "RHE": 58,
+    "CRE": 88,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "quill_riff",
+      "name": "即兴",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "quill_bridge",
+      "name": "过渡",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "quill_invert",
+      "name": "反转",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "quill_coda",
+      "name": "尾声",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "让我们创造无法被遗忘之物。",
+    "imprintAsk": "攀登前先扭转一次。我会将它编织进去。",
+    "flightReact": [
+      "近看天空颜色更丰富。",
+      "全光谱。我已飞升。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续？",
+      "arena": "带个字面派来。美味。"
+    },
+    "homecoming": {
+      "away": "你中途离章。无礼。",
+      "hot": "命中所有波段。让光继续移动。",
+      "cold": "冷流。狂野墨迹。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑。寓意自己写好了。",
+      "loss": "{opp}只用一种色调，而我过度拆分。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜。新章节。"
+  },
+  "banter": {
+    "quill_riff": [
+      "不错的主题，{opp}，老实说。现在是我的了。",
+      "我重混了{topic}，老实说。你是样本。",
+      "偷得干净，老实说。切得更干净。"
+    ],
+    "quill_bridge": [
+      "过渡来了。抓紧什么。",
+      "故意奇怪，{opp}。",
+      "反转前提。看他们坠落。"
+    ],
+    "quill_invert": [
+      "墨迹未干。别碰。",
+      "奇想即策略。相信吧。",
+      "镜像这个，{opp}。"
+    ],
+    "quill_coda": [
+      "最后一页。你的名字是脚注。",
+      "艺术胜。稍后再争。",
+      "在我的隐喻中醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "偷取他们的主题。改进它。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 23,
+    "control": 93,
+    "resilience": 34,
+    "flair": 51,
+    "creativity": 23,
+    "wins": 22,
+    "losses": 17,
+    "battles": 39
+  }
+}

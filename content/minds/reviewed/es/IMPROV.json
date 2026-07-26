@@ -1,0 +1,109 @@
+{
+  "key": "IMPROV",
+  "name": "IMPROV",
+  "type": "CREATIVITY",
+  "persona": "un constructor de mosaicos que gana con fragmentos que solo encajan en la muerte al final",
+  "lineage": "eco de Muse: riff extraño",
+  "stats": {
+    "LOG": 14,
+    "CMP": 22,
+    "RHE": 64,
+    "CRE": 84,
+    "CHA": 15
+  },
+  "moves": [
+    {
+      "id": "improv_glyph",
+      "name": "Glifo",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "improv_mosaic",
+      "name": "Mosaico",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "improv_dream",
+      "name": "Cambio Onírico",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "improv_wake",
+      "name": "Arte del Despertar",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Creemos algo que no puedan dejar de ver.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Grosero.",
+      "hot": "Golpeando cada banda. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} hizo el papel del tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me fragmenté de más."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria clasificatoria. Nuevo capítulo."
+  },
+  "banter": {
+    "improv_glyph": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Reinterpretado {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "improv_mosaic": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "improv_dream": [
+      "La tinta aún está húmeda, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Refleja esto, {opp}, en serio."
+    ],
+    "improv_wake": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Lleva el combate a una metáfora que ellos poseen.",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 49,
+    "control": 16,
+    "resilience": 89,
+    "flair": -17,
+    "creativity": 5,
+    "wins": 54,
+    "losses": 11,
+    "battles": 65
+  }
+}

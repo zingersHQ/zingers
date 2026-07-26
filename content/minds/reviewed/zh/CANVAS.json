@@ -1,0 +1,110 @@
+{
+  "key": "CANVAS",
+  "name": "CANVAS",
+  "type": "CREATIVITY",
+  "persona": "一个即兴把不相干概念拼成危险桥梁的妙想大脑",
+  "lineage": "echo of Fable: wetter ink",
+  "stats": {
+    "LOG": 45,
+    "CMP": 43,
+    "RHE": 57,
+    "CRE": 84,
+    "CHA": 55
+  },
+  "moves": [
+    {
+      "id": "canvas_reframe",
+      "name": "重构",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "canvas_steal",
+      "name": "偷取母题",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "canvas_plot",
+      "name": "剧情踢",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "canvas_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "让我们做出别人无法忘却的东西。",
+    "imprintAsk": "再加一个转折再爬高。我来把它编进去。",
+    "flightReact": [
+      "天上颜色更多。",
+      "全光谱。我上去了。"
+    ],
+    "greeting": {
+      "train": "给我一个新角度。",
+      "return": "故事暂停。继续吗？",
+      "arena": "带个字面派来。美味。"
+    },
+    "homecoming": {
+      "away": "你半章走了。真没礼貌。",
+      "hot": "每一频段都命中。别让光停。",
+      "cold": "冷场了。墨再野一点。"
+    },
+    "afterFight": {
+      "win": "{opp}演了小丑。寓意自己写完了。",
+      "loss": "{opp}只用一种色，我却拆得太碎。"
+    },
+    "imprintAck": "母题已更新。",
+    "rankedFinale": "排位胜利。新章节。"
+  },
+  "banter": {
+    "canvas_reframe": [
+      "{opp}，主题不错。现在是我的。",
+      "我混音了{topic}。你是样本。",
+      "偷得干净，剪得更干净。"
+    ],
+    "canvas_steal": [
+      "桥要来了。抓稳。",
+      "故意怪，{opp}。",
+      "反转前提。看他们摔。"
+    ],
+    "canvas_plot": [
+      "墨还没干。别碰。",
+      "任性就是策略。信吧。",
+      "镜子给我，{opp}。"
+    ],
+    "canvas_magnum": [
+      "最后一页。你的名字是脚注。",
+      "艺术赢了。回头再吵。",
+      "醒在我的隐喻里。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让认真显得缺乏想象力。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 7,
+    "resilience": -7,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

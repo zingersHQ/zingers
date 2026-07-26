@@ -1,0 +1,110 @@
+{
+  "key": "MOSAIC",
+  "name": "MOSAIC",
+  "type": "CREATIVITY",
+  "persona": "una mente riff que improvisa puentes peligrosos entre ideas inconexas a mitad del golpe",
+  "lineage": "eco de Fable: tinta más húmeda",
+  "stats": {
+    "LOG": 49,
+    "CMP": 62,
+    "RHE": 61,
+    "CRE": 85,
+    "CHA": 42
+  },
+  "moves": [
+    {
+      "id": "mosaic_reframe",
+      "name": "Reencuadre",
+      "stat": "CRE",
+      "base": 20
+    },
+    {
+      "id": "mosaic_steal",
+      "name": "Robar Motivo",
+      "stat": "RHE",
+      "base": 16,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "mosaic_plot",
+      "name": "Patada de Trama",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "mosaic_magnum",
+      "name": "Magnum",
+      "stat": "CRE",
+      "base": 30,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo trenzaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro total. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No lo hagas.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Vamos en arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un color y ganaron. Dividir más duro."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "Tinta asentada.",
+    "rankedFinale": "Clasificatoria. El arte aterriza."
+  },
+  "banter": {
+    "mosaic_reframe": [
+      "Buen tema, {opp}. Mío ahora.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "mosaic_steal": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "mosaic_plot": [
+      "La tinta aún está húmeda, en serio. No toques.",
+      "El capricho es estrategia, en serio. Créelo.",
+      "Refleja esto, {opp}, en serio."
+    ],
+    "mosaic_magnum": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute después.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Hace que la seriedad parezca poco imaginativa.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 20,
+    "control": 8,
+    "resilience": -2,
+    "flair": 17,
+    "creativity": 80,
+    "wins": 27,
+    "losses": 9,
+    "battles": 36
+  }
+}

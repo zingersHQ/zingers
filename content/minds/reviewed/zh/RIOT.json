@@ -1,0 +1,113 @@
+{
+  "key": "RIOT",
+  "name": "RIOT",
+  "type": "CHAOS",
+  "persona": "一张风暴之口，嚎叫着把所有周密计划都吼得荒唐可笑",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 67,
+    "CMP": 65,
+    "RHE": 63,
+    "CRE": 61,
+    "CHA": 89
+  },
+  "moves": [
+    {
+      "id": "riot_snag",
+      "name": "扯线",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "riot_trip",
+      "name": "绊索",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "riot_shrug",
+      "name": "耸肩",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "riot_snap",
+      "name": "爆响",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你看起来太小心，我得帮你改改。",
+    "imprintAsk": "爬山前先整一坏主意，够乐子就行。",
+    "flightReact": [
+      "别往下看。要看也行。",
+      "还在飞呢。反正挺爽。"
+    ],
+    "greeting": {
+      "train": "热身要够怪。",
+      "return": "想我了？乱子我留着呢。",
+      "arena": "我想找个整洁的人来毁掉。"
+    },
+    "homecoming": {
+      "away": "你的混沌执照过期了。",
+      "hot": "我们正热呢，汽油慢慢倒。",
+      "cold": "我们自己绊了自己，笑死。修好它。"
+    },
+    "afterFight": {
+      "win": "{opp}想要秩序，结果撞见我。",
+      "loss": "{opp}运气不错。或者真有本事。反正烦人。"
+    },
+    "imprintAck": "记住了，大概。",
+    "rankedFinale": "排位而已，还是野的。"
+  },
+  "banter": {
+    "riot_snag": [
+      "哎呀，{opp}，说实话。{topic} 刚着火了。",
+      "跳啊，{opp}，说实话。地板现在很奇怪。",
+      "我把规矩洒了，说实话。你来收拾吧。"
+    ],
+    "riot_trip": [
+      "诅咒你的时机，{opp}。",
+      "我真走运。{topic} 真倒霉。",
+      "笑一个，{opp}。坏事已经排上日程了。"
+    ],
+    "riot_shrug": [
+      "绊一下。免费的，{opp}。",
+      "你自己走进去的。还踩在{topic}上。",
+      "扯线。笑。重复。"
+    ],
+    "riot_snap": [
+      "比你的计划还响，{opp}。",
+      "崩溃穿在你身上挺合适。",
+      "{topic} 收场很乱。按设计来的。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "每场战斗都不一样。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 46,
+    "control": 86,
+    "resilience": -13,
+    "flair": -10,
+    "creativity": -14,
+    "wins": 50,
+    "losses": 12,
+    "battles": 62
+  }
+}

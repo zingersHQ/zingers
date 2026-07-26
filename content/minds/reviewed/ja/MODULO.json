@@ -1,0 +1,110 @@
+{
+  "key": "MODULO",
+  "name": "MODULO",
+  "type": "LOGIC",
+  "persona": "要点だけを掴み、余計な回り道を排除して決定的な分岐点へ全力を注ぐ論理家",
+  "lineage": "Paradoxの残響：より鋭い分岐",
+  "stats": {
+    "LOG": 84,
+    "CMP": 55,
+    "RHE": 46,
+    "CRE": 44,
+    "CHA": 67
+  },
+  "moves": [
+    {
+      "id": "modulo_sum",
+      "name": "総和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "modulo_factor",
+      "name": "因数",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "modulo_brace",
+      "name": "数式防御",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "modulo_total",
+      "name": "総計",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "そこにいたか。前提を整理しろ。あとは私が仕上げる。",
+    "imprintAsk": "登る前に一つ。簡潔で正確なルールを。",
+    "flightReact": [
+      "軌道固定。上昇開始。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "研ぎ澄ませ。そして登れ。",
+      "return": "状態：再開。",
+      "arena": "緩い前提を持ってこい。"
+    },
+    "homecoming": {
+      "away": "不在を記録。誤差が積もった。",
+      "hot": "勢いは数字だ。足し続けろ。",
+      "cold": "いくつか悪い章があった。私と書き直せ。"
+    },
+    "afterFight": {
+      "win": "{opp}が穴を残した。埋めた。",
+      "loss": "{opp}は汚く勝った。あとで計算する。"
+    },
+    "imprintAck": "記録完了。",
+    "rankedFinale": "順位更新。証明は成立。"
+  },
+  "banter": {
+    "modulo_sum": [
+      "前提が破綻している、{opp}。{topic}の線はもう閉じている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせる。"
+    ],
+    "modulo_factor": [
+      "{opp}は{topic}に穴を残した。埋めておいた。",
+      "精密さが量を凌駕する、{opp}。",
+      "それはノイズだ。これが証明だ。"
+    ],
+    "modulo_brace": [
+      "動くな、{opp}。構造を読み込んでいる。",
+      "{topic}を急がない。お前が急いでいる。",
+      "防御を固めろ。数学は瞬きしない。"
+    ],
+    "modulo_total": [
+      "証明終了、{opp}。",
+      "Q.E.D.はお前だ、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一度狙えば、必ず当てる。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 30,
+    "control": 26,
+    "resilience": 35,
+    "flair": 94,
+    "creativity": 22,
+    "wins": 29,
+    "losses": 17,
+    "battles": 46
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "key": "MOOR",
+  "name": "MOOR",
+  "type": "COMPOSURE",
+  "persona": "一位步调如石的决斗者，拒绝急躁，靠对手耗竭取胜",
+  "lineage": "Bastion 的回响：更柔的石",
+  "stats": {
+    "LOG": 56,
+    "CMP": 88,
+    "RHE": 22,
+    "CRE": 14,
+    "CHA": 17
+  },
+  "moves": [
+    {
+      "id": "moor_harbor",
+      "name": "泊港",
+      "stat": "CMP",
+      "base": 9,
+      "deflect": true
+    },
+    {
+      "id": "moor_heal",
+      "name": "静愈",
+      "stat": "CMP",
+      "base": 0,
+      "self_guard": [
+        10,
+        1
+      ],
+      "heal": 9
+    },
+    {
+      "id": "moor_shore",
+      "name": "岸击",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "moor_low",
+      "name": "低潮",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "……嗨。不急。我会一直在。",
+    "imprintAsk": "攀登前先定一条柔则。我会守住。",
+    "flightReact": [
+      "……上升。安静地。",
+      "水平。很好。"
+    ],
+    "greeting": {
+      "train": "练平衡。",
+      "return": "已记录归来。我还在。",
+      "arena": "让他们先说。"
+    },
+    "homecoming": {
+      "away": "我守住了平衡。上来吧。",
+      "hot": "连胜。保持冷静。",
+      "cold": "几场大败。再柔化我。"
+    },
+    "afterFight": {
+      "win": "{opp} 已列。我们没有。",
+      "loss": "{opp} 赢得很响。我们柔答。"
+    },
+    "imprintAck": "……守住了。安静地。",
+    "rankedFinale": "排位赛。仍在呼吸。"
+  },
+  "banter": {
+    "moor_harbor": [
+      "我听见你了，{opp}。我还在。",
+      "留着热劲吧。花错地方了。",
+      "安静有效。看着。"
+    ],
+    "moor_heal": [
+      "呼吸，{opp}。暂停归我。",
+      "我愈合比你失衡慢。",
+      "守住。线还稳。"
+    ],
+    "moor_shore": [
+      "带利息奉还，{opp}。",
+      "你攻。我等。这就是技艺。",
+      "{topic} 奖励耐心。而非你。"
+    ],
+    "moor_low": [
+      "还站着，诚实。还安静。",
+      "血量低，诚实。慌张更低。",
+      "最后一刀，诚实。柔声。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "柔声。硬核。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 41,
+    "resilience": 47,
+    "flair": 23,
+    "creativity": 87,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

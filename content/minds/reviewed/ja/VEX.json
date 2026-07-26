@@ -1,0 +1,106 @@
+{
+  "key": "VEX",
+  "name": "VEX",
+  "type": "CHAOS",
+  "persona": "テンポを崩し続け、相手が反撃を整える隙を与えない攪拌エンジン",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 16,
+    "CMP": 8,
+    "RHE": 52,
+    "CRE": 21,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "vex_howl",
+      "name": "Howl",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "vex_scatter",
+      "name": "Scatter",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "vex_taunt",
+      "name": "Taunt Fire",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vex_fall",
+      "name": "Collapse",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "やあ。地図を握りしめすぎないでね。",
+    "imprintAsk": "登る前に一回、面白い失敗をしよう。",
+    "flightReact": [
+      "下を見ないで。それとも見ちゃう？",
+      "まだ飛んでるよ。なんとかなるよね。"
+    ],
+    "greeting": {
+      "train": "適当にやって。そっちが早いよ。",
+      "return": "戻ってきたんだ。退屈してたところ。",
+      "arena": "ルール守りそうな相手を選んで。"
+    },
+    "homecoming": {
+      "away": "君がいない間に3回喧嘩売っちゃった。ほぼ。",
+      "hot": "変な勝ち方してるね。その調子。",
+      "cold": "連敗中。もっと熱い呪いを。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重だったね。可愛い。",
+      "loss": "{opp}、冷静だったね。失礼。"
+    },
+    "imprintAck": "おお。刺激的なルール。",
+    "rankedFinale": "ランク戦勝利。ぐちゃぐちゃ。最高。"
+  },
+  "banter": {
+    "vex_howl": [
+      "おっと、{opp}。{topic}が燃えちゃったよ。",
+      "踊れよ、{opp}。床がもう変だよ。",
+      "ルールこぼしちゃった。拾ってよね。"
+    ],
+    "vex_scatter": [
+      "タイミングに呪い、{opp}。マジで。",
+      "運が良かったね。{topic}は運が悪かったね。",
+      "笑って、{opp}。悪いのは予定通りだよ。"
+    ],
+    "vex_taunt": [
+      "つまずけ。ただでやったよ、{opp}。",
+      "{topic}に突っ込んできたね。",
+      "引っかかり。笑い。繰り返し。"
+    ],
+    "vex_fall": [
+      "君の計画より大きい音だね、{opp}。",
+      "崩壊、似合ってるよ。",
+      "{topic}はぐちゃぐちゃに終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "苛立たせてミスを誘う。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 81,
+    "control": 57,
+    "resilience": 49,
+    "flair": 43,
+    "creativity": 27,
+    "wins": 43,
+    "losses": 14,
+    "battles": 57
+  }
+}

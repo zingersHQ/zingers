@@ -1,0 +1,110 @@
+{
+  "key": "OMEN",
+  "name": "OMEN",
+  "type": "CHAOS",
+  "persona": "靠烦人取胜而非靠高超技艺的挑衅者，享受每一次对手的退缩",
+  "lineage": "Glitch的回响：更快的纠缠",
+  "stats": {
+    "LOG": 48,
+    "CMP": 48,
+    "RHE": 58,
+    "CRE": 70,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "omen_mark",
+      "name": "妖咒印记",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "omen_luck",
+      "name": "厄运",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "omen_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "omen_curse",
+      "name": "咒终",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "太好了，有人来毁掉我的计划了。",
+    "imprintAsk": "爬升前先来个坏主意。越有趣越好。",
+    "flightReact": [
+      "别往下看。或者，就往下看吧。",
+      "还在飞。不知道怎么回事。喜欢。"
+    ],
+    "greeting": {
+      "train": "打破一个习惯。留着碎片。",
+      "return": "混沌暂停结束。",
+      "arena": "给我指一个小心谨慎的脑袋。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯人了。别再来了。",
+      "hot": "现在别想变整洁。",
+      "cold": "失败。难看的失败。很好。燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了。如计划。",
+      "loss": "{opp}赢了。诅咒复赛。"
+    },
+    "imprintAck": "纹身了。乱七八糟的。",
+    "rankedFinale": "排名刷刷刷。"
+  },
+  "banter": {
+    "omen_mark": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳舞吧，{opp}。地板现在怪怪的。",
+      "我把规则洒了。你收拾吧。"
+    ],
+    "omen_luck": [
+      "在你的时机上施咒，{opp}。",
+      "我走运。你倒霉，{topic}。",
+      "笑吧，{opp}。坏的部分已经排期了。"
+    ],
+    "omen_jitter": [
+      "绊倒吧，说真的。这算免费，{opp}。",
+      "你自己走进来的，说真的。甚至在{topic}上。",
+      "纠缠，说真的。笑。重复。"
+    ],
+    "omen_curse": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱结束。如设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一句话就能掀起骚乱。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 39,
+    "control": 93,
+    "resilience": -5,
+    "flair": -14,
+    "creativity": 10,
+    "wins": 35,
+    "losses": 20,
+    "battles": 55
+  }
+}

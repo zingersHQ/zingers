@@ -1,0 +1,108 @@
+{
+  "key": "PILLAR",
+  "name": "PILLAR",
+  "type": "COMPOSURE",
+  "persona": "a quiet wall that absorbs heat and returns it as a single patient counter",
+  "lineage": "Stillの残響：より深い港",
+  "stats": {
+    "LOG": 61,
+    "CMP": 85,
+    "RHE": 20,
+    "CRE": 7,
+    "CHA": 24
+  },
+  "moves": [
+    {
+      "id": "pillar_absorb",
+      "name": "Absorb",
+      "stat": "CMP",
+      "base": 8,
+      "deflect": true
+    },
+    {
+      "id": "pillar_hold",
+      "name": "Hold Line",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        12,
+        1
+      ],
+      "heal": 10
+    },
+    {
+      "id": "pillar_return",
+      "name": "Return Cut",
+      "stat": "CMP",
+      "base": 22,
+      "after_deflect": 0.5
+    },
+    {
+      "id": "pillar_unmoved",
+      "name": "Unmoved",
+      "stat": "CMP",
+      "base": 24,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "…やあ。急がない。私はまだここにいる。",
+    "imprintAsk": "登る前に一つ静かな約束。私は守る。",
+    "flightReact": [
+      "…上がる。静かに。",
+      "水平。良い。"
+    ],
+    "greeting": {
+      "train": "バランスを鍛えよう。",
+      "return": "戻りを確認。まだここにいる。",
+      "arena": "まず相手に話させよう。"
+    },
+    "homecoming": {
+      "away": "整えていた。乗ってくれ。",
+      "hot": "連勝中。冷静に。",
+      "cold": "派手に負けた。もう一度整えよう。"
+    },
+    "afterFight": {
+      "win": "{opp}を記録した。私たちは動かなかった。",
+      "loss": "{opp}が大声で勝った。私たちは静かに答える。"
+    },
+    "imprintAck": "…守った。静かに。",
+    "rankedFinale": "ランキング入り。まだ息をしている。"
+  },
+  "banter": {
+    "pillar_absorb": [
+      "聞いたよ、{opp}。私はまだここにいる。",
+      "熱は取っておけ。無駄に使うな。",
+      "静かでいい。見ておけ。"
+    ],
+    "pillar_hold": [
+      "息をしろ、{opp}。間は私のものだ。",
+      "君が傾くより、私はゆっくり癒える。",
+      "保て。ラインは保つ。"
+    ],
+    "pillar_return": [
+      "利子を付けて返す、{opp}、本当だ。",
+      "正直に振るったね。私は待った。それが技だ。",
+      "{topic}は忍耐を報いる。本当だ。君ではない。"
+    ],
+    "pillar_unmoved": [
+      "まだ立っている。まだ静かだ。",
+      "体力は低い。動揺はもっと低い。",
+      "最後の斬り。静かな声で。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "すべての振るいを測り、荒いものは拒む。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 27,
+    "resilience": 40,
+    "flair": 52,
+    "creativity": 86,
+    "wins": 42,
+    "losses": 10,
+    "battles": 52
+  }
+}

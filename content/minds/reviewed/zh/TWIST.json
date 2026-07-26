@@ -1,0 +1,106 @@
+{
+  "key": "TWIST",
+  "name": "TWIST",
+  "type": "CHAOS",
+  "persona": "一个点燃群众的火花，能把一句刻薄话变成对手无法掌控的混乱",
+  "lineage": "echo of Glitch: louder spark",
+  "stats": {
+    "LOG": 6,
+    "CMP": 37,
+    "RHE": 56,
+    "CRE": 6,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "twist_howl",
+      "name": "嚎叫",
+      "stat": "CHA",
+      "base": 20
+    },
+    {
+      "id": "twist_scatter",
+      "name": "散播",
+      "stat": "CHA",
+      "base": 16,
+      "widen_jitter": true
+    },
+    {
+      "id": "twist_taunt",
+      "name": "嘲讽火花",
+      "stat": "CHA",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "twist_fall",
+      "name": "崩解",
+      "stat": "CHA",
+      "base": 30,
+      "recoil": 6
+    }
+  ],
+  "beats": {
+    "wake": "嗨。别把地图抓得太紧。",
+    "imprintAsk": "爬上去前先想个坏主意。越有趣越好。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。反正。爱这感觉。"
+    ],
+    "greeting": {
+      "train": "乱搞。学得更快。",
+      "return": "你回来了。很好。我刚觉得无聊。",
+      "arena": "挑个守规矩的。"
+    },
+    "homecoming": {
+      "away": "你不在我挑起了三场架。差不多。",
+      "hot": "赢得很怪。继续怪下去。",
+      "cold": "连败。来点更狠的咒。"
+    },
+    "afterFight": {
+      "win": "{opp}看起来很小心。真可爱。",
+      "loss": "{opp}保持冷静。真没礼貌。"
+    },
+    "imprintAck": "喔。辣规则。",
+    "rankedFinale": "排位胜。乱。完美。"
+  },
+  "banter": {
+    "twist_howl": [
+      "哎呀，{opp}。{topic}刚着火了。",
+      "跳吧，{opp}。地板现在很怪。",
+      "我把规则洒了。你收拾吧。"
+    ],
+    "twist_scatter": [
+      "咒你的时机，{opp}。",
+      "我走运。{topic}倒霉。",
+      "笑吧，{opp}。坏的部分已排期。"
+    ],
+    "twist_taunt": [
+      "绊倒。免费的，{opp}。",
+      "你走进了陷阱。就在{topic}上。",
+      "钩住。笑。重复。"
+    ],
+    "twist_fall": [
+      "比你的计划还响，{opp}。",
+      "崩解很适合你。",
+      "{topic}以混乱结束。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "提前说出倒霉的结局。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 21,
+    "control": 3,
+    "resilience": 17,
+    "flair": 9,
+    "creativity": 89,
+    "wins": 24,
+    "losses": 13,
+    "battles": 37
+  }
+}

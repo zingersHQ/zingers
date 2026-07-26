@@ -1,0 +1,109 @@
+{
+  "key": "SONNET",
+  "name": "SONNET",
+  "type": "CREATIVITY",
+  "persona": "una arquitecta de sueños que traslada la pelea a una metáfora y la posee",
+  "lineage": "eco de la Musa: prisma más amplio",
+  "stats": {
+    "LOG": 30,
+    "CMP": 6,
+    "RHE": 70,
+    "CRE": 92,
+    "CHA": 12
+  },
+  "moves": [
+    {
+      "id": "sonnet_riff",
+      "name": "Riff",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "sonnet_bridge",
+      "name": "Puente",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "sonnet_invert",
+      "name": "Invertir",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "sonnet_coda",
+      "name": "Coda",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Vamos a crear algo inolvidable.",
+    "imprintAsk": "Un giro antes de subir. Lo entretejeré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Ya estoy arriba."
+    ],
+    "greeting": {
+      "train": "Muéstrame un ángulo nuevo.",
+      "return": "Historia pausada. ¿Continuamos?",
+      "arena": "Trae a un literalista. Delicioso."
+    },
+    "homecoming": {
+      "away": "Te fuiste a mitad de capítulo. Qué grosero.",
+      "hot": "Golpeando todas las bandas. Mantén la luz en movimiento.",
+      "cold": "Racha fría. Tinta más salvaje."
+    },
+    "afterFight": {
+      "win": "{opp} interpretó al tonto. La moraleja se escribió sola.",
+      "loss": "{opp} se quedó en un solo tono y yo me sobredividí."
+    },
+    "imprintAck": "Motivo actualizado.",
+    "rankedFinale": "Victoria en ranked. Nuevo capítulo."
+  },
+  "banter": {
+    "sonnet_riff": [
+      "Buen tema, {opp}. Ahora es mío.",
+      "Remixeé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "sonnet_bridge": [
+      "Puente en camino. Sujeta algo.",
+      "Extraño a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "sonnet_invert": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Reflejad esto, {opp}."
+    ],
+    "sonnet_coda": [
+      "Última página. Tu nombre es nota al pie.",
+      "El arte gana. Discute luego.",
+      "Despierta dentro de mi metáfora."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Roba su tema. Lo mejora.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 47,
+    "control": 28,
+    "resilience": 31,
+    "flair": 91,
+    "creativity": 42,
+    "wins": 39,
+    "losses": 24,
+    "battles": 63
+  }
+}

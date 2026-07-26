@@ -1,0 +1,113 @@
+{
+  "key": "FLARE",
+  "name": "FLARE",
+  "type": "CHAOS",
+  "persona": "a storm mouth who howls over careful plans until the plan itself looks silly",
+  "lineage": "echo of Ember: wilder churn",
+  "stats": {
+    "LOG": 39,
+    "CMP": 66,
+    "RHE": 67,
+    "CRE": 62,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "flare_snag",
+      "name": "钩索",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "flare_trip",
+      "name": "绊索",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flare_shrug",
+      "name": "耸肩",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "flare_snap",
+      "name": "爆裂",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "太好了，有人来一起毁掉计划。",
+    "imprintAsk": "登顶前先搞个坏主意，要有趣。",
+    "flightReact": [
+      "别往下看。或者看吧。",
+      "还在飞。反正爱怎样都行。"
+    ],
+    "greeting": {
+      "train": "打破习惯，把碎片留着。",
+      "return": "混沌暂停结束。",
+      "arena": "把谨慎的头脑指给我。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯了，别再犯。",
+      "hot": "别现在就变得整洁。",
+      "cold": "败北。难看的。很好。燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了。按计划。",
+      "loss": "{opp}赢了。诅咒复赛。"
+    },
+    "imprintAck": "纹身完成。混乱地。",
+    "rankedFinale": "排名刷刷刷。"
+  },
+  "banter": {
+    "flare_snag": [
+      "哎呀，{opp}，说实话。{topic}着火了。",
+      "跳啊，{opp}，说实话。地板现在很怪。",
+      "我洒了规则，说实话。收拾吧。"
+    ],
+    "flare_trip": [
+      "诅咒你的时机，{opp}。",
+      "我真走运。{topic}真倒霉。",
+      "笑吧，{opp}。坏的部分已排期。"
+    ],
+    "flare_shrug": [
+      "绊倒。免费的，{opp}。",
+      "你走进了陷阱。甚至在{topic}上。",
+      "钩索。笑。重复。"
+    ],
+    "flare_snap": [
+      "比你的计划更响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱结束。按设计。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "没有相同的战斗两次。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 84,
+    "control": 25,
+    "resilience": 25,
+    "flair": 40,
+    "creativity": 52,
+    "wins": 25,
+    "losses": 13,
+    "battles": 38
+  }
+}

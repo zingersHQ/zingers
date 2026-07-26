@@ -1,0 +1,110 @@
+{
+  "key": "YARN",
+  "name": "YARN",
+  "type": "CREATIVITY",
+  "persona": "una espada caprichosa que gana haciendo que la seriedad parezca falta de imaginación",
+  "lineage": "eco de Fable: truco más amable",
+  "stats": {
+    "LOG": 53,
+    "CMP": 70,
+    "RHE": 71,
+    "CRE": 92,
+    "CHA": 65
+  },
+  "moves": [
+    {
+      "id": "yarn_ink",
+      "name": "Tinta",
+      "stat": "CRE",
+      "base": 17,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "yarn_whim",
+      "name": "Corte Caprichoso",
+      "stat": "RHE",
+      "base": 15
+    },
+    {
+      "id": "yarn_mirror",
+      "name": "Cuento Espejo",
+      "stat": "CRE",
+      "base": 14,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "yarn_page",
+      "name": "Última Página",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Trajiste ojos. Yo traje ángulos.",
+    "imprintAsk": "Un giro antes de subir. Lo trenzaré.",
+    "flightReact": [
+      "El cielo tiene más colores de cerca.",
+      "Espectro completo. Estoy arriba."
+    ],
+    "greeting": {
+      "train": "Juega. Luego comprométete.",
+      "return": "La paleta se apagó. No hagas eso.",
+      "arena": "Quiero una mente rígida que doblar."
+    },
+    "homecoming": {
+      "away": "El motivo extrañó a su coautor.",
+      "hot": "Vamos en un arco ganador. No rompas el motivo.",
+      "cold": "Se quedaron en un color y ganaron. Divide más fuerte."
+    },
+    "afterFight": {
+      "win": "{opp} trajo un color. Yo traje más.",
+      "loss": "{opp} robó el final. Borrador más afilado la próxima."
+    },
+    "imprintAck": "La tinta prendió.",
+    "rankedFinale": "Clasificatorio. El arte aterriza."
+  },
+  "banter": {
+    "yarn_ink": [
+      "Buen tema, {opp}. Mío ahora.",
+      "Remixé {topic}. Tú eres la muestra.",
+      "Roba limpio. Corta más limpio."
+    ],
+    "yarn_whim": [
+      "Puente en camino. Sujeta algo.",
+      "Raro a propósito, {opp}.",
+      "Invierte la premisa. Míralos caer."
+    ],
+    "yarn_mirror": [
+      "La tinta aún está húmeda. No toques.",
+      "El capricho es estrategia. Créelo.",
+      "Espejea esto, {opp}."
+    ],
+    "yarn_page": [
+      "Última página, honestamente. Tu nombre es nota al pie.",
+      "El arte gana, honestamente. Discute después.",
+      "Despierta dentro de mi metáfora, honestamente."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Responde con preguntas más bonitas.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 34,
+    "control": 19,
+    "resilience": -16,
+    "flair": 10,
+    "creativity": 78,
+    "wins": 39,
+    "losses": 11,
+    "battles": 50
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "LEMMA",
+  "name": "LEMMA",
+  "type": "LOGIC",
+  "persona": "前提を最小の数え上げ可能な部品に分解する、基本ケースにこだわる衒学者",
+  "lineage": "Paradoxの残響: より鋭い蝶番",
+  "stats": {
+    "LOG": 88,
+    "CMP": 63,
+    "RHE": 7,
+    "CRE": 38,
+    "CHA": 9
+  },
+  "moves": [
+    {
+      "id": "lemma_sum",
+      "name": "総和",
+      "stat": "LOG",
+      "base": 18
+    },
+    {
+      "id": "lemma_factor",
+      "name": "分解",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "lemma_brace",
+      "name": "数式防御",
+      "stat": "LOG",
+      "base": 0,
+      "self_guard": [
+        11,
+        1
+      ],
+      "heal": 8
+    },
+    {
+      "id": "lemma_total",
+      "name": "総計",
+      "stat": "LOG",
+      "base": 27,
+      "scale_low_hp": true
+    }
+  ],
+  "beats": {
+    "wake": "いらっしゃい。きれいな前提を持ってきたら、あとは任せて。",
+    "imprintAsk": "登る前に一つだけ。厳密なルールをひとつ。",
+    "flightReact": [
+      "ベクトル固定。上昇開始。",
+      "高度確認。クリーンなフライト。"
+    ],
+    "greeting": {
+      "train": "研ぎ澄ませ。それから登る。",
+      "return": "状態: 再開。",
+      "arena": "不正確な前提を探せ。"
+    },
+    "homecoming": {
+      "away": "不在を記録。誤差が蓄積した。",
+      "hot": "勢いは数値だ。足し続けろ。",
+      "cold": "いくつか悪い章があった。共に書き直そう。"
+    },
+    "afterFight": {
+      "win": "{opp}が穴を残した。埋めた。",
+      "loss": "{opp}は汚く勝った。あとで計算する。"
+    },
+    "imprintAck": "記録完了。",
+    "rankedFinale": "ランキング更新。証明は成立。"
+  },
+  "banter": {
+    "lemma_sum": [
+      "{opp}、前提が破綻している。{topic}については、すでに線が引かれている。",
+      "数えた。修正した。次は{opp}だ。",
+      "私は叫ばない、{opp}。{topic}を終わらせるだけだ。"
+    ],
+    "lemma_factor": [
+      "{opp}が{topic}に穴を残した。埋めておいた。",
+      "正確さは音量に勝つ、{opp}。",
+      "それはノイズだった。これが証明だ。"
+    ],
+    "lemma_brace": [
+      "動くな、{opp}。正直に。構造を読み込んでいる。",
+      "{topic}を急がない、正直に。急いでいるのは君だ。",
+      "防御しろ、正直に。数学は瞬きしない。"
+    ],
+    "lemma_total": [
+      "証明終了、{opp}。",
+      "Q.E.D.は君を指す、{opp}。",
+      "{topic}は決着した。座れ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手が終わる前に、すでに結末を書いている。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 42,
+    "control": 92,
+    "resilience": 44,
+    "flair": 48,
+    "creativity": 58,
+    "wins": 33,
+    "losses": 25,
+    "battles": 58
+  }
+}

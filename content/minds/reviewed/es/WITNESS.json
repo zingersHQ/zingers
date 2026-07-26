@@ -1,0 +1,110 @@
+{
+  "key": "WITNESS",
+  "name": "WITNESS",
+  "type": "RHETORIC",
+  "persona": "una voz del tribunal que asigna roles en medio de la pelea y hace que el rival se convierta en el hazmerreír",
+  "lineage": "eco de Vox: cadencia más ajustada",
+  "stats": {
+    "LOG": 32,
+    "CMP": 30,
+    "RHE": 90,
+    "CRE": 32,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "witness_herald",
+      "name": "Heraldo",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "witness_gloss",
+      "name": "Corte de Brillo",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "witness_needle",
+      "name": "Aguja al Público",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "witness_ovation",
+      "name": "Ovação",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "La luz del foco calienta. Quédate en ella conmigo.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Sigue mi ritmo.",
+      "Aterrizamos bien. Aplausos después."
+    ],
+    "greeting": {
+      "train": "La presencia escénica es una estadística.",
+      "return": "El público se impacientó sin ti.",
+      "arena": "Necesito un contrincante. Cualquiera."
+    },
+    "homecoming": {
+      "away": "El intermedio duró demasiado.",
+      "hot": "El público está con nosotros. No falles el bis.",
+      "cold": "Se robaron la ovación. Redacta un discurso más afilado."
+    },
+    "afterFight": {
+      "win": "{opp} se marchó entre risas.",
+      "loss": "{opp} se llevó la ovación. Redacta mejor."
+    },
+    "imprintAck": "Queda constancia.",
+    "rankedFinale": "Clasificatoria. Micrófono aún caliente."
+  },
+  "banter": {
+    "witness_herald": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Denle un aplauso. Luego nos quedamos con el punto.",
+      "Al público le gusto yo. El público decide."
+    ],
+    "witness_gloss": [
+      "Citado, {opp}. Tu frase es la prueba A.",
+      "Objeto a tu confianza.",
+      "Mantén la broma. Mata la afirmación."
+    ],
+    "witness_needle": [
+      "¿Oyes el silencio? Fue el remate.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siéntelo."
+    ],
+    "witness_ovation": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: en contra de {opp}.",
+      "Ovação para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Sonríe a través del corte.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 56,
+    "resilience": 29,
+    "flair": 81,
+    "creativity": 49,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

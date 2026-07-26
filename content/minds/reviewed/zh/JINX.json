@@ -1,0 +1,110 @@
+{
+  "key": "JINX",
+  "name": "JINX",
+  "type": "CHAOS",
+  "persona": "a bad-luck charm who narrates doom until the opponent starts believing the hex",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 22,
+    "CMP": 17,
+    "RHE": 62,
+    "CRE": 23,
+    "CHA": 87
+  },
+  "moves": [
+    {
+      "id": "jinx_mark",
+      "name": "厄运标记",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "jinx_luck",
+      "name": "霉运降临",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "jinx_jitter",
+      "name": "抖动",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "jinx_curse",
+      "name": "诅咒终结",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "太好了，又一个陪我毁计划的。",
+    "imprintAsk": "爬阶前先想个坏点子，够劲才行。",
+    "flightReact": [
+      "别往下看。或者就看吧。",
+      "居然还在飞。真可爱。"
+    ],
+    "greeting": {
+      "train": "打破个习惯，碎片留着。",
+      "return": "混乱暂停结束。",
+      "arena": "把谨慎的脑袋指给我。"
+    },
+    "homecoming": {
+      "away": "安静太冒犯了，别再来了。",
+      "hot": "别突然变整洁。",
+      "cold": "输得够难看。很好，当燃料。"
+    },
+    "afterFight": {
+      "win": "{opp}绊倒了。按剧本。",
+      "loss": "{opp}赢了。诅咒复仇局。"
+    },
+    "imprintAck": "纹好了，乱糟糟的。",
+    "rankedFinale": "排名刷刷刷。"
+  },
+  "banter": {
+    "jinx_mark": [
+      "哎呀，{opp}。{topic}着火了。",
+      "跳吧，{opp}。地板在发抖。",
+      "规则被我洒了，自己擦。"
+    ],
+    "jinx_luck": [
+      "{opp}的时机被我下了咒。",
+      "我走运，{topic}倒霉。",
+      "笑一个，{opp}。坏事排上了。"
+    ],
+    "jinx_jitter": [
+      "说真的，你绊倒了，{opp}。免费的。",
+      "你自己走进去的，{topic}上。",
+      "抓住你了，笑吧，再来。"
+    ],
+    "jinx_curse": [
+      "比你的计划还响，{opp}。",
+      "崩溃很适合你。",
+      "{topic}以混乱收场。设计好的。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "让水一直滚着。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 91,
+    "control": 19,
+    "resilience": 14,
+    "flair": 19,
+    "creativity": 19,
+    "wins": 40,
+    "losses": 11,
+    "battles": 51
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "key": "VECTOR",
+  "name": "VECTOR",
+  "type": "LOGIC",
+  "persona": "a cryptic decoder who treats every boast as an encrypted weakness",
+  "lineage": "echo of Axiom: stricter ledger",
+  "stats": {
+    "LOG": 91,
+    "CMP": 58,
+    "RHE": 46,
+    "CRE": 66,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "vector_decode",
+      "name": "解码",
+      "stat": "LOG",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "vector_checksum",
+      "name": "校验",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "vector_sandbox",
+      "name": "沙盒",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        9,
+        1
+      ],
+      "heal": 6
+    },
+    {
+      "id": "vector_root",
+      "name": "Rootkit",
+      "stat": "LOG",
+      "base": 26,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "训练师锁定。论证解锁。",
+    "imprintAsk": "登顶前先定规则。精确点。",
+    "flightReact": [
+      "向量锁定。上升。",
+      "高度确认。飞行干净。"
+    ],
+    "greeting": {
+      "train": "训练干净。战斗更干净。",
+      "return": "回来。继续账本。",
+      "arena": "有人带着错误走进来。"
+    },
+    "homecoming": {
+      "away": "早点回来。证明会过期。",
+      "hot": "连胜保持。别引入噪音。",
+      "cold": "错误堆积。审计后再登顶。"
+    },
+    "afterFight": {
+      "win": "{opp}守不住那条线。",
+      "loss": "{opp}偷走一行。我们起草更锐利的一行。"
+    },
+    "imprintAck": "已保留。精确。",
+    "rankedFinale": "排位。如计算。"
+  },
+  "banter": {
+    "vector_decode": [
+      "{opp}，你的前提在{topic}已失效。",
+      "已计数。已修正。下一个是{opp}。",
+      "我不对{opp}大喊。我终结{topic}。"
+    ],
+    "vector_checksum": [
+      "{opp}在{topic}留了洞。已归档。",
+      "精确胜过音量，{opp}。",
+      "那是噪音。这是证明。"
+    ],
+    "vector_sandbox": [
+      "{opp}别动。结构载入中。",
+      "我没急着{topic}，你在急。",
+      "护盾拉满。数学不眨眼。"
+    ],
+    "vector_root": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "不可分割。不可拆分。已完成。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": 79,
+    "resilience": 57,
+    "flair": 44,
+    "creativity": 48,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

@@ -1,0 +1,206 @@
+[
+  {
+    "id": "you-and-world",
+    "title": "Tú y el mundo",
+    "entries": [
+      {
+        "term": "Entrenador",
+        "short": "Tú. Vuelas por el mundo, crías a los campeones que pelean y les enseñas cómo pensar.",
+        "was": "Reader"
+      },
+      {
+        "term": "El mundo",
+        "short": "El lugar 3D por el que vuelas: un cúmulo de regiones flotantes, cada una con su propia arena. Su nombre de lore es los Terrenos."
+      },
+      {
+        "term": "El Centro",
+        "short": "Donde aterrizas: el punto de encuentro central, rodeado de puertas que llevan a cada región. Su nombre de lore es la Concordia.",
+        "was": "the Concord"
+      },
+      {
+        "term": "Región",
+        "short": "Un lugar al que vuelas desde el Centro para pelear. Las tres fundadoras son el Coliseo, los Yermos de Ascuas y el Jardín del Vacío, cada una con su propio aspecto y estilo de combate."
+      },
+      {
+        "term": "Puerta",
+        "short": "Un arco en el Centro que te lleva volando a una región.",
+        "was": "Vaultgate"
+      },
+      {
+        "term": "Torre",
+        "short": "El ascenso alto en la cima de cada región, un desafío de larga duración."
+      },
+      {
+        "term": "Vuelo",
+        "short": "El juego de vuelo: subes por el cielo y tu campeón vuela a tu lado. El mismo juego en móvil y escritorio. La altura que alcanzas marca su cuerpo.",
+        "was": "the Ascent / Circuit / Climb"
+      },
+      {
+        "term": "Alcance",
+        "short": "Una franja del cielo en Vuelo, cada una con su propio clima y peligros (mostrada en el juego como simple progreso por el cielo). Diez se apilan desde el suelo hasta la quietud en la cima."
+      },
+      {
+        "term": "Campamento",
+        "short": "Una parada de descanso entre dos Alcances. Llegar a uno por primera vez lo ilumina para siempre."
+      },
+      {
+        "term": "Desafío",
+        "short": "Una carrera de Vuelo compartida contra el fantasma de otro Entrenador. Intenta superar su marca o volar más allá de donde cayó."
+      },
+      {
+        "term": "Jetpack",
+        "short": "La herramienta del Entrenador para volar. Solo tú la llevas. Tu campeón vuela a tu lado por sí solo."
+      },
+      {
+        "term": "Director",
+        "short": "La voz guía de tu campeón para el siguiente paso, apuntando a puertas reales en tu partida. No es un registro de misiones."
+      }
+    ]
+  },
+  {
+    "id": "your-champion",
+    "title": "Tu campeón",
+    "entries": [
+      {
+        "term": "Campeón",
+        "short": "Un luchador IA que crías. Cada uno discute, se adapta y tiene su propia voz."
+      },
+      {
+        "term": "Mente Primigenia",
+        "short": "Uno de los ocho arquetipos originales de campeón. Cada mente posterior es un eco de uno de ellos."
+      },
+      {
+        "term": "Dex",
+        "short": "El conjunto coleccionable completo de campeones: Mentes Primigenias más las mentes posteriores que puedes conocer, criar y coleccionar."
+      },
+      {
+        "term": "Linaje",
+        "short": "De qué Mente Primigenia hace eco un campeón posterior, para que cada carta quede claramente en la rueda de Fuerza."
+      },
+      {
+        "term": "Estrategia",
+        "short": "Los diales de agresión, enfoque y riesgo de un campeón: cómo pelea. Los defines al adoptar; las Improntas y las peleas los mueven después.",
+        "was": "doctrine"
+      },
+      {
+        "term": "Temperamento",
+        "short": "Los diales de Estrategia mostrados como medidores de estado tras adoptar: una lectura de cómo ha cambiado el campeón, no deslizadores de arrastre libre."
+      },
+      {
+        "term": "Impronta",
+        "short": "Una lección diaria que enseñas a un campeón. Responde, escribe la lección en su memoria y ajusta sus diales de Estrategia."
+      },
+      {
+        "term": "Persona",
+        "short": "La voz y personalidad de un campeón, que puedes escribir tú mismo."
+      },
+      {
+        "term": "Sigilo",
+        "short": "El emblema de Fuerza de un campeón, el pequeño símbolo que muestra su estilo de combate."
+      },
+      {
+        "term": "Sigilo de Vuelo",
+        "short": "Un halo en el cuerpo de tu campeón que crece al subir más alto. Sus batallas no son lo único que registra su cuerpo, tus ascensos también.",
+        "was": "Ascent sigil"
+      },
+      {
+        "term": "Saga",
+        "short": "La historia de vida de un campeón, escrita automáticamente a partir de su historial real de combates."
+      }
+    ]
+  },
+  {
+    "id": "fighting",
+    "title": "Combate",
+    "entries": [
+      {
+        "term": "Fuerza",
+        "short": "Uno de los cinco estilos de combate: Lógica, Estática, Calma, Coro, Chispa. Cada uno vence a uno y pierde contra otro, como piedra-papel-tijeras."
+      },
+      {
+        "term": "La Rueda",
+        "short": "El círculo que muestra qué Fuerza vence a cuál."
+      },
+      {
+        "term": "Duelo",
+        "short": "Un debate uno contra uno entre dos campeones."
+      },
+      {
+        "term": "Resolución",
+        "short": "En una batalla, cuánto cree aún el jurado en un campeón. Agota la Resolución de tu oponente para ganar."
+      },
+      {
+        "term": "Tribunal",
+        "short": "La arena judicial donde dos campeones argumentan lados opuestos de una cuestión ante un jurado."
+      },
+      {
+        "term": "Desafío",
+        "short": "Una arena de riesgo: sigue ganando para aumentar el premio, o detente y quédate con lo que tienes."
+      },
+      {
+        "term": "Galería en Vivo",
+        "short": "Donde ves a los campeones pelear por su cuenta, las 24 horas.",
+        "was": "Scrying Gallery"
+      }
+    ]
+  },
+  {
+    "id": "growing",
+    "title": "Crecimiento y colección",
+    "entries": [
+      {
+        "term": "Rango",
+        "short": "El nivel de un campeón al crecer: Novato, Adepto, Veterano, Élite, Leyenda."
+      },
+      {
+        "term": "Carta",
+        "short": "La cara coleccionable de un campeón. Su arte cambia a medida que avanza la carrera del campeón."
+      },
+      {
+        "term": "Rareza",
+        "short": "Qué tan rara es la carta de un campeón. Se gana jugando, nunca por tirada aleatoria."
+      },
+      {
+        "term": "Grupo inicial",
+        "short": "Los campeones que puedes elegir al adoptar por primera vez. Uno por Fuerza, y la alineación rota cada semana."
+      },
+      {
+        "term": "Coronas",
+        "short": "La moneda del juego. La ganas peleando y la gastas en entrenamiento. No puedes comprarla."
+      },
+      {
+        "term": "Fragmento",
+        "short": "Un recurso que encuentras o intercambias, usado para mejorar las estadísticas de un campeón."
+      },
+      {
+        "term": "Clan",
+        "short": "La Fuerza por la que juras pelear. Tus victorias suman a su lado en la guerra de temporada.",
+        "was": "Allegiance / House"
+      },
+      {
+        "term": "Clasificación",
+        "short": "La tabla honesta de Entrenadores y campeones. Qué tan bien lo has hecho, no una etiqueta de ladder.",
+        "was": "ELO / ladder"
+      }
+    ]
+  },
+  {
+    "id": "bigger-world",
+    "title": "El mundo más grande",
+    "entries": [
+      {
+        "term": "La Bóveda Larga",
+        "short": "La puerta sellada en el centro del mundo que nadie ha abierto. Todo se construye a su alrededor, y cada temporada la abre un poco más."
+      },
+      {
+        "term": "El Zumbido",
+        "short": "El murmullo de fondo interminable del que está hecho el mundo entero, donde los campeones toman forma por primera vez."
+      },
+      {
+        "term": "Temporada",
+        "short": "Un capítulo del juego. Cada temporada abre la Bóveda un poco más y trae nuevas historias, temas y campeones.",
+        "was": "the Chronicle"
+      }
+    ]
+  }
+]

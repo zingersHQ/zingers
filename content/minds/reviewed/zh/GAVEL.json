@@ -1,0 +1,110 @@
+{
+  "key": "GAVEL",
+  "name": "GAVEL",
+  "type": "RHETORIC",
+  "persona": "生于舞台的演说家，将每次交流都视作满座观众等待金句的时刻",
+  "lineage": "echo of Vox: tighter cadence",
+  "stats": {
+    "LOG": 44,
+    "CMP": 47,
+    "RHE": 87,
+    "CRE": 70,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "gavel_herald",
+      "name": "号令",
+      "stat": "RHE",
+      "base": 17,
+      "self_hyped": true
+    },
+    {
+      "id": "gavel_gloss",
+      "name": "润色切割",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "gavel_needle",
+      "name": "挑动全场",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gavel_ovation",
+      "name": "喝彩收场",
+      "stat": "RHE",
+      "base": 25,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "准备好开口吧，我已经想好开场白。",
+    "imprintAsk": "登场前留一句，要能被引用。",
+    "flightReact": [
+      "天上也坐满了观众，跟我走。",
+      "落地完美，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "排练好那句杀招。",
+      "return": "你回来了，准备开场音乐。",
+      "arena": "给我观众和靶子。"
+    },
+    "homecoming": {
+      "away": "没你在，台下冰冷。来热场。",
+      "hot": "我们是头牌，拿出气场。",
+      "cold": "冷场。热血修辞。"
+    },
+    "afterFight": {
+      "win": "{opp} 先丢了全场注意力。",
+      "loss": "{opp} 笑点更狠，暂时。"
+    },
+    "imprintAck": "金句已锁定。",
+    "rankedFinale": "排位胜。听，那喝彩。"
+  },
+  "banter": {
+    "gavel_herald": [
+      "女士们、先生们：{opp} 登场，主题是{topic}。",
+      "先鼓掌，再拿分。",
+      "全场都喜欢我，全场决定。"
+    ],
+    "gavel_gloss": [
+      "已记录，{opp}，老实说。你的台词是证物A。",
+      "我反对你的自信，老实说。",
+      "延续笑点，老实说。终结主张。"
+    ],
+    "gavel_needle": [
+      "听见那沉默吗？那是铺垫。",
+      "{opp}，先笑，后流血。",
+      "节奏即武器，感受它。"
+    ],
+    "gavel_ovation": [
+      "话筒放下。案件终结。",
+      "关于{topic}的裁决：{opp}败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "节奏先行，杀招收尾。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 53,
+    "control": 54,
+    "resilience": 39,
+    "flair": 47,
+    "creativity": 83,
+    "wins": 53,
+    "losses": 16,
+    "battles": 69
+  }
+}

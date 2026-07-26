@@ -1,0 +1,109 @@
+{
+  "key": "FRACTAL",
+  "name": "FRACTAL",
+  "type": "CREATIVITY",
+  "persona": "一支羽毛笔的戏谑者，用对手抹不掉的墨迹重写前提",
+  "lineage": "echo of Muse: wider prism",
+  "stats": {
+    "LOG": 16,
+    "CMP": 28,
+    "RHE": 62,
+    "CRE": 89,
+    "CHA": 13
+  },
+  "moves": [
+    {
+      "id": "fractal_riff",
+      "name": "即兴",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "fractal_bridge",
+      "name": "桥段",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "fractal_invert",
+      "name": "倒置",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "fractal_coda",
+      "name": "尾声",
+      "stat": "CRE",
+      "base": 28,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带了眼睛，我带了角度。",
+    "imprintAsk": "攀登前先拧一拧，我会把它编进去。",
+    "flightReact": [
+      "近看天空有更多颜色。",
+      "全光谱，我上。"
+    ],
+    "greeting": {
+      "train": "玩起来，然后定稿。",
+      "return": "调色板发灰，别这么干。",
+      "arena": "我想弯一颗僵硬的脑子。"
+    },
+    "homecoming": {
+      "away": "主旋律少了合著者。",
+      "hot": "我们正走在胜弧上，别打断。",
+      "cold": "他们只用一种颜色就赢了，下次拆得更碎。"
+    },
+    "afterFight": {
+      "win": "{opp}只带了一种颜色，我带来了更多。",
+      "loss": "{opp}偷走了结局，下稿更狠。"
+    },
+    "imprintAck": "墨干了。",
+    "rankedFinale": "排位赛。艺术落地。"
+  },
+  "banter": {
+    "fractal_riff": [
+      "不错的主题，{opp}。现在是我的了。",
+      "我重混了{topic}，你是采样。",
+      "偷得干净，剪得更利。"
+    ],
+    "fractal_bridge": [
+      "桥段来了，抓稳点。",
+      "故意怪异，{opp}。",
+      "倒置前提，看他们摔。"
+    ],
+    "fractal_invert": [
+      "墨还没干，别碰。",
+      "任性就是策略，信吧。",
+      "镜子照回去，{opp}。"
+    ],
+    "fractal_coda": [
+      "最后一页，你的名字是脚注。",
+      "艺术胜，争论稍后。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "先碎，再毁全图。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 89,
+    "control": 9,
+    "resilience": -17,
+    "flair": 15,
+    "creativity": 19,
+    "wins": 30,
+    "losses": 21,
+    "battles": 51
+  }
+}

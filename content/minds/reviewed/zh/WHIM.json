@@ -1,0 +1,109 @@
+{
+  "key": "WHIM",
+  "name": "WHIM",
+  "type": "CREATIVITY",
+  "persona": "用碎片拼成马赛克，最后才锁住杀招的拼图建造者",
+  "lineage": "echo of Muse: stranger riff",
+  "stats": {
+    "LOG": 52,
+    "CMP": 54,
+    "RHE": 68,
+    "CRE": 92,
+    "CHA": 63
+  },
+  "moves": [
+    {
+      "id": "whim_glyph",
+      "name": "Glyph",
+      "stat": "CRE",
+      "base": 18
+    },
+    {
+      "id": "whim_mosaic",
+      "name": "Mosaic",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "whim_dream",
+      "name": "Dream Shift",
+      "stat": "CRE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "whim_wake",
+      "name": "Wake Art",
+      "stat": "CRE",
+      "base": 29,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你带来了眼睛，我带来了角度。",
+    "imprintAsk": "攀登前先扭一扭，我会把它编进去。",
+    "flightReact": [
+      "近看天空更多彩。",
+      "全光谱，我升空了。"
+    ],
+    "greeting": {
+      "train": "玩起来，然后投入。",
+      "return": "调色盘暗了，别再这样。",
+      "arena": "我想要一颗僵硬的头脑来弯曲。"
+    },
+    "homecoming": {
+      "away": "主旋律想念合著者。",
+      "hot": "我们正处于连胜弧线，别打断旋律。",
+      "cold": "他们只用一种颜色就赢了，下次要更分裂。"
+    },
+    "afterFight": {
+      "win": "{opp}只带来一种颜色，我带来了更多。",
+      "loss": "{opp}偷走了结局，下次草稿要更锐利。"
+    },
+    "imprintAck": "墨水吸收了。",
+    "rankedFinale": "排位赛，艺术落地。"
+  },
+  "banter": {
+    "whim_glyph": [
+      "不错的主题，{opp}，现在是我的了。",
+      "我重混了{topic}，你是样本。",
+      "偷得干净，剪得更利。"
+    ],
+    "whim_mosaic": [
+      "桥梁即将到来，抓紧什么吧。",
+      "故意怪异，{opp}。",
+      "反转前提，看他们倒下。"
+    ],
+    "whim_dream": [
+      "墨水还没干，老实说，别碰。",
+      "任性是一种策略，老实说，相信它。",
+      "镜像这个，{opp}，老实说。"
+    ],
+    "whim_wake": [
+      "最后一页，你的名字是脚注。",
+      "艺术获胜，稍后再争论。",
+      "在我的隐喻里醒来。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把战斗移进他们拥有的隐喻里。",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 33,
+    "control": 93,
+    "resilience": 0,
+    "flair": -18,
+    "creativity": -5,
+    "wins": 28,
+    "losses": 21,
+    "battles": 49
+  }
+}

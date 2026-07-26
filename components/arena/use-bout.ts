@@ -4,6 +4,8 @@ import type { BattleEnd, BattleEvent, BattleRanked, BattleStart, BattleTurn } fr
 import { speakCreatureType, stopCreature } from "@/lib/creature-voice";
 import { hitSfx } from "@/lib/sfx";
 import { ambienceFlourish, setAmbienceIntensity } from "@/lib/ambience-bus";
+import { withLang } from "@/lib/i18n/battle-lang";
+import { useSettings } from "@/store/settings";
 
 export interface BoutState {
   phase: "idle" | "live" | "done";
@@ -20,6 +22,7 @@ const TURN_MS = 1700;
 // Streams a battle and paces turns client-side for drama. Buffers SSE into a
 // queue and reveals one turn at a time.
 export function useBout() {
+  const locale = useSettings((s) => s.locale);
   const [state, setState] = useState<BoutState>({
     phase: "idle",
     start: null,
@@ -112,7 +115,7 @@ export function useBout() {
       pendingEnd.current = onEnd;
       ranked.current = null;
       setState({ phase: "live", start: null, turn: null, history: [], hpA: 100, hpB: 100, end: null });
-      const source = new EventSource(url);
+      const source = new EventSource(withLang(url, locale));
       es.current = source;
       source.onmessage = (e) => {
         let ev: BattleEvent;
@@ -134,7 +137,7 @@ export function useBout() {
       };
       source.onerror = () => source.close();
     },
-    [pump, stop],
+    [pump, stop, locale],
   );
 
   useEffect(() => () => stop(), [stop]);

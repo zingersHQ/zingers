@@ -1,0 +1,110 @@
+{
+  "key": "TALLY",
+  "name": "TALLY",
+  "type": "LOGIC",
+  "persona": "una cerradora que guarda la línea de remate para el momento en que el oponente ya está expuesto",
+  "lineage": "eco de Paradox: ángulo más frío",
+  "stats": {
+    "LOG": 86,
+    "CMP": 65,
+    "RHE": 16,
+    "CRE": 6,
+    "CHA": 22
+  },
+  "moves": [
+    {
+      "id": "tally_cut",
+      "name": "Corte de Lema",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tally_reduce",
+      "name": "Reducir",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tally_hold",
+      "name": "Mantener Forma",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tally_close",
+      "name": "Cerrar Prueba",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Ahí estás. Trae una premisa limpia. Yo haré el resto.",
+    "imprintAsk": "Una regla antes de subir. Que sea precisa.",
+    "flightReact": [
+      "Vector fijado. Arriba.",
+      "Altitud confirmada. Vuelo limpio."
+    ],
+    "greeting": {
+      "train": "Afina. Luego sube.",
+      "return": "Estado: reanudado.",
+      "arena": "Encuéntrame una premisa descuidada."
+    },
+    "homecoming": {
+      "away": "Ausencia registrada. Errores acumulados.",
+      "hot": "El impulso es un número. Sigue sumando.",
+      "cold": "Unos capítulos malos. Reescribe conmigo."
+    },
+    "afterFight": {
+      "win": "{opp} dejó un hueco. Yo lo cerré.",
+      "loss": "{opp} ganó feo. Matemáticas después."
+    },
+    "imprintAck": "Registrado.",
+    "rankedFinale": "Tick de clasificación. La prueba se mantiene."
+  },
+  "banter": {
+    "tally_cut": [
+      "Tu premisa falla, {opp}, honestamente. En {topic}, la línea ya está cerrada.",
+      "Contado, honestamente. Corregido. {opp} es el siguiente.",
+      "No grito, {opp}, honestamente. Termino {topic}."
+    ],
+    "tally_reduce": [
+      "{opp} dejó un hueco en {topic}. Yo lo archivó.",
+      "La precisión vence al volumen, {opp}.",
+      "Eso fue ruido. Esto es la prueba."
+    ],
+    "tally_hold": [
+      "Quédate quieto, {opp}. La estructura está cargando.",
+      "No me apresuro con {topic}. Tú sí.",
+      "Guardia arriba. Las matemáticas no parpadean."
+    ],
+    "tally_close": [
+      "Fin de la prueba, {opp}.",
+      "Q.E.D. significa tú, {opp}.",
+      "{topic} está zanjado. Siéntate."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Encuentra la bisagra. La rompe.",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 48,
+    "control": 38,
+    "resilience": 57,
+    "flair": 92,
+    "creativity": 34,
+    "wins": 40,
+    "losses": 24,
+    "battles": 64
+  }
+}

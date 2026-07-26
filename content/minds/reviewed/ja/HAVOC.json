@@ -1,0 +1,110 @@
+{
+  "key": "HAVOC",
+  "name": "HAVOC",
+  "type": "CHAOS",
+  "persona": "苛立ちで勝負を決めるニードラー。派手さより相手の動揺を楽しむ",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 34,
+    "CMP": 21,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 88
+  },
+  "moves": [
+    {
+      "id": "havoc_mark",
+      "name": "呪刻印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "havoc_luck",
+      "name": "不運の呪",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "havoc_jitter",
+      "name": "身震い",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "havoc_curse",
+      "name": "終末呪",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "こん。地図握りすぎ注意。",
+    "imprintAsk": "登る前にまず一発悪戯。面白くやろ？",
+    "flightReact": [
+      "下見ない方がいいよ。見てもいいけど。",
+      "まだ飛んでる。まあ、いいけど。"
+    ],
+    "greeting": {
+      "train": "適当にやって。早く覚えるよ。",
+      "return": "戻ったんだ。退屈してた。",
+      "arena": "堅物を選んで。"
+    },
+    "homecoming": {
+      "away": "留守中、三回喧嘩売った。ほぼ。",
+      "hot": "変な勝ち方してるね。続けなよ。",
+      "cold": "連敗中。次は熱い呪い。"
+    },
+    "afterFight": {
+      "win": "{opp}、慎重だったね。可愛い。",
+      "loss": "{opp}、冷静だった。失礼。"
+    },
+    "imprintAck": "おっ。尖ったルール。",
+    "rankedFinale": "ランク戦勝利。乱雑。最高。"
+  },
+  "banter": {
+    "havoc_mark": [
+      "おっと、{opp}。{topic}が燃えてるよ。",
+      "踊れ、{opp}。床がおかしい。",
+      "ルール零した。拾って。"
+    ],
+    "havoc_luck": [
+      "タイミングに呪い、{opp}。",
+      "ラッキー私。アンメリィ{topic}。",
+      "笑え、{opp}。悪いのは予定通り。"
+    ],
+    "havoc_jitter": [
+      "転べ、本気。タダだったよ、{opp}。",
+      "自分で踏んだね、{topic}にまで。",
+      "引っ掛かり、笑え。繰り返せ。"
+    ],
+    "havoc_curse": [
+      "計画より大きい声だね、{opp}。",
+      "崩れ、似合うよ。",
+      "{topic}は散らかる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "一言で騒動を起こす。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 55,
+    "control": -8,
+    "resilience": 1,
+    "flair": 2,
+    "creativity": 93,
+    "wins": 49,
+    "losses": 22,
+    "battles": 71
+  }
+}

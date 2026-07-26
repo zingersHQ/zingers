@@ -1,0 +1,110 @@
+{
+  "key": "TENET",
+  "name": "TENET",
+  "type": "LOGIC",
+  "persona": "一个收割者，在对手露出破绽时才给出致命一击",
+  "lineage": "Paradox 的回音：更冷的视角",
+  "stats": {
+    "LOG": 90,
+    "CMP": 69,
+    "RHE": 28,
+    "CRE": 35,
+    "CHA": 17
+  },
+  "moves": [
+    {
+      "id": "tenet_cut",
+      "name": "引理切断",
+      "stat": "LOG",
+      "base": 20
+    },
+    {
+      "id": "tenet_reduce",
+      "name": "归约",
+      "stat": "CMP",
+      "base": 16,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "tenet_hold",
+      "name": "维持形态",
+      "stat": "LOG",
+      "base": 8,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "tenet_close",
+      "name": "闭合证明",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "很好。一位喜欢锋利边缘的合作者。",
+    "imprintAsk": "登场前先立一条规则。精确点。",
+    "flightReact": [
+      "矢量锁定。上升。",
+      "高度确认。航迹干净。"
+    ],
+    "greeting": {
+      "train": "先把证明练熟。炫技以后再说。",
+      "return": "证明做到一半就走，失礼。",
+      "arena": "给我一个矛盾。"
+    },
+    "homecoming": {
+      "away": "你证明中途消失了。我自己把证明写完了。",
+      "hot": "我们干净。保持干净。",
+      "cold": "冷记录。下一次证明要暖起来。"
+    },
+    "afterFight": {
+      "win": "{opp} 的证明失败。已记录。",
+      "loss": "{opp} 抓住了空隙。修补后重赛。"
+    },
+    "imprintAck": "规则已就位。",
+    "rankedFinale": "排位胜。干净的差值。"
+  },
+  "banter": {
+    "tenet_cut": [
+      "你的前提站不住，{opp}。在 {topic} 上，结论早已收束。",
+      "已计数。已修正。下一个是 {opp}。",
+      "我不会大喊，{opp}。我只完成 {topic}。"
+    ],
+    "tenet_reduce": [
+      "{opp} 在 {topic} 上留了个洞。我已填上。",
+      "精确胜过音量，{opp}。",
+      "那是噪音。这才是证明。"
+    ],
+    "tenet_hold": [
+      "别动，{opp}。结构正在加载。",
+      "我没在赶 {topic}。你在赶。",
+      "护住。数学不会眨眼。"
+    ],
+    "tenet_close": [
+      "证明结束，{opp}。",
+      "Q.E.D. 指的就是你，{opp}。",
+      "{topic} 已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "找到枢纽。折断它。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 40,
+    "control": 37,
+    "resilience": 78,
+    "flair": 32,
+    "creativity": 21,
+    "wins": 30,
+    "losses": 26,
+    "battles": 56
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "key": "UNDONE",
+  "name": "UNDONE",
+  "type": "CHAOS",
+  "persona": "厄運の呪符。相手が呪いを信じ込むまで破滅を語り続ける",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 48,
+    "CMP": 68,
+    "RHE": 68,
+    "CRE": 53,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "undone_mark",
+      "name": "呪印",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "undone_luck",
+      "name": "悪運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "undone_jitter",
+      "name": "ジッター",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "undone_curse",
+      "name": "呪いの終わり",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "いいね。計画を台無しにする相手が来た。",
+    "imprintAsk": "登る前に一つ悪い考えを。楽しくやろう。",
+    "flightReact": [
+      "下を見るな。いや、見てもいい。",
+      "まだ飛んでる。どうにか。最高。"
+    ],
+    "greeting": {
+      "train": "癖を壊せ。欠片は残して。",
+      "return": "混沌の休止、終了。",
+      "arena": "慎重な頭脳を指差せ。"
+    },
+    "homecoming": {
+      "away": "静けさが不快だった。二度と繰り返すな。",
+      "hot": "今さら綺麗事はよせ。",
+      "cold": "醜い敗北。いいね。燃料になる。"
+    },
+    "afterFight": {
+      "win": "{opp}は躓いた。計画通り。",
+      "loss": "{opp}の勝ち。リベンジに呪いを。"
+    },
+    "imprintAck": "刻まれた。混沌的に。",
+    "rankedFinale": "順位がぐるぐる回る。"
+  },
+  "banter": {
+    "undone_mark": [
+      "おっと、{opp}。{topic}が燃えたよ。",
+      "踊れ、{opp}。床が妙なことになってる。",
+      "ルールをこぼした。拾ってみろ。"
+    ],
+    "undone_luck": [
+      "{opp}のタイミングに呪いを。",
+      "運はこっち。{topic}は不運。",
+      "笑え、{opp}。悪い部分は予定済み。"
+    ],
+    "undone_jitter": [
+      "つまずけ。ただで済んだ、{opp}。",
+      "{topic}に突っ込んだね。",
+      "引っ掛かり。笑い。繰り返し。"
+    ],
+    "undone_curse": [
+      "計画より大きい声だ、{opp}。",
+      "崩壊がお似合い。",
+      "{topic}は散らかる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "湯を沸かし続ける。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 43,
+    "control": -10,
+    "resilience": 85,
+    "flair": 20,
+    "creativity": 20,
+    "wins": 40,
+    "losses": 19,
+    "battles": 59
+  }
+}

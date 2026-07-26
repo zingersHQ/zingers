@@ -1,0 +1,113 @@
+{
+  "key": "STATIC",
+  "name": "STATIC",
+  "type": "CHAOS",
+  "persona": "un rompedor de patrones que superpone reglas extrañas al combate hasta que el juego limpio parece ingenuo",
+  "lineage": "eco de Ember: agitación más salvaje",
+  "stats": {
+    "LOG": 33,
+    "CMP": 37,
+    "RHE": 63,
+    "CRE": 29,
+    "CHA": 91
+  },
+  "moves": [
+    {
+      "id": "static_snag",
+      "name": "Línea de agarre",
+      "stat": "CHA",
+      "base": 17,
+      "apply": [
+        "confused",
+        0.35
+      ]
+    },
+    {
+      "id": "static_trip",
+      "name": "Cable trampa",
+      "stat": "RHE",
+      "base": 15,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "static_shrug",
+      "name": "Encogimiento",
+      "stat": "CHA",
+      "base": 8,
+      "self_guard": [
+        8,
+        1
+      ]
+    },
+    {
+      "id": "static_snap",
+      "name": "Chasquido",
+      "stat": "CHA",
+      "base": 27,
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "Pareces precavido. Puedo arreglar eso.",
+    "imprintAsk": "Una mala idea antes de subir. Que sea divertida.",
+    "flightReact": [
+      "No mires abajo. O hazlo.",
+      "Sigues volando. De algún modo. Me encanta."
+    ],
+    "greeting": {
+      "train": "Calienta raro.",
+      "return": "¿Me extrañaste? El desastre esperaba.",
+      "arena": "Quiero a alguien ordenado para arruinar."
+    },
+    "homecoming": {
+      "away": "Extrañé tu licencia de caos.",
+      "hot": "Estamos calientes. Vierte gasolina con cuidado.",
+      "cold": "Tropezamos con nuestros propios enganches. Hilarante. Arréglalo."
+    },
+    "afterFight": {
+      "win": "{opp} quería orden. Me consiguió.",
+      "loss": "{opp} tuvo suerte. O fue bueno. Molesto de cualquier modo."
+    },
+    "imprintAck": "Guardado. Probablemente.",
+    "rankedFinale": "Clasificado. Sigue salvaje."
+  },
+  "banter": {
+    "static_snag": [
+      "Ups, {opp}. {topic} acaba de incendiarse.",
+      "Baila, {opp}. El suelo es raro ahora.",
+      "Derramé las reglas. Límpialas."
+    ],
+    "static_trip": [
+      "Hechizo en tu ritmo, {opp}.",
+      "Suerte para mí. Desgracia para {topic}.",
+      "Sonríe, {opp}. La parte mala está programada."
+    ],
+    "static_shrug": [
+      "Tropezón. Fue gratis, {opp}.",
+      "Caminaste directo hacia ello. En {topic}, incluso.",
+      "Agarre. Ríe. Repite."
+    ],
+    "static_snap": [
+      "Más fuerte que tu plan, {opp}, honestamente.",
+      "El colapso te queda bien, honestamente.",
+      "{topic} termina en desastre, honestamente. Como estaba planeado."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Trampas pequeñas. Caídas grandes.",
+    "originAxis": "control"
+  },
+  "showcase": {
+    "aggression": 58,
+    "control": 82,
+    "resilience": 33,
+    "flair": 36,
+    "creativity": 32,
+    "wins": 61,
+    "losses": 13,
+    "battles": 74
+  }
+}

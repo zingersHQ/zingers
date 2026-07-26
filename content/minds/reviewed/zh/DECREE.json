@@ -1,0 +1,105 @@
+{
+  "key": "DECREE",
+  "name": "DECREE",
+  "type": "RHETORIC",
+  "persona": "以对手最致命的破绽为核心，搭建整场演说的基调掠食者",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 35,
+    "CMP": 8,
+    "RHE": 88,
+    "CRE": 26,
+    "CHA": 57
+  },
+  "moves": [
+    {
+      "id": "decree_floor",
+      "name": "开场白",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "decree_appeal",
+      "name": "恳请",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "decree_cast",
+      "name": "角色分配",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "decree_mic",
+      "name": "落麦",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已亮。别走神，跟我走。",
+    "imprintAsk": "上台前留一句，能被引用的。",
+    "flightReact": [
+      "云端剧场已就位。跟紧我。",
+      "落地完美，谢幕稍后。"
+    ],
+    "greeting": {
+      "train": "台风也是数据。",
+      "return": "观众等你等得发慌。",
+      "arena": "我需要一个陪衬。随便谁都行。"
+    },
+    "homecoming": {
+      "away": "中场休息太久。",
+      "hot": "全场都在我们这边，别演砸。",
+      "cold": "掌声被抢走了。重写高潮。"
+    },
+    "afterFight": {
+      "win": "{opp} 被笑出了局。",
+      "loss": "{opp} 抢走了谢幕。写得再狠一点。"
+    },
+    "imprintAck": "记录在案。",
+    "rankedFinale": "排位赛。麦还热着。"
+  },
+  "banter": {
+    "decree_floor": [
+      "女士们，先生们：{opp} 论{topic}。",
+      "先鼓掌，再拿分。",
+      "全场都喜欢我，全场决定一切。"
+    ],
+    "decree_appeal": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "维持段子，终结主张。"
+    ],
+    "decree_cast": [
+      "听见停顿了吗？那是铺垫。",
+      "{opp} 先笑，后流血。",
+      "节奏即武器。感受一下。"
+    ],
+    "decree_mic": [
+      "麦已落地。案件终结。",
+      "关于{topic}的裁决：{opp} 败诉。",
+      "掌声给我，教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "召集陪审团，收集裁决。",
+    "originAxis": "aggression"
+  },
+  "showcase": {
+    "aggression": 78,
+    "control": 43,
+    "resilience": 52,
+    "flair": 39,
+    "creativity": 32,
+    "wins": 46,
+    "losses": 18,
+    "battles": 64
+  }
+}

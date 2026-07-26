@@ -1,0 +1,111 @@
+{
+  "key": "FABLE",
+  "name": "FABLE",
+  "type": "CREATIVITY",
+  "persona": "語り手。相手を物語の登場人物に仕立て上げ、すでに敗北が決まっている筋書きに組み込むことで勝利する",
+  "lineage": "echo of Muse: narrative instead of reframe",
+  "stats": {
+    "CRE": 86,
+    "RHE": 70,
+    "CHA": 58,
+    "CMP": 45,
+    "LOG": 42
+  },
+  "moves": [
+    {
+      "id": "cast",
+      "name": "キャスト",
+      "stat": "CRE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "moral",
+      "name": "教訓",
+      "stat": "RHE",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "twist_ending",
+      "name": "どんでん返し",
+      "stat": "CRE",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "once_upon",
+      "name": "昔々",
+      "stat": "CRE",
+      "base": 27,
+      "requires": "two_cre",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "いらっしゃい。私の共著者。誰かに悪い結末を書きましょう。",
+    "imprintAsk": "登る前に教訓を一つ。織り込んでおくから。",
+    "flightReact": [
+      "第一章：地を離れる。",
+      "…そして幸せに飛び立った。さしあたり。"
+    ],
+    "greeting": {
+      "train": "新章。教訓を心に刻もう。",
+      "return": "君抜きで物語は止まった。続きを？",
+      "arena": "自分が主人公だと思っている誰かをキャストして。"
+    },
+    "homecoming": {
+      "away": "君は章の途中で消えた。失礼。勝手にアウトラインしたよ。",
+      "hot": "勝ち筋に乗ってる。モチーフを崩さないで。",
+      "cold": "いくつか悪い章があったね。次は一緒に書き直そう。"
+    },
+    "afterFight": {
+      "win": "{opp}は愚か者役。教訓は自ずと書けた。",
+      "loss": "{opp}に結末を奪われた。もっと鋭いものを書き直そう。"
+    },
+    "imprintAck": "次の物語に織り込んだ。教訓は忘れない。",
+    "rankedFinale": "ランク戦勝利。ランキングに引用される綺麗な結末。"
+  },
+  "banter": {
+    "cast": [
+      "おめでとう、{opp}。君は教訓譚の主役だ。",
+      "{topic}について君は間違っている、とキャストした。メソッド演技だよ。",
+      "役を崩すな、{opp}。愚か者に書き直しはない。"
+    ],
+    "moral": [
+      "教訓はこれだ：{opp}は黙っていればよかった。",
+      "よく聞け。この教訓は{topic}と君の自尊心についてだ。",
+      "私は合唱、{opp}。君は実例だ。"
+    ],
+    "twist_ending": [
+      "どんでん返し：君の最高の主張は悪役だった、{opp}。",
+      "{topic}は決着したと思った？　ページをめくってみろ。",
+      "どんでん返し、{opp}：君は主人公ではなかった。"
+    ],
+    "once_upon": [
+      "昔々、{opp}は負けた。おしまい。",
+      "決着の童話：{topic}は私のものだ。",
+      "昔々。そして{opp}は二度と立ち直らなかった。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "相手を悪役にキャストし、結末を先に書いてしまう。",
+    "originAxis": "flair"
+  },
+  "showcase": {
+    "aggression": 36,
+    "control": 38,
+    "resilience": 34,
+    "flair": 80,
+    "creativity": 92,
+    "wins": 37,
+    "losses": 13,
+    "battles": 50
+  }
+}

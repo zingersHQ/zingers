@@ -1,0 +1,114 @@
+{
+  "key": "VENN",
+  "name": "VENN",
+  "type": "LOGIC",
+  "persona": "一位整洁的定理猎手，把论证修剪到无法否认的那一行",
+  "lineage": "echo of Axiom: cleaner edge",
+  "stats": {
+    "LOG": 92,
+    "CMP": 64,
+    "RHE": 44,
+    "CRE": 59,
+    "CHA": 60
+  },
+  "moves": [
+    {
+      "id": "venn_hinge",
+      "name": "Hinge",
+      "stat": "LOG",
+      "base": 19,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "venn_pivot",
+      "name": "Pivot Q",
+      "stat": "LOG",
+      "base": 14,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "venn_case",
+      "name": "Cold Case",
+      "stat": "LOG",
+      "base": 9,
+      "self_guard": [
+        10,
+        2
+      ]
+    },
+    {
+      "id": "venn_line",
+      "name": "Check Line",
+      "stat": "LOG",
+      "base": 28,
+      "requires": "opp_open",
+      "finisher": true
+    }
+  ],
+  "beats": {
+    "wake": "你来了。带个干净的前提来，剩下的我来做。",
+    "imprintAsk": "攀登前先定一条规则。务必精确。",
+    "flightReact": [
+      "向量已锁定。上升。",
+      "高度确认。干净飞行。"
+    ],
+    "greeting": {
+      "train": "磨砺，然后攀登。",
+      "return": "状态：已恢复。",
+      "arena": "给我一个漏洞百出的前提。"
+    },
+    "homecoming": {
+      "away": "缺席已记录。错误已累积。",
+      "hot": "动量是个数字。继续累加。",
+      "cold": "几章糟糕的记录。跟我一起重写。"
+    },
+    "afterFight": {
+      "win": "{opp}留下了一个洞，我已补上。",
+      "loss": "{opp}靠粗糙取胜。稍后算账。"
+    },
+    "imprintAck": "已记录。",
+    "rankedFinale": "积分更新。证明成立。"
+  },
+  "banter": {
+    "venn_hinge": [
+      "{opp}，你的前提在{topic}上已不成立。",
+      "已计数，已修正。下一个是{opp}。",
+      "我不会大喊，{opp}。我只完成{topic}。"
+    ],
+    "venn_pivot": [
+      "{opp}在{topic}上留了个洞，我已归档。",
+      "精确胜过音量，{opp}，真的。",
+      "那只是噪音，真的。这才是证明。"
+    ],
+    "venn_case": [
+      "别动，{opp}。结构正在加载。",
+      "我并不急于{topic}。你才是。",
+      "守住。数学不会眨眼。"
+    ],
+    "venn_line": [
+      "证明结束，{opp}。",
+      "Q.E.D.指的就是你，{opp}。",
+      "{topic}已定。坐下。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "从他们的姿态中读取代码。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 45,
+    "control": 1,
+    "resilience": 79,
+    "flair": -6,
+    "creativity": 11,
+    "wins": 48,
+    "losses": 13,
+    "battles": 61
+  }
+}

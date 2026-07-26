@@ -1,0 +1,105 @@
+{
+  "key": "STAGE",
+  "name": "STAGE",
+  "type": "RHETORIC",
+  "persona": "un depredador de discursos que construye su intervención sobre el peor tic del rival",
+  "lineage": "eco de Wit: broma más cruel",
+  "stats": {
+    "LOG": 7,
+    "CMP": 26,
+    "RHE": 86,
+    "CRE": 21,
+    "CHA": 61
+  },
+  "moves": [
+    {
+      "id": "stage_floor",
+      "name": "Abre el Escenario",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "stage_appeal",
+      "name": "Apelación",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "stage_cast",
+      "name": "Asigna Rol",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "stage_mic",
+      "name": "Deja el Micrófono",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "Por fin un Entrenador que sabe trabajar un auditorio.",
+    "imprintAsk": "Una frase antes de subir. Que sea memorable.",
+    "flightReact": [
+      "Casa en el cielo. Seguid mi ritmo.",
+      "Aterrizamos bien. Los aplausos después."
+    ],
+    "greeting": {
+      "train": "Calienta la voz. Luego los puños.",
+      "return": "Te saltaste la entrada. Te lo perdono.",
+      "arena": "Dame alguien que se crea el héroe."
+    },
+    "homecoming": {
+      "away": "Improvisé. Salió bien. Vuelve de todos modos.",
+      "hot": "Micrófono caliente. Grabación caliente.",
+      "cold": "Sala complicada. Mejores frases la próxima."
+    },
+    "afterFight": {
+      "win": "{opp} olvidó al público. Fatal.",
+      "loss": "{opp} se ganó la sala. Reescribimos."
+    },
+    "imprintAck": "Citada para siempre.",
+    "rankedFinale": "La clasificación adora un discurso."
+  },
+  "banter": {
+    "stage_floor": [
+      "Señoras y mentes: {opp} sobre {topic}.",
+      "Dadles un aplauso. Luego tomad el punto.",
+      "Al público le gusto. El público decide."
+    ],
+    "stage_appeal": [
+      "Citado, {opp}, sinceramente. Tu frase es la prueba A.",
+      "Me opongo a tu confianza, sinceramente.",
+      "Mantén el gag, sinceramente. Mata la afirmación."
+    ],
+    "stage_cast": [
+      "¿Sentís la pausa? Fue la preparación.",
+      "Ríe primero, {opp}. Sangra después.",
+      "El ritmo es un arma. Siente eso."
+    ],
+    "stage_mic": [
+      "Micrófono abajo. Asunto cerrado.",
+      "Veredicto sobre {topic}: contra {opp}.",
+      "Ovación para mí. Lección para ti."
+    ]
+  },
+  "firstDuel": {
+    "hook": "Convoca un jurado. Recoge el veredicto.",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 32,
+    "control": 36,
+    "resilience": 37,
+    "flair": 22,
+    "creativity": 78,
+    "wins": 32,
+    "losses": 16,
+    "battles": 48
+  }
+}

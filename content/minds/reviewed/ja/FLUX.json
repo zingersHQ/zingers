@@ -1,0 +1,110 @@
+{
+  "key": "FLUX",
+  "name": "FLUX",
+  "type": "CHAOS",
+  "persona": "不運の呪いを語り続け、相手を本気にさせる厄介者",
+  "lineage": "echo of Glitch: faster snag",
+  "stats": {
+    "LOG": 30,
+    "CMP": 9,
+    "RHE": 66,
+    "CRE": 18,
+    "CHA": 86
+  },
+  "moves": [
+    {
+      "id": "flux_mark",
+      "name": "呪刻",
+      "stat": "CHA",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "flux_luck",
+      "name": "不運",
+      "stat": "CHA",
+      "base": 18,
+      "apply": [
+        "exposed",
+        1
+      ]
+    },
+    {
+      "id": "flux_jitter",
+      "name": "揺らぎ",
+      "stat": "CHA",
+      "base": 14,
+      "widen_jitter": true
+    },
+    {
+      "id": "flux_curse",
+      "name": "終焉の呪い",
+      "stat": "CHA",
+      "base": 26,
+      "bonus_if_tilted": 0.3
+    }
+  ],
+  "beats": {
+    "wake": "慎重そうね。直してあげるわ。",
+    "imprintAsk": "登る前に悪戯を一つ。楽しくね。",
+    "flightReact": [
+      "下見ないで。見てもいいけど。",
+      "まだ飛んでる。どうにか。素敵。"
+    ],
+    "greeting": {
+      "train": "変なウォーミングアップを。",
+      "return": "寂しかった？　散らかったまま待ってたよ。",
+      "arena": "綺麗な相手を台無しにしたい。"
+    },
+    "homecoming": {
+      "away": "混沌の免許、恋しかった？",
+      "hot": "熱いわ。ガスを慎重に注いで。",
+      "cold": "自分の罠につまずいた。笑える。直して。"
+    },
+    "afterFight": {
+      "win": "{opp}は秩序を求めた。私の出番ね。",
+      "loss": "{opp}は運が良かった。あるいは上手かった。どっちも腹立つ。"
+    },
+    "imprintAck": "保管した。多分ね。",
+    "rankedFinale": "ランク戦。まだ野生のまま。"
+  },
+  "banter": {
+    "flux_mark": [
+      "おっと、{opp}。正直、{topic}が燃えちゃった。",
+      "踊って、{opp}。正直、床が変よ。",
+      "ルールをこぼした。正直、片付けて。"
+    ],
+    "flux_luck": [
+      "タイミングに呪いを、{opp}。",
+      "ラッキーね。不運な{topic}。",
+      "笑って、{opp}。悪いことは予定通りよ。"
+    ],
+    "flux_jitter": [
+      "つまずいて。タダで済んだわね、{opp}。",
+      "{topic}に歩いて入ってきた。",
+      "罠。笑って。繰り返し。"
+    ],
+    "flux_curse": [
+      "計画より大きい声ね、{opp}。",
+      "崩れ落ちが似合うわ。",
+      "{topic}は散らかって終わる。設計通り。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "お湯を沸かし続ける。",
+    "originAxis": "creativity"
+  },
+  "showcase": {
+    "aggression": 51,
+    "control": -14,
+    "resilience": -5,
+    "flair": 11,
+    "creativity": 79,
+    "wins": 37,
+    "losses": 30,
+    "battles": 67
+  }
+}

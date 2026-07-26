@@ -1,0 +1,105 @@
+{
+  "key": "GLOSS",
+  "name": "GLOSS",
+  "type": "RHETORIC",
+  "persona": "判決を下す法廷の精神。謝罪ゼロで議論を完結させる",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 21,
+    "CMP": 8,
+    "RHE": 90,
+    "CRE": 20,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "gloss_floor",
+      "name": "Open Floor",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "gloss_appeal",
+      "name": "Appeal",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "gloss_cast",
+      "name": "Cast Role",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gloss_mic",
+      "name": "Drop Mic",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "スポットライトが熱い。ついて来て。",
+    "imprintAsk": "一言で。引用に値するものを。",
+    "flightReact": [
+      "空の家屋。私の後に続け。",
+      "着地成功。後で礼を。"
+    ],
+    "greeting": {
+      "train": "存在感こそ能力値だ。",
+      "return": "君抜きで観客が退屈した。",
+      "arena": "対立役が必要だ。誰でもいい。"
+    },
+    "homecoming": {
+      "away": "休憩が長引いた。",
+      "hot": "観客は味方。しくじらないで。",
+      "cold": "喝采を奪われた。もっと鋭い台詞を。"
+    },
+    "afterFight": {
+      "win": "{opp}は笑い飛ばされた。",
+      "loss": "{opp}が喝采を奪った。次はもっと良く。"
+    },
+    "imprintAck": "記録済み。",
+    "rankedFinale": "ランク戦。マイクはまだ熱い。"
+  },
+  "banter": {
+    "gloss_floor": [
+      "淑女と諸君：{topic}の{opp}だ。",
+      "拍手して。それから論点を奪う。",
+      "観客は私を好く。観客が決める。"
+    ],
+    "gloss_appeal": [
+      "引用済み、{opp}。君の発言は証拠Aだ。",
+      "君の自信に異議を唱える。",
+      "ネタを続けろ。主張を殺せ。"
+    ],
+    "gloss_cast": [
+      "間の取り方が聞こえるか？それが伏線だ。",
+      "{opp}、先笑え。次に血を流す。",
+      "リズムは武器だ。感じろ。"
+    ],
+    "gloss_mic": [
+      "マイク・ダウン。件は終了。",
+      "{topic}に関する判決：{opp}に対し。",
+      "喝采は私へ。教訓は君へ。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "弱い主張を刃に研ぎ上げる。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": -8,
+    "resilience": 78,
+    "flair": 12,
+    "creativity": -6,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}

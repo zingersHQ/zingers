@@ -1,0 +1,105 @@
+{
+  "key": "GLOSS",
+  "name": "GLOSS",
+  "type": "RHETORIC",
+  "persona": "一位锤下即判的头脑，终结辩论时礼仪庄重且绝不道歉",
+  "lineage": "echo of Wit: meaner jest",
+  "stats": {
+    "LOG": 21,
+    "CMP": 8,
+    "RHE": 90,
+    "CRE": 20,
+    "CHA": 69
+  },
+  "moves": [
+    {
+      "id": "gloss_floor",
+      "name": "开放发言",
+      "stat": "RHE",
+      "base": 18
+    },
+    {
+      "id": "gloss_appeal",
+      "name": "上诉",
+      "stat": "CHA",
+      "base": 14,
+      "self_hyped": true
+    },
+    {
+      "id": "gloss_cast",
+      "name": "角色分配",
+      "stat": "RHE",
+      "base": 16,
+      "apply": [
+        "tilted",
+        1
+      ]
+    },
+    {
+      "id": "gloss_mic",
+      "name": "落锤",
+      "stat": "RHE",
+      "base": 22
+    }
+  ],
+  "beats": {
+    "wake": "聚光灯已暖。和我一起留在其中。",
+    "imprintAsk": "登顶前留一句。让它值得引用。",
+    "flightReact": [
+      "天空之屋。跟紧我的节奏。",
+      "落地已稳。谢礼稍后。"
+    ],
+    "greeting": {
+      "train": "舞台存在感也是一项数据。",
+      "return": "观众因你而坐立不安。",
+      "arena": "我需要一个对立面。任何都行。"
+    },
+    "homecoming": {
+      "away": "中场休息拖得太长。",
+      "hot": "全场与我们同在。别演砸了安可。",
+      "cold": "他们抢走了掌声。重写一段更锋利的台词。"
+    },
+    "afterFight": {
+      "win": "{opp} 被笑声逐出场外。",
+      "loss": "{opp} 收下了掌声。写得再好一点。"
+    },
+    "imprintAck": "已记录在案。",
+    "rankedFinale": "排位。麦仍热。"
+  },
+  "banter": {
+    "gloss_floor": [
+      "女士们与诸位头脑：{opp} 论{topic}。",
+      "先鼓掌，再拿分。",
+      "全场喜欢我。全场做主。"
+    ],
+    "gloss_appeal": [
+      "已引用，{opp}。你的台词是证物A。",
+      "我反对你的自信。",
+      "维持笑点。终结主张。"
+    ],
+    "gloss_cast": [
+      "听见停顿了吗？那是铺垫。",
+      "先笑，{opp}。再流血。",
+      "节奏即武器。感受它。"
+    ],
+    "gloss_mic": [
+      "麦已落。案已结。",
+      "关于{topic}的裁决：驳回{opp}。",
+      "掌声给我。教训给你。"
+    ]
+  },
+  "firstDuel": {
+    "hook": "把脆弱的论点打磨成刃。",
+    "originAxis": "resilience"
+  },
+  "showcase": {
+    "aggression": 52,
+    "control": -8,
+    "resilience": 78,
+    "flair": 12,
+    "creativity": -6,
+    "wins": 45,
+    "losses": 23,
+    "battles": 68
+  }
+}
