@@ -2,7 +2,7 @@
 export const BRAND = {
   name: "Zingers",
   nameUpper: "ZINGERS",
-  tagline: "train · fight · evolve living champions",
+  tagline: "you fly. it fights. you both rise.",
   site: "https://zingers.gg",
   siteTech: "https://zingers.org",
   twitter: "zingersHQ",

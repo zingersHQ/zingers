@@ -1,13 +1,15 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { Plug, Swords } from "lucide-react";
-import type { CreatureType, RosterEntry } from "@/lib/types";
+import type { CreatureType, RosterEntry, Strat } from "@/lib/types";
+import { DEFAULT_STRAT } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { getOwnerToken } from "@/lib/owner";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { TrainerCode } from "@/components/trainer-code";
+import { useChampions } from "@/store/champions";
+import { ROSTER } from "@/lib/engine/roster";
 
 interface LadderChampion {
   id: string;
@@ -35,6 +37,9 @@ interface FeedEntry {
 const ACC = "#7c5cff";
 
 export default function StandingsPage() {
+  const owned = useChampions((s) => s.owned);
+  const recipes = useChampions((s) => s.recipes);
+
   const [ladder, setLadder] = useState<LadderChampion[]>([]);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [shared, setShared] = useState(true);
@@ -44,11 +49,9 @@ export default function StandingsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const tokenRef = useRef("");
 
-  // claim form — champion name is server-assigned (Ubuntu-style); no free text
-  const [pick, setPick] = useState("");
+  // claim form — roster mind from your save; Ubuntu-style name minted server-side
   const [brain, setBrain] = useState<"grok" | "http">("grok");
   const [endpoint, setEndpoint] = useState("");
-  const [dials, setDials] = useState({ risk: 50, focus: 50, aggression: 50 });
 
   const refresh = useCallback(async () => {
     const [lr, fr] = await Promise.all([
@@ -71,7 +74,6 @@ export default function StandingsPage() {
     tokenRef.current = getOwnerToken();
     fetch("/api/roster").then((r) => r.json()).then((d) => {
       setRoster(d.creatures);
-      setPick(d.creatures[0]?.key || "");
     });
     refresh();
     loadOwned();
@@ -85,16 +87,20 @@ export default function StandingsPage() {
   };
 
   const claim = async () => {
-    if (!pick) return;
+    if (!owned || !ROSTER[owned]) {
+      flash("Claim a mind in the Grounds first.");
+      return;
+    }
     setBusy("claim");
+    const strat: Strat = recipes[owned]?.strat || DEFAULT_STRAT;
     const res = await fetch("/api/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ownerToken: tokenRef.current,
-        key: pick,
+        key: owned,
         brain: brain === "http" && endpoint ? { provider: "http", endpoint } : { provider: "grok" },
-        strat: dials,
+        strat,
       }),
     }).then((r) => r.json());
     setBusy(null);
@@ -119,6 +125,8 @@ export default function StandingsPage() {
 
   const topRating = ladder[0]?.rating ?? 1000;
   const rosterByKey = useMemo(() => Object.fromEntries(roster.map((r) => [r.key, r])), [roster]);
+  const onBoard = ladder.some((c) => ownedIds.has(c.id));
+  const ownedEntry = owned && ROSTER[owned] ? ROSTER[owned] : null;
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "26px 22px 90px" }}>
@@ -205,62 +213,64 @@ export default function StandingsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 76 }}>
           <TrainerCode />
 
-          {/* claim */}
-          <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE BOARD</div>
-            <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px", lineHeight: 1.45 }}>
-              They get a unique name when they join. You stay the driver.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <select value={pick} onChange={(e) => setPick(e.target.value)} style={inputStyle}>
-                {roster.map((r) => (
-                  <option key={r.key} value={r.key}>{r.name} · {r.type}</option>
-                ))}
-              </select>
+          {/* claim — your mind from the Grounds; board name minted server-side */}
+          {!onBoard && (
+            <div className="panel" style={{ ["--ac" as string]: ACC, padding: 16 }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: ACC, marginBottom: 10 }}>PUT A CHAMPION ON THE BOARD</div>
+              <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "0 0 10px", lineHeight: 1.45 }}>
+                They get a unique name when they join. You stay the driver.
+              </p>
+              {ownedEntry ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800 }}>
+                    {ownedEntry.name}
+                    <span className="mono" style={{ fontSize: 10, color: TYPE_COLOR[ownedEntry.type], marginLeft: 8 }}>
+                      {forceName(ownedEntry.type)}
+                    </span>
+                  </div>
 
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["grok", "http"] as const).map((b) => (
-                  <button
-                    key={b}
-                    onClick={() => setBrain(b)}
-                    className="mono"
-                    style={{
-                      flex: 1,
-                      fontSize: 10,
-                      padding: "8px 6px",
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      border: `1px solid ${brain === b ? ACC : "var(--line2)"}`,
-                      background: brain === b ? "rgba(124,92,255,.12)" : "transparent",
-                      color: brain === b ? ACC : "var(--muted)",
-                    }}
-                  >
-                    {b === "grok" ? "House Grok" : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> My agent</span>}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(["grok", "http"] as const).map((b) => (
+                      <button
+                        key={b}
+                        type="button"
+                        onClick={() => setBrain(b)}
+                        className="mono"
+                        style={{
+                          flex: 1,
+                          fontSize: 10,
+                          padding: "8px 6px",
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          border: `1px solid ${brain === b ? ACC : "var(--line2)"}`,
+                          background: brain === b ? "rgba(124,92,255,.12)" : "transparent",
+                          color: brain === b ? ACC : "var(--muted)",
+                        }}
+                      >
+                        {b === "grok" ? "House Grok" : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Plug size={11} strokeWidth={2} /> My agent</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {brain === "http" && (
+                    <input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://your-agent.example/act" style={inputStyle} />
+                  )}
+
+                  <button type="button" onClick={claim} disabled={busy === "claim"} className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", marginTop: 4, opacity: busy === "claim" ? 0.5 : 1 }}>
+                    {busy === "claim" ? "Entering…" : "Claim & join standings →"}
                   </button>
-                ))}
-              </div>
-              {brain === "http" && (
-                <input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://your-agent.example/act" style={inputStyle} />
-              )}
-
-              {(["risk", "focus", "aggression"] as const).map((k) => (
-                <label key={k} className="mono" style={{ fontSize: 10, color: "var(--muted2)", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 64, textTransform: "uppercase" }}>{k}</span>
-                  <input type="range" min={0} max={100} value={dials[k]} onChange={(e) => setDials({ ...dials, [k]: Number(e.target.value) })} style={{ flex: 1, accentColor: ACC }} />
-                  <span style={{ width: 22, textAlign: "right", color: "var(--ink)" }}>{dials[k]}</span>
-                </label>
-              ))}
-
-              <button onClick={claim} disabled={busy === "claim"} className="btn btn-primary" style={{ ["--ac" as string]: "var(--gold)", marginTop: 4, opacity: busy === "claim" ? 0.5 : 1 }}>
-                {busy === "claim" ? "Entering…" : "Claim & join standings →"}
-              </button>
-              {brain === "http" && (
-                <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.4, margin: 0 }}>
-                  We POST the game state to your URL and expect a move. Your keys stay on your server.
+                  {brain === "http" && (
+                    <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", lineHeight: 1.4, margin: 0 }}>
+                      We POST the game state to your URL and expect a move. Your keys stay on your server.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mono" style={{ fontSize: 11, color: "var(--muted2)", margin: 0, lineHeight: 1.45 }}>
+                  Claim a mind in the Grounds first, then bring them here.
                 </p>
               )}
             </div>
-          </div>
+          )}
 
           {/* feed */}
           <div className="panel" style={{ ["--ac" as string]: "var(--good)", padding: 16 }}>

@@ -623,7 +623,7 @@ function EvolveStep({
 
   const tweet = useCallback(() => {
     const url = cardShareUrl(key, after);
-    const text = `I raised ${name} on Zingers: train · fight · evolve.`;
+    const text = `I raised ${name} on Zingers. You fly. It fights. You both rise.`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
   }, [key, name, after]);
 
