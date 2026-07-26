@@ -1,15 +1,16 @@
 // Vertical reach the flyer can cover in a gap — used to keep generated
 // layouts physically finishable (docs/climb-feel: altitude is the skill axis).
 //
-// Budgets use the mobile Climb accel model (slightly weaker than desktop's
-// FLY_THRUST). Layouts are authored in climb-canonical space then × VERT_SCALE,
-// so we divide the world-space budget by DESKTOP_VERT_SCALE.
+// Layout budgets stay conservative (below live mobile thrust) so hotter mobile
+// cruise (MOBILE_CRUISE_MULT) still leaves flap headroom. Do NOT mirror every
+// circuit-lite bump here — raising these makes generators place harder rings.
+// Live flyer: THRUST 54 − GRAVITY 28 = net 26, MAX_RISE 13, KICK 4.2.
 
 import { DESKTOP_VERT_SCALE } from "./body-scale";
 
-// Mirror circuit-lite vertical constants (keep in sync if those move).
+// Conservative layout envelope (deliberately below live Climb thrust).
 const KICK = 4;
-const NET_UP = 22; // THRUST_ACCEL 50 − GRAVITY 28
+const NET_UP = 22;
 const MAX_RISE = 12;
 const GRAVITY = 28;
 const MAX_FALL = 18;

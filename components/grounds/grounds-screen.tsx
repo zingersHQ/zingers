@@ -335,6 +335,8 @@ export default function GroundsScreen({
   const activeVenue = gameSession?.venue ?? null;
   const venueHostWorldId = gameSession?.hostWorldId ?? worldId;
   const inVenue = !!activeVenue;
+  /** Wilds coaches / chrome only — never on `/ascent` or inside a venue (Flight, Amphitheatre). */
+  const worldRoamOpen = !ascentEntry && !inVenue;
   const theme = useTheme();
   // declared up here (not with the rest of the Circuit state below) because the
   // venue biome reads it to pick the current sector's Reach sky
@@ -1647,7 +1649,12 @@ export default function GroundsScreen({
         setClaimArriveCover(true);
         setConcordCoach(true);
         setGuideNudge(true);
-      } else if (isFirstDuelComplete() && localStorage.getItem(STORAGE.concordCoach) !== "1") {
+      } else if (
+        !ascentEntry &&
+        isFirstDuelComplete() &&
+        localStorage.getItem(STORAGE.concordCoach) !== "1"
+      ) {
+        // /ascent is fly-first — never arm Hub coaches before Circuit mounts.
         setConcordCoach(true);
         setGuideNudge(localStorage.getItem(STORAGE.firstGuide) !== "1");
       } else {
@@ -1671,7 +1678,7 @@ export default function GroundsScreen({
       const introDone = !!(localStorage.getItem(STORAGE.intro) || localStorage.getItem(STORAGE.introLegacy));
       if (seenRaw == null) {
         localStorage.setItem(STORAGE.seasonSeen, String(now));
-      } else if (Number(seenRaw) < now && introDone && isFirstDuelComplete()) {
+      } else if (!ascentEntry && Number(seenRaw) < now && introDone && isFirstDuelComplete()) {
         setSeasonBeat(true);
         // Stamp the season turn into the active champion's saga — it survived a
         // Vault door opening, and the biography should remember that.
@@ -1734,7 +1741,7 @@ export default function GroundsScreen({
       setGoalCoach(false);
       return;
     }
-    if (!owned || claiming || inVenue || liveGoals.length === 0) return;
+    if (!owned || claiming || !worldRoamOpen || liveGoals.length === 0) return;
     const firstVisit = !regionGoalIntroducedRef.current.has(world.id);
     const fromHub = arrivedFromHubRef.current;
     if (firstVisit || fromHub) {
@@ -1742,7 +1749,7 @@ export default function GroundsScreen({
       arrivedFromHubRef.current = false;
       setGoalCoach(true);
     }
-  }, [world.id, isHub, inVenue, owned, claiming, liveGoals.length]);
+  }, [world.id, isHub, worldRoamOpen, owned, claiming, liveGoals.length]);
 
   const dismissReaderSplitCoach = useCallback(() => {
     try {
@@ -2977,7 +2984,15 @@ export default function GroundsScreen({
   // — the compass sat at z-index 100 above CharacterBeat (92), breaking keeper
   // dialogues and other overlays.
   const cinematicOpen =
-    seasonBeat || !!rivalBeat || !!wakeKey || !!flightKey || imprintTease || !!keeperIntroPending || !!companionBeat || !!trialNom || !!clanCeremony;
+    seasonBeat ||
+    !!rivalBeat ||
+    !!wakeKey ||
+    !!flightKey ||
+    (imprintTease && worldRoamOpen) ||
+    !!keeperIntroPending ||
+    !!companionBeat ||
+    !!trialNom ||
+    !!clanCeremony;
   /** Sheets / cinematics that must own the screen alone — no orphan toasts on top. */
   const sheetOwnsScreen =
     showMatch ||
@@ -3028,7 +3043,7 @@ export default function GroundsScreen({
   // champion asks for one Imprint — then a soft raise nudge (not the full Train sheet).
   useEffect(() => {
     if (!mounted || !owned || imprintTease || regionRaiseCoach) return;
-    if (isHub || inVenue || showMatch || overlay !== "none") return;
+    if (!worldRoamOpen || isHub || showMatch || overlay !== "none") return;
     if (concordCoach || wakeKey || flightKey || travelCard || claimArriveCover) return;
     try {
       if (localStorage.getItem(STORAGE.imprintCoach) === "1") return;
@@ -3041,8 +3056,8 @@ export default function GroundsScreen({
     owned,
     imprintTease,
     regionRaiseCoach,
+    worldRoamOpen,
     isHub,
-    inVenue,
     showMatch,
     overlay,
     concordCoach,
@@ -3051,6 +3066,17 @@ export default function GroundsScreen({
     travelCard,
     claimArriveCover,
   ]);
+
+  // Flight / venue owns the screen — kill wilds coaches so they can't arm during
+  // the /ascent → Circuit gap or linger after enterVenue.
+  useEffect(() => {
+    if (worldRoamOpen) return;
+    setImprintTease(false);
+    setRegionRaiseCoach(false);
+    setArenaFightCoach(false);
+    setReaderSplitStep(null);
+    setGoalCoach(false);
+  }, [worldRoamOpen]);
 
   // Post-claim remount: force Concord, pose at outer spawn facing Grounds gate, then lift cover.
   useEffect(() => {
@@ -3623,8 +3649,8 @@ export default function GroundsScreen({
         </div>
       )}
 
-      {/* cache-claimed celebration — never over a sheet/modal */}
-      {nodeFlash && !sheetOwnsScreen && (
+      {/* cache-claimed celebration — never over a sheet/modal or Flight */}
+      {nodeFlash && worldRoamOpen && !sheetOwnsScreen && (
         <Celebration
           tone="good"
           accent={nodeFlash.fragments > 0 ? "#39e0ff" : "#f0a93a"}
@@ -3831,7 +3857,7 @@ export default function GroundsScreen({
         />
       )}
 
-      {goalCoach && owned && !sheetOwnsScreen && !isHub && !inVenue && liveGoals.length > 0 && readerSplitStep === null && (
+      {goalCoach && owned && !sheetOwnsScreen && !isHub && worldRoamOpen && liveGoals.length > 0 && readerSplitStep === null && (
         <ObjectiveToasts goals={liveGoals} isMobile={isMobile} onDone={dismissGoalCoach} />
       )}
 
@@ -3884,7 +3910,7 @@ export default function GroundsScreen({
         </div>
       )}
 
-      {readerSplitStep !== null && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
+      {readerSplitStep !== null && worldRoamOpen && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--gold)", textAlign: "center" }}>
             {readerSplitStep === 0 ? (
@@ -3915,7 +3941,7 @@ export default function GroundsScreen({
       )}
 
       {/* After Train — send them to the Arena (this region's fight pit), not another menu. */}
-      {arenaFightCoach && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
+      {arenaFightCoach && worldRoamOpen && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--good)", pointerEvents: "auto", maxWidth: 520, width: "100%", padding: "14px 16px", borderColor: "var(--good)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--good)", marginBottom: 6 }}>NEXT · A REAL FIGHT</div>
@@ -3943,7 +3969,7 @@ export default function GroundsScreen({
       )}
 
       {/* First region: after Imprint — one soft raise nudge. No Crowns / pad essay. */}
-      {regionRaiseCoach && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
+      {regionRaiseCoach && worldRoamOpen && !isHub && owned && !sheetOwnsScreen && !inFirstDuelSetup && !imprintTease && !arenaFightCoach && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 60, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "var(--gold)", pointerEvents: "auto", maxWidth: 420, width: "100%", padding: "14px 16px", borderColor: "var(--gold)" }}>
             <div className="mono" style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold)", marginBottom: 6 }}>RAISE YOUR CHAMPION</div>
@@ -3972,7 +3998,7 @@ export default function GroundsScreen({
 
       {/* first-ranked-win Clan invite — one-time, surfaces after the result
           card closes (deferred so the choice arrives when it means something) */}
-      {clanInvite && owned && !store.force && !modesLocked && !sheetOwnsScreen && !result && (
+      {clanInvite && worldRoamOpen && owned && !store.force && !modesLocked && !sheetOwnsScreen && !result && (
         <div style={{ position: "absolute", bottom: (isMobile ? 96 : 70) + compassReserve + 64, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 59, padding: isMobile ? "0 104px 0 16px" : "0 16px" }}>
           <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", pointerEvents: "auto", display: "flex", alignItems: "center", gap: 12, padding: "9px 13px", maxWidth: 480, borderColor: "#c77dff" }}>
             <span style={{ fontSize: 16, color: "#c77dff", flexShrink: 0 }}>⚑</span>
@@ -3986,7 +4012,7 @@ export default function GroundsScreen({
       )}
 
       {/* goal-cleared celebration (peak / depth / secret) */}
-      {goalFlash && !sheetOwnsScreen && (
+      {goalFlash && worldRoamOpen && !sheetOwnsScreen && (
         <Celebration
           tone="epic"
           accent={goalFlash.goalKind === "secret" ? "#c77dff" : goalFlash.goalKind === "depth" ? "#39e0ff" : "#f0a93a"}
@@ -4001,7 +4027,7 @@ export default function GroundsScreen({
       )}
 
       {/* tier-up celebration — your champion's body just evolved a new part */}
-      {evoFlash && !sheetOwnsScreen && (
+      {evoFlash && worldRoamOpen && !sheetOwnsScreen && (
         <Celebration
           tone="epic"
           accent={byKey[evoFlash.key] ? TYPE_COLOR[byKey[evoFlash.key].type] : "var(--gold)"}
@@ -4039,7 +4065,7 @@ export default function GroundsScreen({
       )}
 
       {/* clan-joined celebration — brief after the ceremony (or immediately if reduced motion) */}
-      {pledgeFlash && !sheetOwnsScreen && !clanCeremony && (
+      {pledgeFlash && worldRoamOpen && !sheetOwnsScreen && !clanCeremony && (
         <Celebration
           tone="pledge"
           accent={pledgeFlash.color}
@@ -4254,7 +4280,7 @@ export default function GroundsScreen({
       )}
 
       {/* first Imprint ask — after Concord gate, open Train on the raise loop */}
-      {imprintTease && owned && byKey[owned] && !wakeKey && !flightKey && !showMatch && overlay === "none" && !inFirstDuelSetup && (
+      {imprintTease && worldRoamOpen && owned && byKey[owned] && !wakeKey && !flightKey && !showMatch && overlay === "none" && !inFirstDuelSetup && (
         <CharacterBeat
           script={championImprintAskScript(owned)}
           accent={TYPE_COLOR[byKey[owned].type]}

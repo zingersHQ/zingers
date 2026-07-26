@@ -141,12 +141,12 @@ frame height**; next ring and the one after are both readable.
 ### 4b. Mobile Climb
 
 - Auto-forward with **instant cruise** from frame 0 (no spool).
-- Holding thrust adds a **10% forward boost** (`HOLD_FWD_BOOST`) so flaps feel
-  like propulsion, not only lift. Released glide stays at matched cruise so
-  authored `gapSec` remains the baseline; boost stays inside `flyer-budget`
-  headroom (safety 0.78) on rhythm gaps.
-- Chase cam sells the wind: stronger `CAM_LEAD`, FOV swell while thrusting, and
-  a short press FOV kick (gated by reduced motion).
+- Body-only wind: `MOBILE_CRUISE_MULT` (**1.16×** desktop par) always on, plus
+  **8%** more while thrusting (`HOLD_FWD_BOOST`). Peak ~1.25× stays inside
+  climb headroom; desktop boards keep matched par. Vertical thrust is a touch
+  stronger than layout budgets so rhythm gaps stay flappable.
+- Chase cam sells the wind: closer `CAM_DIST`, stronger `CAM_LEAD`, FOV swell
+  while thrusting, press FOV kick (gated by reduced motion).
 
 ### 4c. Desktop Circuit (the big feel change)
 

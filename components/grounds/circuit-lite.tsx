@@ -51,7 +51,7 @@ import {
   needsAltitudeProve,
   setAscentSessionMods,
 } from "@/lib/ascent-rules";
-import { sectorFlightCruise } from "./climb/flight-cruise";
+import { MOBILE_CRUISE_MULT, sectorFlightCruise } from "./climb/flight-cruise";
 import {
   evaluateLadder,
   hitsRankLock,
@@ -147,30 +147,30 @@ interface RunReward {
 // ── flight feel — a HEAVY robot fighting a POWERFUL jetpack ───────────────────
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
-// Base forward SPEED matches desktop (difficulty §3 × desktop gap scale) so
-// authored gapSec stays real time. Hold adds a capped forward boost (climb-feel
-// §4b) so flaps read as propulsion — still inside flyer-budget headroom.
+// Mobile body runs hotter than desktop par (MOBILE_CRUISE_MULT + hold boost) so
+// the wind reads; vertical authority is a touch above layout budgets so rhythm
+// gaps stay flappable at the higher pace (climb-feel §4b).
 const GRAVITY = 28;
-const THRUST_ACCEL = 50;
-const PRESS_KICK = 4.0;
-const MAX_FALL = 18;
-const MAX_RISE = 12;
+const THRUST_ACCEL = 54; // net +26 — more climb headroom at the faster pace
+const PRESS_KICK = 4.2;
+const MAX_FALL = 20;
+const MAX_RISE = 13;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
-/** While thrusting: cruise × (1 + this). Caps ~10% so rhythm gaps stay flappable. */
-const HOLD_FWD_BOOST = 0.10;
-// Chase camera — lead + FOV sell the wind; cast/rings stay readable.
-const CAM_DIST = 11.2;
-const CAM_PITCH = 0.14;
+/** While thrusting: cruise × (1 + this). Stacks on MOBILE_CRUISE_MULT. */
+const HOLD_FWD_BOOST = 0.08;
+// Chase camera — closer + more lead = world rush; rings stay readable.
+const CAM_DIST = 10.0;
+const CAM_PITCH = 0.12;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
 const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
-const CAM_LEAD = 3.4; // stronger down-track look = forward rush (2–3 rings in frame)
+const CAM_LEAD = 4.2;
 const CAM_HEIGHT = 0.27;
-const CAM_LERP = 7;
-const CAM_FOV = 56;
-const CAM_FOV_THRUST = 61; // swell while flapping — wind in the lens
-const CAM_FOV_KICK = 5; // one-shot punch on press (desktop deploy FOV kin)
+const CAM_LERP = 10;
+const CAM_FOV = 58;
+const CAM_FOV_THRUST = 65;
+const CAM_FOV_KICK = 6;
 
 // Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
@@ -291,9 +291,8 @@ function Flyer({
     const controlLocked = tSec < lockUntil.current;
     const held = !controlLocked && !!holdRef.current;
 
-    // Hard wind — lock cruise every frame (desktop Circuit's constant +Z push).
-    // Wing Tailwind multiplies via session mods. Hold adds a tiny forward boost
-    // so flaps feel like propulsion (desktop's W-surge kin; climb-feel §4b).
+    // Hard wind — lock cruise every frame. speed already includes MOBILE_CRUISE_MULT.
+    // Hold adds a bit more so flaps feel like propulsion (climb-feel §4b).
     const cruise = speed * ascentSessionMods().cruiseSpeedMult;
     fwd.current = held ? cruise * (1 + HOLD_FWD_BOOST) : cruise;
     pos.current.z += fwd.current * dt;
@@ -350,9 +349,9 @@ function Flyer({
     if (grp.current) {
       grp.current.position.copy(pos.current);
       grp.current.rotation.y = CHAMP_FACE;
-      // Stronger forward lean into the wind + climb/sink attitude.
-      const pitch = THREE.MathUtils.clamp(0.36 - vy.current * 0.045, -0.15, 0.68);
-      grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
+      // Nose into the wind — stronger lean sells the rush.
+      const pitch = THREE.MathUtils.clamp(0.42 - vy.current * 0.04, -0.12, 0.72);
+      grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-14 * dt));
     }
 
     // Chase the visual Trainer (CHAMP_Y), not the gate-thread point above it.
@@ -823,7 +822,7 @@ export default function CircuitLite({
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
   const speed = useMemo(
-    () => sectorFlightCruise(sector) * (modifier?.speedMult ?? 1),
+    () => sectorFlightCruise(sector) * MOBILE_CRUISE_MULT * (modifier?.speedMult ?? 1),
     [sector, modifier],
   );
   const hazards = useMemo(() => sectorHazards(sector, track, layoutSeed), [sector, track, layoutSeed]);
