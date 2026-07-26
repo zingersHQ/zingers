@@ -509,6 +509,9 @@ export default function GroundsScreen({
 
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
+  /** Sync mirror — useFrame outcomes must not trust a stale closure phase. */
+  const circuitPhaseRef = useRef<CircuitPhase>("ready");
+  circuitPhaseRef.current = circuitPhase;
   const [circuitFailReason, setCircuitFailReason] = useState<CircuitFailReason>("fall");
   const [circuitRunMs, setCircuitRunMs] = useState(0);
   const [circuitSectorMs, setCircuitSectorMs] = useState(0);
@@ -1235,12 +1238,8 @@ export default function GroundsScreen({
 
   const onCircuitFail = useCallback(
     (reason: CircuitFailReason = "fall", pose?: CircuitGhostPose) => {
-      if (
-        circuitPhase === "failed" ||
-        circuitPhase === "done" ||
-        circuitPhase === "sector" ||
-        circuitPhase === "continue"
-      ) {
+      const phase = circuitPhaseRef.current;
+      if (phase === "failed" || phase === "done" || phase === "sector" || phase === "continue") {
         return;
       }
 
@@ -1261,6 +1260,7 @@ export default function GroundsScreen({
           circuitRunMsRef.current = flown;
           setCircuitRunMs(flown);
         }
+        circuitPhaseRef.current = "continue";
         setCircuitPhase("continue");
         circuitCpNext.current = 1;
         setCircuitCpPassed(1);
@@ -1290,6 +1290,7 @@ export default function GroundsScreen({
         // Hold the LIFE LOST beat through ghost + arrive before jump unlocks.
         circuitContinueTimers.current.push(
           window.setTimeout(() => {
+            circuitPhaseRef.current = "ready";
             setCircuitPhase("ready");
           }, 3200),
         );
@@ -1307,6 +1308,7 @@ export default function GroundsScreen({
       circuitRunMsRef.current = total;
       setCircuitRunMs(total);
       setCircuitFailReason(reason);
+      circuitPhaseRef.current = "failed";
       setCircuitPhase("failed");
       submitCircuitRun(sectors, total, false);
       if (circuitChallenge) {
@@ -1337,12 +1339,12 @@ export default function GroundsScreen({
       }
       outcomeSfx(false);
     },
-    [circuitPhase, circuitSectorIdx, submitCircuitRun, clearCircuitContinueTimers, circuitChallenge],
+    [circuitSectorIdx, submitCircuitRun, clearCircuitContinueTimers, circuitChallenge],
   );
 
   /** Jump on the launch pad starts the sector — wind / cruise / timers. */
   const onCircuitStart = useCallback(() => {
-    if (circuitPhase !== "ready") return;
+    if (circuitPhaseRef.current !== "ready") return;
     const now = performance.now();
     // Fresh run only — retries after a life keep prior flying time.
     if (circuitSectorIdx === circuitStartSectorRef.current && circuitRunMsRef.current === 0) {
@@ -1358,8 +1360,9 @@ export default function GroundsScreen({
     circuitSampleLastT.current = now;
     circuitSectorStart.current = now;
     setCircuitGhostRunStartMs(now);
+    circuitPhaseRef.current = "running";
     setCircuitPhase("running");
-  }, [circuitPhase, circuitSectorIdx]);
+  }, [circuitSectorIdx]);
 
   const onCircuitSample = useCallback((y: number, z: number) => {
     const now = performance.now();
@@ -1423,7 +1426,7 @@ export default function GroundsScreen({
   const onCircuitPass = useCallback(
     (index: number) => {
       const cp = circuitTrack.checkpoints[index];
-      if (!cp || circuitPhase !== "running") return;
+      if (!cp || circuitPhaseRef.current !== "running") return;
       const now = performance.now();
       setCircuitCpPassed(index + 1);
       if (!cp.finish) {
@@ -1450,6 +1453,8 @@ export default function GroundsScreen({
               maxLives: wingLivesCap.current,
             },
           });
+          // Sync before setState — blocks a same-tick fall from stealing the clear.
+          circuitPhaseRef.current = "done";
           setCircuitPhase("done");
           submitCircuitRun(cap, total, true);
           if (circuitChallenge && circuitRunModeRef.current === "ranked") {
@@ -1471,13 +1476,14 @@ export default function GroundsScreen({
           outcomeSfx(true);
         } else {
           // Park on "sector" so this frame stops cruise/fail checks; effect advances.
+          circuitPhaseRef.current = "sector";
           setCircuitPhase("sector");
           store.awardTrainerXp(owned && circuitRunModeRef.current === "ranked" ? 15 : 0);
           outcomeSfx(true);
         }
       }
     },
-    [circuitPhase, circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, climbHundred],
+    [circuitSectorIdx, circuitTrack, submitCircuitRun, store, circuitChallenge, owned, climbHundred, expedition.sectors],
   );
 
   // Auto-advance after a clear (mobile-like). Brief "sector" phase avoids a soft-lock

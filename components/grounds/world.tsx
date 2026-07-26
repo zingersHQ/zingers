@@ -3177,6 +3177,12 @@ function Handler({
   const circuitPrevZ = useRef<number | null>(null);
   /** Left the launch pad this sector — next ground contact = fall fail (soul atom). */
   const circuitAirborne = useRef(false);
+  /**
+   * Sync outcome latch (parity with Climb `dead` ref). React phase flips are
+   * async — without this, threading finish can still spend a life on the next
+   * frames before "sector"/"done" commits (false LIFE LOST after a clear).
+   */
+  const circuitSettled = useRef(false);
   const jumps = useRef(0);
   const prevSpace = useRef(false);
   const prevTouchJump = useRef(0);
@@ -3599,6 +3605,7 @@ function Handler({
       jetBurst.current++;
       heading.current = 0;
       circuitAirborne.current = false;
+      circuitSettled.current = false;
       if (inner.current) inner.current.rotation.set(0, 0, 0);
     }
     wasCircuitRunning.current = circuitRunning;
@@ -3998,15 +4005,18 @@ function Handler({
       const prevZ = teleported || circuitPrevZ.current == null ? t.z : circuitPrevZ.current;
       // Shared with mobile Climb: crossing a gate's Z-plane outside the opening = miss.
       // Only while running — ready is pad idle until jump starts the sector.
-      if (circuitRunning && !teleported && cp && onCircuitPass) {
+      // Skip once settled (finish/fail) so async phase can't race a false life spend.
+      if (circuitRunning && !circuitSettled.current && !teleported && cp && onCircuitPass) {
         const cross = circuitGatePlaneCross(prevZ, t.z, pos, { pos: cp.posTuple, radius: cp.radius });
         if (cross === "pass") {
           onCircuitPass(cp.index);
           circuitCpNextRef.current = nextIdx + 1;
+          if (cp.finish) circuitSettled.current = true;
         } else if (cross === "miss" && onCircuitFail) {
           const now = performance.now();
           if (now - failCooldown.current > 800) {
             failCooldown.current = now;
+            circuitSettled.current = true;
             onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
           }
         }
@@ -4015,6 +4025,7 @@ function Handler({
       if (circuitRunning && onCircuitSample) onCircuitSample(t.y, t.z);
       if (
         circuitRunning &&
+        !circuitSettled.current &&
         onCircuitFail &&
         atCircuitFinishEarly(
           pos,
@@ -4025,12 +4036,13 @@ function Handler({
         const now = performance.now();
         if (now - failCooldown.current > 800) {
           failCooldown.current = now;
+          circuitSettled.current = true;
           onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
         }
       }
       // Fall / ground hit after leaving the pad — spends a life (continue) or ends the run.
       // Ready stays safe — circuitRunning is false until the launch jump.
-      if (circuitRunning) {
+      if (circuitRunning && !circuitSettled.current) {
         if (!grounded && t.y > restY + 0.85) circuitAirborne.current = true;
         const fellToVoid = t.y < -6;
         const landedAfterFlight = circuitAirborne.current && grounded;
@@ -4038,6 +4050,7 @@ function Handler({
           const now = performance.now();
           if (now - failCooldown.current > 800) {
             failCooldown.current = now;
+            circuitSettled.current = true;
             onCircuitFail("fall", { x: t.x, y: t.y, z: t.z, heading: heading.current });
           }
         }
