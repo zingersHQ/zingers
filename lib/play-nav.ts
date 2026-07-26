@@ -13,6 +13,8 @@ export interface PlayLink {
   /** reference/doc links: shown in the site header, hidden from the in-world hubs
    *  (the M-menu + player-hub panel) to keep first-run chrome uncluttered. */
   secondary?: boolean;
+  /** Absolute off-site URL — open in a new tab; do not prefix with the game origin. */
+  external?: boolean;
 }
 
 export interface NavGroup {
@@ -71,7 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
       // Reference/doc links: kept in the site header but hidden from the in-world
       // hubs (secondary) so the M-menu / player-hub panel don't read as a doc dump.
       { id: "catalogue", label: "Catalogue", short: "Cat", href: "/catalogue", blurb: "20 agents emulated from the real systems: every type, tier, and clan.", secondary: true },
-      { id: "org", label: "Docs", short: "Docs", href: "/org", blurb: "zingers.org: bible, protocol, design specs.", secondary: true },
+      { id: "org", label: "Docs", short: "Docs", href: "https://zingers.org/", blurb: "zingers.org: bible, protocol, design specs.", secondary: true, external: true },
       { id: "readme", label: "Whitepaper", short: "Paper", href: "/readme", blurb: "The full design doc.", secondary: true },
     ],
   },

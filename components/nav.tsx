@@ -74,15 +74,33 @@ export function Nav() {
                   ? playEntryHref(true)
                   : l.id === "org" && onOrg
                     ? "/"
-                    : gameHref(l.href);
+                    : l.external
+                      ? l.href
+                      : gameHref(l.href);
+              const className = `site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
+                l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m"))) ? " is-on" : ""
+              }`;
+              if (l.external && !onOrg) {
+                return (
+                  <a
+                    key={l.id}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={close}
+                    className={className}
+                    title={l.blurb}
+                  >
+                    {l.label}
+                  </a>
+                );
+              }
               return (
               <Link
                 key={l.id}
                 href={href}
                 onClick={close}
-                className={`site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
-                  l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m"))) ? " is-on" : ""
-                }`}
+                className={className}
                 title={l.blurb}
               >
                 {l.label}

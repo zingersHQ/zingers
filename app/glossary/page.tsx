@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/brand";
+import { orgCanonical } from "@/lib/org/hosts";
 import { getGlossary } from "@/lib/lore/glossary";
 
 export const metadata = {
@@ -23,9 +23,9 @@ export default async function GlossaryPage() {
       </div>
       <p style={{ maxWidth: 720, color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "0 0 30px" }}>
         {t("pageLead")}{" "}
-        <Link href="/bible" style={{ color: "var(--accent)" }}>
+        <a href={orgCanonical("bible")} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
           the Bible
-        </Link>
+        </a>
         .
       </p>
 

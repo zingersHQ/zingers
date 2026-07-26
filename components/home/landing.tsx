@@ -260,7 +260,7 @@ export function Landing() {
               </button>
             </div>
             <nav className="lp-final__links mono">
-              <Link href="/bible">Lore</Link>
+              <a href={`${BRAND.siteTech}/bible`} target="_blank" rel="noopener noreferrer">Lore</a>
               <span aria-hidden>·</span>
               <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer">@{BRAND.twitter}</a>
             </nav>
