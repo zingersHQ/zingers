@@ -146,33 +146,33 @@ interface RunReward {
   deeper: boolean;
 }
 
-// ── flight feel — a HEAVY robot fighting a POWERFUL jetpack ───────────────────
-// Acceleration-based (not velocity-eased), so there's real weight: gravity is
-// always pulling hard, thrust punches up through it, a tap gives an instant kick.
-// Forward cruise + gap Z share FLIGHT_WIND_SCALE (soul wind tunnel). Hold adds a
-// tiny forward boost so flaps feel like propulsion (climb-feel §4b).
+// ── flight feel — jetpack glide, not hop cadence (feel pass A) ────────────────
+// Acceleration-based weight stays; press kick is a soft spool so hold reads as
+// flight, not Flappy hops. Layout budgets (flyer-budget) stay untouched —
+// cruiseSink / gapSec / NET_UP envelope unchanged so polished sectors remain
+// finishable. Forward cruise + gap Z share FLIGHT_WIND_SCALE.
 const GRAVITY = 28;
-const THRUST_ACCEL = 54; // net +26 — headroom above layout budgets
-const PRESS_KICK = 4.2;
+const THRUST_ACCEL = 56; // net +28 — slight sustained authority; budget still ~22
+/** Soft ignite on press — was 4.2 (hop). Keep ≥~2 so short-gap climb ≥ budget. */
+const PRESS_KICK = 2.0;
 const MAX_FALL = 20;
 const MAX_RISE = 13;
-const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
 /** While thrusting: cruise × (1 + this). Modest — wind scale owns the rush. */
 const HOLD_FWD_BOOST = 0.06;
-// Chase camera — closer + more lead = world rush; rings stay readable.
-const CAM_DIST = 10.0;
-const CAM_PITCH = 0.12;
+// Chase camera — pull back so the corridor (not the hop) reads (climb-feel §3).
+const CAM_DIST = 13.5;
+const CAM_PITCH = 0.11;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
 const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
-const CAM_LEAD = 4.2;
+const CAM_LEAD = 5.6;
 const CAM_HEIGHT = 0.27;
-const CAM_LERP = 10;
-const CAM_FOV = 58;
-const CAM_FOV_THRUST = 66;
-const CAM_FOV_KICK = 7;
-const CAM_FOV_IGNITE = 8; // wind-tunnel open punch
+const CAM_LERP = 9;
+const CAM_FOV = 56;
+const CAM_FOV_THRUST = 62;
+const CAM_FOV_KICK = 4;
+const CAM_FOV_IGNITE = 5; // wind-tunnel open punch
 
 // Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
@@ -301,11 +301,14 @@ function Flyer({
 
     const cp = track.checkpoints[cpNext.current];
 
-    // vertical: thrust climbs; released thumb cruises with a slight sink, or a
-    // deeper dive when the next ring is clearly below (auto-+Z is always on).
+    // vertical: thrust climbs; released thumb cruises with a constant slight
+    // sink (auto-+Z is always on). No next-gate height assist — that read as
+    // the path yanking you down. Desktop dive stays player-owned (S/↓).
     // Stumble lock drops into a hard gravity fall so the shove still reads.
+    // Rising edge: soft spool to a climb floor (cancels sink). No hop stack on
+    // re-press while already rising — sustained hold owns the climb.
     if (held && !wasHeld.current) {
-      vy.current = Math.max(vy.current, 0) + PRESS_KICK;
+      if (vy.current < PRESS_KICK) vy.current = PRESS_KICK;
       if (!reduceMotion) fovKick.current = CAM_FOV_KICK;
     }
     wasHeld.current = held;
@@ -318,15 +321,11 @@ function Flyer({
     } else if (controlLocked) {
       vy.current = THREE.MathUtils.clamp(vy.current - GRAVITY * dt, -MAX_FALL, MAX_RISE);
     } else {
+      // Shared cruiseSink — do not soften here; high→low Surge needs that rate
+      // after next-gate auto-dive was removed.
       const ses = ascentSessionMods();
-      let sink: number = ses.cruiseSink;
-      let glide: number = ses.cruiseGlide;
-      if (cp && pos.current.y > cp.pos[1] + DIVE_LEAD) {
-        sink = ses.diveSink;
-        glide = ses.diveGlide;
-      }
-      const k = 1 - Math.exp(-glide * dt);
-      vy.current = vy.current + (sink - vy.current) * k;
+      const k = 1 - Math.exp(-ses.cruiseGlide * dt);
+      vy.current = vy.current + (ses.cruiseSink - vy.current) * k;
     }
     pos.current.y += vy.current * dt;
     climbVelRef.current = vy.current;
