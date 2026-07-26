@@ -147,8 +147,9 @@ interface RunReward {
 // ── flight feel — a HEAVY robot fighting a POWERFUL jetpack ───────────────────
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
-// Forward SPEED is per-sector (difficulty §3 × desktop gap scale) so authored
-// gapSec is real time on both bodies. Vertical feel stays constant.
+// Base forward SPEED matches desktop (difficulty §3 × desktop gap scale) so
+// authored gapSec stays real time. Hold adds a capped forward boost (climb-feel
+// §4b) so flaps read as propulsion — still inside flyer-budget headroom.
 const GRAVITY = 28;
 const THRUST_ACCEL = 50;
 const PRESS_KICK = 4.0;
@@ -156,16 +157,20 @@ const MAX_FALL = 18;
 const MAX_RISE = 12;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
-// Chase camera — a touch farther so cast/rings match desktop scale in frame.
+/** While thrusting: cruise × (1 + this). Caps ~10% so rhythm gaps stay flappable. */
+const HOLD_FWD_BOOST = 0.10;
+// Chase camera — lead + FOV sell the wind; cast/rings stay readable.
 const CAM_DIST = 11.2;
 const CAM_PITCH = 0.14;
 const CAM_SIDE = 0;
 const CAM_BACK = CAM_DIST * Math.cos(CAM_PITCH);
 const CAM_UP = CAM_DIST * Math.sin(CAM_PITCH);
-const CAM_LEAD = 2.4; // more down-track look = stronger forward rush
+const CAM_LEAD = 3.4; // stronger down-track look = forward rush (2–3 rings in frame)
 const CAM_HEIGHT = 0.27;
 const CAM_LERP = 7;
-const CAM_FOV = 54; // slight widen + lead sells the wind
+const CAM_FOV = 56;
+const CAM_FOV_THRUST = 61; // swell while flapping — wind in the lens
+const CAM_FOV_KICK = 5; // one-shot punch on press (desktop deploy FOV kin)
 
 // Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
@@ -253,12 +258,14 @@ function Flyer({
 }) {
   const grp = useRef<THREE.Group>(null);
   const { camera } = useThree();
+  const reduceMotion = usePrefersReducedMotion();
 
   const pos = useRef(new THREE.Vector3(track.spawn[0], track.spawn[1], track.spawn[2]));
   const vy = useRef(0);
   // Hard wind from frame 0 — no spool (spool read as "hovering then drifting").
   const fwd = useRef(speed);
   const wasHeld = useRef(false); // rising-edge detect for the tap-kick
+  const fovKick = useRef(0);
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
   const prevZ = useRef(track.spawn[2]);
   const dead = useRef(false);
@@ -285,8 +292,10 @@ function Flyer({
     const held = !controlLocked && !!holdRef.current;
 
     // Hard wind — lock cruise every frame (desktop Circuit's constant +Z push).
-    // Wing Tailwind multiplies via session mods.
-    fwd.current = speed * ascentSessionMods().cruiseSpeedMult;
+    // Wing Tailwind multiplies via session mods. Hold adds a tiny forward boost
+    // so flaps feel like propulsion (desktop's W-surge kin; climb-feel §4b).
+    const cruise = speed * ascentSessionMods().cruiseSpeedMult;
+    fwd.current = held ? cruise * (1 + HOLD_FWD_BOOST) : cruise;
     pos.current.z += fwd.current * dt;
 
     const cp = track.checkpoints[cpNext.current];
@@ -296,6 +305,7 @@ function Flyer({
     // Stumble lock drops into a hard gravity fall so the shove still reads.
     if (held && !wasHeld.current) {
       vy.current = Math.max(vy.current, 0) + PRESS_KICK;
+      if (!reduceMotion) fovKick.current = CAM_FOV_KICK;
     }
     wasHeld.current = held;
     if (held) {
@@ -340,8 +350,8 @@ function Flyer({
     if (grp.current) {
       grp.current.position.copy(pos.current);
       grp.current.rotation.y = CHAMP_FACE;
-      // Strong forward lean into the wind + climb/sink attitude.
-      const pitch = THREE.MathUtils.clamp(0.28 - vy.current * 0.045, -0.15, 0.62);
+      // Stronger forward lean into the wind + climb/sink attitude.
+      const pitch = THREE.MathUtils.clamp(0.36 - vy.current * 0.045, -0.15, 0.68);
       grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-12 * dt));
     }
 
@@ -356,8 +366,13 @@ function Flyer({
     );
     camera.lookAt(lookAt.current);
     const cam = camera as THREE.PerspectiveCamera;
-    if (Math.abs(cam.fov - CAM_FOV) > 0.05) {
-      cam.fov += (CAM_FOV - cam.fov) * (1 - Math.exp(-3 * dt));
+    // FOV swell + press kick sell wind; reduced motion stays flat.
+    fovKick.current *= Math.exp(-8 * dt);
+    const targetFov = reduceMotion
+      ? CAM_FOV
+      : (held ? CAM_FOV_THRUST : CAM_FOV) + fovKick.current;
+    if (Math.abs(cam.fov - targetFov) > 0.05) {
+      cam.fov += (targetFov - cam.fov) * (1 - Math.exp(-4 * dt));
       cam.updateProjectionMatrix();
     }
 

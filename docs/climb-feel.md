@@ -138,13 +138,15 @@ frame height**; next ring and the one after are both readable.
 > The Ascent **always pushes you forward** once a run starts. Altitude is the
 > skill axis; forward is the heartbeat.
 
-### 4b. Mobile Climb (already almost there)
+### 4b. Mobile Climb
 
-- Keep auto-forward; make launch feel stronger: **instant cruise** (or 0.2s
-  spool), not a lazy ease that feels like walking.
-- Optional: holding thrust also adds a **tiny forward boost** (cap it) so flaps
-  feel like propulsion, not only lift — careful not to break gap-second math
-  (`dz = speed × gap`).
+- Auto-forward with **instant cruise** from frame 0 (no spool).
+- Holding thrust adds a **10% forward boost** (`HOLD_FWD_BOOST`) so flaps feel
+  like propulsion, not only lift. Released glide stays at matched cruise so
+  authored `gapSec` remains the baseline; boost stays inside `flyer-budget`
+  headroom (safety 0.78) on rhythm gaps.
+- Chase cam sells the wind: stronger `CAM_LEAD`, FOV swell while thrusting, and
+  a short press FOV kick (gated by reduced motion).
 
 ### 4c. Desktop Circuit (the big feel change)
 
