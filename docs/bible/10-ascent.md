@@ -116,7 +116,9 @@ own terms.
 Between gates, sparks and bars that shove you are hazards. They are never prizes.
 They shove and lock thrust; they do not take Crowns or lives on contact.
 The only mid-run treasure is a Crown cache floating off the glide line between
-gates. Climb or dive for it. Missing one never fails the sector.
+gates. Each sector either has one or does not — the map is fixed, not a lottery.
+Early Reaches show more small prizes; later ones pay more but sit harder off the
+line. Climb or dive for it. Missing one never fails the sector.
 Systems detail: [`climb.md`](../climb.md).
 
 Clearing all one hundred sectors is a summit. After that the climb does not become

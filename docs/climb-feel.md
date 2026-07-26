@@ -55,7 +55,7 @@ driven by role `k`, not free RNG zig-zag.
 | Teach / Combine | introduce hazard between rings | gaps mid-band; one hazard mid-gap |
 | Rhythm | pure Flappy cadence | **equal gapSec**, alternating high/low Y (sine), no hazards |
 | Pressure | bite | tighter gaps, smaller radius, hazard in *every other* gap |
-| Vista | screenshot / breathe | 1 long scenic gap (≤5s), 2–3 wide rings, Crowns line or prop parade |
+| Vista | screenshot / breathe | 1 long scenic gap (≤5s), 2–3 wide rings, nearly always a Crown cache off-line |
 | Twist | modifier stage | Swift / Duskfall / etc. + layout that sells the modifier |
 | Gauntlet / Trial | exam | mix of prior patterns + guarded finish (rotor / wisp) |
 

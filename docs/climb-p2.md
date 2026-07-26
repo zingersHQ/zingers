@@ -157,7 +157,7 @@ Everything the Trainer does with their hands must mark the champion.
 
 - **Today's Ascent** (daily featured Reach + Crowns×2) → **P3** (needs the
   surprise/modifier + daily-index work landing together).
-- **Surprise *rolls*** (Crown cache odds beyond today's, Keeper watch, meteor,
+- **Surprise *rolls*** (Keeper watch, meteor,
   rival line) → **P3**; P2 only lands the *ledger hook* for the Keeper watch so
   P3 can fire it.
 - **Camp visuals in the 3D world** → plaques only later; the desktop D3

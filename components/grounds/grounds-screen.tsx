@@ -674,10 +674,13 @@ export default function GroundsScreen({
   );
 
   useEffect(() => {
-    const g = rollCrownCache(circuitTrack.checkpoints, runModsRef.current.goldOddsMult, circuitCruise);
+    const g = rollCrownCache(circuitSectorIdx, circuitTrack.checkpoints, circuitCruise, {
+      oddsMult: runModsRef.current.goldOddsMult,
+      seed: circuitLayoutSeed,
+    });
     crownCacheRef.current = g;
     setCrownCache(g);
-  }, [circuitTrack, circuitCruise]);
+  }, [circuitTrack, circuitCruise, circuitSectorIdx, circuitLayoutSeed]);
 
   useEffect(() => {
     if (!scoutUnlocked && circuitRunMode === "scout") {
@@ -739,10 +742,11 @@ export default function GroundsScreen({
     circuitStumbleTimer.current = window.setTimeout(() => setCircuitStumble(false), 280);
   }, []);
   const onCircuitCrownCollect = useCallback(() => {
-    if (!crownCacheRef.current) return;
+    const cache = crownCacheRef.current;
+    if (!cache) return;
     crownCacheRef.current = null;
     setCrownCache(null);
-    const paid = crownCacheCrowns(runModsRef.current.goldCrownsMult);
+    const paid = crownCacheCrowns(cache.crowns, runModsRef.current.goldCrownsMult);
     bonusCrowns.current += paid;
     circuitGoldRings.current += 1;
     rewardSfx("big");

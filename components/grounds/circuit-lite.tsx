@@ -1177,12 +1177,15 @@ export default function CircuitLite({
     const doneT = window.setTimeout(() => dismissReachCard(true), 2000);
     return () => window.clearTimeout(doneT);
   }, [theme.index, dismissReachCard]);
-  // Roll a Crown cache per sector (§7b) — mid-gap, off the glide line.
+  // Place a Crown cache per sector (§7b) — seeded mid-gap, off the glide line.
   useEffect(() => {
-    const g = rollCrownCache(track.checkpoints, runModsRef.current.goldOddsMult, speed);
+    const g = rollCrownCache(sector, track.checkpoints, speed, {
+      oddsMult: runModsRef.current.goldOddsMult,
+      seed: layoutSeed,
+    });
     crownCacheRef.current = g;
     setCrownCache(g);
-  }, [track, runId, speed]);
+  }, [track, runId, speed, sector, layoutSeed]);
 
   // Flight theme — mobile never hits resolveAmbienceMood; pin the circuit score
   // for the whole run, then soft-land on Concord when the tab closes.
@@ -1400,10 +1403,11 @@ export default function CircuitLite({
   }, []);
 
   const onCrownCollect = useCallback(() => {
-    if (!crownCacheRef.current) return;
+    const cache = crownCacheRef.current;
+    if (!cache) return;
     crownCacheRef.current = null;
     setCrownCache(null);
-    const paid = crownCacheCrowns(runModsRef.current.goldCrownsMult);
+    const paid = crownCacheCrowns(cache.crowns, runModsRef.current.goldCrownsMult);
     bonusCrowns.current += paid;
     goldRingsRef.current += 1;
     rewardSfx("big");
@@ -2476,7 +2480,7 @@ export default function CircuitLite({
                 onClick={onClaim}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
               >
-                Claim a champion to prove
+                Claim a champion
               </button>
             )}
           </div>
