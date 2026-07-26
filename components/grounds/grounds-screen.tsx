@@ -4526,15 +4526,6 @@ export default function GroundsScreen({
       {/* gauntlet run resolved */}
       {gRun?.phase === "over" && <GauntletResult run={gRun} onClose={closeGauntlet} />}
 
-      {/* the case on the wall while a Tribunal hearing runs */}
-      {showMatch && matchView && isTribunal && !opponentId && !result && (
-        <TribunalMatchBanner
-          proposition={tribunalProp}
-          myStance={tribunalDraw(tribunalSeed, `${tribunalSeed}:${opponent ?? "_"}`).myStance}
-          isMobile={isMobile}
-        />
-      )}
-
       {/* live match reasoning overlay */}
       {showMatch && matchView && (
         <MatchHud
@@ -4548,8 +4539,15 @@ export default function GroundsScreen({
           result={result}
           onClose={dismissMatch}
           isMobile={isMobile}
-          // TribunalMatchBanner owns the case quote — don't stack a second copy.
-          hideTopic={isTribunal && !opponentId && !result}
+          // Tribunal case strip lives in MatchHud above the momentum meter.
+          caseBanner={
+            isTribunal && !opponentId && !result
+              ? {
+                  proposition: tribunalProp,
+                  myStance: tribunalDraw(tribunalSeed, `${tribunalSeed}:${opponent ?? "_"}`).myStance,
+                }
+              : null
+          }
         />
       )}
 
@@ -5279,10 +5277,10 @@ function MatchHud(props: {
   result: { won: boolean; crowns: number; betWon: boolean | null; ladders: string[]; ratingDelta: number; leveledTo: number | null; learned: string | null; globalDelta: number | null; globalRating: number | null; home: boolean } | null;
   onClose: () => void;
   isMobile: boolean;
-  /** When another surface (Tribunal banner) already shows the case. */
-  hideTopic?: boolean;
+  /** Tribunal hearing: case + stance strip stacked above the momentum meter. */
+  caseBanner?: { proposition: string; myStance: "for" | "against" } | null;
 }) {
-  const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile, hideTopic } = props;
+  const { bout, owned, opponent, foeMeta, foeType, byKey, get, result, onClose, isMobile, caseBanner } = props;
   const t = bout.turn;
   const [study, setStudy] = useState(false);
   const canSkip = bout.phase === "live" && (t?.round ?? 0) >= 2 && !result && !bout.end;
@@ -5328,10 +5326,18 @@ function MatchHud(props: {
           <div className="mono" style={{ fontSize: isMobile ? 11 : 12, color: "var(--gold)", letterSpacing: 1 }}>
             {aName} <span style={{ color: "var(--muted2)" }}>vs</span> {bName}
           </div>
-          {bout.start && !hideTopic && (
-            <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.45 }}>
-              &ldquo;{bout.start.topic}&rdquo;
-            </div>
+          {caseBanner ? (
+            <TribunalMatchBanner
+              proposition={caseBanner.proposition}
+              myStance={caseBanner.myStance}
+              isMobile={isMobile}
+            />
+          ) : (
+            bout.start && (
+              <div style={{ fontStyle: "italic", color: "var(--ink)", marginTop: 2, fontSize: isMobile ? 13 : 15, textShadow: "0 2px 8px #000", lineHeight: 1.45 }}>
+                &ldquo;{bout.start.topic}&rdquo;
+              </div>
+            )
           )}
           {t && !result && (
             <MomentumMeter
