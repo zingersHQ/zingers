@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Shuffle, Lock, Flame, Trophy, Mic } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { BattleEnd, Champion, RosterEntry, Style } from "@/lib/types";
 import { TYPE_COLOR, blankStyle, accrue, dominant } from "@/lib/evolve/progression";
 import { useChampions } from "@/store/champions";
@@ -29,6 +30,7 @@ function pickTwo(keys: string[]): [string, string] {
 }
 
 export function MobileWatch() {
+  const t = useTranslations("mobile");
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [topics, setTopics] = useState<string[]>([]);
   const [aKey, setAKey] = useState<string>("");
@@ -119,24 +121,24 @@ export function MobileWatch() {
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <Eye size={20} strokeWidth={2.2} style={{ color: "var(--accent)" }} />
-          <span style={{ fontSize: 20, fontWeight: 800 }}>Watch</span>
+          <span style={{ fontSize: 20, fontWeight: 800 }}>{t("watchTitle")}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <Pill icon={<Flame size={12} strokeWidth={2.4} />} label="STREAK" value={predict.streak} ac="var(--gold)" />
-            <Pill icon={<Trophy size={12} strokeWidth={2.4} />} label="BEST" value={predict.best} ac="var(--good)" />
+            <Pill icon={<Flame size={12} strokeWidth={2.4} />} label={t("streak")} value={predict.streak} ac="var(--gold)" />
+            <Pill icon={<Trophy size={12} strokeWidth={2.4} />} label={t("best")} value={predict.best} ac="var(--good)" />
           </div>
         </div>
 
         {!a || !b ? (
-          <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 50 }}>dealing a matchup…</div>
+          <div className="mono" style={{ textAlign: "center", color: "var(--muted2)", padding: 50 }}>{t("loadingFight")}</div>
         ) : view === "call" ? (
           <>
             <div className="panel" style={{ padding: 14, marginBottom: 12, textAlign: "center" }}>
-              <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 6 }}>THE PROPOSITION</div>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 6 }}>{t("tribunal")}</div>
               <div style={{ fontSize: 17, fontWeight: 700, fontStyle: "italic", lineHeight: 1.35 }}>&ldquo;{topic}&rdquo;</div>
             </div>
 
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 8, textAlign: "center" }}>
-              CALL THE WINNER
+              {t("callWinner")}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <CallCard entry={a} champ={get(aKey)} col={acol} side="FOR" on={pick === "a"} onClick={() => setPick("a")} />
@@ -150,7 +152,7 @@ export function MobileWatch() {
                 className="mono"
                 style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 16px", borderRadius: 12, border: "1px solid var(--line2)", background: "transparent", color: "var(--ink)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
-                <Shuffle size={15} strokeWidth={2.2} /> Deal
+                <Shuffle size={15} strokeWidth={2.2} /> {t("dealAnother")}
               </button>
               <button
                 type="button"
@@ -158,7 +160,7 @@ export function MobileWatch() {
                 onClick={start}
                 style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "13px 18px", borderRadius: 12, border: "none", background: "var(--gold, #f5d020)", color: "#0a0a12", fontSize: 15, fontWeight: 800, cursor: pick ? "pointer" : "not-allowed", opacity: pick ? 1 : 0.45 }}
               >
-                <Lock size={16} strokeWidth={2.4} /> Lock it in &amp; watch
+                <Lock size={16} strokeWidth={2.4} /> {t("lockWatch")}
               </button>
             </div>
             <p className="mono" style={{ textAlign: "center", fontSize: 10, color: "var(--muted2)", marginTop: 12, letterSpacing: 0.5 }}>

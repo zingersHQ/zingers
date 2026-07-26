@@ -19,6 +19,7 @@ import Link from "next/link";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RotateCcw, Flag, Skull, ChevronLeft, ChevronRight, Hand, Trophy, Crown, Zap, Sparkles, Share2, Swords, Rocket } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { CircuitScene } from "./circuit-scene";
 import { READER_SCALE, WORLD_AGENT_SCALE } from "./champion-mesh";
 import { RobotPilot, FlyingFollower } from "./flying-cast";
@@ -128,7 +129,6 @@ import { setMood, setAmbienceIntensity, duckAmbience, startAmbience } from "@/li
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { consumeFlightTeach, goldPayoutLine } from "./climb/flight-teach";
 import { FlightTeachToast } from "./climb/flight-teach-toast";
-import { flightMasteryLine, hundredClearDetail } from "./climb/flight-mastery";
 import { track as pingEvent } from "@/lib/track";
 
 // a leaderboard row as returned by /api/circuit
@@ -616,6 +616,7 @@ export default function CircuitLite({
   /** Incoming async Climb challenge (depth + optional ghost path). */
   challenge?: ClimbChallenge | null;
 } = {}) {
+  const t = useTranslations("flight");
   const gfxTier = useGraphicsTier();
   const gfx = useMemo(() => climbCanvasGfx(gfxTier, embedded), [gfxTier, embedded]);
   const [mounted, setMounted] = useState(false);
@@ -1812,7 +1813,7 @@ export default function CircuitLite({
         }}
       >
         <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: accent, opacity: 0.9 }}>
-          SECTOR {sectorLabel}
+          {t("sector", { n: sectorLabel })}
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
           <span style={{ fontSize: 52, fontWeight: 800, color: "#fff", letterSpacing: -1.5, lineHeight: 0.95, fontVariantNumeric: "tabular-nums", textShadow: `0 0 26px ${accent}` }}>
@@ -1820,10 +1821,10 @@ export default function CircuitLite({
           </span>
           <span className="mono" style={{ fontSize: 16, color: "var(--muted, #9a96b8)" }}>m</span>
         </div>
-        <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: "var(--muted2, #6b6785)" }}>ALTITUDE</div>
+        <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2, color: "var(--muted2, #6b6785)" }}>{t("altitude")}</div>
         {/* gate progress for THIS sector (what the ring-pips mean) */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5 }}>
-          <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>GATES</span>
+          <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>{t("gates")}</span>
           <span style={{ display: "flex", gap: 4 }}>
             {Array.from({ length: gateCount }, (_, i) => (
               <span
@@ -1841,8 +1842,8 @@ export default function CircuitLite({
           </span>
         </div>
         {(phase === "ready" || phase === "running") && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }} aria-label={`${lives} lives left`}>
-            <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>LIVES</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }} aria-label={t("livesLeftAria", { n: lives })}>
+            <span className="mono" style={{ fontSize: 8.5, letterSpacing: 1.5, color: "var(--muted2, #6b6785)" }}>{t("lives")}</span>
             <span style={{ display: "flex", gap: 4 }}>
               {Array.from({ length: runMods.lives }, (_, i) => (
                 <span
@@ -1995,12 +1996,12 @@ export default function CircuitLite({
             <div style={{ display: "flex", alignItems: "center", gap: 8, pointerEvents: "none" }}>
               {showLeave &&
                 (onExit ? (
-                  <button type="button" onClick={onExit} aria-label="Leave Flight" style={chipStyle}>
-                    <ChevronLeft size={15} strokeWidth={2.4} /> Back
+                  <button type="button" onClick={onExit} aria-label={t("leaveFlight")} style={chipStyle}>
+                    <ChevronLeft size={15} strokeWidth={2.4} /> {t("back")}
                   </button>
                 ) : (
-                  <Link href="/grounds" aria-label="Back to the Hub" style={chipStyle}>
-                    <ChevronLeft size={15} strokeWidth={2.4} /> Hub
+                  <Link href="/grounds" aria-label={t("backToHub")} style={chipStyle}>
+                    <ChevronLeft size={15} strokeWidth={2.4} /> {t("hub")}
                   </Link>
                 ))}
             </div>
@@ -2014,10 +2015,10 @@ export default function CircuitLite({
                 <button
                   type="button"
                   onClick={onClaim}
-                  aria-label="Claim a champion"
+                  aria-label={t("claimChampion")}
                   style={{ ...chipStyle, color: accent, border: `1px solid ${accent}`, padding: "7px 12px" }}
                 >
-                  Claim a champion <ChevronRight size={15} strokeWidth={2.4} />
+                  {t("claimChampion")} <ChevronRight size={15} strokeWidth={2.4} />
                 </button>
               )}
             </div>
@@ -2053,10 +2054,10 @@ export default function CircuitLite({
           }}
         >
           <div className="mono" style={{ textAlign: "center", color: "#fff" }}>
-            <div style={{ fontSize: 12, letterSpacing: 2.4, fontWeight: 800, color: "#ff5a5a", marginBottom: 8 }}>LIFE LOST</div>
-            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{failReason === "gates" ? "Missed a gate" : "You fell"}</div>
+            <div style={{ fontSize: 12, letterSpacing: 2.4, fontWeight: 800, color: "#ff5a5a", marginBottom: 8 }}>{t("lifeLost")}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{failReason === "gates" ? t("missedGate") : t("youFell")}</div>
             <div style={{ fontSize: 11, color: "var(--muted, #9a96b8)", letterSpacing: 1 }}>
-              {lives} {lives === 1 ? "life" : "lives"} left · same sector
+              {t("livesLeftSame", { n: lives, life: lives === 1 ? t("life") : t("livesWord") })}
             </div>
           </div>
         </div>
@@ -2161,7 +2162,7 @@ export default function CircuitLite({
                     cursor: "pointer",
                   }}
                 >
-                  RANKED · SECTOR 1
+                  {t("rankedSector1")}
                 </button>
                 {expeditionOpen && !guest && (
                   <button
@@ -2181,7 +2182,7 @@ export default function CircuitLite({
                       cursor: "pointer",
                     }}
                   >
-                    WEEK · {expedition.name.toUpperCase()}
+                    {t("week", { name: expedition.name.toUpperCase() })}
                   </button>
                 )}
                 {scoutUnlocked &&
@@ -2208,7 +2209,7 @@ export default function CircuitLite({
                           cursor: "pointer",
                         }}
                       >
-                        SCOUT · CAMP {theme.roman}
+                        {t("scoutCamp", { roman: theme.roman })}
                       </button>
                     );
                   })}
@@ -2217,13 +2218,13 @@ export default function CircuitLite({
           )}
           {phase === "ready" && runMode === "scout" && (
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
-              PRACTICE · no board · half XP · quarter Crowns
-              {climbHundred ? " · ★ Hundred" : ""}
+              {t("practice")}
+              {climbHundred ? t("practiceHundred") : ""}
             </div>
           )}
           {phase === "ready" && runMode === "expedition" && (
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
-              EXPEDITION · {routeCap} sectors · weekly board · no camps
+              {t("expeditionLine", { n: routeCap })}
             </div>
           )}
           <div
@@ -2242,7 +2243,7 @@ export default function CircuitLite({
               transition: "background .08s, color .08s, box-shadow .12s",
             }}
           >
-            <Hand size={18} strokeWidth={2.4} /> HOLD
+            <Hand size={18} strokeWidth={2.4} /> {t("hold")}
           </div>
         </div>
       )}
@@ -2276,37 +2277,51 @@ export default function CircuitLite({
               }}
             >
               <Share2 size={14} strokeWidth={2.4} />
-              Share
+              {t("share")}
             </button>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: phase === "done" ? accent : "#ff5a5a" }}>
               {phase === "done" ? <Flag size={30} strokeWidth={2.2} /> : <Skull size={30} strokeWidth={2.2} />}
             </div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: phase === "done" ? accent : "#ff5a5a" }}>
-              {phase === "done" ? (clearSnap?.firstHundred ? "THE HUNDRED" : "FULL CLEAR") : "RUN OVER"}
+              {phase === "done" ? (clearSnap?.firstHundred ? t("theHundred") : t("fullClear")) : t("runOver")}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", margin: "8px 0 4px" }}>
-              {phase === "done" ? `All ${CLIMB_SECTOR_COUNT} sectors` : `${sector} sector${sector === 1 ? "" : "s"} cleared`}
+              {phase === "done"
+                ? t("allSectors", { n: CLIMB_SECTOR_COUNT })
+                : sector === 1
+                  ? t("sectorsCleared", { n: sector })
+                  : t("sectorsClearedPlural", { n: sector })}
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 10, lineHeight: 1.45 }}>
               {phase === "done"
-                ? hundredClearDetail(!!clearSnap?.firstHundred)
+                ? t(clearSnap?.firstHundred ? "hundredFirst" : "hundredAgain")
                 : failReason === "gates"
-                  ? "out of lives. Missed a gate · back to sector 1"
-                  : "out of lives · back to sector 1"}
+                  ? t("outLivesGate")
+                  : t("outLives")}
             </div>
             {phase === "done" && clearSnap && (
               <div className="mono" style={{ fontSize: 11, letterSpacing: 0.6, color: accent, marginBottom: 14, fontWeight: 700 }}>
-                {flightMasteryLine(clearSnap.mastery)}
+                {(() => {
+                  const m = clearSnap.mastery;
+                  const stumbles = Math.max(0, Math.floor(m.stumbles));
+                  const caches = Math.max(0, Math.floor(m.goldRings));
+                  const parts = [
+                    stumbles === 0 ? t("masteryClean") : stumbles === 1 ? t("masteryStumble", { n: stumbles }) : t("masteryStumbles", { n: stumbles }),
+                  ];
+                  if (caches > 0) parts.push(caches === 1 ? t("masteryCache", { n: caches }) : t("masteryCaches", { n: caches }));
+                  parts.push(t("masteryLives", { left: Math.max(0, Math.floor(m.livesLeft)), max: Math.max(1, Math.floor(m.maxLives)) }));
+                  return parts.join(" · ");
+                })()}
               </div>
             )}
             {newBest ? (
               <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, padding: "5px 12px", borderRadius: 999, background: accent, color: "#0a0a12", fontWeight: 800, fontSize: 11, letterSpacing: 1 }}>
-                <Trophy size={13} strokeWidth={2.6} /> NEW BEST
+                <Trophy size={13} strokeWidth={2.6} /> {t("newBest")}
               </div>
             ) : (
               best && (
                 <div className="mono" style={{ marginBottom: 16, fontSize: 11, color: "var(--muted2, #6b6785)", letterSpacing: 1 }}>
-                  best {best.sectors}/{CLIMB_SECTOR_COUNT}
+                  {t("bestLine", { sectors: best.sectors, total: CLIMB_SECTOR_COUNT })}
                   {best.totalMs > 0 && ` · ${formatCircuitMs(best.totalMs)}`}
                 </div>
               )
@@ -2329,7 +2344,7 @@ export default function CircuitLite({
             {ascentReaches > 0 && (
               <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, fontSize: 10, letterSpacing: 1.5, color: reward?.deeper ? accent : "var(--muted, #9a96b8)" }}>
                 <Sparkles size={12} strokeWidth={2.2} style={{ color: accent }} />
-                ASCENT SIGIL · {ascentReaches} REACH{ascentReaches === 1 ? "" : "ES"}
+                {ascentReaches === 1 ? t("ascentSigil", { n: ascentReaches }) : t("ascentSigils", { n: ascentReaches })}
               </div>
             )}
 
@@ -2352,22 +2367,22 @@ export default function CircuitLite({
                 }}
               >
                 {challengeResult === "beat"
-                  ? `YOU BEAT ${challenge.name || "THEM"} · ${challenge.sectors}/100`
+                  ? t("beatThem", { name: challenge.name || t("them"), sectors: challenge.sectors })
                   : challengeResult === "surpassed"
-                    ? `PAST THEIR MARK · further than ${challenge.name || "them"}`
-                    : `${challenge.name || "THEY"} HOLD · need ${challenge.sectors}+ sectors`}
+                    ? t("pastMark", { name: challenge.name || t("themLower") })
+                    : t("theyHold", { name: challenge.name || t("they"), sectors: challenge.sectors })}
               </div>
             )}
 
             {/* compact craft board (depth-then-time) — soft trust until replay */}
             <div style={{ marginBottom: 18, textAlign: "left", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, padding: "10px 12px", background: "rgba(255,255,255,.02)" }}>
               <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2, #6b6785)", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-                <span>CRAFT BOARD · soft trust</span>
+                <span>{t("craftBoard")}</span>
                 <span>{boardLoading ? "…" : `${board.length}`}</span>
               </div>
               {board.length === 0 ? (
                 <div className="mono" style={{ fontSize: 10, color: "var(--muted2, #6b6785)" }}>
-                  {getOwnerToken() ? "no runs yet. Set the pace" : "claim a Trainer to rank"}
+                  {getOwnerToken() ? t("noRuns") : t("claimTrainer")}
                 </div>
               ) : (
                 board.slice(0, 5).map((r, i) => (
@@ -2377,7 +2392,7 @@ export default function CircuitLite({
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, fontSize: 11, padding: "2px 0", color: r.you ? accent : "#d9d5ea", fontWeight: r.you ? 800 : 500 }}
                   >
                     <span style={{ width: 16, color: "var(--muted2, #6b6785)" }}>{i + 1}</span>
-                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.handle || "anon"}{r.you ? " · you" : ""}</span>
+                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.handle || t("anon")}{r.you ? ` · ${t("you")}` : ""}</span>
                     <span>{r.sectors}/{CLIMB_SECTOR_COUNT}</span>
                     <span style={{ width: 52, textAlign: "right", color: "var(--muted, #9a96b8)" }}>{r.totalMs > 0 ? formatCircuitMs(r.totalMs) : "—"}</span>
                   </div>
@@ -2390,14 +2405,14 @@ export default function CircuitLite({
             {guest && onClaim && (
               <>
                 <div className="mono" style={{ fontSize: 10.5, color: "var(--muted, #9a96b8)", lineHeight: 1.5, marginBottom: 12, letterSpacing: 0.3 }}>
-                  A wild mind flew with you. Claim it to keep your run. Earn XP, Crowns, and a place on the board.
+                  {t("guestClaimBlurb")}
                 </div>
                 <button
                   type="button"
                   onClick={onClaim}
                   style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, marginBottom: 10, width: "100%", justifyContent: "center" }}
                 >
-                  <Sparkles size={16} strokeWidth={2.4} /> Claim {ROSTER[activeKey]?.name ?? "this mind"}
+                  <Sparkles size={16} strokeWidth={2.4} /> {t("claimMind", { name: ROSTER[activeKey]?.name ?? t("thisMind") })}
                 </button>
               </>
             )}
@@ -2407,7 +2422,7 @@ export default function CircuitLite({
                 onClick={() => void shareChallenge()}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 12, border: `1.5px solid ${accent}`, background: "transparent", color: accent, fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
               >
-                <Share2 size={15} strokeWidth={2.4} /> Challenge a friend
+                <Share2 size={15} strokeWidth={2.4} /> {t("challengeFriend")}
               </button>
             )}
             {phase === "done" && !guest && expeditionOpen && (
@@ -2419,7 +2434,7 @@ export default function CircuitLite({
                 }}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 12, border: "1.5px solid rgba(255,255,255,.18)", background: "transparent", color: "rgba(242,238,251,.85)", fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
               >
-                <Sparkles size={15} strokeWidth={2.4} /> This week&apos;s sky
+                <Sparkles size={15} strokeWidth={2.4} /> {t("weeksSky")}
               </button>
             )}
             <button
@@ -2427,7 +2442,7 @@ export default function CircuitLite({
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
             >
-              <Rocket size={16} strokeWidth={2.4} /> {phase === "done" ? "Fly cleaner" : "Try again"}
+              <Rocket size={16} strokeWidth={2.4} /> {phase === "done" ? t("flyCleaner") : t("tryAgain")}
             </button>
             {shareMsg && (
               <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: accent, marginTop: 10 }}>
@@ -2446,13 +2461,13 @@ export default function CircuitLite({
               <Sparkles size={30} strokeWidth={2.2} />
             </div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 2, color: accent }}>
-              ALTITUDE GATE
+              {t("altitudeGate")}
             </div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: "8px 0 6px" }}>
-              Prove your mind for the higher sky
+              {t("proveTitle")}
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted, #9a96b8)", marginBottom: 18, lineHeight: 1.5 }}>
-              A short fight opens Reach II. Win here, then keep climbing.
+              {t("proveBody")}
             </div>
             {!guest && (
               <button
@@ -2463,7 +2478,7 @@ export default function CircuitLite({
                 }}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center", marginBottom: 8 }}
               >
-                <Swords size={15} strokeWidth={2.4} /> Prove now
+                <Swords size={15} strokeWidth={2.4} /> {t("proveNow")}
               </button>
             )}
             <button
@@ -2471,7 +2486,7 @@ export default function CircuitLite({
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "1px solid rgba(255,255,255,.16)", background: "transparent", color: "#e6e2f5", fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
             >
-              <RotateCcw size={15} strokeWidth={2.4} /> First flight again
+              <RotateCcw size={15} strokeWidth={2.4} /> {t("firstFlightAgain")}
             </button>
             {guest && onClaim && (
               <button
@@ -2479,7 +2494,7 @@ export default function CircuitLite({
                 onClick={onClaim}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: accent, color: "#0a0a12", fontWeight: 800, cursor: "pointer", fontSize: 15, width: "100%", justifyContent: "center" }}
               >
-                Claim a champion
+                {t("claimChampion")}
               </button>
             )}
           </div>

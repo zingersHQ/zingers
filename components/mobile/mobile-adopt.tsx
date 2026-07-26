@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useMemo, useState } from "react";
 import { Sparkles, Check, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { ROSTER } from "@/lib/engine/roster";
@@ -25,6 +26,7 @@ import {
   markFirstDuelComplete,
 } from "@/lib/first-duel";
 export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
+  const t = useTranslations("mobile");
   const adoptStarterRookie = useChampions((s) => s.adoptStarterRookie);
   // preselect the loaner the guest just flew in the Climb, if it's a valid starter
   const [picked, setPicked] = useState<string | null>(
@@ -79,7 +81,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 10 }}>
           <Sparkles size={20} strokeWidth={2} style={{ color: "var(--accent)" }} />
-          <div style={{ fontSize: 20, fontWeight: 800, margin: "4px 0 0" }}>Choose your champion</div>
+          <div style={{ fontSize: 20, fontWeight: 800, margin: "4px 0 0" }}>{t("adoptTitle")}</div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
@@ -153,7 +155,7 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
         {/* the picked mind's hook + persona — name sticks before first flight */}
         <div style={{ minHeight: 44, textAlign: "center", margin: "8px auto 0", maxWidth: 340 }}>
           <p style={{ fontSize: 12, lineHeight: 1.35, color: picked ? "var(--ink, #e6e2f5)" : "var(--muted2, #6b6785)", margin: 0 }}>
-            {pickedHook ?? "Tap a champion to meet them."}
+            {pickedHook ?? t("adoptTap")}
           </p>
           {pickedPersona && (
             <p style={{ fontSize: 11.5, lineHeight: 1.35, color: "var(--muted, #9a96b8)", margin: "3px 0 0" }}>
@@ -183,11 +185,11 @@ export function MobileAdopt({ initialPick }: { initialPick?: string } = {}) {
             cursor: picked ? "pointer" : "not-allowed",
           }}
         >
-          {picked ? <>Raise {ROSTER[picked].name} <ChevronRight size={17} strokeWidth={2.6} /></> : "Pick a champion above"}
+          {picked ? <>{t("raiseName", { name: ROSTER[picked].name })} <ChevronRight size={17} strokeWidth={2.6} /></> : t("pickAbove")}
         </button>
 
         <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2, #6b6785)", textAlign: "center", lineHeight: 1.45, margin: "8px 0 0" }}>
-          One champion to start · a new pool of starters rotates weekly
+          {t("adoptFoot")}
         </p>
       </div>
     </div>

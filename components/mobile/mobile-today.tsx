@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles, ArrowUpCircle, ChevronsUp, Dumbbell, KeyRound, DoorOpen, Award } from "lucide-react";
 import type { BattleEnd, BattleTurn, CareerEvent, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
@@ -23,6 +24,7 @@ import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
 import { NextCard } from "@/components/director/next-card";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { MobileBoutStage } from "@/components/mobile/mobile-bout";
+import { LocaleDropdown } from "@/components/locale-dropdown";
 
 type View = "hub" | "predict" | "bout" | "done";
 
@@ -203,21 +205,25 @@ function Hub({
   onOpenDaily: () => void;
   onNavigate?: (tab: string) => void;
 }) {
+  const t = useTranslations("mobile");
   const router = useRouter();
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 22 }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         {/* top bar — wordmark + streak. Bottom tabs are the only mobile nav; the
             immersive 3D Grounds is a desktop surface, so no gear/opt-in here. */}
-        <div style={{ display: "flex", alignItems: "center", padding: "14px 14px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 14px 10px" }}>
           <span className="glow" style={{ fontSize: 22, fontWeight: 900, letterSpacing: 0.5, color: "var(--accent)" }}>
             {BRAND.name ?? "Zingers"}
           </span>
-          <span className="mono" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
-            <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
-            <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
-            <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>STREAK</span>
-          </span>
+          <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <LocaleDropdown variant="hub" />
+            <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
+              <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
+              <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
+              <span style={{ color: "var(--muted2)", fontSize: 9, letterSpacing: 1 }}>{t("streak")}</span>
+            </span>
+          </div>
         </div>
 
         {/* homecoming: your champion greets you the moment you open the app */}
@@ -261,15 +267,15 @@ function Hub({
           {/* the two most-legible surfaces, one tap each */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
             <Tile
-              title="Flight"
-              sub="Hold to fly"
+              title={t("tileFlight")}
+              sub={t("tileFlightSub")}
               icon={<Rocket size={20} strokeWidth={2.2} />}
               col="var(--accent)"
               onClick={() => onNavigate?.("climb")}
             />
             <Tile
-              title="Watch"
-              sub="Live fights"
+              title={t("tileWatch")}
+              sub={t("tileWatchSub")}
               icon={<Eye size={20} strokeWidth={2.2} />}
               col="var(--gold)"
               onClick={() => onNavigate?.("watch")}
@@ -314,6 +320,7 @@ function reportRel(ts: number): string {
 }
 
 function ReportCard({ owned, homecoming, onNavigate }: { owned: string; homecoming: Homecoming; onNavigate?: (tab: string) => void }) {
+  const t = useTranslations("mobile");
   const type = ROSTER[owned].type;
   const col = TYPE_COLOR[type];
   const { since, wins, losses, latest } = homecoming;
@@ -327,7 +334,7 @@ function ReportCard({ owned, homecoming, onNavigate }: { owned: string; homecomi
       style={{ ["--ac" as string]: col, width: "100%", textAlign: "left", padding: "13px 14px", cursor: "pointer", marginBottom: 12 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span className="mono" style={{ fontSize: 10, letterSpacing: 1.4, color: "var(--muted2)" }}>{quiet ? "WHILE YOU WERE AWAY" : "SINCE YOU LAST LOOKED"}</span>
+        <span className="mono" style={{ fontSize: 10, letterSpacing: 1.4, color: "var(--muted2)" }}>{quiet ? t("whileAway") : t("sinceLooked")}</span>
         {!quiet && (wins > 0 || losses > 0) && (
           <span className="mono" style={{ marginLeft: "auto", fontSize: 11, fontWeight: 800 }}>
             <span style={{ color: "var(--good)" }}>{wins}W</span>
@@ -340,7 +347,9 @@ function ReportCard({ owned, homecoming, onNavigate }: { owned: string; homecomi
 
       {quiet ? (
         <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 7, lineHeight: 1.45 }}>
-          {latest ? `${ROSTER[owned].name} rests between fights. ${latest.title}.` : `${ROSTER[owned].name} is ready. Nothing new to report.`}
+          {latest
+            ? t("restsBetween", { name: ROSTER[owned].name, title: latest.title })
+            : t("readyNothing", { name: ROSTER[owned].name })}
         </div>
       ) : (
         <div style={{ display: "grid", gap: 7, marginTop: 9 }}>
@@ -362,6 +371,7 @@ function ReportCard({ owned, homecoming, onNavigate }: { owned: string; homecomi
 }
 
 function ChampionHero({ owned, get, onNavigate }: { owned: string; get: (k: string) => Champion; onNavigate?: (tab: string) => void }) {
+  const t = useTranslations("mobile");
   const type = ROSTER[owned].type;
   const champ = get(owned);
   const dl = doctrineLabel(champ);
@@ -403,12 +413,12 @@ function ChampionHero({ owned, get, onNavigate }: { owned: string; get: (k: stri
           pointerEvents: "none",
         }}
       >
-        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.8, color: "var(--muted2)" }}>YOUR CHAMPION</div>
+        <div className="mono" style={{ fontSize: 9, letterSpacing: 1.8, color: "var(--muted2)" }}>{t("yourChampion")}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
           <span style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{ROSTER[owned].name}</span>
           {nearEvolve && (
             <span className="glow" style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1, color: "#0a0a12", background: col, padding: "3px 8px", borderRadius: 999 }}>
-              READY TO EVOLVE
+              {t("readyToEvolve")}
             </span>
           )}
         </div>
@@ -427,6 +437,7 @@ function ChampionHero({ owned, get, onNavigate }: { owned: string; get: (k: stri
 }
 
 function AdoptHero({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+  const t = useTranslations("mobile");
   return (
     <button
       type="button"
@@ -451,12 +462,12 @@ function AdoptHero({ onNavigate }: { onNavigate?: (tab: string) => void }) {
         <div style={{ width: 64, height: 64, borderRadius: 18, display: "grid", placeItems: "center", background: "var(--panel2, #15131f)", boxShadow: "0 0 50px -18px var(--accent)" }}>
           <Sparkles size={30} strokeWidth={2} style={{ color: "var(--accent)" }} />
         </div>
-        <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>Meet your champion</div>
+        <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{t("meetTitle")}</div>
         <div style={{ fontSize: 13.5, color: "var(--muted)", maxWidth: 280, lineHeight: 1.5 }}>
-          Raise one mind. It fights, learns, and evolves. This is your game.
+          {t("meetBody")}
         </div>
         <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, color: "var(--accent)", fontSize: 14, fontWeight: 800 }}>
-          Choose yours <ChevronRight size={16} strokeWidth={2.6} />
+          {t("chooseYours")} <ChevronRight size={16} strokeWidth={2.6} />
         </div>
       </div>
     </button>
@@ -478,6 +489,7 @@ function TribunalCard({
   result: DailyResult | null;
   onOpen: () => void;
 }) {
+  const t = useTranslations("mobile");
   const ready = plan != null && mounted;
   const acol = plan ? TYPE_COLOR[plan.a.type] : "#888";
   const bcol = plan ? TYPE_COLOR[plan.b.type] : "#888";
@@ -498,9 +510,9 @@ function TribunalCard({
       }}
     >
       <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 1.5, color: "var(--gold)", fontWeight: 800 }}>
-        <Swords size={13} strokeWidth={2.4} /> TODAY&apos;S TRIBUNAL
+        <Swords size={13} strokeWidth={2.4} /> {t("tribunal")}
       </div>
-      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>Two minds argue, call the winner</div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>{t("tribunalSub")}</div>
 
       {ready && plan ? (
         <>
@@ -511,20 +523,20 @@ function TribunalCard({
           </div>
           {solvedToday && result ? (
             <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 4, fontSize: 12, fontWeight: 700 }}>
-              <span style={{ color: result.winnerCorrect ? "var(--good)" : "var(--bad)" }}>{result.winnerCorrect ? "✓ You called it" : "✗ Missed it"}</span>
-              <span style={{ color: "var(--muted2)" }}>· See result</span>
+              <span style={{ color: result.winnerCorrect ? "var(--good)" : "var(--bad)" }}>{result.winnerCorrect ? t("calledIt") : t("missedIt")}</span>
+              <span style={{ color: "var(--muted2)" }}>· {t("seeResult")}</span>
               <ChevronRight size={13} strokeWidth={2.2} style={{ color: "var(--muted2)" }} />
             </div>
           ) : (
             <div
               style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 8, padding: "11px 22px", borderRadius: 11, background: "var(--gold, #f5d020)", color: "#0a0a12", fontSize: 14.5, fontWeight: 800 }}
             >
-              <Lock size={15} strokeWidth={2.4} /> Call it &amp; Watch
+              <Lock size={15} strokeWidth={2.4} /> {t("callWatch")}
             </div>
           )}
         </>
       ) : (
-        <div className="mono" style={{ color: "var(--muted2)", fontSize: 12, padding: "18px 0" }}>loading today&apos;s fight…</div>
+        <div className="mono" style={{ color: "var(--muted2)", fontSize: 12, padding: "18px 0" }}>{t("loadingFight")}</div>
       )}
     </button>
   );

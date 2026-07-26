@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
 import { TYPE_COLOR, blank, levelFor } from "@/lib/evolve/progression";
@@ -29,6 +30,7 @@ const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
 ];
 
 export function MobileChampion(_props: { onNavigate?: (tab: string) => void; initialPick?: string }) {
+  const t = useTranslations("mobile");
   const owned = useChampions((s) => s.owned);
   const progress = useChampions((s) => s.progress);
   const recipes = useChampions((s) => s.recipes);
@@ -88,14 +90,14 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
     setBusy(true);
     const ok = await trainChampion(owned);
     setBusy(false);
-    flash(ok ? "Training complete. Your champion evolved." : "Not enough Crowns to train.");
-  }, [owned, busy, trainChampion, flash]);
+    flash(ok ? t("trainDone") : t("trainNoCrowns"));
+  }, [owned, busy, trainChampion, flash, t]);
 
   const trainFree = useCallback(() => {
     if (!owned) return;
     const ok = trainWithFragment(owned);
-    flash(ok ? "Fragment spent. A free session banked." : "No fragments to spend.");
-  }, [owned, trainWithFragment, flash]);
+    flash(ok ? t("fragmentSpent") : t("noFragments"));
+  }, [owned, trainWithFragment, flash, t]);
 
   const teach = useCallback(
     async (lessonId: string) => {
@@ -105,19 +107,19 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       const out = await imprint(owned, lessonId);
       setImprinting(null);
       if (!out.applied) {
-        flash("Already internalized today. Try a different lesson.");
+        flash(t("alreadyLesson"));
         return;
       }
       setReply(out.reply);
       const who = ROSTER[owned]?.name ?? owned;
       const moved = describeDial(out.dial);
-      flash(moved ? `${who} took it to heart. ${moved}.` : `${who} took it to heart.`);
+      flash(moved ? t("tookHeartMoved", { name: who, moved }) : t("tookHeart", { name: who }));
       const axes = new Set(Object.keys(out.dial) as (keyof Strat)[]);
       setLitAxes(axes);
       if (litTimer.current) clearTimeout(litTimer.current);
       litTimer.current = setTimeout(() => setLitAxes(new Set()), 1800);
     },
-    [owned, imprinting, imprint, flash],
+    [owned, imprinting, imprint, flash, t],
   );
 
   // No champion yet → the adoption door (desktop does this in the 3D first-duel;
@@ -142,7 +144,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         {/* header + wallet */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <span style={{ fontSize: 20, fontWeight: 800 }}>Champion</span>
+          <span style={{ fontSize: 20, fontWeight: 800 }}>{t("tabs.champion")}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, border: "1px solid var(--line2)", fontSize: 11 }}>
               <Crown size={12} strokeWidth={2.4} fill="#f5d020" style={{ color: "#f5d020" }} />
@@ -182,7 +184,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           <div style={{ marginTop: 10 }}>
             <XpBar champion={champ} color={col} />
             <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>
-              {dl.into} / {dl.span} XP TO NEXT
+              {dl.into} / {dl.span} {t("xpToNext")}
             </div>
           </div>
         </div>
@@ -220,7 +222,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
                 if (!owned || !nickDirty) return;
                 setNick(owned, nickDraft);
                 setNickSaved(true);
-                flash(nickDraft.trim() ? "Nickname saved." : "Nickname cleared.");
+                flash(nickDraft.trim() ? t("nickSaved") : t("nickSaved"));
               }}
               style={{
                 padding: "10px 14px",
@@ -236,7 +238,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
                 minWidth: 72,
               }}
             >
-              {nickSaved && !nickDirty ? "Saved" : "Save"}
+              {nickSaved && !nickDirty ? t("saveNick") : t("saveNick")}
             </button>
           </div>
           {nickSaved && !nickDirty ? (

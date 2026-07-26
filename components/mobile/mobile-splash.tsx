@@ -13,15 +13,18 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Rocket, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { BRAND } from "@/lib/brand";
 import { track as pingEvent } from "@/lib/track";
 import { FlightHeroPoster } from "@/components/home/flight-hero-poster";
+import { LocaleDropdown } from "@/components/locale-dropdown";
 
 // Infinite-flight hero loads after first paint so the captured still + CTA are
 // usable instantly on a cold phone.
 const SplashScene = dynamic(() => import("./mobile-splash-scene"), { ssr: false, loading: () => null });
 
 export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: () => void }) {
+  const t = useTranslations("mobile");
   const [live, setLive] = useState(false);
 
   useEffect(() => {
@@ -49,6 +52,19 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
         WebkitTapHighlightColor: "transparent",
       }}
     >
+      {/* Language — site nav is hidden on /ascent; keep EN▾ on the phone door. */}
+      <div
+        style={{
+          position: "absolute",
+          top: "calc(12px + env(safe-area-inset-top, 0px))",
+          right: 12,
+          zIndex: 6,
+          pointerEvents: "auto",
+        }}
+      >
+        <LocaleDropdown variant="hub" />
+      </div>
+
       {/* Captured first frame (our models) for instant paint / SEO; live WebGL fades over it. */}
       <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <FlightHeroPoster visible={!live} />
@@ -68,10 +84,10 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
       <div style={{ position: "relative", zIndex: 3, padding: "0 24px calc(40px + env(safe-area-inset-bottom, 0px))", textAlign: "center" }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: 4, color: "#39e0ff", marginBottom: 10 }}>{BRAND.nameUpper}</div>
         <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.02, margin: "0 0 10px", letterSpacing: -0.5, textShadow: "0 4px 30px rgba(0,0,0,.6)" }}>
-          Take flight.
+          {t("splashTitle")}
         </h1>
         <p style={{ fontSize: 14.5, lineHeight: 1.5, color: "rgba(230,226,245,.78)", margin: "0 auto 26px", maxWidth: 300 }}>
-          Jetpack lit, a thinking champion flying at your side. Climb the sky, raise the mind. You both rise.
+          {t("splashBody")}
         </p>
 
         <button
@@ -95,7 +111,7 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
             boxShadow: "0 14px 40px -12px #39e0ffaa",
           }}
         >
-          <Rocket size={20} strokeWidth={2.6} /> Fly
+          <Rocket size={20} strokeWidth={2.6} /> {t("fly")}
         </button>
 
         <button
@@ -116,7 +132,7 @@ export function MobileSplash({ onFly, onEnter }: { onFly: () => void; onEnter: (
             cursor: "pointer",
           }}
         >
-          Enter the world <ChevronRight size={15} strokeWidth={2.4} />
+          {t("enterWorld")} <ChevronRight size={15} strokeWidth={2.4} />
         </button>
       </div>
 

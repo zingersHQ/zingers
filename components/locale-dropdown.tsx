@@ -40,10 +40,11 @@ export function LocaleDropdown({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onDoc);
+    // pointerdown covers mouse + touch (phones never get a reliable mousedown-outside).
+    document.addEventListener("pointerdown", onDoc);
     window.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("pointerdown", onDoc);
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);

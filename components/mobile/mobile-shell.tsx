@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Home, Eye, Shield, Rocket, Trophy, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import CircuitLite from "@/components/grounds/circuit-lite";
 import { AmbienceEngine } from "@/components/grounds/ambience";
 import { startAmbience } from "@/lib/ambience-bus";
@@ -37,21 +38,30 @@ type TabId = "today" | "watch" | "champion" | "climb" | "rank";
 
 interface TabDef {
   id: TabId;
-  label: string;
+  label?: string;
   icon: LucideIcon;
 }
 
-const TABS: TabDef[] = [
-  { id: "today", label: "Today", icon: Home },
-  { id: "watch", label: "Watch", icon: Eye },
-  { id: "champion", label: "Champion", icon: Shield },
-  { id: "climb", label: "Flight", icon: Rocket },
-  { id: "rank", label: "Rank", icon: Trophy },
+const TABS: Omit<TabDef, "label">[] = [
+  { id: "today", icon: Home },
+  { id: "watch", icon: Eye },
+  { id: "champion", icon: Shield },
+  { id: "climb", icon: Rocket },
+  { id: "rank", icon: Trophy },
 ];
+
+const TAB_LABEL_KEY: Record<TabId, "tabs.today" | "tabs.watch" | "tabs.champion" | "tabs.flight" | "tabs.rank"> = {
+  today: "tabs.today",
+  watch: "tabs.watch",
+  champion: "tabs.champion",
+  climb: "tabs.flight",
+  rank: "tabs.rank",
+};
 
 const ACCENT = "var(--accent, #7cf6c8)";
 
 export function MobileShell() {
+  const t = useTranslations("mobile");
   const [tab, setTab] = useState<TabId>("today");
   // where a "back/close" from an immersive context returns to (the last browse tab)
   const [prevTab, setPrevTab] = useState<TabId>("today");
@@ -224,21 +234,24 @@ export function MobileShell() {
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="mono" style={{ fontSize: 9, letterSpacing: 1.4, color: ACCENT }}>
-                        CHALLENGE
+                        {t("challenge")}
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginTop: 2 }}>
-                        Beat {challenge.name || "a Trainer"} · {challenge.sectors}/100
-                        {challenge.totalMs > 0 ? ` · ${formatCircuitMs(challenge.totalMs)}` : ""}
+                        {t("challengeBeat", {
+                          name: challenge.name || "Trainer",
+                          sectors: challenge.sectors,
+                          time: challenge.totalMs > 0 ? formatCircuitMs(challenge.totalMs) : "—",
+                        })}
                       </div>
                       <div className="mono" style={{ fontSize: 10, color: "var(--muted, #9a96b8)", marginTop: 2 }}>
                         {challenge.path?.some((s) => s.length >= 2)
-                          ? "Ghost flies beside you. Clear deeper or faster to win"
-                          : "Clear deeper (or same depth, faster) to claim the win"}
+                          ? t("challengeGhost")
+                          : t("challengeClear")}
                       </div>
                     </div>
                     <button
                       type="button"
-                      aria-label="Dismiss challenge"
+                      aria-label={t("dismissChallenge")}
                       onClick={() => setChallengeDismissed(true)}
                       style={{
                         width: 32,
@@ -280,7 +293,7 @@ export function MobileShell() {
               <button
                 type="button"
                 onClick={exitImmersive}
-                aria-label="Close champion selection"
+                aria-label={t("closeChampionSelect")}
                 style={{
                   position: "absolute",
                   top: "calc(12px + env(safe-area-inset-top, 0px))",
@@ -321,16 +334,16 @@ export function MobileShell() {
           WebkitBackdropFilter: "blur(12px)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
-        aria-label="Primary"
+        aria-label={t("tabs.primary")}
       >
-        {TABS.map((t) => {
-          const active = t.id === activeTab;
-          const Icon = t.icon;
+        {TABS.map((tabDef) => {
+          const active = tabDef.id === activeTab;
+          const Icon = tabDef.icon;
           return (
             <button
-              key={t.id}
+              key={tabDef.id}
               type="button"
-              onClick={() => selectTab(t.id)}
+              onClick={() => selectTab(tabDef.id)}
               aria-current={active ? "page" : undefined}
               style={{
                 flex: 1,
@@ -350,7 +363,9 @@ export function MobileShell() {
               }}
             >
               <Icon size={21} strokeWidth={active ? 2.6 : 2} />
-              <span className="mono" style={{ fontSize: 9.5, letterSpacing: 0.8, fontWeight: active ? 800 : 500 }}>{t.label}</span>
+              <span className="mono" style={{ fontSize: 9.5, letterSpacing: 0.8, fontWeight: active ? 800 : 500 }}>
+                {t(TAB_LABEL_KEY[tabDef.id])}
+              </span>
             </button>
           );
         })}
