@@ -456,7 +456,22 @@ export default function World({
   const circuitFogNear = Math.max(12, 35 * Math.max(0.35, circuitFogNearMult));
   const circuitExposure = biome.exposure * (circuitWarm ? 1.08 : 1);
   const circuitMotes = circuitMoteColor || biome.lights.arenaPoint;
-  const camCue = useRef<CamCue>({ zoom: 0, heading: Math.PI, speed: 0, moving: false, reverse: false, flying: false, climb: 0, superrun: false, headingSteer: false, recenter: false, touchActive: false, inputLock: false, bodyReady: false });
+  // Circuit must seed heading 0 (+Z / rings). Default π faces the return portal at z=-20.
+  const camCue = useRef<CamCue>({
+    zoom: 0,
+    heading: inCircuit ? 0 : inAmphitheatre ? AMPHI_SPAWN_HEADING : Math.PI,
+    speed: 0,
+    moving: false,
+    reverse: false,
+    flying: false,
+    climb: 0,
+    superrun: false,
+    headingSteer: false,
+    recenter: false,
+    touchActive: false,
+    inputLock: false,
+    bodyReady: false,
+  });
   // the Scrying Gallery flags when its bout is live + where the ring sits, so the
   // camera can ease onto the fight while the player stands close (released on leave)
   const galleryFocus = useRef<GalleryFocus | null>(null);
@@ -3139,7 +3154,8 @@ function Handler({
   // the raw, 60Hz-stepped rb.translation()) keeps the camera locked to the body
   // the eye actually sees, killing the relative judder on >60Hz / uneven frames.
   const camAnchor = useRef<THREE.Group>(null);
-  const heading = useRef(Math.PI);
+  // Seed from World (circuit = 0 down-track). Math.PI would stare at the exit portal.
+  const heading = useRef(handlerHeading.current);
   const ground = useRef(0);
   // spawn settle guard: pin the capsule at standing height until the floor
   // sensor confirms the ground collider is actually under us (a cold-load race
@@ -3629,9 +3645,14 @@ function Handler({
       rb.setLinvel({ x: v.x * damp, y: v.y, z: v.z * damp }, true);
     }
 
-    // jump input: held state (for hold-to-fly) + rising edge (for discrete hops)
+    // jump input: held state (for hold-to-fly) + rising edge (for discrete hops).
+    // Ready pad: Space must start the sector even during the arrive inputLock
+    // (title card still up) — same "press to go" as mobile Climb.
     const canJump =
-      controlsEnabled && (circuitMode ? circuitRunning || !moveLocked : !moveLocked);
+      controlsEnabled &&
+      (circuitMode
+        ? circuitRunning || !moveLocked || circuitPhase === "ready"
+        : !moveLocked);
     const space = canJump && !!keys["Space"];
     const spaceEdge = space && !prevSpace.current;
     prevSpace.current = space;
@@ -4371,10 +4392,9 @@ function CameraController({
   circuitArriveNonce?: number;
 }) {
   const { camera, gl } = useThree();
-  // Circuit boots facing the Trainer (yaw = heading = 0 → lens in front, portal
-  // behind them), then Q-sweeps to chase (heading + π). Amphitheatre / wilds
-  // default yaw 0 already puts the camera behind a −Z-facing spawn.
-  const yaw = useRef(0);
+  // Circuit: start behind the Trainer looking down-track (yaw = heading + π).
+  // Amphitheatre / wilds default yaw 0 already puts the camera behind a −Z spawn.
+  const yaw = useRef(inCircuit ? Math.PI : 0);
   const pitch = useRef(PITCH_GROUND);
   const dist = useRef(CAM_DIST_DEFAULT);
   // wheel/pinch write the TARGET; `dist` eases toward it each frame so zoom is a
@@ -4399,9 +4419,9 @@ function CameraController({
   const prevSuperrun = useRef(false);
   const recenter = useRef(0);
   const recenterPitch = useRef(PITCH_GROUND);
-  // Circuit race intro: hold a front-facing hero shot, then sweep behind the runner.
+  // Circuit race intro: brief chase settle after Jump-to-start.
   const circuitIntroHold = useRef(0);
-  // Arrival: hold face-on (portal in background), then Q-sweep to chase down-track.
+  // Arrival: hold behind the Trainer looking at the rings, then settle into chase.
   const circuitArriveHold = useRef(0);
   // Seconds remaining of "don't steer" while the chase cam settles (enter / intro).
   // Separate from generic recenter so mid-run takeoff sweeps don't freeze controls.
@@ -4423,13 +4443,14 @@ function CameraController({
       if (camCue.current) camCue.current.inputLock = false;
       return;
     }
-    // Arrival: lens already behind the Trainer looking down-track at the rings
-    // (heading + π). Hold, then settle into chase — never open on the return portal.
-    // Re-arms on life-continue (circuitArriveNonce). Read phase via ref so
-    // flipping continue→ready does NOT re-arm arrive.
+    // Arrival: lens behind the Trainer looking down-track at the rings
+    // (heading + π). Never open on the return portal (z=-20). Circuit heading
+    // is always 0 — don't trust a stale camCue default of π.
+    // Re-arms on life-continue (circuitArriveNonce).
     const hold =
       circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
-    const h = camCue.current?.heading ?? 0;
+    const h = inCircuit ? 0 : (camCue.current?.heading ?? 0);
+    if (camCue.current && inCircuit) camCue.current.heading = 0;
     yaw.current = h + Math.PI; // behind character → rings ahead
     pitch.current = PITCH_GROUND;
     distTarget.current = CAM_DIST_DEFAULT;
@@ -4666,19 +4687,29 @@ function CameraController({
     const speed01 = Math.min(1, speed / (cue?.superrun ? SUPERRUN : RUN));
 
     if (inCircuit && circuitPhase === "running" && prevCircuitPhase.current !== "running") {
-      // Snap chase cam behind the flyer looking down-track — do NOT re-lock
-      // input (thrust must stay live the moment the sector starts).
+      // Early Jump-to-start: kill arrive hold/lock so thrust + chase are live now.
+      circuitArriveHold.current = 0;
+      circuitInputLock.current = 0;
+      if (cue) cue.inputLock = false;
+      // Snap chase cam behind the flyer looking down-track.
       circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
-      if (cue) yaw.current = cue.heading + Math.PI;
+      if (cue) {
+        cue.heading = 0;
+        yaw.current = Math.PI;
+      }
     }
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
     else prevCircuitPhase.current = null;
 
     // Arrival: hold behind the Trainer looking at the rings, ease distance in,
-    // then soft settle into chase. Pause countdown until the capsule exists.
+    // then soft settle into chase. Keep yaw correct even before the capsule settles
+    // (stale heading π used to open on the return portal).
     const circuitArriveActive = inCircuit && circuitArriveHold.current > 0;
     if (circuitArriveActive) {
+      const trackH = 0; // Circuit faces +Z / rings
+      if (cue) cue.heading = trackH;
       if (!bodyReady) {
+        yaw.current = trackH + Math.PI;
         pitch.current = PITCH_GROUND;
         dragging.current = false;
       } else {
@@ -4687,11 +4718,9 @@ function CameraController({
         const holdSpan =
           circuitPhase === "continue" ? CIRCUIT_CONTINUE_ARRIVE_HOLD_S : CIRCUIT_ARRIVE_HOLD_S;
         const u = 1 - circuitArriveHold.current / holdSpan; // 0→1
-        if (cue) {
-          // Stay behind (+π); tiny lateral drift so it isn't locked-still.
-          const drift = Math.sin(u * Math.PI) * 0.08;
-          yaw.current = cue.heading + Math.PI + drift;
-        }
+        // Stay behind (+π); tiny lateral drift so it isn't locked-still.
+        const drift = Math.sin(u * Math.PI) * 0.08;
+        yaw.current = trackH + Math.PI + drift;
         pitch.current = PITCH_GROUND - 0.04 * (1 - u);
         distTarget.current = CAM_DIST_DEFAULT * (1.1 - 0.1 * u);
         if (holdBefore > 0 && circuitArriveHold.current === 0) {

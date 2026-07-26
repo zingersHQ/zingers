@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Flag, Rocket, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
@@ -91,8 +91,11 @@ function LifePips({ lives, maxLives = CIRCUIT_LIVES, accent }: { lives: number; 
 /**
  * Sector-open title card — pairs with the arrive camera hold/sweep.
  * Bold Reach + sector, then after it leaves: "Jump to start" alone.
+ * Jump/Space during the card starts the sector and fades this off immediately
+ * (parity with mobile Climb's first-press dismiss).
  */
 function SectorIntro({
+  phase,
   sectorN,
   sectorTotal,
   accent,
@@ -101,6 +104,7 @@ function SectorIntro({
   maxLives = CIRCUIT_LIVES,
   modifierLabel = null,
 }: {
+  phase: CircuitPhase;
   sectorN: number;
   sectorTotal: number;
   accent: string;
@@ -110,18 +114,53 @@ function SectorIntro({
   modifierLabel?: string | null;
 }) {
   const [showCard, setShowCard] = useState(true);
+  const [cardOut, setCardOut] = useState(false);
+  const hideT = useRef<number | null>(null);
+
+  const dismissCard = useCallback((fade: boolean) => {
+    if (hideT.current != null) {
+      window.clearTimeout(hideT.current);
+      hideT.current = null;
+    }
+    if (!fade) {
+      setShowCard(false);
+      setCardOut(false);
+      return;
+    }
+    setCardOut(true);
+    hideT.current = window.setTimeout(() => {
+      setShowCard(false);
+      setCardOut(false);
+      hideT.current = null;
+    }, 320);
+  }, []);
 
   useEffect(() => {
     setShowCard(true);
+    setCardOut(false);
     rewardSfx("small");
-    const doneT = window.setTimeout(() => setShowCard(false), CIRCUIT_SECTOR_INTRO.cardMs);
-    return () => window.clearTimeout(doneT);
-  }, [sectorN]);
+    const doneT = window.setTimeout(() => dismissCard(true), CIRCUIT_SECTOR_INTRO.cardMs);
+    return () => {
+      window.clearTimeout(doneT);
+      if (hideT.current != null) window.clearTimeout(hideT.current);
+    };
+  }, [sectorN, dismissCard]);
+
+  // Early Jump-to-start — fade the card as soon as the sector goes live.
+  useEffect(() => {
+    if (phase !== "running") return;
+    dismissCard(true);
+  }, [phase, dismissCard]);
+
+  if (!showCard && phase !== "ready") return null;
 
   return (
     <>
       {showCard && (
-        <div className="circuit-sector-intro" aria-live="polite">
+        <div
+          className={`circuit-sector-intro${cardOut ? " circuit-sector-intro--out" : ""}`}
+          aria-live="polite"
+        >
           <div className="circuit-sector-intro__wash" style={{ ["--ac" as string]: accent }} />
           <div className="circuit-sector-intro__card">
             <div className="circuit-sector-intro__kicker mono" style={{ color: accent }}>
@@ -168,7 +207,7 @@ function SectorIntro({
           </div>
         </div>
       )}
-      {!showCard && (
+      {!showCard && phase === "ready" && (
         <div className="circuit-sector-intro__hint mono" style={{ color: accent }}>
           Jump to start
         </div>
@@ -636,9 +675,10 @@ export function CircuitHud({
         </div>
       )}
 
-      {phase === "ready" && (
+      {(phase === "ready" || phase === "running") && (
         <SectorIntro
           key={sectorIndex}
+          phase={phase}
           sectorN={sectorN}
           sectorTotal={sectorTotal}
           accent={accent}
