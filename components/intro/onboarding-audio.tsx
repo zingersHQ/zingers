@@ -6,7 +6,7 @@ import { AmbienceEngine, AmbientToggle } from "@/components/grounds/ambience";
  *  persistent host mounts). */
 export function OnboardingAudio({ compact = false }: { compact?: boolean }) {
   return (
-    <div style={{ position: "fixed", top: 14, right: 16, zIndex: 90, pointerEvents: "auto" }}>
+    <div style={{ position: "fixed", top: 14, right: 72, zIndex: 90, pointerEvents: "auto" }}>
       <AmbienceEngine />
       <AmbientToggle compact={compact} />
     </div>

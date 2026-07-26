@@ -659,9 +659,15 @@ textarea::placeholder {
   margin-left: 4px;
 }
 .site-nav__links {
-  margin-left: auto;
   display: flex;
   gap: 6px;
+}
+.site-nav__end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .site-nav__link {
   font-size: 12px;
@@ -676,9 +682,17 @@ textarea::placeholder {
   background: var(--panel);
   border: 1px solid var(--line2);
 }
+@media (min-width: 721px) {
+  /* Links sit mid-right; language control stays at the far right. */
+  .site-nav__links {
+    margin-left: auto;
+  }
+  .site-nav__end {
+    margin-left: 8px;
+  }
+}
 .site-nav__burger {
   display: none;
-  margin-left: auto;
   width: 40px;
   height: 36px;
   border: 1px solid var(--line2);

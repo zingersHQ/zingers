@@ -3,21 +3,23 @@
 import { useEffect, useRef } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { useSettings } from "@/store/settings";
+import type { Locale } from "@/lib/i18n/locales";
 import {
-  DEFAULT_LOCALE,
-  isLocale,
-  normalizeLocale,
-  type Locale,
-} from "@/lib/i18n/locales";
-import { readLocaleCookie, setLocaleCookie } from "@/lib/i18n/cookie";
+  persistLocale,
+  readStoredLocale,
+  setLocaleCookie,
+} from "@/lib/i18n/cookie";
 import { setActiveLocale } from "@/lib/i18n/locale-context";
 import { getBaked, registerBakedSync } from "@/lib/minds/baked";
 
 type Messages = Record<string, unknown>;
 
+const SSR_SYNC_FLAG = "zingers_locale_ssr_sync";
+
 /**
- * Boots locale from cookie / navigator when unset, keeps cookie in sync with
- * settings, and provides next-intl messages to the client tree.
+ * Durable localStorage preference wins. Cookie mirrors it for SSR.
+ * If storage and SSR disagree, push cookie from storage and reload once.
+ * If there is no stored preference yet, adopt the SSR/cookie locale.
  */
 export function LocaleProvider({
   locale: serverLocale,
@@ -28,46 +30,62 @@ export function LocaleProvider({
   messages: Messages;
   children: React.ReactNode;
 }) {
-  const locale = useSettings((s) => s.locale);
-  const set = useSettings((s) => s.set);
-  const booted = useRef(false);
+  const didSync = useRef(false);
 
   useEffect(() => {
-    if (booted.current) return;
-    booted.current = true;
-    const fromCookie = readLocaleCookie();
-    if (isLocale(fromCookie) && fromCookie !== locale) {
-      set({ locale: fromCookie });
+    if (didSync.current) return;
+
+    const finish = () => {
+      if (didSync.current) return;
+      didSync.current = true;
+
+      const stored = readStoredLocale();
+      const preferred = stored ?? serverLocale;
+
+      useSettings.setState({ locale: preferred });
+
+      if (stored && stored !== serverLocale) {
+        // Cookie lagged behind localStorage — push cookie and reload once.
+        const alreadyTried =
+          typeof sessionStorage !== "undefined" && sessionStorage.getItem(SSR_SYNC_FLAG) === stored;
+        if (!alreadyTried) {
+          try {
+            sessionStorage.setItem(SSR_SYNC_FLAG, stored);
+          } catch {
+            /* ignore */
+          }
+          persistLocale(stored);
+          window.location.reload();
+          return;
+        }
+        // Still mismatched after a retry — keep preference without looping.
+        setLocaleCookie(stored);
+      } else {
+        try {
+          sessionStorage.removeItem(SSR_SYNC_FLAG);
+        } catch {
+          /* ignore */
+        }
+        // Settle: write dedicated key + cookie so refresh keeps this locale.
+        persistLocale(preferred);
+      }
+
+      setActiveLocale(preferred);
+      if (typeof document !== "undefined") {
+        document.documentElement.lang = preferred === "zh" ? "zh-Hans" : preferred;
+      }
+      void getBaked(preferred).then((banks) => registerBakedSync(preferred, banks));
+    };
+
+    const persistApi = useSettings.persist;
+    if (persistApi.hasHydrated()) {
+      finish();
       return;
     }
-    if (!fromCookie && locale === DEFAULT_LOCALE && typeof navigator !== "undefined") {
-      const detected = normalizeLocale(navigator.language);
-      if (detected !== DEFAULT_LOCALE) {
-        set({ locale: detected });
-        setLocaleCookie(detected);
-        return;
-      }
-    }
-    setLocaleCookie(locale);
-  }, [locale, set]);
-
-  useEffect(() => {
-    setLocaleCookie(locale);
-    setActiveLocale(locale);
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = locale === "zh" ? "zh-Hans" : locale;
-    }
-    void getBaked(locale).then((banks) => registerBakedSync(locale, banks));
-  }, [locale]);
-
-  // When the player switches language, reload so SSR messages + baked banks match.
-  const prev = useRef(serverLocale);
-  useEffect(() => {
-    if (prev.current !== locale && locale !== serverLocale) {
-      prev.current = locale;
-      window.location.reload();
-    }
-  }, [locale, serverLocale]);
+    return persistApi.onFinishHydration(() => {
+      finish();
+    });
+  }, [serverLocale]);
 
   return (
     <NextIntlClientProvider locale={serverLocale} messages={messages} timeZone="UTC">

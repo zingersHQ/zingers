@@ -4,7 +4,7 @@ import { X, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSettings } from "@/store/settings";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/locales";
-import { setLocaleCookie } from "@/lib/i18n/cookie";
+import { applyLocale } from "@/lib/i18n/apply-locale";
 
 // Pause / Settings overlay. Opens from the HUD gear, the Esc key, or Start on a
 // gamepad. Groups the knobs a player actually reaches for: one master volume,
@@ -130,11 +130,6 @@ export function SettingsOverlay({
 
   if (!open) return null;
 
-  const setLocale = (locale: Locale) => {
-    s.set({ locale });
-    setLocaleCookie(locale);
-  };
-
   return (
     <div
       role="dialog"
@@ -200,7 +195,7 @@ export function SettingsOverlay({
               <button
                 key={code}
                 type="button"
-                onClick={() => setLocale(code)}
+                onClick={() => applyLocale(code)}
                 aria-pressed={on}
                 style={{
                   padding: "8px 12px",

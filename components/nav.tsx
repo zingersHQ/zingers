@@ -8,6 +8,7 @@ import { isOrgHost } from "@/lib/org/hosts";
 import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden, playEntryHref } from "@/lib/play-nav";
 import { useIsMobile } from "@/lib/use-device";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LocaleDropdown } from "@/components/locale-dropdown";
 import { RobotMark } from "@/components/brand/robot-mark";
 
 export function Nav() {
@@ -54,15 +55,18 @@ export function Nav() {
         @{BRAND.twitter}
       </a>
 
-      <button
-        type="button"
-        className="site-nav__burger"
-        aria-label={open ? "Close menu" : "Open menu"}
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-      >
-        {open ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      <div className="site-nav__end">
+        <LocaleDropdown variant="nav" />
+        <button
+          type="button"
+          className="site-nav__burger"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
 
       <nav className={`site-nav__links${open ? " is-open" : ""}`}>
         {NAV_GROUPS.map((group, gi) => (

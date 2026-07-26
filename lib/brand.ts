@@ -25,7 +25,10 @@ export const STORAGE = {
   seasonSeen: "zingers_season_seen_v1",
   controlsSeen: "zingers_controls_seen_v1",
   settings: "zingers_settings_v1",
+  /** Preferred UI locale (en|es|zh|ru|ja). Survives refresh; cookie mirrors for SSR. */
+  locale: "zingers_locale_v1",
   readerSplitCoach: "zingers_reader_split_coach_v1",
+
   /** First Imprint tease after Concord → region (empathy / raise loop). */
   imprintCoach: "zingers_imprint_coach_v1",
   mSplash: "zingers_m_splash_v1", // mobile splash door shown once per browser (docs/two-doors.md §3)

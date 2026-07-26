@@ -15,6 +15,7 @@ import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { FIRST_FIGHT_WORLD } from "@/lib/first-duel";
 import { ASCENT_HREF } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
+import { LocaleDropdown } from "@/components/locale-dropdown";
 import type { Champion } from "@/lib/types";
 
 /** Fades a block in once it scrolls into view (no-op under reduced motion). */
@@ -154,6 +155,8 @@ export function Landing() {
 
   return (
     <main className="lp">
+      {/* Top-right language — always on the game homepage (hero + below). */}
+      <LocaleDropdown variant="floating" />
       {/* ── HERO: Awaken beat (unchanged) ─────────────────────────────── */}
       <section className="lp-deck" aria-label="Introduction">
         <FirstRun embedded onClose={enterTutorial} onIndexChange={setDeckIndex} />

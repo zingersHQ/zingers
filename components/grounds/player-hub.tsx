@@ -20,6 +20,7 @@ import { readerSaga, SAGA } from "@/lib/lore/saga";
 import { HUB_NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
+import { LocaleDropdown } from "@/components/locale-dropdown";
 import { RobotMark } from "@/components/brand/robot-mark";
 import type { WorldGoal } from "./goals";
 import type { WarState } from "@/lib/types";
@@ -448,6 +449,7 @@ export function PlayerHub({
             {/* ── DISPLAY & SETTINGS ── */}
             <SectionLabel>Display &amp; settings</SectionLabel>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <LocaleDropdown variant="hub" />
               <ThemeToggle variant="compact" />
               <AmbientToggle compact={false} />
               <button onClick={openThen(onOpenControls)} className="panel" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>

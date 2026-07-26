@@ -55,10 +55,17 @@ export const useSettings = create<Settings>()(
       version: 2,
       migrate: (persisted, version) => {
         const p = (persisted ?? {}) as Partial<Settings>;
-        if (version < 2 || !isLocale(p.locale)) {
-          return { ...DEFAULTS, ...p, locale: DEFAULT_LOCALE };
+        let locale = isLocale(p.locale) ? p.locale : DEFAULT_LOCALE;
+        try {
+          const dedicated = localStorage.getItem(STORAGE.locale);
+          if (isLocale(dedicated)) locale = dedicated;
+        } catch {
+          /* ignore */
         }
-        return { ...DEFAULTS, ...p };
+        if (version < 2 || !isLocale(p.locale)) {
+          return { ...DEFAULTS, ...p, locale };
+        }
+        return { ...DEFAULTS, ...p, locale };
       },
     },
   ),

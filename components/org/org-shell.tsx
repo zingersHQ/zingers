@@ -5,8 +5,6 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost, orgHref } from "@/lib/org/hosts";
 import { ORG_SECTIONS, orgPagesInSection } from "@/lib/org/registry";
-import { OrgLangSwitch } from "@/components/org/org-lang-switch";
-
 export async function OrgShell({ slug, children }: { slug?: string; children: ReactNode }) {
   const host = (await headers()).get("host")?.split(":")[0] ?? "";
   const orgHost = BRAND.siteTech.replace("https://", "");
@@ -25,10 +23,6 @@ export async function OrgShell({ slug, children }: { slug?: string; children: Re
           <p className="org-sidebar__blurb">
             Flight-First pitches, lore bible, agent protocol, and combat specs. One source of truth for humans and generators.
           </p>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginTop: 12 }}>
-            {t("language")}
-          </div>
-          <OrgLangSwitch />
         </div>
 
         <nav className="org-sidebar__nav">

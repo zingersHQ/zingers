@@ -8,10 +8,10 @@ export function isOrgHost(host: string): boolean {
   return ORG_HOSTS.has(bare);
 }
 
-/** Public href for a docs slug — clean on .org, prefixed on .gg / localhost. */
-export function orgHref(slug: string, host: string, locale?: string): string {
-  const locPrefix = locale && locale !== "en" ? `/${locale}` : "";
-  if (isOrgHost(host)) return slug ? `${locPrefix}/${slug}` : locPrefix || "/";
+/** Public href for a docs slug — clean on .org, prefixed on .gg / localhost.
+ *  Locale is cookie-driven (no /es/… prefixes in nav links — avoids redirect loops). */
+export function orgHref(slug: string, host: string, _locale?: string): string {
+  if (isOrgHost(host)) return slug ? `/${slug}` : "/";
   return slug ? `/org/${slug}` : "/org";
 }
 
