@@ -6,10 +6,12 @@
 // real store actions (imprint / trainChampion / trainWithFragment) and the same
 // career-derived portrait the rest of the app uses, so training here visibly
 // reshapes the body and marks the champion everywhere.
+// Board identity is Ubuntu-style and server-assigned (standings claim) — no
+// free-text name editor here.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Sparkles, Dumbbell, Gem, Brain } from "lucide-react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { Crown, Sparkles, Dumbbell, Gem, Brain, Share2 } from "lucide-react";
 import type { Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
 import { TYPE_COLOR, blank, levelFor } from "@/lib/evolve/progression";
@@ -22,6 +24,10 @@ import { ChampionAvatar, XpBar, Sigils, doctrineLabel } from "@/components/champ
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { MobileAdopt } from "@/components/mobile/mobile-adopt";
 import { canRetire, readCareer } from "@/lib/career-friction";
+import { cardOf } from "@/lib/cards/card";
+import { shareQuery } from "@/components/collection/card-frame";
+import { getOwnerToken, getHandle } from "@/lib/owner";
+import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
 
 const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
   { key: "aggression", label: "Aggression", hints: ["Patient", "Relentless"] },
@@ -30,7 +36,6 @@ const DIALS: { key: keyof Strat; label: string; hints: [string, string] }[] = [
 ];
 
 export function MobileChampion(_props: { onNavigate?: (tab: string) => void; initialPick?: string }) {
-  const t = useTranslations("mobile");
   const owned = useChampions((s) => s.owned);
   const progress = useChampions((s) => s.progress);
   const recipes = useChampions((s) => s.recipes);
@@ -41,15 +46,16 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   const crowns = useChampions((s) => s.crowns);
   const fragments = useChampions((s) => s.fragments);
   const trainerXp = useChampions((s) => s.trainerXp);
-  const setNick = useChampions((s) => s.setNick);
   const events = useChampions((s) => (s.owned ? s.events[s.owned] : undefined));
   const retireOwned = useChampions((s) => s.retireOwned);
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [nickSaved, setNickSaved] = useState(false);
   const [imprinting, setImprinting] = useState<string | null>(null);
   const [reply, setReply] = useState<string | null>(null);
+  /** Server Ubuntu-style board name once claimed / mirrored onto standings. */
+  const [boardName, setBoardName] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
   // Axes an Imprint just nudged — the STRATEGY dials glow briefly so the lesson
   // visibly lands. Cleared on a timer.
   const [litAxes, setLitAxes] = useState<Set<keyof Strat>>(() => new Set());
@@ -60,7 +66,6 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
 
   const champ = useMemo(() => (owned ? progress[owned] ?? blank() : null), [owned, progress]);
   const strat: Strat = (owned && recipes[owned]?.strat) || DEFAULT_STRAT;
-  const nick = (owned && recipes[owned]?.nick) || "";
   const sessionLessons = useMemo(() => {
     if (!owned || !ROSTER[owned] || !champ) return [];
     return lessonsForSession({
@@ -71,15 +76,30 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       day,
     });
   }, [owned, champ, strat, day]);
-  const [nickDraft, setNickDraft] = useState(nick);
+
   useEffect(() => {
-    setNickDraft(nick);
-  }, [nick, owned]);
-  useEffect(() => {
-    setNickSaved(false);
+    if (!owned) {
+      setBoardName(null);
+      return;
+    }
+    let cancelled = false;
+    const token = getOwnerToken();
+    if (!token) return;
+    fetch(`/api/me?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        const mine = (d.champions || []).find((c: { key: string; name?: string }) => c.key === owned);
+        setBoardName(typeof mine?.name === "string" && mine.name.trim() ? mine.name : null);
+      })
+      .catch(() => {
+        if (!cancelled) setBoardName(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [owned]);
 
-  const nickDirty = nickDraft.trim() !== nick;
   const flash = useCallback((m: string) => {
     setToast(m);
     setTimeout(() => setToast(null), 2600);
@@ -90,14 +110,14 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
     setBusy(true);
     const ok = await trainChampion(owned);
     setBusy(false);
-    flash(ok ? t("trainDone") : t("trainNoCrowns"));
-  }, [owned, busy, trainChampion, flash, t]);
+    flash(ok ? "Training complete. Your champion evolved." : "Not enough Crowns to train.");
+  }, [owned, busy, trainChampion, flash]);
 
   const trainFree = useCallback(() => {
     if (!owned) return;
     const ok = trainWithFragment(owned);
-    flash(ok ? t("fragmentSpent") : t("noFragments"));
-  }, [owned, trainWithFragment, flash, t]);
+    flash(ok ? "Fragment spent. A free session banked." : "No fragments to spend.");
+  }, [owned, trainWithFragment, flash]);
 
   const teach = useCallback(
     async (lessonId: string) => {
@@ -107,20 +127,53 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       const out = await imprint(owned, lessonId);
       setImprinting(null);
       if (!out.applied) {
-        flash(t("alreadyLesson"));
+        flash("Already internalized today. Try a different lesson.");
         return;
       }
       setReply(out.reply);
       const who = ROSTER[owned]?.name ?? owned;
       const moved = describeDial(out.dial);
-      flash(moved ? t("tookHeartMoved", { name: who, moved }) : t("tookHeart", { name: who }));
+      flash(moved ? `${who} took it to heart. ${moved}.` : `${who} took it to heart.`);
       const axes = new Set(Object.keys(out.dial) as (keyof Strat)[]);
       setLitAxes(axes);
       if (litTimer.current) clearTimeout(litTimer.current);
       litTimer.current = setTimeout(() => setLitAxes(new Set()), 1800);
     },
-    [owned, imprinting, imprint, flash, t],
+    [owned, imprinting, imprint, flash],
   );
+
+  const shareCard = useCallback(async () => {
+    if (!owned || !champ) return;
+    const recipe = recipes[owned];
+    const card = cardOf(owned, champ, { memory: recipe?.memory });
+    const best = loadCircuitPersonalBest();
+    const ascentReaches = best ? Math.min(10, Math.ceil(best.sectors / 10)) : 0;
+    const qs = shareQuery(card, recipe?.agent?.provider ? String(recipe.agent.provider) : "House Grok", {
+      // Prefer board identity on the share card once they have one.
+      nick: boardName || undefined,
+      ascentReaches,
+      trainer: getHandle() || undefined,
+    });
+    const url = `${window.location.origin}/c/${owned}?${qs}`;
+    try {
+      const nav = navigator as Navigator & { share?: (d: { url: string; title: string }) => Promise<void> };
+      if (nav.share) {
+        await nav.share({ url, title: boardName || ROSTER[owned]?.name || owned });
+      } else {
+        await navigator.clipboard?.writeText(url);
+      }
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1800);
+    } catch {
+      try {
+        await navigator.clipboard?.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 1800);
+      } catch {
+        flash("Could not share.");
+      }
+    }
+  }, [owned, champ, recipes, boardName, flash]);
 
   // No champion yet → the adoption door (desktop does this in the 3D first-duel;
   // on a phone this IS the raise lane's entry). Once adopted, `owned` flips and
@@ -130,7 +183,8 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
   }
 
   const type = ROSTER[owned].type;
-  const name = ROSTER[owned].name;
+  const rosterName = ROSTER[owned].name;
+  const displayName = boardName || rosterName;
   const col = TYPE_COLOR[type];
   const dl = doctrineLabel(champ);
   const battles = champ.wins + champ.losses;
@@ -144,7 +198,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         {/* header + wallet */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <span style={{ fontSize: 20, fontWeight: 800 }}>{t("tabs.champion")}</span>
+          <span style={{ fontSize: 20, fontWeight: 800 }}>Champion</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, border: "1px solid var(--line2)", fontSize: 11 }}>
               <Crown size={12} strokeWidth={2.4} fill="#f5d020" style={{ color: "#f5d020" }} />
@@ -163,10 +217,16 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <ChampionAvatar ckey={owned} type={type} champion={champ} size={76} />
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>{nick || name}</div>
-              {nick ? (
-                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2 }}>{name}</div>
-              ) : null}
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1 }}>{displayName}</div>
+              {boardName ? (
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2 }}>
+                  {rosterName} · board name
+                </div>
+              ) : (
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted2)", marginTop: 2 }}>
+                  Joins the standings with a unique name
+                </div>
+              )}
               <div className="mono" style={{ fontSize: 10, color: col, marginTop: 3 }}>
                 {forceName(type)} · L{dl.level} {dl.tier}
               </div>
@@ -184,68 +244,51 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           <div style={{ marginTop: 10 }}>
             <XpBar champion={champ} color={col} />
             <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 4 }}>
-              {dl.into} / {dl.span} {t("xpToNext")}
+              {dl.into} / {dl.span} XP TO NEXT
             </div>
           </div>
-        </div>
-
-        {/* nickname — shows on share cards / profile */}
-        <div className="panel" style={{ padding: 14, marginTop: 12 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 8 }}>
-            NICKNAME · YOUR NAME FOR THIS CHAMPION
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={nickDraft}
-              onChange={(e) => {
-                setNickDraft(e.target.value.slice(0, 24));
-                setNickSaved(false);
-              }}
-              placeholder={name}
-              maxLength={24}
-              aria-label="Champion nickname"
-              style={{
-                flex: 1,
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--line2)",
-                background: "var(--panel2, #15131f)",
-                color: "var(--ink)",
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            />
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <button
               type="button"
-              disabled={!nickDirty}
-              onClick={() => {
-                if (!owned || !nickDirty) return;
-                setNick(owned, nickDraft);
-                setNickSaved(true);
-                flash(nickDraft.trim() ? t("nickSaved") : t("nickSaved"));
-              }}
+              onClick={shareCard}
               style={{
-                padding: "10px 14px",
-                borderRadius: 10,
+                flex: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+                padding: "11px 12px",
+                borderRadius: 11,
                 border: "none",
-                background: nickSaved && !nickDirty ? "transparent" : col,
-                color: nickSaved && !nickDirty ? col : "#0a0a12",
-                outline: nickSaved && !nickDirty ? `1px solid ${col}` : "none",
+                background: col,
+                color: "#0a0a12",
                 fontWeight: 800,
                 fontSize: 13,
-                cursor: nickDirty ? "pointer" : "default",
-                opacity: nickDirty || nickSaved ? 1 : 0.45,
-                minWidth: 72,
+                cursor: "pointer",
               }}
             >
-              {nickSaved && !nickDirty ? t("saveNick") : t("saveNick")}
+              <Share2 size={14} strokeWidth={2.4} /> {shareCopied ? "Copied" : "Share card"}
             </button>
+            <Link
+              href={`/champion/${owned}`}
+              className="mono"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "11px 14px",
+                borderRadius: 11,
+                border: "1px solid var(--line2)",
+                background: "transparent",
+                color: "var(--ink)",
+                fontWeight: 700,
+                fontSize: 12,
+                textDecoration: "none",
+              }}
+            >
+              Diary
+            </Link>
           </div>
-          {nickSaved && !nickDirty ? (
-            <p className="mono" style={{ fontSize: 10, color: col, margin: "8px 0 0", lineHeight: 1.4 }}>
-              Locked in. Shows on this champion&apos;s profile.
-            </p>
-          ) : null}
         </div>
 
         {/* career friction — form / fatigue / scars + retire (Stage 4) */}
@@ -298,7 +341,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
         {/* temperament — status meters; Imprints + fights grow these (never drag) */}
         <div className="panel" style={{ padding: 16, marginTop: 12 }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--gold)", marginBottom: 6 }}>
-            TEMPERAMENT · HOW {(nick || name).toUpperCase()} THINKS
+            TEMPERAMENT · HOW {displayName.toUpperCase()} THINKS
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.45, margin: "0 0 12px" }}>
             Its fighting nature: grown by lessons you teach and fights it survives. Not sliders you set.
@@ -314,7 +357,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
             <Brain size={12} strokeWidth={2.4} /> TODAY&apos;S LESSONS · EACH ONCE PER DAY
           </div>
           <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", lineHeight: 1.5, margin: "0 0 10px" }}>
-            Free. Picked for {name}&apos;s Force &amp; temperament. New set tomorrow. Teaching one doesn&apos;t lock the others.
+            Free. Picked for {rosterName}&apos;s Force &amp; temperament. New set tomorrow. Teaching one doesn&apos;t lock the others.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
             {sessionLessons.map((l) => {
@@ -342,7 +385,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
           </div>
           {reply && (
             <div style={{ marginTop: 12, padding: 12, borderRadius: 11, background: "var(--panel2, #15131f)", border: `1px solid ${col}` }}>
-              <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 4 }}>{name.toUpperCase()}</div>
+              <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: col, marginBottom: 4 }}>{rosterName.toUpperCase()}</div>
               <div style={{ fontSize: 13.5, fontStyle: "italic", lineHeight: 1.45 }}>&ldquo;{reply}&rdquo;</div>
             </div>
           )}

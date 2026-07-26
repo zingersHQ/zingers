@@ -12,19 +12,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles, ArrowUpCircle, ChevronsUp, Dumbbell, KeyRound, DoorOpen, Award } from "lucide-react";
+import { Lock, Flame, Mic, Share2, RotateCcw, ChevronRight, ChevronLeft, Shield, Swords, Eye, Rocket, Sparkles, ArrowUpCircle, ChevronsUp, Dumbbell, KeyRound, DoorOpen, Award, BookOpen, Settings as SettingsIcon } from "lucide-react";
 import type { BattleEnd, BattleTurn, CareerEvent, Champion, DailyResponse, DailyResult } from "@/lib/types";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { BRAND } from "@/lib/brand";
 import { ROSTER } from "@/lib/engine/roster";
 import { championHomecoming, type HomecomingMood } from "@/lib/lore/character-beats";
+import { readerSaga, SAGA } from "@/lib/lore/saga";
 import { useChampions } from "@/store/champions";
+import { useSettings } from "@/store/settings";
 import { useBout } from "@/components/arena/use-bout";
 import { ChampionAvatar, doctrineLabel } from "@/components/champion-avatar";
 import { NextCard } from "@/components/director/next-card";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { MobileBoutStage } from "@/components/mobile/mobile-bout";
 import { LocaleDropdown } from "@/components/locale-dropdown";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { AmbientToggle } from "@/components/grounds/ambience";
+import { SettingsOverlay } from "@/components/grounds/settings-overlay";
 
 type View = "hub" | "predict" | "bout" | "done";
 
@@ -207,17 +212,32 @@ function Hub({
 }) {
   const t = useTranslations("mobile");
   const router = useRouter();
+  const trainerXp = useChampions((s) => s.trainerXp);
+  const reduceMotion = useSettings((s) => s.reduceMotion);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const saga = readerSaga(trainerXp);
+
   return (
     <div style={{ height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 22 }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
-        {/* top bar — wordmark + streak. Bottom tabs are the only mobile nav; the
-            immersive 3D Grounds is a desktop surface, so no gear/opt-in here. */}
+        {/* top bar — wordmark + prefs + streak. Grounds stay desktop-gated. */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 14px 10px" }}>
           <span className="glow" style={{ fontSize: 22, fontWeight: 900, letterSpacing: 0.5, color: "var(--accent)" }}>
             {BRAND.name ?? "Zingers"}
           </span>
-          <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <LocaleDropdown variant="hub" />
+            <ThemeToggle variant="compact" />
+            <AmbientToggle compact />
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Settings"
+              className="panel"
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, padding: 0, cursor: "pointer" }}
+            >
+              <SettingsIcon size={15} />
+            </button>
             <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--line2)", fontSize: 12 }}>
               <Flame size={13} strokeWidth={2.4} style={{ color: "var(--gold)" }} />
               <span style={{ fontWeight: 800, color: "var(--gold)" }}>{mounted ? streak : 0}</span>
@@ -243,18 +263,50 @@ function Hub({
         )}
 
         <div style={{ padding: "12px 14px 0" }}>
-          {/* the Director — the one next thing, so the hub is never "you're free" */}
+          {/* the Director — phone-native targets only (no /grounds dump) */}
           <NextCard
-            hideAlso={["daily"]}
+            hideAlso={["daily", "hub"]}
             onGo={(target) => {
               if (target === "daily") onOpenDaily();
               else if (target === "flight") onNavigate?.("climb");
-              else if (target === "collection") router.push("/collection");
-              else if (target === "hub") router.push("/grounds");
-              // train + champion both land on the Champion tab (lessons + career).
+              else if (target === "collection") {
+                if (owned && ROSTER[owned]) router.push(`/champion/${owned}`);
+                else onNavigate?.("champion");
+              }
+              else if (target === "claim") onNavigate?.("rank");
+              else if (target === "hub") onNavigate?.("champion");
               else if (target === "train" || target === "champion") onNavigate?.("champion");
             }}
           />
+
+          {/* Saga — same spine as desktop Player Hub */}
+          <div className="panel" style={{ ["--ac" as string]: "#cdb8ff", padding: "12px 13px", marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 8, background: "color-mix(in srgb, #cdb8ff 16%, transparent)", color: "#cdb8ff" }}>
+                <BookOpen size={15} />
+              </span>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 800 }}>Saga</div>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: 0.8, color: "var(--muted2)" }}>
+                  CHAPTER {saga.index + 1}/{saga.total} · ACT {saga.chapter.act}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8 }}>{saga.chapter.title}</div>
+            <p style={{ fontSize: 11.5, color: "var(--muted)", fontStyle: "italic", margin: "5px 0 0", lineHeight: 1.45 }}>{saga.chapter.stake}</p>
+            <div style={{ display: "flex", gap: 7, alignItems: "flex-start", marginTop: 9 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#cdb8ff", marginTop: 5, flexShrink: 0, boxShadow: "0 0 8px #cdb8ff" }} />
+              <span style={{ fontSize: 12, lineHeight: 1.4 }}>{saga.chapter.objective}</span>
+            </div>
+            <div style={{ height: 4, borderRadius: 3, background: "rgba(255,255,255,.09)", marginTop: 10, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.round(saga.pct * 100)}%`, background: "#cdb8ff", transition: reduceMotion ? "none" : "width .5s" }} />
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
+              {SAGA.map((ch, i) => (
+                <span key={ch.id} title={ch.title} style={{ width: 9, height: 9, borderRadius: "50%", background: i === saga.index ? "#cdb8ff" : i < saga.index ? "var(--muted2)" : "transparent", border: i <= saga.index ? "none" : "1px solid var(--line)", boxShadow: i === saga.index ? "0 0 8px #cdb8ff" : "none" }} />
+              ))}
+            </div>
+          </div>
 
           {/* the Report — what happened to your champion while you were away */}
           {mounted && owned && ROSTER[owned] && homecoming && (
@@ -283,6 +335,13 @@ function Hub({
           </div>
         </div>
       </div>
+
+      <SettingsOverlay
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenControls={() => setSettingsOpen(false)}
+        hasPad={false}
+      />
     </div>
   );
 }

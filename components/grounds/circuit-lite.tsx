@@ -1996,11 +1996,22 @@ export default function CircuitLite({
             <div style={{ display: "flex", alignItems: "center", gap: 8, pointerEvents: "none" }}>
               {showLeave &&
                 (onExit ? (
-                  <button type="button" onClick={onExit} aria-label={t("leaveFlight")} style={chipStyle}>
+                  <button
+                    type="button"
+                    onClick={onExit}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    aria-label={t("leaveFlight")}
+                    style={chipStyle}
+                  >
                     <ChevronLeft size={15} strokeWidth={2.4} /> {t("back")}
                   </button>
                 ) : (
-                  <Link href="/grounds" aria-label={t("backToHub")} style={chipStyle}>
+                  <Link
+                    href="/grounds"
+                    aria-label={t("backToHub")}
+                    style={chipStyle}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
                     <ChevronLeft size={15} strokeWidth={2.4} /> {t("hub")}
                   </Link>
                 ))}
@@ -2015,6 +2026,7 @@ export default function CircuitLite({
                 <button
                   type="button"
                   onClick={onClaim}
+                  onPointerDown={(e) => e.stopPropagation()}
                   aria-label={t("claimChampion")}
                   style={{ ...chipStyle, color: accent, border: `1px solid ${accent}`, padding: "7px 12px" }}
                 >
@@ -2089,6 +2101,7 @@ export default function CircuitLite({
                 maxWidth: 420,
                 pointerEvents: "auto",
               }}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               {runMode === "expedition" && (
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--gold)", fontWeight: 800, textAlign: "center" }} title={expedition.gloss}>
