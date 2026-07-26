@@ -510,9 +510,16 @@ export default function GroundsScreen({
 
   // ── The Circuit — 10-sector roguelike run ─────────────────────────────────
   const [circuitPhase, setCircuitPhase] = useState<CircuitPhase>("ready");
-  /** Sync mirror — useFrame outcomes must not trust a stale closure phase. */
+  /**
+   * Sync mirror — useFrame outcomes must not trust a stale closure phase.
+   * Do NOT assign `= circuitPhase` every render: that can wipe a sync latch
+   * (`sector` / `done` / `continue`) set inside onCircuitPass/Fail before React
+   * commits, re-opening a same-tick LIFE LOST race after a clean finish.
+   */
   const circuitPhaseRef = useRef<CircuitPhase>("ready");
-  circuitPhaseRef.current = circuitPhase;
+  useEffect(() => {
+    circuitPhaseRef.current = circuitPhase;
+  }, [circuitPhase]);
   const [circuitFailReason, setCircuitFailReason] = useState<CircuitFailReason>("fall");
   const [circuitRunMs, setCircuitRunMs] = useState(0);
   const [circuitSectorMs, setCircuitSectorMs] = useState(0);
@@ -1281,14 +1288,15 @@ export default function GroundsScreen({
         circuitSampleLastT.current = 0;
 
         const s = desktopCircuitSector(circuitSectorIdx, circuitLayoutSeedRef.current).spawn;
-        const ghostPose: CircuitGhostPose = {
+        // Ghost at the real fail pose — pad spawn read as "first ring killed you".
+        const ghostPose: CircuitGhostPose = pose ?? {
           x: s[0],
           y: s[1],
           z: s[2],
-          heading: pose?.heading ?? 0,
+          heading: 0,
         };
 
-        // Let the fail sting land, then snap to pad for the ghost / arrive shot.
+        // Let the fail sting land at the miss, then snap camera to pad for relaunch.
         circuitContinueTimers.current.push(
           window.setTimeout(() => {
             circuitGhostId.current += 1;

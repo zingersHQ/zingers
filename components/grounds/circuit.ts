@@ -94,53 +94,100 @@ export function crossedCircuitGate(pos: CircuitPos, cp: CircuitCheckpoint, opts?
   return r <= cp.radius * 0.95;
 }
 
-/** On the finish pad before every prior gate was cleared — a shortcut, not a clear. */
-export function atCircuitFinishEarly(pos: CircuitPos, checkpoints: { pos: [number, number, number]; radius: number; finish?: boolean; index: number }[], nextIdx: number): boolean {
+/**
+ * On the finish pad before every prior gate was cleared — a shortcut, not a clear.
+ * Only fires when the flyer is still *short* of a skipped gate's Z (true skip).
+ * If they're already past owed gates (hitch soft-lock), catch-up resolve handles it —
+ * punishing the finish volume here was "LIFE LOST the moment I crossed the last ring".
+ */
+export function atCircuitFinishEarly(
+  pos: CircuitPos,
+  checkpoints: { pos: [number, number, number]; radius: number; finish?: boolean; index: number }[],
+  nextIdx: number,
+): boolean {
   const finish = checkpoints[checkpoints.length - 1];
   if (!finish?.finish || nextIdx >= finish.index) return false;
+  const owed = checkpoints[nextIdx];
+  if (owed && pos.z >= owed.pos[2]) return false;
   const [fx, fy, fz] = finish.pos;
   const dh = Math.hypot(pos.x - fx, pos.z - fz);
   const dy = Math.abs(pos.y - fy);
   return dh <= finish.radius * 0.9 && dy <= finish.radius * 0.9;
 }
 
-/**
- * Shared Ascent rule (desktop Circuit + mobile Climb): when the flyer crosses the
- * next gate's Z-plane, they must be inside the opening. Outside = miss → run over.
- * Returns null when this frame did not cross the plane.
- *
- * Large Δz (tab hitch / GC) still counts — `prevZ < gz && z >= gz` holds across a
- * jump. Callers must not replace prevZ with z on spikes or the plane is skipped
- * forever and desktop dies on the void with a false "You fell".
- */
-export function circuitGatePlaneCross(
-  prevZ: number,
-  z: number,
-  pos: CircuitPos,
-  cp: Pick<CircuitCheckpoint, "pos" | "radius">,
-): "pass" | "miss" | null {
-  const gz = cp.pos[2];
-  if (!(prevZ < gz && z >= gz)) return null;
-  const dx = Math.abs(pos.x - cp.pos[0]);
-  const dy = Math.abs(pos.y - cp.pos[1]);
+/** Flyer XY on the gate's Z-plane between two samples (hitch-safe). */
+function posOnGatePlane(prev: CircuitPos, pos: CircuitPos, gz: number): CircuitPos {
+  const span = pos.z - prev.z;
+  if (!(span > 1e-8)) return { x: pos.x, y: pos.y, z: gz };
+  const u = (gz - prev.z) / span;
+  const t = u < 0 ? 0 : u > 1 ? 1 : u;
+  return {
+    x: prev.x + (pos.x - prev.x) * t,
+    y: prev.y + (pos.y - prev.y) * t,
+    z: gz,
+  };
+}
+
+function openingTest(x: number, y: number, cp: Pick<CircuitCheckpoint, "pos" | "radius">): "pass" | "miss" {
+  const dx = Math.abs(x - cp.pos[0]);
+  const dy = Math.abs(y - cp.pos[1]);
   const r = cp.radius * 0.95;
   return dx <= r && dy <= r ? "pass" : "miss";
 }
 
 /**
- * Resolve the next gate when the flyer is already at/past its Z (lag overshoot or
- * a prior frame that dropped the plane-cross). Same opening test as plane-cross.
- * Null = still short of the gate.
+ * Shared Ascent rule (desktop Circuit + mobile Climb): when the flyer crosses the
+ * next gate's Z-plane, they must be inside the opening. Outside = miss → life.
+ * Returns null when this frame did not cross the plane.
+ *
+ * XY is sampled **on the gate plane** (lerped from prev→pos). Testing the
+ * post-frame pose after a tab/GC hitch was fine when rings sat at x=0; with soft
+ * rails the flyer is already on the next bend, so end-of-frame XY false-missed
+ * clean threads ("Missed a gate" / LIFE LOST after a clean sector).
+ *
+ * Large Δz still counts — `prev.z < gz && pos.z >= gz` holds across a jump.
+ * Callers must keep a real previous sample (never snap prev to pos on spikes).
  */
-export function circuitGateResolveAtOrPast(
-  z: number,
+export function circuitGatePlaneCross(
+  prev: CircuitPos,
   pos: CircuitPos,
   cp: Pick<CircuitCheckpoint, "pos" | "radius">,
 ): "pass" | "miss" | null {
   const gz = cp.pos[2];
-  if (z < gz) return null;
-  const dx = Math.abs(pos.x - cp.pos[0]);
-  const dy = Math.abs(pos.y - cp.pos[1]);
+  if (!(prev.z < gz && pos.z >= gz)) return null;
   const r = cp.radius * 0.95;
-  return dx <= r && dy <= r ? "pass" : "miss";
+  const span = pos.z - prev.z;
+  // Soft rails bend X/Y between gates. A fat Δz hitch's linear chord is not the
+  // flown path — crediting the gate beats inventing "Missed a gate" after clean
+  // flight. Tight frames still use the interpolated opening test.
+  if (span > r * 3) return "pass";
+  const at = posOnGatePlane(prev, pos, gz);
+  if (openingTest(at.x, at.y, cp) === "pass") return "pass";
+  // Approach grace (desktop finish false-death): if the flyer was already inside
+  // the opening on the approach side, a same-frame dip/nudge past the plane must
+  // not invent "Missed a gate" / LIFE LOST after threading the last ring.
+  if (openingTest(prev.x, prev.y, cp) === "pass") return "pass";
+  return "miss";
+}
+
+/**
+ * Resolve the next gate when the flyer is already at/past its Z (lag overshoot or
+ * a prior frame that dropped the plane-cross).
+ * Null = still short of the gate.
+ *
+ * If this frame still spans the plane, use the interpolated opening test.
+ * If both samples are already past (dropped event), **credit a pass** — soft-rail
+ * XY at a later Z is not evidence you missed the earlier opening.
+ */
+export function circuitGateResolveAtOrPast(
+  prev: CircuitPos | null,
+  pos: CircuitPos,
+  cp: Pick<CircuitCheckpoint, "pos" | "radius">,
+): "pass" | "miss" | null {
+  const gz = cp.pos[2];
+  if (pos.z < gz) return null;
+  if (prev && prev.z < gz) {
+    return circuitGatePlaneCross(prev, pos, cp);
+  }
+  return "pass";
 }

@@ -3199,7 +3199,8 @@ function Handler({
   const cur = useRef<"idle" | "walk" | "run" | "jump">("idle");
   const near = useRef<NearTarget>(null);
   const failCooldown = useRef(0);
-  const circuitPrevZ = useRef<number | null>(null);
+  /** Previous flyer sample for hitch-safe gate plane tests (soft rails need XY at gz). */
+  const circuitPrevPos = useRef<{ x: number; y: number; z: number } | null>(null);
   /** Left the launch pad this sector — next ground contact = fall fail (soul atom). */
   const circuitAirborne = useRef(false);
   /**
@@ -3633,6 +3634,7 @@ function Handler({
       heading.current = 0;
       circuitAirborne.current = false;
       circuitSettled.current = false;
+      circuitPrevPos.current = null; // fresh sample chain — no stale Z from last life
       if (inner.current) inner.current.rotation.set(0, 0, 0);
     }
     wasCircuitRunning.current = circuitRunning;
@@ -4027,12 +4029,13 @@ function Handler({
     }
     if (!matchActive && circuitMode && circuitCpNextRef) {
       const pos = { x: t.x, y: t.y, z: t.z };
-      // Always keep the real previous Z. A old "teleport → prevZ = z" shortcut
-      // dropped plane-crosses on lag spikes, so the finish never cleared and the
-      // void fail showed LIFE LOST / You fell after a clean run.
-      const prevZ = circuitPrevZ.current == null ? t.z : circuitPrevZ.current;
+      // Always keep the real previous sample. A old "teleport → prev = now"
+      // shortcut dropped plane-crosses on lag spikes, so the finish never cleared
+      // and the void fail showed LIFE LOST / You fell after a clean run.
+      const prev = circuitPrevPos.current ?? pos;
       // Shared with mobile Climb: crossing a gate's Z-plane outside the opening = miss.
       // Catch up any gates already behind us (hitch overshoot) in one frame.
+      // XY is lerped onto each gate plane — end-of-hitch pose must not judge earlier rings.
       if (circuitRunning && !circuitSettled.current && onCircuitPass) {
         const mod = sectorModifier(circuitSectorIdx);
         const tSec = state.clock.elapsedTime;
@@ -4043,6 +4046,8 @@ function Handler({
           if (!cp) {
             // Past the last ring without a finish latch — still count as clear.
             circuitSettled.current = true;
+            const last = circuitCheckpoints[circuitCheckpoints.length - 1];
+            if (last) onCircuitPass(last.index);
             break;
           }
           const live = liveGateCheckpoint(
@@ -4050,18 +4055,20 @@ function Handler({
             mod,
             tSec,
           );
-          let cross = circuitGatePlaneCross(prevZ, t.z, pos, live);
+          let cross = circuitGatePlaneCross(prev, pos, live);
           // Recovery: a prior spike left us past the plane with no pass/miss event.
           if (cross == null && t.z >= live.pos[2]) {
-            cross = circuitGateResolveAtOrPast(t.z, pos, live);
+            cross = circuitGateResolveAtOrPast(prev, pos, live);
           }
           if (cross == null) break;
           if (cross === "pass") {
-            onCircuitPass(cp.index);
-            circuitCpNextRef.current = idx + 1;
+            // Latch before onCircuitPass — React phase is async; finish must not
+            // lose a race to fall / atCircuitFinishEarly in the same frame.
             if (cp.finish || idx >= circuitCheckpoints.length - 1) {
               circuitSettled.current = true;
             }
+            onCircuitPass(cp.index);
+            circuitCpNextRef.current = idx + 1;
             continue;
           }
           if (cross === "miss" && onCircuitFail) {
@@ -4075,7 +4082,7 @@ function Handler({
           break;
         }
       }
-      circuitPrevZ.current = t.z;
+      circuitPrevPos.current = { x: t.x, y: t.y, z: t.z };
       if (circuitRunning && onCircuitSample) onCircuitSample(t.y, t.z);
       const nextIdx = circuitCpNextRef.current;
       if (

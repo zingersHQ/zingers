@@ -118,7 +118,13 @@ import {
   DESKTOP_VERT_SCALE,
 } from "./climb/desktop-adapter";
 import type { BiomeConfig } from "./biomes";
-import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, circuitGatePlaneCross, formatCircuitMs } from "./circuit";
+import {
+  CIRCUIT_LIVES,
+  CIRCUIT_SECTOR_INTRO,
+  circuitGatePlaneCross,
+  circuitGateResolveAtOrPast,
+  formatCircuitMs,
+} from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import { CircuitGhostLeave, type CircuitGhostPose } from "./circuit-ghost";
 import { usePrefersReducedMotion } from "@/components/arena/juice";
@@ -261,7 +267,7 @@ function Flyer({
   sectorStart: React.MutableRefObject<number>;
   onGate: (nextIdx: number) => void;
   onSectorClear: () => void;
-  onFail: (r: FailReason) => void;
+  onFail: (r: FailReason, pose?: CircuitGhostPose) => void;
   onStumble: () => void;
 }) {
   const grp = useRef<THREE.Group>(null);
@@ -275,7 +281,8 @@ function Flyer({
   const wasHeld = useRef(false); // rising-edge detect for the tap-kick
   const fovKick = useRef(reduceMotion ? 0 : CAM_FOV_IGNITE); // wind-tunnel open
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
-  const prevZ = useRef(track.spawn[2]);
+  // Full prev sample for hitch-safe gate plane tests (soft rails need XY at gz).
+  const prevPos = useRef({ x: track.spawn[0], y: track.spawn[1], z: track.spawn[2] });
   const dead = useRef(false);
   const lockUntil = useRef(0);   // control ignored until this clock time (stumble)
   const immuneUntil = useRef(0); // no new stumble until this clock time (grace)
@@ -304,8 +311,6 @@ function Flyer({
     const cruise = speed * ascentSessionMods().cruiseSpeedMult;
     fwd.current = held ? cruise * (1 + HOLD_FWD_BOOST) : cruise;
     pos.current.z += fwd.current * dt;
-
-    const cp = track.checkpoints[cpNext.current];
 
     // vertical: thrust climbs; released thumb cruises with a constant slight
     // sink (auto-+Z is always on). No next-gate height assist — that read as
@@ -405,7 +410,12 @@ function Flyer({
   // fall = spend a life (or run over when out)
     if (pos.current.y < FLOOR_Y) {
       dead.current = true;
-      onFail("fall");
+      onFail("fall", {
+        x: pos.current.x,
+        y: pos.current.y + CHAMP_Y,
+        z: pos.current.z,
+        heading: flyerHeadingRef.current,
+      });
       return;
     }
 
@@ -433,26 +443,44 @@ function Flyer({
       onCrownCollect();
     }
 
-    // gate threading — shared plane-cross rule with desktop Circuit (miss = run over).
-    // Drifting gates: test against live bob Y so mesh and collision agree.
-    if (cp) {
-      const live = liveGateCheckpoint(cp, modifier, tSec);
-      const cross = circuitGatePlaneCross(prevZ.current, pos.current.z, pos.current, live);
+    // Gate threading — same catch-up loop as desktop Circuit. One gate per frame
+    // used to soft-lock after a hitch: prev jumped past ring N+1, finish never
+    // counted, then FLOOR_Y spent a life the moment you cleared the last ring.
+    const cur = { x: pos.current.x, y: pos.current.y, z: pos.current.z };
+    let guard = 0;
+    while (guard++ < 12 && !dead.current) {
+      const next = track.checkpoints[cpNext.current];
+      if (!next) {
+        dead.current = true;
+        onSectorClear();
+        break;
+      }
+      const live = liveGateCheckpoint(next, modifier, tSec);
+      let cross = circuitGatePlaneCross(prevPos.current, cur, live);
+      if (cross == null && cur.z >= live.pos[2]) {
+        cross = circuitGateResolveAtOrPast(prevPos.current, cur, live);
+      }
+      if (cross == null) break;
       if (cross === "pass") {
         cpNext.current += 1;
-        if (cp.finish) {
+        if (next.finish || cpNext.current >= track.checkpoints.length) {
           dead.current = true;
           onSectorClear();
-        } else {
-          onGate(cpNext.current);
+          break;
         }
-      } else if (cross === "miss") {
-        dead.current = true;
-        onFail("gates");
-        return;
+        onGate(cpNext.current);
+        continue;
       }
+      dead.current = true;
+      onFail("gates", {
+        x: cur.x,
+        y: cur.y + CHAMP_Y,
+        z: cur.z,
+        heading: flyerHeadingRef.current,
+      });
+      return;
     }
-    prevZ.current = pos.current.z;
+    prevPos.current = cur;
   });
 
   return (
@@ -1524,7 +1552,7 @@ export default function CircuitLite({
   }, [setHold, recordRun, guest, champWins, trainerLvl, bestSectors, expedition.sectors, challenge, climbHundred]);
 
   const onFail = useCallback(
-    (r: FailReason) => {
+    (r: FailReason, pose?: CircuitGhostPose) => {
       setHold(false);
       stopJet();
       if (r === "fall") jetFallSfx();
@@ -1541,15 +1569,19 @@ export default function CircuitLite({
         samplesRef.current = [];
         duckAmbience(0.55, 800);
         setPhase("continue");
+        // Ghost at the real fail pose — pad spawn lied ("first ring killed you").
+        const failPose: CircuitGhostPose = pose ?? {
+          x: track.spawn[0],
+          y: track.spawn[1] + CHAMP_Y,
+          z: track.spawn[2],
+          heading: CHAMP_FACE,
+        };
         continueTimers.current.push(
           window.setTimeout(() => {
             ghostId.current += 1;
             setGhost({
               id: ghostId.current,
-              x: track.spawn[0],
-              y: track.spawn[1] + CHAMP_Y,
-              z: track.spawn[2],
-              heading: CHAMP_FACE,
+              ...failPose,
             });
           }, 380),
         );
