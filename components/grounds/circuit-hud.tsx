@@ -587,7 +587,7 @@ export function CircuitHud({
               display: "flex",
               flexWrap: "wrap",
               justifyContent: "center",
-              gap: 6,
+              gap: 8,
               maxWidth: 440,
               pointerEvents: "auto",
             }}
@@ -597,7 +597,8 @@ export function CircuitHud({
               onClick={onPickRanked}
               className="mono"
               style={{
-                padding: "6px 12px",
+                padding: compact ? "10px 14px" : "6px 12px",
+                minHeight: compact ? 40 : undefined,
                 borderRadius: 999,
                 border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
                 background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
@@ -606,6 +607,7 @@ export function CircuitHud({
                 fontWeight: 800,
                 letterSpacing: 0.8,
                 cursor: "pointer",
+                touchAction: "manipulation",
               }}
             >
               RANKED · SECTOR 1
@@ -617,7 +619,8 @@ export function CircuitHud({
                 className="mono"
                 title={expeditionDetail}
                 style={{
-                  padding: "6px 12px",
+                  padding: compact ? "10px 14px" : "6px 12px",
+                  minHeight: compact ? 40 : undefined,
                   borderRadius: 999,
                   border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
                   background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
@@ -626,9 +629,10 @@ export function CircuitHud({
                   fontWeight: 800,
                   letterSpacing: 0.8,
                   cursor: "pointer",
+                  touchAction: "manipulation",
                 }}
               >
-                WEEK · {expeditionLabel.toUpperCase()}
+                EXPEDITION · {expeditionLabel.toUpperCase()}
               </button>
             )}
             {scoutUnlocked &&
@@ -645,7 +649,8 @@ export function CircuitHud({
                     className="mono"
                     title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
                     style={{
-                      padding: "6px 10px",
+                      padding: compact ? "10px 12px" : "6px 10px",
+                      minHeight: compact ? 40 : undefined,
                       borderRadius: 999,
                       border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
                       background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
@@ -654,6 +659,7 @@ export function CircuitHud({
                       fontWeight: 800,
                       letterSpacing: 0.6,
                       cursor: "pointer",
+                      touchAction: "manipulation",
                     }}
                   >
                     SCOUT · CAMP {theme.roman}

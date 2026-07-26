@@ -44,6 +44,18 @@ export function scoutStartSector(camp: number): number {
   return (n - 1) * REACH_SIZE;
 }
 
+/**
+ * Highest camp index the scout picker may offer.
+ * Camp Sense (`scoutCampBonus`) unlocks one Reach ahead of lit camps — it must
+ * NOT remap a tapped camp to another (that made pills feel "wrong").
+ */
+export function scoutCampCap(campsLit: number, scoutCampBonus = 0): number {
+  const lit = Math.max(0, Math.min(10, Math.floor(campsLit)));
+  if (lit <= 0) return 0;
+  const bonus = Math.max(0, Math.floor(scoutCampBonus));
+  return Math.min(10, lit + bonus);
+}
+
 /** How many Reaches a depth has touched (ceil sectors/10, cap 10). */
 export function reachesFromSectors(sectors: number): number {
   if (sectors <= 0) return 0;

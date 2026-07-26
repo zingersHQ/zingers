@@ -58,7 +58,7 @@ export const WING_TRAITS: Record<WingTraitId, WingTraitDef> = {
   camp_sense: {
     id: "camp_sense",
     name: "Camp Sense",
-    gloss: "Scout starts one Reach higher.",
+    gloss: "Scout can open one Reach ahead of your lit camps.",
     innateType: "RHETORIC",
   },
   tailwind: {
@@ -98,7 +98,7 @@ export interface FlightModifiers {
   stumbleLockS: number;
   stumbleImmuneS: number;
   cruiseSpeedMult: number;
-  /** Added to scout camp index when picking scout (clamped to campsLit). */
+  /** Extra scout camps unlocked ahead of campsLit (Camp Sense = 1). */
   scoutCampBonus: number;
   crownPayoutMult: number;
 }

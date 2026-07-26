@@ -95,6 +95,7 @@ import {
   HUNDRED_CHEST_CROWNS,
   SCOUT_CROWN_MULT,
   SCOUT_XP_MULT,
+  scoutCampCap,
   scoutStartSector,
 } from "@/lib/climb-campaign";
 import { climbCanvasGfx, useGraphicsTier } from "@/lib/graphics-tier";
@@ -764,6 +765,7 @@ export default function CircuitLite({
   const runModsRef = useRef<RunMods>(runMods);
   runModsRef.current = runMods;
   const scoutUnlocked = scoutRankOpen && !runMods.banScout;
+  const scoutCamps = scoutUnlocked ? scoutCampCap(campsLit, runMods.scoutCampBonus) : 0;
 
   const wingLivesCap = useRef(CIRCUIT_LIVES);
   const applyWingSession = useCallback((mods: FlightModifiers, refillLives: boolean) => {
@@ -882,8 +884,8 @@ export default function CircuitLite({
 
   useEffect(() => {
     if (!scoutUnlocked && runMode === "scout") setRunMode("ranked");
-    else setScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
-  }, [campsLit, scoutUnlocked, runMode]);
+    else if (scoutCamps > 0) setScoutCamp((c) => Math.min(Math.max(1, c), scoutCamps));
+  }, [scoutCamps, scoutUnlocked, runMode]);
 
   useEffect(() => {
     if (!expeditionOpen && runMode === "expedition") setRunMode("ranked");
@@ -1310,8 +1312,8 @@ export default function CircuitLite({
   }, []);
 
   const pickScout = useCallback((camp: number) => {
-    const bonus = runModsRef.current.scoutCampBonus;
-    const n = Math.max(1, Math.min(campsLit, camp + bonus));
+    const cap = scoutCampCap(campsLit, runModsRef.current.scoutCampBonus);
+    const n = Math.max(1, Math.min(cap, Math.floor(camp)));
     setRunMode("scout");
     setScoutCamp(n);
     setSector(scoutStartSector(n));
@@ -2158,13 +2160,15 @@ export default function CircuitLite({
                   })}
                 </div>
               )}
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
                 <button
                   type="button"
                   onClick={pickRanked}
+                  onPointerDown={(e) => e.stopPropagation()}
                   className="mono"
                   style={{
-                    padding: "6px 12px",
+                    padding: "10px 14px",
+                    minHeight: 40,
                     borderRadius: 999,
                     border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
                     background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
@@ -2173,6 +2177,8 @@ export default function CircuitLite({
                     fontWeight: 800,
                     letterSpacing: 0.8,
                     cursor: "pointer",
+                    touchAction: "manipulation",
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 >
                   {t("rankedSector1")}
@@ -2181,10 +2187,12 @@ export default function CircuitLite({
                   <button
                     type="button"
                     onClick={pickExpedition}
+                    onPointerDown={(e) => e.stopPropagation()}
                     className="mono"
                     title={expedition.gloss}
                     style={{
-                      padding: "6px 12px",
+                      padding: "10px 14px",
+                      minHeight: 40,
                       borderRadius: 999,
                       border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
                       background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
@@ -2193,13 +2201,15 @@ export default function CircuitLite({
                       fontWeight: 800,
                       letterSpacing: 0.8,
                       cursor: "pointer",
+                      touchAction: "manipulation",
+                      WebkitTapHighlightColor: "transparent",
                     }}
                   >
                     {t("week", { name: expedition.name.toUpperCase() })}
                   </button>
                 )}
                 {scoutUnlocked &&
-                  Array.from({ length: campsLit }, (_, i) => {
+                  Array.from({ length: scoutCamps }, (_, i) => {
                     const camp = i + 1;
                     const on = runMode === "scout" && scoutCamp === camp;
                     const theme = reachThemeByIndex(camp - 1);
@@ -2208,10 +2218,12 @@ export default function CircuitLite({
                         key={camp}
                         type="button"
                         onClick={() => pickScout(camp)}
+                        onPointerDown={(e) => e.stopPropagation()}
                         className="mono"
                         title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
                         style={{
-                          padding: "6px 10px",
+                          padding: "10px 12px",
+                          minHeight: 40,
                           borderRadius: 999,
                           border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
                           background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
@@ -2220,6 +2232,8 @@ export default function CircuitLite({
                           fontWeight: 800,
                           letterSpacing: 0.6,
                           cursor: "pointer",
+                          touchAction: "manipulation",
+                          WebkitTapHighlightColor: "transparent",
                         }}
                       >
                         {t("scoutCamp", { roman: theme.roman })}

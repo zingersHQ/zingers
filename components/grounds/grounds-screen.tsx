@@ -174,6 +174,7 @@ import {
   HUNDRED_CHEST_CROWNS,
   SCOUT_CROWN_MULT,
   SCOUT_XP_MULT,
+  scoutCampCap,
   scoutStartSector,
 } from "@/lib/climb-campaign";
 import { crownCacheCrowns, rollCrownCache, type CrownCache } from "@/components/grounds/climb/crown-cache";
@@ -618,6 +619,7 @@ export default function GroundsScreen({
   const runModsRef = useRef<RunMods>(runMods);
   runModsRef.current = runMods;
   const scoutUnlocked = scoutRankOpen && !runMods.banScout;
+  const scoutCamps = scoutUnlocked ? scoutCampCap(campsLit, runMods.scoutCampBonus) : 0;
   const wingLivesCap = useRef(CIRCUIT_LIVES);
 
   // Sector spice (Swift / Duskfall / …) — same map as mobile Climb.
@@ -686,10 +688,10 @@ export default function GroundsScreen({
     if (!scoutUnlocked && circuitRunMode === "scout") {
       setCircuitRunMode("ranked");
       setCircuitScoutCamp(1);
-    } else if (scoutUnlocked) {
-      setCircuitScoutCamp((c) => Math.min(Math.max(1, c), campsLit));
+    } else if (scoutCamps > 0) {
+      setCircuitScoutCamp((c) => Math.min(Math.max(1, c), scoutCamps));
     }
-  }, [campsLit, circuitRunMode, scoutUnlocked]);
+  }, [scoutCamps, circuitRunMode, scoutUnlocked]);
 
   useEffect(() => {
     if (!expeditionOpen && circuitRunMode === "expedition") setCircuitRunMode("ranked");
@@ -976,8 +978,8 @@ export default function GroundsScreen({
   }, []);
 
   const pickCircuitScout = useCallback((camp: number) => {
-    const bonus = runModsRef.current.scoutCampBonus;
-    const n = Math.max(1, Math.min(campsLit, camp + bonus));
+    const cap = scoutCampCap(campsLit, runModsRef.current.scoutCampBonus);
+    const n = Math.max(1, Math.min(cap, Math.floor(camp)));
     setCircuitRunMode("scout");
     setCircuitScoutCamp(n);
     const start = scoutStartSector(n);
@@ -3724,7 +3726,7 @@ export default function GroundsScreen({
           lives={circuitLives}
           maxLives={runMods.lives}
           runMode={circuitRunMode}
-          campsLit={campsLit}
+          campsLit={scoutCamps}
           scoutCamp={circuitScoutCamp}
           onPickRanked={!circuitGuest ? pickCircuitRanked : undefined}
           onPickScout={!circuitGuest ? pickCircuitScout : undefined}

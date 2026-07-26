@@ -286,7 +286,7 @@
     "life": "life",
     "livesWord": "lives",
     "rankedSector1": "RANKED · SECTOR 1",
-    "week": "WEEK · {name}",
+    "week": "EXPEDITION · {name}",
     "scoutCamp": "SCOUT · CAMP {roman}",
     "practice": "PRACTICE · no board · half XP · quarter Crowns",
     "practiceHundred": " · ★ Hundred",
