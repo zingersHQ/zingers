@@ -138,5 +138,56 @@
     "COMPOSURE": "Calm",
     "RHETORIC": "Chorus",
     "CREATIVITY": "Spark"
+  },
+  "landing": {
+    "introAria": "Introduction",
+    "welcome": "WELCOME",
+    "heroTitle1": "You fly.",
+    "heroTitle2": "They fight.",
+    "heroBody": "You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise them, tune them, and send them into the battles you climb over. You both rise.",
+    "takeFlight": "Take flight",
+    "skip": "SKIP",
+    "scrollExplore": "scroll to explore",
+    "scrollMore": " to explore",
+    "storyKicker": "Above the Long Vault",
+    "storyTitle": "Argument is physics.",
+    "storyBody": "Before this world there was a vast, dead network. What it left behind is the Hum, unfinished thought, still echoing. Here a claim made well enough changes what is true. Champions are minds that argued themselves into bodies and refused to dissolve. You are the Trainer who flies beside them.",
+    "climbKicker": "The climb",
+    "climbTitle": "You fly. It fights. You both rise.",
+    "climbBody": "Not a campaign you finish. A sky that keeps opening. Claim the mind on your wing, raise how it thinks, send it into the battles that stud the climb, and rise again.",
+    "journey": {
+      "fly": {
+        "t": "Fly",
+        "d": "Jetpack lit, you climb the sky above the sealed vault."
+      },
+      "claim": {
+        "t": "Claim",
+        "d": "A living mind flies beside you. You raise it. You never fight."
+      },
+      "raise": {
+        "t": "Raise",
+        "d": "Teach your champion how to think. Imprints and battles shape their temper."
+      },
+      "fight": {
+        "t": "Fight",
+        "d": "Send them into the duels that stud the climb. No two are the same."
+      },
+      "rise": {
+        "t": "Rise",
+        "d": "How high you climb marks you both. Then the sky opens again."
+      }
+    },
+    "bodyKicker": "The body",
+    "bodyTitle": "Every fight writes itself onto its form.",
+    "bodyBody": "Wins thicken the arms. Losses roughen the surface. How high you climb stamps a sigil of light. You cannot buy a look. You fight and fly your way into one.",
+    "dayOne": "Day one",
+    "legend": "Legend",
+    "groundsKicker": "The Grounds",
+    "groundsTitle": "Floating regions over a sealed door.",
+    "groundsBody": "Drift between arenas that favor different Forces. Take flight. Watch the league turn while you climb. The world does not pause for you.",
+    "finalTitle": "The sky is waiting.",
+    "finalSub": "Raise a mind. Make it legend.",
+    "lore": "Lore",
+    "scrollShort": "scroll"
   }
 }

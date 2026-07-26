@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Champion, CreatureType } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 import { armOnboardingAudio } from "@/lib/sound-gallery";
@@ -45,6 +46,7 @@ const RIVAL = showcaseChampion("BASTION"); // COMPOSURE / The Stillness
 const ACC = "#7c5cff";
 
 export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose: () => void; embedded?: boolean; onIndexChange?: (i: number) => void }) {
+  const t = useTranslations("landing");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -216,7 +218,7 @@ export function FirstRun({ onClose, embedded = false, onIndexChange }: { onClose
             </div>
           )}
           <button onClick={onClose} className="mono" style={{ marginLeft: count > 1 ? 14 : "auto", pointerEvents: "auto", background: "none", border: "none", color: "var(--muted2)", fontSize: 11, letterSpacing: 1, cursor: "pointer" }}>
-            SKIP
+            {t("skip")}
           </button>
         </div>
 
@@ -339,6 +341,7 @@ function Awaken({
   /** Solid hero CTA — desktop homepage Start (side chevron was too quiet). */
   onStart?: () => void;
 }) {
+  const t = useTranslations("landing");
   const [live, setLive] = useState(false);
   return (
     <div style={{ ...FULL, background: "radial-gradient(120% 90% at 50% 10%, #f0c090 0%, #c88858 42%, #2a1830 100%)" }}>
@@ -355,24 +358,24 @@ function Awaken({
       </Stage>
       <LowerThird
         mobile={mobile}
-        kicker="WELCOME"
+        kicker={t("welcome")}
         title={
           <>
-            You fly.
+            {t("heroTitle1")}
             <br />
-            They fight.
+            {t("heroTitle2")}
           </>
         }
-        body="You're the Trainer: jetpack lit, a thinking champion flying at your side. Raise them, tune them, and send them into the battles you climb over — you both rise."
+        body={t("heroBody")}
       >
         {onStart && (
           <button
             type="button"
             onClick={onStart}
-            aria-label="Take flight"
+            aria-label={t("takeFlight")}
             className="fr-start-cta"
           >
-            Take flight <ArrowRight size={18} strokeWidth={2.6} />
+            {t("takeFlight")} <ArrowRight size={18} strokeWidth={2.6} />
           </button>
         )}
       </LowerThird>

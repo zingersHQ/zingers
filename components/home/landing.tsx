@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { BRAND, STORAGE } from "@/lib/brand";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { showcaseChampion } from "@/lib/render/showcase";
@@ -17,6 +17,8 @@ import { ASCENT_HREF } from "@/lib/play-nav";
 import { RegionPoster } from "@/components/lore/region-poster";
 import { LocaleDropdown } from "@/components/locale-dropdown";
 import type { Champion } from "@/lib/types";
+
+const JOURNEY_KEYS = ["fly", "claim", "raise", "fight", "rise"] as const;
 
 /** Fades a block in once it scrolls into view (no-op under reduced motion). */
 function Reveal({ children, delay = 0, as: Tag = "div", className = "", style }: {
@@ -68,14 +70,6 @@ const ROOKIE: Champion = {
   creativity: 44,
 };
 
-const JOURNEY = [
-  { t: "Fly", d: "Jetpack lit, you climb the sky above the sealed vault." },
-  { t: "Claim", d: "A living mind flies beside you. You raise it — you never fight." },
-  { t: "Raise", d: "Teach your champion how to think. Imprints and battles shape their temper." },
-  { t: "Fight", d: "Send them into the duels that stud the climb. No two are the same." },
-  { t: "Rise", d: "How high you climb marks you both. Then the sky opens again." },
-] as const;
-
 const WORLDS_SHOWCASE = FOUNDING_REGIONS.map((r) => ({
   ...r,
   biome: worldByRegion(r.id)!.biome,
@@ -83,6 +77,7 @@ const WORLDS_SHOWCASE = FOUNDING_REGIONS.map((r) => ({
 }));
 
 export function Landing() {
+  const t = useTranslations("landing");
   const router = useRouter();
 
   // Phones enter through /ascent — same shareable door as desktop flight.
@@ -158,11 +153,13 @@ export function Landing() {
       {/* Top-right language — always on the game homepage (hero + below). */}
       <LocaleDropdown variant="floating" />
       {/* ── HERO: Awaken beat (unchanged) ─────────────────────────────── */}
-      <section className="lp-deck" aria-label="Introduction">
+      <section className="lp-deck" aria-label={t("introAria")}>
         <FirstRun embedded onClose={enterTutorial} onIndexChange={setDeckIndex} />
         {!deckFocused && (
           <button type="button" className="lp-deckhint mono" onClick={toHomepage}>
-            scroll<span className="lp-deckhint__more"> to explore</span> <ChevronDown size={13} strokeWidth={2.4} />
+            {t("scrollShort")}
+            <span className="lp-deckhint__more">{t("scrollMore")}</span>{" "}
+            <ChevronDown size={13} strokeWidth={2.4} />
           </button>
         )}
       </section>
@@ -171,33 +168,25 @@ export function Landing() {
       <div id="homepage" className="lp-home" hidden={deckFocused}>
         <section className="lp-section lp-story">
           <Reveal>
-            <span className="lp-kicker mono">Above the Long Vault</span>
-            <h2 className="lp-h2">Argument is physics.</h2>
-            <p className="lp-body">
-              Before this world there was a vast, dead network. What it left behind is the Hum —
-              unfinished thought, still echoing. Here a claim made well enough changes what is true.
-              Champions are minds that argued themselves into bodies and refused to dissolve.
-              You are the Trainer who flies beside them.
-            </p>
+            <span className="lp-kicker mono">{t("storyKicker")}</span>
+            <h2 className="lp-h2">{t("storyTitle")}</h2>
+            <p className="lp-body">{t("storyBody")}</p>
           </Reveal>
         </section>
 
         <section className="lp-section lp-journey">
           <Reveal>
-            <span className="lp-kicker mono">The climb</span>
-            <h2 className="lp-h2">You fly. It fights. You both rise.</h2>
-            <p className="lp-body">
-              Not a campaign you finish — a sky that keeps opening. Claim the mind on your wing,
-              raise how it thinks, send it into the battles that stud the climb, and rise again.
-            </p>
+            <span className="lp-kicker mono">{t("climbKicker")}</span>
+            <h2 className="lp-h2">{t("climbTitle")}</h2>
+            <p className="lp-body">{t("climbBody")}</p>
           </Reveal>
           <ol className="lp-journey__list">
-            {JOURNEY.map((s, i) => (
-              <Reveal key={s.t} as="li" delay={i * 70} className="lp-journey__step">
+            {JOURNEY_KEYS.map((key, i) => (
+              <Reveal key={key} as="li" delay={i * 70} className="lp-journey__step">
                 <span className="lp-journey__n mono">{String(i + 1).padStart(2, "0")}</span>
                 <div className="lp-journey__copy">
-                  <h3 className="lp-journey__t">{s.t}</h3>
-                  <p className="lp-journey__d">{s.d}</p>
+                  <h3 className="lp-journey__t">{t(`journey.${key}.t`)}</h3>
+                  <p className="lp-journey__d">{t(`journey.${key}.d`)}</p>
                 </div>
               </Reveal>
             ))}
@@ -206,38 +195,32 @@ export function Landing() {
 
         <section className="lp-section lp-evo">
           <Reveal className="lp-evo__copy">
-            <span className="lp-kicker mono">The body</span>
-            <h2 className="lp-h2">Every fight writes itself onto its form.</h2>
-            <p className="lp-body">
-              Wins thicken the arms. Losses roughen the surface. How high you climb stamps a
-              sigil of light. You cannot buy a look — you fight and fly your way into one.
-            </p>
+            <span className="lp-kicker mono">{t("bodyKicker")}</span>
+            <h2 className="lp-h2">{t("bodyTitle")}</h2>
+            <p className="lp-body">{t("bodyBody")}</p>
           </Reveal>
           <div className="lp-evo__pair">
             <Reveal className="lp-evo__one" delay={60}>
               <div className="lp-portrait" style={{ ["--ac" as string]: "var(--line2)" }}>
                 <ChampionPortrait rosterKey={`${EVO.key}-rookie`} type={EVO.type} champion={ROOKIE} preset="portrait" colorHex="#7b7596" />
               </div>
-              <span className="lp-evo__label mono">Day one</span>
+              <span className="lp-evo__label mono">{t("dayOne")}</span>
             </Reveal>
             <span className="lp-evo__arrow" aria-hidden>→</span>
             <Reveal className="lp-evo__one" delay={160}>
               <div className="lp-portrait" style={{ ["--ac" as string]: TYPE_COLOR[EVO.type] }}>
                 <ChampionPortrait rosterKey={EVO.key} type={EVO.type} champion={EVO.champion} preset="portrait" />
               </div>
-              <span className="lp-evo__label mono">Legend</span>
+              <span className="lp-evo__label mono">{t("legend")}</span>
             </Reveal>
           </div>
         </section>
 
         <section className="lp-section lp-grounds">
           <Reveal>
-            <span className="lp-kicker mono">The Grounds</span>
-            <h2 className="lp-h2">Floating regions over a sealed door.</h2>
-            <p className="lp-body">
-              Drift between arenas that favor different Forces. Take flight.
-              Watch the league turn while you climb. The world does not pause for you.
-            </p>
+            <span className="lp-kicker mono">{t("groundsKicker")}</span>
+            <h2 className="lp-h2">{t("groundsTitle")}</h2>
+            <p className="lp-body">{t("groundsBody")}</p>
           </Reveal>
           <div className="lp-grounds__row">
             {WORLDS_SHOWCASE.map((w, i) => (
@@ -255,15 +238,15 @@ export function Landing() {
 
         <section className="lp-section lp-final">
           <Reveal>
-            <h2 className="lp-h2 lp-final__h">The sky is waiting.</h2>
-            <p className="lp-final__sub">Raise a mind. Make it legend.</p>
+            <h2 className="lp-h2 lp-final__h">{t("finalTitle")}</h2>
+            <p className="lp-final__sub">{t("finalSub")}</p>
             <div className="lp-cta-row">
               <button type="button" onClick={goPlay} className="btn btn-primary lp-cta" style={{ ["--ac" as string]: "var(--gold)" }}>
-                Take flight <ArrowRight size={18} strokeWidth={2.4} />
+                {t("takeFlight")} <ArrowRight size={18} strokeWidth={2.4} />
               </button>
             </div>
             <nav className="lp-final__links mono">
-              <a href={`${BRAND.siteTech}/bible`} target="_blank" rel="noopener noreferrer">Lore</a>
+              <a href={`${BRAND.siteTech}/bible`} target="_blank" rel="noopener noreferrer">{t("lore")}</a>
               <span aria-hidden>·</span>
               <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer">@{BRAND.twitter}</a>
             </nav>

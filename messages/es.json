@@ -138,5 +138,56 @@
     "COMPOSURE": "Calma",
     "RHETORIC": "Coro",
     "CREATIVITY": "Chispa"
+  },
+  "landing": {
+    "introAria": "Introducción",
+    "welcome": "BIENVENIDO",
+    "heroTitle1": "Tú vuelas.",
+    "heroTitle2": "Ellos pelean.",
+    "heroBody": "Eres el Entrenador: jetpack encendido, un campeón pensante volando a tu lado. Críalo, ajústalo y mándalo a las batallas que atraviesas en la subida. Los dos ascienden.",
+    "takeFlight": "Alza el vuelo",
+    "skip": "SALTAR",
+    "scrollExplore": "baja para explorar",
+    "scrollMore": " para explorar",
+    "storyKicker": "Sobre the Long Vault",
+    "storyTitle": "El argumento es física.",
+    "storyBody": "Antes de este mundo hubo una red vasta y muerta. Lo que dejó es the Hum, pensamiento sin terminar, aún resonando. Aquí una afirmación hecha con suficiente fuerza cambia lo que es verdad. Los campeones son mentes que se argumentaron un cuerpo y se negaron a disolverse. Tú eres el Entrenador que vuela a su lado.",
+    "climbKicker": "La subida",
+    "climbTitle": "Tú vuelas. Él pelea. Los dos ascienden.",
+    "climbBody": "No es una campaña que terminas. Es un cielo que sigue abriéndose. Reclama la mente en tu ala, cría cómo piensa, mándala a las batallas que salpican la subida, y asciende otra vez.",
+    "journey": {
+      "fly": {
+        "t": "Vuela",
+        "d": "Jetpack encendido, subes el cielo sobre la bóveda sellada."
+      },
+      "claim": {
+        "t": "Reclama",
+        "d": "Una mente viva vuela a tu lado. Tú la crías. Tú nunca peleas."
+      },
+      "raise": {
+        "t": "Cría",
+        "d": "Enseña a tu campeón a pensar. Las Improntas y las batallas moldean su temperamento."
+      },
+      "fight": {
+        "t": "Pelea",
+        "d": "Mándalos a los duelos que salpican la subida. Ninguno se repite."
+      },
+      "rise": {
+        "t": "Asciende",
+        "d": "Lo alto que llegues los marca a los dos. Luego el cielo se abre otra vez."
+      }
+    },
+    "bodyKicker": "El cuerpo",
+    "bodyTitle": "Cada pelea se escribe en su forma.",
+    "bodyBody": "Las victorias engrosan los brazos. Las derrotas agrisan la superficie. Lo alto que subas sella un sigilo de luz. No puedes comprar un aspecto. Peleas y vuelas hasta merecerlo.",
+    "dayOne": "Día uno",
+    "legend": "Leyenda",
+    "groundsKicker": "The Grounds",
+    "groundsTitle": "Regiones flotantes sobre una puerta sellada.",
+    "groundsBody": "Deriva entre arenas que favorecen distintas Fuerzas. Alza el vuelo. Mira girar la liga mientras subes. El mundo no se detiene por ti.",
+    "finalTitle": "El cielo te espera.",
+    "finalSub": "Cría una mente. Hazla leyenda.",
+    "lore": "Lore",
+    "scrollShort": "baja"
   }
 }
