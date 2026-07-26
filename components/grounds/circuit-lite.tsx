@@ -26,6 +26,7 @@ import { RobotPilot, FlyingFollower } from "./flying-cast";
 import { ClimbProveGate } from "./climb/prove-gate";
 import { ClimbGhostRacer } from "./climb/ghost-racer";
 import { ChallengeOvertakeToast } from "./climb/challenge-overtake-toast";
+import { FlightModePicker, flightHoldLabel } from "./climb/flight-mode-picker";
 import {
   buildShareGhostPaths,
   challengeTipFurthestZ,
@@ -106,7 +107,8 @@ import { getHandle } from "@/lib/owner";
 import { reachTheme, reachThemeByIndex, type ReachTheme } from "./climb/reaches";
 import { sectorHazards, hazardHits, type Hazard } from "./climb/hazards";
 import { HazardField } from "./climb/hazard-field";
-import { sectorModifier, type Modifier } from "./climb/modifiers";
+import { liveGateCheckpoint, sectorModifier, type Modifier } from "./climb/modifiers";
+import { railAtZ, settleAxis } from "./climb/flight-rail";
 import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dressing";
 import { AscentSigil } from "./climb/ascent-sigil";
 import {
@@ -222,6 +224,7 @@ function Flyer({
   ascentReaches,
   accent,
   sigilAccent,
+  modifier,
   holdRef,
   altRef,
   flyerPosRef,
@@ -243,6 +246,8 @@ function Flyer({
   ascentReaches: number;
   accent: string;
   sigilAccent: string;
+  /** Sector modifier — drifting gates need live Y in the plane-cross test. */
+  modifier: Modifier | null;
   holdRef: React.RefObject<boolean>;
   altRef: React.RefObject<number>;
   /** the pilot's live world position — the FlyingFollower champion trails it */
@@ -331,15 +336,16 @@ function Flyer({
     pos.current.y += vy.current * dt;
     climbVelRef.current = vy.current;
 
-    // coplanar corridor (climb-feel §1c): rings sit at x=0 — pin the flyer to the
-    // flight plane. No lateral ease toward a weaving next-gate (that rubber-band
-    // was the "weird correction" players hated).
-    pos.current.x = 0;
+    // Soft rail settle — corridor may bend in X from Reach II; skill stays Hold/release.
+    // No rubber-band toward the *next* gate alone: we track the polyline at live Z.
+    const rail = railAtZ(track.checkpoints, pos.current.z);
+    pos.current.x = settleAxis(pos.current.x, rail.x, dt, 11);
+    const yaw = rail.yaw * 0.55; // soft look into the bend
 
     // Publish the *visual* Trainer pose (mesh sits at CHAMP_Y). Follower wingDrop
     // is authored relative to the body, not the gate-thread point above it.
     flyerPosRef.current.set(pos.current.x, pos.current.y + CHAMP_Y, pos.current.z);
-    flyerHeadingRef.current = CHAMP_FACE;
+    flyerHeadingRef.current = yaw;
     // puff the pilot's jetpack: a steady cadence while held, sparse while gliding
     jetEmit.current += dt;
     const emitGap = held ? 0.05 : 0.16;
@@ -350,10 +356,13 @@ function Flyer({
 
     if (grp.current) {
       grp.current.position.copy(pos.current);
-      grp.current.rotation.y = CHAMP_FACE;
-      // Nose into the wind — stronger lean sells the rush.
+      grp.current.rotation.y = THREE.MathUtils.lerp(grp.current.rotation.y, yaw, 1 - Math.exp(-10 * dt));
+      // Nose into the wind — stronger lean sells the rush; light bank into the curve.
       const pitch = THREE.MathUtils.clamp(0.42 - vy.current * 0.04, -0.12, 0.72);
-      grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, 1 - Math.exp(-14 * dt));
+      const bank = THREE.MathUtils.clamp(-yaw * 0.85, -0.35, 0.35);
+      const kLean = 1 - Math.exp(-14 * dt);
+      grp.current.rotation.x = THREE.MathUtils.lerp(grp.current.rotation.x, pitch, kLean);
+      grp.current.rotation.z = THREE.MathUtils.lerp(grp.current.rotation.z, bank, kLean);
     }
 
     // Chase the visual Trainer (CHAMP_Y), not the gate-thread point above it.
@@ -424,9 +433,11 @@ function Flyer({
       onCrownCollect();
     }
 
-    // gate threading — shared plane-cross rule with desktop Circuit (miss = run over)
+    // gate threading — shared plane-cross rule with desktop Circuit (miss = run over).
+    // Drifting gates: test against live bob Y so mesh and collision agree.
     if (cp) {
-      const cross = circuitGatePlaneCross(prevZ.current, pos.current.z, pos.current, cp);
+      const live = liveGateCheckpoint(cp, modifier, tSec);
+      const cross = circuitGatePlaneCross(prevZ.current, pos.current.z, pos.current, live);
       if (cross === "pass") {
         cpNext.current += 1;
         if (cp.finish) {
@@ -825,6 +836,13 @@ export default function CircuitLite({
   const biome = theme.biome;
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
+  const gateDrift = useMemo(
+    () =>
+      modifier?.kind === "driftingGates" && modifier.driftAmp > 0
+        ? { amp: modifier.driftAmp, cycle: modifier.driftCycle }
+        : null,
+    [modifier],
+  );
   const speed = useMemo(
     () => sectorFlightCruise(sector) * (modifier?.speedMult ?? 1),
     [sector, modifier],
@@ -884,7 +902,14 @@ export default function CircuitLite({
 
   useEffect(() => {
     if (!scoutUnlocked && runMode === "scout") setRunMode("ranked");
-    else if (scoutCamps > 0) setScoutCamp((c) => Math.min(Math.max(1, c), scoutCamps));
+    else if (scoutCamps > 0) {
+      setScoutCamp((c) => {
+        const capped = Math.min(Math.max(1, c), scoutCamps);
+        // First paint / still on default camp 1: land Explore on the deepest unlock.
+        if (runMode !== "scout" && c === 1 && scoutCamps > 1) return scoutCamps;
+        return capped;
+      });
+    }
   }, [scoutCamps, scoutUnlocked, runMode]);
 
   useEffect(() => {
@@ -1657,6 +1682,7 @@ export default function CircuitLite({
             cpNextRef={running ? cpNextRef : undefined}
             staticMode
             showFloor={false}
+            gateDrift={gateDrift}
           />
           <ClimbDriftMotes track={track} accent={moteColor} countScale={climbMoteScale(sector) * 0.28} />
           {(phase === "ready" || phase === "continue" || running) && (
@@ -1685,6 +1711,7 @@ export default function CircuitLite({
               ascentReaches={ascentReaches}
               accent={accent}
               sigilAccent={sigilAccent}
+              modifier={modifier}
               holdRef={holdRef}
               altRef={altRef}
               flyerPosRef={flyerPosRef}
@@ -2102,12 +2129,13 @@ export default function CircuitLite({
                 gap: 8,
                 maxWidth: 420,
                 pointerEvents: "auto",
+                width: "100%",
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {runMode === "expedition" && (
                 <div className="mono" style={{ fontSize: 9, letterSpacing: 1.2, color: "var(--gold)", fontWeight: 800, textAlign: "center" }} title={expedition.gloss}>
-                  WEEK · {expedition.name.toUpperCase()} · {expedition.condition.name.toUpperCase()}
+                  {t("expeditionLine", { n: routeCap })}
                 </div>
               )}
               {runMode === "ranked" && activeCondition.id !== "clear" && (
@@ -2160,98 +2188,20 @@ export default function CircuitLite({
                   })}
                 </div>
               )}
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={pickRanked}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="mono"
-                  style={{
-                    padding: "10px 14px",
-                    minHeight: 40,
-                    borderRadius: 999,
-                    border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
-                    background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
-                    color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: 0.8,
-                    cursor: "pointer",
-                    touchAction: "manipulation",
-                    WebkitTapHighlightColor: "transparent",
-                  }}
-                >
-                  {t("rankedSector1")}
-                </button>
-                {expeditionOpen && !guest && (
-                  <button
-                    type="button"
-                    onClick={pickExpedition}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    className="mono"
-                    title={expedition.gloss}
-                    style={{
-                      padding: "10px 14px",
-                      minHeight: 40,
-                      borderRadius: 999,
-                      border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
-                      background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
-                      color: runMode === "expedition" ? "var(--gold)" : "rgba(242,238,251,.75)",
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: 0.8,
-                      cursor: "pointer",
-                      touchAction: "manipulation",
-                      WebkitTapHighlightColor: "transparent",
-                    }}
-                  >
-                    {t("week", { name: expedition.name.toUpperCase() })}
-                  </button>
-                )}
-                {scoutUnlocked &&
-                  Array.from({ length: scoutCamps }, (_, i) => {
-                    const camp = i + 1;
-                    const on = runMode === "scout" && scoutCamp === camp;
-                    const theme = reachThemeByIndex(camp - 1);
-                    return (
-                      <button
-                        key={camp}
-                        type="button"
-                        onClick={() => pickScout(camp)}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        className="mono"
-                        title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
-                        style={{
-                          padding: "10px 12px",
-                          minHeight: 40,
-                          borderRadius: 999,
-                          border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
-                          background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
-                          color: on ? theme.accent : "rgba(242,238,251,.75)",
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: 0.6,
-                          cursor: "pointer",
-                          touchAction: "manipulation",
-                          WebkitTapHighlightColor: "transparent",
-                        }}
-                      >
-                        {t("scoutCamp", { roman: theme.roman })}
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-          {phase === "ready" && runMode === "scout" && (
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
-              {t("practice")}
-              {climbHundred ? t("practiceHundred") : ""}
-            </div>
-          )}
-          {phase === "ready" && runMode === "expedition" && (
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
-              {t("expeditionLine", { n: routeCap })}
+              <FlightModePicker
+                runMode={runMode}
+                scoutCamp={scoutCamp}
+                scoutCamps={scoutCamps}
+                scoutUnlocked={scoutUnlocked}
+                expeditionOpen={expeditionOpen && !guest}
+                expeditionName={expedition.name}
+                expeditionGloss={expedition.gloss}
+                accent={accent}
+                climbHundred={climbHundred}
+                onPickRanked={pickRanked}
+                onPickScout={pickScout}
+                onPickExpedition={expeditionOpen && !guest ? pickExpedition : undefined}
+              />
             </div>
           )}
           <div
@@ -2270,7 +2220,10 @@ export default function CircuitLite({
               transition: "background .08s, color .08s, box-shadow .12s",
             }}
           >
-            <Hand size={18} strokeWidth={2.4} /> {t("hold")}
+            <Hand size={18} strokeWidth={2.4} />{" "}
+            {phase === "ready"
+              ? flightHoldLabel(t, runMode, expedition.name)
+              : t("hold")}
           </div>
         </div>
       )}

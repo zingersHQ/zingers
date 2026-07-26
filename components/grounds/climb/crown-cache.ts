@@ -38,16 +38,17 @@ type Gate = { pos: [number, number, number]; radius: number; finish?: boolean };
  * Pressure / gauntlet stay lean so greed never crowds the exam.
  */
 const ROLE_CACHE_PRESENCE: Record<Role, number> = {
-  arrival: 0.45,
-  teach: 0.55,
-  combine: 0.5,
-  rhythm: 0.35,
-  pressure: 0.16,
-  vista: 0.55,
-  twist: 0.4,
-  pressure2: 0.12,
-  gauntlet: 0.08,
-  trial: 0.35,
+  arrival: 0.5,
+  teach: 0.6,
+  combine: 0.55,
+  rhythm: 0.4,
+  // Slight greed on pressure — off-rail climb/dive still optional, never required.
+  pressure: 0.28,
+  vista: 0.7,
+  twist: 0.48,
+  pressure2: 0.22,
+  gauntlet: 0.14,
+  trial: 0.4,
 };
 
 /** Reach density — denser early; taper so late isn't gold spam. */

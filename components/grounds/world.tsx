@@ -67,11 +67,13 @@ import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dr
 import { ClimbGhostRacer, GHOST_CAPSULE_FOOT } from "./climb/ghost-racer";
 import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
 import { sectorFlightBand } from "./climb/flight-cruise";
+import { railAtZ } from "./climb/flight-rail";
 import { FlightWindStreaks } from "./climb/wind-streaks";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { crownCacheHits, type CrownCache } from "./climb/crown-cache";
 import { CrownCacheField } from "./climb/crown-cache-field";
+import { liveGateCheckpoint, sectorModifier } from "./climb/modifiers";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
 import {
@@ -773,6 +775,12 @@ export default function World({
         : [],
     [inCircuit, circuitTrack.checkpoints],
   );
+  const circuitGateDrift = useMemo(() => {
+    if (!inCircuit) return null;
+    const mod = sectorModifier(circuitSectorIdx);
+    if (mod?.kind !== "driftingGates" || mod.driftAmp <= 0) return null;
+    return { amp: mod.driftAmp, cycle: mod.driftCycle };
+  }, [inCircuit, circuitSectorIdx]);
   const keeperTargets = useMemo(() => keeperTargetsFrom(keeperSites(shape, sc.landmarks.spire.angle)), [shape, sc.landmarks.spire.angle]);
   return (
     <>
@@ -907,6 +915,7 @@ export default function World({
                 biome={biome}
                 cpNextRef={circuitCpNextRef}
                 showFloor={false}
+                gateDrift={circuitGateDrift}
               />
               <FlightWindStreaks
                 originRef={handlerPos}
@@ -3634,16 +3643,18 @@ function Handler({
       const band = sectorFlightBand(circuitSectorIdx);
       const cruise =
         (az > 0.2 ? band.surge : az < -0.2 ? band.brake : band.cruise) * speedMult;
-      // light lateral steer only (layouts are coplanar). Steer along the CAMERA's
-      // right axis, not world +X: the Circuit lens looks down-track (+Z), so a raw
-      // +X nudge read as screen-LEFT — D/→ moved left and A/← moved right. right.x
-      // (camera-relative) restores intuitive left/right for the trailing camera.
-      const tvx = right.x * ax * WALK * 0.55;
+      // Soft rail settle (parity with mobile) + light A/D craft nudge around the rail.
+      // Camera-relative right so D/→ still reads screen-right under the chase lens.
+      const rail = railAtZ(circuitCheckpoints, t.z);
+      const nudge = right.x * ax * WALK * 0.4;
+      const settleVx = (rail.x + nudge - t.x) * 9.5;
+      const tvx = settleVx;
       const tvz = cruise;
       const k = 1 - Math.exp(-(flyingMode ? ACCEL_FLY : ACCEL_GROUND) * dt);
       rb.setLinvel({ x: v.x + (tvx - v.x) * k, y: v.y, z: v.z + (tvz - v.z) * k }, true);
-      // ease facing down-track (+Z)
-      let d = 0 - heading.current;
+      // Ease facing down-track, soft yaw into the rail bend.
+      const wantYaw = rail.yaw * 0.5;
+      let d = wantYaw - heading.current;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       heading.current += d * (1 - Math.exp(-TURN_AIR * dt));
     } else if (moveLen > 0) {
@@ -4023,6 +4034,8 @@ function Handler({
       // Shared with mobile Climb: crossing a gate's Z-plane outside the opening = miss.
       // Catch up any gates already behind us (hitch overshoot) in one frame.
       if (circuitRunning && !circuitSettled.current && onCircuitPass) {
+        const mod = sectorModifier(circuitSectorIdx);
+        const tSec = state.clock.elapsedTime;
         let guard = 0;
         while (guard++ < 12 && !circuitSettled.current) {
           const idx = circuitCpNextRef.current;
@@ -4032,13 +4045,15 @@ function Handler({
             circuitSettled.current = true;
             break;
           }
-          let cross = circuitGatePlaneCross(prevZ, t.z, pos, {
-            pos: cp.posTuple,
-            radius: cp.radius,
-          });
+          const live = liveGateCheckpoint(
+            { pos: cp.posTuple, radius: cp.radius, index: cp.index },
+            mod,
+            tSec,
+          );
+          let cross = circuitGatePlaneCross(prevZ, t.z, pos, live);
           // Recovery: a prior spike left us past the plane with no pass/miss event.
-          if (cross == null && t.z >= cp.posTuple[2]) {
-            cross = circuitGateResolveAtOrPast(t.z, pos, { pos: cp.posTuple, radius: cp.radius });
+          if (cross == null && t.z >= live.pos[2]) {
+            cross = circuitGateResolveAtOrPast(t.z, pos, live);
           }
           if (cross == null) break;
           if (cross === "pass") {

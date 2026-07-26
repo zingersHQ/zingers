@@ -689,7 +689,11 @@ export default function GroundsScreen({
       setCircuitRunMode("ranked");
       setCircuitScoutCamp(1);
     } else if (scoutCamps > 0) {
-      setCircuitScoutCamp((c) => Math.min(Math.max(1, c), scoutCamps));
+      setCircuitScoutCamp((c) => {
+        const capped = Math.min(Math.max(1, c), scoutCamps);
+        if (circuitRunMode !== "scout" && c === 1 && scoutCamps > 1) return scoutCamps;
+        return capped;
+      });
     }
   }, [scoutCamps, circuitRunMode, scoutUnlocked]);
 

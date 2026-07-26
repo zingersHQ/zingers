@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Flag, Rocket, RotateCcw, Share2, Skull, Sparkles, Swords, Timer, Trophy } from "lucide-react";
 import { CIRCUIT_LIVES, CIRCUIT_SECTOR_INTRO, formatCircuitMs } from "./circuit";
 import type { CircuitPersonalBest } from "./circuit-tracks";
-import { reachThemeByIndex } from "./climb/reaches";
 import { FlightTeachToast } from "./climb/flight-teach-toast";
 import { flightMasteryLine, hundredClearDetail } from "./climb/flight-mastery";
+import { FlightModePicker } from "./climb/flight-mode-picker";
 import { rewardSfx } from "@/lib/sfx";
 import { NextLine } from "@/components/director/next-card";
 import { traitLabel, type WingTraitId } from "@/lib/wing-traits";
@@ -582,97 +582,22 @@ export function CircuitHud({
               })}
             </div>
           )}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: 8,
-              maxWidth: 440,
-              pointerEvents: "auto",
-            }}
-          >
-            <button
-              type="button"
-              onClick={onPickRanked}
-              className="mono"
-              style={{
-                padding: compact ? "10px 14px" : "6px 12px",
-                minHeight: compact ? 40 : undefined,
-                borderRadius: 999,
-                border: `1.5px solid ${runMode === "ranked" ? accent : "rgba(255,255,255,.18)"}`,
-                background: runMode === "ranked" ? `${accent}33` : "rgba(10,10,18,.55)",
-                color: runMode === "ranked" ? accent : "rgba(242,238,251,.75)",
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: 0.8,
-                cursor: "pointer",
-                touchAction: "manipulation",
-              }}
-            >
-              RANKED · SECTOR 1
-            </button>
-            {onPickExpedition && expeditionLabel && (
-              <button
-                type="button"
-                onClick={onPickExpedition}
-                className="mono"
-                title={expeditionDetail}
-                style={{
-                  padding: compact ? "10px 14px" : "6px 12px",
-                  minHeight: compact ? 40 : undefined,
-                  borderRadius: 999,
-                  border: `1.5px solid ${runMode === "expedition" ? "var(--gold)" : "rgba(255,255,255,.18)"}`,
-                  background: runMode === "expedition" ? "rgba(245,208,32,.22)" : "rgba(10,10,18,.55)",
-                  color: runMode === "expedition" ? "var(--gold)" : "rgba(242,238,251,.75)",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 0.8,
-                  cursor: "pointer",
-                  touchAction: "manipulation",
-                }}
-              >
-                EXPEDITION · {expeditionLabel.toUpperCase()}
-              </button>
-            )}
-            {scoutUnlocked &&
-              onPickScout &&
-              Array.from({ length: campsLit }, (_, i) => {
-                const camp = i + 1;
-                const on = runMode === "scout" && scoutCamp === camp;
-                const theme = reachThemeByIndex(camp - 1);
-                return (
-                  <button
-                    key={camp}
-                    type="button"
-                    onClick={() => onPickScout(camp)}
-                    className="mono"
-                    title={`Scout from Camp ${theme.roman} · ${theme.name} (unranked)`}
-                    style={{
-                      padding: compact ? "10px 12px" : "6px 10px",
-                      minHeight: compact ? 40 : undefined,
-                      borderRadius: 999,
-                      border: `1.5px solid ${on ? theme.accent : "rgba(255,255,255,.18)"}`,
-                      background: on ? `${theme.accent}33` : "rgba(10,10,18,.55)",
-                      color: on ? theme.accent : "rgba(242,238,251,.75)",
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: 0.6,
-                      cursor: "pointer",
-                      touchAction: "manipulation",
-                    }}
-                  >
-                    SCOUT · CAMP {theme.roman}
-                  </button>
-                );
-              })}
+          <div style={{ pointerEvents: "auto", width: "100%", display: "flex", justifyContent: "center" }}>
+            <FlightModePicker
+              runMode={runMode}
+              scoutCamp={scoutCamp}
+              scoutCamps={campsLit}
+              scoutUnlocked={!!scoutUnlocked && !!onPickScout}
+              expeditionOpen={!!onPickExpedition && !!expeditionLabel}
+              expeditionName={expeditionLabel}
+              expeditionGloss={expeditionDetail}
+              accent={accent}
+              climbHundred={climbHundred}
+              onPickRanked={onPickRanked}
+              onPickScout={(camp) => onPickScout?.(camp)}
+              onPickExpedition={onPickExpedition}
+            />
           </div>
-          {runMode === "scout" && (
-            <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
-              PRACTICE · no board · half XP · quarter Crowns
-              {climbHundred ? " · ★ Hundred" : ""}
-            </div>
-          )}
           {runMode === "expedition" && (
             <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "rgba(242,238,251,.55)", textAlign: "center" }}>
               EXPEDITION · weekly board · no camps · {sectorTotal} sectors

@@ -27,6 +27,7 @@ const CheckpointRing = memo(function CheckpointRing({
   finish,
   highlight = false,
   cpNextRef,
+  gateDrift,
 }: {
   cp: CircuitCheckpoint;
   color: string;
@@ -37,6 +38,8 @@ const CheckpointRing = memo(function CheckpointRing({
    *  them and the current target pulses (the desktop 6-DOF feedback the mobile
    *  Climb `highlight` never got). A ref so per-gate progress needs no re-render. */
   cpNextRef?: React.MutableRefObject<number>;
+  /** Drifting-gates modifier — bob Y in sync with collision (climb/modifiers). */
+  gateDrift?: { amp: number; cycle: number } | null;
 }) {
   const r = cp.radius;
   const grp = useRef<THREE.Group>(null);
@@ -49,6 +52,7 @@ const CheckpointRing = memo(function CheckpointRing({
   const passCol = useMemo(() => new THREE.Color(PASS_GREEN), []);
   const washCol = useMemo(() => new THREE.Color(FAR_WASH), []);
   const target = useMemo(() => new THREE.Color(color), [color]);
+  const baseY = cp.pos[1];
 
   useFrame(({ clock }, dt) => {
     const g = grp.current;
@@ -62,6 +66,13 @@ const CheckpointRing = memo(function CheckpointRing({
     // fresh crossing → kick the confirmation burst
     if (passed && !wasPassed.current) burstT.current = 0.55;
     wasPassed.current = passed;
+
+    // Drifting gates — same sine the flyer collision uses (modifiers.driftingGateDy).
+    if (gateDrift && gateDrift.amp > 0) {
+      g.position.y = baseY + Math.sin(clock.elapsedTime * gateDrift.cycle + cp.index * 0.85) * gateDrift.amp;
+    } else {
+      g.position.y = baseY;
+    }
 
     const pulse = isNext ? 1 + Math.sin(clock.elapsedTime * 5) * 0.07 : 1;
     g.scale.setScalar(pulse);
@@ -97,7 +108,7 @@ const CheckpointRing = memo(function CheckpointRing({
   });
 
   return (
-    <group ref={grp} position={cp.pos}>
+    <group ref={grp} position={[cp.pos[0], cp.pos[1], cp.pos[2]]}>
       <mesh>
         <torusGeometry args={[r, highlight ? 0.18 : finish ? 0.14 : 0.1, 12, 48]} />
         <meshBasicMaterial ref={torusMat} color={color} transparent opacity={highlight ? 1 : finish ? 0.95 : 0.72} depthWrite={false} />
@@ -273,6 +284,7 @@ export const CircuitScene = memo(function CircuitScene({
   staticMode = false,
   cpNextRef,
   showFloor = true,
+  gateDrift = null,
 }: {
   track: CircuitTrackDef;
   biome: BiomeConfig;
@@ -285,6 +297,8 @@ export const CircuitScene = memo(function CircuitScene({
   cpNextRef?: React.MutableRefObject<number>;
   /** false when ClimbDressing supplies the under-corridor ground */
   showFloor?: boolean;
+  /** Drifting-gates modifier — rings bob; flyer collision must use the same sine. */
+  gateDrift?: { amp: number; cycle: number } | null;
 }) {
   const accent = biome.lights.arenaPoint;
   const floor = useMemo(() => biome.terrain.low, [biome.terrain.low]);
@@ -303,6 +317,7 @@ export const CircuitScene = memo(function CircuitScene({
           finish={cp.finish}
           highlight={cp.index === highlightIndex}
           cpNextRef={cpNextRef}
+          gateDrift={gateDrift}
         />
       ))}
     </>

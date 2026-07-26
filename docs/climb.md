@@ -25,9 +25,10 @@ score; lives then back to zero; the run marks your champion.* Everything
 below is body, and must never violate these:
 
 1. **One input.** Hold to rise, release to fall. **Amended (see
-   [`climb-feel.md`](./climb-feel.md) §1c):** on mobile, rings share one lateral
-   plane (`x = 0`) — no weave, no auto-X centering. Lateral skill stays out;
-   height is the only skill axis. Any hazard that requires a second input is out.
+   [`climb-feel.md`](./climb-feel.md) §1c):** height is the only skill axis.
+   Soft rail curves (Reach II+) bend the corridor in X; both bodies settle onto
+   the rail automatically — no lateral stick skill. Any hazard that requires a
+   second input is out.
 2. **Three lives** on a ranked run: each fail spends a life (ghost leave + pad
    retry on the same sector); at zero the run is over → sector 1. Clearing a
    Reach Gate Trial restores one life (capped at the run max) so deep Flight
@@ -130,21 +131,23 @@ interface SectorDifficulty {
 }
 ```
 
-Tuning targets (shipped in `components/grounds/climb/difficulty.ts`):
+Tuning targets (shipped in `components/grounds/climb/difficulty.ts`, retuned
+2026-07 after mid-run felt soft through ~s40):
 
-- **Speed** ~`7.7 + 0.3·b0 + 0.028·k`, cap **11.4** (bodies cruise at
+- **Speed** ~`8.0 + 0.38·b0 + 0.04·k`, cap **12.2** (bodies cruise at
   `speed × DESKTOP_GAP_SCALE` so gapSec stays real time). Late bite is rhythm +
-  hazards, not raw mph. Swift still multiplies when that modifier is live.
-- **Gate radius** ~`4.2 − 0.12·b0 − 0.018·k`, floor **2.7**.
-- **Gap between rings** in *seconds of flight*: role bands ~`1.25s–2.2s`; Vista
-  stretches to **~3.8s max** (scenic, not a dead float between rings).
-- **Gates per sector** `4 + floor(b0/3) + (surge/gauntlet ? 1 : 0)`, **cap 8**.
-  Arrival and Vista hold at **4** (breath via spacing, not stub corridors).
-  Early sectors feel like a short run; deep Reaches stretch without becoming a
-  ring ladder. Layout ΔY is clamped to `flyer-budget.ts` so longer ≠ impossible.
+  hazards + tighter, not raw mph alone. Swift still multiplies when live.
+- **Gate radius** ~`4.05 − 0.16·b0 − 0.025·k`, floor **2.35**.
+- **Gap between rings** in *seconds of flight*: role bands ~`1.08s–2.05s`; Vista
+  stretches to **~3.3s max** (scenic, not a dead float between rings).
+- **Gates per sector** `4 + floor(b0/2.5) + (pressure/surge/gauntlet/trial ? 1 : 0)`,
+  **cap 9**. Arrival/Vista stay short (breath via spacing). Layout ΔY is
+  clamped to `flyer-budget.ts` so louder swings stay finishable.
+- **Lateral rail** (`latAmp`): 0 on Reach I; soft sine/S/bowl curves from Reach
+  II via `flight-rail.ts` + path settle on both bodies.
 - **Cross-Reach variety:** same role bar every Reach, but archetypes are
-  Reach-flavored (amp / phase / bite slot) so Arrival@11 does not photocopy
-  Arrival@1.
+  Reach-flavored (amp / phase / bite slot / path kind) so Arrival@11 does not
+  photocopy Arrival@1.
 - **Fail states:** miss a ring or fall → life lost (3 lives; Reach-clear can
   restore). Hazards never insta-kill (§4). They shove you toward those fails.
 
@@ -211,8 +214,8 @@ across the 100:
 | Modifier | Effect | Count | Where |
 |---|---|---|---|
 | **Swift** | speed ×1.22, Crowns ×1.5 for the sector | **3** (~3%) | s23, s57, s86 (roles k3/k7/k6 — never stacked on hazard peaks) |
-| **Drifting gates** | rings bob ±1.2u on a slow sine (phase visible on approach) | 8 | one per Reach III–X, always k7 |
-| **Gusty** | 2–3 crosswind bands | 6 | Reaches VI–X |
+| **Drifting gates** | rings bob on a slow sine (collision + mesh agree) | **5** shipped | Twist (k7) on Reaches III, IV, VII, VIII, IX |
+| **Gusty** | 2–3 crosswind bands | 6 (not shipped) | Reaches VI–X |
 | **Duskfall** | fog pulls near ×0.6; rings glow brighter (readability preserved) | 4 | one each in II, V, IX, X |
 | **Silent sky** | music drops to a single drone; only SFX (tension by absence) | 2 | s49, s99 — the sectors *before* the two big ceremonies |
 | **Golden hour** | pure cosmetic: warm grade, motes turn gold, Crowns pickups +1 line | 3 | Vista sectors s16, s56, s96 |

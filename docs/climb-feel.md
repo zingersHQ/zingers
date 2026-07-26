@@ -9,9 +9,10 @@
 > propulsion** so both bodies feel like one addictive runner — not “fly through
 > a museum of rings.”
 
-Status: **P-feel.0–1.2 largely shipped** (coplanar rings, archetypes, green
-`cpNextRef`, Flappy cam, desktop auto-forward). **Next:** device-tune + hazard
-Y-corridor (P-feel.4). Active roadmap: [`flight-first-plan.md`](./flight-first-plan.md).  
+Status: **P-feel.0–1.4 shipped**; **balance + rail curves (2026-07)** live —
+steeper saw-tooth, louder vertical, soft lateral rails from Reach II with path
+settle (Hold/release unchanged), drifting-gates modifier. Full loops still
+future set pieces. Active roadmap: [`flight-first-plan.md`](./flight-first-plan.md).  
 Companions: [`climb.md`](./climb.md) (amended by §1c here), [`circuit-world.md`](./circuit-world.md)
 (amended by §4–5 here), [`essence.md`](./essence.md).
 
@@ -67,26 +68,27 @@ shallow to force a real flap).
 use role bands (rhythm = tight equal; vista = one long; pressure =
 short–short–medium). Same seed → same layout forever.
 
-### 1c. Mobile Climb — zero lateral offset (**new hard law**)
+### 1c. One skill axis + soft rail curves (**amended 2026-07**)
 
 **Overrides [`climb.md`](./climb.md) §1 “lateral stays auto-threaded” weave:**
 
-> On the mobile body, **all rings share the same X** (the flight plane `x = 0`).
-> Distance (Z) and height (Y) may vary freely. Lateral weave is **desktop-only**
-> (or retired entirely until 6-DOF needs it).
+> **Skill stays one axis:** Hold/release = world-Y. The flyer never steers X on
+> mobile. From Reach II up, rings may sit on a soft **rail curve** (sine / S /
+> bowl) authored in `climb/flight-rail.ts`; both bodies **settle** onto the rail
+> at live Z. Reach I stays a straight corridor so flap teaches cleanly.
 
 Consequences:
 
-- Generator: `gate.x = 0` always on Climb tracks (decorative platforms centered /
-  subtle under-ring).
-- Flyer: **remove** `LATERAL_EASE` auto-centering toward next gate (the “weird
-  correction”).
+- Generator: `gate.x` follows `pathKindFor(role, reach)` × `latAmp` (0 on Reach I).
+- Flyer: settle spring onto the rail polyline — **not** rubber-band toward the
+  next gate alone (that was the old weird correction).
 - Soft ceiling / auto-thread stay **vertical-only**.
-- Hazards that needed lateral dodge (crosswind as X shove) become **Y-only** on
-  mobile, or wait for a later pass.
+- Hazards stay in the flight line (Y dodge). No second-stick lateral skill.
+- Desktop keeps a light A/D nudge *around* the rail for craft; cruise still
+  auto-forwards.
 
-This is the Flappy contract: **one axis of skill, a straight corridor in XZ, a
-dancing corridor in Y.**
+Contract: **one axis of skill, a dancing corridor in Y, optional soft bends in X
+that the path settles for you.**
 
 ### 1d. Desktop Circuit — keep scale, share archetypes
 

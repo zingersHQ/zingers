@@ -1,9 +1,9 @@
 // The Climb — 100 sectors, generated deterministically (docs/climb.md §2–3,
 // docs/climb-feel.md §1).
 //
-// Feel-pass law: rings share ONE lateral plane (x = 0). Challenge is altitude
-// timing + gap rhythm + hazards — never sideways rubber-banding. Layouts follow
-// role archetypes so Arrival ≠ Gauntlet by shape.
+// Feel-pass law: challenge is altitude timing + gap rhythm + hazards. Soft
+// lateral rail curves (flight-rail.ts) bend the corridor from Reach II up —
+// flyer settles onto the rail; Hold/release stays the only skill axis.
 //
 // Hard law (2026-07): never a ring ladder. Enforce a minimum |ΔY| between
 // consecutive gates and break near-collinear YZ runs so "five rings inline"
@@ -12,6 +12,7 @@
 import type { CircuitCheckpoint, CircuitTrackDef } from "../circuit";
 import { hash01 } from "../landmarks";
 import { CLIMB_SECTOR_COUNT, roleIndex, roleOf, sectorDifficulty, type Role } from "./difficulty";
+import { pathKindFor, pathLateralAt } from "./flight-rail";
 import { clampDeltaToBudget, maxClimbDeltaY } from "./flyer-budget";
 import { reachTheme } from "./reaches";
 
@@ -57,12 +58,13 @@ function makeRng(i: number, seed = ""): () => number {
 function reachFlavor(reach: number, rnd: () => number) {
   const r = Math.max(0, Math.min(9, reach));
   // Stable per-Reach bias + tiny per-sector jitter (rnd already sector-seeded).
-  const ampMul = 0.88 + r * 0.028 + rnd() * 0.08;
-  const phase = r * 0.73 + rnd() * 0.35;
+  const ampMul = 0.92 + r * 0.035 + rnd() * 0.1;
+  const phase = r * 0.73 + rnd() * 0.45;
   const dipGate = (1 + (r % 3)) % Math.max(2, 4); // early dip slot drifts by Reach
   const biteMod = (r + 1) % 3; // which gap gets the pressure "bite"
-  const stagger = 0.15 + (r % 4) * 0.05;
-  return { ampMul, phase, dipGate, biteMod, stagger };
+  const stagger = 0.18 + (r % 4) * 0.06;
+  const latSign = r % 2 === 0 ? 1 : -1;
+  return { ampMul, phase, dipGate, biteMod, stagger, latSign };
 }
 
 /** Role → raw height delta before anti-ladder enforcement. */
@@ -73,41 +75,41 @@ function gateHeightDelta(
   rnd: () => number,
   flavor: ReturnType<typeof reachFlavor>,
 ): number {
-  // Amp stays readable but inside flyer-budget once gapSec is applied.
-  const amp = Math.max(d.gateRadius * 1.1, d.vertStep * 1.35) * flavor.ampMul;
+  // Push closer to flyer-budget — shallow stairs were the monotone feel.
+  const amp = Math.max(d.gateRadius * 1.3, d.vertStep * 1.6) * flavor.ampMul;
   switch (role) {
     case "arrival": {
       // short rising staircase — Reach salt on step size; rare mid dip later
-      const step = d.vertStep * (1.05 + rnd() * 0.25) * flavor.ampMul;
-      if (d.reach >= 2 && g === flavor.dipGate && rnd() < 0.35 + d.reach * 0.04) {
-        return -amp * (0.35 + rnd() * 0.15);
+      const step = d.vertStep * (1.15 + rnd() * 0.3) * flavor.ampMul;
+      if (d.reach >= 2 && g === flavor.dipGate && rnd() < 0.4 + d.reach * 0.05) {
+        return -amp * (0.45 + rnd() * 0.2);
       }
       return step;
     }
     case "teach":
       // mostly up; dip gate drifts by Reach so Approach never feels identical
-      return g === flavor.dipGate ? -amp * (0.4 + rnd() * 0.12) : d.vertStep * (1.0 + rnd() * 0.25) * flavor.ampMul;
+      return g === flavor.dipGate ? -amp * (0.5 + rnd() * 0.15) : d.vertStep * (1.1 + rnd() * 0.3) * flavor.ampMul;
     case "rhythm":
-      return Math.sin((g + 1) * Math.PI + flavor.phase) * amp * (0.85 + rnd() * 0.12);
+      return Math.sin((g + 1) * Math.PI + flavor.phase) * amp * (0.95 + rnd() * 0.12);
     case "combine":
     case "twist": {
-      const a = g % 2 === 0 ? 1 : -0.7;
+      const a = g % 2 === 0 ? 1 : -0.85;
       // Reach flips the opening polarity so Weave/Twist alternate feel
       const pol = d.reach % 2 === 0 ? a : -a;
-      return pol * amp * (0.75 + rnd() * 0.25);
+      return pol * amp * (0.85 + rnd() * 0.25);
     }
     case "pressure":
     case "pressure2":
       // bite slot = every-3rd offset by Reach (not always g%3===1)
-      return (g + flavor.biteMod) % 3 === 1 ? -amp * (0.9 + rnd() * 0.2) : amp * (0.9 + rnd() * 0.2);
+      return (g + flavor.biteMod) % 3 === 1 ? -amp * (1.05 + rnd() * 0.2) : amp * (1.05 + rnd() * 0.2);
     case "vista":
-      return (g % 2 === 0 ? 0.55 : -0.35) * d.vertStep * (0.9 + rnd() * 0.25) * flavor.ampMul;
+      return (g % 2 === 0 ? 0.7 : -0.5) * d.vertStep * (1.05 + rnd() * 0.3) * flavor.ampMul;
     case "gauntlet":
-      return Math.sin(g * 1.7 + 0.4 + flavor.phase) * amp * (1.0 + rnd() * 0.15);
+      return Math.sin(g * 1.7 + 0.4 + flavor.phase) * amp * (1.15 + rnd() * 0.15);
     case "trial": {
-      const a = g % 2 === 0 ? 1.0 : -0.8;
+      const a = g % 2 === 0 ? 1.1 : -0.95;
       const pol = d.reach % 2 === 0 ? a : -a * 0.95;
-      return pol * amp * (0.95 + rnd() * 0.15);
+      return pol * amp * (1.05 + rnd() * 0.15);
     }
   }
 }
@@ -183,10 +185,12 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   // Arrival's short staircase may rise twice. Everything else reverses by the
   // third same-direction step so long diagonals can't form.
   const allowMono = role === "arrival";
-  // Readable swing, but never above what a controlled flap can cover in the
-  // tightest gap this role allows (matched cruise → gapSec is real time).
-  const budgetFloor = maxClimbDeltaY(gapMin) * 0.72;
-  const minSwing = Math.min(d.gateRadius * 0.95, Math.max(d.vertStep * 0.85, budgetFloor * 0.55));
+  // Readable swing — use more of the flyer budget so altitude timing bites.
+  const budgetFloor = maxClimbDeltaY(gapMin) * 0.78;
+  const minSwing = Math.min(d.gateRadius * 1.2, Math.max(d.vertStep * 1.05, budgetFloor * 0.72));
+
+  const pathKind = pathKindFor(role, d.reach);
+  const latAmp = d.latAmp * flavor.latSign;
 
   const gatePos: { x: number; y: number; z: number }[] = [];
 
@@ -194,7 +198,7 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
   let y = 2.8;
   const yFloor = 1.6;
   // Wide band so enforceSwing isn't crushed into a flat ceiling line.
-  const yCeil = 2.8 + d.gates * Math.max(d.vertStep * 1.35, d.gateRadius * 1.5) + 8;
+  const yCeil = 2.8 + d.gates * Math.max(d.vertStep * 1.55, d.gateRadius * 1.65) + 10;
 
   let lastSign = 0;
   let sameDirStreak = 0;
@@ -221,7 +225,8 @@ export function buildClimbSector(i: number, seed = ""): CircuitTrackDef {
       }
     }
 
-    gatePos.push({ x: 0, y, z });
+    const x = pathLateralAt(pathKind, g, d.gates, Math.abs(latAmp), flavor.phase) * Math.sign(latAmp || 1);
+    gatePos.push({ x, y, z });
   }
 
   const checkpoints: CircuitCheckpoint[] = [

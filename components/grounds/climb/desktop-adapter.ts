@@ -24,7 +24,8 @@ import {
 
 /** Exported so ghost samples can round-trip in canonical Climb space. */
 export { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE, DESKTOP_RADIUS_SCALE, FLIGHT_WIND_SCALE };
-const LAT_SCALE = 1; // climb-feel §1c: rings are coplanar (x=0); no lateral stretch
+/** Soft rail curves — scale X with the corridor so bends read at wind speed. */
+const LAT_SCALE = DESKTOP_GAP_SCALE * 0.48;
 
 export const DESKTOP_CIRCUIT_COUNT = CLIMB_SECTOR_COUNT;
 
