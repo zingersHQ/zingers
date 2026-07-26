@@ -51,7 +51,8 @@ import {
   needsAltitudeProve,
   setAscentSessionMods,
 } from "@/lib/ascent-rules";
-import { MOBILE_CRUISE_MULT, sectorFlightCruise } from "./climb/flight-cruise";
+import { sectorFlightCruise } from "./climb/flight-cruise";
+import { FlightWindStreaks } from "./climb/wind-streaks";
 import {
   evaluateLadder,
   hitsRankLock,
@@ -123,7 +124,8 @@ import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
-import { setMood, setAmbienceIntensity, duckAmbience } from "@/lib/ambience-bus";
+import { setMood, setAmbienceIntensity, duckAmbience, startAmbience } from "@/lib/ambience-bus";
+import { AmbientToggle } from "@/components/grounds/ambience";
 import { consumeFlightTeach, goldPayoutLine } from "./climb/flight-teach";
 import { FlightTeachToast } from "./climb/flight-teach-toast";
 import { flightMasteryLine, hundredClearDetail } from "./climb/flight-mastery";
@@ -147,18 +149,17 @@ interface RunReward {
 // ── flight feel — a HEAVY robot fighting a POWERFUL jetpack ───────────────────
 // Acceleration-based (not velocity-eased), so there's real weight: gravity is
 // always pulling hard, thrust punches up through it, a tap gives an instant kick.
-// Mobile body runs hotter than desktop par (MOBILE_CRUISE_MULT + hold boost) so
-// the wind reads; vertical authority is a touch above layout budgets so rhythm
-// gaps stay flappable at the higher pace (climb-feel §4b).
+// Forward cruise + gap Z share FLIGHT_WIND_SCALE (soul wind tunnel). Hold adds a
+// tiny forward boost so flaps feel like propulsion (climb-feel §4b).
 const GRAVITY = 28;
-const THRUST_ACCEL = 54; // net +26 — more climb headroom at the faster pace
+const THRUST_ACCEL = 54; // net +26 — headroom above layout budgets
 const PRESS_KICK = 4.2;
 const MAX_FALL = 20;
 const MAX_RISE = 13;
 const DIVE_LEAD = 2.2;
 const FLOOR_Y = -9;
-/** While thrusting: cruise × (1 + this). Stacks on MOBILE_CRUISE_MULT. */
-const HOLD_FWD_BOOST = 0.08;
+/** While thrusting: cruise × (1 + this). Modest — wind scale owns the rush. */
+const HOLD_FWD_BOOST = 0.06;
 // Chase camera — closer + more lead = world rush; rings stay readable.
 const CAM_DIST = 10.0;
 const CAM_PITCH = 0.12;
@@ -169,8 +170,9 @@ const CAM_LEAD = 4.2;
 const CAM_HEIGHT = 0.27;
 const CAM_LERP = 10;
 const CAM_FOV = 58;
-const CAM_FOV_THRUST = 65;
-const CAM_FOV_KICK = 6;
+const CAM_FOV_THRUST = 66;
+const CAM_FOV_KICK = 7;
+const CAM_FOV_IGNITE = 8; // wind-tunnel open punch
 
 // Flying cast scales — same absolute sizes as desktop Circuit / Grounds.
 const PILOT_SCALE = READER_SCALE;
@@ -265,7 +267,7 @@ function Flyer({
   // Hard wind from frame 0 — no spool (spool read as "hovering then drifting").
   const fwd = useRef(speed);
   const wasHeld = useRef(false); // rising-edge detect for the tap-kick
-  const fovKick = useRef(0);
+  const fovKick = useRef(reduceMotion ? 0 : CAM_FOV_IGNITE); // wind-tunnel open
   const cpNext = useRef(1); // skip the start pad (checkpoint 0); thread gates 1..finish
   const prevZ = useRef(track.spawn[2]);
   const dead = useRef(false);
@@ -291,7 +293,7 @@ function Flyer({
     const controlLocked = tSec < lockUntil.current;
     const held = !controlLocked && !!holdRef.current;
 
-    // Hard wind — lock cruise every frame. speed already includes MOBILE_CRUISE_MULT.
+    // Hard wind — lock cruise every frame (FLIGHT_WIND_SCALE is in sectorFlightCruise).
     // Hold adds a bit more so flaps feel like propulsion (climb-feel §4b).
     const cruise = speed * ascentSessionMods().cruiseSpeedMult;
     fwd.current = held ? cruise * (1 + HOLD_FWD_BOOST) : cruise;
@@ -822,7 +824,7 @@ export default function CircuitLite({
   const accent = theme.accent;
   const modifier: Modifier | null = useMemo(() => sectorModifier(sector), [sector]);
   const speed = useMemo(
-    () => sectorFlightCruise(sector) * MOBILE_CRUISE_MULT * (modifier?.speedMult ?? 1),
+    () => sectorFlightCruise(sector) * (modifier?.speedMult ?? 1),
     [sector, modifier],
   );
   const hazards = useMemo(() => sectorHazards(sector, track, layoutSeed), [sector, track, layoutSeed]);
@@ -1182,8 +1184,8 @@ export default function CircuitLite({
     setCrownCache(g);
   }, [track, runId, speed]);
 
-  // Flight theme — mobile Climb never hit resolveAmbienceMood; pin the circuit
-  // score for the whole run, then soft-land on Concord when the tab closes.
+  // Flight theme — mobile never hits resolveAmbienceMood; pin the circuit score
+  // for the whole run, then soft-land on Concord when the tab closes.
   useEffect(() => {
     setMood("circuit");
     return () => {
@@ -1240,6 +1242,10 @@ export default function CircuitLite({
 
   // the flyer sits idle until the first press — no dying before you react
   const press = useCallback(() => {
+    // Hold is the Flight user-gesture — kick the procedural score here (iOS
+    // won't resume AudioContext from a mount effect alone). Desktop Circuit
+    // arms via Grounds chrome; mobile parity needs this on the thumb body.
+    startAmbience();
     setPhase((p) => {
       if (p === "ready") {
         const now = performance.now();
@@ -1686,6 +1692,13 @@ export default function CircuitLite({
               onStumble={onStumble}
             />
           )}
+          <FlightWindStreaks
+            originRef={flyerPosRef}
+            active={running}
+            accent={accent}
+            density="lite"
+            reduceMotion={prefersReduced}
+          />
           {/* Pedestal + champion — desktop CircuitSpectator staging (stand to the right). */}
           {(phase === "ready" || phase === "continue" || running) && (
             <>
@@ -1777,7 +1790,8 @@ export default function CircuitLite({
       <div
         style={{
           position: "absolute",
-          top: guest || (embedded && !onExit) ? 12 : 54,
+          // Clear the top chrome (Back / mute / Claim) + notch.
+          top: embedded || onExit || !guest ? "calc(54px + env(safe-area-inset-top, 0px))" : 12,
           left: 12,
           zIndex: 18,
           pointerEvents: "none",
@@ -1929,48 +1943,25 @@ export default function CircuitLite({
         <FlightTeachToast message={teachMsg} accent={accent} />
       )}
 
-      {/* Guests: top-right claim (continue). Owned/standalone: leave chrome. */}
-      {guest && onClaim && phase !== "failed" && phase !== "done" && phase !== "ceiling" && phase !== "ranklock" && (
-        <button
-          type="button"
-          onClick={onClaim}
-          aria-label="Claim a champion"
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 12,
-            zIndex: 20,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: accent,
-            background: "rgba(8,7,14,.55)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            border: `1px solid ${accent}`,
-            padding: "7px 12px",
-            borderRadius: 999,
-            cursor: "pointer",
-            boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
-          }}
-        >
-          Claim a champion <ChevronRight size={15} strokeWidth={2.4} />
-        </button>
-      )}
-      {!guest && (!embedded || onExit) && (() => {
-        const backStyle = {
-          position: "absolute" as const,
-          top: 14,
-          left: 12,
-          zIndex: 20,
+      {/* Top chrome: leave / claim + mute. Mobile has no PlayerHub, so Flight must
+          carry AmbientToggle or a leftover STORAGE.sound=off is inescapable silence. */}
+      {(() => {
+        const showLeave = !guest && (!embedded || !!onExit);
+        const showClaim =
+          !!guest &&
+          !!onClaim &&
+          phase !== "failed" &&
+          phase !== "done" &&
+          phase !== "ceiling" &&
+          phase !== "ranklock";
+        const showMute = showLeave || !!embedded || !!onExit;
+        if (!showLeave && !showClaim && !showMute) return null;
+        const chipStyle = {
           display: "inline-flex",
           alignItems: "center",
           gap: 5,
           fontSize: 12.5,
           fontWeight: 600,
-          color: "#e6e2f5",
           textDecoration: "none",
           background: "rgba(8,7,14,.55)",
           backdropFilter: "blur(8px)",
@@ -1980,15 +1971,54 @@ export default function CircuitLite({
           borderRadius: 999,
           pointerEvents: "auto" as const,
           boxShadow: "0 4px 16px -6px rgba(0,0,0,.5)",
+          cursor: "pointer",
+          color: "#e6e2f5",
         };
-        return onExit ? (
-          <button type="button" onClick={onExit} aria-label="Leave Flight" style={{ ...backStyle, cursor: "pointer" }}>
-            <ChevronLeft size={15} strokeWidth={2.4} /> Back
-          </button>
-        ) : (
-          <Link href="/grounds" aria-label="Back to the Hub" style={backStyle}>
-            <ChevronLeft size={15} strokeWidth={2.4} /> Hub
-          </Link>
+        return (
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(14px + env(safe-area-inset-top, 0px))",
+              left: 12,
+              right: 12,
+              zIndex: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+              pointerEvents: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, pointerEvents: "none" }}>
+              {showLeave &&
+                (onExit ? (
+                  <button type="button" onClick={onExit} aria-label="Leave Flight" style={chipStyle}>
+                    <ChevronLeft size={15} strokeWidth={2.4} /> Back
+                  </button>
+                ) : (
+                  <Link href="/grounds" aria-label="Back to the Hub" style={chipStyle}>
+                    <ChevronLeft size={15} strokeWidth={2.4} /> Hub
+                  </Link>
+                ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, pointerEvents: "none" }}>
+              {showMute && (
+                <div style={{ pointerEvents: "auto" }} onPointerDown={(e) => e.stopPropagation()}>
+                  <AmbientToggle compact />
+                </div>
+              )}
+              {showClaim && (
+                <button
+                  type="button"
+                  onClick={onClaim}
+                  aria-label="Claim a champion"
+                  style={{ ...chipStyle, color: accent, border: `1px solid ${accent}`, padding: "7px 12px" }}
+                >
+                  Claim a champion <ChevronRight size={15} strokeWidth={2.4} />
+                </button>
+              )}
+            </div>
+          </div>
         );
       })()}
 

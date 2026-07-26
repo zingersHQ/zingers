@@ -50,8 +50,8 @@ column.
    desktop track builder multiplies the generated geometry: gap distances ×1.6,
    gate radius ×1.15, vertical steps ×1.3 (constants in one place:
    `climb/desktop-adapter.ts`). Seconds-of-flight stay the honest unit — the
-   Handler's jetpack cruise (~14 u/s horizontal) replaces the mobile forward
-   constant in the `dz = speed × gap` conversion.
+   Handler's jetpack cruise (par × `FLIGHT_WIND_SCALE`) matches mobile so
+   `gapSec` stays real time in the shared wind tunnel.
 2. **Speed is yours.** Mobile auto-scrolls; desktop you fly. So `speed` becomes
    **par pace**: each sector gets a par time (`Σ gaps + 15%`); beating par is
    what the craft rewards read. **Swift** sectors shrink par by ÷1.22 instead

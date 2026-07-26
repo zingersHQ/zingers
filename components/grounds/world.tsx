@@ -67,6 +67,7 @@ import { ClimbDressing, ClimbDriftMotes, climbMoteScale } from "./climb/climb-dr
 import { ClimbGhostRacer, GHOST_CAPSULE_FOOT } from "./climb/ghost-racer";
 import { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE } from "./climb/desktop-adapter";
 import { sectorFlightBand } from "./climb/flight-cruise";
+import { FlightWindStreaks } from "./climb/wind-streaks";
 import { HazardField } from "./climb/hazard-field";
 import { hazardHits, type Hazard } from "./climb/hazards";
 import { crownCacheHits, type CrownCache } from "./climb/crown-cache";
@@ -445,6 +446,9 @@ export default function World({
   const inAmphitheatre = activeVenue === "amphitheatre";
   const theme = useTheme();
   const gfxTier = useGraphicsTier();
+  const prefersReduced = usePrefersReducedMotion();
+  const settingsReduce = useSettings((s) => s.reduceMotion);
+  const reduceMotionPref = prefersReduced || settingsReduce;
   // Desktop Circuit land = the HOST world you portal'd from (Ember chute → ember
   // hills; Void sleeve → garden). Reach biome still skins sky/rings via `biome`.
   const circuitGroundBiome = useMemo(() => {
@@ -898,6 +902,13 @@ export default function World({
                 biome={biome}
                 cpNextRef={circuitCpNextRef}
                 showFloor={false}
+              />
+              <FlightWindStreaks
+                originRef={handlerPos}
+                active={circuitPhase === "running"}
+                accent={biome.lights.arenaPoint}
+                density={gpuLite ? "lite" : "full"}
+                reduceMotion={reduceMotionPref}
               />
               {(circuitPhase === "ready" || circuitPhase === "running" || circuitPhase === "continue") && (
                 <CrownCacheField cache={circuitCrownCache ?? null} />
@@ -4704,11 +4715,12 @@ function CameraController({
       circuitArriveHold.current = 0;
       circuitInputLock.current = 0;
       if (cue) cue.inputLock = false;
-      // Snap chase cam behind the flyer looking down-track.
+      // Snap chase cam behind the flyer looking down-track + wind-tunnel FOV punch.
       circuitIntroHold.current = CIRCUIT_INTRO_HOLD_S;
       if (cue) {
         cue.heading = 0;
         yaw.current = Math.PI;
+        if (!st.reduceMotion) cue.zoom = Math.min(1.35, cue.zoom + 0.55);
       }
     }
     if (inCircuit) prevCircuitPhase.current = circuitPhase;
@@ -4868,9 +4880,15 @@ function CameraController({
 
     const cam = camera as THREE.PerspectiveCamera;
     // reduced motion: hold a steady FOV (no speed swell / action-cam punch).
-    // superrun adds a small extra kick on top of the speed swell so breaking into
-    // the double-speed dash reads in the lens, not just the smoke.
-    const targetFov = st.reduceMotion ? 52 : 52 + (flying ? 0 : speed01 * 10 + (cue?.superrun ? 4 : 0) + flyZoom * 6);
+    // Circuit wind tunnel: swell while flying. Open-world flight stays flat (no fisheye).
+    // On foot, speed swell + optional superrun kick.
+    const targetFov = st.reduceMotion
+      ? 52
+      : inCircuit && flying
+        ? 58 + flyZoom * 5
+        : flying
+          ? 52
+          : 52 + speed01 * 10 + (cue?.superrun ? 4 : 0) + flyZoom * 6;
     if (Math.abs(cam.fov - targetFov) > 0.01) {
       cam.fov += (targetFov - cam.fov) * (1 - Math.exp(-3 * dt));
       cam.updateProjectionMatrix();

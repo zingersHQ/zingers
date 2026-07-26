@@ -138,15 +138,16 @@ frame height**; next ring and the one after are both readable.
 > The Ascent **always pushes you forward** once a run starts. Altitude is the
 > skill axis; forward is the heartbeat.
 
-### 4b. Mobile Climb
+### 4b. Shared wind tunnel (both bodies)
 
-- Auto-forward with **instant cruise** from frame 0 (no spool).
-- Body-only wind: `MOBILE_CRUISE_MULT` (**1.16×** desktop par) always on, plus
-  **8%** more while thrusting (`HOLD_FWD_BOOST`). Peak ~1.25× stays inside
-  climb headroom; desktop boards keep matched par. Vertical thrust is a touch
-  stronger than layout budgets so rhythm gaps stay flappable.
-- Chase cam sells the wind: closer `CAM_DIST`, stronger `CAM_LEAD`, FOV swell
-  while thrusting, press FOV kick (gated by reduced motion).
+- Soul scale: `FLIGHT_WIND_SCALE` (**1.75×**) multiplies **cruise and gap Z**
+  together via `DESKTOP_GAP_SCALE`. `gapSec` stays real flap time — rings stay
+  flappable; the corridor just rushes harder.
+- Auto-forward / instant cruise from ignition (mobile frame 0; desktop Jump-to-start).
+- Mobile hold adds a small forward boost (`HOLD_FWD_BOOST` ~6%); desktop W still
+  surges around par.
+- Presentation: `FlightWindStreaks` past the flyer, FOV ignition punch + thrust
+  swell, stronger chase lead (all gated by reduced motion).
 
 ### 4c. Desktop Circuit (the big feel change)
 

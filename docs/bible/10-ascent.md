@@ -107,9 +107,11 @@ Like everything in Zingers, Flight is *one soul in native bodies*
 - **Phone:** the same sky, flown with one thumb. Hold to rise, release to fall,
   thread the gates. Leaner freedom, identical soul.
 
-Same Reaches, same Camps, same Vault below, same champion on your wing. How high you
-climbed is a fact about your Trainer that travels with you everywhere; how *fast* you
-flew it is a craft that each device scores on its own terms.
+Both bodies fly the same wind corridor: the pack pushes you forward hard once a
+sector starts, and the gates are spaced for that pace so skill stays altitude, not
+unfair timing. How high you climbed is a fact about your Trainer that travels with
+you everywhere; how *fast* you flew it is a craft that each device scores on its
+own terms.
 
 Between gates, sparks and bars that shove you are hazards. They are never prizes.
 They shove and lock thrust; they do not take Crowns or lives on contact.

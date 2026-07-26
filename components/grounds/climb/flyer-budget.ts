@@ -1,10 +1,9 @@
 // Vertical reach the flyer can cover in a gap — used to keep generated
 // layouts physically finishable (docs/climb-feel: altitude is the skill axis).
 //
-// Layout budgets stay conservative (below live mobile thrust) so hotter mobile
-// cruise (MOBILE_CRUISE_MULT) still leaves flap headroom. Do NOT mirror every
-// circuit-lite bump here — raising these makes generators place harder rings.
-// Live flyer: THRUST 54 − GRAVITY 28 = net 26, MAX_RISE 13, KICK 4.2.
+// Layout budgets stay conservative (below live thrust). FLIGHT_WIND_SCALE
+// stretches cruise AND gap Z together so gapSec (and these budgets) stay honest.
+// Do NOT raise these when wind scale changes — that would place harder rings.
 
 import { DESKTOP_VERT_SCALE } from "./body-scale";
 

@@ -19,10 +19,11 @@ import {
   DESKTOP_GAP_SCALE,
   DESKTOP_RADIUS_SCALE,
   DESKTOP_VERT_SCALE,
+  FLIGHT_WIND_SCALE,
 } from "./body-scale";
 
 /** Exported so ghost samples can round-trip in canonical Climb space. */
-export { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE, DESKTOP_RADIUS_SCALE };
+export { DESKTOP_GAP_SCALE, DESKTOP_VERT_SCALE, DESKTOP_RADIUS_SCALE, FLIGHT_WIND_SCALE };
 const LAT_SCALE = 1; // climb-feel §1c: rings are coplanar (x=0); no lateral stretch
 
 export const DESKTOP_CIRCUIT_COUNT = CLIMB_SECTOR_COUNT;

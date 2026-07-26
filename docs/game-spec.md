@@ -82,7 +82,7 @@ Live sequencing: **[flight-first-plan.md](./flight-first-plan.md)** and
   one-shot teach for first hazard / cache / Gate Trial.
 - **After the Hundred:** finite summit (not endless). Prestige is cleaner flights,
   friend challenges, and weekly expeditions. Not a cross-body speedrun pitch
-  (mobile runs a hotter always-on cruise + thrust surge; desktop W-surge stays a quiet craft flex).
+  (shared `FLIGHT_WIND_SCALE` stretches cruise + gaps on both bodies; desktop W-surge stays a quiet craft flex).
 - **Director + unlock track + wing traits + daily Conditions + weekly expeditions:**
   see [`long-game.md`](./long-game.md).
 

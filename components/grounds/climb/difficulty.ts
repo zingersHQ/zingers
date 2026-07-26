@@ -123,8 +123,8 @@ export function sectorDifficulty(sector: number): SectorDifficulty {
   const role = roleOf(i);
   const t = ROLE_TUNING[role];
 
-  // Canonical forward speed — bodies cruise at speed × DESKTOP_GAP_SCALE so
-  // gapSec is real time. Late Reaches bite via rhythm + hazards, not raw mph.
+  // Canonical forward speed — bodies cruise at speed × DESKTOP_GAP_SCALE
+  // (includes FLIGHT_WIND_SCALE) so gapSec stays real time in the wind tunnel.
   const speed = Math.min(11.4, 7.7 + 0.3 * b0 + 0.028 * k);
 
   // Rings tighten with altitude; floor keeps a fair opening for the flyer.
