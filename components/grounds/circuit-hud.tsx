@@ -948,7 +948,7 @@ export function CircuitHud({
             </button>
           )}
           <button type="button" className="btn" style={{ ["--ac" as string]: "var(--line2)", width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={onRestart}>
-            <RotateCcw size={15} strokeWidth={2.2} /> Practice the first sky again
+            <RotateCcw size={15} strokeWidth={2.2} /> First flight again
           </button>
         </CircuitModal>
       )}

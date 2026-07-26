@@ -2468,7 +2468,7 @@ export default function CircuitLite({
               onClick={resetRun}
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "1px solid rgba(255,255,255,.16)", background: "transparent", color: "#e6e2f5", fontWeight: 800, cursor: "pointer", fontSize: 14, width: "100%", justifyContent: "center", marginBottom: 8 }}
             >
-              <RotateCcw size={15} strokeWidth={2.4} /> Practice Reach I again
+              <RotateCcw size={15} strokeWidth={2.4} /> First flight again
             </button>
             {guest && onClaim && (
               <button
