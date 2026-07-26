@@ -74,7 +74,12 @@ import { crownCacheHits, type CrownCache } from "./climb/crown-cache";
 import { CrownCacheField } from "./climb/crown-cache-field";
 import { circuitSector } from "./circuit-tracks";
 import type { CircuitPhase, CircuitFailReason } from "./circuit-hud";
-import { atCircuitFinishEarly, circuitGatePlaneCross, CIRCUIT_SECTOR_INTRO } from "./circuit";
+import {
+  atCircuitFinishEarly,
+  circuitGatePlaneCross,
+  circuitGateResolveAtOrPast,
+  CIRCUIT_SECTOR_INTRO,
+} from "./circuit";
 import type { CircuitTrackDef } from "./circuit";
 import type { ClimbGhostSample } from "@/lib/climb-ghost";
 import {
@@ -3559,8 +3564,10 @@ function Handler({
     rb.setGravityScale(flyingMode ? 0 : 1, false);
     const v = rb.linvel();
     // refund the air-jump budget only once settled on the ground (not the frame
-    // we launched), so a multi-jump isn't refunded mid-takeoff
-    if (grounded && v.y <= 0.6) jumps.current = 0;
+    // we launched), so a multi-jump isn't refunded mid-takeoff.
+    // Circuit running must NOT refund — pad contact on the ignition frame used to
+    // zero jumps and cut the pack, then a later void fall read as LIFE LOST.
+    if (grounded && v.y <= 0.6 && !circuitRunning) jumps.current = 0;
 
     // Shift is sprint-only — fire superrun the moment it's held with movement
     // (no charge delay). Ends as soon as sprint or movement drops.
@@ -4008,32 +4015,54 @@ function Handler({
       if (dh < ex.radius && dy < ex.radius) next = { kind: "venue-exit", label: ex.label };
     }
     if (!matchActive && circuitMode && circuitCpNextRef) {
-      const nextIdx = circuitCpNextRef.current;
-      const cp = circuitCheckpoints[nextIdx];
       const pos = { x: t.x, y: t.y, z: t.z };
-      // After a sector teleport, ignore one huge Δz so we don't "miss" every gate at once.
-      const teleported = circuitPrevZ.current != null && Math.abs(t.z - circuitPrevZ.current) > 10;
-      const prevZ = teleported || circuitPrevZ.current == null ? t.z : circuitPrevZ.current;
+      // Always keep the real previous Z. A old "teleport → prevZ = z" shortcut
+      // dropped plane-crosses on lag spikes, so the finish never cleared and the
+      // void fail showed LIFE LOST / You fell after a clean run.
+      const prevZ = circuitPrevZ.current == null ? t.z : circuitPrevZ.current;
       // Shared with mobile Climb: crossing a gate's Z-plane outside the opening = miss.
-      // Only while running — ready is pad idle until jump starts the sector.
-      // Skip once settled (finish/fail) so async phase can't race a false life spend.
-      if (circuitRunning && !circuitSettled.current && !teleported && cp && onCircuitPass) {
-        const cross = circuitGatePlaneCross(prevZ, t.z, pos, { pos: cp.posTuple, radius: cp.radius });
-        if (cross === "pass") {
-          onCircuitPass(cp.index);
-          circuitCpNextRef.current = nextIdx + 1;
-          if (cp.finish) circuitSettled.current = true;
-        } else if (cross === "miss" && onCircuitFail) {
-          const now = performance.now();
-          if (now - failCooldown.current > 800) {
-            failCooldown.current = now;
+      // Catch up any gates already behind us (hitch overshoot) in one frame.
+      if (circuitRunning && !circuitSettled.current && onCircuitPass) {
+        let guard = 0;
+        while (guard++ < 12 && !circuitSettled.current) {
+          const idx = circuitCpNextRef.current;
+          const cp = circuitCheckpoints[idx];
+          if (!cp) {
+            // Past the last ring without a finish latch — still count as clear.
             circuitSettled.current = true;
-            onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
+            break;
           }
+          let cross = circuitGatePlaneCross(prevZ, t.z, pos, {
+            pos: cp.posTuple,
+            radius: cp.radius,
+          });
+          // Recovery: a prior spike left us past the plane with no pass/miss event.
+          if (cross == null && t.z >= cp.posTuple[2]) {
+            cross = circuitGateResolveAtOrPast(t.z, pos, { pos: cp.posTuple, radius: cp.radius });
+          }
+          if (cross == null) break;
+          if (cross === "pass") {
+            onCircuitPass(cp.index);
+            circuitCpNextRef.current = idx + 1;
+            if (cp.finish || idx >= circuitCheckpoints.length - 1) {
+              circuitSettled.current = true;
+            }
+            continue;
+          }
+          if (cross === "miss" && onCircuitFail) {
+            const now = performance.now();
+            if (now - failCooldown.current > 800) {
+              failCooldown.current = now;
+              circuitSettled.current = true;
+              onCircuitFail("gates", { x: t.x, y: t.y, z: t.z, heading: heading.current });
+            }
+          }
+          break;
         }
       }
       circuitPrevZ.current = t.z;
       if (circuitRunning && onCircuitSample) onCircuitSample(t.y, t.z);
+      const nextIdx = circuitCpNextRef.current;
       if (
         circuitRunning &&
         !circuitSettled.current &&
@@ -4053,6 +4082,7 @@ function Handler({
       }
       // Fall / ground hit after leaving the pad — spends a life (continue) or ends the run.
       // Ready stays safe — circuitRunning is false until the launch jump.
+      // Never after settle (finish clear) — void beyond the last ring is not a death.
       if (circuitRunning && !circuitSettled.current) {
         if (!grounded && t.y > restY + 0.85) circuitAirborne.current = true;
         const fellToVoid = t.y < -6;

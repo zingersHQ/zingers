@@ -108,6 +108,10 @@ export function atCircuitFinishEarly(pos: CircuitPos, checkpoints: { pos: [numbe
  * Shared Ascent rule (desktop Circuit + mobile Climb): when the flyer crosses the
  * next gate's Z-plane, they must be inside the opening. Outside = miss → run over.
  * Returns null when this frame did not cross the plane.
+ *
+ * Large Δz (tab hitch / GC) still counts — `prevZ < gz && z >= gz` holds across a
+ * jump. Callers must not replace prevZ with z on spikes or the plane is skipped
+ * forever and desktop dies on the void with a false "You fell".
  */
 export function circuitGatePlaneCross(
   prevZ: number,
@@ -117,6 +121,24 @@ export function circuitGatePlaneCross(
 ): "pass" | "miss" | null {
   const gz = cp.pos[2];
   if (!(prevZ < gz && z >= gz)) return null;
+  const dx = Math.abs(pos.x - cp.pos[0]);
+  const dy = Math.abs(pos.y - cp.pos[1]);
+  const r = cp.radius * 0.95;
+  return dx <= r && dy <= r ? "pass" : "miss";
+}
+
+/**
+ * Resolve the next gate when the flyer is already at/past its Z (lag overshoot or
+ * a prior frame that dropped the plane-cross). Same opening test as plane-cross.
+ * Null = still short of the gate.
+ */
+export function circuitGateResolveAtOrPast(
+  z: number,
+  pos: CircuitPos,
+  cp: Pick<CircuitCheckpoint, "pos" | "radius">,
+): "pass" | "miss" | null {
+  const gz = cp.pos[2];
+  if (z < gz) return null;
   const dx = Math.abs(pos.x - cp.pos[0]);
   const dy = Math.abs(pos.y - cp.pos[1]);
   const r = cp.radius * 0.95;
