@@ -103,15 +103,14 @@ export function ArchetypeFeatures({
   }
 }
 
-// ── LOGIC · The Lattice — a back-mounted gyroscope + a crown of fixed cubes ─────
+// ── LOGIC · The Lattice — a back-mounted gyroscope + a collar of proof gems ─────
 // Order made visible, BOLTED ON: a small armillary gyro rides the upper back and
 // spins in place (a moving part that's clearly fixed to the frame), capped by a
-// gold proof-sigil; a tight ring of cubes sits fused around the collar instead of
-// orbiting out through empty space.
+// gold proof-sigil; octahedral beads fuse around the collar (never cube debris).
 function Lattice({ h, col, acc, k, head, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; head?: THREE.Object3D; torso?: THREE.Object3D; pl: Place }) {
   const arm = useRef<THREE.Group>(null);
   const sigil = useRef<THREE.Mesh>(null);
-  const cubes = useRef<THREE.Group>(null);
+  const gems = useRef<THREE.Group>(null);
   const gyroR = h * 0.14;
   useFrame((s, dt) => {
     if (arm.current) {
@@ -119,9 +118,9 @@ function Lattice({ h, col, acc, k, head, torso, pl }: { h: number; col: THREE.Co
       arm.current.rotation.x += dt * 0.18;
     }
     if (sigil.current) sigil.current.rotation.y += dt * 1.0;
-    // the collar cubes counter-rotate slowly AS A FIXED RING — they spin around
-    // the neck axis but never translate off it
-    if (cubes.current) cubes.current.rotation.y -= dt * 0.4;
+    // collar gems counter-rotate slowly AS A FIXED RING — spin around the neck
+    // axis but never translate off it
+    if (gems.current) gems.current.rotation.y -= dt * 0.4;
   });
   return (
     <>
@@ -142,14 +141,14 @@ function Lattice({ h, col, acc, k, head, torso, pl }: { h: number; col: THREE.Co
           </mesh>
         </group>
       </BoneFollower>
-      {/* a tight crown of cubes fused around the base of the neck */}
+      {/* tight crown of octahedral beads fused around the base of the neck */}
       <BoneFollower bone={torso}>
-        <group ref={cubes} position={[0, pl.neckY, 0]}>
-          {[0, 1, 2, 3].map((i) => {
-            const a = (i / 4) * Math.PI * 2;
+        <group ref={gems} position={[0, pl.neckY, 0]}>
+          {[0, 1, 2, 3, 4, 5].map((i) => {
+            const a = (i / 6) * Math.PI * 2;
             return (
-              <mesh key={i} position={[Math.cos(a) * h * 0.17, 0, Math.sin(a) * h * 0.17]} rotation={[a, a, 0]}>
-                <boxGeometry args={[0.05 * h, 0.05 * h, 0.05 * h]} />
+              <mesh key={i} position={[Math.cos(a) * h * 0.16, 0, Math.sin(a) * h * 0.16]} rotation={[a * 0.5, a, 0.2]}>
+                <octahedronGeometry args={[0.032 * h, 0]} />
                 <meshStandardMaterial color={col} emissive={col} emissiveIntensity={1.1 * k} metalness={0.7} roughness={0.18} />
               </mesh>
             );
@@ -209,10 +208,10 @@ function Static({ h, col, k, seed, torso, pl }: { h: number; col: THREE.Color; k
   );
 }
 
-// ── COMPOSURE · The Stillness — grounded rings + squared shoulder heft ─────────
+// ── COMPOSURE · The Stillness — grounded rings + rounded shoulder heft ─────────
 // Mass that reads as "immovable": weighty ground rings stay planted on the FLOOR
-// (never bobbing with the body), while squared shoulder caps are bolted to the
-// torso so they sit on the frame.
+// (never bobbing with the body), while dome shoulder caps are bolted to the
+// torso so they sit on the frame (no squared fridge-slab pauldrons).
 function Monolith({ h, col, acc, k, torso, pl }: { h: number; col: THREE.Color; acc: THREE.Color; k: number; torso?: THREE.Object3D; pl: Place }) {
   return (
     <>
@@ -225,13 +224,19 @@ function Monolith({ h, col, acc, k, torso, pl }: { h: number; col: THREE.Color; 
         <ringGeometry args={[h * 0.66, h * 0.7, 56]} />
         <meshBasicMaterial color={acc} transparent opacity={0.28 * k} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
-      {/* shoulder slab caps — bolted to the torso so they ride the frame */}
+      {/* rounded shoulder caps — bolted to the torso so they ride the frame */}
       <BoneFollower bone={torso}>
         <group>
           {[-1, 1].map((sgn) => (
-            <mesh key={sgn} position={[sgn * h * 0.26, pl.torsoY + h * 0.12, 0]} rotation={[0, 0, sgn * 0.12]} castShadow>
-              <boxGeometry args={[h * 0.14, h * 0.1, h * 0.2]} />
-              <meshStandardMaterial color={col} emissive={col} emissiveIntensity={0.3 * k} metalness={0.35} roughness={0.6} flatShading />
+            <mesh
+              key={sgn}
+              position={[sgn * h * 0.26, pl.torsoY + h * 0.12, 0]}
+              rotation={[0, 0, sgn * 0.18]}
+              scale={[1, 0.72, 1.1]}
+              castShadow
+            >
+              <sphereGeometry args={[h * 0.11, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+              <meshStandardMaterial color={col} emissive={col} emissiveIntensity={0.3 * k} metalness={0.35} roughness={0.6} />
             </mesh>
           ))}
         </group>

@@ -68,19 +68,22 @@ function PortraitOverlay({
 
 function BeatBody({ scene, eager }: { scene: BeatScene; eager?: boolean }) {
   if (scene.kind === "flightLive") {
+    const empty = scene.cast === false;
+    const mind = scene.mind ?? "AXIOM";
     return (
       <>
         <InfiniteFlightHero
           variant="desktop"
           showPoster={false}
           freeze={!eager}
-          mindKey={scene.mind}
+          mindKey={mind}
           ghost={scene.ghost}
+          cast={!empty}
         />
         <StageChrome
-          kicker={scene.ghost ? "Flight · ghost race" : "Flight · live"}
-          title={scene.mind}
-          accent={FORCES[showcaseChampion(scene.mind).type].hex}
+          kicker={empty ? "Flight · empty" : scene.ghost ? "Flight · ghost race" : "Flight · live"}
+          title={empty ? "Scenario" : mind}
+          accent={empty ? "#f5d020" : FORCES[showcaseChampion(mind).type].hex}
         />
       </>
     );
@@ -89,10 +92,13 @@ function BeatBody({ scene, eager }: { scene: BeatScene; eager?: boolean }) {
   if (scene.kind === "duo") {
     const force = FORCES[showcaseChampion(scene.mind).type];
     const action = (scene.action ?? "fly") as ArtAction;
+    const cast = scene.cast ?? "duo";
+    const kicker =
+      cast === "trainer" ? "Trainer" : cast === "champion" ? scene.mind : `Trainer + ${scene.mind}`;
     return (
       <>
-        <ArtDuoScene mindKey={scene.mind} action={action} accent={force.hex} paused={false} />
-        <StageChrome kicker={`Trainer + ${scene.mind}`} title={action === "fly" ? "On the wing" : "Bond"} accent={force.hex} />
+        <ArtDuoScene mindKey={scene.mind} action={action} accent={force.hex} paused={false} cast={cast} />
+        <StageChrome kicker={kicker} title={action === "fly" ? "On the wing" : "Bond"} accent={force.hex} />
       </>
     );
   }

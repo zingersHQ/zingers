@@ -30,11 +30,13 @@ function resolveMdHref(sourceFile: string, href: string): string | null {
 export function preprocessMarkdown(raw: string, sourceFile: string): string {
   let s = raw;
 
-  // public assets → site root; prefer game renders over legacy AI bible art
-  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/minds\/mind-([a-z]+)\.png)\)/g, "](/renders/minds/$2.png)");
-  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/forces\/(force-[a-z]+)\.png)\)/g, "](/renders/forces/$2.png)");
-  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/bible\/regions\/(region-[a-z]+)\.png)\)/g, "](/renders/regions/$2.png)");
-  s = s.replace(/\]\(\.\.\/\.\.\/public(\/img\/[^)]+)\)/g, "]($1)");
+  // public assets → site root; prefer live game renders over legacy AI bible art.
+  // Docs use several relative forms (././public/…, ../../public/…, ./public/…).
+  const pub = String.raw`(?:\.\.?\/)*public`;
+  s = s.replace(new RegExp(String.raw`\]\(${pub}(\/img\/bible\/minds\/mind-([a-z]+)\.png)\)`, "gi"), "](/renders/minds/$2.png)");
+  s = s.replace(new RegExp(String.raw`\]\(${pub}(\/img\/bible\/forces\/(force-[a-z]+)\.png)\)`, "gi"), "](/renders/forces/$2.png)");
+  s = s.replace(new RegExp(String.raw`\]\(${pub}(\/img\/bible\/regions\/(region-[a-z]+)\.png)\)`, "gi"), "](/renders/regions/$2.png)");
+  s = s.replace(new RegExp(String.raw`\]\(${pub}(\/img\/[^)]+)\)`, "g"), "]($1)");
 
   // markdown cross-links
   s = s.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (match, text: string, href: string) => {

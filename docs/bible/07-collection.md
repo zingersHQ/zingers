@@ -7,9 +7,10 @@
 Every champion is also a **card**. The card is the portable, collectible face of a
 mind, and its single best trick is already true: **the art evolves**, because the
 art is the champion's body. Each mind wears a stable **species mark** on a shared
-frame: breed silhouette plus part loadout, plus the career body that grows with
-fights and tier. Same-Force minds read as different animals; tier bolts on more
-armour. A card you own gets visibly stronger as you fight it.
+frame: breed bodytype (stilts, tank, stout, wispy, orator, reach, or canonical)
+plus part loadout, plus the career body that grows with fights and tier.
+Same-Force minds read as different animals; tier bolts on more armour. A card you
+own gets visibly stronger as you fight it.
 
 ## Anatomy of a card
 

@@ -361,8 +361,7 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "helm") {
-    // closed cranial shell: canopy + cheek plates + glowing brow slit (reads as
-    // a different skull type, not a floating box)
+    // closed cranial shell: canopy + curved cheek cups + glowing brow band
     return (
       <group position={[0, center, 0]}>
         <mesh>
@@ -374,13 +373,18 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
           {smooth(shade(pal.secondary), 0.55, 0.45)}
         </mesh>
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * r * 0.72, -r * 0.05, r * 0.25]} rotation={[0.15, s * 0.35, s * 0.25]}>
-            <boxGeometry args={[r * 0.45, r * 0.7, r * 0.22]} />
+          <mesh
+            key={s}
+            position={[s * r * 0.78, -r * 0.08, r * 0.28]}
+            rotation={[0.2, s * 0.55, s * 0.15]}
+            scale={[0.55, 0.85, 0.45]}
+          >
+            <sphereGeometry args={[r * 0.55, 14, 12, 0, Math.PI, 0, Math.PI]} />
             {smooth(shade(pal.secondary), 0.58, 0.42)}
           </mesh>
         ))}
-        <mesh position={[0, r * 0.22, r * 0.88]} rotation={[0.2, 0, 0]}>
-          <boxGeometry args={[r * 1.15, r * 0.1, r * 0.12]} />
+        <mesh position={[0, r * 0.22, r * 0.9]} rotation={[0.25, 0, 0]} scale={[1, 0.22, 0.35]}>
+          <sphereGeometry args={[r * 0.7, 16, 10]} />
           {glowMat(pal.glow, 1.35 * k)}
         </mesh>
         <mesh position={[0, r * 0.55, -r * 0.15]} scale={[0.9, 0.35, 0.7]}>
@@ -392,21 +396,33 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "mask") {
-    // half-face plate bolted over the front of the head
+    // theatrical face shell: curved cheek cups + brow ridge wrapping the skull,
+    // never a flat box bolted on the nose
     return (
-      <group position={[0, center + r * 0.05, r * 0.55]}>
-        <mesh>
-          <boxGeometry args={[r * 1.35, r * 1.1, r * 0.22]} />
-          {smooth(pal.secondary, 0.58, 0.4)}
-        </mesh>
+      <group position={[0, center, r * 0.15]}>
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * r * 0.32, r * 0.12, r * 0.14]}>
-            <sphereGeometry args={[r * 0.16, 12, 10]} />
-            {glowMat(pal.glow, 1.6 * k)}
+          <mesh
+            key={s}
+            position={[s * r * 0.55, r * 0.02, r * 0.55]}
+            rotation={[0.15, s * 0.65, s * 0.08]}
+            scale={[0.62, 0.95, 0.5]}
+          >
+            <sphereGeometry args={[r * 0.72, 16, 12, 0, Math.PI * 0.95, 0, Math.PI * 0.85]} />
+            {smooth(pal.secondary, 0.58, 0.4)}
           </mesh>
         ))}
-        <mesh position={[0, -r * 0.35, r * 0.08]}>
-          <boxGeometry args={[r * 0.55, r * 0.12, r * 0.1]} />
+        <mesh position={[0, r * 0.38, r * 0.72]} rotation={[0.35, 0, 0]} scale={[1.15, 0.28, 0.45]}>
+          <sphereGeometry args={[r * 0.55, 14, 10]} />
+          {smooth(shade(pal.secondary), 0.55, 0.42)}
+        </mesh>
+        {[-1, 1].map((s) => (
+          <mesh key={`e${s}`} position={[s * r * 0.28, r * 0.08, r * 0.88]}>
+            <sphereGeometry args={[r * 0.14, 12, 10]} />
+            {glowMat(pal.glow, 1.65 * k)}
+          </mesh>
+        ))}
+        <mesh position={[0, -r * 0.42, r * 0.62]} scale={[0.7, 0.35, 0.4]}>
+          <sphereGeometry args={[r * 0.32, 12, 10]} />
           {smooth(shade(pal.secondary), 0.5, 0.5)}
         </mesh>
       </group>
@@ -447,18 +463,33 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "disks") {
-    // stacked orbital disks — ceremonial / broadcast / crystal read
+    // ear-rooted broadcast disks — sit on the temples, not a floating halo stack
     return (
-      <group position={[0, top + r * 0.05, 0]}>
-        {[0.55, 0.85, 1.15].map((s, i) => (
-          <mesh key={i} position={[0, r * 0.08 * i, 0]} rotation={[Math.PI / 2, 0, i * 0.4]}>
-            <torusGeometry args={[r * s, r * (0.06 - i * 0.01), 10, 28]} />
-            {i === 1 ? glowMat(pal.glow, 1.4 * k) : smooth(pal.secondary, 0.6, 0.35)}
-          </mesh>
+      <group position={[0, center + r * 0.05, 0]}>
+        {[-1, 1].map((s) => (
+          <group key={s} position={[s * r * 0.95, r * 0.08, 0]} rotation={[0.1, s * 0.35, s * 0.15]}>
+            <mesh rotation={[0, Math.PI / 2, 0]}>
+              <cylinderGeometry args={[r * 0.42, r * 0.42, r * 0.1, 20]} />
+              {smooth(pal.secondary, 0.58, 0.38)}
+            </mesh>
+            <mesh rotation={[0, Math.PI / 2, 0]} position={[0, 0, s * r * 0.02]}>
+              <torusGeometry args={[r * 0.28, r * 0.04, 10, 24]} />
+              {glowMat(pal.glow, 1.35 * k)}
+            </mesh>
+            <mesh position={[0, 0, s * r * 0.08]}>
+              <sphereGeometry args={[r * 0.12, 12, 10]} />
+              {glowMat(pal.glow, 1.7 * k)}
+            </mesh>
+            {/* root stub into the skull */}
+            <mesh position={[-s * r * 0.22, 0, 0]} rotation={[0, 0, s * 0.5]}>
+              <cylinderGeometry args={[r * 0.08, r * 0.12, r * 0.28, 8]} />
+              {smooth(shade(pal.secondary), 0.55, 0.45)}
+            </mesh>
+          </group>
         ))}
-        <mesh position={[0, r * 0.2, 0]}>
-          <sphereGeometry args={[r * 0.14, 12, 10]} />
-          {glowMat(pal.glow, 1.8 * k)}
+        <mesh position={[0, r * 0.55, 0]}>
+          <sphereGeometry args={[r * 0.1, 12, 10]} />
+          {glowMat(pal.glow, 1.4 * k)}
         </mesh>
       </group>
     );
@@ -541,11 +572,11 @@ function Shoulder({ kind, sgn, h, x, y, pal, k }: { kind: Phenotype["shoulders"]
       </group>
     );
   }
-  // vent — louvered exhaust slats on a recessed housing
+  // vent — louvered exhaust slats on a rounded housing
   return (
     <group ref={g} position={[sgn * x, y, 0]} rotation={[0, 0, -sgn * 0.2]}>
-      <mesh>
-        <boxGeometry args={[u * 1.0, u * 0.78, u * 0.78]} />
+      <mesh scale={[1, 0.85, 1]}>
+        <cylinderGeometry args={[u * 0.48, u * 0.52, u * 0.78, 12]} />
         {smooth(shade(pal.secondary), 0.5, 0.55)}
       </mesh>
       {[0, 1, 2].map((i) => (
@@ -657,7 +688,7 @@ function Chest({ kind, y, z, h, pal, k }: { kind: Phenotype["chest"]; y: number;
 
 // ── Back unit ─────────────────────────────────────────────────────────────────
 function Back({ kind, y, z, h, count, pal, k }: { kind: Phenotype["back"]; y: number; z: number; h: number; count: number; pal: PartPalette; k: number }) {
-  const banner = useRef<THREE.Mesh>(null);
+  const banner = useRef<THREE.Group>(null);
   useFrame((s) => {
     if (banner.current) banner.current.rotation.x = Math.sin(s.clock.elapsedTime * 0.8) * 0.08;
   });
@@ -692,15 +723,25 @@ function Back({ kind, y, z, h, count, pal, k }: { kind: Phenotype["back"]; y: nu
     );
   }
   if (kind === "slab") {
+    // crystalline spine ridge — stacked gems along the back, never a fridge door
     return (
       <group position={[0, y, z]}>
-        <mesh>
-          <boxGeometry args={[h * 0.5, h * 0.9, h * 0.06]} />
-          {struct(shade(pal.secondary), 0.3, 0.7)}
-        </mesh>
-        <mesh position={[0, 0, -h * 0.031]}>
-          <planeGeometry args={[h * 0.06, h * 0.7]} />
-          {glowMat(pal.glow, 1.2 * k)}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const t = i / 4;
+          const yy = (t - 0.5) * h * 0.72;
+          const s = h * (0.09 - Math.abs(t - 0.5) * 0.06);
+          return (
+            <group key={i} position={[0, yy, -h * 0.02]}>
+              <mesh rotation={[0.2, i * 0.35, 0.15]}>
+                <octahedronGeometry args={[s, 0]} />
+                {i === 2 ? glowMat(pal.glow, 1.45 * k) : struct(shade(pal.secondary), 0.45, 0.45)}
+              </mesh>
+            </group>
+          );
+        })}
+        <mesh position={[0, 0, h * 0.01]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[h * 0.035, h * 0.045, h * 0.78, 8]} />
+          {smooth(shade(pal.secondary), 0.55, 0.4)}
         </mesh>
       </group>
     );
@@ -750,12 +791,45 @@ function Back({ kind, y, z, h, count, pal, k }: { kind: Phenotype["back"]; y: nu
       </group>
     );
   }
-  // banner — a slim cape trailing from the shoulders (narrow so it never reads as
-  // a shield strapped to the back)
+  // banner — layered orator cape: shoulder yoke + two soft panels that sway
   return (
-    <mesh ref={banner} position={[0, y - h * 0.26, z + h * 0.01]}>
-      <planeGeometry args={[h * 0.22, h * 0.74, 1, 4]} />
-      <meshStandardMaterial color={pal.primary} emissive={pal.glow} emissiveIntensity={0.3 * k} metalness={0.2} roughness={0.7} side={THREE.DoubleSide} />
-    </mesh>
+    <group ref={banner} position={[0, y - h * 0.08, z + h * 0.02]}>
+      <mesh position={[0, h * 0.12, 0]} rotation={[0.35, 0, 0]} scale={[1, 0.35, 0.55]}>
+        <sphereGeometry args={[h * 0.16, 14, 10]} />
+        {smooth(shade(pal.secondary), 0.5, 0.5)}
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh
+          key={s}
+          position={[s * h * 0.08, -h * 0.28, -h * 0.02]}
+          rotation={[0.2, s * 0.12, s * 0.08]}
+        >
+          <planeGeometry args={[h * 0.28, h * 0.7, 1, 5]} />
+          <meshStandardMaterial
+            color={pal.primary}
+            emissive={pal.glow}
+            emissiveIntensity={0.28 * k}
+            metalness={0.18}
+            roughness={0.72}
+            side={THREE.DoubleSide}
+            transparent
+            opacity={0.92}
+          />
+        </mesh>
+      ))}
+      <mesh position={[0, -h * 0.22, -h * 0.04]} rotation={[0.15, 0, 0]}>
+        <planeGeometry args={[h * 0.14, h * 0.55, 1, 4]} />
+        <meshStandardMaterial
+          color={pal.accent}
+          emissive={pal.glow}
+          emissiveIntensity={0.45 * k}
+          metalness={0.25}
+          roughness={0.55}
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+    </group>
   );
 }

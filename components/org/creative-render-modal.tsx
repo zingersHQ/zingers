@@ -5,7 +5,7 @@ import { Download, Copy, Check, X } from "lucide-react";
 import { CreativeScene, sceneAspect } from "@/components/org/creative-scene";
 import { CreativeBeatStage, BEAT_ASPECT } from "@/components/org/creative-beat-stage";
 import { copyText, downloadPngFromContainer } from "@/lib/org/creative-download";
-import type { BeatScene, IdeaScene } from "@/lib/org/creative-brief-data";
+import type { BeatScene, IdeaScene, ShortIdea } from "@/lib/org/creative-brief-data";
 
 export type CreativeModalPayload = {
   title: string;
@@ -14,6 +14,13 @@ export type CreativeModalPayload = {
   beat?: BeatScene;
   prompt?: string;
   filename: string;
+  /** Story-beat details (shown only in View details). */
+  idea?: Pick<ShortIdea, "hook" | "beats" | "overlay" | "notes" | "format" | "duration" | "lane">;
+};
+
+const LANE_LABEL: Record<ShortIdea["lane"], string> = {
+  primary: "Flight & bond",
+  press: "Press",
 };
 
 export function CreativeRenderModal({
@@ -47,12 +54,12 @@ export function CreativeRenderModal({
   if (!payload) return null;
 
   const aspect = payload.beat ? BEAT_ASPECT : payload.scene ? sceneAspect(payload.scene) : "16/9";
+  const hasDetails = !!(payload.idea || payload.prompt);
 
   const onDownload = async () => {
     if (!stageRef.current) return;
     setDlState("busy");
-    // Flight / duo stages need a beat longer to paint
-    await new Promise((r) => setTimeout(r, payload.beat ? 900 : 400));
+    await new Promise((r) => setTimeout(r, payload.beat || payload.scene?.kind === "flightLive" || payload.scene?.kind === "cast" ? 900 : 400));
     const ok = await downloadPngFromContainer(stageRef.current, payload.filename);
     setDlState(ok ? "ok" : "fail");
     if (ok) setTimeout(() => setDlState("idle"), 1800);
@@ -78,6 +85,11 @@ export function CreativeRenderModal({
           <div>
             <h2 id={titleId}>{payload.title}</h2>
             {payload.caption ? <p>{payload.caption}</p> : null}
+            {payload.idea ? (
+              <p className="mono creative-modal__meta">
+                {LANE_LABEL[payload.idea.lane]} · {payload.idea.format} · {payload.idea.duration}
+              </p>
+            ) : null}
           </div>
           <button type="button" className="creative-modal__icon-btn" onClick={onClose} aria-label="Close">
             <X size={18} strokeWidth={2.2} />
@@ -88,7 +100,7 @@ export function CreativeRenderModal({
           <div
             ref={stageRef}
             className="creative-modal__stage"
-            style={{ aspectRatio: aspect, maxHeight: payload.prompt ? "min(52vh, 640px)" : "min(72vh, 820px)" }}
+            style={{ aspectRatio: aspect, maxHeight: hasDetails ? "min(42vh, 520px)" : "min(72vh, 820px)" }}
           >
             {payload.beat ? (
               <CreativeBeatStage scene={payload.beat} eager />
@@ -110,6 +122,28 @@ export function CreativeRenderModal({
             </button>
           ) : null}
         </div>
+
+        {payload.idea ? (
+          <section className="creative-modal__details">
+            <h3 className="mono">Description</h3>
+            <p className="creative-modal__hook">{payload.idea.hook}</p>
+            <ol>
+              {payload.idea.beats.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ol>
+            {payload.idea.overlay ? (
+              <p>
+                <span className="mono">Overlay</span> {payload.idea.overlay}
+              </p>
+            ) : null}
+            {payload.idea.notes ? (
+              <p>
+                <span className="mono">Seed tip</span> {payload.idea.notes}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
 
         {payload.prompt ? (
           <section className="creative-modal__prompt">

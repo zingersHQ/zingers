@@ -722,28 +722,36 @@ export function ArtViewport({
 
 useGLTF.preload(SHARED_RIG);
 
-/** Bare Trainer+champion stage for press-kit story beats (no chrome / orbit). */
+export type ArtCastMode = "duo" | "trainer" | "champion";
+
+/** Bare cast stage for press kit: Trainer+champion, Trainer alone, or champion alone. */
 export function ArtDuoScene({
   mindKey,
   action = "fly",
   accent,
   paused = false,
+  cast = "duo",
 }: {
   mindKey: string;
   action?: ArtAction;
   accent: string;
   paused?: boolean;
+  /** duo keeps game proportions (~⅓). Solo frames center that figure. */
+  cast?: ArtCastMode;
 }) {
   const subject = useMemo(() => {
     const { type, champion } = showcaseChampion(mindKey);
     return { force: type, type, champion };
   }, [mindKey]);
 
+  const wide = cast === "duo";
+  const camZ = cast === "duo" ? 7.4 : cast === "trainer" ? 6.6 : 5.8;
+
   return (
     <div style={{ position: "absolute", inset: 0, background: "#0a0812" }}>
       <Canvas
         dpr={[1, 1.75]}
-        camera={{ position: [0, 1.55, 7.4], fov: 32 }}
+        camera={{ position: [0, 1.55, camZ], fov: 32 }}
         gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
         style={{ width: "100%", height: "100%", display: "block" }}
       >
@@ -755,14 +763,37 @@ export function ArtDuoScene({
         <pointLight position={[-5, 3, -3]} intensity={42} color={accent} distance={22} />
         <pointLight position={[4, 1.5, 5]} intensity={18} color="#ffffff" distance={20} />
         <Suspense fallback={null}>
-          <FitOnce wide resetKey={`beat-duo-${mindKey}-${action}`}>
-            <DuoParade
-              force={subject.force}
-              type={subject.type}
-              champion={subject.champion}
-              action={action}
-              paused={paused}
-            />
+          <FitOnce wide={wide} resetKey={`beat-${cast}-${mindKey}-${action}`}>
+            {cast === "duo" ? (
+              <DuoParade
+                force={subject.force}
+                type={subject.type}
+                champion={subject.champion}
+                action={action}
+                paused={paused}
+              />
+            ) : cast === "trainer" ? (
+              <group position={[0, 0, 0]}>
+                <TrainerFigure force={subject.force} action={action} paused={paused} embedded />
+              </group>
+            ) : (
+              <group position={[0, 0, 0]} scale={0.85}>
+                <ChampionMesh
+                  type={subject.type}
+                  champion={subject.champion}
+                  clan={subject.force}
+                  position={[0, 0, 0]}
+                  rotation={0}
+                  selected
+                  showLabel={false}
+                  hideFloaters
+                  restPose="standing"
+                  idleSpeed={action === "stand" ? idleSpeedForMode("breathing") : paused ? 0 : 0.5}
+                  breatheIntensity={action === "stand" ? breatheIntensityForMode("breathing") : paused ? 0 : 0.45}
+                  bodyBob={action === "stand" ? bodyBobForMode("bounce") : 0}
+                />
+              </group>
+            )}
           </FitOnce>
           <ContactShadows position={[0, 0.01, 0]} opacity={0.5} scale={14} blur={2.4} far={4} resolution={256} color="#000000" />
         </Suspense>

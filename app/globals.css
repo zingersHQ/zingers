@@ -103,12 +103,12 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* re-enable selection where it's actually wanted: form fields and the docs
-   prose so people can still read, copy and select real content. */
+/* re-enable selection where it's actually wanted: form fields and the whole
+   org docs portal so people can read, copy, and select real content. */
 input,
 textarea,
 [contenteditable="true"],
-.org-prose {
+.org-root {
   -webkit-user-select: text;
   user-select: text;
   -webkit-touch-callout: default;
@@ -1147,6 +1147,10 @@ textarea::placeholder {
 /* ── zingers.org docs portal (/org) ─────────────────────────────────── */
 .org-root {
   min-height: calc(100dvh - 56px);
+  /* docs are meant to be quoted and copied; override the game-shell kill */
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 .org-layout {
   display: grid;
@@ -1729,6 +1733,78 @@ textarea::placeholder {
   font-size: 13px;
   font-weight: 600;
 }
+.creative-brief__plate-group {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--ac, var(--cb-gold));
+}
+.creative-brief__subgroup {
+  margin-top: 22px;
+}
+.creative-brief__subgroup:first-of-type {
+  margin-top: 14px;
+}
+.creative-brief__subgroup-title {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  font-weight: 500;
+}
+.creative-brief__idea-body--compact {
+  padding-bottom: 14px;
+}
+.creative-brief__idea-body--compact .creative-brief__idea-open {
+  margin-top: 10px;
+}
+.creative-modal__meta {
+  margin: 4px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: var(--muted2);
+}
+.creative-modal__details {
+  margin: 0 22px 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: rgba(10, 8, 18, 0.55);
+}
+.creative-modal__details h3 {
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--cb-gold);
+}
+.creative-modal__hook {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.creative-modal__details ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.creative-modal__details > p {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.creative-modal__details > p .mono {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
 .creative-brief__ideas {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1874,9 +1950,6 @@ textarea::placeholder {
   background:
     radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--ac, #f5d020) 28%, #0a0812), #0a0812);
 }
-.creative-brief__idea[data-lane="depth"] {
-  border-color: rgba(255, 74, 209, 0.28);
-}
 .creative-brief__idea[data-lane="press"] {
   border-color: rgba(245, 208, 32, 0.28);
 }
@@ -1887,9 +1960,6 @@ textarea::placeholder {
   letter-spacing: 1.3px;
   text-transform: uppercase;
   color: var(--cb-gold);
-}
-.creative-brief__idea[data-lane="depth"] .creative-brief__lane {
-  color: #ff4ad1;
 }
 .creative-brief__idea h3 {
   margin: 0;

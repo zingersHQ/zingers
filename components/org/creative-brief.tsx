@@ -1,123 +1,173 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { orgCanonical } from "@/lib/org/hosts";
 import { FORCES, FOUNDING_REGIONS } from "@/lib/lore/canon";
-import { FIRST_MIND_KEYS, ROSTER } from "@/lib/engine/roster";
+import { ROSTER } from "@/lib/engine/roster";
 import { CreativeScene, sceneAspect } from "@/components/org/creative-scene";
 import { CreativeBeatStage, BEAT_ASPECT } from "@/components/org/creative-beat-stage";
 import { CreativeRenderModal, type CreativeModalPayload } from "@/components/org/creative-render-modal";
 import {
+  CHARACTER_PLATES,
   CONTENT_LAW,
-  FLIGHT_CAPTURES,
   NORTH_STAR,
   PALETTE,
   PROMPT_SKELETON,
+  SCENARIO_PLATES,
   SHORT_IDEAS,
   VOCAB_DO,
   VOCAB_DONT,
   WORLD_BLURB,
-  type IdeaScene,
+  type AssetPlate,
   type ShortIdea,
 } from "@/lib/org/creative-brief-data";
-
-const FORCE_SLUG: Record<string, string> = {
-  LOGIC: "lattice",
-  CHAOS: "static",
-  COMPOSURE: "stillness",
-  RHETORIC: "chorus",
-  CREATIVITY: "spark",
-};
-
-function slugify(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 
 const LANE_LABEL: Record<ShortIdea["lane"], string> = {
   primary: "Flight & bond",
   press: "Press",
-  depth: "Depth",
 };
 
-function IdeaCard({ idea, onOpen }: { idea: ShortIdea; onOpen: (p: CreativeModalPayload) => void }) {
-  const openBeat = () =>
-    onOpen({
-      title: idea.title,
-      caption: `${idea.format} · ${idea.duration} · ${idea.hook}`,
-      beat: idea.scene,
-      prompt: idea.prompt,
-      filename: `zingers-idea-${idea.id}`,
+function plateAccent(plate: AssetPlate): string | undefined {
+  if (plate.accent) return plate.accent;
+  const s = plate.scene;
+  if (s.kind === "mind") return FORCES[ROSTER[s.key]?.type]?.hex;
+  if (s.kind === "cast" || (s.kind === "flightLive" && s.mind)) {
+    const key = s.kind === "cast" ? s.mind : s.mind!;
+    return FORCES[ROSTER[key]?.type]?.hex;
+  }
+  if (s.kind === "force") {
+    const entry = Object.values(FORCES).find((f) => {
+      const slug =
+        f.type === "LOGIC"
+          ? "lattice"
+          : f.type === "CHAOS"
+            ? "static"
+            : f.type === "COMPOSURE"
+              ? "stillness"
+              : f.type === "RHETORIC"
+                ? "chorus"
+                : "spark";
+      return slug === s.slug;
     });
-
-  return (
-    <article className="creative-brief__idea" data-lane={idea.lane}>
-      <button type="button" className="creative-brief__idea-scene" style={{ aspectRatio: BEAT_ASPECT }} onClick={openBeat}>
-        <CreativeBeatStage scene={idea.scene} />
-        <span className="mono creative-brief__idea-scene-hint">Open · PNG · prompt</span>
-      </button>
-      <div className="creative-brief__idea-body">
-        <header>
-          <span className="mono creative-brief__lane">{LANE_LABEL[idea.lane]}</span>
-          <h3>{idea.title}</h3>
-          <p className="creative-brief__meta mono">
-            {idea.format} · {idea.duration}
-          </p>
-        </header>
-        <p className="creative-brief__hook">{idea.hook}</p>
-        <ol>
-          {idea.beats.map((b) => (
-            <li key={b}>{b}</li>
-          ))}
-        </ol>
-        {idea.overlay ? (
-          <p className="creative-brief__overlay">
-            <span className="mono">Overlay</span> {idea.overlay}
-          </p>
-        ) : null}
-        {idea.notes ? <p className="creative-brief__notes">{idea.notes}</p> : null}
-        <button type="button" className="btn creative-brief__idea-open" onClick={openBeat}>
-          Fullscreen reference + prompt
-        </button>
-      </div>
-    </article>
-  );
+    return entry?.hex;
+  }
+  if (s.kind === "region") {
+    const region = FOUNDING_REGIONS.find((r) => r.id === s.regionId);
+    return region ? FORCES[region.bias]?.hex : undefined;
+  }
+  return undefined;
 }
 
-function LivePlate({
-  label,
-  caption,
-  aspect,
-  accent,
-  scene,
-  filename,
-  onOpen,
-}: {
-  label: string;
-  caption: string;
-  aspect: string;
-  accent?: string;
-  scene: IdeaScene;
-  filename: string;
-  onOpen: (p: CreativeModalPayload) => void;
-}) {
+function LivePlate({ plate, onOpen }: { plate: AssetPlate; onOpen: (p: CreativeModalPayload) => void }) {
+  const accent = plateAccent(plate);
+  const aspect = plate.aspect || sceneAspect(plate.scene);
   return (
     <figure className="creative-brief__plate" style={accent ? { ["--ac" as string]: accent } : undefined}>
       <button
         type="button"
         className="creative-brief__plate-btn"
         style={{ aspectRatio: aspect }}
-        onClick={() => onOpen({ title: label, caption, scene, filename })}
-        aria-label={`Open ${label} fullscreen`}
+        onClick={() =>
+          onOpen({
+            title: plate.label,
+            caption: `${plate.group} · ${plate.caption}`,
+            scene: plate.scene,
+            filename: plate.filename,
+          })
+        }
+        aria-label={`Open ${plate.label} fullscreen`}
       >
-        <CreativeScene scene={scene} />
+        <CreativeScene scene={plate.scene} />
         <span className="mono creative-brief__plate-hint">View · Download PNG</span>
       </button>
       <figcaption>
-        <strong>{label}</strong>
-        <span>{caption}</span>
+        <span className="mono creative-brief__plate-group">{plate.group}</span>
+        <strong>{plate.label}</strong>
+        <span>{plate.caption}</span>
       </figcaption>
     </figure>
+  );
+}
+
+function IdeaCard({ idea, onOpen }: { idea: ShortIdea; onOpen: (p: CreativeModalPayload) => void }) {
+  const openDetails = () =>
+    onOpen({
+      title: idea.title,
+      caption: `${idea.format} · ${idea.duration}`,
+      beat: idea.scene,
+      prompt: idea.prompt,
+      filename: `zingers-idea-${idea.id}`,
+      idea: {
+        hook: idea.hook,
+        beats: idea.beats,
+        overlay: idea.overlay,
+        notes: idea.notes,
+        format: idea.format,
+        duration: idea.duration,
+        lane: idea.lane,
+      },
+    });
+
+  return (
+    <article className="creative-brief__idea" data-lane={idea.lane}>
+      <button type="button" className="creative-brief__idea-scene" style={{ aspectRatio: BEAT_ASPECT }} onClick={openDetails}>
+        <CreativeBeatStage scene={idea.scene} />
+        <span className="mono creative-brief__idea-scene-hint">View details</span>
+      </button>
+      <div className="creative-brief__idea-body creative-brief__idea-body--compact">
+        <span className="mono creative-brief__lane">{LANE_LABEL[idea.lane]}</span>
+        <h3>{idea.title}</h3>
+        <p className="creative-brief__meta mono">
+          {idea.format} · {idea.duration}
+        </p>
+        <button type="button" className="btn creative-brief__idea-open" onClick={openDetails}>
+          View details
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function PlateSection({
+  title,
+  lede,
+  plates,
+  onOpen,
+}: {
+  title: string;
+  lede: string;
+  plates: AssetPlate[];
+  onOpen: (p: CreativeModalPayload) => void;
+}) {
+  const groups = useMemo(() => {
+    const order: string[] = [];
+    const map = new Map<string, AssetPlate[]>();
+    for (const p of plates) {
+      if (!map.has(p.group)) {
+        map.set(p.group, []);
+        order.push(p.group);
+      }
+      map.get(p.group)!.push(p);
+    }
+    return order.map((g) => ({ group: g, plates: map.get(g)! }));
+  }, [plates]);
+
+  return (
+    <section className="creative-brief__section">
+      <h2>{title}</h2>
+      <p>{lede}</p>
+      {groups.map(({ group, plates: gp }) => (
+        <div key={group} className="creative-brief__subgroup">
+          <h3 className="mono creative-brief__subgroup-title">{group}</h3>
+          <div className="creative-brief__grid">
+            {gp.map((plate) => (
+              <LivePlate key={plate.id} plate={plate} onOpen={onOpen} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -128,36 +178,48 @@ export function CreativeBrief() {
 
   const primary = SHORT_IDEAS.filter((i) => i.lane === "primary");
   const press = SHORT_IDEAS.filter((i) => i.lane === "press");
-  const depth = SHORT_IDEAS.filter((i) => i.lane === "depth");
 
   return (
     <div className="creative-brief">
       <header className="creative-brief__hero">
         <p className="mono creative-brief__kicker">
-          {BRAND.siteTech.replace("https://", "")} · press kit · assets &amp; story
+          {BRAND.siteTech.replace("https://", "")} · press kit · mix &amp; match
         </p>
         <h1>Press kit</h1>
         <p className="creative-brief__tagline">{NORTH_STAR}</p>
         <p className="creative-brief__lede">
-          Official assets and narrative beats for press, partners, and creative studios. Every portrait and region below
-          is a <strong>live game render</strong> of our current models. Click any plate for fullscreen, download a PNG
-          seed, and open short ideas for a full prompt with universe context. Companion gallery:{" "}
-          <a href={`${BRAND.siteTech}/gallery`}>Visual gallery</a>. Pitch:{" "}
+          Download <strong>Characters</strong> and <strong>Scenarios</strong> separately, then composite. Every plate is a{" "}
+          <strong>live game render</strong>. Story beats are scripts: open View details for the description and full
+          studio prompt. Gallery: <a href={`${BRAND.siteTech}/gallery`}>Visual gallery</a>. Pitch:{" "}
           <a href={orgCanonical("product/onepager")}>one-pager</a>. Lore:{" "}
-          <a href={orgCanonical("bible/ascent")}>Flight</a>. Contact / social:{" "}
+          <a href={orgCanonical("bible/ascent")}>Flight</a>. Contact:{" "}
           <a href={BRAND.twitterUrl} target="_blank" rel="noopener noreferrer">
             @{BRAND.twitter}
           </a>
           .
         </p>
         <p className="creative-brief__warn">
-          Character identity is the robot mesh on this page. Do not replace champions with painterly concept faces,
-          anime, or photoreal humans. AI may enrich atmosphere only.
+          Character identity is the robot mesh on this page. Keep Trainer larger than the champion (~3:1 height). Do not
+          replace champions with painterly faces, anime, or photoreal humans.
         </p>
       </header>
 
       <section className="creative-brief__section">
-        <h2>Content law</h2>
+        <h2>How to use</h2>
+        <ol className="creative-brief__rules">
+          <li>
+            <strong>Pick a Scenario</strong> (empty Flight sky or a founding region).
+          </li>
+          <li>
+            <strong>Pick a Character</strong> (one of the 8 champions for shape + Clan color, Trainer, couple, Flight cast, or ghost race).
+          </li>
+          <li>
+            <strong>Composite</strong> in your tool, or use a Story beat prompt that already describes the scene.
+          </li>
+          <li>
+            <strong>AI enrich</strong> atmosphere only. Lock silhouettes to the downloaded PNGs.
+          </li>
+        </ol>
         <p className="creative-brief__law">{CONTENT_LAW}</p>
         <p>{WORLD_BLURB}</p>
       </section>
@@ -198,98 +260,23 @@ export function CreativeBrief() {
         </ul>
       </section>
 
-      <section className="creative-brief__section">
-        <h2>Flight · real-model captures</h2>
-        <p>
-          The face of the game. Trainer wears the jetpack. The champion needs none and flies beside you. Click to
-          fullscreen and download a PNG seed.
-        </p>
-        <div className="creative-brief__grid creative-brief__grid--flight">
-          {FLIGHT_CAPTURES.map((p) => (
-            <LivePlate
-              key={p.src}
-              label={p.label}
-              caption={p.caption}
-              aspect="16/9"
-              scene={p.scene}
-              filename={`zingers-${slugify(p.label)}`}
-              onOpen={open}
-            />
-          ))}
-        </div>
-      </section>
+      <PlateSection
+        title="Characters"
+        lede="Start with Champions: eight First Minds, each a different body shape and Clan color (Forces live in the mesh, not a separate gallery). Then Trainer, couples, Flight cast, and ghost races. Download a PNG and drop it into a Scenario."
+        plates={CHARACTER_PLATES}
+        onOpen={open}
+      />
 
-      <section className="creative-brief__section">
-        <h2>First Minds · live game models</h2>
-        <p>Identity plates. Click any mind for fullscreen + PNG download. Do not invent a lookalike.</p>
-        <div className="creative-brief__grid">
-          {FIRST_MIND_KEYS.map((key) => {
-            const r = ROSTER[key];
-            const force = FORCES[r.type];
-            return (
-              <LivePlate
-                key={key}
-                label={key}
-                caption={`${force.name}. ${r.persona.split(",")[0]}.`}
-                aspect="4/5"
-                accent={force.hex}
-                scene={{ kind: "mind", key }}
-                filename={`zingers-mind-${key.toLowerCase()}`}
-                onOpen={open}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
-        <h2>Forces · live game models</h2>
-        <div className="creative-brief__grid creative-brief__grid--forces">
-          {Object.values(FORCES).map((f) => {
-            const slug = FORCE_SLUG[f.type];
-            return (
-              <LivePlate
-                key={f.type}
-                label={`${f.sigil} ${f.name}`}
-                caption={`the ${f.inWorld.replace(/^The /, "")} · ${f.hex}`}
-                aspect="1/1"
-                accent={f.hex}
-                scene={{ kind: "force", slug }}
-                filename={`zingers-force-${slug}`}
-                onOpen={open}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
-        <h2>Founding regions · live scenes</h2>
-        <div className="creative-brief__grid creative-brief__grid--regions">
-          {FOUNDING_REGIONS.map((region) => {
-            const force = FORCES[region.bias];
-            return (
-              <LivePlate
-                key={region.id}
-                label={region.name}
-                caption={`${region.arena} · ${force.name}. ${region.blurb}`}
-                aspect="16/9"
-                accent={force.hex}
-                scene={{ kind: "region", regionId: region.id }}
-                filename={`zingers-region-${region.id}`}
-                onOpen={open}
-              />
-            );
-          })}
-        </div>
-      </section>
+      <PlateSection
+        title="Scenarios"
+        lede="Empty worlds: Flight belt with rings and vegetation, plus the three founding regions. No heroes in the shot so you can place Characters freely."
+        plates={SCENARIO_PLATES}
+        onOpen={open}
+      />
 
       <section className="creative-brief__section">
         <h2>Story beats · Flight &amp; bond</h2>
-        <p>
-          Short-form and social ideas that lead with the climb and the Trainer↔champion relationship. Each beat includes
-          a live reference scene, a PNG seed, and a full studio prompt.
-        </p>
+        <p>Scripts for shorts. Grid shows the live reference only. Open View details for description + full prompt.</p>
         <div className="creative-brief__ideas">
           {primary.map((idea) => (
             <IdeaCard key={idea.id} idea={idea} onOpen={open} />
@@ -299,7 +286,10 @@ export function CreativeBrief() {
 
       <section className="creative-brief__section">
         <h2>Press &amp; beauty</h2>
-        <p>Launch stills and wide vistas for articles, decks, and key art.</p>
+        <p>
+          Stills and key art for articles, decks, and launch. Prefer empty Scenario plates for world beauty; add a Character
+          plate when you need the pair or a roster face.
+        </p>
         <div className="creative-brief__ideas">
           {press.map((idea) => (
             <IdeaCard key={idea.id} idea={idea} onOpen={open} />
@@ -308,34 +298,7 @@ export function CreativeBrief() {
       </section>
 
       <section className="creative-brief__section">
-        <h2>Depth · under the climb</h2>
-        <p>Arena beats that belong under Flight, not as the brand face. Useful once the sky story is established.</p>
-        <div className="creative-brief__ideas">
-          {depth.map((idea) => (
-            <IdeaCard key={idea.id} idea={idea} onOpen={open} />
-          ))}
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
-        <h2>Usage for generative enrichment</h2>
-        <ol className="creative-brief__rules">
-          <li>
-            <strong>Render-first, AI-enrich second.</strong> Download the PNG from the modal. AI may dress atmosphere,
-            fog, rim-light, and grade. AI must not redesign the character.
-          </li>
-          <li>
-            <strong>Use each beat&apos;s full prompt</strong> (Copy in the modal). It includes universe context plus the
-            locked scene.
-          </li>
-          <li>
-            <strong>One dominant Clan color</strong> per image, plus gold accents. Avoid rainbow.
-          </li>
-          <li>
-            <strong>Forbidden in-frame:</strong> painterly bible concept faces, invented silhouettes, text, logos,
-            watermarks, UI/HUD, gore, photoreal humans.
-          </li>
-        </ol>
+        <h2>Prompt skeleton</h2>
         <pre className="creative-brief__prompt">{PROMPT_SKELETON}</pre>
       </section>
 

@@ -2,7 +2,7 @@
 
 > **En resumen:** Cada campeón funciona también como una carta coleccionable, y el arte de esa carta cambia a medida que el campeón lucha y crece. Coleccionas un dex en expansión, crías un establo y (más adelante) intercambias.
 
-Cada campeón es también una **carta**. La carta es el rostro portátil y coleccionable de una mente, y su mejor truco ya es cierto: **el arte evoluciona**, porque el arte es el cuerpo del campeón. Cada mente lleva una **marca de especie** estable sobre un marco compartido: silueta de raza más carga de partes, más el cuerpo de carrera que crece con las peleas y el nivel. Mentes de la misma Fuerza se leen como animales distintos; el nivel añade más armadura. Una carta que posees se vuelve visiblemente más fuerte a medida que la peleas.
+Cada campeón es también una **carta**. La carta es el rostro portátil y coleccionable de una mente, y su mejor truco ya es cierto: **el arte evoluciona**, porque el arte es el cuerpo del campeón. Cada mente lleva una **marca de especie** estable sobre un marco compartido: tipo corporal de raza (zancos, tanque, robusto, vaporoso, orador, alcance o canónico) más carga de partes, más el cuerpo de carrera que crece con las peleas y el nivel. Mentes de la misma Fuerza se leen como animales distintos; el nivel añade más armadura. Una carta que posees se vuelve visiblemente más fuerte a medida que la peleas.
 
 ## Anatomía de una carta
 

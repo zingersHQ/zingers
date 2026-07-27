@@ -456,6 +456,7 @@ function FlightWorld({
   onCastReady,
   mindKey,
   ghost,
+  cast = true,
 }: {
   variant: Variant;
   reduceMotion: boolean;
@@ -463,6 +464,8 @@ function FlightWorld({
   onCastReady: () => void;
   mindKey: string;
   ghost?: boolean;
+  /** When false, empty sky + terrain + rings only (scenario plate). */
+  cast?: boolean;
 }) {
   const biome = useMemo(() => {
     const day = daylightBiome(biomeById(BIOME_ID));
@@ -497,7 +500,7 @@ function FlightWorld({
         <CloudPuffs reduceMotion={reduceMotion} count={cloudCount} animate={animate} />
         <TerrainBelt biome={biome} reduceMotion={reduceMotion} mobile={variant === "mobile"} animate={animate} />
         <DriftMotes accent={biome.lights.arenaPoint} reduceMotion={reduceMotion} animate={animate} />
-        <FlightPair reduceMotion={reduceMotion} animate={animate} mindKey={mindKey} ghost={ghost} />
+        {cast ? <FlightPair reduceMotion={reduceMotion} animate={animate} mindKey={mindKey} ghost={ghost} /> : null}
         <ReadyCue onReady={onCastReady} />
       </Suspense>
     </>
@@ -529,6 +532,7 @@ export default function InfiniteFlightHero({
   freeze = false,
   mindKey = DEFAULT_MIND,
   ghost = false,
+  cast = true,
 }: {
   variant?: Variant;
   /** Called when the live scene has drawn — parents can drop their own poster. */
@@ -541,6 +545,8 @@ export default function InfiniteFlightHero({
   mindKey?: string;
   /** Show a trailing ghost Trainer (challenge / ghost-race beats). */
   ghost?: boolean;
+  /** When false, render empty Flight scenery (rings / terrain) with no cast. */
+  cast?: boolean;
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
@@ -601,6 +607,7 @@ export default function InfiniteFlightHero({
               onCastReady={markReady}
               mindKey={mindKey}
               ghost={ghost}
+              cast={cast}
             />
           </Canvas>
         </RenderBoundary>

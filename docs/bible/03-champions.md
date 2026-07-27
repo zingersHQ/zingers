@@ -115,12 +115,12 @@ are **descendants or echoes** of a First Mind: same Force family, distinct voice
 moves, and silhouette. They are never a sixth Force.
 
 **How they look different:** each mind wears a stable **species mark** on a shared
-robot frame: breed silhouette plus which solid parts it carries (headgear,
-shoulders, chest, back). First Minds are hand-authored; later dex minds land on a
-Force **breed** line with light spice so cousins differ. Career growth and tier still
-reshape the body. Rookies already wear their species mark so the adopt grid and dex
-read as different animals, not palette swaps. As they climb tiers, more armour
-layers bolt on.
+robot frame: breed **bodytype** (stilts, tank, stout, wispy, orator, reach, or
+canonical) plus which solid parts it carries (headgear, shoulders, chest, back).
+First Minds are hand-authored; later dex minds land on a Force **breed** line with
+light spice so cousins differ. Career growth and tier still reshape the body.
+Rookies already wear their species mark so the adopt grid and dex read as different
+animals, not palette swaps. As they climb tiers, more armour layers bolt on.
 
 **Rotation:** weekly starters pick one mind per Force from First Minds plus the
 dex pool. The dex grows in waves toward a large collectible set; ownership and trade
