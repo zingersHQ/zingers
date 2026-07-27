@@ -13,7 +13,7 @@ Public site: **[zingers.org](https://zingers.org)** (registry: `lib/org/registry
 |-----|---------|
 | [ONEPAGER.md](./ONEPAGER.md) | Elevator pitch |
 | [TWOPAGER.md](./TWOPAGER.md) | Extended pitch |
-| [STORY.md](./STORY.md) | World, Forces, Keepers, raise-and-know spine |
+| [STORY.md](./STORY.md) | World, Forces, Flight, raise-and-know spine |
 | [TECHNICAL.md](./TECHNICAL.md) | Stack, architecture, agent defaults, cost rails |
 | [AI-CRYPTO.md](./AI-CRYPTO.md) | Agent layer + Crowns / $ZING positioning |
 

@@ -1,10 +1,10 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { AxisSnapshot, CareerEvent, CareerEventKind, Champion, CreatureType, DailyResult, DailyState, ForcePoints, HouseEnd, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
+import type { AxisSnapshot, CareerEvent, CareerEventKind, Champion, CreatureType, DailyResult, DailyState, ForcePoints, PlayerSave, PredictState, Progress, Recipe, Strat, Style } from "@/lib/types";
 import { DEFAULT_STRAT, SAVE_VERSION } from "@/lib/types";
 import { applyResult, blank, blankStyle, levelFor, tierIndex, TIERS } from "@/lib/evolve/progression";
-import { recordHouse, recordArena, type RatingDelta } from "@/lib/evolve/elo";
+import { recordArena } from "@/lib/evolve/elo";
 import { TRAINER_XP, trainerLevel } from "@/lib/evolve/trainer";
 import { recruitSlotsOpen } from "@/lib/unlock-ladder";
 import { consumePendingHeirloom, retireChampion as retireToLegacy } from "@/lib/legacy";
@@ -268,7 +268,7 @@ interface ChampionStore {
   setOwned: (key: string) => void;
   adoptStarterRookie: (key: string) => void;
   /**
-   * Retire the active champion into House memory + leave an heirloom wing for
+   * Retire the active champion into legacy memory + leave an heirloom wing for
    * the next claim (docs/long-game.md Stage 4). Clears `owned`.
    */
   retireOwned: () => { ok: boolean; detail?: string };
@@ -306,9 +306,7 @@ interface ChampionStore {
   // Whether the Reader may choose/switch their Clan right now (no clan yet, or
   // the locked season has rolled over).
   canChangeClan: () => boolean;
-  crackKeeper: () => void; // a Keeper yielded — award the milestone XP
   recordBattle: (winnerKey: string, loserKey: string, styles: Record<string, Style>) => void;
-  recordHouseGame: (end: HouseEnd, votesLog: { voter: string; target: string }[]) => Record<string, RatingDelta>;
   predictResult: (correct: boolean) => void;
   recordDaily: (r: DailyResult) => boolean;
   reseed: () => void;
@@ -644,7 +642,7 @@ export const useChampions = create<ChampionStore>()(
         }
         const name = ROSTER[key]?.name ?? key;
         const result = retireToLegacy(key, champ, name);
-        if (!result) return { ok: false, detail: "Already sealed in the House." };
+        if (!result) return { ok: false, detail: "Already sealed into legend." };
         const now = Date.now();
         const sealed: CareerEvent = {
           id: `${now}-sealed-${key}`,
@@ -801,15 +799,6 @@ export const useChampions = create<ChampionStore>()(
         });
         return true;
       },
-      crackKeeper: () =>
-        set((s) => {
-          const trainerXp = s.trainerXp + TRAINER_XP.keeperCracked;
-          if (!s.owned) return { trainerXp };
-          const now = Date.now();
-          const ev: CareerEvent = { id: `${now}-keeper-${Math.random().toString(36).slice(2, 6)}`, ts: now, kind: "keeper", title: "Stood with you as a Keeper yielded", detail: "A word toward the Long Vault." };
-          return { trainerXp, events: { ...s.events, [s.owned]: appendCapped(s.events[s.owned], ev) } };
-        }),
-
       // a paid training session: spends Crowns, adds XP + nudges style axes toward
       // the recipe dials — so money visibly evolves the body and shifts the build.
       trainChampion: async (key) => {
@@ -965,13 +954,6 @@ export const useChampions = create<ChampionStore>()(
           }
           return { progress, trainerXp, forcePoints, lastEvolution, events, snapshots };
         }),
-
-      recordHouseGame: (end, votesLog) => {
-        const progress: Progress = JSON.parse(JSON.stringify(get().progress));
-        const deltas = recordHouse(progress, end, votesLog);
-        set({ progress });
-        return deltas;
-      },
 
       predictResult: (correct) =>
         set((s) => {

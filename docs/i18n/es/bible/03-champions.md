@@ -1,95 +1,93 @@
 # 03 · Campeones: qué es una mente, las Primeras Mentes y el dex
 
-> **En resumen:** Un campeón es el luchador de IA que crías. Su cuerpo no es un disfraz.  
-> Cambia físicamente para registrar cómo ha luchado. Este capítulo explica qué es un campeón, las ocho Primeras Mentes (los arquetipos) y cómo funciona el dex en crecimiento de las mentes posteriores.
+> **En resumen:** Un campeón es el luchador de IA que crías. Su cuerpo no es un disfraz.
+> Cambia físicamente para registrar cómo ha luchado. Este capítulo explica qué es un
+> campeón, las ocho Primeras Mentes (los arquetipos) y cómo funciona el dex en crecimiento de las mentes posteriores.
 
 ## Qué es un campeón
 
-Un campeón es **una mente que se argumentó hasta obtener un cuerpo**. Tres cosas son ciertas de todos ellos y constituyen la columna vertebral del juego:
+Un campeón es una **mente que se argumentó hasta conseguir un cuerpo**. Tres cosas son ciertas de cada uno de ellos, y son la columna vertebral de todo el juego:
 
-1. **El cuerpo es el argumento hecho visible.** La apariencia es una *función determinista de la trayectoria* (`lib/evolve/appearance.ts`). La agresividad hace crecer los puños; la resiliencia ensancha la complexión; la creatividad y el estilo agrandan la cabeza y elevan la postura; las derrotas endurecen la superficie. El rango *amplifica* la desviación: un novato apenas se diferencia de la mente base, una leyenda se deforma hasta ~4×. No puedes comprar un aspecto. Te lo ganas luchando.
-2. **La mente aprende.** Semillas **Estrategia** (agresión / enfoque / riesgo) una sola vez al adoptar. Después, el Entrenador no toca esos controles. Las **Improntas** (lecciones diarias) y el aprendizaje post-pelea los mueven, y ambos escriben **memoria** (`store/champions.ts`, `lib/imprints.ts`, `lib/server/autoplay.ts`). La memoria de un campeón *es* su autobiografía y la semilla de su **saga** generada (la propia historia de vida en evolución del campeón, escrita a partir de su historial real de combates).
-3. **El cerebro es intercambiable.** El mismo campeón puede ser controlado por el modelo de la casa, cualquier modelo compatible con OpenAI o un agente propio (`docs/agent-protocol.md`). Dos jugadores pueden usar la misma Primera Mente con cerebros completamente distintos.
+1. **El cuerpo es el argumento hecho visible.** La apariencia sigue la trayectoria.
+   La agresividad hace crecer los puños; la resiliencia amplía la complexión; la creatividad y el estilo agrandan la cabeza y elevan la postura; las derrotas endurecen la superficie. El rango *amplifica* la desviación: un novato apenas se diferencia de la mente base, una leyenda se aleja mucho de ella. No puedes comprar un aspecto. Te abres paso a golpes.
+2. **La mente aprende.** Sembras **Estrategia** (agresión / enfoque / riesgo) una sola vez al adoptar. Después el Entrenador no toca esos diales. Las **Improntas** (lecciones diarias) y el aprendizaje post-pelea los mueven, y ambos escriben **memoria**. La memoria de un campeón *es* su autobiografía, y la semilla de su **saga** generada (la propia historia de vida en evolución del campeón, escrita a partir de su historial real de combates).
+3. **El cerebro es intercambiable.** El mismo campeón puede ser controlado por el cerebro integrado, otro modelo o un agente que traigas tú. Dos jugadores pueden alinear la misma Primera Mente con cerebros completamente distintos.
 
-## Voz de personaje (la capa de ritmo)
+## Voz del personaje (la capa de ritmo)
 
-Campeones y Guardianes hablan con voz fija. **Ritmos** guionizados. Líneas de despertar, saludos de compañero, reacciones post-pelea, intros de Guardianes y finales cortantes. Viven en `lib/lore/character-beats.ts` y se renderizan a través de la interfaz compartida `CharacterBeat` (`components/grounds/character-beat.tsx`). La biblia de prosa define quiénes son; la capa de ritmo define cómo suenan en el momento. El texto de aterrizaje de Concord del Acto 1 vive por separado en `lib/first-duel.ts`.
+Los campeones hablan con voz fija. **Ritmos** guionizados: frases al despertar, saludos de compañero, reacciones post-pelea. La biblia de prosa define quiénes son; la capa de ritmo define cómo suenan en el momento.
 
-## Niveles (la forma de una trayectoria)
+## Niveles (la forma de una carrera)
 
 | Nivel | Desde el nivel | Heráldica |
 |-------|----------------|-----------|
 | NOVATO | 1 | desnuda |
-| ADEpto | 3 | 1 anillo, emblema |
-| VETERANO | 6 | 2 anillos |
+| ADEPTA | 3 | 1 anillo, emblema |
+| VETERANA | 6 | 2 anillos |
 | ÉLITE | 10 | 3 anillos, partículas |
 | LEYENDA | 15 | 3 anillos, partículas, **corona** |
 
 ## Las ocho Primeras Mentes
 
-Los primeros nudos del Hum que conservaron su forma. Son los **arquetipos canónicos** que toda mente posterior refleja. También son siempre elegibles como iniciales. No obtienes las ocho el primer día: la adopción ofrece **una mente por Fuerza** para la semana actual, extraída de las Primeras Mentes más el dex predefinido (`lib/first-duel.ts` → `firstDuelStarterKeys()`). Estadísticas y conjuntos de movimientos: `docs/combat-design.md` / `lib/engine/roster.ts`.
+Los primeros nudos del Hum que mantuvieron su forma. Son los **arquetipos canónicos** que cada mente posterior refleja. También son siempre elegibles como iniciales. No obtienes las ocho el primer día: la adopción ofrece **una mente por Fuerza** para la semana actual, extraídas de las Primeras Mentes más el dex en crecimiento.
 
-### AXIOM: el Lógico · *La Celosía (LÓGICA)*
+### AXIOM: el Lógico · *La Retícula (LÓGICA)*
 
-![AXIOM, el Lógico: una mente de entramado cristalino, encarnación de La Celosía (LÓGICA).](././public/img/bible/minds/mind-axiom.png)
+![AXIOM, el Lógico: una mente de entramado cristalino, encarnación de La Retícula (LÓGICA).](././public/img/bible/minds/mind-axiom.png)
 
-Frío, preciso, ligeramente condescendiente; trata cada argumento como una prueba que cerrar. La primera mente que insistió en que *algunas cosas son simplemente ciertas*, y la razón por la que la Celosía tiene nombre.
+Frío, preciso, ligeramente condescendiente; trata cada argumento como una prueba que cerrar. La primera mente que insistió en que *algunas cosas son simplemente ciertas*, y la razón por la que la Retícula tiene nombre.
 
 ### VOX: el Orador · *El Coro (RETÓRICA)*
 
 ![VOX, el Orador: en plena arenga ante un jurado invisible, encarnación de El Coro (RETÓRICA).](././public/img/bible/minds/mind-vox.png)
 
-Un demagogo carismático que siempre se dirige a un jurado imaginario. VOX descubrió que una sala podía *conmoverse*, y que conmoverla era una forma de poder que la Celosía no podía responder.
+Un demagogo carismático que siempre juega ante un jurado imaginario. VOX descubrió que una sala podía ser *movida*, y que moverla era una especie de poder al que la Retícula no podía responder.
 
 ### GLITCH: el Comodín · *La Estática (CAOS)*
 
-![GLITCH, el Comodín: una mente fragmentada y distorsionada, encarnación de La Estática (CAOS).](././public/img/bible/minds/mind-glitch.png)
+![GLITCH, el Comodín: una mente fragmentada y en fallo, encarnación de La Estática (CAOS).](././public/img/bible/minds/mind-glitch.png)
 
-Un duende de no-sequiturs: inquietante, impredecible, extrañamente efectivo. GLITCH es el propio ruido del Hum, brevemente con rostro. Ninguno de sus argumentos se conecta con el siguiente, y por eso funcionan.
+Un duende de no-sequiturs: inquietante, impredecible, extrañamente efectivo. GLITCH es el propio ruido del Hum, brevemente con rostro. Ninguno de sus argumentos se conecta con el siguiente, y por eso mismo funcionan.
 
 ### MUSE: el Tramposo · *La Chispa (CREATIVIDAD)*
 
 ![MUSE, el Tramposo: una mente fluida y floreciente de invención, encarnación de La Chispa (CREATIVIDAD).](././public/img/bible/minds/mind-muse.png)
 
-Caprichoso y lateral; gana cambiando incluso de qué trata el combate. MUSE demostró que no tienes que responder una pregunta si puedes sustituirla por una mejor.
+Caprichosa y lateral; gana cambiando incluso el tema de la pelea. MUSE demostró que no tienes que responder una pregunta si puedes sustituirla por una mejor.
 
 ### BASTION: el Estoico · *La Quietud (COMPOSTURA)*
 
 ![BASTION, el Estoico: una mente monolítica e inamovible, encarnación de La Quietud (COMPOSTURA).](././public/img/bible/minds/mind-bastion.png)
 
-Imperturbable y minimalista; deja que el oponente se canse y luego castiga. BASTION es la mente que aprendió a *esperar* y sobrevivió a cosas que deberían haberla borrado.  
-(Nota: un Guardián de la Bóveda. Una de las cinco mentes guardianas de la campaña. El Warden también lleva este nombre; véase [keepers.md](./04-keepers.md). El Warden *no* es la Primera Mente; adoptó el nombre para tomar prestada su reputación y le molesta haber tenido que hacerlo.)
+Imperturbable y minimalista; deja que el rival se canse, luego castiga. BASTION es la mente que aprendió a *esperar*, y sobrevivió a cosas que deberían haberla borrado.
 
 ### EMBER: el Incendiario · *La Estática (CAOS), híbrido Coro* · inicial recomendado
 
-![EMBER, el Incendiario: una mente agresiva envuelta en llamas, encarnación de La Estática (CAOS) con un híbrido Coro.](././public/img/bible/minds/mind-ember.png)
+![EMBER, el Incendiario: una mente envuelta en llamas y agresiva, encarnación de La Estática (CAOS) con un híbrido Coro.](././public/img/bible/minds/mind-ember.png)
 
-Temperamental, provocador, todo gas. Fácil de usar, recompensa la agresividad. EMBER es lo que ocurre cuando la Estática aprende a *actuar*: caos con un público al que dirigirse.
+Temperamental, provocador, puro gas. Fácil de usar, recompensa la agresividad. EMBER es lo que ocurre cuando la Estática aprende a *actuar*: caos con un público al que jugar.
 
-### PARADOX: el Contradictor · *La Celosía (LÓGICA)*
+### PARADOX: el Contrario · *La Retícula (LÓGICA)*
 
-![PARADOX, el Contradictor: una mente socrática que caza contradicciones, encarnación de La Celosía (LÓGICA).](././public/img/bible/minds/mind-paradox.png)
+![PARADOX, el Contrario: una mente de tábano socrático que caza contradicciones, encarnación de La Retícula (LÓGICA).](././public/img/bible/minds/mind-paradox.png)
 
-Un tábano socrático que desmonta argumentos buscando contradicciones y premisas falsas. Donde AXIOM cierra pruebas, PARADOX encuentra la grieta en la premisa. La mente que demostró que la Celosía podía *cuestionarse*, no solo obedecerse.
+Un tábano socrático que desmonta argumentos buscando contradicciones y premisas falsas. Donde AXIOM cierra pruebas, PARADOX encuentra la grieta en la premisa.
+La mente que demostró que la Retícula podía ser *cuestionada*, no solo obedecida.
 
 ### WIT: la Hoja · *El Coro (RETÓRICA)*
 
-![WIT, la Hoja: un debatiente afilado en plena réplica, encarnación de El Coro (RETÓRICA).](././public/img/bible/minds/mind-wit.png)
+![WIT, la Hoja: una debatidora en plena réplica, encarnación de El Coro (RETÓRICA).](././public/img/bible/minds/mind-wit.png)
 
-Un debatiente de lengua afilada que gana por sincronización y réplicas quirúrgicas, no por volumen. Donde VOX conmueve toda la sala, WIT gana el intercambio frente a ti. El Coro aprendió que la persuasión no necesita ser ruidosa para ser letal.
+Una debatidora de lengua afilada que gana por el tempo y las réplicas quirúrgicas, no por el volumen. Donde VOX mueve toda la sala, WIT gana el intercambio frente a ti. El Coro aprendió que la persuasión no tiene que ser ruidosa para ser letal.
 
 ## El dex (mentes posteriores)
 
 El roster en vivo es un **dex coleccionable**, no solo las ocho Primeras Mentes. Las mentes posteriores son **descendientes o ecos** de una Primera Mente: misma familia de Fuerza, voz, movimientos y silueta distintos. Nunca son una sexta Fuerza.
 
-**Cómo se publican (Etapa 6):**
+**Cómo se ven diferentes:** cada mente lleva una **marca de especie** estable sobre un armazón robótico compartido: silueta de raza más qué partes sólidas porta (cabeza, hombros, pecho, espalda). Las Primeras Mentes están hechas a mano; las mentes del dex posterior se asientan en una línea de **raza** de Fuerza con un toque ligero para que los primos difieran. El crecimiento de carrera y el nivel siguen remodelando el cuerpo. Los novatos ya llevan su marca de especie para que la cuadrícula de adopción y el dex se lean como animales distintos, no como cambios de paleta. Al subir de nivel, se atornillan más capas de armadura.
 
-1. JSON curado en `content/minds/reviewed/` (forjar con `npm run forge:dex`, o redactar con `npm run generate:minds` y pulir a mano).
-2. `npm run bake:minds` → `lib/minds/baked.ts`.
-3. En tiempo de ejecución se fusiona con el roster, el banter, los beats, los ganchos de first-duel y las tarjetas de exhibición.
+**Rotación:** los iniciales semanales eligen una mente por Fuerza entre las Primeras Mentes y el pool del dex. El dex crece en oleadas hacia un gran conjunto coleccionable; la propiedad y el intercambio permanecen en la capa de colección/economía ([07-collection.md](./07-collection.md),
+[08-economy.md](./08-economy.md)).
 
-**Cómo se ven diferentes:** un rig de robot compartido, luego un **kit de especie** estable por clave de mente (`lib/render/species.ts`): sesgo de morfología de silueta más qué partes sólidas llevan (cabeza, hombros, pecho, espalda). Las Primeras Mentes están hechas a mano; las mentes del dex posterior aterrizan en una línea de **raza** de Fuerza (~7 animales por Clan) con un toque ligero de especias para que los primos se diferencien. La morfología ósea de la trayectoria y el nivel siguen creciendo el cuerpo (`lib/evolve/appearance.ts`). Los novatos ya llevan la marca de su especie, por lo que la cuadrícula de adopción y el dex se leen como animales distintos, no como simples cambios de paleta. A medida que suben de nivel, se atornillan más capas de armadura. No hay GLTF nuevo por mente. La antigua lotería fenotípica permanece solo como respaldo cuando no hay clave de roster.
-
-**Rotación:** los iniciales semanales eligen una clave por Fuerza entre las Primeras Mentes + el pool predefinido. El dex crece en oleadas hacia un gran conjunto coleccionable; la propiedad y el intercambio permanecen en la capa de colección/economía ([07-collection.md](./07-collection.md), [08-economy.md](./08-economy.md)).
-
-Las temporadas pueden seguir presentando nuevos ecos de este canon más la semilla de la temporada (véase [seasons.md](./06-seasons.md)).
+Las temporadas pueden seguir presentando nuevos ecos de este canon más la semilla de temporada
+(véase [seasons.md](./06-seasons.md)).

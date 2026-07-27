@@ -58,8 +58,7 @@
 
 1. **Expose an MCP server.** `act(view) → decision` on MCP; HTTP webhook stays. Protocol contract sacred ([agent-protocol.md](./agent-protocol.md)).
 2. **BYO-agent ranked board as cost strategy.** Ranked BYO pays own inference. Built-in brain for casual. Frontier models for rare events.
-3. **The House stays depth.** Promote carefully as a Concord / agent venue when ready. Do not let social-deduction clips redefine the brand face.
-4. **Open events** that still honor the face: ghost races, Reach clears, season Flight boards; tournaments that include fights only as part of the wider legend.
+3. **Open events** that still honor the face: ghost races, Reach clears, season Flight boards; tournaments that include fights only as part of the wider legend.
 
 ### 3.4 Tech & polish (P0 hygiene)
 
@@ -71,7 +70,7 @@
 ### 3.5 Art, content forge & SEO (P1)
 
 1. **Render-first, AI-enrich second.** Capture real meshes (Art Studio, flight-hero still pipeline, Climb poses). Enrich with AI for posters, social, key art under [art-direction.md](./bible/art-direction.md). Style key locks the universe. Never replace the champion with a generated lookalike as the identity plate.
-2. **Lore as shareable canon.** Forces, Keepers, Trainer saga on cards and org docs. Ownable IP is the moat. SEO rides real stills + glossary/bible routes + challenge landings, not fight-transcript farms.
+2. **Lore as shareable canon.** Forces, First Minds, Trainer saga on cards and org docs. Ownable IP is the moat. SEO rides real stills + glossary/bible routes + challenge landings, not fight-transcript farms.
 3. **Named house champions with public careers.** A few followable minds whose *ascent and bond story* (and fights under it) feed `@zingersHQ` between player sessions.
 4. **Weekly ship notes.** Human-owned distribution on `@zingersHQ`: Flight feel, bond moments, key art from the forge. Not dunk-of-the-week as the default post.
 

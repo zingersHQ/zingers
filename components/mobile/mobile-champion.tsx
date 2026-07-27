@@ -329,7 +329,7 @@ export function MobileChampion(_props: { onNavigate?: (tab: string) => void; ini
                 cursor: "pointer",
               }}
             >
-              Retire to the House
+              Retire
             </button>
           ) : (
             <p className="mono" style={{ fontSize: 10, color: "var(--muted2)", margin: "10px 0 0", letterSpacing: 0.3 }}>

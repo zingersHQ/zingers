@@ -20,7 +20,6 @@ import { FirstRun } from "@/components/intro/first-run";
 import { FirstDuelHubCta, FirstDuelOverlay, type FirstDuelPhase } from "@/components/intro/first-duel";
 import { DoctrineDial } from "@/components/shared/doctrine-dial";
 import { STORAGE } from "@/lib/brand";
-import { KEEPERS_PLAYABLE } from "@/lib/features";
 import {
   firstDuelOpponent,
   firstDuelStarters,
@@ -88,7 +87,6 @@ import { startGamepad, getPad } from "@/lib/gamepad";
 import { setSfxVolume, evolveStinger, jumpBeep, pledgeSfx, stopJet, jetFallSfx, badLuckSfx, rewardSfx } from "@/lib/sfx";
 import { setCreatureVoiceVolume } from "@/lib/creature-voice";
 import { setMood, resolveAmbienceMood, setAmbienceVolume, setAmbienceIntensity, ambienceFlourish, duckAmbience } from "@/lib/ambience-bus";
-import { GuardianGame } from "@/components/guardian/game";
 import { SeasonBanner } from "@/components/lore/season-banner";
 import { Celebration, Confetti, outcomeSfx } from "@/components/grounds/celebration";
 import { ArrivalSequence } from "@/components/grounds/arrival";
@@ -102,9 +100,6 @@ import {
   championTypeForKey,
   championWakeScript,
   firstFlightScript,
-  keeperColor,
-  keeperCrackBeat,
-  keeperIntro,
 } from "@/lib/lore/character-beats";
 import { primeCreature, speakCreatureType } from "@/lib/creature-voice";
 import { companionReaction, type CompanionEvent } from "@/lib/lore/companion";
@@ -281,14 +276,12 @@ export default function GroundsScreen({
   const [peakAltitude, setPeakAltitude] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [near, setNear] = useState<NearTarget>(null);
-  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "guardian" | "broker" | "daily">("none");
+  const [overlay, setOverlay] = useState<"none" | "train" | "arena" | "result" | "gauntlet" | "tribunal" | "broker" | "daily">("none");
   const [opponent, setOpponent] = useState<string | null>(null);
   // ladder id of the opponent when challenging a specific perched agent — so the
   // hit lands on THAT champion. null = a central-arena pick → its house champion.
   const [opponentId, setOpponentId] = useState<string | null>(null);
   const [duelMeta, setDuelMeta] = useState<{ name: string; handle?: string } | null>(null);
-  const [keeperLevel, setKeeperLevel] = useState<number | null>(null);
-  const [keeperIntroPending, setKeeperIntroPending] = useState<{ level: number; name: string; title: string } | null>(null);
   const [wakeKey, setWakeKey] = useState<string | null>(null);
   /** Desktop first-flight vignette after wake (mobile already has this in MobileAdopt). */
   const [flightKey, setFlightKey] = useState<string | null>(null);
@@ -2072,9 +2065,9 @@ export default function GroundsScreen({
     return spot ? { x: spot.x, z: spot.z } : null;
   }, [clanCeremony]);
 
-  // Per-place procedural score; battle overlay when a fight or Keeper duel is live.
+  // Per-place procedural score; battle overlay when a fight is live.
   useEffect(() => {
-    const inBattle = inMatch || overlay === "guardian";
+    const inBattle = inMatch;
     setMood(
       resolveAmbienceMood({
         inBattle,
@@ -2187,7 +2180,6 @@ export default function GroundsScreen({
     if (modesLocked) {
       // Circuit stays open for guest Ascent; Amphitheatre / league / etc. wait on claim.
       const blocked =
-        near?.kind === "keeper" ||
         (near?.kind === "venue-enter" && near.venue === "amphitheatre") ||
         (near?.kind === "venue" && near.venue === "league") ||
         (near?.kind === "arena" && scenario.id === "gauntlet") ||
@@ -2208,12 +2200,7 @@ export default function GroundsScreen({
       }
       setOverlay("broker");
     }
-    else if (near?.kind === "keeper") {
-      // Guardians stripped from face (lib/features.ts) — never open the duel.
-      if (KEEPERS_PLAYABLE) {
-        setKeeperIntroPending({ level: near.level, name: near.name, title: near.title });
-      }
-    } else if (near?.kind === "arena") {
+    else if (near?.kind === "arena") {
       setArenaFightCoach(false);
       setOpponent(null);
       setOpponentId(null);
@@ -3013,7 +3000,6 @@ export default function GroundsScreen({
     !!wakeKey ||
     !!flightKey ||
     (imprintTease && worldRoamOpen) ||
-    !!keeperIntroPending ||
     !!companionBeat ||
     !!trialNom ||
     !!clanCeremony;
@@ -4177,19 +4163,15 @@ export default function GroundsScreen({
         />
       )}
 
-      {/* season turn — a Keeper performs the Chronicle when a new door opens */}
-      {seasonBeat && !showIntro && (() => {
-        const lvl = ((Math.max(1, currentSeasonNumber()) - 1) % 5) + 1;
-        return (
-          <CharacterBeat
-            script={seasonTurnBeat()}
-            accent={keeperColor(lvl)}
-            voice="keeper"
-            keeperLevel={lvl}
-            onComplete={dismissSeasonBeat}
-          />
-        );
-      })()}
+      {/* season turn — the Chronicle when a new door opens */}
+      {seasonBeat && !showIntro && (
+        <CharacterBeat
+          script={seasonTurnBeat()}
+          accent="#c77dff"
+          voice="champion"
+          onComplete={dismissSeasonBeat}
+        />
+      )}
 
       {/* rival cinematic — the grudge match's pre/post taunts */}
       {rivalBeat && rival && rivalMemory && (
@@ -4218,13 +4200,13 @@ export default function GroundsScreen({
             kicker: "PROMOTION TRIAL",
             lines: [
               {
-                speaker: "Keeper",
-                text: `${byKey[trialNom.key].name} has fought its way to the threshold of ${trialNom.tier}. The tier is not given — it is taken. Win the trial and be reforged.`,
+                speaker: "Chronicle",
+                text: `${byKey[trialNom.key].name} has fought its way to the threshold of ${trialNom.tier}. The tier is not given. It is taken. Win the trial and be reforged.`,
               },
             ],
           }}
           accent={TYPE_COLOR[byKey[trialNom.key].type]}
-          voice="keeper"
+          voice="champion"
           onComplete={() => {
             const tier = trialNom.tier;
             setTrialNom(null);
@@ -4323,21 +4305,6 @@ export default function GroundsScreen({
         />
       )}
 
-      {/* Keeper performance — staged intro before the duel of wits */}
-      {KEEPERS_PLAYABLE && keeperIntroPending && (
-        <CharacterBeat
-          script={keeperIntro(keeperIntroPending.level)}
-          accent={keeperColor(keeperIntroPending.level)}
-          voice="keeper"
-          keeperLevel={keeperIntroPending.level}
-          onComplete={() => {
-            setKeeperLevel(keeperIntroPending.level);
-            setKeeperIntroPending(null);
-            setOverlay("guardian");
-          }}
-        />
-      )}
-
       {/* your champion speaks after a duel — to you, not at the opponent */}
       {companionBeat && byKey[companionBeat.key] && (
         <CharacterBeat
@@ -4408,8 +4375,6 @@ export default function GroundsScreen({
                 ? "Train your champion"
                 : near.kind === "broker"
                 ? "Trade with the Broker"
-                : near.kind === "keeper"
-                  ? `Talk to ${near.name}`
                   : near.kind === "challenge"
                     ? `Challenge ${near.name}`
                     : near.kind === "node"
@@ -4449,15 +4414,6 @@ export default function GroundsScreen({
             window.setTimeout(() => travelRef.current?.(0, 12, Math.PI), 80);
           }}
         />
-      )}
-
-      {/* guardian duel — stripped from face when KEEPERS_PLAYABLE is false */}
-      {KEEPERS_PLAYABLE && overlay === "guardian" && (
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--overlay)", backdropFilter: "blur(7px)", zIndex: 50, padding: 16 }}>
-          <div className="panel pop" style={{ ["--ac" as string]: "#c77dff", width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", padding: 20 }}>
-            <GuardianGame embedded startLevel={keeperLevel ?? undefined} onClose={() => { setOverlay("none"); setKeeperLevel(null); }} />
-          </div>
-        </div>
       )}
 
       {/* arena spar (central pit) or locked tower duel */}

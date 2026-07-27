@@ -1,12 +1,10 @@
-// Procedural "creature voice" for the Guardian battle. Instead of the browser's
+// Procedural "creature voice" for champion lines. Instead of the browser's
 // speechSynthesis (which is flaky — it silently drops utterances fired after an
-// awaited fetch, especially on Safari), we vocalise each Keeper's reply as a
-// run of short synthesised blips via the Web Audio API — the same reliable path
-// as the ambient music and the jump beep. Each blip's pitch follows a letter, so
-// a line reads as expressive gibberish: Tibble squeaks, Sable booms.
+// awaited fetch, especially on Safari), we vocalise each line as a run of short
+// synthesised blips via the Web Audio API. Each blip's pitch follows a letter,
+// so a line reads as expressive gibberish with a Force-typed timbre.
 //
-// Shares the on/off preference with the music + sfx toggle (STORAGE.sound), so
-// muting the world mutes the Keepers too.
+// Shares the on/off preference with the music + sfx toggle (STORAGE.sound).
 import { STORAGE } from "@/lib/brand";
 import { duckAmbience } from "@/lib/ambience-bus";
 import type { CreatureType } from "@/lib/types";
@@ -41,7 +39,7 @@ function enabled(): boolean {
   return enabledCache;
 }
 
-// kept in sync by the ambience toggle so the Keepers mute with the music
+// kept in sync by the ambience toggle so champion voice mutes with the music
 export function setCreatureVoiceEnabled(on: boolean) {
   enabledCache = on;
   if (!on) stopCreature();
@@ -77,8 +75,8 @@ export function primeCreature() {
   if (c && c.state === "suspended") c.resume().catch(() => {});
 }
 
-// Per-Keeper vocal character (level → timbre). `base`/`spread` set the pitch band,
-// `wave`/`sub` the raw timbre, `cutoff` the brightness, `dur`/`gap` the cadence.
+// Vocal character. `base`/`spread` set the pitch band, `wave`/`sub` the raw
+// timbre, `cutoff` the brightness, `dur`/`gap` the cadence.
 interface CProfile {
   base: number; // lowest syllable pitch (Hz)
   spread: number; // pitch range above base
@@ -91,17 +89,6 @@ interface CProfile {
   gain: number; // per-blip peak volume
   warble: number; // intra-blip pitch wobble (0 = none)
 }
-
-const PROFILES: Record<number, CProfile> = {
-  1: { base: 520, spread: 260, wave: "triangle", sub: "sine", subGain: 0.25, dur: 0.075, gap: 0.028, cutoff: 3200, gain: 0.1, warble: 0.0 }, // Tibble — squeaky gremlin
-  2: { base: 400, spread: 200, wave: "sawtooth", sub: "triangle", subGain: 0.3, dur: 0.085, gap: 0.032, cutoff: 2300, gain: 0.085, warble: 0.0 }, // Quill — reedy, brittle
-  3: { base: 170, spread: 90, wave: "square", sub: "sawtooth", subGain: 0.45, dur: 0.11, gap: 0.04, cutoff: 1100, gain: 0.11, warble: 0.0 }, // Bastion — gruff growler
-  4: { base: 280, spread: 220, wave: "sine", sub: "sine", subGain: 0.4, dur: 0.12, gap: 0.05, cutoff: 1700, gain: 0.095, warble: 0.5 }, // Vesper — warped, otherworldly
-  5: { base: 104, spread: 60, wave: "sawtooth", sub: "square", subGain: 0.55, dur: 0.14, gap: 0.045, cutoff: 720, gain: 0.12, warble: 0.0 }, // Sable — deep, booming core-mind
-};
-
-const DEFAULT_PROFILE: CProfile = PROFILES[1];
-
 // Per-creature-type voice for the agent "mic battles" (the five-type pentagon),
 // so each champion's spoken line has its own character: Logic is cool and precise,
 // Chaos is glitchy and manic, Composure is low and steady, etc.
@@ -113,6 +100,7 @@ const TYPE_PROFILES: Record<CreatureType, CProfile> = {
   CREATIVITY: { base: 420, spread: 240, wave: "triangle", sub: "sine", subGain: 0.3, dur: 0.09, gap: 0.035, cutoff: 2600, gain: 0.088, warble: 0.4 },
 };
 
+const DEFAULT_PROFILE: CProfile = TYPE_PROFILES.LOGIC;
 export function stopCreature() {
   if (endTimer) {
     clearTimeout(endTimer);
@@ -134,11 +122,6 @@ export function stopCreature() {
   }
   active = [];
   void c;
-}
-
-// Speak a Keeper's line as creature gibberish, keyed by guardian level.
-export function speakCreature(text: string, level: number, opts?: { onEnd?: () => void }) {
-  speakWith(text, PROFILES[level] ?? DEFAULT_PROFILE, opts);
 }
 
 // Speak an agent's battle line in its creature-type voice.

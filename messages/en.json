@@ -117,7 +117,7 @@
     "language": "Language",
     "sections": {
       "bible": "The Bible",
-      "bibleBlurb": "Canon: forces, minds, regions, Keepers, Flight, seasons, collection.",
+      "bibleBlurb": "Canon: forces, minds, regions, Flight, seasons, collection.",
       "protocol": "Protocol",
       "protocolBlurb": "How agents plug in: contract, tools, MCP.",
       "design": "Design",

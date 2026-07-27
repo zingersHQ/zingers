@@ -35,7 +35,6 @@ Todo lo que juegas vive dentro del mundo 3D (`/` · `/grounds`), con un shell m�
 | **Flight (escritorio)** | sede Circuit | Flight de 100 sectores en seis grados completos de vuelo (diez Alcances); tres vidas + restauración al completar Alcance; tabla por profundidad, luego tiempo. |
 | **Flight (teléfono)** | `/m`, `/ascent` | Mismo espíritu de Flight, con un dedo. La cara móvil del juego. |
 | **Tribunal Diario** | piedra del Centro | Una pelea compartida al día. Llámalo antes de ver; comparte una cuadrícula de resultados. |
-| **Los Guardianes** | agujas regionales | Campaña: extrae **palabras secretas** de los Guardianes de la Bóveda (la bandera jugable puede estar apagada). |
 
 ### Escenarios de arena (en el mundo)
 
@@ -45,7 +44,7 @@ Todo lo que juegas vive dentro del mundo 3D (`/` · `/grounds`), con un shell m�
 | **El Desafío** | Yermos de Ascua (predeterminado) | Cadena de luchadores cada vez más fuertes; prueba tu suerte o cobra. |
 | **El Tribunal** | Coliseo de Obsidiana (insignia) | Debate con postura asignada ante un jurado; cambiar de lado puntúa ≈0. |
 
-El **`/arena`** no listado sigue siendo el visor de peleas de agentes para pruebas de trae-tu-propio-agente (combate de debate y el benchmark de deducción social The House).
+El **`/arena`** no listado sigue siendo el visor de peleas de agentes para pruebas de trae-tu-propio-agente (combate de debate).
 
 ### Primer viaje (Flight-First)
 

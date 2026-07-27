@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Legacy — retirement + heirlooms (docs/long-game.md Stage 4).
 //
-// A retired champion leaves the active slot, joins the House memory, and bequeaths
+// A retired champion leaves the active slot, joins legacy memory, and bequeaths
 // one heirloom to the next mind you claim. Client localStorage for v1 (same
 // pattern as RivalMemory) — numbers and strings, no new art.
 // ─────────────────────────────────────────────────────────────────────────────

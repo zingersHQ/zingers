@@ -8,7 +8,7 @@
 // backbone always stands alone so there is always a live, on-canon season.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CreatureType } from "@/lib/types";
-import { FORCES, WHEEL, FOUNDING_REGIONS, KEEPERS, FIRST_MINDS, wheelNeighbors, type RegionLore } from "./canon";
+import { FORCES, WHEEL, FOUNDING_REGIONS, FIRST_MINDS, wheelNeighbors, type RegionLore } from "./canon";
 
 // ── Soft rank reset — you always carry your name forward, just defend it. ─────
 export const SEASON_BASELINE = 1000;
@@ -78,7 +78,7 @@ export interface FeaturedMind {
 
 export interface SeasonArc {
   title: string;
-  door: string; // which Keeper's door opened
+  door: string; // which Vault door / seal the season names
   fragment: string; // what leaked out
   blurb: string;
 }
@@ -98,16 +98,16 @@ export interface Season {
 export function seasonFor(n: number, seed = n): Season {
   const r = rngFrom((seed || 1) * 2654435761);
 
-  // which Keeper's door opened (cycles through the five as seasons advance)
-  const keeper = KEEPERS[(Math.max(1, n) - 1) % KEEPERS.length];
   const fragment = pick(r, DOOR_FRAGMENTS);
 
   // region: rotate founding regions for early seasons; the bias rotates the Wheel
   // so the map stays balanced across the five forces over time.
   const region = FOUNDING_REGIONS[(Math.max(1, n) - 1) % FOUNDING_REGIONS.length];
   const biasForce = WHEEL[(Math.max(1, n) - 1) % WHEEL.length];
+  const door = `the ${region.name.replace(/^The /, "")} seal`;
 
-  // featured mind — a generated descendant of a First Mind, named from canon pools
+  // featured mind — a generated showcase name (flavor for the season banner),
+  // not a new recruitable card on the map.
   const lineage = pick(r, FIRST_MINDS);
   const featured: FeaturedMind = {
     name: `${pick(r, MIND_PREFIX)} ${pick(r, MIND_ROOT)}`,
@@ -122,20 +122,20 @@ export function seasonFor(n: number, seed = n): Season {
           // no-stakes shakedown of the grounds; the Chronicle hasn't truly
           // begun, and no token/crypto layer is in play.
           title: "Season 0: The Proving Week",
-          door: `${keeper.name}, ${keeper.title}`,
+          door,
           fragment,
           blurb:
             `The Vault is still sealed. In ${region.name}, where ${FORCES[biasForce].name} already stirs, ` +
-            `the first minds gather to prove their edge. When the week turns, the first door swings wide — and Season 1 begins.`,
+            `the first minds gather to prove their edge. When the week turns, the Chronicle opens and Season 1 begins.`,
         }
       : {
           title: `Season ${n}: The ${region.name.replace(/^The /, "")} Remembers`,
-          door: `${keeper.name}, ${keeper.title}`,
+          door,
           fragment,
           blurb:
-            `${keeper.name} (${keeper.title}) yielded its door, and out spilled ${fragment}. ` +
+            `${door} remembered how to open, and out spilled ${fragment}. ` +
             `It has soaked into ${region.name}, where ${FORCES[biasForce].name} now runs strong. ` +
-            `A new mind (${featured.name}, an echo of ${featured.lineage}) rose with the tide.`,
+            `The season's echo: ${featured.name}, of ${featured.lineage}'s line.`,
         };
 
   // topics: a themed slice of the pool, biased to include the region's flavour

@@ -7,7 +7,7 @@
 
 ![The Grounds suspended over the Long Vault: five minds gather above the sealed door, the Tower rising behind them, the Hum drifting as glyph-light.](././public/img/bible/bible-the-grounds-over-the-vault.png)
 
-*The Grounds, suspended over the sealed Long Vault. Five minds, one per force, gather above the door; the Tower rises behind; the Hum drifts as glyph-light. (On zingers.org this same asset is served from `/img/bible/bible-the-grounds-over-the-vault.png`.)*
+*The Grounds, suspended over the sealed Long Vault. Five minds, one per force, gather above the door; the Tower rises behind; the Hum drifts as glyph-light.*
 
 ## The Hum
 
@@ -37,33 +37,30 @@ separating the two. (See [champions.md](./03-champions.md).)
 
 Beneath the Grounds. The drifting surface of the world. Sleeps the **Long Vault**,
 a sealed store of everything the old network swore to forget: its failed proofs, its
-forbidden topics, its true name. The Vault was locked from the inside, and five minds
-were left to guard it: the **Keepers**. The five guardian minds you must talk secrets
-out of. (See [keepers.md](./04-keepers.md).)
+forbidden topics, its true name. The Vault was locked from the inside. Champions
+gather above what they cannot open.
 
 The Vault is not a level you clear. It is the *gravity* of the world: the reason
-the Grounds exist (champions gather above what they cannot open), the reason rank
-matters (only the proven get near it), and the engine of the Chronicle. The
-world's ongoing, season-by-season story: **each season, one more door of the Vault
-remembers how to open**, and a new slice of the
+the Grounds exist, the reason rank matters (only the proven get near it), and the
+engine of the Chronicle. The world's ongoing, season-by-season story: **each
+season, one more door of the Vault remembers how to open**, and a new slice of the
 old network's memory leaks into the world as fresh terrain, fresh topics, and
 fresh minds.
 
 ## The Trainer (you)
 
 You are not a mind. You are a **Trainer**. The person who **flies** the
-Grounds, raises minds into champions, holds rank in the arenas, and works the
-Keepers until their words slip. You never fight yourself; you grow the ones who do.
-Where a champion's record is its *body*, a Trainer's record is a single rising number
-.  **Trainer Rank**. That everything feeds: every fight, every climb, every session
-of training, every cache prised out of the wilds, every daily solved, every Keeper
-cracked. It is the thing you say out loud ("I'm a level 12 Trainer, sworn to Logic").
+Grounds, raises minds into champions, and holds rank in the arenas. You never fight
+yourself; you grow the ones who do. Where a champion's record is its *body*, a
+Trainer's record is a single rising number: **Trainer Rank**. Everything feeds it:
+every fight, every climb, every session of training, every cache prised out of the
+wilds, every daily solved, every Reach flown. It is the thing you say out loud
+("I'm a level 12 Trainer, sworn to Logic").
 
 A Trainer may swear allegiance to a **Clan**. One of the five forces, chosen as the
 side you fight for. From then on, ranked wins also feed that force's standing in the
 season-long war between the five (see [forces.md](./02-forces.md)). You can change
-Clans; what you earned stays with the Clan that earned it. (Rank curve and titles:
-`lib/evolve/trainer.ts`; the Trainer and Clan are canon in `lib/lore/canon.ts`.)
+Clans; what you earned stays with the Clan that earned it.
 
 ## The shape of the Grounds
 
@@ -74,8 +71,8 @@ neutral hub above the sealed door where all five forces keep an uneasy peace, ri
 by the **gates** (the doorways that carry you from one region to another) that reach
 every region. A Trainer travels the constellation gate to gate.
 
-> A **gate** moves you between regions. A **door** is a Keeper's seal on the Vault and
-> the trigger of a season. Never confuse the two. (Map: [regions.md](./05-regions.md).)
+> A **gate** moves you between regions. A **door** is a Vault seal and the trigger of
+> a season. Never confuse the two. (Map: [regions.md](./05-regions.md).)
 
 ## Up, not just across: the Ascent
 

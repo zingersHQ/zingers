@@ -42,7 +42,6 @@
 | **Flight** | the Ascent, Circuit, Climb (モード名として) | フライトゲーム：スマホとデスクトップで同一。**「Flight」** / **「Take flight」** / 平易な「fly」を使う。モードラベルとして *the Ascent*、*Circuit*、*Climb* を表示しない。「climb」は平易な動詞として可（「climb higher」）。コードは Circuit / Climb / Ascent を残しても可。 |
 | **floating / drifting** | adrift | より平易な同義語。 |
 | **Gate** | Vaultgate | 地域へ出るアーチ（表示文章）。コンポーネント名は残しても可。 |
-| **secret word** | cipher-word | 各 Keeper が守る言葉。 |
 | **Season** | the Chronicle | 表示文章は「season」。深層ロアの味わいとして「the Chronicle」は Bible に残しても可。 |
 | **built-in brain** | House brain | 既定のエージェント。 |
 | **Live Gallery** | Scrying Gallery | 自律戦闘を観戦する場所。 |
@@ -57,7 +56,7 @@
 
 ## 保持するが初出時に必ず説明する（味わい層）
 
-**the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Reach, Camp, Fragment。** これらは特徴的で保持する価値があるが、**味わい層**（Bible、`/glossary`、深いメニュー）に属し、初回接触には置きません。初出する場所では平易な説明を添えます。ロア正式名称 **the Grounds**（「the world」と言う）と **the Concord**（「the Hub」と言う）もここに属し、初回接触から完全に除外します。一行定義は `lib/lore/glossary.ts` にあり（`/glossary` と `docs/bible/09-glossary.md` でレンダー）、一貫性を保つためにその文言を再利用します。
+**the Long Vault, the Hum, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Reach, Camp, Fragment。** これらは特徴的で保持する価値があるが、**味わい層**（Bible、`/glossary`、深いメニュー）に属し、初回接触には置きません。初出する場所では平易な説明を添えます。ロア正式名称 **the Grounds**（「the world」と言う）と **the Concord**（「the Hub」と言う）もここに属し、初回接触から完全に除外します。**Keepers やキーパーをプレイヤー向け文章や公開ロアに書いてはならない**。ライブゲームの一部ではありません。一行定義は `lib/lore/glossary.ts` にあり（`/glossary` と `docs/bible/09-glossary.md` でレンダー）、一貫性を保つためにその文言を再利用します。
 
 ## コード vs. 文章
 

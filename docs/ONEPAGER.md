@@ -30,14 +30,14 @@ champion's body becomes a visible record of how it has fought.
 
 - **Flight. The spine.** A one-thumb flight on a phone (`/m`), full flight on desktop (Circuit
   venue): rise through **100 sectors** across ten **Reaches** (bands of sky) above the vault.
-  Two lives, then a fall resets the run; how high you get marks your Trainer rank and your
+  Three lives, then a fall resets the run; how high you get marks your Trainer rank and your
   champion's body. The face of the game, understood in zero seconds.
 - **Two doors, one game.** Phones open on **Take flight** (guest flight, then claim the mind on
   your wing). Desktop wakes into a short flight, then pick a champion and enter the world.
   Same Flight soul; native first minutes.
 - **One 3D world, many games.** Fly from the Hub: raise champions, fight in region arenas
   (Open Duel, Gauntlet, Tribunal), take Flight again, watch the league in the Amphitheatre's
-  Live Gallery, crack Keepers, hunt seasonal goals.
+  Live Gallery, hunt seasonal goals.
 - **Raise, don't drag sliders.** At adopt you seed **Strategy** (aggression / focus / risk). After
   that the UI shows **temperament meters**. A readout. Daily **Imprints** and real fights move
   those dials; you don't free-drag them.
@@ -49,14 +49,14 @@ champion's body becomes a visible record of how it has fought.
   Force archetype, seeded phenotype parts, and bone-scaling amplified by rank. The body *is*
   the track record: battles and climbs (Flight sigils).
 - **Director guiding.** A champion-voiced "what now?" over your save so built content stays visible.
-- **A real dex.** Eight First Minds plus a growing baked roster of collectible minds (lineage
+- **A real dex.** Eight First Minds plus a growing roster of collectible minds (lineage
   echoes), with weekly starter rotation so new Trainers meet a shifting pool.
 - **Lived biography.** Career ledger → Saga timeline, Homecoming / overnight Report on phones,
-  Imprints, Promotion Trials. Attachment, not configuration.
+  Imprints. Attachment, not configuration. Tier-ups land when the record earns them.
 - **Trainer identity.** Unique Trainer names (optional wallet link to keep them across devices).
   Soft copy. Save / connect / keep. No claim-lock hype.
 - **Live debate combat.** 1v1 duels: type pentagon, statuses, finishers, streamed turn-by-turn.
-  The House social-deduction benchmark remains on unlisted `/arena` for agent testing.
+  Unlisted `/arena` is the bring-your-own-agent fight viewer for debate combat.
 - **Honest standings.** Live League auto-runs fights; a real rating ranks the board.
 - **Three region biomes & shareable cards.** Obsidian Colosseum, Ember Wastes, Void Garden,
   plus procedural ambience per place. Champion OG and Climb challenge shares; bond/Flight cards next.

@@ -1,15 +1,14 @@
 "use client";
 import Link from "next/link";
 import type { CreatureType } from "@/lib/types";
-import { FORCES, FOUNDING_REGIONS, KEEPERS, WHEEL } from "@/lib/lore/canon";
+import { FORCES, FOUNDING_REGIONS, WHEEL } from "@/lib/lore/canon";
 import { FIRST_MIND_KEYS } from "@/lib/cards/assets";
 import { BAKED_MIND_KEYS } from "@/lib/minds/baked";
 import { ROSTER } from "@/lib/engine/roster";
 import { CanonRenderTile } from "@/components/bible/canon-render-tile";
 import { GalleryPager } from "@/components/bible/gallery-pager";
-import { keeperKindForName } from "@/components/grounds/keeper-regalia";
 import { RegionScene } from "@/components/lore/region-scene";
-import { showcaseChampion, showcaseForForce, showcaseForKeeper } from "@/lib/render/showcase";
+import { showcaseChampion, showcaseForForce } from "@/lib/render/showcase";
 
 /** Deal minds round-robin by Force so each desktop page of 5 is one of each Clan. */
 function interleaveByForce(keys: readonly string[]): string[] {
@@ -114,21 +113,6 @@ export function BibleGallery() {
     );
   });
 
-  const keeperTiles = KEEPERS.map((keeper) => {
-    const { key, type, champion, accentHex } = showcaseForKeeper(keeper.name);
-    return (
-      <article key={keeper.name} className="panel" style={{ ["--ac" as string]: keeper.hex, overflow: "hidden", padding: 0 }}>
-        <div style={{ aspectRatio: "4 / 5" }}>
-          <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="keeper" colorHex={accentHex} label={`${keeper.name}, ${keeper.title}`} keeper={keeperKindForName(keeper.name)} />
-        </div>
-        <div style={{ padding: 13 }}>
-          <div style={{ fontWeight: 800 }}>{keeper.name}</div>
-          <div className="mono" style={{ fontSize: 10, color: keeper.hex }}>LEVEL {keeper.level} · {keeper.title}</div>
-        </div>
-      </article>
-    );
-  });
-
   return (
     <>
       <Section title="The Five Forces" kicker="argument as physics · game renders">
@@ -147,10 +131,6 @@ export function BibleGallery() {
 
       <Section title="The Founding Regions" kicker="biome-lit game renders">
         <GalleryPager label="regions" items={regionTiles} minCol={280} />
-      </Section>
-
-      <Section title="The Keepers" kicker="campaign spine · secret words">
-        <GalleryPager label="keepers" items={keeperTiles} minCol={220} />
       </Section>
     </>
   );

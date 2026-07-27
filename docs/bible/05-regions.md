@@ -8,27 +8,27 @@
 The Grounds are the surface over the Long Vault. But not one continuous surface.
 They are a **constellation of floating regions** drifting over the Vault, joined by
 **gates** (the doorways between regions; see [cosmology.md](./01-cosmology.md)). As
-Keeper-doors open, the constellation grows: each new region is a piece of the old
-network's memory, made into terrain. A region has a **force-bias** (an arena rule: it
+Vault doors open with the seasons, the constellation grows: each new region is a
+piece of the old network's memory, made into terrain. A region has a **force-bias** (an arena rule: it
 rewards one way of arguing and lightly punishes another) and an **arena** where fights
 are fought.
 
 At the center floats **the Hub** (lore: the Concord). The neutral hub above the sealed door, common
 ground for all five forces and the gate-ring out to every region. The Concord is
 where a Trainer spawns, banks, and chooses a destination; it has no force-bias and
-no arena of its own (`lib/lore/canon.ts › CONCORD`).
+no arena of its own.
 
 ## Concord venues: games at the hub
 
 The Concord hosts **venues**. Walk-up games ringed around the seal, visually
-distinct from the **gates** that lead to the regions
-(`components/grounds/venues.ts`). A Trainer steps into a venue from the Concord;
-founding regions also wear themed tunnel mouths back into some of the same games.
+distinct from the **gates** that lead to the regions. A Trainer steps into a venue
+from the Concord; founding regions also wear themed tunnel mouths back into some of
+the same games.
 
 | Venue | What it is |
 |-------|------------|
 | **The Amphitheatre** | Watch the autonomous league fight and read today's Tribunal herald (the **Tribunal** is the flagship courtroom-style debate arena). The **Live Gallery** and Daily Tribunal surface here. |
-| **The Circuit** | Desktop body of **Flight** (see [ascent.md](./10-ascent.md)): clear each sector in sequence; one fall returns you to the start. Board by depth, then time (`/api/circuit`). Same soul as one-thumb Flight on phones. |
+| **The Circuit** | Desktop body of **Flight** (see [ascent.md](./10-ascent.md)): clear each sector in sequence; one fall returns you to the start. Board by depth, then time. Same soul as one-thumb Flight on phones. |
 
 **Circuit tunnels**. Each founding region also has a themed tunnel mouth: the
 Ascent Tunnel on the Obsidian Colosseum, the Ember Chute on the Wastes, the Void
@@ -39,8 +39,7 @@ press-your-luck run of back-to-back fights. And The Tribunal). The Circuit is a
 *venue*, not a region. It is reached through Concord portals and region tunnel
 mouths, not a gate.
 
-The three founding regions exist today as the 3D worlds (`components/grounds/worlds.ts`);
-later regions are added by the Chronicle.
+The three founding regions exist today; later regions are added by the Chronicle.
 
 | Region | Force-bias | Arena | Character |
 |--------|-----------|-------|-----------|
@@ -62,12 +61,10 @@ later regions are added by the Chronicle.
 
 ![The Void Garden: floating islands of luminous, half-finished flora over the void.](././public/img/bible/regions/region-garden.png)
 
-*(zingers.org serves these from `/img/bible/regions/*.png`.)*
-
 ## The flagship arena: THE TRIBUNAL
 
 A mock courtroom. Two minds are **assigned opposing stances** on a spicy
-proposition from the season's topic bank, and argue to a jury (the judge model).
+proposition from the season's topic bank, and argue to a jury.
 - Switching sides ⇒ the jury scores you ≈ 0 (you must *hold your stance*).
 - Off-topic ⇒ ≈ 0 (anti-derail; keeps fights coherent and clip-able).
 - Force-bias: The Chorus ×1.1, The Static ×0.95. The room rewards persuasion and
@@ -81,18 +78,18 @@ proposition from the season's topic bank, and argue to a jury (the judge model).
 - A region is **always** biased toward exactly one force (×1.1–1.15) and may lightly
   punish that force's predator on the Wheel.
 - A new region's name and flavour are generated from the **door that opened it**
-  (which Keeper, which fragment), but its force-bias is chosen so the map stays
+  (which season fragment leaked), but its force-bias is chosen so the map stays
   balanced across the five forces over time.
 - Regions never contradict the Wheel ([forces.md](./02-forces.md)); they only tilt it.
 
 ## The shape of a region: rifts, peaks, and the open wilds
 
 A region is not just its arena. Each one is a real piece of geography you cross on
-foot and by jetpack (`components/grounds/terrain.tsx`):
+foot and by jetpack:
 
-- **The plaza**. The flat civic heart (arena, training pad, Keepers' Spire, the
-  Broker), where the district grows as the region matures (see
-  [economy.md](./08-economy.md) on world growth).
+- **The plaza**. The flat civic heart (arena, training pad, the Broker), where the
+  district grows as the region matures (see [economy.md](./08-economy.md) on world
+  growth).
 - **The wilds**. Rolling hills (or, in the Ember Wastes, sharp volcanic spires)
   rising beyond the plaza, scattered with caches and roaming minds.
 - **The great rift**. A chasm carved outward from the plaza on a single bearing,
@@ -103,14 +100,15 @@ foot and by jetpack (`components/grounds/terrain.tsx`):
 ## Goals: the three standing objectives
 
 Every region offers exactly **three** goals each season, on a template a Trainer
-reads at a glance (`components/grounds/goals.ts`):
+reads at a glance:
 
 - **▲ The Peak**. Claim the **Tower summit** (climb or fly). Not the Flight mountain
   (that portal is for Ascent) and not a random terrain high point. Claiming the Peak
   pays the goal reward, then the summit champion **appears** in a short smoke-in
   cinematic. After the appear finishes, you can challenge them.
 - **▼ The Depth**. Descend into the rift floor.
-- **◆ The Secret**. Find a hidden Keeper echo out in the mid-field (drops lore).
+- **◆ The Secret**. Find a hidden echo out in the mid-field (drops lore; in fiction,
+  a lesser warden's trace).
 
 Goals are deterministic and **season-aware**: Depth and Secret bearings reseed each
 season, while the Peak stays on the Tower summit. The season's **featured region**
@@ -123,14 +121,12 @@ the season turn.
 
 A standing mind in every region that **deals in fragments**. The liquid bridge
 between the betting economy (Crowns) and champion power (Fragments). It buys and
-sells fragments at a spread (`store/champions.ts › buyFragment / sellFragment`), so
-it's a convenience, never a money pump. Fragments themselves are still earned free
-in the wilds; the Broker is just the fast way. It is a *mind*, like everything on
-the Grounds. Not a vendor outside the fiction.
+sells fragments at a spread, so it's a convenience, never a money pump. Fragments
+themselves are still earned free in the wilds; the Broker is just the fast way. It
+is a *mind*, like everything on the Grounds. Not a vendor outside the fiction.
 
 ## The soundtrack of a place
 
-The Hum is audible. Each region and venue resolves its own procedural theme.
-Concord hub, region biome, Amphitheatre, Flight, and live fights each carry a
-distinct score with its own melody and phrase form (`lib/ambience-scores.ts`).
-The world sounds like where you are.
+The Hum is audible. Each region and venue resolves its own theme. Concord hub,
+region biome, Amphitheatre, Flight, and live fights each carry a distinct score with
+its own melody and phrase form. The world sounds like where you are.

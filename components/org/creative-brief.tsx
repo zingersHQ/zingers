@@ -3,9 +3,10 @@
 import { useCallback, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { orgCanonical } from "@/lib/org/hosts";
-import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
+import { FORCES, FOUNDING_REGIONS } from "@/lib/lore/canon";
 import { FIRST_MIND_KEYS, ROSTER } from "@/lib/engine/roster";
 import { CreativeScene, sceneAspect } from "@/components/org/creative-scene";
+import { CreativeBeatStage, BEAT_ASPECT } from "@/components/org/creative-beat-stage";
 import { CreativeRenderModal, type CreativeModalPayload } from "@/components/org/creative-render-modal";
 import {
   CONTENT_LAW,
@@ -40,60 +41,45 @@ const LANE_LABEL: Record<ShortIdea["lane"], string> = {
 };
 
 function IdeaCard({ idea, onOpen }: { idea: ShortIdea; onOpen: (p: CreativeModalPayload) => void }) {
-  const aspect = sceneAspect(idea.scene);
+  const openBeat = () =>
+    onOpen({
+      title: idea.title,
+      caption: `${idea.format} · ${idea.duration} · ${idea.hook}`,
+      beat: idea.scene,
+      prompt: idea.prompt,
+      filename: `zingers-idea-${idea.id}`,
+    });
+
   return (
     <article className="creative-brief__idea" data-lane={idea.lane}>
-      <button
-        type="button"
-        className="creative-brief__idea-scene"
-        style={{ aspectRatio: aspect }}
-        onClick={() =>
-          onOpen({
-            title: idea.title,
-            caption: `${idea.format} · ${idea.duration} · ${idea.hook}`,
-            scene: idea.scene,
-            prompt: idea.prompt,
-            filename: `zingers-idea-${idea.id}`,
-          })
-        }
-      >
-        <CreativeScene scene={idea.scene} />
+      <button type="button" className="creative-brief__idea-scene" style={{ aspectRatio: BEAT_ASPECT }} onClick={openBeat}>
+        <CreativeBeatStage scene={idea.scene} />
         <span className="mono creative-brief__idea-scene-hint">Open · PNG · prompt</span>
       </button>
-      <header>
-        <span className="mono creative-brief__lane">{LANE_LABEL[idea.lane]}</span>
-        <h3>{idea.title}</h3>
-        <p className="creative-brief__meta mono">
-          {idea.format} · {idea.duration}
-        </p>
-      </header>
-      <p className="creative-brief__hook">{idea.hook}</p>
-      <ol>
-        {idea.beats.map((b) => (
-          <li key={b}>{b}</li>
-        ))}
-      </ol>
-      {idea.overlay ? (
-        <p className="creative-brief__overlay">
-          <span className="mono">Overlay</span> {idea.overlay}
-        </p>
-      ) : null}
-      {idea.notes ? <p className="creative-brief__notes">{idea.notes}</p> : null}
-      <button
-        type="button"
-        className="btn creative-brief__idea-open"
-        onClick={() =>
-          onOpen({
-            title: idea.title,
-            caption: `${idea.format} · ${idea.duration} · ${idea.hook}`,
-            scene: idea.scene,
-            prompt: idea.prompt,
-            filename: `zingers-idea-${idea.id}`,
-          })
-        }
-      >
-        Fullscreen reference + prompt
-      </button>
+      <div className="creative-brief__idea-body">
+        <header>
+          <span className="mono creative-brief__lane">{LANE_LABEL[idea.lane]}</span>
+          <h3>{idea.title}</h3>
+          <p className="creative-brief__meta mono">
+            {idea.format} · {idea.duration}
+          </p>
+        </header>
+        <p className="creative-brief__hook">{idea.hook}</p>
+        <ol>
+          {idea.beats.map((b) => (
+            <li key={b}>{b}</li>
+          ))}
+        </ol>
+        {idea.overlay ? (
+          <p className="creative-brief__overlay">
+            <span className="mono">Overlay</span> {idea.overlay}
+          </p>
+        ) : null}
+        {idea.notes ? <p className="creative-brief__notes">{idea.notes}</p> : null}
+        <button type="button" className="btn creative-brief__idea-open" onClick={openBeat}>
+          Fullscreen reference + prompt
+        </button>
+      </div>
     </article>
   );
 }
@@ -299,25 +285,6 @@ export function CreativeBrief() {
       </section>
 
       <section className="creative-brief__section">
-        <h2>Keepers · live game models · depth only</h2>
-        <p>Useful for lore depth. Not the default short-form face.</p>
-        <div className="creative-brief__grid">
-          {KEEPERS.map((keeper) => (
-            <LivePlate
-              key={keeper.name}
-              label={keeper.name}
-              caption={`Level ${keeper.level} · ${keeper.title}`}
-              aspect="4/5"
-              accent={keeper.hex}
-              scene={{ kind: "keeper", name: keeper.name }}
-              filename={`zingers-keeper-${slugify(keeper.name)}`}
-              onOpen={open}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
         <h2>Story beats · Flight &amp; bond</h2>
         <p>
           Short-form and social ideas that lead with the climb and the Trainer↔champion relationship. Each beat includes
@@ -342,10 +309,7 @@ export function CreativeBrief() {
 
       <section className="creative-brief__section">
         <h2>Depth · under the climb</h2>
-        <p>
-          Arena and Keeper beats that belong under Flight, not as the brand face. Useful once the sky story is
-          established.
-        </p>
+        <p>Arena beats that belong under Flight, not as the brand face. Useful once the sky story is established.</p>
         <div className="creative-brief__ideas">
           {depth.map((idea) => (
             <IdeaCard key={idea.id} idea={idea} onOpen={open} />

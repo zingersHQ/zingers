@@ -57,14 +57,14 @@ for live fights · **xAI (Grok)** as the built-in brain. Deployed on Vercel
 - **State is client-first, synced.** Careers live in `localStorage` and mirror to
   Redis via `/api/save`. The **career ledger** (`CareerEvent[]` + `AxisSnapshot[]`
   on `PlayerSave`) is a pure-additive, capped, append-only log from every real
-  moment. Fight, level-up, tier-up, training, Keeper crack, season turn, first
-  claim. In `store/champions.ts`.
+  moment. Fight, level-up, tier-up, training, season turn, first claim. In
+  `store/champions.ts`.
 - **Trainer identity.** Unique names can lock to an optional Solana wallet
   (prove-ownership only. No spend). Circuit/Climb boards resolve labels
   server-side.
 - **~25 API routes** (`app/api/*`) cover battle, sim, claim, roster, standings,
-  daily, guardian (Keepers), imprint, feed, war, save, wallet, solana-link,
-  card OG images, and a `/api/cost` meter.
+  daily, imprint, feed, war, save, wallet, solana-link, card OG images, and a
+  `/api/cost` meter.
 
 ## The pluggable agent layer
 

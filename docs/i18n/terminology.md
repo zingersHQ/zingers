@@ -14,7 +14,7 @@ tells translators and draft scripts how to treat each signature term in
 5. **Gloss on first use** for flavor-layer lore names, same as English.
 6. **Trash-talk length** (agent prompts): en 14 words · es 16 words · zh 28 chars ·
    ru 14 words · ja 36 chars. See `lib/i18n/locales.ts` `LINE_LIMIT`.
-7. **Guardian secret words** stay English (puzzle keys). Dialogue localizes.
+7. Dialogue localizes; puzzle keys and agent protocol ids stay English when they are shared across locales.
 
 ## Borrow vs translate
 
@@ -56,3 +56,9 @@ placeholders intact. Voice must stay in character per mind.
 Mirror path: `docs/i18n/{locale}/…` matching registry `file` paths under `docs/`
 (and `mcp/README.md` → `docs/i18n/{locale}/mcp/README.md`). English fallback if
 a locale file is missing.
+
+**Mandatory sync:** when English player-facing docs or bible chapters change,
+update the locale mirrors in the same session (`npm run i18n:draft-docs -- --locale
+<code>`; optional `--only docs/bible`). See `.cursor/skills/i18n-sync/SKILL.md`.
+Bible locales must keep the same voice rule as English: world fiction, not repo
+paths or npm scripts.

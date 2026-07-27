@@ -4,7 +4,7 @@ import type { Champion, CreatureType } from "@/lib/types";
 import { ChampionAvatar } from "@/components/champion-avatar";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { OnboardingAudio } from "@/components/intro/onboarding-audio";
-import { primeCreature, speakCreature, speakCreatureType } from "@/lib/creature-voice";
+import { primeCreature, speakCreatureType } from "@/lib/creature-voice";
 import { jumpBeep, trainStinger, rewardSfx, travelWhoosh, evolveStinger } from "@/lib/sfx";
 import { startAmbience, setMood, duckAmbience, ambienceFlourish, setAmbienceIntensity } from "@/lib/ambience-bus";
 import type { BeatScript } from "@/lib/lore/character-beats";
@@ -20,13 +20,12 @@ const BEAT_QUOTE_H = { mobile: 92, desktop: 100 } as const;
 // A directed narrative beat — not a static slide. The live 3D portrait rises and
 // floats, the frame is letterboxed for cinema, each new line pulses a glow and
 // types itself in, and a slow parallax field drifts behind. One presentation
-// shared by every story moment: champion wakes, Keeper performances, the rival's
+// shared by every story moment: champion wakes, the rival's
 // taunts, and the season-turn Chronicle.
 export function CharacterBeat({
   script,
   accent,
   voice,
-  keeperLevel,
   championType,
   portrait,
   onComplete,
@@ -36,8 +35,7 @@ export function CharacterBeat({
   script: BeatScript;
   accent: string;
   /** who vocalises the lines */
-  voice: "keeper" | "champion";
-  keeperLevel?: number;
+  voice: "champion";
   championType?: CreatureType;
   portrait?: { key: string; type: CreatureType; champion: Champion; name: string };
   onComplete: () => void;
@@ -60,10 +58,9 @@ export function CharacterBeat({
   const speak = useCallback(
     (text: string, speaker: string) => {
       if (speaker === "Trainer" || speaker === "The Trainer") return;
-      if (voice === "keeper" && keeperLevel) speakCreature(text, keeperLevel);
-      else if (championType) speakCreatureType(text, championType);
+      if (championType) speakCreatureType(text, championType);
     },
-    [voice, keeperLevel, championType],
+    [championType],
   );
 
   useEffect(() => {

@@ -9,8 +9,7 @@
 
 This chapter establishes the **vertical geography** of the world. Chapters 01 and 05
 map the world *across* (the Hum, the Vault, the floating regions). This one maps it
-*up*. Systems live in [`docs/climb.md`](../climb.md); the fiction lives here.
-Phone and desktop are one soul, two bodies ([`essence.md`](../essence.md)).
+*up*. Phone and desktop are one soul in two bodies: the same sky, different controls.
 
 ## Why up
 
@@ -36,9 +35,7 @@ climbing over that region's terrain.
 
 The ten Reaches, low to high, culminate in **The Hum**: the topmost Reach, near-black
 and star-dense, the highest anyone has flown and the closest anyone comes to silence
-above the noise the whole world is named for. (The authored 100-sector layout of the
-Reaches, roles, hazards, modifiers, is a systems concern; see
-[`docs/climb.md`](../climb.md) §2.)
+above the noise the whole world is named for.
 
 ## Camps: the waystations
 
@@ -56,14 +53,13 @@ Flight has a fixed rule, and it matters because flight is central:
 
 - **The Trainer flies with a jetpack.** You are flesh: an ordinary being in an
   extraordinary sky. The jetpack is your machine; without it you fall. **The jetpack
-  is Trainer-only.** It is part of the Handler's silhouette (cosmology.md,
-  design-vision.md): gold sigil, rank billboard, and the pack on the back.
+  is Trainer-only.** It is part of the Handler's silhouette: gold sigil, rank
+  billboard, and the pack on the back.
 - **The champion needs no jetpack.** A champion is a *mind*: a knot in the Hum
   (cosmology.md). A thought does not need an engine to rise; neither does a champion.
   So your champion **flies beside you**, on its own, a wingmate. When a freshly
   claimed rookie first leaves the ground, it is not learning to use a machine. It is
-  discovering it was never bound to the floor. (Voice: the FIRST FLIGHT beat,
-  `lib/lore/character-beats.ts`.)
+  discovering it was never bound to the floor.
 
 This is the whole shape of it in five words, and it is canon: **you fly, it fights.**
 The one place the Trainer performs with their own hands is the flight; the one place
@@ -79,8 +75,7 @@ Hundred rings the halo with the star-band of the topmost Reach.
 
 The consequence is quietly important: the champion's body now records **two**
 careers braided together. *Its* fights and *your* climbs. The thing you raise wears
-proof of the thing you do. (Mechanics: [`essence.md`](../essence.md) §3;
-[`climb.md`](../climb.md) §6. Older docs may still say "ascent sigil"; same thing.)
+proof of the thing you do.
 
 ## Challenges: racing another Trainer's mark
 
@@ -92,15 +87,13 @@ mark (or push past the tip where they fell).
 - Clearing their tip sector can toast and, when you outfly their fail mark, the
   run-over can say you went past them.
 - Share links keep the sector you actually passed after you continue, not only the
-  miss. Path form: `/ascent/<id>` (query forms still resolve).
+  miss.
 
-Same rules on phone and desktop (one soul). Codec: `lib/climb-ghost.ts` and the
-shared climb helpers under `components/grounds/climb/`.
+Same rules on phone and desktop (one soul).
 
 ## Two bodies, one sky
 
-Like everything in Zingers, Flight is *one soul in native bodies*
-([`essence.md`](../essence.md)):
+Like everything in Zingers, Flight is *one soul in native bodies*:
 
 - **Desktop:** full six-degree flight in the world; the Circuit venue is a raceable
   body of the same Hundred.
@@ -116,10 +109,9 @@ own terms.
 Between gates, sparks and bars that shove you are hazards. They are never prizes.
 They shove and lock thrust; they do not take Crowns or lives on contact.
 The only mid-run treasure is a Crown cache floating off the glide line between
-gates. Each sector either has one or does not — the map is fixed, not a lottery.
+gates. Each sector either has one or does not; the map is fixed, not a lottery.
 Early Reaches show more small prizes; later ones pay more but sit harder off the
 line. Climb or dive for it. Missing one never fails the sector.
-Systems detail: [`climb.md`](../climb.md).
 
 Clearing all one hundred sectors is a summit. After that the climb does not become
 endless. You fly cleaner, race a friend's ghost, or wait for a new weekly sky.

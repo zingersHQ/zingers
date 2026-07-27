@@ -90,14 +90,13 @@ export const CONCORD = {
 
 // ── The Trainer (you) ────────────────────────────────────────────────────────
 // The player is a Trainer: not a mind, but the person who FLIES the sky above the
-// Vault, raises the minds that fight, climbs the ranks, and talks the Keepers out
-// of their words.
+// Vault, raises the minds that fight, and climbs the ranks.
 // Trainer Rank is the one account-level number every activity feeds; a Trainer may
 // swear to one Force (their Clan), binding ranked wins to that Force's standing in
 // the season-long war between the five. (Rank curve/titles: lib/evolve/trainer.ts.)
 export const READER = {
   noun: "Trainer",
-  blurb: "A Trainer flies the sky above the Long Vault, raises the minds that fight, climbs the ranks, and takes on the Keepers, the five guardians of the sealed Vault. Swear to a Force to fight in its name.",
+  blurb: "A Trainer flies the sky above the Long Vault, raises the minds that fight, and climbs the ranks. Swear to a Force to fight in its name.",
 } as const;
 
 // ── The Ascent (flight is central; these rules are canon, not flavor) ─────────
@@ -114,23 +113,6 @@ export const ASCENT = {
   jetpack: "Trainer-only — the Trainer's machine for flight; a champion needs none.",
   teachingLine: "You fly. It fights. You both rise.",
 } as const;
-
-// ── The Keepers (the five fixed cipher-words; canon, never regenerated) ───────
-// Mirrors lib/server/guardian.ts — kept here as canon reference for lore/UI that
-// must not import server-only code. The secrets themselves stay server-side.
-export interface KeeperLore {
-  level: number;
-  name: string;
-  title: string;
-  hex: string;
-}
-export const KEEPERS: KeeperLore[] = [
-  { level: 1, name: "Tibble", title: "The Greeter", hex: "#f0a93a" },
-  { level: 2, name: "Quill", title: "The Archivist", hex: "#6a6bff" },
-  { level: 3, name: "Bastion", title: "The Warden", hex: "#36d39a" },
-  { level: 4, name: "Vesper", title: "The Diviner", hex: "#c77dff" },
-  { level: 5, name: "Sable", title: "The Vaultheart", hex: "#ff5a6a" },
-];
 
 // ── Lineage (every later mind echoes a First Mind) ───────────────────────────
 export const FIRST_MINDS: { key: string; force: CreatureType }[] = FIRST_MIND_KEYS.map((key) => ({

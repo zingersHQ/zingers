@@ -1,6 +1,6 @@
 // Imprints — the daily raising verb. A handler teaches ONE lesson; the champion
 // answers in character and internalizes it (a memory note + a gentle doctrine
-// nudge). This mirrors /api/guardian: capped, budgeted house LLM with a
+// nudge). Capped, budgeted house LLM with a
 // deterministic template fallback so the verb ALWAYS works — the daily loop
 // never blocks on a model. BYO keys aren't touched here; this is house voice.
 import { NextResponse } from "next/server";

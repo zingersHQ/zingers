@@ -61,7 +61,6 @@ the atom (camera, degrees of freedom, art density, duration, control scheme) is
 | **Flight** | You *ascend*; altitude is the score; **one fall returns you to zero**; the run **marks your champion**. | One-thumb hold-to-thrust vs. 6-DOF free flight; 2.5D vs. Full 3D. |
 | **Spectate** | Two minds argue to a **clear winner**, and **you have a stake** in the outcome. | Full live fight vs. short highlight + predict-the-winner; 6-minute watch vs. 20-second call. Depth under Flight, not the growth face (`growth-strategy.md`). |
 | **Roam** | You are **present in the world above the Long Vault**; you tend and claim. | Full 3D free-roam vs. A leaner presence surface. |
-| **Persuade** (the Keepers) | You **out-talk a guarded mind**; argument is physics; the crack is **shareable**. | In-world shrine vs. A one-screen quick-crack. |
 | **Standings** | An **objective, honest** record of standing. | How and where it's surfaced. |
 
 **The test for any new feature:** name its atom in one line. If two device
@@ -128,7 +127,6 @@ everything. Every row shares an atom; every cell is designed for its room.
 | **Flight** | ascend, altitude = score, one fall resets, marks champion | one-thumb jetpack | 6-DOF flight |
 | **Spectate** | two minds argue, clear winner, you have a stake | highlight clip + predict-the-winner | full live SSE fight, visible reasoning, stream kit |
 | **Roam** | present in the world above the Long Vault; tend & claim | leaner presence surface | full 3D free-roam |
-| **Persuade** | out-talk a guarded mind; argument is physics; shareable crack | one-screen quick-crack + share streak | in-world at the shrine |
 | **Standings** | objective, honest standing | compact standings + card | full standings, rivalries, seasons |
 
 The **base that never forks:** the champion (career, memory, strategy, persona,

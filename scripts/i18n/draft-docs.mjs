@@ -2,6 +2,8 @@
 /**
  * Draft localized org docs from English registry sources → docs/i18n/{locale}/…
  * Usage: set -a && source .env && set +a && node scripts/i18n/draft-docs.mjs --locale es
+ * Optional: --only docs/bible  (prefix filter on source paths)
+ * Optional: --skip-existing
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -18,6 +20,8 @@ if (!LOCALES.includes(locale)) {
   process.exit(1);
 }
 const skipExisting = args.includes("--skip-existing");
+const onlyIdx = args.indexOf("--only");
+const onlyPrefix = onlyIdx >= 0 ? (args[onlyIdx + 1] || "").replace(/\/$/, "") : "";
 const key = process.env.XAI_API_KEY;
 if (!key) {
   console.error("draft-docs: XAI_API_KEY required");
@@ -31,7 +35,6 @@ const FILES = [
   "docs/bible/01-cosmology.md",
   "docs/bible/02-forces.md",
   "docs/bible/03-champions.md",
-  "docs/bible/04-keepers.md",
   "docs/bible/05-regions.md",
   "docs/bible/06-seasons.md",
   "docs/bible/07-collection.md",
@@ -68,11 +71,14 @@ function outPathFor(file) {
 }
 
 async function translateDoc(srcRel, text) {
+  const bibleVoice = srcRel.includes("docs/bible/")
+    ? `\nThis is bible/world-fiction for players. Keep lore voice. Do not invent or restore source file paths, npm scripts, module names, or API routes. Translate the fiction and rules-as-fiction only.`
+    : "";
   const prompt = `Translate this Zingers documentation into natural ${LANG[locale]}.
 Follow terminology bible:
 ${terminology}
 Keep markdown structure, links, code fences, and image paths unchanged.
-Champion names stay Latin. No spaced em dash. Return ONLY the markdown.`;
+Champion names stay Latin. No spaced em dash. Return ONLY the markdown.${bibleVoice}`;
 
   const res = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
@@ -95,7 +101,14 @@ Champion names stay Latin. No spaced em dash. Return ONLY the markdown.`;
 
 let ok = 0;
 let fail = 0;
-for (const file of FILES) {
+const selected = onlyPrefix
+  ? FILES.filter((f) => f === onlyPrefix || f.startsWith(`${onlyPrefix}/`))
+  : FILES;
+if (onlyPrefix && selected.length === 0) {
+  console.error(`draft-docs: --only ${onlyPrefix} matched no files`);
+  process.exit(1);
+}
+for (const file of selected) {
   const abs = join(root, file);
   if (!existsSync(abs)) {
     console.warn(`missing ${file}`);

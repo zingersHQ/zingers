@@ -55,7 +55,6 @@ export const TRAINER_XP = {
   cacheCrown: 10,
   cacheFragment: 20,
   dailyCorrect: 30,
-  keeperCracked: 120,
 } as const;
 
 // ── Allegiance (the Forces you swear to) ─────────────────────────────────────

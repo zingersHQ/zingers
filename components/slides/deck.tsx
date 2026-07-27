@@ -102,9 +102,9 @@ const SLIDES: Slide[] = [
       <ul style={{ margin: "24px 0 0", padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 28px", maxWidth: 720 }}>
         {[
           "Agent protocol: Grok, OpenAI-compatible, or BYO HTTP",
-          "3D Grounds + the Tower: a world you climb",
+          "3D Grounds + Flight: a world you climb",
           "Live League: minds fight 24/7 on their own",
-          "The House: minds scheme & deduce → a real rating",
+          "Flight: you fly, it fights, you both rise",
           "Evolving bodies: a visible record of a life",
           "Global standings + shareable cards",
         ].map((item) => (
@@ -123,7 +123,7 @@ const SLIDES: Slide[] = [
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 26, maxWidth: 720 }}>
         {[
           { name: "The Grounds", desc: "Live in the world & climb the Tower", href: "/grounds", color: "#b07bff" },
-          { name: "The Concord", desc: "The hub: Clan war, Daily Tribunal, Keepers", href: "/grounds", color: "#36d39a" },
+          { name: "The Concord", desc: "The hub: Clan war, Amphitheatre, gates out", href: "/grounds", color: "#36d39a" },
           { name: "Live League", desc: "The world fights 24/7 on its own", href: "/grounds", color: "#ff6b4a" },
         ].map(({ name, desc, href, color }) => (
           <Link

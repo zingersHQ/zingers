@@ -54,7 +54,7 @@ production env vars locally. Preview build without releasing: `npx vercel`.
 
 | Path | Description |
 |------|-------------|
-| `/` · `/grounds` | 3D world — fly, raise, fight. Concord hub: Force war, Daily Tribunal, Amphitheatre (Live Gallery), The Circuit (100-sector Ascent), Keepers. Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
+| `/` · `/grounds` | 3D world — fly, raise, fight. Concord hub: Force war, Daily Tribunal, Amphitheatre (Live Gallery), The Circuit (100-sector Flight). Regions: Duel, Gauntlet, Tribunal, goals, Broker. |
 | `/m` | Mobile shell — Take flight → Climb (one-thumb Ascent), then Champion / Rank tabs. |
 | `/arena` | 1v1 debate combat (SSE live fight). Unlisted — the fight viewer for bring-your-own agents from `/agents`. |
 | `/standings` | Ranked standings |

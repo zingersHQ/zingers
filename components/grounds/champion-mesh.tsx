@@ -10,7 +10,6 @@ import { appearanceOf, type Appearance, type BoneMorph } from "@/lib/evolve/appe
 import { archetypeAppearance, kitFor } from "@/lib/render/archetypes";
 import { ALL_MODELS, modelFor } from "@/lib/render/model-registry";
 import { ArchetypeFeatures } from "@/components/grounds/archetype-features";
-import { KeeperRegalia, type KeeperKind } from "@/components/grounds/keeper-regalia";
 import { PhenotypeParts, BoneFollower } from "@/components/grounds/phenotype-parts";
 import { phenotypeOf } from "@/lib/render/phenotype";
 import { phenotypeFromSpecies, speciesKitFor } from "@/lib/render/species";
@@ -560,7 +559,6 @@ export function ChampionMesh({
   bodyBob = 0,
   auraDim,
   identityKey,
-  keeper,
   speechLine,
   speechEmote,
   clan = null,
@@ -607,9 +605,6 @@ export function ChampionMesh({
   auraDim?: boolean;
   /** stable individual id → unique colour scheme / clothing pattern */
   identityKey?: string;
-  /** when set, marks this figure as a campaign Keeper and bolts on its signature
-   *  regalia (lantern / tomes / shield / orb / scythe) so bosses are unmistakable */
-  keeper?: KeeperKind;
   /** in-world speech bubble — companion lines, greetings */
   speechLine?: string | null;
   /** wordless reaction glyph — the companion's "HEY!"/impression bubble */
@@ -671,7 +666,7 @@ export function ChampionMesh({
   );
 
   // Authored species kit when identityKey is a roster mind — stable animal line
-  // instead of phenotype lottery. Keepers / ghosts / unnamed stay on lottery.
+  // instead of phenotype lottery. Ghosts / unnamed stay on lottery.
   const species = useMemo(
     () => (identityKey ? speciesKitFor(identityKey, type) : null),
     [identityKey, type],
@@ -680,17 +675,15 @@ export function ChampionMesh({
     () => archetypeAppearance(champion, type, seed, species?.morph),
     [champion, type, seed, species],
   );
-  // Colour identity: regular minds are restrained to their Force's two-tone pair;
-  // Keepers ignore the pair and get the richer, patterned, multi-colour treatment.
-  const isKeeper = !!keeper;
+  // Colour identity: regular minds are restrained to their Force's two-tone pair.
   const palette = useMemo(() => {
-    const p = bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: isKeeper, type });
+    const p = bodyPalette(colHex, seed, { secondary: forceColors(type).secondary, rich: false, type });
     if (clan) return { ...p, glow: TYPE_COLOR[clan] };
     return p;
-  }, [colHex, seed, type, isKeeper, clan]);
+  }, [colHex, seed, type, clan]);
 
   // Species parts lock the collectible silhouette; lottery + skill nudge remain
-  // for unnamed / keeper / ghost bodies.
+  // for unnamed / ghost bodies.
   const domAxis = dominant(champion);
   const pheno = useMemo(
     () =>
@@ -703,7 +696,7 @@ export function ChampionMesh({
   // Build the real rigged body: clone the shared RobotExpressive rig, recolour it
   // per region, scale to height + morph the SKELETON to this Force's proportions,
   // and wire its idle / walk / punch clips. Rebuilds only when the identity changes.
-  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}|${isKeeper}|${species?.tag ?? ""}`;
+  const appKey = `${type}|${champion.xp}|${champion.aggression}|${champion.control}|${champion.flair}|${champion.resilience}|${champion.creativity}|${champion.losses}|${colHex}|${seed}|${species?.tag ?? ""}`;
   const built = useMemo(() => buildCharacter(scene, animations, champion, colHex, app, seed, palette), [scene, animations, appKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gref = useRef<THREE.Group>(null);
@@ -1298,14 +1291,7 @@ export function ChampionMesh({
           <Jetpack h={app.h} flyingRef={companionFlyingRef} burstRef={companionJetBurst} />
         )}
 
-        {/* keeper regalia + aura ride the core bone so they track the body's live
-            motion (sway, lunge, recoil) as one piece instead of hanging at the
-            static origin and getting clipped by the fighter mid-duel. */}
         <BoneFollower bone={coreBone}>
-          {/* Keeper regalia — the signature weapon/item that makes a campaign boss
-              read as itself, not a recoloured ladder agent */}
-          {keeper && <KeeperRegalia kind={keeper} h={app.h} pal={palette} dim={auraDim} />}
-
           {/* aura sphere — faint, wide atmospheric glow; flagged so portrait
               auto-framing may let it bleed off-edge rather than shrinking the body */}
           {!hideFloaters && (

@@ -3,13 +3,15 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Download, Copy, Check, X } from "lucide-react";
 import { CreativeScene, sceneAspect } from "@/components/org/creative-scene";
+import { CreativeBeatStage, BEAT_ASPECT } from "@/components/org/creative-beat-stage";
 import { copyText, downloadPngFromContainer } from "@/lib/org/creative-download";
-import type { IdeaScene } from "@/lib/org/creative-brief-data";
+import type { BeatScene, IdeaScene } from "@/lib/org/creative-brief-data";
 
 export type CreativeModalPayload = {
   title: string;
   caption?: string;
-  scene: IdeaScene;
+  scene?: IdeaScene;
+  beat?: BeatScene;
   prompt?: string;
   filename: string;
 };
@@ -44,13 +46,13 @@ export function CreativeRenderModal({
 
   if (!payload) return null;
 
-  const aspect = sceneAspect(payload.scene);
+  const aspect = payload.beat ? BEAT_ASPECT : payload.scene ? sceneAspect(payload.scene) : "16/9";
 
   const onDownload = async () => {
     if (!stageRef.current) return;
     setDlState("busy");
-    // Give WebGL a moment to settle after eager mount
-    await new Promise((r) => setTimeout(r, 400));
+    // Flight / duo stages need a beat longer to paint
+    await new Promise((r) => setTimeout(r, payload.beat ? 900 : 400));
     const ok = await downloadPngFromContainer(stageRef.current, payload.filename);
     setDlState(ok ? "ok" : "fail");
     if (ok) setTimeout(() => setDlState("idle"), 1800);
@@ -88,7 +90,11 @@ export function CreativeRenderModal({
             className="creative-modal__stage"
             style={{ aspectRatio: aspect, maxHeight: payload.prompt ? "min(52vh, 640px)" : "min(72vh, 820px)" }}
           >
-            <CreativeScene scene={payload.scene} eager />
+            {payload.beat ? (
+              <CreativeBeatStage scene={payload.beat} eager />
+            ) : payload.scene ? (
+              <CreativeScene scene={payload.scene} eager />
+            ) : null}
           </div>
         </div>
 

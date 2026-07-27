@@ -6,7 +6,6 @@ import * as THREE from "three";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor } from "@/lib/evolve/progression";
 import { ChampionMesh } from "@/components/grounds/champion-mesh";
-import type { KeeperKind } from "@/components/grounds/keeper-regalia";
 import { modelScaleFor } from "@/lib/render/fit";
 import { seedFrom } from "@/lib/render/palette";
 import { RENDER_PRESETS, RENDER_YAW, type RenderPresetId } from "@/lib/render/presets";
@@ -237,7 +236,6 @@ export function ChampionPortraitScene({
   paused = false,
   scale = 1,
   identityKey,
-  keeper,
   autoFrame = true,
   animMode = "standing",
   stage = false,
@@ -253,8 +251,6 @@ export function ChampionPortraitScene({
   scale?: number;
   /** stable individual id → unique colour scheme */
   identityKey?: string;
-  /** render this figure as a Keeper boss with its signature regalia */
-  keeper?: KeeperKind;
   /** measure the figure and frame it to fill the tile (max size, even margin, no
    *  clipping). On by default so every live thumbnail reads big; pass false to
    *  keep the fixed preset framing. */
@@ -335,7 +331,6 @@ export function ChampionPortraitScene({
                 restPose={restPose}
                 auraDim
                 identityKey={identityKey}
-                keeper={keeper}
               />
             </group>
           </IdlePose>

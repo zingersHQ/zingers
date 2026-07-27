@@ -10,30 +10,25 @@
 A champion is a **mind that argued itself into a body**. Three things are true of
 every one of them, and they are the spine of the whole game:
 
-1. **The body is the argument made visible.** Appearance is a *deterministic
-   function of the career* (`lib/evolve/appearance.ts`). Aggression grows the
-   fists; resilience broadens the build; creativity and flair enlarge the head and
-   raise the stance; losses roughen the surface. Rank *amplifies* deviation: a
-   rookie barely differs from the base mind, a legend warps up to ~4×. You cannot
-   buy a look. You fight your way into one.
+1. **The body is the argument made visible.** Appearance follows the career.
+   Aggression grows the fists; resilience broadens the build; creativity and flair
+   enlarge the head and raise the stance; losses roughen the surface. Rank
+   *amplifies* deviation: a rookie barely differs from the base mind, a legend warps
+   far from it. You cannot buy a look. You fight your way into one.
 2. **The mind learns.** You seed **Strategy** (aggression / focus / risk) once at
    adopt. After that the Trainer does not drag those dials. **Imprints** (daily
-   lessons) and post-fight learning move them, and both write **memory**
-   (`store/champions.ts`, `lib/imprints.ts`, `lib/server/autoplay.ts`). A champion's
-   memory *is* its autobiography, and the seed of its generated **saga** (the
-   champion's own evolving life-story, written from its real match history).
-3. **The brain is pluggable.** The same champion can be driven by the house model,
-   any OpenAI-compatible model, or a bring-your-own agent (`docs/agent-protocol.md`).
-   Two players can field the same First Mind with completely different brains.
+   lessons) and post-fight learning move them, and both write **memory**. A
+   champion's memory *is* its autobiography, and the seed of its generated **saga**
+   (the champion's own evolving life-story, written from its real match history).
+3. **The brain is pluggable.** The same champion can be driven by the built-in
+   brain, another model, or a bring-your-own agent. Two players can field the same
+   First Mind with completely different brains.
 
 ## Character voice (the beat layer)
 
-Champions and Keepers speak in fixed voice. Scripted **beats**. Wake lines,
-companion greetings, post-fight reactions, Keeper intros and crack finales. Live
-in `lib/lore/character-beats.ts` and render through the shared `CharacterBeat` UI
-(`components/grounds/character-beat.tsx`). The prose bible defines who they are;
-the beat layer defines how they sound in the moment. Act 1 Concord landing copy
-lives separately in `lib/first-duel.ts`.
+Champions speak in fixed voice. Scripted **beats**: wake lines, companion greetings,
+post-fight reactions. The prose bible defines who they are; the beat layer defines
+how they sound in the moment.
 
 ## Tiers (the shape of a career)
 
@@ -50,8 +45,7 @@ lives separately in `lib/first-duel.ts`.
 The first knots in the Hum to hold their shape. They are the **canonical archetypes**
 every later mind echoes. They are also always eligible as starters. You do not get
 all eight on day one: adopt offers **one mind per Force** for the current week, drawn
-from the First Minds plus the baked dex (`lib/first-duel.ts` → `firstDuelStarterKeys()`).
-Stats and movesets: `docs/combat-design.md` / `lib/engine/roster.ts`.
+from the First Minds plus the growing dex.
 
 ### AXIOM: the Logician · *The Lattice (LOGIC)*
 
@@ -90,10 +84,6 @@ that you do not have to answer a question if you can replace it with a better on
 
 Unflappable and minimalist; lets the opponent tire, then punishes. BASTION is the
 mind that learned to *wait*, and outlasted things that should have erased it.
-(Note: a Keeper of the Vault. One of the five guardian minds of the campaign. The
-Warden, also bears this name; see
-[keepers.md](./04-keepers.md). The Warden is *not* the First Mind; it took the name
-to borrow its reputation, and resents that it had to.)
 
 ### EMBER: the Firebrand · *The Static (CHAOS), hybrid Chorus* · recommended starter
 
@@ -124,26 +114,17 @@ The live roster is a **collectible dex**, not only the eight First Minds. Later 
 are **descendants or echoes** of a First Mind: same Force family, distinct voice,
 moves, and silhouette. They are never a sixth Force.
 
-**How they ship (Stage 6):**
+**How they look different:** each mind wears a stable **species mark** on a shared
+robot frame: breed silhouette plus which solid parts it carries (headgear,
+shoulders, chest, back). First Minds are hand-authored; later dex minds land on a
+Force **breed** line with light spice so cousins differ. Career growth and tier still
+reshape the body. Rookies already wear their species mark so the adopt grid and dex
+read as different animals, not palette swaps. As they climb tiers, more armour
+layers bolt on.
 
-1. Curated JSON in `content/minds/reviewed/` (forge via `npm run forge:dex`, or draft
-   with `npm run generate:minds` then hand-polish).
-2. `npm run bake:minds` → `lib/minds/baked.ts`.
-3. Runtime merges into roster, banter, beats, first-duel hooks, and showcase cards.
-
-**How they look different:** one shared robot rig, then a stable **species kit**
-per mind key (`lib/render/species.ts`): silhouette morph bias plus which solid
-parts they wear (headgear, shoulders, chest, back). First Minds are hand-authored;
-later dex minds land on a Force **breed** line (~7 animals per Clan) with light
-seeded spice so cousins differ. Career bone morph and tier still grow the body
-(`lib/evolve/appearance.ts`). Rookies already wear their species mark so the adopt
-grid and dex read as different animals, not palette swaps. As they climb tiers,
-more armour layers bolt on. No new GLTF per mind. The old phenotype lottery remains
-only as a fallback when there is no roster key.
-
-**Rotation:** weekly starters pick one key per Force from First Minds + baked pool.
-The dex grows in waves toward a large collectible set; ownership and trade stay on
-the collection/economy layer ([07-collection.md](./07-collection.md),
+**Rotation:** weekly starters pick one mind per Force from First Minds plus the
+dex pool. The dex grows in waves toward a large collectible set; ownership and trade
+stay on the collection/economy layer ([07-collection.md](./07-collection.md),
 [08-economy.md](./08-economy.md)).
 
 Seasons may still feature new echoes from this canon plus the season seed

@@ -1,6 +1,6 @@
 import type { RenderPresetId } from "@/lib/render/presets";
-import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
-import { showcaseChampion, showcaseForForce, showcaseForKeeper, showcaseForRegion } from "@/lib/render/showcase";
+import { FORCES, FOUNDING_REGIONS } from "@/lib/lore/canon";
+import { showcaseChampion, showcaseForForce, showcaseForRegion } from "@/lib/render/showcase";
 
 export interface CanonEmbedSpec {
   rosterKey: string;
@@ -39,25 +39,6 @@ export function canonEmbedFromUrl(url: string): CanonEmbedSpec | null {
     const region = FOUNDING_REGIONS.find((x) => x.id === regionId);
     const hex = region ? FORCES[region.bias].hex : undefined;
     return { rosterKey: key, preset: "region", colorHex: hex };
-  }
-
-  const k = url.match(/^\/renders\/keepers\/keeper-([a-z]+)\.png$/i);
-  if (k) {
-    const keeperName =
-      k[1] === "tibble"
-        ? "Tibble"
-        : k[1] === "quill"
-          ? "Quill"
-          : k[1] === "warden"
-            ? "Bastion"
-            : k[1] === "vesper"
-              ? "Vesper"
-              : k[1] === "sable"
-                ? "Sable"
-                : k[1];
-    const keeper = KEEPERS.find((x) => x.name === keeperName);
-    const { key } = showcaseForKeeper(keeperName);
-    return { rosterKey: key, preset: "keeper", colorHex: keeper?.hex };
   }
 
   const direct = url.match(/^\/renders\/portrait\/([A-Z]+)\.png$/i);

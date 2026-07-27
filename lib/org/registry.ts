@@ -17,7 +17,7 @@ export interface OrgPage {
 }
 
 export const ORG_SECTIONS: OrgSection[] = [
-  { id: "bible", title: "The Bible", blurb: "Canon: forces, minds, regions, Flight, seasons, collection, Vault lore." },
+  { id: "bible", title: "The Bible", blurb: "Canon: forces, minds, regions, Flight, seasons, collection." },
   { id: "protocol", title: "Protocol", blurb: "How agents plug in: contract, tools, MCP." },
   { id: "design", title: "Design", blurb: "Flight-First loop, combat math, retention, arenas." },
   { id: "product", title: "Product", blurb: "Pitch decks, positioning, and the press kit." },
@@ -29,14 +29,13 @@ export const ORG_PAGES: OrgPage[] = [
   { slug: "bible/cosmology", section: "bible", order: 1, title: "Cosmology", file: "docs/bible/01-cosmology.md", description: "The Hum, the Long Vault, and why anyone fights." },
   { slug: "bible/forces", section: "bible", order: 2, title: "The Five Forces", file: "docs/bible/02-forces.md", description: "The type pentagon as in-world physics." },
   { slug: "bible/champions", section: "bible", order: 3, title: "Champions", file: "docs/bible/03-champions.md", description: "What a mind is; First Minds; the growing collectible dex." },
-  { slug: "bible/keepers", section: "bible", order: 4, title: "The Keepers", file: "docs/bible/04-keepers.md", description: "Five Keepers of the Long Vault: canon lore; rite shelved from the face." },
-  { slug: "bible/regions", section: "bible", order: 5, title: "Regions", file: "docs/bible/05-regions.md", description: "The map: Hub, regions, venues, Force bias, arenas." },
-  { slug: "bible/seasons", section: "bible", order: 6, title: "Seasons", file: "docs/bible/06-seasons.md", description: "The Chronicle: generative, seeded living seasons." },
-  { slug: "bible/collection", section: "bible", order: 7, title: "Collection", file: "docs/bible/07-collection.md", description: "Cards, rarity, lineage, weekly starters: the dex layer." },
-  { slug: "bible/economy", section: "bible", order: 8, title: "Economy", file: "docs/bible/08-economy.md", description: "Crowns and the optional ownership layer beneath." },
-  { slug: "bible/ascent", section: "bible", order: 9, title: "Flight", file: "docs/bible/10-ascent.md", description: "Vertical world: Reaches, Camps, Flight sigil, challenges." },
-  { slug: "bible/art-direction", section: "bible", order: 10, title: "Art direction", file: "docs/bible/art-direction.md", description: "House visual canon: palette, prompts, brand mark, asset paths." },
-  { slug: "bible/glossary", section: "bible", order: 11, title: "Glossary", file: "docs/bible/09-glossary.md", description: "Every term in one plain sentence for newcomers and non-native readers." },
+  { slug: "bible/regions", section: "bible", order: 4, title: "Regions", file: "docs/bible/05-regions.md", description: "The map: Hub, regions, venues, Force bias, arenas." },
+  { slug: "bible/seasons", section: "bible", order: 5, title: "Seasons", file: "docs/bible/06-seasons.md", description: "The Chronicle: generative, seeded living seasons." },
+  { slug: "bible/collection", section: "bible", order: 6, title: "Collection", file: "docs/bible/07-collection.md", description: "Cards, rarity, lineage, weekly starters: the dex layer." },
+  { slug: "bible/economy", section: "bible", order: 7, title: "Economy", file: "docs/bible/08-economy.md", description: "Crowns and the optional ownership layer beneath." },
+  { slug: "bible/ascent", section: "bible", order: 8, title: "Flight", file: "docs/bible/10-ascent.md", description: "Vertical world: Reaches, Camps, Flight sigil, challenges." },
+  { slug: "bible/art-direction", section: "bible", order: 9, title: "Art direction", file: "docs/bible/art-direction.md", description: "House visual canon: palette, prompts, brand mark, asset paths." },
+  { slug: "bible/glossary", section: "bible", order: 10, title: "Glossary", file: "docs/bible/09-glossary.md", description: "Every term in one plain sentence for newcomers and non-native readers." },
   // protocol
   { slug: "protocol/agents", section: "protocol", order: 0, title: "Agent protocol", file: "docs/agent-protocol.md", description: "Bring-your-own-agent interface: act(view) → decision." },
   { slug: "protocol/mcp", section: "protocol", order: 1, title: "MCP server", file: "mcp/README.md", description: "Play Zingers from inside an AI agent via MCP tools." },

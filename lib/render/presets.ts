@@ -1,7 +1,7 @@
 // House render presets — camera, lighting, and backdrop for canon PNG exports.
 // Palette matches docs/bible/art-direction.md and lib/lore/canon.ts force hexes.
 
-export type RenderPresetId = "portrait" | "force" | "region" | "keeper";
+export type RenderPresetId = "portrait" | "force" | "region";
 
 export interface RenderPreset {
   id: RenderPresetId;
@@ -50,17 +50,6 @@ export const RENDER_PRESETS: Record<RenderPresetId, RenderPreset> = {
     spin: 0,
     bg: "#0a0812",
     fog: ["#15102a", 10, 32],
-  },
-  keeper: {
-    id: "keeper",
-    aspect: 4 / 5,
-    camera: { position: [0, 1.4, 9.4], fov: 28, lookY: 1.32 },
-    scale: 0.5,
-    targetBodyH: 2.78,
-    spin: 0,
-    bg: "#0a0812",
-    fog: ["#0a0812", 15, 30],
-    rimBoost: 1.2,
   },
 };
 

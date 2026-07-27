@@ -11,6 +11,7 @@ import { GOLD, readerPalette } from "@/lib/render/palette";
 import { ChampionMesh, applyBoneMorph, buildCharacter, WORLD_AGENT_SCALE, READER_SCALE, CHAMPION_REL_TO_TRAINER } from "@/components/grounds/champion-mesh";
 import { Jetpack } from "@/components/grounds/jetpack";
 import { ANIM, breatheIntensityForMode, bodyBobForMode, idleSpeedForMode } from "@/lib/render/animations";
+import { showcaseChampion } from "@/lib/render/showcase";
 
 type Controls = { target: THREE.Vector3; update: () => void };
 
@@ -720,3 +721,52 @@ export function ArtViewport({
 }
 
 useGLTF.preload(SHARED_RIG);
+
+/** Bare Trainer+champion stage for press-kit story beats (no chrome / orbit). */
+export function ArtDuoScene({
+  mindKey,
+  action = "fly",
+  accent,
+  paused = false,
+}: {
+  mindKey: string;
+  action?: ArtAction;
+  accent: string;
+  paused?: boolean;
+}) {
+  const subject = useMemo(() => {
+    const { type, champion } = showcaseChampion(mindKey);
+    return { force: type, type, champion };
+  }, [mindKey]);
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "#0a0812" }}>
+      <Canvas
+        dpr={[1, 1.75]}
+        camera={{ position: [0, 1.55, 7.4], fov: 32 }}
+        gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
+        style={{ width: "100%", height: "100%", display: "block" }}
+      >
+        <color attach="background" args={["#0a0812"]} />
+        <fog attach="fog" args={["#0a0812", 10, 28]} />
+        <ambientLight intensity={0.65} />
+        <hemisphereLight args={["#d8d0ff", "#1a1428", 0.75]} />
+        <directionalLight position={[5, 8, 4]} intensity={1.75} />
+        <pointLight position={[-5, 3, -3]} intensity={42} color={accent} distance={22} />
+        <pointLight position={[4, 1.5, 5]} intensity={18} color="#ffffff" distance={20} />
+        <Suspense fallback={null}>
+          <FitOnce wide resetKey={`beat-duo-${mindKey}-${action}`}>
+            <DuoParade
+              force={subject.force}
+              type={subject.type}
+              champion={subject.champion}
+              action={action}
+              paused={paused}
+            />
+          </FitOnce>
+          <ContactShadows position={[0, 0.01, 0]} opacity={0.5} scale={14} blur={2.4} far={4} resolution={256} color="#000000" />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}

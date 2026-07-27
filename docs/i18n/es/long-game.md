@@ -32,7 +32,6 @@ Una auditoría del código en vivo, no de los documentos, reveló:
 - **Campeones:** Primeras Mentes + dex integrada (ola 1 de la Etapa 6), pentágono de tipos, 5 niveles, cuerpos derivados de la carrera + fenotipo, registro de Sagas, Improntas.  
   (`lib/engine/roster.ts`, `lib/minds/baked.ts`, `lib/imprints.ts`, `lib/evolve/*`)
 - **Ganchos de retorno:** pelea diaria, alijos diarios, objetivos de temporada, temporadas de 28 días, guerra de Clanes, rachas de predicción, tabla de clasificación global que se auto-juega vía cron, Director orientador, pista de desbloqueo, rasgos de ala, Condiciones, expediciones.
-- **En pausa:** 5 Guardianes, completamente escritos y probados, desactivados por `KEEPERS_PLAYABLE = false` (`lib/features.ts`). Un juego de Casa con tipos y ganchos de tienda, pero sin interfaz.
 
 Eso equivale a **15 horas de contenido servido en los primeros 30 minutos, casi todo invisible.** El problema nunca fue volumen.
 
@@ -64,7 +63,7 @@ Leer transcripciones de debates LLM es una novedad que muere con la repetición.
 
 Una vez que criar un Campeón sea un sistema de construcción para el verbo que el jugador realmente ejecuta —manejo, alcance de exploración, segunda vida, atracción de oro, lecturas de peligros—, “criar una mente” deja de ser una pestaña lateral y se convierte en la razón para seguir criando. Esa es la sensación de Pokémon (construcción de equipo, decisiones significativas, consecuencia legible) trasladada al verbo correcto.
 
-Las batallas permanecen: “tú vuelas, él pelea” es el diferenciador, y la liga asíncrona es contenido que corre mientras los jugadores duermen. Pero se comprimen en momentos resueltos, de un vistazo y con peso. Nunca un muro de texto para leer. Los Guardianes permanecen apagados; un juego de texto desactivado no es contenido gratis.
+Las batallas permanecen: “tú vuelas, él pelea” es el diferenciador, y la liga asíncrona es contenido que corre mientras los jugadores duermen. Pero se comprimen en momentos resueltos, de un vistazo y con peso. Nunca un muro de texto para leer.
 
 ## 6. El plan
 
@@ -107,7 +106,6 @@ Tubería sin conexión: `content/minds/reviewed/*.json` → `npm run bake:minds`
 ## 7. No-objetivos explícitos
 
 - **Una cuarta región.** Es barato (un blob `BiomeConfig` y un preajuste de naturaleza) y es exactamente la trampa. Tres regiones sin trabajo se convierten en cuatro regiones sin trabajo, y el vacío se vuelve más grande y mejor iluminado. Las regiones reciben *trabajos* antes que hermanos.
-- **Reactivar los Guardianes** como relleno. Regresan solo si un rediseño los convierte en una actuación, no en una transcripción.
 - **Cualquier cosa que desplace las compuertas de sensación Vuelo-Primero.** Andamiaje de retención sobre un verbo central que no se siente bien solo crea una tabla de clasificación legible y vacía. El trabajo de sensación en [`flight-first-plan.md`](./flight-first-plan.md) va por delante de todo lo aquí.
 
 ## 8. Cómo sabremos si funciona

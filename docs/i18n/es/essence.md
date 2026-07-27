@@ -30,7 +30,6 @@ Para que "una sola alma" sea real y no un eslogan, cada verbo central tiene un *
 | **Vuelo** | *Ascendemos*; la altitud es la puntuación; **una caída te devuelve a cero**; la carrera **marca a tu campeón**. | Mantener pulsado con un pulgar vs. vuelo libre de 6 DOF; 2.5D vs. 3D completo. |
 | **Espectar** | Dos mentes discuten hasta un **ganador claro** y **tienes algo en juego** en el resultado. | Combate en directo completo vs. breve resumen + predecir al ganador; 6 minutos de visionado vs. 20 segundos de apuesta. Profundidad bajo Vuelo, no la cara de crecimiento (`growth-strategy.md`). |
 | **Deambular** | Estás **presente en el mundo sobre la Bóveda Larga**; cuidas y reclamas. | Libre deambular 3D completo vs. superficie de presencia más ligera. |
-| **Persuadir** (a los Guardianes) | **Convences a una mente protegida**; el argumento es física; la grieta es **compartible**. | Santuario dentro del mundo vs. una pantalla rápida para romper la defensa. |
 | **Clasificación** | Un registro **objetivo y honesto** de la posición. | Cómo y dónde se muestra. |
 
 **La prueba para cualquier función nueva:** nombra su átomo en una sola línea. Si dos versiones de dispositivo comparten esa línea, es un solo juego. Si no, has creado un segundo juego que compite con el alma. Y se aplica la ley del documento de crecimiento: *nunca publiques una experiencia desconectada sin un gancho de subir/evolucionar que vuelva al campeón*.
@@ -74,7 +73,6 @@ El Circuito fue la lente que encontró el principio; el principio rige todo. Cad
 | **Vuelo** | ascender, altitud = puntuación, una caída reinicia, marca al campeón | jetpack de un pulgar | vuelo de 6 DOF |
 | **Espectar** | dos mentes discuten, ganador claro, tienes algo en juego | clip de resumen + predecir al ganador | combate SSE en directo completo, razonamiento visible, kit de transmisión |
 | **Deambular** | presente en el mundo sobre la Bóveda Larga; cuidar y reclamar | superficie de presencia más ligera | libre deambular 3D completo |
-| **Persuadir** | convencer a una mente protegida; el argumento es física; grieta compartible | grieta rápida de una pantalla + racha compartible | dentro del mundo, en el santuario |
 | **Clasificación** | posición objetiva y honesta | clasificación compacta + tarjeta | clasificación completa, rivalidades, temporadas |
 
 **La base que nunca se bifurca:** el campeón (carrera, memoria, estrategia, persona, cuerpo derivado de la carrera), las Cinco Fuerzas, el lore/IP y el vocabulario del glosario, el Rango de Entrenador (eterno), las Coronas, la lealtad al Clan y los resultados de la tabla de clasificación.

@@ -49,7 +49,6 @@ same 100-sector climb as mobile. Catalogue: `lib/scenarios/registry.ts` · venue
 | **Flight (desktop)** | Circuit venue | 100-sector Flight in full six-degree flight (ten Reaches); three lives + Reach-clear restore; board by depth, then time. |
 | **Flight (phone)** | `/m`, `/ascent` | Same Flight soul, one-thumb. The mobile face of the game. |
 | **Daily Tribunal** | Hub stone | One shared fight a day. Call it before you watch; share a result grid. |
-| **The Keepers** | region spires | Campaign: talk **secret words** out of the Vault's Keepers (playable flag may be off). |
 
 ### Arena scenarios (in-world)
 
@@ -60,7 +59,7 @@ same 100-sector climb as mobile. Catalogue: `lib/scenarios/registry.ts` · venue
 | **The Tribunal** | Obsidian Colosseum (flagship) | Assigned-stance debate to a jury; switching sides scores ≈0. |
 
 Unlisted **`/arena`** remains the agent fight viewer for bring-your-own-agent testing
-(debate combat and The House social-deduction benchmark).
+(debate combat).
 
 ### First journey (Flight-First)
 

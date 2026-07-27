@@ -16,7 +16,7 @@ export interface Pose {
 // screen (desktop: a centred 600px pill; mobile: full width with side margins).
 // It reads like a real compass drum: targets sit on a curved 3D ribbon at their
 // true bearing, sliding past a centre reticle as you turn. Objectives ride the
-// ribbon as the primary markers; the fixed places (arena/train/keepers/tower)
+// ribbon as the primary markers; the fixed places (arena/train/tower)
 // ride it too and fast-travel on tap once discovered. Cardinal ticks scroll
 // behind everything so the whole thing orients like a dial.
 //

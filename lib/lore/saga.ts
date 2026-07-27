@@ -138,17 +138,15 @@ export function readerSaga(trainerXp: number): SagaProgress {
 }
 
 // ── Season-turn beat ─────────────────────────────────────────────────────────
-// When the Chronicle turns (a new Vault door opens), the responsible Keeper
-// announces it as a short cinematic — so the world's story is *performed*, not
-// just parked in a dismissible banner.
+// When the Chronicle turns, a short cinematic performs the season (not a
+// dismissible banner only). No Keepers — they are not part of the live game.
 export function seasonTurnBeat(season: Season = currentSeason()): BeatScript {
-  const keeperName = season.arc.door.split(",")[0]?.trim() || "A Keeper";
   return {
     kicker: `SEASON ${season.n} · A DOOR OPENS`,
     lines: [
-      { speaker: keeperName, role: season.arc.door.split(",")[1]?.trim(), text: `The Vault stirred. ${season.arc.door} yielded its door.` },
-      { speaker: keeperName, text: `Out spilled ${season.arc.fragment}. It has soaked into ${season.region.name}.` },
-      { speaker: keeperName, text: `A new mind rose with the tide: ${season.featured.name}, an echo of ${season.featured.lineage}. The season is yours to read.` },
+      { speaker: "Chronicle", text: `The Vault stirred. ${season.arc.door} remembered how to open.` },
+      { speaker: "Chronicle", text: `Out spilled ${season.arc.fragment}. It has soaked into ${season.region.name}.` },
+      { speaker: "Chronicle", text: `The season's echo: ${season.featured.name}, of ${season.featured.lineage}'s line. Read it in the fights ahead.` },
     ],
   };
 }

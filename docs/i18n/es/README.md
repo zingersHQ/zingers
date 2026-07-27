@@ -13,7 +13,7 @@ Sitio público: **[zingers.org](https://zingers.org)** (registro: `lib/org/regis
 |-----|---------|
 | [ONEPAGER.md](./ONEPAGER.md) | Discurso de ascensor |
 | [TWOPAGER.md](./TWOPAGER.md) | Discurso extendido |
-| [STORY.md](./STORY.md) | Mundo, Fuerzas, Guardianes, columna vertebral de criar y conocer |
+| [STORY.md](./STORY.md) | Mundo, Fuerzas, Vuelo, eje de criar y conocer |
 | [TECHNICAL.md](./TECHNICAL.md) | Pila, arquitectura, valores predeterminados de agentes, límites de coste |
 | [AI-CRYPTO.md](./AI-CRYPTO.md) | Capa de agentes + posicionamiento de Coronas / $ZING |
 
@@ -21,21 +21,21 @@ Sitio público: **[zingers.org](https://zingers.org)** (registro: `lib/org/regis
 
 | Doc | Propósito |
 |-----|---------|
-| [vocabulary.md](./vocabulary.md) | **Política de nombres**: Entrenador, Estrategia, Clan, pelea, Vuelo, clasificación |
+| [vocabulary.md](./vocabulary.md) | **Política de nomenclatura**: Entrenador, Estrategia, Clan, pelea, Vuelo, clasificación |
 | [design-vision.md](./design-vision.md) | Estrella polar del producto (Flight-First v3.1) |
 | [game-spec.md](./game-spec.md) | Bucle, escenarios, modelo de participación |
-| [combat-design.md](./combat-design.md) | Fórmula de daño, estadísticas de plantel, conjuntos de movimientos, reglas de juez |
-| [flight-first-plan.md](./flight-first-plan.md) | Hoja de ruta: fases, identidad de cartera, puertas, lista de congelación |
-| [long-game.md](./long-game.md) | **Retención enviada:** Director, desbloqueos, alas, Condiciones, expediciones, dex |
-| [essence.md](./essence.md) | Una alma, cuerpos nativos (teléfono vs escritorio) |
-| [two-doors.md](./two-doors.md) | Cara móvil Flight-first; mundo completo de escritorio; medición |
+| [combat-design.md](./combat-design.md) | Fórmula de daño, estadísticas del roster, sets de movimientos, reglas del juez |
+| [flight-first-plan.md](./flight-first-plan.md) | Hoja de ruta: fases, identidad de wallet, puertas, lista de congelación |
+| [long-game.md](./long-game.md) | **Retención ya publicada:** Director, desbloqueos, alas, Condiciones, expediciones, dex |
+| [essence.md](./essence.md) | Una sola alma, cuerpos nativos (móvil vs escritorio) |
+| [two-doors.md](./two-doors.md) | Cara móvil Flight-First; mundo completo en escritorio; medición |
 | [climb.md](./climb.md) | Sistemas de Vuelo (100 sectores, Alcances; el código puede decir Climb/Circuit) |
-| [climb-feel.md](./climb-feel.md) | Pase de sensación (gramática de corredor, latido de corredor) |
+| [climb-feel.md](./climb-feel.md) | Pase de sensación (gramática de pasillos, pulso del corredor) |
 | [flyover.md](./flyover.md) | Cómo el primer vuelo enseña todo el juego |
 | [mobile.md](./mobile.md) | Especificación del shell móvil (puerta reemplazada por two-doors) |
 | [agent-protocol.md](./agent-protocol.md) | Interfaz bring-your-own-agent (`act(view) → decision`) |
-| [zing-model.md](./zing-model.md) | Posicionamiento de $ZING (diferido; combustible, no el producto) |
-| [horizon.md](./horizon.md) | **Interno:** hoja de ruta continua post-lanzamiento (token → temporadas → Game Two opcional) |
+| [zing-model.md](./zing-model.md) | Posicionamiento de $ZING (aplazado; combustible, no el producto) |
+| [horizon.md](./horizon.md) | **Interno:** hoja de ruta posterior al lanzamiento (token → temporadas → Game Two opcional) |
 
 ## Biblia de lore
 
@@ -45,13 +45,13 @@ Sitio público: **[zingers.org](https://zingers.org)** (registro: `lib/org/regis
 | [bible/10-ascent.md](./bible/10-ascent.md) | Canon de Vuelo / Alcances / desafíos |
 | [bible/09-glossary.md](./bible/09-glossary.md) | Definiciones sencillas (refleja `lib/lore/glossary.ts`) |
 
-## Histórico / planificación (leer banners de estado)
+## Histórico / planificación (leer banderas de estado)
 
 | Doc | Notas |
 |-----|-------|
-| [first-journey-roadmap.md](./first-journey-roadmap.md) | Acto 1 liderado por peleas (pase anterior); puerta en vivo = Flight-First |
-| [launch-week.md](./launch-week.md) | Plan de recorte P4 Flight-First. Gran parte ya enviado; comprobar estado de fase |
-| [climb-p2.md](./climb-p2.md) | Lluvia de ideas de profundidad de Circuit diferida |
+| [first-journey-roadmap.md](./first-journey-roadmap.md) | Acto 1 liderado por peleas (paso anterior); puerta en vivo = Flight-First |
+| [launch-week.md](./launch-week.md) | Plan de recorte P4 Flight-First. Gran parte ya publicado; revisa el estado de fase |
+| [climb-p2.md](./climb-p2.md) | Lluvia de ideas de profundidad de Circuit aplazada |
 | [region-variety.md](./region-variety.md) | Lluvia de ideas; parcialmente reemplazada |
-| [circuit-board.md](./circuit-board.md) / [circuit-world.md](./circuit-world.md) | Detalle de sistemas Circuit |
-| [growth-strategy.md](./growth-strategy.md) | Apuestas de crecimiento: Vuelo + vínculo Entrenador↔campeón como columna vertebral de compartir (peleas relegadas) |
+| [circuit-board.md](./circuit-board.md) / [circuit-world.md](./circuit-world.md) | Detalle de sistemas de Circuit |
+| [growth-strategy.md](./growth-strategy.md) | Apuestas de crecimiento: Vuelo + vínculo Entrenador↔campeón como eje de compartir (peleas relegadas) |

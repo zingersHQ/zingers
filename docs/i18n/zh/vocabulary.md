@@ -42,7 +42,6 @@
 | **飞行** | the Ascent, Circuit, Climb（作为模式名） | 飞行游戏：手机与桌面端同一款游戏。使用 **“Flight”** / **“Take flight”** / 朴素的“fly”。**绝不**将 *the Ascent*、*Circuit* 或 *Climb* 作为模式标签显示。小写的“climb”可作为普通动词（“climb higher”）。代码仍可保留 Circuit / Climb / Ascent。 |
 | **浮动 / 漂移** | adrift | 使用更朴素的同义词。 |
 | **门** | Vaultgate | 通往区域的拱门（可见文案中；组件名可保留）。 |
-| **密语** | cipher-word | 每位守卫者守护的单词。 |
 | **赛季** | the Chronicle | 可见文案使用“season”；“the Chronicle”可作为深层世界观风味保留在圣典中。 |
 | **内置大脑** | House brain | 默认代理。 |
 | **实时画廊** | Scrying Gallery | 观看自主对战的地方。 |
@@ -57,4 +56,12 @@
 
 ## 保留但首次使用时必须附带解释（风味层）
 
-**the Long Vault、the Hum、the Keepers、Force、Sigil、Saga、Resolve、Tribunal、Gauntlet、Reach、Camp、Fragment。** 这些是标志性术语，值得保留，但它们属于**风味层**（圣典、`<|eos|>
+**the Long Vault、the Hum、Force、Sigil、Saga、Resolve、Tribunal、Gauntlet、Reach、Camp、Fragment。** 这些是标志性术语，值得保留，但它们属于**风味层**（圣典、`/glossary`、深层菜单），而非首次接触。每当其中一项首次出现时，请附上通俗解释。世界观专有名称 **the Grounds**（说“the world”）与 **the Concord**（说“the Hub”）也属于此层；完全不要出现在首次接触文案中。**不要在玩家可见文案或公共传说中写守望者或 Keepers**；它们不属于现行游戏。一行定义见 `lib/lore/glossary.ts`（在 `/glossary` 与 `docs/bible/09-glossary.md` 渲染）；复用该措辞以保持解释一致。
+
+## 代码 vs. 文案
+
+**只改文案。** 标识符、键名、URL 参数、组件名、API 字段名、事件类型等保持不变，即使可见英文改了。若某处必须引用代码 id（如开发者文档），用反引号标注 id，旁边写玩家可见的等价词。
+
+## 待决问题（尚未决定）
+
+**“The House”** 作为内置联赛/对手名称（不同于现已改为“内置大脑”的 House brain）仍出现在部分位置（白皮书、幻灯片、分享 id 如 `"House Grok"`）。它触及存储值与分享 URL，因此更名属于产品决策，而非文案一轮修改。暂时保留。

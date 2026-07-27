@@ -7,7 +7,7 @@ import { BibleGallery } from "@/components/bible/bible-gallery";
 
 export const metadata = {
   title: pageTitle("Visual Gallery"),
-  description: "Live game renders of Zingers forces, minds, regions, and Keepers. Canon docs live on zingers.org.",
+  description: "Live game renders of Zingers forces, minds, and regions. Canon docs live on zingers.org.",
 };
 
 const DOC_LINKS = [
@@ -15,7 +15,6 @@ const DOC_LINKS = [
   { slug: "bible/forces", label: "Forces" },
   { slug: "bible/champions", label: "Champions" },
   { slug: "bible/regions", label: "Regions" },
-  { slug: "bible/keepers", label: "Keepers" },
   { slug: "bible/ascent", label: "Flight" },
   { slug: "bible/glossary", label: "Glossary" },
 ] as const;

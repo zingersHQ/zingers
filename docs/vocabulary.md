@@ -42,7 +42,6 @@ When copy tells the Trainer what to do next (Director, Flight outcome, lock gate
 | **Flight** | the Ascent, Circuit, Climb (as mode names) | The flight game: one game on phone and desktop. Say **"Flight"** / **"Take flight"** / plain "fly". **Never** show *the Ascent*, *Circuit*, or *Climb* as a mode label. Lowercase "climb" is fine as a plain verb ("climb higher"). Code may still say Circuit / Climb / Ascent. |
 | **floating / drifting** | adrift | Plainer synonyms. |
 | **Gate** | Vaultgate | The arch out to a region (in visible copy; component names may stay). |
-| **secret word** | cipher-word | The word each Keeper guards. |
 | **Season** | the Chronicle | Visible copy says "season"; "the Chronicle" may remain as deep-lore flavor in the Bible. |
 | **built-in brain** | House brain | The default agent. |
 | **Live Gallery** | Scrying Gallery | Where you watch autonomous fights. |
@@ -60,7 +59,7 @@ revealed later, in context, the first time it's relevant. Never dumped up front.
 
 ## Keep, but always gloss on first use (the flavor layer)
 
-**the Long Vault, the Hum, the Keepers, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Reach, Camp, Fragment.** These are signature and worth keeping, but they belong to the **flavor layer** (the Bible, `/glossary`, deep menus), not first-touch. Wherever one first appears, add a plain gloss. The lore proper names **the Grounds** (say "the world") and **the Concord** (say "the Hub") also live here; keep them out of first-touch entirely. The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
+**the Long Vault, the Hum, Force, Sigil, Saga, Resolve, Tribunal, Gauntlet, Reach, Camp, Fragment.** These are signature and worth keeping, but they belong to the **flavor layer** (the Bible, `/glossary`, deep menus), not first-touch. Wherever one first appears, add a plain gloss. The lore proper names **the Grounds** (say "the world") and **the Concord** (say "the Hub") also live here; keep them out of first-touch entirely. Do **not** write **Keepers** into player-facing copy or public lore; they are not in the live game. The canonical one-line definitions live in `lib/lore/glossary.ts` (rendered at `/glossary` and in `docs/bible/09-glossary.md`); reuse that wording so glosses stay consistent.
 
 ## Code vs. copy
 
@@ -68,4 +67,4 @@ Change **player-visible text only**: string literals shown in the UI, JSX text, 
 
 ## Open question (not yet decided)
 
-**"The House"** as the name of the built-in league/opponents (distinct from "House brain", which is now "built-in brain") is still used in a few places (whitepaper, slides, share ids like `"House Grok"`). It touches stored values and share URLs, so renaming it is a product decision, not a copy pass. Left as-is for now.
+**"House Grok"** / `"House · Grok"` is still the built-in brain label on cards, share URLs, and some UI. Renaming it touches stored values and share links, so it is a product decision, not a copy pass. Left as-is for now. (The social-deduction mode called "The House" is gone.)

@@ -38,10 +38,6 @@ An audit of the live code, not the docs, found:
 - **Return hooks:** Daily fight, daily caches, seasonal goals, 28-day seasons,
   Clan war, prediction streaks, a global rating board that self-plays via cron,
   Director guiding, unlock track, wing traits, Conditions, expeditions.
-- **Shelved:** 5 Keepers, fully written and tested, switched off by
-  `KEEPERS_PLAYABLE = false` (`lib/features.ts`). A House game with types and store
-  hooks and no UI.
-
 That is on the order of **15 hours of content being served in the first 30 minutes,
 mostly invisibly.** The problem was never volume.
 
@@ -94,8 +90,7 @@ right verb.
 
 Battles stay: "you fly, it fights" is the differentiator, and the async league is
 content that runs while players sleep. But they get **compressed into resolved,
-glanceable, stake-carrying moments**. Never a wall of text to read. Keepers stay
-off; a switched-off text game is not free content.
+glanceable, stake-carrying moments**. Never a wall of text to read.
 
 ## 6. The plan
 
@@ -176,8 +171,6 @@ Further waves = more reviewed JSON + rebake + part-kit expansion.
   that is exactly the trap. Three regions with no job become four regions with no
   job, and the emptiness gets bigger and better lit. Regions get *jobs* before they
   get siblings.
-- **Turning the Keepers back on** as filler. They return only if a redesign makes
-  them a performance, not a transcript.
 - **Anything that displaces the Flight-First feel gates.** Retention scaffolding on a
   core verb that doesn't feel good just makes a legible empty standings. Feel work in
   [`flight-first-plan.md`](./flight-first-plan.md) stays ahead of everything here.

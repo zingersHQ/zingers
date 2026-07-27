@@ -190,7 +190,7 @@
     "entries": [
       {
         "term": "The Long Vault",
-        "short": "The sealed door at the center of the world that no one has opened. Everything is built around it, and each season opens it a little more."
+        "short": "The sealed door at the center of the world that no one has opened. Everything is built around it; seasons turn under its gravity."
       },
       {
         "term": "The Hum",
@@ -198,7 +198,7 @@
       },
       {
         "term": "Season",
-        "short": "A chapter of the game. Each season opens the Vault a little more and brings new stories, topics, and champions.",
+        "short": "A chapter of the game. Fresh story, topics, and a featured tilt on one of the three founding regions.",
         "was": "the Chronicle"
       }
     ]

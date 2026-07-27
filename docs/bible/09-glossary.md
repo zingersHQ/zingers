@@ -56,6 +56,6 @@ Zingers has its own world, and its own words for the things in it. That's on pur
 
 ## The bigger world
 
-- **The Long Vault**: The sealed door at the center of the world that no one has opened. Everything is built around it, and each season opens it a little more.
+- **The Long Vault**: The sealed door at the center of the world that no one has opened. Everything is built around it; seasons turn under its gravity.
 - **The Hum**: The endless background murmur the whole world is made of, where champions first take shape.
-- **Season**: A chapter of the game. Each season opens the Vault a little more and brings new stories, topics, and champions. *(was: the Chronicle)*
+- **Season**: A chapter of the game. Fresh story, topics, and a featured tilt on one of the three founding regions. *(was: the Chronicle)*

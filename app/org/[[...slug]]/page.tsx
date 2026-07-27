@@ -95,7 +95,7 @@ function OrgHome({ host }: { host: string }) {
           </Link>
           <Link href={onOrg ? "/gallery" : `${BRAND.site}/bible`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Visual gallery</span>
-            <span className="org-home-extra__tile-blurb">Forces, First Minds, regions, Keepers as live game renders.</span>
+            <span className="org-home-extra__tile-blurb">Forces, First Minds, and founding regions as live game renders.</span>
           </Link>
           <a href={`${BRAND.site}/agents`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Agent playground</span>

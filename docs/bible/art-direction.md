@@ -21,7 +21,7 @@ never drifts.
 | **The Chorus** (RHETORIC) | `#f0a93a` | amber |
 | **The Spark** (CREATIVITY) | `#f5d020` | bright yellow |
 
-(Force hexes are canon: `lib/lore/canon.ts`.)
+Force colours match the Force table in [forces.md](./02-forces.md).
 
 ## Medium & lens
 
@@ -43,25 +43,20 @@ never drifts.
 | Group | Aspect | Framing |
 |-------|--------|---------|
 | Scenarios / regions | 16:9 | wide establishing shot, atmospheric depth |
-| Characters (Minds, Keepers) | 4:5 | centered figure, ¾ pose, emblem behind |
+| Characters (Minds) | 4:5 | centered figure, ¾ pose, emblem behind |
 | Forces / icons | 1:1 | centered emblematic embodiment, tile-able |
 
 ## Brand chrome (UI mark. Not bible key art)
 
 The product chrome mark is a flat vector **robot head** (big eyes, thick antenna),
-not painterly bible art:
-
-- `app/icon.svg`. Favicon / app icon (near-full-bleed silhouette)
-- `public/brand/robot-mark.svg`. Same mark for nav / PlayerHub
-- `components/brand/robot-mark.tsx`. React wrapper
-
-Keep bible / share key art painterly (below). Do not put the robot mark into
-generated lore plates; do not put painterly faces into the favicon tile.
+not painterly bible art. Keep bible / share key art painterly (below). Do not put
+the robot mark into generated lore plates; do not put painterly faces into the
+favicon tile.
 
 ## Files & embedding
 
-- Save to `public/img/bible/<group>/<slug>.png`
-  (`forces/`, `minds/`, `regions/`, `keepers/`, scenarios at the root).
+- Key art lives under `public/img/bible/<group>/<slug>.png`
+  (`forces/`, `minds/`, `regions/`, scenarios at the root).
 - Embed in `docs/bible/*.md` with a repo-relative path (renders on GitHub).
 - zingers.org serves the same file at `/img/bible/<group>/<slug>.png`.
 

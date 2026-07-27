@@ -19,9 +19,9 @@ import { showcaseChampion } from "@/lib/render/showcase";
 import { naturePreset, natureUrl, natureTerrainPalette } from "@/lib/render/nature-kit";
 import { FlightHeroPoster } from "@/components/home/flight-hero-poster";
 
-const HERO = showcaseChampion("MUSE");
 /** Soft daylight Grounds — same nature kit as the live region. */
 const BIOME_ID = "colosseum";
+const DEFAULT_MIND = "MUSE";
 
 const CHAR_SCALE = READER_SCALE * 1.35;
 const PAIR_SCALE = 0.42;
@@ -117,7 +117,19 @@ function heroHeight(x: number, z: number, seed: number): number {
   return Math.max(0, rolling + hills * 0.85 + bump);
 }
 
-function FlightPair({ reduceMotion, animate }: { reduceMotion: boolean; animate: boolean }) {
+function FlightPair({
+  reduceMotion,
+  animate,
+  mindKey,
+  ghost = false,
+}: {
+  reduceMotion: boolean;
+  animate: boolean;
+  mindKey: string;
+  /** Trail a translucent second Trainer for "ghost race" beats. */
+  ghost?: boolean;
+}) {
+  const hero = useMemo(() => showcaseChampion(mindKey || DEFAULT_MIND), [mindKey]);
   const grp = useRef<THREE.Group>(null);
   const flyingRef = useRef(true);
   const burstRef = useRef(0);
@@ -200,15 +212,27 @@ function FlightPair({ reduceMotion, animate }: { reduceMotion: boolean; animate:
   return (
     <group ref={grp} scale={PAIR_SCALE}>
       <JetPuff burstRef={burstRef} intensityRef={intensityRef} />
+      {ghost ? (
+        <group position={[-1.55, 0.12, -1.35]} scale={0.92}>
+          <group position={[-0.55, 0, 0]}>
+            <RobotPilot force={hero.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.32} />
+          </group>
+          {/* Soft ghost wash — depth-only silhouette behind the live pair */}
+          <mesh position={[0.1, 0.9, 0.2]} renderOrder={-1}>
+            <sphereGeometry args={[1.35, 16, 12]} />
+            <meshBasicMaterial color="#c8d0e8" transparent opacity={0.14} depthWrite={false} />
+          </mesh>
+        </group>
+      ) : null}
       {/* Face the camera (+Z): front-on flight over the world. */}
       <group position={[-0.55, 0, 0]}>
-        <RobotPilot force={HERO.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.32} />
+        <RobotPilot force={hero.type} flyingRef={flyingRef} burstRef={burstRef} faceHeading={0} scale={CHAR_SCALE} lean={0.32} />
       </group>
       <group position={[0.95, -0.18, -0.35]} scale={CHAR_SCALE * CHAMPION_REL_TO_TRAINER}>
         <ChampionMesh
-          type={HERO.type}
-          champion={HERO.champion}
-          identityKey={HERO.key}
+          type={hero.type}
+          champion={hero.champion}
+          identityKey={hero.key}
           position={[0, 0, 0]}
           rotation={-0.08}
           showLabel={false}
@@ -430,11 +454,15 @@ function FlightWorld({
   reduceMotion,
   animate,
   onCastReady,
+  mindKey,
+  ghost,
 }: {
   variant: Variant;
   reduceMotion: boolean;
   animate: boolean;
   onCastReady: () => void;
+  mindKey: string;
+  ghost?: boolean;
 }) {
   const biome = useMemo(() => {
     const day = daylightBiome(biomeById(BIOME_ID));
@@ -469,7 +497,7 @@ function FlightWorld({
         <CloudPuffs reduceMotion={reduceMotion} count={cloudCount} animate={animate} />
         <TerrainBelt biome={biome} reduceMotion={reduceMotion} mobile={variant === "mobile"} animate={animate} />
         <DriftMotes accent={biome.lights.arenaPoint} reduceMotion={reduceMotion} animate={animate} />
-        <FlightPair reduceMotion={reduceMotion} animate={animate} />
+        <FlightPair reduceMotion={reduceMotion} animate={animate} mindKey={mindKey} ghost={ghost} />
         <ReadyCue onReady={onCastReady} />
       </Suspense>
     </>
@@ -499,6 +527,8 @@ export default function InfiniteFlightHero({
   onReady,
   showPoster = true,
   freeze = false,
+  mindKey = DEFAULT_MIND,
+  ghost = false,
 }: {
   variant?: Variant;
   /** Called when the live scene has drawn — parents can drop their own poster. */
@@ -507,6 +537,10 @@ export default function InfiniteFlightHero({
   showPoster?: boolean;
   /** Hold the opening cruise pose (capture page / reduced-motion). */
   freeze?: boolean;
+  /** Wingmate First Mind / roster key for the champion on the wing. */
+  mindKey?: string;
+  /** Show a trailing ghost Trainer (challenge / ghost-race beats). */
+  ghost?: boolean;
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const dpr = variant === "mobile" ? 1 : ([1, 1.6] as [number, number]);
@@ -565,6 +599,8 @@ export default function InfiniteFlightHero({
               reduceMotion={reduceMotion || freeze}
               animate={animate}
               onCastReady={markReady}
+              mindKey={mindKey}
+              ghost={ghost}
             />
           </Canvas>
         </RenderBoundary>

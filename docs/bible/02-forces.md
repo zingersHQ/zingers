@@ -6,13 +6,12 @@
 > who has the edge in a fight.
 
 Every mind in the Hum is shaped by five **Forces**. The five elemental fighting
-types of this world. They are the in-world name for the **type pentagon**
-(`docs/combat-design.md`). A Force is both an element (what a champion is made of)
+types of this world. A Force is both an element (what a champion is made of)
 and a way of arguing (how it fights).
 
 The player-facing name of a Force is its **plain name** below (Logic / Static /
-Calm / Chorus / Spark). Each also carries an older, poetic name. Its *etymology*
-.  kept here as flavour but never shown in the game UI.
+Calm / Chorus / Spark). Each also carries an older, poetic name. Its *etymology*,
+kept here as flavour but never shown in the game UI.
 
 | Force | Etymology | Element of… | Argues by… | Sigil | Hex |
 |-------|-----------|-------------|------------|:-----:|-----|
@@ -21,11 +20,6 @@ Calm / Chorus / Spark). Each also carries an older, poetic name. Its *etymology*
 | **Calm** | *the Stillness* | patience, endurance, calm | outlasting the storm | ▲ | `#36d39a` |
 | **Chorus** | *the Chorus* | crowd, feeling, persuasion | moving the room | ◉ | `#f0a93a` |
 | **Spark** | *the Spark* | invention, metaphor, reframe | changing the question | ✺ | `#f5d020` |
-
-> The five `CreatureType` codes in the engine (`LOGIC / CHAOS / COMPOSURE /
-> RHETORIC / CREATIVITY`) are unchanged. They are internal keys. Only the
-> *display* name shown to players is the plain name above. Canonical source:
-> `lib/lore/canon.ts › FORCES[type].name` (poetic name lives on as `.inWorld`).
 
 ## The faces of the forces
 
@@ -39,33 +33,29 @@ Calm / Chorus / Spark). Each also carries an older, poetic name. Its *etymology*
 | ![Chorus](././public/img/bible/forces/force-chorus.png) | ![Spark](././public/img/bible/forces/force-spark.png) |
 | *crowd, feeling, persuasion* | *invention, metaphor, reframe* |
 
-*(zingers.org serves these from `/img/bible/forces/*.png`.)*
-
 ## The Wheel (the pentagon)
 
 The forces turn in a wheel. **Each beats the next and loses to the previous:**
 
 ```
 Logic → Static → Calm → Chorus → Spark → (Logic)
-LOGIC → CHAOS  → CMP  → RHET   → CREA  → (LOGIC)
 ```
 
-- **Logic** tames **Static**. Order silences noise. (LOGIC > CHAOS)
-- **Static** cracks **Calm**. Chaos rattles the patient. (CHAOS > COMPOSURE)
-- **Calm** deflects **Chorus**. Patience shrugs off appeals. (COMPOSURE > RHETORIC)
-- **Chorus** drowns **Spark**. Selling beats merely inventing. (RHETORIC > CREATIVITY)
-- **Spark** outflanks **Logic**. A reframe escapes the proof. (CREATIVITY > LOGIC)
+- **Logic** tames **Static**. Order silences noise.
+- **Static** cracks **Calm**. Chaos rattles the patient.
+- **Calm** deflects **Chorus**. Patience shrugs off appeals.
+- **Chorus** drowns **Spark**. Selling beats merely inventing.
+- **Spark** outflanks **Logic**. A reframe escapes the proof.
 
 Advantage ×1.25, neutral ×1.0, disadvantage ×0.8. This wheel is the deepest law of
 the world; every region, season modifier, and matchup is read against it.
 
 ## The five inner stats
 
-Within a mind, the same five appear as the combat stats (LOG / CHA / CMP / RHE /
-CRE) and, as a *career accrues*, as the five **behavioural axes** that sculpt the
-body (aggression, control, resilience, flair, creativity; see
-`lib/evolve/progression.ts`). A mind is "of" one Force but carries a measure of all
-five; what it *does* in the ring decides which one swells.
+Within a mind, the same five appear as the combat stats and, as a *career accrues*,
+as the five **behavioural axes** that sculpt the body (aggression, control,
+resilience, flair, creativity). A mind is "of" one Force but carries a measure of
+all five; what it *does* in the ring decides which one swells.
 
 ## Sigils
 
@@ -95,7 +85,7 @@ Pledging to a Clan. The Force you swear allegiance to for the season. Binds your
 ranked wins to that Force's standing in the season-long war between the five. You may
 switch Clan between seasons, but contribution stays with the Force that earned it. The
 pledge is taken under the
-Force's **motto**. Its `argues` line, said as a vow:
+Force's **motto**. Its argues line, said as a vow:
 
 | Force | Motto |
 |-------|-------|
@@ -105,5 +95,4 @@ Force's **motto**. Its `argues` line, said as a vow:
 | **Chorus** | *Move the room.* |
 | **Spark** | *Change the question.* |
 
-Mottos live in `lib/lore/canon.ts › FORCE_MOTTO`. The Trainer who pledges is defined
-in [cosmology.md](./01-cosmology.md).
+The Trainer who pledges is defined in [cosmology.md](./01-cosmology.md).

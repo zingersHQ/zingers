@@ -5,7 +5,6 @@ import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { RENDER_PRESETS, type RenderPresetId } from "@/lib/render/presets";
 import { ChampionPortraitScene } from "@/components/render/champion-portrait-scene";
 import { useWebglHardFailed } from "@/components/grounds/render-guard";
-import type { KeeperKind } from "@/components/grounds/keeper-regalia";
 
 /** Live 3D portrait — the model idles in-frame; mounts only when scrolled near. */
 export function ChampionPortrait({
@@ -17,7 +16,7 @@ export function ChampionPortrait({
   className,
   eager = false,
   scale = 1,
-  keeper,
+  fill = false,
 }: {
   rosterKey: string;
   type: CreatureType;
@@ -29,8 +28,8 @@ export function ChampionPortrait({
   eager?: boolean;
   /** Per-tile multiplier on the fitted body size (1 = preset default). */
   scale?: number;
-  /** render this figure as a Keeper boss with its signature regalia */
-  keeper?: KeeperKind;
+  /** Fill parent box instead of enforcing preset aspect (overlays / beat stages). */
+  fill?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(eager);
@@ -73,14 +72,15 @@ export function ChampionPortrait({
       style={{
         position: "relative",
         width: "100%",
-        aspectRatio: String(aspect),
+        height: fill ? "100%" : undefined,
+        aspectRatio: fill ? undefined : String(aspect),
         overflow: "hidden",
         background: `radial-gradient(120% 120% at 50% 18%, color-mix(in srgb, ${accent} 22%, #0a0812), #0a0812)`,
       }}
       aria-label={`${rosterKey} living portrait`}
     >
       {live && !glDisabled ? (
-        <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} identityKey={rosterKey} keeper={keeper} />
+        <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} identityKey={rosterKey} />
       ) : (
         <div
           style={{

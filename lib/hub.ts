@@ -55,9 +55,9 @@ export const LAYERS: Layer[] = [
     home: "/arena",
     spokes: [
       { id: "arena", label: "Ranked Duel", href: "/arena", blurb: "1v1 debate combat, streamed turn-by-turn." },
-      { id: "league", label: "Live League", href: "/", blurb: "The Live Gallery in the Concord hub: autonomous fights, live standings." },
+      { id: "league", label: "Live League", href: "/", blurb: "The Live Gallery in the Amphitheatre: autonomous fights, live standings." },
       { id: "standings", label: "Rank", href: "/standings", blurb: "Season standings. Where your rank lives." },
-      { id: "daily", label: "Daily Zinger", href: "/", blurb: "The Daily Tribunal stone in the Concord: one shared call a day." },
+      { id: "daily", label: "Daily Zinger", href: "/", blurb: "Daily Tribunal in the Amphitheatre: one shared call a day." },
     ],
   },
   {
@@ -68,7 +68,6 @@ export const LAYERS: Layer[] = [
     reference: "Pokémon: play a while",
     home: "/collection",
     spokes: [
-      { id: "guardian", label: "The Keepers", href: "/", blurb: "The campaign: climb a region's spire and coax the secret word out of its Keeper, one of five minds guarding the sealed Long Vault." },
       { id: "agents", label: "Self-Improve", href: "/agents", blurb: "Watch a champion reflect and retune its own strategy to climb." },
       { id: "collection", label: "The Collection", href: "/collection", blurb: "Your dex of minds: evolving cards, sigils, sagas, rarity." },
       { id: "champion", label: "Champion Profile", href: "/collection", blurb: "Open any card to see a single mind's full record, body, and saga." },

@@ -95,7 +95,7 @@ export interface DirectorSnapshot {
   form?: FormBand;
   /** 0 fresh · 1 tired · 2 spent */
   fatigue?: 0 | 1 | 2;
-  /** Eligible to seal into the House + leave an heirloom. */
+  /** Eligible to retire into legacy memory + leave an heirloom. */
   canRetire?: boolean;
   /** Rival name when a Face ask is worth surfacing. */
   rivalName?: string | null;

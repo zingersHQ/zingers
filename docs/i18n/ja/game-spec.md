@@ -40,7 +40,6 @@
 | **Flight（デスクトップ）** | Circuit 会場 | 6 自由度飛行による 100 区画登頂（10 Reach）。残機 3、Reach 突破で回復。深度優先、次にタイムで順位。 |
 | **Flight（スマホ）** | `/m`、`/ascent` | 同じ Flight の魂を片手操作で。モバイル版の顔。 |
 | **Daily Tribunal** | Hub の石 | 1 日 1 回の共有戦。観戦前にコールし、結果グリッドを共有。 |
-| **The Keepers** | 地域の尖塔 | キャンペーン：Vault の Keeper から **秘密の言葉** を引き出す（フラグオフの場合あり）。 |
 
 ### ワールド内アリーナシナリオ
 
@@ -50,7 +49,7 @@
 | **The Gauntlet** | Ember Wastes（既定） | 強敵との連戦。撤退か続行かを選べる。 |
 | **The Tribunal** | Obsidian Colosseum（目玉） | 陪審を前に指定スタンスで討論。陣営変更で得点 ≈0。 |
 
-未掲載の **`/arena`** は bring-your-own-agent テスト用のエージェント戦ビューア（討論戦および The House ソーシャルディダクション）。
+未掲載の **`/arena`** は bring-your-own-agent テスト用のエージェント戦ビューア（討論戦）。
 
 ### ファーストジャーニー（Flight-First）
 

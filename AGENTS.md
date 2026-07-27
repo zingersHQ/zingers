@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Vocabulary & voice (added 2026-07)
 
-- **Naming is governed by `docs/vocabulary.md`** — read it before writing player-facing copy or lore. Canon: player = **Trainer** (not Reader), champion strategy = **strategy** (not doctrine, in visible text only), the Force you swear to = **Clan** (not Allegiance/House). Never write **bout** in player-facing copy; use **fight** / **battle** / **duel**. Keep signature terms (the Grounds, Concord, Long Vault, Keepers, Sigil, Resolve…) but **gloss each on first use**.
+- **Naming is governed by `docs/vocabulary.md`** — read it before writing player-facing copy or lore. Canon: player = **Trainer** (not Reader), champion strategy = **strategy** (not doctrine, in visible text only), the Force you swear to = **Clan** (not Allegiance/House). Never write **bout** in player-facing copy; use **fight** / **battle** / **duel**. Keep signature terms (the Grounds, Concord, Long Vault, Sigil, Resolve…) but **gloss each on first use**.
 - **Guiding copy:** write "what's next" as the champion (we/us, warm, direct). Never quest-sign chrome (`NEXT`, Compass-as-objective). **Never market** "it talks to you" / "voiced lines" as a feature. Gold: *"Stay with me. Nine more stretches of sky and we light the next camp."*
 - **No em dash ` — ` in player-readable text** (UI, beats, glossary, public docs). Periods and short sentences. Code comments are exempt.
 - **No ELO / no ladder in player copy:** use **standings**, **rank**, **board**, **rating**. Code ids may stay.
@@ -17,12 +17,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Internationalization (added 2026-07)
 
 - **Locales:** `en` (source), `es`, `zh` (Simplified), `ru`, `ja`. Preference: `settings.locale` + `NEXT_LOCALE` cookie. No locale URL prefixes on the game host.
+- **Same-session sync (mandatory):** any change to player-facing UI copy, org/bible docs, glossary, or mind banter must update the sibling locales in the same pass. Do not leave `es`/`zh`/`ru`/`ja` on stale meaning. Follow the **`i18n-sync`** skill (`.cursor/skills/i18n-sync/SKILL.md`).
 - **UI chrome:** `messages/{locale}.json` via `next-intl`. New player-facing strings land in `messages/en.json` first, then sibling locale files.
 - **Terminology:** [`docs/i18n/terminology.md`](docs/i18n/terminology.md) governs borrow vs translate. Native rewrite for banter/wit; no MT dumps.
 - **Minds / banter:** English in `content/minds/reviewed/*.json`; locales in `content/minds/reviewed/{locale}/` → `npm run bake:minds -- --locale <code>` → `lib/minds/baked/{locale}.ts`. Draft via `npm run i18n:draft-minds`.
-- **Battles:** clients pass `lang` (automatic in `useBout`). Agent prompts + banter banks honor locale. Guardian **secret words stay English**.
-- **Org docs:** `docs/i18n/{locale}/…` with English fallback; optional `/es|/zh|/ru|/ja` prefix on zingers.org.
+- **Battles:** clients pass `lang` (automatic in `useBout`). Agent prompts + banter banks honor locale.
+- **Org docs:** `docs/i18n/{locale}/…` with English fallback; optional `/es|/zh|/ru|/ja` prefix on zingers.org. After English doc edits: `npm run i18n:draft-docs -- --locale <code>` (e.g. `--only docs/bible`).
 - **Check:** `npm run i18n:check` for message key parity.
+- **Bible voice:** `docs/bible/` is world fiction for players/generators, not a repo runbook. No source paths, npm scripts, or module names in bible prose (any locale).
 
 # Game-feel conventions (added 2026-07)
 

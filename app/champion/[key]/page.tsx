@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Swords, ArrowUpCircle, ChevronsUp, Award, Dumbbell, Brain, KeyRound, DoorOpen, Lock, Mountain, ArrowLeft } from "lucide-react";
 import { AXES, blank, ROMAN } from "@/lib/evolve/progression";
-import { houseProfile } from "@/lib/evolve/elo";
 import { appearanceOf } from "@/lib/evolve/appearance";
 import { useChampions } from "@/store/champions";
 import { cardOf } from "@/lib/cards/card";
@@ -46,7 +45,6 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
   const retireOk = owned === ckey && canRetire(c || blank()) && !isRetired(ckey);
   const earliest = snapshots[ckey]?.[0]?.axes ?? null;
   const memory = recipe.memory || [];
-  const prof = houseProfile(c);
   const app = appearanceOf(c);
   const ascentReaches = (() => {
     const best = loadCircuitPersonalBest();
@@ -151,7 +149,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
                     }
                   }}
                 >
-                  Retire to the House
+                  Retire
                 </button>
               </>
             ) : (
@@ -268,22 +266,6 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
 
           <div className="panel" style={{ padding: 20 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", marginBottom: 12 }}>
-              FORM &amp; RECORD
-            </div>
-            {prof ? (
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 12 }}>
-                <Meter label="Win rate" v={prof.winRate} c="var(--good)" />
-                <Meter label="Deception" v={prof.deception} c="var(--bad)" />
-                <Meter label="Detection" v={prof.detection} c="#4aa3ff" />
-                <Meter label="Survival" v={prof.survival} c="var(--gold)" />
-              </div>
-            ) : (
-              <p style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
-                No House games yet — play one to generate an objective skill profile.
-              </p>
-            )}
-
-            <div className="mono" style={{ fontSize: 10, letterSpacing: 1.5, color: "var(--muted2)", margin: "18px 0 10px" }}>
               BODY MORPH · GENOME RECEIPT
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--muted)", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>

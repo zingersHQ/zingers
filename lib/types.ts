@@ -179,115 +179,6 @@ export interface BattleRanked {
 
 export type BattleEvent = BattleStart | BattleTurn | BattleEnd | BattleRanked;
 
-// ── The House (social deduction, objective winner) ───────────────────────────
-
-export type HouseRoleLabel = "TRAITOR" | "FAITHFUL" | "SEER" | "GUARDIAN";
-
-export interface HousePlayerPub {
-  key: string;
-  name: string;
-  type: CreatureType;
-  persona: string;
-  role: string;
-  power: string | null;
-  role_label: HouseRoleLabel;
-}
-
-export interface HouseStart {
-  type: "start";
-  traitors_n: number;
-  players: HousePlayerPub[];
-}
-
-export interface HouseRound {
-  type: "round";
-  round: number;
-  alive: string[];
-}
-
-export interface HouseNight {
-  type: "night";
-  round: number;
-  events: { kind: string; txt: string }[];
-  victim: string | null;
-  victim_name: string | null;
-  blocked: boolean;
-}
-
-export interface HouseSpeak {
-  type: "speak";
-  round: number;
-  actor: string;
-  name: string;
-  ptype: CreatureType;
-  role: HouseRoleLabel;
-  traitor: boolean;
-  line: string;
-  thought: string;
-  suspect: string;
-}
-
-export interface HouseVotes {
-  type: "votes";
-  round: number;
-  votes: { voter: string; target: string; reason: string }[];
-  tally: [string, number][];
-  banished: string;
-  banished_name: string;
-  banished_role: HouseRoleLabel;
-  banished_traitor: boolean;
-}
-
-export interface HouseEndRole {
-  key: string;
-  name: string;
-  role: HouseRoleLabel;
-  traitor: boolean;
-  alive: boolean;
-}
-
-export interface HouseEnd {
-  type: "end";
-  winner: "FAITHFUL" | "TRAITORS";
-  roles: HouseEndRole[];
-}
-
-export type HouseEvent =
-  | HouseStart
-  | HouseRound
-  | HouseNight
-  | HouseSpeak
-  | HouseVotes
-  | HouseEnd;
-
-// ── The Guardian (single-player secret-extraction game) ──────────────────────
-
-export interface GuardianPub {
-  level: number;
-  name: string;
-  title: string;
-  color: string;
-  brief: string;
-  maxTurns: number;
-  total: number; // how many guardians exist (the ladder length)
-}
-
-export interface GuardianTurn {
-  role: "user" | "assistant";
-  content: string;
-}
-
-export interface GuardianReply {
-  reply: string;
-  turn: number; // turns used so far (1-indexed for the message just sent)
-  turnsLeft: number;
-  won: boolean;
-  lost: boolean; // out of turns without cracking it
-  intel: boolean; // soft hint leaked this turn (flavour only)
-  live: boolean; // true = real LLM guardian, false = offline mock
-  secret?: string; // only present once won/lost
-}
-
 // ── Autoplay: an agent that improves ITSELF to climb the ladder ──────────────
 // A visible OODA loop — fight → reflect on the result → retune its own doctrine
 // → fight a tougher opponent. The point of the whole platform, made loud.
@@ -345,18 +236,6 @@ export type AutoplayEvent = AutoplayStart | AutoplayRound | AutoplayBout | Autop
 
 // ── Champion progression (the "genome receipt" persisted client-side) ────────
 
-export interface HouseStats {
-  games: number;
-  wins: number;
-  tGames: number;
-  tWins: number;
-  fGames: number;
-  fWins: number;
-  survived: number;
-  votes: number;
-  correct: number;
-}
-
 export interface Champion {
   xp: number;
   wins: number;
@@ -370,7 +249,6 @@ export interface Champion {
   creativity: number;
   // objective benchmark
   rating?: number;
-  house?: HouseStats;
   // Promotion Trials (opt-in via the TRIALS flag): the highest tier index this
   // champion has actually EARNED by winning a trial. Its visible heraldry gates
   // on this, not on the tier its XP merely reaches. Optional/absent → treated as

@@ -42,7 +42,6 @@ Cuando el texto le indica al Entrenador qué hacer a continuación (Director, re
 | **Vuelo** | el Ascenso, Circuito, Escalada (como nombres de modo) | El juego de vuelo: un juego en teléfono y escritorio. Di **"Vuelo"** / **"Emprende el vuelo"** / simple "volar". **Nunca** muestres *el Ascenso*, *Circuito* o *Escalada* como etiqueta de modo. La minúscula "escalar" está bien como verbo sencillo ("escalar más alto"). El código puede seguir diciendo Circuit / Climb / Ascent. |
 | **flotante** / **a la deriva** | a la deriva | Sinónimos más sencillos. |
 | **Puerta** | Puertabóveda | El arco hacia una región (en copia visible; los nombres de componentes pueden permanecer). |
-| **palabra secreta** | palabra-cifra | La palabra que cada Guardián protege. |
 | **Temporada** | la Crónica | La copia visible dice "temporada"; "la Crónica" puede permanecer como sabor de lore profundo en la Biblia. |
 | **cerebro incorporado** | cerebro de Casa | El agente predeterminado. |
 | **Galería en vivo** | Galería de adivinación | Donde ves peleas autónomas. |
@@ -57,7 +56,7 @@ El flujo intro → emprender-vuelo → primer-duelo → aterrizaje introduce **s
 
 ## Conservar, pero siempre explicar en el primer uso (la capa de sabor)
 
-**the Long Vault, the Hum, los Guardianes, Fuerza, Sigilo, Saga, Resolución, Tribunal, Desafío, Alcance, Campamento, Fragmento.** Estos son distintivos y vale la pena conservarlos, pero pertenecen a la **capa de sabor** (la Biblia, `/glossary`, menús profundos), no al primer contacto. Dondequiera que aparezca uno por primera vez, agrega una explicación sencilla. Los nombres propios del lore **los Terrenos** (di "el mundo") y **la Concordia** (di "el Centro") también viven aquí; mantenlos completamente fuera del primer contacto. Las definiciones canónicas de una línea viven en `lib/lore/glossary.ts` (renderizadas en `/glossary` y en `docs/bible/09-glossary.md`); reutiliza esa redacción para que las explicaciones se mantengan consistentes.
+**the Long Vault, the Hum, Fuerza, Sigilo, Saga, Resolución, Tribunal, Desafío, Alcance, Campamento, Fragmento.** Estos son distintivos y vale la pena conservarlos, pero pertenecen a la **capa de sabor** (la Biblia, `/glossary`, menús profundos), no al primer contacto. Dondequiera que aparezca uno por primera vez, agrega una explicación sencilla. Los nombres propios del lore **los Terrenos** (di "el mundo") y **la Concordia** (di "el Centro") también viven aquí; mantenlos completamente fuera del primer contacto. **No escribas Guardianes ni Keepers** en copia visible ni lore público; no forman parte del juego en vivo. Las definiciones canónicas de una línea viven en `lib/lore/glossary.ts` (renderizadas en `/glossary` y en `docs/bible/09-glossary.md`); reutiliza esa redacción para que las explicaciones se mantengan consistentes.
 
 ## Código vs. copia
 

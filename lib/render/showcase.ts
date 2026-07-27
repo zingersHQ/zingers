@@ -3,7 +3,6 @@
 import type { Champion } from "@/lib/types";
 import type { CreatureType } from "@/lib/types";
 import { ROSTER } from "@/lib/engine/roster";
-import { KEEPERS } from "@/lib/lore/canon";
 import { BAKED_SHOWCASE } from "@/lib/minds/baked";
 
 const LEGEND_XP = 18500;
@@ -67,17 +66,3 @@ export function showcaseForRegion(regionId: string) {
   return showcaseChampion(key);
 }
 
-const KEEPER_MIND: Record<string, string> = {
-  Tibble: "VOX",
-  Quill: "AXIOM",
-  Bastion: "BASTION",
-  Vesper: "MUSE",
-  Sable: "EMBER",
-};
-
-export function showcaseForKeeper(name: string) {
-  const keeper = KEEPERS.find((k) => k.name.toLowerCase() === name.toLowerCase());
-  const key = KEEPER_MIND[keeper?.name ?? name] ?? "BASTION";
-  const hex = keeper?.hex;
-  return { ...showcaseChampion(key), accentHex: hex };
-}

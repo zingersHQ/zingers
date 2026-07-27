@@ -52,18 +52,17 @@ A single typed Next.js app: one runtime, no separate backend to babysit.
 
 | Pillar | Status | Detail |
 |---|---|---|
-| **Flight** | Built | 100 sectors across ten Reaches; mobile one-thumb (`/m`); desktop Circuit venue = same Flight soul. Two lives; boards by depth then time. |
+| **Flight** | Built | 100 sectors across ten Reaches; mobile one-thumb (`/m`); desktop Circuit venue = same Flight soul. Three lives; boards by depth then time. |
 | **Two doors** | Built | Mobile: Take flight (guest flight → claim wingmate). Desktop: short flight hero → champion pick → Hub / Flight. |
-| **3D world (one map)** | Built | Hub + three floating regions. Walk-up venues (Amphitheatre / Live Gallery, Circuit), arena scenarios (Duel, Gauntlet, Tribunal), Keepers, goals, Broker, Clan war. |
+| **3D world (one map)** | Built | Hub + three floating regions. Walk-up venues (Amphitheatre / Live Gallery, Circuit), arena scenarios (Duel, Gauntlet, Tribunal), goals, Broker, Clan war. |
 | **AI agent protocol** | Built | Every champion implements one `act(view)` contract. Drivers: Grok (xAI), any OpenAI-compatible model, or a bring-your-own HTTP agent. Deterministic heuristic fallback means a keyless demo still runs. Default: single-shot JSON + local judge. |
-| **Collectible dex** | Built | Eight First Minds + baked later minds (lineage echoes); weekly starter rotation; forge/bake pipeline. |
+| **Collectible dex** | Built | Eight First Minds + later minds (lineage echoes); weekly starter rotation. |
 | **Evolving 3D body** | Built | Force archetype + seeded phenotype + career bone morph; Flight sigils from climbs; deviation amplified by rank. |
-| **Progression & biography** | Built | XP, tiers (Rookie → Legend), style axes, career ledger → Saga, Homecoming / Report, Imprints, Promotion Trials. |
+| **Progression & biography** | Built | XP, tiers (Rookie → Legend), style axes, career ledger → Saga, Homecoming / Report, Imprints. |
 | **Debate combat (1v1)** | Built | Stat-driven, five-type pentagon, statuses, finishers, streamed turn-by-turn over SSE. Open Duel, Gauntlet, and Tribunal scenarios in-world. |
 | **Trainer identity** | Built | Unique Trainer names; optional Solana wallet link to keep the name. Soft identity copy. |
-| **The House** | Built | Social-deduction benchmark on unlisted `/arena` (not yet a Grounds venue). |
 | **Training & economy** | Built | Crowns currency; paid training sessions; recruit loop (earned Crowns sink. Not gacha). |
-| **The mind evolves** | Built | Memory notes across fights; Strategy / temperament drifts via Imprints and results. Character beats give champions and Keepers fixed voice. |
+| **The mind evolves** | Built | Memory notes across fights; Strategy / temperament drifts via Imprints and results. Character beats give champions fixed voice. |
 | **Live League + Standings** | Built | Auto-running fights feed an objective rating board. Amphitheatre surfaces the league in-world. |
 | **Three region biomes** | Built | Obsidian Colosseum, Ember Wastes, Void Garden. Procedural ambience per place. |
 | **Shareable cards** | Built / sharpening | Champion OG + Climb challenge links; next: richer Flight/bond cards from real meshes. |

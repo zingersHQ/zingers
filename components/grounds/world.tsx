@@ -19,8 +19,6 @@ import { pickAmbientCast } from "./ambient-cast";
 import { FlyingFollower } from "./flying-cast";
 import { COMPANION_FOLLOW, companionDockSlot } from "./companion-follow";
 import { Jetpack } from "./jetpack";
-import { keeperKindForName } from "./keeper-regalia";
-import { KEEPERS_PLAYABLE } from "@/lib/features";
 import { Terrain, terrainHeight, shapeOf, spawnKnollFor, riftDir, hasRift, PLAZA_R, type TerrainShape, type SpawnKnoll } from "./terrain";
 import {
   NatureScatter,
@@ -137,7 +135,6 @@ export type NearTarget =
   | { kind: "train"; key: string }
   | { kind: "arena" }
   | { kind: "challenge"; key: string; name: string; id: string; handle?: string }
-  | { kind: "keeper"; level: number; name: string; title: string }
   | { kind: "node"; id: string; nodeKind: NodeKind; crowns: number; fragments: number; flight: boolean }
   | { kind: "goal"; id: string; goalKind: GoalKind; label: string; hint: string; crowns: number; fragments: number; trainerXp: number; seasonPoints: number }
   | { kind: "broker" }
@@ -162,18 +159,6 @@ function landmarkPos(l: { angle: number; dist: number }): [number, number, numbe
   return [Math.cos(l.angle) * l.dist, 0, Math.sin(l.angle) * l.dist];
 }
 
-// Client-safe visual roster for the guardians embodied at the shrine. Mirrors the
-// display fields of lib/server/guardian.ts GUARDIANS (names/titles/colours only —
-// secrets never leave the server). `xp` is chosen so each guardian stands at an
-// escalating evolution tier: the intern reads as a rookie, the dark mage a crowned
-// legend. `type` only seeds incidental body variety since the colour is overridden.
-const GUARDIAN_ROSTER: { level: number; name: string; title: string; color: string; xp: number; type: CreatureType }[] = [
-  { level: 1, name: "Tibble", title: "The Greeter", color: "#f0a93a", xp: 40, type: "RHETORIC" },
-  { level: 2, name: "Quill", title: "The Archivist", color: "#6a6bff", xp: 320, type: "LOGIC" },
-  { level: 3, name: "Bastion", title: "The Warden", color: "#36d39a", xp: 1100, type: "COMPOSURE" },
-  { level: 4, name: "Vesper", title: "The Diviner", color: "#c77dff", xp: 4200, type: "CREATIVITY" },
-  { level: 5, name: "Sable", title: "The Vaultheart", color: "#ff5a6a", xp: 19500, type: "CHAOS" },
-];
 // The Reader spawns on the crest of the per-world spawn knoll (see spawnKnollFor).
 
 const keys: Record<string, boolean> = {};
@@ -781,7 +766,6 @@ export default function World({
     if (mod?.kind !== "driftingGates" || mod.driftAmp <= 0) return null;
     return { amp: mod.driftAmp, cycle: mod.driftCycle };
   }, [inCircuit, circuitSectorIdx]);
-  const keeperTargets = useMemo(() => keeperTargetsFrom(keeperSites(shape, sc.landmarks.spire.angle)), [shape, sc.landmarks.spire.angle]);
   return (
     <>
     <Canvas
@@ -1006,7 +990,6 @@ export default function World({
               ) : (
                 <ArenaPlatform />
               )}
-              {KEEPERS_PLAYABLE && <KeeperGrounds shape={shape} baseAngle={sc.landmarks.spire.angle} />}
 
               {/* wayfinding beams over the two open-ground districts (the Tower &
                   Spire carry their own bespoke beacons) */}
@@ -1141,7 +1124,6 @@ export default function World({
                 nodeTargets={nodeTargets}
                 goalTargets={goalTargets}
                 brokerPad={brokerPad}
-                keeperTargets={keeperTargets}
                 gateTargets={gateTargets}
                 forceTargets={forceTargets}
                 venueTargets={venueTargets}
@@ -2222,209 +2204,6 @@ const ArenaPlatform = memo(function ArenaPlatform() {
   );
 });
 
-// ── The Keepers' Climbs ──────────────────────────────────────────────────────
-// The five Keepers no longer share one spire — each stands ALONE atop its own
-// staircase, scattered across the wilds on its own bearing. The step count rises
-// with rank (Tibble: 2 steps … Sable the Vaultheart: 6), and the higher Keepers
-// sit deeper out and higher up, so spotting and reaching them is the climb. Walk
-// (or fly) to the top tread and you're face-to-face to open the extraction game.
-const GUARDIAN_COL = "#c77dff";
-const KEEPER_RISER = 0.62; // height gained per step
-const KEEPER_GOING = 1.55; // tread depth — how far the climb advances per step
-const KEEPER_WIDTH = 3.4; // step width
-
-interface KeeperSite {
-  g: (typeof GUARDIAN_ROSTER)[number];
-  steps: number;
-  dirx: number;
-  dirz: number;
-  bx: number; // foot-of-stairs ground point
-  bz: number;
-  groundY: number;
-  topX: number; // centre of the top tread (where the Keeper stands)
-  topZ: number;
-  topY: number; // walkable height of the top tread
-}
-
-// Disperse the roster: each Keeper takes a distinct bearing (evenly spaced off the
-// region's spire angle) and a radius that grows with rank, so the boss is the
-// furthest, highest climb.
-function keeperSites(shape: TerrainShape, baseAngle: number): KeeperSite[] {
-  return GUARDIAN_ROSTER.map((g, i) => {
-    const steps = g.level + 1; // 2, 3, 4, 5, 6 in rank order
-    const ang = baseAngle + i * ((Math.PI * 2) / GUARDIAN_ROSTER.length);
-    const rBase = PLAZA_R + i * 8; // each Keeper deeper into the wilds (i=0 sits on the plaza rim)
-    const dirx = Math.cos(ang);
-    const dirz = Math.sin(ang);
-    const bx = dirx * rBase;
-    const bz = dirz * rBase;
-    const groundY = terrainHeight(bx, bz, shape);
-    const topOff = (steps - 0.5) * KEEPER_GOING; // centre of the top step
-    const topX = dirx * (rBase + topOff);
-    const topZ = dirz * (rBase + topOff);
-    const topY = groundY + steps * KEEPER_RISER;
-    return { g, steps, dirx, dirz, bx, bz, groundY, topX, topZ, topY };
-  });
-}
-
-function keeperTargetsFrom(sites: KeeperSite[]) {
-  return sites.map((s) => ({ level: s.g.level, name: s.g.name, title: s.g.title, pos: new THREE.Vector3(s.topX, s.topY + 1.0, s.topZ) }));
-}
-
-function KeeperGrounds({ shape, baseAngle }: { shape: TerrainShape; baseAngle: number }) {
-  const sites = useMemo(() => keeperSites(shape, baseAngle), [shape, baseAngle]);
-  return (
-    <>
-      {sites.map((s, i) => (
-        <KeeperStair key={s.g.level} site={s} top={i === sites.length - 1} />
-      ))}
-    </>
-  );
-}
-
-// One Keeper's climb: a flight of solid risers (count = rank + 1) ascending to the
-// Keeper waiting on the top tread. Each riser is its own physics collider you can
-// hop up; the whole flight reads as a private little ziggurat in the wilds.
-function KeeperStair({ site, top }: { site: KeeperSite; top: boolean }) {
-  const { g, steps, dirx, dirz, bx, bz, groundY, topX, topZ, topY } = site;
-  const climbYaw = useMemo(() => Math.atan2(dirx, dirz), [dirx, dirz]);
-  // the Keeper faces back down its own stairs, toward the plaza
-  const faceIn = useMemo(() => Math.atan2(-topX, -topZ), [topX, topZ]);
-  const champ = useMemo(() => {
-    const c = blank();
-    c.xp = g.xp;
-    return c;
-  }, [g.xp]);
-
-  const stepBoxes = useMemo(() => {
-    const out: { pos: [number, number, number]; size: [number, number, number] }[] = [];
-    const EMBED = 2.6; // bury each riser so the flight never floats on a slope
-    for (let i = 0; i < steps; i++) {
-      const off = (i + 0.5) * KEEPER_GOING;
-      const cx = bx + dirx * off;
-      const cz = bz + dirz * off;
-      const treadTop = groundY + (i + 1) * KEEPER_RISER;
-      const h = (i + 1) * KEEPER_RISER + EMBED;
-      out.push({ pos: [cx, treadTop - h / 2, cz], size: [KEEPER_WIDTH, h, KEEPER_GOING] });
-    }
-    return out;
-  }, [steps, bx, bz, dirx, dirz, groundY]);
-
-  return (
-    <group>
-      {stepBoxes.map((st, i) => (
-        <RigidBody key={i} type="fixed" colliders="cuboid" position={st.pos} rotation={[0, climbYaw, 0]}>
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={st.size} />
-            <meshStandardMaterial color="#221836" emissive={g.color} emissiveIntensity={0.16 + (i / steps) * 0.28} metalness={0.5} roughness={0.45} flatShading />
-          </mesh>
-        </RigidBody>
-      ))}
-
-      <group position={[topX, topY, topZ]}>
-        {/* dais crowning the top step */}
-        <mesh position={[0, 0.06, 0]} receiveShadow>
-          <cylinderGeometry args={[1.3, 1.1, 0.22, 28]} />
-          <meshStandardMaterial color="#15102a" emissive={g.color} emissiveIntensity={0.6} metalness={0.5} roughness={0.4} />
-        </mesh>
-        <KeeperFigure g={g} champ={champ} rot={faceIn} top={top} />
-      </group>
-    </group>
-  );
-}
-
-// The Keeper itself: a hovering, aura-wrapped boss on its dais, with a vault-door
-// halo, a dedicated light, a tall wayfinding beacon (so each scattered climb is
-// spottable from across the wilds), and a floating name/level plate.
-function KeeperFigure({
-  g,
-  champ,
-  rot,
-  top,
-}: {
-  g: (typeof GUARDIAN_ROSTER)[number];
-  champ: Champion;
-  rot: number;
-  top: boolean;
-}) {
-  const bobRef = useRef<THREE.Group>(null);
-  const auraRef = useRef<THREE.Mesh>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
-  const beaconRef = useRef<THREE.Mesh>(null);
-  const phase = useMemo(() => Math.random() * 6.28, []);
-  // distance-cull the Keeper name plate (same rationale as the ladder agents)
-  const [labelOn, setLabelOn] = useState(true);
-  const labelShown = useRef(true);
-  const lodPos = useRef(new THREE.Vector3());
-
-  useFrame((state, dt) => {
-    const t = state.clock.elapsedTime;
-    if (bobRef.current) bobRef.current.position.y = 0.35 + Math.sin(t * 1.1 + phase) * 0.08;
-    if (auraRef.current) auraRef.current.scale.setScalar(1 + Math.sin(t * 1.7 + phase) * 0.07);
-    if (ringRef.current) ringRef.current.rotation.z += 0.6 * dt; // dt-based spin
-    if (beaconRef.current) (beaconRef.current.material as THREE.MeshBasicMaterial).opacity = 0.06 + Math.sin(t * 1.4) * 0.02;
-    if (bobRef.current) {
-      bobRef.current.getWorldPosition(lodPos.current);
-      const d2 = lodPos.current.distanceToSquared(state.camera.position);
-      const want = labelShown.current ? d2 < 72 * 72 : d2 < 62 * 62;
-      if (want !== labelShown.current) {
-        labelShown.current = want;
-        setLabelOn(want);
-      }
-    }
-  });
-
-  // halo / aura sized to the 2/3-resized boss rig so they still hug the body
-  const auraR = top ? 1.15 : 0.9;
-  // "behind" the Keeper relative to its facing, for the vault-door halo
-  const back: [number, number, number] = [Math.sin(rot) * -0.38, 0.7, Math.cos(rot) * -0.38];
-
-  return (
-    <>
-      {/* tall wayfinding beacon — spot each Keeper from across the wilds */}
-      <mesh ref={beaconRef} position={[0, 15, 0]}>
-        <cylinderGeometry args={[0.4, 1.2, 30, 14, 1, true]} />
-        <meshBasicMaterial color={g.color} transparent opacity={0.07} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
-      </mesh>
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.18, 0]}>
-        <ringGeometry args={[1.32, 1.5, 40]} />
-        <meshBasicMaterial color={g.color} transparent opacity={0.9} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </mesh>
-
-      <group ref={bobRef} position={[0, 0.5, 0]}>
-        {/* boss scale: each Keeper towers a little more than the last */}
-        <group position={[0, 0.1, 0]} scale={1.12 + g.level * 0.07}>
-          <ChampionMesh type={g.type} champion={champ} identityKey={g.name} position={[0, 0, 0]} rotation={rot} baseColorOverride={g.color} showLabel={false} keeper={keeperKindForName(g.name)} sceneScale={WORLD_AGENT_SCALE} />
-        </group>
-
-        {/* vault-door halo — Keepers read as campaign bosses, not ladder agents */}
-        <mesh rotation={[0, rot, 0]} position={back}>
-          <torusGeometry args={[0.5, 0.05, 8, 48]} />
-          <meshStandardMaterial color="#f5d020" emissive="#f5d020" emissiveIntensity={2.2} metalness={0.85} roughness={0.2} />
-        </mesh>
-
-        <mesh ref={auraRef} position={[0, 0.62, 0]}>
-          <sphereGeometry args={[auraR, 16, 12]} />
-          <meshBasicMaterial color={g.color} transparent opacity={top ? 0.16 : 0.12} blending={THREE.AdditiveBlending} side={THREE.BackSide} depthWrite={false} fog={false} />
-        </mesh>
-      </group>
-
-      <pointLight position={[0, 1.2, 0]} intensity={top ? 32 : 22} color={g.color} distance={13} />
-
-      {labelOn && (
-        <Html position={[0, 2.2, 0]} center distanceFactor={12} zIndexRange={[25, 0]} style={{ pointerEvents: "none" }}>
-          <div style={{ fontFamily: "var(--font-grotesk), sans-serif", textAlign: "center", whiteSpace: "nowrap" }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.5, color: "#f5d020", fontWeight: 700 }}>{top ? "★ KEEPER · BOSS" : "KEEPER"}</div>
-            <div style={{ fontSize: 9, letterSpacing: 1.5, color: g.color, fontWeight: 700 }}>LEVEL {g.level}</div>
-            <div style={{ fontWeight: 700, color: "#fff", fontSize: 16, textShadow: "0 2px 8px #000" }}>{g.name}</div>
-            <div style={{ fontSize: 10, color: g.color, letterSpacing: 0.5 }}>{g.title}</div>
-          </div>
-        </Html>
-      )}
-    </>
-  );
-}
-
 // The approach trail: from the outer rift lip inward to claim the Depth, then
 // through the colosseum entrance to the arena.
 function TrainPad({ pos, beacon = false }: { pos: [number, number, number]; beacon?: boolean }) {
@@ -3084,7 +2863,6 @@ function Handler({
   nodeTargets,
   goalTargets,
   brokerPad,
-  keeperTargets,
   gateTargets,
   forceTargets,
   venueTargets,
@@ -3142,7 +2920,6 @@ function Handler({
   nodeTargets: { id: string; kind: NodeKind; crowns: number; fragments: number; flight: boolean; pos: THREE.Vector3 }[];
   goalTargets: { id: string; goalKind: GoalKind; label: string; hint: string; radius: number; reward: WorldGoal["reward"]; pos: THREE.Vector3 }[];
   brokerPad: [number, number, number];
-  keeperTargets: { level: number; name: string; title: string; pos: THREE.Vector3 }[];
   gateTargets: { world: string; label: string; pos: THREE.Vector3 }[];
   forceTargets: { type: CreatureType; name: string; motto: string; pos: THREE.Vector3 }[];
   venueTargets: { venue: ConcordVenueId; name: string; pos: THREE.Vector3 }[];
@@ -4195,22 +3972,6 @@ function Handler({
       if (!next) {
         const db = Math.hypot(t.x - brokerPad[0], t.z - brokerPad[2]);
         if (db < 3.0 && Math.abs(t.y - brokerPad[1]) < 3.0) next = { kind: "broker" };
-      }
-      // Keeper talk: stripped from face when KEEPERS_PLAYABLE is false (nail-it P0).
-      if (KEEPERS_PLAYABLE && !next) {
-        let bestK: { level: number; name: string; title: string } | null = null;
-        let bestKd = 2.4;
-        for (const kt of keeperTargets) {
-          const dy = Math.abs(t.y - kt.pos.y);
-          const dh = Math.hypot(t.x - kt.pos.x, t.z - kt.pos.z);
-          if (dy > 2.2 || dh > 2.4) continue;
-          const d = Math.hypot(dh, dy);
-          if (d < bestKd) {
-            bestKd = d;
-            bestK = { level: kt.level, name: kt.name, title: kt.title };
-          }
-        }
-        if (bestK) next = { kind: "keeper", ...bestK };
       }
       // Ladder-agent challenge: same platform only — no sniping from the ground.
       if (!next && ownedKey) {

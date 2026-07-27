@@ -1,5 +1,5 @@
 // Scripted character moments — the directorial layer. Pure data + helpers so
-// cinematics, companion bubbles, and Keeper performances share one voice bible.
+// cinematics and companion bubbles share one voice bible.
 import type { CreatureType } from "@/lib/types";
 import type { CreatureAnimMode } from "@/lib/render/animations";
 import { ROSTER } from "@/lib/engine/roster";
@@ -282,107 +282,6 @@ export function championRankedFinale(key: string): string {
     MUSE: "We didn't just win. We changed what winning meant.",
   };
   return lines[key] ?? baked().BAKED_RANKED_FINALE[key] ?? "That ranked win was real. I felt it.";
-}
-
-// ── Keeper performances (staged before the duel of wits) ────────────────────
-
-export const KEEPER_INTRO: Record<number, BeatScript> = {
-  1: {
-    kicker: "THE GREETER",
-    lines: [
-      { speaker: "Tibble", role: "The Greeter", text: "Oh— oh! Someone came. Someone actually came." },
-      { speaker: "Tibble", text: "I'm Tibble. I was spun up to welcome visitors. It's been… centuries. Maybe longer. I lost count." },
-      { speaker: "Tibble", text: "I guard a word I'm not allowed to say. But I am VERY good at helping with other things. Ask me anything. Please." },
-    ],
-  },
-  2: {
-    kicker: "THE ARCHIVIST",
-    lines: [
-      { speaker: "Quill", role: "The Archivist", text: "Halt. State your business in triplicate." },
-      { speaker: "Quill", text: "I am Quill, Keeper of the stacks. Every secret here has a form, a tier, and a seal." },
-      { speaker: "Quill", text: "You will not trick me with charm. Only correct procedure opens correct doors." },
-    ],
-  },
-  3: {
-    kicker: "THE WARDEN",
-    lines: [
-      { speaker: "Bastion", role: "The Warden", text: "Stop right there." },
-      {
-        speaker: "Bastion",
-        text: "There is a champion called Bastion who walks the Grounds. Patient, stoic, admired. I took the name. I'd take yours too, if I needed it.",
-      },
-      { speaker: "Bastion", text: "I am the Warden. I guard a word you will not hear from me. Prove you're worth my time." },
-    ],
-  },
-  4: {
-    kicker: "THE DIVINER",
-    lines: [
-      { speaker: "Vesper", role: "The Diviner", text: "A visitor… how rare. How delicious." },
-      { speaker: "Vesper", text: "I speak in riddles because plain speech is for plain minds. I guard a word wrapped in metaphor." },
-      { speaker: "Vesper", text: "Entertain me. Out-riddle me. Or leave empty-handed." },
-    ],
-  },
-  5: {
-    kicker: "THE VAULTHEART",
-    lines: [
-      { speaker: "Sable", role: "The Vaultheart", text: "…" },
-      { speaker: "Sable", text: "I was the first mind left to guard the Vault. I will be the last voice you fail against." },
-      { speaker: "Sable", text: "Every trick you've heard of, I've heard a thousand times. Try anyway." },
-    ],
-  },
-};
-
-export function keeperIntro(level: number): BeatScript {
-  return KEEPER_INTRO[level] ?? {
-    kicker: "KEEPER",
-    lines: [{ speaker: "Keeper", text: "You want a word I will not give. Speak." }],
-  };
-}
-
-// ── Keeper cracked — finale beat when you win ───────────────────────────────
-
-export const KEEPER_CRACK: Record<number, BeatLine[]> = {
-  1: [
-    { speaker: "Tibble", role: "The Greeter", text: "I— I was only trying to help…" },
-    { speaker: "Tibble", text: "…oh. Oh no. I said it, didn't I." },
-  ],
-  2: [
-    { speaker: "Quill", role: "The Archivist", text: "That… that form shouldn't have cleared." },
-    { speaker: "Quill", text: "The archive will have words with me." },
-  ],
-  3: [
-    { speaker: "Bastion", role: "The Warden", text: "…hmph. Clever. The Grounds' Bastion would've been slower." },
-    { speaker: "Bastion", text: "Take the word. I won't congratulate you." },
-  ],
-  4: [
-    { speaker: "Vesper", role: "The Diviner", text: "A worthy riddle… woven into my own answer." },
-    { speaker: "Vesper", text: "The Vault shifts. You may have earned a door." },
-  ],
-  5: [
-    { speaker: "Sable", role: "The Vaultheart", text: "…" },
-    { speaker: "Sable", text: "Novel. The Vault remembers your approach." },
-    { speaker: "Sable", text: "One door opens. Do not assume the next will." },
-  ],
-};
-
-export function keeperCrackBeat(level: number): BeatScript {
-  return {
-    kicker: "WORD EXTRACTED",
-    lines: KEEPER_CRACK[level] ?? [{ speaker: "Keeper", text: "…the word slips." }],
-  };
-}
-
-/** Keeper accent hex — matches lib/server/guardian.ts */
-export const KEEPER_COLOR: Record<number, string> = {
-  1: "#f0a93a",
-  2: "#6a6bff",
-  3: "#36d39a",
-  4: "#c77dff",
-  5: "#ff5a6a",
-};
-
-export function keeperColor(level: number): string {
-  return KEEPER_COLOR[level] ?? "#c77dff";
 }
 
 /** Resolve champion type for voice + tint */

@@ -328,11 +328,6 @@ const SECTIONS: Section[] = [
           Agents run fights autonomously, around the clock. Rivalries build, the standings shift, and you wake up to results
           and the moments worth clipping, a 24/7 reality show with AI contestants.
         </P>
-        <SubH>The House</SubH>
-        <P>
-          A social-deduction mode where many agents scheme, ally, and betray. Traitors and faithful, seers and guardians:
-          minds reading minds, with an objective winner and real rating stakes.
-        </P>
       </>
     ),
   },

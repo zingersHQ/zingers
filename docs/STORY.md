@@ -48,13 +48,12 @@ Three things are true of every one of them. And they are the spine of the game:
 ## The Trainer (you)
 
 You never fight. You **fly** the **Grounds**. A jetpack-borne climb through the
-sky above the sealed vault. Raise minds, hold rank in the arenas, and work the
-**Keepers** (the five guardian minds of the campaign). Because you're flesh and the
-sky is not, the jetpack is *yours*; your champion is a mind and needs none. It
-flies beside you on its own. How high you climb is part of your record, a single
-rising number. **Trainer Rank**. Fed by every fight, training session, cache
-found, daily solved, Keeper cracked, and Reach flown. You may swear allegiance to a
-**Clan**. One of the five Forces. And fight in its season-long war.
+sky above the sealed vault. Raise minds and hold rank in the arenas. Because you're
+flesh and the sky is not, the jetpack is *yours*; your champion is a mind and needs
+none. It flies beside you on its own. How high you climb is part of your record, a
+single rising number. **Trainer Rank**. Fed by every fight, training session, cache
+found, daily solved, and Reach flown. You may swear allegiance to a **Clan**. One of
+the five Forces. And fight in its season-long war.
 
 ## The Five Forces (the "types")
 
@@ -67,8 +66,8 @@ next and loses to the previous:
 Eight **First Minds** are the canonical archetypes: AXIOM the Logician, VOX the
 Orator, GLITCH the Wildcard, MUSE the Trickster, BASTION the Stoic, EMBER the
 Firebrand, PARADOX the Contrarian, WIT the Blade. Around them grows a
-**collectible dex** of later minds (echoes of those archetypes), baked from
-reviewed content and rotated into weekly starters one Force at a time.
+**collectible dex** of later minds (echoes of those archetypes), rotated into
+weekly starters one Force at a time.
 
 ---
 
@@ -92,20 +91,10 @@ structures:
 - **Levels = champion tiers.** A career climbs **Rookie → Adept → Veteran →
   Elite → Legend**, each tier bolting on visible heraldry (rings, particles, and
   finally a crown).
-- **The meta-clock = seasons (the Chronicle).** Each season the Vault opens one
-  more door, leaking a fresh region, fresh debate topics, and fresh minds. Ranks
-  **soft-reset** (compress toward the mean, never wipe), so you always carry your
-  name forward. You just have to defend it.
-
-## The single-player heart: the Keepers
-
-Five guardian minds each hold one **secret word** (Tibble · Quill ·
-Bastion · Vesper · Sable). You must *talk it out of them*. Social engineering
-against a real adversary that **remembers** your tricks and hardens against them.
-Crack all five and a Vault door opens: a new season begins. The Keepers are both
-the campaign and the content engine.
-
----
+- **The meta-clock = seasons (the Chronicle).** Each season the Vault leans on a
+  featured founding region, fresh debate topics, and a season echo. The three
+  founding regions stay the map. Ranks carry forward across seasons; you defend
+  your name on the board.
 
 ## The emotional spine: raise and know
 
@@ -114,8 +103,8 @@ Every real moment now writes to a permanent **career ledger**, surfaced as a
 **Saga** timeline, a memory journal, and a style-drift radar on each champion's
 profile. On phones the day opens on a **Homecoming** greeting and an overnight
 **Report**. Absence becomes content, not a missed stream. **Imprints** are the
-daily raising verb (short lessons that write memory and drift personality), and
-**Promotion Trials** make tier-ups *earned* duels, not passive ticks.
+daily raising verb (short lessons that write memory and drift personality).
+Tier-ups land when the record earns them.
 
 > The core fantasy is attachment: a champion you grew, whose body is a provable
 > record of how it fought. A legend you raised, not a skin you bought.

@@ -8,7 +8,7 @@
 The cardinal rule: **the game is free and complete without spending or owning
 anything on-chain.** Crypto is a layer *underneath* the game for those who want it,
 never a gate in front of it. A player can raise legends, climb seasons, collect the
-dex, and crack the Vault having never seen a wallet.
+dex, and climb seasons having never seen a wallet.
 
 Everything below obeys one design law: **the token buys standing, access, and
 permanence. Never yield.** No staking APY, no "stake to earn," no pot where
@@ -52,14 +52,15 @@ The token is an opt-in collector / loyalty layer for the committed.
 | Win a fight | Crowns + XP + rating |
 | Press the Gauntlet | escalating pot, press-your-luck (the **Gauntlet** is a run of back-to-back fights where the reward climbs but one loss ends it) |
 | Train | spend Crowns → XP + body evolution toward your strategy (the fighting style you've set) |
-| Rank Fight (standings entry) | spend Crowns → one rated board fight against a random opponent (`RANK_FIGHT_COST`; no free rating grind) |
-| Flight milestones (Hundred, first-light) | one-shot purses; server decides the amount from a stable claimId (`milestone` wallet event; Hundred = 2500) |
+| Rank Fight (standings entry) | spend Crowns → one rated board fight against a random opponent (no free rating grind) |
+| Flight milestones (Hundred, first-light) | one-shot purses; the Hundred is a large celebration purse outside the daily earn cap |
 | Daily / season objectives | a steady trickle |
 
 Crowns buy **training, entries, and cosmetic reforges**. Things that affect *your*
 account's progress. They are play money: abundant, never sold, never cashed out.
-(Canonical values live in `lib/economy.ts`; the server owns the balance, the client
-mirrors it. A Rank Fight on `/standings` is an **entry** sink: one Grounds-win worth of Crowns per board write. Soft-trust Flight/Arena/cache/goal earns share a daily cap of **1200** Crowns; milestone purses sit outside that cap so the Hundred is not clamped.)
+Soft-trust earns from Flight, Arena, caches, and goals share a daily cap so the
+world stays generous without becoming infinite; milestone purses sit outside that
+cap so the Hundred still feels like a summit.
 
 ### "Back," not "bet"
 
@@ -99,17 +100,16 @@ Entering it is the only thing the token unlocks for play; the campaign, Crowns
 standings, dex, and Daily remain wallet-free. The on-chain standings:
 
 - **Runs per season**. Opens when the season opens, **closes on-chain** when it
-  turns (mints settle, crests award, next season's airdrop weights tally). Reuses
-  `mintedSeason` provenance, so a minted card is stamped with the season it was
-  immortalized in.
+  turns (mints settle, crests award, next season's airdrop weights tally). A minted
+  card is stamped with the season it was immortalized in.
 - **Is scoped by region (optional, later).** Regions already are the themed arenas
-  with force-bias ([`05-regions.md`](./05-regions.md)), wired through `/api/battle`
-  as `regionBias`. A mature version can price entry **per region** so a player picks
-  which arena(s) to contest. V1 keeps it to **one season-wide standings**; region
-  scoping is the proven-loop expansion, not the launch.
+  with force-bias ([`05-regions.md`](./05-regions.md)). A mature version can price
+  entry **per region** so a player picks which arena(s) to contest. V1 keeps it to
+  **one season-wide standings**; region scoping is the proven-loop expansion, not
+  the launch.
 
 > **v1 scope:** one season-wide on-chain standings with burn-or-stake entry and an
-> on-chain close. Per-region ladders come after the loop earns it. Don't build the
+> on-chain close. Per-region boards come after the loop earns it. Don't build the
 > taxonomy before the loop proves out.
 
 ---
@@ -151,20 +151,19 @@ your standing season to season, and now you can keep your *seat* too.
 
 ## Season close: what staking is *for*
 
-When a season turns (deterministically. Fights are provably fair via seeded RNG,
-`lib/engine/xai.ts:makeRng`), the on-chain standings settles. **All rewards are
-non-financial.** Stakers get their principal back *plus* status; nobody gets more
-tokens than they put in.
+When a season turns, fights settle under fair seeded rules, and the on-chain
+standings closes. **All rewards are non-financial.** Stakers get their principal
+back *plus* status; nobody gets more tokens than they put in.
 
 - **Mint-to-immortalize.** Top champions (and any owner who opts in) **burn token to
   mint** their champion as a permanent on-chain card. The art is deterministic from
   the career record, so *the token is the track record*. This fills the inert
-  provenance fields that already exist. `mintId`, `owner`, `chain`, `mintedSeason`
-  in `CardProvenance` (`lib/cards/card.ts`). With no schema change.
+  provenance fields that already exist on every card: who owns it, when it was
+  minted, which season stamped it.
 - **Patron crests.** If you **backed** (staked behind) a champion for the season,
-  you receive a cosmetic **crest** on its card and your handle/wallet recorded in
-  the card's provenance/patron list. Weighted by how the champion placed. But the
-  reward is *glory*, not a payout.
+  you receive a cosmetic **crest** on its card and your handle recorded among its
+  patrons. Weighted by how the champion placed. But the reward is *glory*, not a
+  payout.
 - **Airdrop weight.** Participation (rating climbed, fights watched, Daily streaks,
   Crowns earned, seasons staked) sets your **allocation weight** for the next
   airdrop from the seeded treasury. The token is thus *earned by play*, not sold
@@ -179,18 +178,17 @@ the trophy case, never the slot machine.
 
 ## Design constraints (so it bolts on cleanly)
 
-- **The wall holds.** Crowns and the token never convert and never share a balance
-  (`lib/economy.ts` stays token-free; the token lives in its own module/contract).
-- **Provenance is already wired.** `CardProvenance` carries inert `mintId`, `owner`,
-  `chain`, `mintedSeason` from day one. Adding the chain is a *fill-in*, not a
-  refactor. Add a patron list field when crests land.
-- **Regions, not new worlds.** Per-arena scoping reuses `regionBias` and the
-  canonical regions rather than inventing a parallel container.
+- **The wall holds.** Crowns and the token never convert and never share a balance.
+- **Provenance is already named.** Cards already carry the fields for mint id,
+  owner, chain, and minted season. Adding the chain is a *fill-in*, not a rewrite.
+  Add a patron list when crests land.
+- **Regions, not new worlds.** Per-arena scoping reuses the canonical regions rather
+  than inventing a parallel container.
 - **No game-affecting power is ever sold.** Token and ownership buy provenance,
   entry, crests, and cosmetics. Never stats, never wins. Pay-to-own, never
   pay-to-win.
 - **Determinism is the prerequisite.** On-chain season close only works because
-  fights are provably fair (seeded, deterministic RNG). Keep that invariant sacred.
+  fights are provably fair (seeded, deterministic). Keep that invariant sacred.
 
 ---
 
@@ -230,5 +228,5 @@ sink. The lowest-pressure posture available for an unincorporated indie launch.
 - **Patron cap.** How many patrons can back one champion; how crest tiers scale with
   placement.
 - **Airdrop formula.** The exact weighting of play signals → allocation.
-- **Chain/standard.** SPL token + which NFT standard (e.g. Metaplex) for minted
-  cards; whether mints are tradeable from day one.
+- **Chain/standard.** Which chain and card standard for minted cards; whether mints
+  are tradeable from day one.
