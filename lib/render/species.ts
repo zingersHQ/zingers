@@ -738,7 +738,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "banner",
     chest: "ring",
-    morph: { h: 1.0, neckLen: 1.55, torsoGirth: 0.88, shoulder: 0.78, armLen: 1.1, footScale: 1.38, legLen: 1.55 },
+    morph: { h: 1.0, neckLen: 1.55, torsoGirth: 0.88, shoulder: 0.78, armLen: 1.1, footScale: 1.12, legLen: 1.55 },
   },
   LITANY: {
     tag: "orator litany",

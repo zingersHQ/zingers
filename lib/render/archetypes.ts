@@ -97,7 +97,7 @@ export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
   RHETORIC: {
     type: "RHETORIC",
     featureSet: "chorus",
-    body: { h: 1.05, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.94, shoulder: 0.72, armGirth: 0.86, armLen: 1.08, legGirth: 0.98, legLen: 1.55, footScale: 1.34, asym: 0 },
+    body: { h: 1.05, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.94, shoulder: 0.72, armGirth: 0.86, armLen: 1.08, legGirth: 0.98, legLen: 1.55, footScale: 1.12, asym: 0 },
     material: { metalness: 0.08, roughness: -0.1, emissive: 1.18 },
     idleSpeed: 1.05,
     lean: -0.04,

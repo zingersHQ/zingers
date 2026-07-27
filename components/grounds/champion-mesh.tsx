@@ -307,7 +307,9 @@ export function buildCharacter(
 
   root.position.y = 0;
   root.updateMatrixWorld(true);
-  root.position.y -= new THREE.Box3().setFromObject(root).min.y;
+  // Prefer ankle-based plant: SkinnedMesh bbox often ignores bone scales, so
+  // stilts + big Rhetoric boots used to leave gold feet floating above y=0.
+  plantRootToFeet(root, bones);
   root.updateMatrixWorld(true);
 
   // Measure where each body part's mesh actually sits NOW (post-morph, feet=0) so
@@ -491,6 +493,36 @@ function breathe(built: BuiltCharacter, t: number, intensity = 1) {
 // the head, neck, shoulders and arms — that way each group lands on its intended
 // NET size and a barrel chest never balloons the skull. Legs hang off the hips
 // (unscaled) so they need no correction.
+/** Drop the figure so the lower ankle sits on the floor (plus a small sole pad).
+ *  Uses foot bone world Y — reliable after legLen morphs, unlike mesh AABB. */
+const _plantAnkle = new THREE.Vector3();
+const SOLE_PAD = 0.045; // figure units below the ankle bone to the sole contact
+export function plantRootToFeet(root: THREE.Object3D, bones: Record<string, THREE.Bone>) {
+  root.updateWorldMatrix(true, true);
+  let minAnkle = Infinity;
+  for (const s of ["l", "r"] as const) {
+    const b = bones[`foot.${s}`] ?? bones[`foot${s}`];
+    if (!b) continue;
+    b.getWorldPosition(_plantAnkle);
+    // express in the root PARENT's space so root.position.y is the right lever
+    const parent = root.parent;
+    if (parent) {
+      parent.updateWorldMatrix(true, false);
+      parent.worldToLocal(_plantAnkle);
+    }
+    minAnkle = Math.min(minAnkle, _plantAnkle.y);
+  }
+  if (!Number.isFinite(minAnkle)) {
+    // fallback: unskinned bbox (pre-stilts behaviour)
+    root.position.y = 0;
+    root.updateWorldMatrix(true, true);
+    root.position.y -= new THREE.Box3().setFromObject(root).min.y;
+    return;
+  }
+  // ankle local Y already includes current root.position.y — nudge so sole ≈ 0
+  root.position.y += SOLE_PAD - minAnkle;
+}
+
 export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Record<string, THREE.Vector3>, m: BoneMorph) {
   const set = (nm: string, x: number, y: number, z: number) => {
     const b = bones[nm];
@@ -532,12 +564,12 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
     const legG = m.legGirth * asym;
     set(`upperleg.${s}`, legG, thighY, legG);
     set(`lowerleg.${s}`, 1, shinY, 1);
-    set(
-      `foot.${s}`,
-      (m.footScale / legG) || m.footScale,
-      m.footScale / Math.max(0.55, m.legLen) || m.footScale,
-      (m.footScale / legG) || m.footScale,
-    );
+    // RobotExpressive Foot*: local X = width, Y ≈ forward (toes), Z ≈ world UP.
+    // Grow boots in the sole plane only. Scaling Z with footScale levitates the
+    // gold feet (they inflate upward from the ankle). Leave Z at 1 so ankle→sole
+    // height stays planted; stilts already moved the ankle via thigh/shin length.
+    const boot = Math.max(0.7, Math.min(1.55, m.footScale));
+    set(`foot.${s}`, boot, boot, 1);
   }
 
   // hands — every palm/finger bone scaled uniformly
@@ -1190,6 +1222,9 @@ export function ChampionMesh({
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
+      // Re-plant after clip + morph so stilts / idle leg keys can't leave soles
+      // hanging in the air (CADENCE gold feet). Skip while airborne.
+      if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
       dampNeck(built, peaceful);
       breathe(built, t + phase, breatheIntensity);
     } else if (lod === 1 || locoActive) {
@@ -1197,6 +1232,7 @@ export function ChampionMesh({
       if (lodAccum.current >= LOD_MID_STEP) {
         built.mixer.update(lodAccum.current);
         applyBoneMorph(built.bones, built.boneBase, built.morph);
+        if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
         dampNeck(built, peaceful);
         breathe(built, t + phase, breatheIntensity);
         lodAccum.current = 0;
