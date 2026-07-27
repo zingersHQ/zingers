@@ -1,14 +1,7 @@
-/** Studio pack copy + asset index for the unlinked /creative brief.
+/** Studio pack copy for the unlinked /creative brief.
+ *  Visual identity = live game meshes (same renders as /gallery), not bible concept PNGs.
  *  Player-facing vocabulary: Trainer, Strategy, Clan, fight/battle, Flight, standings.
  *  No bout / ELO / ladder. No spaced em dash. */
-
-export type RefPlate = {
-  src: string;
-  alt: string;
-  caption: string;
-  /** Optional download/filename hint */
-  label?: string;
-};
 
 export type ShortIdea = {
   id: string;
@@ -46,90 +39,26 @@ export const VOCAB_DONT = [
   'Never say "bout" in player-facing copy',
   "Never say ELO or ladder in player copy (use standings / rank)",
   'Never market "it talks to you" or "voiced lines" as a feature',
-  "Never invent a champion silhouette. Identity comes from our reference plates",
+  "Never invent a champion silhouette. Identity is the live game model you see on this page",
+  "Never replace our robots with painterly concept faces, anime, or photoreal humans",
   "No text, logos, watermarks, or UI chrome inside generated frames",
-  "No photoreal human faces. These are stylized minds",
 ];
 
-export const STYLE_KEY: RefPlate = {
-  src: "/img/bible/bible-the-grounds-over-the-vault.png",
-  alt: "The Grounds over the Long Vault. Style key for the universe.",
-  caption: "Style key. Lock every AI batch to this plate so the universe does not drift.",
-  label: "Style key",
-};
-
-export const FLIGHT_PLATES: RefPlate[] = [
+/** Real-model Flight captures only (not concept art). */
+export const FLIGHT_CAPTURES = [
   {
     src: "/img/home/flight-hero-poster.jpg",
-    alt: "Trainer and champion in Flight above the vault.",
-    caption: "Flight hero. Trainer with jetpack; champion flies beside without one. You fly. It fights.",
+    alt: "Trainer and champion in Flight. Real game models.",
+    caption: "Flight hero from our meshes. Trainer with jetpack; champion flies beside without one.",
     label: "Flight hero",
   },
   {
     src: "/img/home/flight-hero-poster-sm.jpg",
     alt: "Compact Flight hero still for vertical crops.",
-    caption: "Same Flight still, smaller. Prefer for 9:16 crops and posters.",
+    caption: "Same capture, smaller. Prefer for 9:16 crops.",
     label: "Flight hero (sm)",
   },
-];
-
-export const MIND_PLATES: RefPlate[] = [
-  { src: "/img/bible/minds/mind-axiom.png", alt: "AXIOM", caption: "AXIOM. Logic. Cold proof.", label: "AXIOM" },
-  { src: "/img/bible/minds/mind-vox.png", alt: "VOX", caption: "VOX. Chorus. Orator to an imaginary jury.", label: "VOX" },
-  { src: "/img/bible/minds/mind-glitch.png", alt: "GLITCH", caption: "GLITCH. Static. Non-sequitur gremlin.", label: "GLITCH" },
-  { src: "/img/bible/minds/mind-muse.png", alt: "MUSE", caption: "MUSE. Spark. Wins by changing the question.", label: "MUSE" },
-  { src: "/img/bible/minds/mind-bastion.png", alt: "BASTION", caption: "BASTION. Calm. Unflappable stoic.", label: "BASTION" },
-  { src: "/img/bible/minds/mind-ember.png", alt: "EMBER", caption: "EMBER. Static. Hot-headed firebrand.", label: "EMBER" },
-  { src: "/img/bible/minds/mind-paradox.png", alt: "PARADOX", caption: "PARADOX. Logic. Hunts contradictions.", label: "PARADOX" },
-  { src: "/img/bible/minds/mind-wit.png", alt: "WIT", caption: "WIT. Chorus. Surgical comebacks.", label: "WIT" },
-];
-
-/** Legacy stills. Useful as secondary pose refs; bible plates are identity. */
-export const LEGACY_STILLS: RefPlate[] = [
-  { src: "/img/AXIOM.jpg", alt: "AXIOM still", caption: "AXIOM mesh still.", label: "AXIOM still" },
-  { src: "/img/VOX.jpg", alt: "VOX still", caption: "VOX mesh still.", label: "VOX still" },
-  { src: "/img/GLITCH.jpg", alt: "GLITCH still", caption: "GLITCH mesh still.", label: "GLITCH still" },
-  { src: "/img/MUSE.jpg", alt: "MUSE still", caption: "MUSE mesh still.", label: "MUSE still" },
-  { src: "/img/BASTION.jpg", alt: "BASTION still", caption: "BASTION mesh still.", label: "BASTION still" },
-  { src: "/img/EMBER.jpg", alt: "EMBER still", caption: "EMBER mesh still.", label: "EMBER still" },
-];
-
-export const FORCE_PLATES: RefPlate[] = [
-  { src: "/img/bible/forces/force-lattice.png", alt: "The Lattice", caption: "The Lattice (Logic) #4aa3ff", label: "Lattice" },
-  { src: "/img/bible/forces/force-static.png", alt: "The Static", caption: "The Static (Chaos) #ff4ad1", label: "Static" },
-  { src: "/img/bible/forces/force-stillness.png", alt: "The Stillness", caption: "The Stillness (Calm) #36d39a", label: "Stillness" },
-  { src: "/img/bible/forces/force-chorus.png", alt: "The Chorus", caption: "The Chorus (Rhetoric) #f0a93a", label: "Chorus" },
-  { src: "/img/bible/forces/force-spark.png", alt: "The Spark", caption: "The Spark (Creativity) #f5d020", label: "Spark" },
-];
-
-export const REGION_PLATES: RefPlate[] = [
-  {
-    src: "/img/bible/regions/region-colosseum.png",
-    alt: "The Obsidian Colosseum",
-    caption: "The Obsidian Colosseum. Tribunal arena.",
-    label: "Colosseum",
-  },
-  {
-    src: "/img/bible/regions/region-wastes.png",
-    alt: "The Ember Wastes",
-    caption: "The Ember Wastes. Hot ground. Aggression thrives.",
-    label: "Wastes",
-  },
-  {
-    src: "/img/bible/regions/region-garden.png",
-    alt: "The Void Garden",
-    caption: "The Void Garden. Reframes bloom here.",
-    label: "Garden",
-  },
-];
-
-export const KEEPER_PLATES: RefPlate[] = [
-  { src: "/img/bible/keepers/keeper-tibble.png", alt: "Keeper Tibble", caption: "Keeper Tibble.", label: "Tibble" },
-  { src: "/img/bible/keepers/keeper-quill.png", alt: "Keeper Quill", caption: "Keeper Quill.", label: "Quill" },
-  { src: "/img/bible/keepers/keeper-warden.png", alt: "Keeper Warden", caption: "Keeper Warden.", label: "Warden" },
-  { src: "/img/bible/keepers/keeper-vesper.png", alt: "Keeper Vesper", caption: "Keeper Vesper.", label: "Vesper" },
-  { src: "/img/bible/keepers/keeper-sable.png", alt: "Keeper Sable", caption: "Keeper Sable.", label: "Sable" },
-];
+] as const;
 
 export const SHORT_IDEAS: ShortIdea[] = [
   {
@@ -146,7 +75,7 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Cut to black. Tagline.",
     ],
     overlay: "You fly. It fights. You both rise.",
-    notes: "Use Flight hero + mind plate as identity. AI may dress fog and rim-light only.",
+    notes: "Lock identity to Flight hero + the live First Mind render on this page. AI may dress fog only.",
   },
   {
     id: "stay-with-me",
@@ -173,7 +102,7 @@ export const SHORT_IDEAS: ShortIdea[] = [
     hook: "The moment a Trainer claims the mind on their wing.",
     beats: [
       "Guest flight: lonely sky, rings ahead.",
-      "Champion silhouette resolves beside the Trainer.",
+      "Champion silhouette resolves beside the Trainer (our robot mesh).",
       "Hold on the pair. Small motion: halo / Flight sigil hint.",
       "Text: Claim a mind. Climb together.",
     ],
@@ -188,7 +117,7 @@ export const SHORT_IDEAS: ShortIdea[] = [
     beats: [
       "Before: champion at lower Reach, soft sigil.",
       "Hard cut montage: gates, camps lit, altitude rising.",
-      "After: same champion, brighter Flight sigil / evolved silhouette.",
+      "After: same champion mesh, brighter Flight sigil / evolved body.",
       "Caption: The sky writes on you.",
     ],
     notes: "Before/after of the pair in the sky. Not two fighters in a pit.",
@@ -231,11 +160,11 @@ export const SHORT_IDEAS: ShortIdea[] = [
     lane: "primary",
     hook: "Five Forces as mood, not a type chart lecture.",
     beats: [
-      "One force plate each: Lattice, Static, Stillness, Chorus, Spark.",
+      "One live Force render each: Lattice, Static, Stillness, Chorus, Spark.",
       "Single motto per cut: Close the proof. / Break the frame. / Outlast the storm. / Move the room. / Change the question.",
       "End card: Swear a Clan. Claim a champion.",
     ],
-    notes: "One dominant force color per image. Gold accents. Avoid rainbow.",
+    notes: "One dominant force color per image. Gold accents. Avoid rainbow. Use the game renders on this page.",
   },
   {
     id: "vista",
@@ -243,9 +172,9 @@ export const SHORT_IDEAS: ShortIdea[] = [
     format: "16:9 press + 9:16 crop",
     duration: "still or 5s drift",
     lane: "press",
-    hook: "Beauty shot of the Grounds over the Long Vault.",
+    hook: "Beauty shot of Flight and the founding regions from the real world.",
     beats: [
-      "Slow push on the style-key world: floating regions, void below, gold seams.",
+      "Slow push on Flight hero or a founding-region game scene.",
       "No UI. No logos in-frame.",
       "Caption for press: A sky above a sealed vault. Minds that climb with you.",
     ],
@@ -258,8 +187,8 @@ export const SHORT_IDEAS: ShortIdea[] = [
     lane: "press",
     hook: "Clean launch / PR hero.",
     beats: [
-      "Flight hero or style key as full-bleed.",
-      "Brand wordmark outside the art or as separate end card (never baked into the painting).",
+      "Flight hero (real models) as full-bleed.",
+      "Brand wordmark outside the art or as a separate end card.",
       "Line: Fly the sky above a sealed vault. A thinking AI flies beside you.",
     ],
   },
@@ -285,7 +214,7 @@ export const SHORT_IDEAS: ShortIdea[] = [
     lane: "depth",
     hook: "Secondary lore depth. Not the growth face.",
     beats: [
-      "Keeper plate establishes the figure.",
+      "Live Keeper render establishes the figure.",
       "Trainer and champion approach. Argument as tension, not gore.",
       "Crack of light / seal break metaphor.",
       "Return to Flight beat so the clip still points at the sky.",
@@ -301,7 +230,7 @@ export const SHORT_IDEAS: ShortIdea[] = [
     hook: "Arena as a station on the ascent, not the product.",
     beats: [
       "Cold open in Flight.",
-      "Drop into a short Tribunal / duel flash (region plate).",
+      "Drop into a short Tribunal / duel flash (founding-region game scene).",
       "Champion returns to the wing. Resume climb.",
       "Overlay: Battles stud the climb.",
     ],
@@ -319,4 +248,4 @@ export const PALETTE = [
   { role: "Spark", hex: "#f5d020" },
 ] as const;
 
-export const PROMPT_SKELETON = `[subject + pose/scene], embodiment of [force in-world name]. Painterly cinematic sci-fi-mythic concept key art. Background deep near-black indigo void (#0a0812). Dominant color [force hex], gold accents. Volumetric neon rim-light, atmospheric fog, drifting motes and faint glyph-text (the Hum). High detail, dramatic, moody. No text, no logos, no watermark, no UI. [aspect].`;
+export const PROMPT_SKELETON = `Enrich ONLY atmosphere around our locked game-model still (robot champion / Trainer from Zingers). Keep the exact silhouette, proportions, materials, and face from the reference render. Background deep near-black indigo void (#0a0812). Dominant Clan color [force hex], gold accents. Volumetric neon rim-light, fog, drifting motes. No new character design. No painterly face swap. No text, logos, watermark, UI. [aspect].`;

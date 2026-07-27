@@ -1,41 +1,34 @@
+"use client";
+
 import Image from "next/image";
 import { BRAND } from "@/lib/brand";
 import { orgCanonical } from "@/lib/org/hosts";
+import { FORCES, FOUNDING_REGIONS, KEEPERS } from "@/lib/lore/canon";
+import { FIRST_MIND_KEYS, ROSTER } from "@/lib/engine/roster";
+import { CanonRenderTile } from "@/components/bible/canon-render-tile";
+import { RegionScene } from "@/components/lore/region-scene";
+import { keeperKindForName } from "@/components/grounds/keeper-regalia";
+import { showcaseChampion, showcaseForForce, showcaseForKeeper } from "@/lib/render/showcase";
 import {
   CONTENT_LAW,
-  FLIGHT_PLATES,
-  FORCE_PLATES,
-  KEEPER_PLATES,
-  LEGACY_STILLS,
-  MIND_PLATES,
+  FLIGHT_CAPTURES,
   NORTH_STAR,
   PALETTE,
   PROMPT_SKELETON,
-  REGION_PLATES,
   SHORT_IDEAS,
-  STYLE_KEY,
   VOCAB_DO,
   VOCAB_DONT,
   WORLD_BLURB,
-  type RefPlate,
   type ShortIdea,
 } from "@/lib/org/creative-brief-data";
 
-function Plate({ plate, aspect = "4/5" }: { plate: RefPlate; aspect?: string }) {
-  return (
-    <figure className="creative-brief__plate">
-      <a href={plate.src} target="_blank" rel="noopener noreferrer" className="creative-brief__plate-link" download>
-        <span className="creative-brief__plate-frame" style={{ aspectRatio: aspect }}>
-          <Image src={plate.src} alt={plate.alt} fill sizes="(max-width: 700px) 50vw, 220px" className="creative-brief__plate-img" />
-        </span>
-      </a>
-      <figcaption>
-        {plate.label ? <strong>{plate.label}</strong> : null}
-        <span>{plate.caption}</span>
-      </figcaption>
-    </figure>
-  );
-}
+const FORCE_SLUG: Record<string, string> = {
+  LOGIC: "lattice",
+  CHAOS: "static",
+  COMPOSURE: "stillness",
+  RHETORIC: "chorus",
+  CREATIVITY: "spark",
+};
 
 function IdeaCard({ idea }: { idea: ShortIdea }) {
   return (
@@ -63,6 +56,32 @@ function IdeaCard({ idea }: { idea: ShortIdea }) {
   );
 }
 
+function LivePlate({
+  label,
+  caption,
+  aspect,
+  accent,
+  children,
+}: {
+  label: string;
+  caption: string;
+  aspect: string;
+  accent?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <figure className="creative-brief__plate" style={accent ? { ["--ac" as string]: accent } : undefined}>
+      <div className="creative-brief__plate-frame" style={{ aspectRatio: aspect }}>
+        {children}
+      </div>
+      <figcaption>
+        <strong>{label}</strong>
+        <span>{caption}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
 export function CreativeBrief() {
   const primary = SHORT_IDEAS.filter((i) => i.lane === "primary");
   const press = SHORT_IDEAS.filter((i) => i.lane === "press");
@@ -77,12 +96,16 @@ export function CreativeBrief() {
         <h1>{BRAND.nameUpper}</h1>
         <p className="creative-brief__tagline">{NORTH_STAR}</p>
         <p className="creative-brief__lede">
-          Unlinked creative brief for short clips, social, press, and beautiful stills. Reference plates below are
-          canon. Right-click or open any image to save. Live 3D gallery:{" "}
-          <a href={`${BRAND.siteTech}/gallery`}>zingers.org/gallery</a>. Written canon:{" "}
-          <a href={orgCanonical("bible/art-direction")}>art direction</a>,{" "}
+          Unlinked creative brief for short clips, social, press, and stills. Every character and region below is a{" "}
+          <strong>live game render</strong> of our current models. Same soul as{" "}
+          <a href={`${BRAND.siteTech}/gallery`}>zingers.org/gallery</a>. Screenshot these, or pose more in{" "}
+          <a href={`${BRAND.site}/art-studio`}>Art Studio</a>. Written canon:{" "}
           <a href={orgCanonical("bible/ascent")}>Flight</a>,{" "}
           <a href={orgCanonical("product/onepager")}>one-pager</a>.
+        </p>
+        <p className="creative-brief__warn">
+          Do not use old painterly bible concept art as character identity. If it is not the robot mesh on this page,
+          it is wrong.
         </p>
       </header>
 
@@ -129,74 +152,127 @@ export function CreativeBrief() {
       </section>
 
       <section className="creative-brief__section">
-        <h2>Style key</h2>
-        <p>Pass this as a reference on every AI batch so palette and rendering stay locked.</p>
-        <div className="creative-brief__grid creative-brief__grid--wide">
-          <Plate plate={STYLE_KEY} aspect="16/9" />
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
-        <h2>Flight · Trainer and wingmate</h2>
+        <h2>Flight · real-model captures</h2>
         <p>
-          The face of the game. Trainer wears the jetpack. The champion needs none and flies beside you. Rings and
-          gates are the score. One fall returns you toward zero. The run marks the champion.
+          The face of the game. Trainer wears the jetpack. The champion needs none and flies beside you. These stills
+          are captured from our meshes.
         </p>
         <div className="creative-brief__grid creative-brief__grid--flight">
-          {FLIGHT_PLATES.map((p) => (
-            <Plate key={p.src} plate={p} aspect="16/9" />
+          {FLIGHT_CAPTURES.map((p) => (
+            <figure key={p.src} className="creative-brief__plate">
+              <a href={p.src} target="_blank" rel="noopener noreferrer" className="creative-brief__plate-link" download>
+                <span className="creative-brief__plate-frame" style={{ aspectRatio: "16/9" }}>
+                  <Image src={p.src} alt={p.alt} fill sizes="(max-width: 700px) 100vw, 480px" className="creative-brief__plate-img" />
+                </span>
+              </a>
+              <figcaption>
+                <strong>{p.label}</strong>
+                <span>{p.caption}</span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </section>
 
       <section className="creative-brief__section">
-        <h2>First Minds · identity plates</h2>
+        <h2>First Minds · live game models</h2>
         <p>
-          These eight are the First Minds. Use them as the identity plate for any generated enrichment. Do not invent
-          a lookalike silhouette.
+          Identity plates. Screenshot these. Do not invent a lookalike. Every later mind echoes one of these bodies.
         </p>
         <div className="creative-brief__grid">
-          {MIND_PLATES.map((p) => (
-            <Plate key={p.src} plate={p} />
-          ))}
+          {FIRST_MIND_KEYS.map((key) => {
+            const r = ROSTER[key];
+            const force = FORCES[r.type];
+            const { type, champion } = showcaseChampion(key);
+            return (
+              <LivePlate
+                key={key}
+                label={key}
+                caption={`${force.name}. ${r.persona.split(",")[0]}.`}
+                aspect="4/5"
+                accent={force.hex}
+              >
+                <CanonRenderTile rosterKey={key} type={type} champion={champion} preset="portrait" label={`${key} live model`} />
+              </LivePlate>
+            );
+          })}
         </div>
       </section>
 
       <section className="creative-brief__section">
-        <h2>Mesh stills · secondary pose refs</h2>
-        <p>Legacy game stills for pose and body mass. Prefer bible mind plates for color and character lock.</p>
-        <div className="creative-brief__grid">
-          {LEGACY_STILLS.map((p) => (
-            <Plate key={p.src} plate={p} aspect="1/1" />
-          ))}
-        </div>
-      </section>
-
-      <section className="creative-brief__section">
-        <h2>Forces</h2>
+        <h2>Forces · live game models</h2>
         <div className="creative-brief__grid creative-brief__grid--forces">
-          {FORCE_PLATES.map((p) => (
-            <Plate key={p.src} plate={p} aspect="1/1" />
-          ))}
+          {Object.values(FORCES).map((f) => {
+            const slug = FORCE_SLUG[f.type];
+            const { key, type, champion } = showcaseForForce(slug);
+            return (
+              <LivePlate
+                key={f.type}
+                label={`${f.sigil} ${f.name}`}
+                caption={`the ${f.inWorld.replace(/^The /, "")} · ${f.hex}`}
+                aspect="1/1"
+                accent={f.hex}
+              >
+                <CanonRenderTile
+                  rosterKey={key}
+                  type={type}
+                  champion={champion}
+                  preset="force"
+                  colorHex={f.hex}
+                  label={`${f.name} live model`}
+                />
+              </LivePlate>
+            );
+          })}
         </div>
       </section>
 
       <section className="creative-brief__section">
-        <h2>Regions</h2>
+        <h2>Founding regions · live scenes</h2>
         <div className="creative-brief__grid creative-brief__grid--regions">
-          {REGION_PLATES.map((p) => (
-            <Plate key={p.src} plate={p} aspect="16/9" />
-          ))}
+          {FOUNDING_REGIONS.map((region) => {
+            const force = FORCES[region.bias];
+            return (
+              <LivePlate
+                key={region.id}
+                label={region.name}
+                caption={`${region.arena} · ${force.name}. ${region.blurb}`}
+                aspect="16/9"
+                accent={force.hex}
+              >
+                <RegionScene regionId={region.id} />
+              </LivePlate>
+            );
+          })}
         </div>
       </section>
 
       <section className="creative-brief__section">
-        <h2>Keepers · depth only</h2>
-        <p>Useful for lore and press worldbuilding. Not the default short-form face.</p>
+        <h2>Keepers · live game models · depth only</h2>
+        <p>Useful for lore depth. Not the default short-form face.</p>
         <div className="creative-brief__grid">
-          {KEEPER_PLATES.map((p) => (
-            <Plate key={p.src} plate={p} />
-          ))}
+          {KEEPERS.map((keeper) => {
+            const { key, type, champion, accentHex } = showcaseForKeeper(keeper.name);
+            return (
+              <LivePlate
+                key={keeper.name}
+                label={keeper.name}
+                caption={`Level ${keeper.level} · ${keeper.title}`}
+                aspect="4/5"
+                accent={keeper.hex}
+              >
+                <CanonRenderTile
+                  rosterKey={key}
+                  type={type}
+                  champion={champion}
+                  preset="keeper"
+                  colorHex={accentHex}
+                  label={`${keeper.name} live model`}
+                  keeper={keeperKindForName(keeper.name)}
+                />
+              </LivePlate>
+            );
+          })}
         </div>
       </section>
 
@@ -232,23 +308,22 @@ export function CreativeBrief() {
         <h2>AI enrichment rules</h2>
         <ol className="creative-brief__rules">
           <li>
-            <strong>Render-first, AI-enrich second.</strong> Our plates and meshes are identity. AI dresses atmosphere,
-            fog, rim-light, and grade.
+            <strong>Render-first, AI-enrich second.</strong> Screenshot the live models on this page (or Art Studio).
+            AI may dress atmosphere, fog, rim-light, and grade. AI must not redesign the character.
           </li>
           <li>
-            <strong>Lock to the style key</strong> on every batch. For a recurring mind, also lock to that mind&apos;s
-            first approved plate.
+            <strong>Lock to the Flight hero + the specific mind render</strong> for every batch of that character.
           </li>
           <li>
-            <strong>One dominant force color</strong> per image, plus gold accents. Avoid rainbow.
+            <strong>One dominant Clan color</strong> per image, plus gold accents. Avoid rainbow.
           </li>
           <li>
-            <strong>Forbidden in-frame:</strong> text, logos, watermarks, UI/HUD, gore, photoreal human faces, robot-mark
-            chrome inside lore art.
+            <strong>Forbidden:</strong> painterly bible concept faces, invented silhouettes, text/logos/watermarks,
+            UI/HUD, gore, photoreal humans, robot-mark chrome inside the art.
           </li>
           <li>
-            <strong>Aspects:</strong> characters 4:5 · regions/scenarios 16:9 · force icons 1:1 · social often 9:16 crop
-            from a 16:9 master.
+            <strong>Aspects:</strong> characters 4:5 · regions 16:9 · force icons 1:1 · social often 9:16 crop from a
+            16:9 master.
           </li>
         </ol>
         <pre className="creative-brief__prompt">{PROMPT_SKELETON}</pre>
