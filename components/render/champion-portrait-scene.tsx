@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows } from "@react-three/drei";
+import { ContactShadows, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { Champion, CreatureType } from "@/lib/types";
 import { TYPE_COLOR, levelFor, tierFor } from "@/lib/evolve/progression";
@@ -10,6 +10,9 @@ import { modelScaleFor } from "@/lib/render/fit";
 import { seedFrom } from "@/lib/render/palette";
 import { RENDER_PRESETS, RENDER_YAW, type RenderPresetId } from "@/lib/render/presets";
 import { ANIM, bodyBobForMode, breatheIntensityForMode, idleSpeedForMode, restPoseForMode, type CreatureAnimMode } from "@/lib/render/animations";
+
+// minimal shape we touch on the OrbitControls instance (avoids a three-stdlib import)
+type Controls = { enabled: boolean; target: THREE.Vector3; update: () => void };
 
 function Rig({ lookY }: { lookY: number }) {
   const { camera } = useThree();
@@ -124,11 +127,18 @@ function FitFrame({
   enabled,
   fillFrac,
   fallback,
+  orbit = false,
+  reframe,
+  controlsRef,
   children,
 }: {
   enabled: boolean;
   fillFrac: number;
   fallback: { camZ: number; lookY: number };
+  /** when true, only re-frame once; the player drives the camera after */
+  orbit?: boolean;
+  reframe?: React.MutableRefObject<boolean>;
+  controlsRef?: React.MutableRefObject<Controls | null>;
   children: React.ReactNode;
 }) {
   const g = useRef<THREE.Group>(null);
@@ -157,6 +167,27 @@ function FitFrame({
     }
     const ty = tgt.current ? tgt.current.y : fallback.lookY;
     const tz = tgt.current ? tgt.current.dist : fallback.camZ;
+    // orbit mode: ease to the measured frame once, then hand the camera to
+    // OrbitControls (suspend its input while we re-frame so they don't fight)
+    if (orbit) {
+      if (reframe?.current && controlsRef?.current) {
+        const c = controlsRef.current;
+        c.enabled = false;
+        const a = 1 - Math.pow(0.0008, dt);
+        cam.position.x += (0 - cam.position.x) * a;
+        cam.position.y += (ty - cam.position.y) * a;
+        cam.position.z += (tz - cam.position.z) * a;
+        c.target.x += (0 - c.target.x) * a;
+        c.target.y += (ty - c.target.y) * a;
+        c.target.z += (0 - c.target.z) * a;
+        c.update();
+        if (Math.abs(cam.position.z - tz) < 0.06 && Math.abs(c.target.y - ty) < 0.04) {
+          c.enabled = true;
+          reframe.current = false;
+        }
+      }
+      return;
+    }
     const a = 1 - Math.pow(0.0012, dt);
     cam.position.x += (0 - cam.position.x) * a;
     cam.position.y += (ty - cam.position.y) * a;
@@ -239,6 +270,7 @@ export function ChampionPortraitScene({
   autoFrame = true,
   animMode = "standing",
   stage = false,
+  interactive = false,
 }: {
   type: CreatureType;
   champion: Champion;
@@ -259,6 +291,8 @@ export function ChampionPortraitScene({
   /** Cinematic mode: place the figure in a real set (ground, horizon sky, stage
    *  rings, atmosphere) instead of the empty portrait void. For vignettes. */
   stage?: boolean;
+  /** Drag / pinch to orbit the camera after auto-frame settles. Champion page hero. */
+  interactive?: boolean;
 }) {
   const p = RENDER_PRESETS[preset];
   const rim = colorHex ?? TYPE_COLOR[type];
@@ -296,6 +330,12 @@ export function ChampionPortraitScene({
     const tanV = Math.tan((p.camera.fov * Math.PI) / 180 / 2);
     return { fillFrac, fallback: { camZ: figureTop / (2 * tanV * fillFrac), lookY: figureTop / 2 } };
   }, [p, champion.xp, scale]);
+  const orbit = interactive && autoFrame;
+  const controlsRef = useRef<Controls | null>(null);
+  const reframe = useRef(true);
+  useEffect(() => {
+    reframe.current = true;
+  }, [identityKey, type, champion.xp]);
 
   return (
     <Canvas
@@ -303,7 +343,7 @@ export function ChampionPortraitScene({
       dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : [1, 2]}
       camera={{ position: p.camera.position, fov: p.camera.fov }}
       gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
-      style={{ width: "100%", height: "100%", display: "block" }}
+      style={{ width: "100%", height: "100%", display: "block", touchAction: orbit ? "none" : undefined }}
     >
       <color attach="background" args={[stage ? "#06050e" : p.bg]} />
       {stage ? <fog attach="fog" args={["#08060f", 30, 96]} /> : p.fog ? <fog attach="fog" args={p.fog} /> : null}
@@ -315,7 +355,14 @@ export function ChampionPortraitScene({
       <pointLight position={[4, 1.5, 5]} intensity={22} color="#ffffff" distance={20} />
       {stage && <VignetteSet colorHex={rim} />}
       <Suspense fallback={null}>
-        <FitFrame enabled={autoFrame} fillFrac={fitCam.fillFrac} fallback={fitCam.fallback}>
+        <FitFrame
+          enabled={autoFrame}
+          fillFrac={fitCam.fillFrac}
+          fallback={fitCam.fallback}
+          orbit={orbit}
+          reframe={reframe}
+          controlsRef={controlsRef}
+        >
           <IdlePose baseYaw={baseYaw} seed={seed} paused={paused} animMode={animMode}>
             <group scale={meshScale}>
               <ChampionMesh
@@ -338,6 +385,21 @@ export function ChampionPortraitScene({
         <ContactShadows position={[0, 0.01, 0]} opacity={0.62} scale={9 * meshScale} blur={2.6} far={5} resolution={512} color="#000000" />
         <ReadyPulse onReady={onReady} />
       </Suspense>
+      {orbit && (
+        <OrbitControls
+          ref={controlsRef as never}
+          makeDefault
+          enablePan={false}
+          enableDamping
+          dampingFactor={0.09}
+          rotateSpeed={0.9}
+          zoomSpeed={0.9}
+          minDistance={fitCam.fallback.camZ * 0.4}
+          maxDistance={fitCam.fallback.camZ * 2.6}
+          minPolarAngle={0.18}
+          maxPolarAngle={Math.PI * 0.92}
+        />
+      )}
     </Canvas>
   );
 }

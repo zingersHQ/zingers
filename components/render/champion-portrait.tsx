@@ -17,6 +17,7 @@ export function ChampionPortrait({
   eager = false,
   scale = 1,
   fill = false,
+  interactive = false,
 }: {
   rosterKey: string;
   type: CreatureType;
@@ -30,6 +31,8 @@ export function ChampionPortrait({
   scale?: number;
   /** Fill parent box instead of enforcing preset aspect (overlays / beat stages). */
   fill?: boolean;
+  /** Drag / pinch to orbit the camera (champion detail pages). */
+  interactive?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(eager);
@@ -80,7 +83,15 @@ export function ChampionPortrait({
       aria-label={`${rosterKey} living portrait`}
     >
       {live && !glDisabled ? (
-        <ChampionPortraitScene type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} identityKey={rosterKey} />
+        <ChampionPortraitScene
+          type={type}
+          champion={champion}
+          preset={preset}
+          colorHex={colorHex}
+          scale={scale}
+          identityKey={rosterKey}
+          interactive={interactive}
+        />
       ) : (
         <div
           style={{

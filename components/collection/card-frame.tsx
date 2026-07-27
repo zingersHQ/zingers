@@ -41,6 +41,7 @@ export function ChampionCardFrame({
   orientation = "portrait",
   footer,
   style,
+  interactive = false,
 }: {
   card: Card;
   champion: Champion;
@@ -50,6 +51,8 @@ export function ChampionCardFrame({
   orientation?: "portrait" | "row";
   footer?: ReactNode;
   style?: CSSProperties;
+  /** Let the player drag / pinch the living portrait camera. */
+  interactive?: boolean;
 }) {
   const hasRecord = card.battles > 0;
   const wr = card.battles ? Math.round((card.wins / card.battles) * 100) : 0;
@@ -75,11 +78,19 @@ export function ChampionCardFrame({
           position: "relative",
           overflow: "hidden",
           background: "#0a0812",
+          touchAction: interactive ? "none" : undefined,
           ...(row ? { width: 128, flex: "0 0 auto" } : { aspectRatio: "4 / 5" }),
         }}
       >
-        <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" eager />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)" }} />
+        <ChampionPortrait rosterKey={card.key} type={card.type} champion={champion} preset="portrait" eager interactive={interactive} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, transparent 50%, rgba(8,6,16,.92) 100%)",
+            pointerEvents: "none",
+          }}
+        />
         <Badge left color={card.force.hex}>
           <span style={{ fontSize: 13, lineHeight: 1 }}>{card.force.sigil}</span>
           {card.force.name.toUpperCase()}
@@ -88,7 +99,22 @@ export function ChampionCardFrame({
           {card.rarityLabel.toUpperCase()}
         </Badge>
         {owned && (
-          <div className="mono" style={{ position: "absolute", bottom: 10, right: 10, background: "var(--gold)", color: "#0a0812", borderRadius: 6, padding: "2px 7px", fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>
+          <div
+            className="mono"
+            style={{
+              position: "absolute",
+              bottom: 10,
+              right: 10,
+              background: "var(--gold)",
+              color: "#0a0812",
+              borderRadius: 6,
+              padding: "2px 7px",
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: 1,
+              pointerEvents: "none",
+            }}
+          >
             YOURS
           </div>
         )}
@@ -162,6 +188,7 @@ function Badge({ children, color, left, filled }: { children: ReactNode; color: 
         fontWeight: filled ? 700 : undefined,
         letterSpacing: 1,
         backdropFilter: filled ? undefined : "blur(4px)",
+        pointerEvents: "none",
       }}
     >
       {children}

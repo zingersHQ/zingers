@@ -76,7 +76,8 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
       card={card}
       champion={c || blank()}
       owned={owned === ckey}
-      orientation={isMobile ? "row" : "portrait"}
+      orientation="portrait"
+      interactive
       footer={isMobile ? undefined : <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>{heroButtons}</div>}
     />
   );
