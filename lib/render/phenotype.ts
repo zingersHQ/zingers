@@ -70,9 +70,8 @@ interface ForceCatalog {
 // diverge hard (Pokemon-style: same type line, different animal).
 const CATALOG: Record<CreatureType, ForceCatalog> = {
   // Catalogs bias toward parts that sit ON the skull/torso (crest/fin/horns/
-  // antenna/dome/helm). Face-box masks / floating disk halos stay out of the
-  // lottery (species kits may still assign redesigned mask/disks meshes).
-  // LOGIC backs prefer coils / spine ridge over flat boards.
+  // antenna/dome/helm). `mask` is fully retired (renders nothing). Disks are
+  // ear-rooted broadcast pads. LOGIC backs prefer coils / spine ridge.
   LOGIC: {
     headgear: [
       ["crest", 3],

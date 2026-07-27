@@ -68,7 +68,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "spike",
     back: "thrusters",
     chest: "bars",
-    morph: { h: 0.88, headScale: 0.9, torsoGirth: 0.68, shoulder: 0.82, armLen: 1.18, asym: 0.62, legLen: 1.28 },
+    morph: { h: 0.92, headScale: 0.9, torsoGirth: 0.82, shoulder: 0.9, armLen: 1.1, asym: 0.45, legLen: 1.35 },
   },
   EMBER: {
     tag: "firebrand blade",
@@ -76,7 +76,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "spike",
     back: "thrusters",
     chest: "eye",
-    morph: { h: 0.9, headScale: 0.86, torsoGirth: 0.72, armGirth: 0.85, armLen: 1.22, asym: 0.4, legLen: 1.35 },
+    morph: { h: 0.94, headScale: 0.88, torsoGirth: 0.85, shoulder: 0.92, armGirth: 0.9, armLen: 1.12, asym: 0.35, legLen: 1.4 },
   },
   BASTION: {
     tag: "monolith wall",
@@ -93,7 +93,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "banner",
     chest: "diamond",
-    morph: { h: 1.08, headScale: 0.74, neckLen: 1.75, shoulder: 0.5, torsoGirth: 0.9, footScale: 1.55, legLen: 1.22 },
+    morph: { h: 1.0, headScale: 0.74, neckLen: 1.75, shoulder: 0.78, torsoGirth: 0.9, footScale: 1.55, legLen: 1.45 },
   },
   WIT: {
     tag: "surgical blade",
@@ -101,7 +101,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "none",
     chest: "ring",
-    morph: { h: 1.02, headScale: 0.7, neckLen: 1.45, torsoGirth: 0.82, shoulder: 0.52, armLen: 1.28, legLen: 1.18 },
+    morph: { h: 1.0, headScale: 0.7, neckLen: 1.45, torsoGirth: 0.88, shoulder: 0.8, armLen: 1.1, legLen: 1.35 },
   },
   MUSE: {
     tag: "lateral spark",
@@ -109,7 +109,7 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "wings",
     chest: "diamond",
-    morph: { h: 0.82, headScale: 1.35, neckLen: 0.78, torsoGirth: 0.48, shoulder: 0.55, armLen: 1.35, legLen: 1.2, asym: 0.28 },
+    morph: { h: 0.88, headScale: 1.28, neckLen: 0.78, torsoGirth: 0.62, shoulder: 0.72, armLen: 1.18, legLen: 1.2, asym: 0.28 },
   },
 };
 
@@ -161,14 +161,14 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "coils",
         chest: "lattice",
-        morph: { h: 1.35, headScale: 0.82, neckLen: 1.15, torsoGirth: 0.72, armLen: 1.3, legLen: 1.85, footScale: 0.95 },
+        morph: { h: 1.0, headScale: 0.88, neckLen: 1.1, torsoGirth: 0.85, shoulder: 0.9, armLen: 1.1, legLen: 2.05, footScale: 0.95 },
       },
     },
     {
       id: "cipher",
       kit: {
-        tag: "mask cipher",
-        headgear: "mask",
+        tag: "helm cipher",
+        headgear: "helm",
         shoulders: "vent",
         back: "coils",
         chest: "ring",
@@ -194,7 +194,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "none",
         chest: "lattice",
-        morph: { h: 1.15, headScale: 0.88, neckLen: 1.28, torsoGirth: 0.7, armLen: 1.45, legLen: 1.55 },
+        morph: { h: 1.0, headScale: 0.9, neckLen: 1.2, torsoGirth: 0.82, shoulder: 0.88, armLen: 1.35, legLen: 1.75 },
       },
     },
   ],
@@ -218,7 +218,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "spike",
         back: "kite",
         chest: "eye",
-        morph: { h: 0.78, headScale: 1.05, torsoGirth: 0.55, shoulder: 0.72, armLen: 1.25, asym: 0.48, legLen: 1.15 },
+        morph: { h: 0.86, headScale: 1.0, torsoGirth: 0.78, shoulder: 0.88, armLen: 1.1, asym: 0.4, legLen: 1.2 },
       },
     },
     {
@@ -240,18 +240,18 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "none",
         chest: "bars",
-        morph: { h: 1.15, headScale: 0.8, torsoGirth: 0.72, armGirth: 0.85, asym: 0.35, legLen: 1.75 },
+        morph: { h: 1.0, headScale: 0.85, torsoGirth: 0.82, shoulder: 0.9, armGirth: 0.88, asym: 0.32, legLen: 1.95 },
       },
     },
     {
       id: "scrap",
       kit: {
-        tag: "tank scrap",
-        headgear: "mask",
+        tag: "horn scrap",
+        headgear: "horns",
         shoulders: "spike",
         back: "none",
         chest: "eye",
-        morph: { h: 0.85, headScale: 0.95, torsoGirth: 1.45, shoulder: 1.25, armGirth: 1.3, asym: 0.58, legLen: 0.8, legGirth: 1.25 },
+        morph: { h: 0.9, headScale: 0.95, torsoGirth: 1.35, shoulder: 1.15, armGirth: 1.15, asym: 0.35, legLen: 0.85, legGirth: 1.2 },
       },
     },
     {
@@ -262,7 +262,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "kite",
         chest: "bars",
-        morph: { h: 0.72, headScale: 1.12, torsoGirth: 0.58, asym: 0.42, armLen: 1.3, legLen: 1.2 },
+        morph: { h: 0.84, headScale: 1.05, torsoGirth: 0.8, shoulder: 0.9, asym: 0.35, armLen: 1.12, legLen: 1.25 },
       },
     },
     {
@@ -273,12 +273,12 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "spike",
         back: "thrusters",
         chest: "eye",
-        morph: { h: 0.95, headScale: 1.0, torsoGirth: 0.65, armLen: 1.4, asym: 0.52, legLen: 1.5 },
+        morph: { h: 0.95, headScale: 1.0, torsoGirth: 0.82, shoulder: 0.92, armLen: 1.22, asym: 0.4, legLen: 1.55 },
       },
     },
   ],
   COMPOSURE: [
-    // Force plan already stilts (~2×). Species biases diverge mass / relative length.
+    // Force plan stilts via legLen (~2×) with body-size h. Species biases diverge mass.
     {
       id: "wall",
       kit: {
@@ -326,8 +326,8 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
     {
       id: "reef",
       kit: {
-        tag: "mask reef",
-        headgear: "mask",
+        tag: "dome reef",
+        headgear: "dome",
         shoulders: "plates",
         back: "coils",
         chest: "core",
@@ -342,7 +342,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "pauldron",
         back: "none",
         chest: "ring",
-        morph: { h: 1.15, headScale: 0.48, torsoGirth: 0.85, shoulder: 0.85, legLen: 1.2, footScale: 1.05 },
+        morph: { h: 1.0, headScale: 0.52, torsoGirth: 0.9, shoulder: 0.9, legLen: 1.25, footScale: 1.05 },
       },
     },
     {
@@ -366,7 +366,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "banner",
         chest: "diamond",
-        morph: { h: 1.1, headScale: 0.72, neckLen: 1.7, shoulder: 0.5, torsoGirth: 0.88, footScale: 1.5, legLen: 1.2 },
+        morph: { h: 1.0, headScale: 0.72, neckLen: 1.7, shoulder: 0.78, torsoGirth: 0.9, footScale: 1.5, legLen: 1.5 },
       },
     },
     {
@@ -388,7 +388,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "kite",
         chest: "eye",
-        morph: { h: 0.85, headScale: 0.9, neckLen: 1.15, torsoGirth: 0.7, shoulder: 0.58, armLen: 1.3, legLen: 1.15 },
+        morph: { h: 0.9, headScale: 0.9, neckLen: 1.15, torsoGirth: 0.82, shoulder: 0.8, armLen: 1.12, legLen: 1.2 },
       },
     },
     {
@@ -399,7 +399,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "banner",
         chest: "diamond",
-        morph: { h: 1.2, headScale: 0.7, neckLen: 1.6, torsoGirth: 0.9, shoulder: 0.55, footScale: 1.48, legLen: 1.35 },
+        morph: { h: 1.0, headScale: 0.72, neckLen: 1.6, torsoGirth: 0.9, shoulder: 0.8, footScale: 1.48, legLen: 1.7 },
       },
     },
     {
@@ -410,7 +410,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "kite",
         chest: "lattice",
-        morph: { h: 1.08, headScale: 0.76, neckLen: 1.5, shoulder: 0.58, armLen: 1.35, footScale: 1.3, legLen: 1.25 },
+        morph: { h: 1.0, headScale: 0.76, neckLen: 1.5, shoulder: 0.8, armLen: 1.2, footScale: 1.3, legLen: 1.45 },
       },
     },
     {
@@ -427,12 +427,12 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
     {
       id: "satire",
       kit: {
-        tag: "blade satire",
-        headgear: "mask",
+        tag: "crest satire",
+        headgear: "crest",
         shoulders: "vent",
         back: "none",
         chest: "lattice",
-        morph: { h: 1.05, headScale: 0.82, neckLen: 1.4, torsoGirth: 0.75, armLen: 1.4, legLen: 1.28 },
+        morph: { h: 1.0, headScale: 0.82, neckLen: 1.4, torsoGirth: 0.88, shoulder: 0.82, armLen: 1.15, legLen: 1.45 },
       },
     },
   ],
@@ -445,7 +445,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "wings",
         chest: "diamond",
-        morph: { h: 0.8, headScale: 1.4, neckLen: 0.78, torsoGirth: 0.48, shoulder: 0.55, armLen: 1.3, legLen: 1.18, asym: 0.22 },
+        morph: { h: 0.88, headScale: 1.3, neckLen: 0.8, torsoGirth: 0.65, shoulder: 0.75, armLen: 1.15, legLen: 1.2, asym: 0.22 },
       },
     },
     {
@@ -456,7 +456,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "wings",
         chest: "lattice",
-        morph: { h: 0.9, headScale: 1.15, neckLen: 0.9, torsoGirth: 0.55, shoulder: 0.65, armLen: 1.5, legLen: 1.4, asym: 0.3 },
+        morph: { h: 0.92, headScale: 1.12, neckLen: 0.9, torsoGirth: 0.72, shoulder: 0.82, armLen: 1.28, legLen: 1.5, asym: 0.28 },
       },
     },
     {
@@ -467,7 +467,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "thrusters",
         chest: "eye",
-        morph: { h: 0.76, headScale: 1.25, neckLen: 0.8, torsoGirth: 0.45, shoulder: 0.5, armLen: 1.4, legLen: 1.25, asym: 0.35 },
+        morph: { h: 0.86, headScale: 1.2, neckLen: 0.82, torsoGirth: 0.65, shoulder: 0.75, armLen: 1.2, legLen: 1.3, asym: 0.3 },
       },
     },
     {
@@ -478,7 +478,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "wings",
         chest: "diamond",
-        morph: { h: 0.68, headScale: 1.45, neckLen: 0.72, torsoGirth: 0.42, shoulder: 0.48, legLen: 1.1, asym: 0.2 },
+        morph: { h: 0.78, headScale: 1.35, neckLen: 0.75, torsoGirth: 0.6, shoulder: 0.7, legLen: 1.15, asym: 0.2 },
       },
     },
     {
@@ -495,8 +495,8 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
     {
       id: "draft",
       kit: {
-        tag: "mask draft",
-        headgear: "mask",
+        tag: "fin draft",
+        headgear: "fin",
         shoulders: "vent",
         back: "thrusters",
         chest: "lattice",
@@ -511,7 +511,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "vent",
         back: "kite",
         chest: "diamond",
-        morph: { h: 1.05, headScale: 1.18, neckLen: 0.85, torsoGirth: 0.5, armLen: 1.45, legLen: 1.65, asym: 0.32 },
+        morph: { h: 0.95, headScale: 1.15, neckLen: 0.85, torsoGirth: 0.7, shoulder: 0.85, armLen: 1.2, legLen: 1.95, asym: 0.28 },
       },
     },
   ],
@@ -544,7 +544,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "slab",
     chest: "diamond",
-    morph: { h: 1.3, headScale: 0.88, neckLen: 1.2, torsoGirth: 0.75, armLen: 1.28, legLen: 1.8 },
+    morph: { h: 1.0, headScale: 0.9, neckLen: 1.15, torsoGirth: 0.85, shoulder: 0.92, armLen: 1.12, legLen: 2.05 },
   },
   RIOT: {
     tag: "lithe riot",
@@ -560,7 +560,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "spike",
     back: "kite",
     chest: "eye",
-    morph: { h: 0.76, headScale: 1.08, torsoGirth: 0.52, asym: 0.48, armLen: 1.28, legLen: 1.18 },
+    morph: { h: 0.86, headScale: 1.0, torsoGirth: 0.8, shoulder: 0.9, asym: 0.38, armLen: 1.1, legLen: 1.25 },
   },
   SNAG: {
     tag: "compact snag",
@@ -576,7 +576,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "none",
     chest: "bars",
-    morph: { h: 1.12, headScale: 0.78, asym: 0.38, legLen: 1.8 },
+    morph: { h: 1.0, headScale: 0.82, torsoGirth: 0.85, shoulder: 0.9, asym: 0.32, legLen: 1.95 },
   },
   STAGE: {
     tag: "orator stage",
@@ -584,7 +584,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "banner",
     chest: "diamond",
-    morph: { h: 1.12, neckLen: 1.72, shoulder: 0.48, footScale: 1.52, legLen: 1.22 },
+    morph: { h: 1.0, neckLen: 1.72, shoulder: 0.78, torsoGirth: 0.9, footScale: 1.52, legLen: 1.5 },
   },
   GAVEL: {
     tag: "compact gavel",
@@ -600,7 +600,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "kite",
     chest: "eye",
-    morph: { h: 0.84, headScale: 0.88, neckLen: 1.18, torsoGirth: 0.68, armLen: 1.32, legLen: 1.18 },
+    morph: { h: 0.9, headScale: 0.88, neckLen: 1.18, torsoGirth: 0.85, shoulder: 0.85, armLen: 1.12, legLen: 1.25 },
   },
   ORATOR: {
     tag: "tall pulpit",
@@ -608,7 +608,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "banner",
     chest: "diamond",
-    morph: { h: 1.22, neckLen: 1.65, footScale: 1.52, legLen: 1.32 },
+    morph: { h: 1.0, neckLen: 1.65, shoulder: 0.8, torsoGirth: 0.9, footScale: 1.52, legLen: 1.7 },
   },
   PULPIT: {
     tag: "tall pulpit",
@@ -616,7 +616,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "banner",
     chest: "diamond",
-    morph: { h: 1.18, neckLen: 1.62, footScale: 1.48, legLen: 1.3 },
+    morph: { h: 1.0, neckLen: 1.62, shoulder: 0.8, torsoGirth: 0.9, footScale: 1.48, legLen: 1.65 },
   },
   RIFF: {
     tag: "reach riff",
@@ -624,7 +624,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "wings",
     chest: "lattice",
-    morph: { h: 0.88, headScale: 1.18, torsoGirth: 0.52, armLen: 1.48, legLen: 1.38, asym: 0.32 },
+    morph: { h: 0.92, headScale: 1.15, torsoGirth: 0.72, shoulder: 0.85, armLen: 1.25, legLen: 1.5, asym: 0.28 },
   },
   DREAM: {
     tag: "tiny dream",
@@ -632,7 +632,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "wings",
     chest: "diamond",
-    morph: { h: 0.66, headScale: 1.48, torsoGirth: 0.4, legLen: 1.08, asym: 0.22 },
+    morph: { h: 0.78, headScale: 1.35, torsoGirth: 0.6, shoulder: 0.7, legLen: 1.12, asym: 0.22 },
   },
   QUIET: {
     tag: "thin quiet",
@@ -672,7 +672,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "thrusters",
     chest: "eye",
-    morph: { h: 0.78, headScale: 1.28, torsoGirth: 0.44, armLen: 1.42, legLen: 1.22, asym: 0.36 },
+    morph: { h: 0.86, headScale: 1.22, torsoGirth: 0.65, shoulder: 0.78, armLen: 1.2, legLen: 1.28, asym: 0.3 },
   },
   FRACTAL: {
     tag: "bobble muse",
@@ -680,7 +680,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "none",
     back: "wings",
     chest: "diamond",
-    morph: { h: 0.78, headScale: 1.38, torsoGirth: 0.46, armLen: 1.32, asym: 0.28 },
+    morph: { h: 0.88, headScale: 1.28, torsoGirth: 0.65, shoulder: 0.75, armLen: 1.15, asym: 0.26 },
   },
   // Extra named overrides — break leftover gallery twins that still share a breed.
   FLUX: {
@@ -689,19 +689,20 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "spike",
     back: "thrusters",
     chest: "core",
-    morph: { h: 0.82, headScale: 1.05, torsoGirth: 0.62, asym: 0.55, armLen: 1.25, legLen: 1.35 },
+    // Keep torso/shoulder near parity so arms root at the shoulder, not inside the chest.
+    morph: { h: 0.92, headScale: 1.0, torsoGirth: 0.88, shoulder: 0.95, armGirth: 0.9, armLen: 1.08, asym: 0.28, legLen: 1.4 },
   },
   HAVOC: {
-    tag: "tank havoc",
-    headgear: "mask",
+    tag: "horn havoc",
+    headgear: "horns",
     shoulders: "plates",
     back: "kite",
     chest: "bars",
     morph: { h: 0.84, torsoGirth: 1.4, shoulder: 1.2, asym: 0.6, armLen: 1.15, legLen: 0.82, legGirth: 1.2 },
   },
   SCRAP: {
-    tag: "tank scrap",
-    headgear: "mask",
+    tag: "horn scrap",
+    headgear: "horns",
     shoulders: "spike",
     back: "none",
     chest: "eye",
@@ -716,8 +717,8 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     morph: { h: 0.84, headScale: 1.22, torsoGirth: 1.2, legGirth: 1.15, legLen: 0.88, asym: 0.26 },
   },
   MOSAIC: {
-    tag: "mask mosaic",
-    headgear: "mask",
+    tag: "antenna mosaic",
+    headgear: "antenna",
     shoulders: "vent",
     back: "wings",
     chest: "eye",
@@ -732,12 +733,12 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     morph: { h: 1.08, headScale: 0.5, torsoGirth: 1.55, shoulder: 1.22, legGirth: 1.3, legLen: 0.88, footScale: 1.28 },
   },
   CADENCE: {
-    tag: "blade cadence",
-    headgear: "mask",
+    tag: "crest cadence",
+    headgear: "crest",
     shoulders: "none",
     back: "banner",
     chest: "ring",
-    morph: { h: 1.06, neckLen: 1.55, torsoGirth: 0.78, shoulder: 0.52, armLen: 1.32, footScale: 1.38, legLen: 1.25 },
+    morph: { h: 1.0, neckLen: 1.55, torsoGirth: 0.88, shoulder: 0.78, armLen: 1.1, footScale: 1.38, legLen: 1.55 },
   },
   LITANY: {
     tag: "orator litany",
@@ -745,7 +746,7 @@ export const DEX_SPECIES: Record<string, SpeciesKit> = {
     shoulders: "vent",
     back: "banner",
     chest: "diamond",
-    morph: { h: 1.14, neckLen: 1.68, torsoGirth: 0.92, footScale: 1.48, legLen: 1.28 },
+    morph: { h: 1.0, neckLen: 1.68, shoulder: 0.82, torsoGirth: 0.92, footScale: 1.48, legLen: 1.55 },
   },
 };
 

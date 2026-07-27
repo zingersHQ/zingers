@@ -276,15 +276,17 @@ export function buildCharacter(
   alias("torso", "torso_1");
   alias("spine", "torso_1");
   for (const s of ["l", "r"] as const) {
-    // Upper body only: torso + shoulders (decor anchors) and the arms that hang off
-    // the shoulders (so they counter-scale the shoulder size). We deliberately do NOT
-    // alias the legs/feet: the leg/foot genome scaling had silently no-op'd for the
-    // rig's whole life, and re-activating it makes the legs spindly and lifts the feet
-    // off their planted stance. Legs hang off the (unscaled) hips, independent of the
-    // torso/shoulder scaling, so leaving them at base keeps the original good footing.
+    // Torso + shoulders (decor anchors) and the limbs that hang off them. Legs MUST
+    // be aliased too — otherwise legLen is a silent no-op and "stilts" breeds only
+    // look taller via uniform `h` (inflates the whole body). Lengthening upper/lower
+    // legs drops the feet; the ground-plant below lifts the hips so the torso stays
+    // its size while the character stands taller on longer limbs.
     alias(`shoulder.${s}`, `shoulder${s}`);
     alias(`upperarm.${s}`, `upperarm${s}`);
     alias(`lowerarm.${s}`, `lowerarm${s}`);
+    alias(`upperleg.${s}`, `upperleg${s}`);
+    alias(`lowerleg.${s}`, `lowerleg${s}`);
+    alias(`foot.${s}`, `foot${s}`);
   }
   const morph = app.morph;
   applyBoneMorph(bones, boneBase, morph);
@@ -510,18 +512,32 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
 
   for (const s of ["l", "r"] as const) {
     const asym = s === "l" ? m.asymL : m.asymR;
-    // shoulder pad sized to m.shoulder (counter inherited torso girth/length)
-    set(`shoulder.${s}`, m.shoulder / g, m.shoulder / m.torsoLen, m.shoulder / g);
-    // upper arm: counter the shoulder's net scale so girth/length land on intent
-    set(`upperarm.${s}`, (m.armGirth / m.shoulder) * asym, m.armLen / m.shoulder, (m.armGirth / m.shoulder) * asym);
-    // fore-arm inherits the upper arm's net size; leave it at base
+    // Clamp shoulder/torso ratio so thin chests don't yank arm origins inside the
+    // ribcage (or balloon pads so far the upperarm looks detached).
+    const shXZ = Math.max(0.62, Math.min(1.55, m.shoulder / g));
+    const shY = Math.max(0.62, Math.min(1.55, m.shoulder / m.torsoLen));
+    set(`shoulder.${s}`, shXZ, shY, shXZ);
+    // upper arm: counter the shoulder's authored size (not the clamped pad) so
+    // length/girth stay near intent, but hard-cap so extreme stilts/reach kits
+    // can't invert the joint ("arm grows from inside the torso").
+    const armGirthS = Math.max(0.55, Math.min(1.45, (m.armGirth / m.shoulder) * asym));
+    const armLenS = Math.max(0.6, Math.min(1.55, m.armLen / m.shoulder));
+    set(`upperarm.${s}`, armGirthS, armLenS, armGirthS);
     set(`lowerarm.${s}`, 1, 1, 1);
-    // legs hang off the (unscaled) hips → apply girth/length directly
-    set(`upperleg.${s}`, m.legGirth * asym, m.legLen, m.legGirth * asym);
-    set(`lowerleg.${s}`, 1, 1, 1);
-    // foot inherits the leg's net scale; counter the inherited length/girth so
-    // footScale lands as a clean, uniform "bigger boots" on top of any build
-    set(`foot.${s}`, (m.footScale / (m.legGirth * asym)) || m.footScale, m.footScale / m.legLen || m.footScale, (m.footScale / (m.legGirth * asym)) || m.footScale);
+    // Split leg length across thigh + shin so stilts read as full limbs, not
+    // stretched thighs. Hips are unscaled → longer legs drop the feet; build
+    // ground-plants so the torso rises with them.
+    const thighY = Math.sqrt(Math.max(0.55, m.legLen));
+    const shinY = Math.max(0.55, m.legLen) / thighY;
+    const legG = m.legGirth * asym;
+    set(`upperleg.${s}`, legG, thighY, legG);
+    set(`lowerleg.${s}`, 1, shinY, 1);
+    set(
+      `foot.${s}`,
+      (m.footScale / legG) || m.footScale,
+      m.footScale / Math.max(0.55, m.legLen) || m.footScale,
+      (m.footScale / legG) || m.footScale,
+    );
   }
 
   // hands — every palm/finger bone scaled uniformly

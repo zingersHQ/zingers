@@ -396,37 +396,10 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
   }
 
   if (kind === "mask") {
-    // theatrical face shell: curved cheek cups + brow ridge wrapping the skull,
-    // never a flat box bolted on the nose
-    return (
-      <group position={[0, center, r * 0.15]}>
-        {[-1, 1].map((s) => (
-          <mesh
-            key={s}
-            position={[s * r * 0.55, r * 0.02, r * 0.55]}
-            rotation={[0.15, s * 0.65, s * 0.08]}
-            scale={[0.62, 0.95, 0.5]}
-          >
-            <sphereGeometry args={[r * 0.72, 16, 12, 0, Math.PI * 0.95, 0, Math.PI * 0.85]} />
-            {smooth(pal.secondary, 0.58, 0.4)}
-          </mesh>
-        ))}
-        <mesh position={[0, r * 0.38, r * 0.72]} rotation={[0.35, 0, 0]} scale={[1.15, 0.28, 0.45]}>
-          <sphereGeometry args={[r * 0.55, 14, 10]} />
-          {smooth(shade(pal.secondary), 0.55, 0.42)}
-        </mesh>
-        {[-1, 1].map((s) => (
-          <mesh key={`e${s}`} position={[s * r * 0.28, r * 0.08, r * 0.88]}>
-            <sphereGeometry args={[r * 0.14, 12, 10]} />
-            {glowMat(pal.glow, 1.65 * k)}
-          </mesh>
-        ))}
-        <mesh position={[0, -r * 0.42, r * 0.62]} scale={[0.7, 0.35, 0.4]}>
-          <sphereGeometry args={[r * 0.32, 12, 10]} />
-          {smooth(shade(pal.secondary), 0.5, 0.5)}
-        </mesh>
-      </group>
-    );
+    // Retired: every "face plate" attempt read as kidneys / floating brow / fridge
+    // door. Species kits remap away from mask; keep a no-op so old saves don't
+    // bolt junk onto the skull.
+    return null;
   }
 
   if (kind === "quills") {

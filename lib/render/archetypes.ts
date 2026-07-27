@@ -81,26 +81,23 @@ export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
     idleSpeed: 0.98,
     lean: 0.03,
   },
-  // The Stillness — a TOWERING long-LEGGED guard (e.g. BASTION): roughly double the
-  // canonical height, standing tall on long stilt legs with reaching (but not
-  // floor-dragging) arms, neat small hands, a moderate torso, and a small head on a
-  // short neck. Height and reach, not bulk — you crane up at it.
+  // The Stillness — a TOWERING long-LEGGED guard (e.g. BASTION): body stays near
+  // canonical size; stilt legs (~2×) lift the hips so you crane up at the same
+  // torso on longer limbs. Neat small hands, moderate frame, small head.
   COMPOSURE: {
     type: "COMPOSURE",
     featureSet: "monolith",
-    body: { h: 2.0, headScale: 0.62, neckLen: 0.92, torsoGirth: 0.95, shoulder: 0.8, armGirth: 0.78, armLen: 0.95, legGirth: 0.9, legLen: 2.0, handScale: 0.45, asym: 0 },
+    body: { h: 1.05, headScale: 0.62, neckLen: 0.92, torsoGirth: 0.95, shoulder: 0.8, armGirth: 0.78, armLen: 0.95, legGirth: 0.95, legLen: 2.05, handScale: 0.45, asym: 0 },
     material: { metalness: -0.12, roughness: 0.36, emissive: 0.7 },
     idleSpeed: 0.65,
     lean: 0.0,
   },
-  // The Chorus — tall and regal (e.g. WIT): a poised orator on a long neck and long
-  // legs, with a SMALLER head (so the big side eye-pods read as a neat face, not
-  // ears), SLIGHT shoulders (no big pauldron pads), and noticeably bigger feet for a
-  // planted, grounded stance. Bearing over bulk.
+  // The Chorus — tall and regal (e.g. WIT): long neck + long legs lift bearing
+  // without inflating the whole mesh. Smaller head, slight shoulders, bigger feet.
   RHETORIC: {
     type: "RHETORIC",
     featureSet: "chorus",
-    body: { h: 1.55, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.94, shoulder: 0.6, armGirth: 0.86, armLen: 1.14, legGirth: 0.98, legLen: 1.42, footScale: 1.34, asym: 0 },
+    body: { h: 1.05, headScale: 0.8, neckLen: 1.5, torsoGirth: 0.94, shoulder: 0.72, armGirth: 0.86, armLen: 1.08, legGirth: 0.98, legLen: 1.55, footScale: 1.34, asym: 0 },
     material: { metalness: 0.08, roughness: -0.1, emissive: 1.18 },
     idleSpeed: 1.05,
     lean: -0.04,
