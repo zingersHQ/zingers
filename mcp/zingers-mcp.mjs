@@ -220,9 +220,9 @@ async function dispatch(name, args = {}) {
 
     case "zingers_fight": {
       if (!args.id) return fail("id is required (see zingers_my_champions).");
-      const d = await api("/api/challenge", { method: "POST", body: { id: args.id } });
+      const d = await api("/api/challenge", { method: "POST", body: { id: args.id, ownerToken: OWNER_TOKEN } });
       const r = d.result;
-      return ok(`Bout: "${r.topic}" → ${r.winner} beat ${r.loser} (±${r.delta} ELO).`, r);
+      return ok(`Fight: "${r.topic}" → ${r.winner} beat ${r.loser} (±${r.delta} rating · −${r.cost ?? "?"} Crowns).`, r);
     }
 
     case "zingers_validate_agent": {

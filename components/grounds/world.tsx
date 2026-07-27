@@ -54,7 +54,7 @@ import {
   type TowerNode,
 } from "./tower-layout";
 import { RenderBoundary, WEBGL_POWER } from "./render-guard";
-import { jetFallSfx, jumpBeep, setJet, stopJet, smokePoofSfx } from "@/lib/sfx";
+import { jetFallSfx, jumpBeep, setJet, stopJet, smokePoofSfx, stumbleSfx } from "@/lib/sfx";
 import { getPad } from "@/lib/gamepad";
 import { useSettings } from "@/store/settings";
 import { useTheme } from "@/lib/theme";
@@ -3726,7 +3726,7 @@ function Handler({
           stumbleActive = true;
           justStumbled = true;
           thrust.current = 0;
-          jetFallSfx();
+          stumbleSfx();
           onCircuitStumble?.();
           break;
         }

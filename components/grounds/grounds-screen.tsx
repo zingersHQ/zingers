@@ -170,8 +170,8 @@ import {
 } from "@/lib/expeditions";
 import { NextCard } from "@/components/director/next-card";
 import {
-  firstLightChestCrowns,
-  HUNDRED_CHEST_CROWNS,
+  firstLightMilestoneId,
+  HUNDRED_MILESTONE_ID,
   SCOUT_CROWN_MULT,
   SCOUT_XP_MULT,
   scoutCampCap,
@@ -913,12 +913,12 @@ export default function GroundsScreen({
       // Camps + first-light (shared soul spine with mobile Climb).
       const lit = store.lightCamp(sectors, clearedAll);
       for (const n of lit.newlyLit) {
-        void store.awardGauntlet(firstLightChestCrowns(n));
+        void store.claimMilestone(firstLightMilestoneId(n));
         const theme = reachThemeByIndex(n - 1);
         store.pushEvent(owned, { kind: "ascent", title: `First light at Camp ${theme.roman}`, detail: theme.name });
       }
       if (lit.hundredJustCleared) {
-        void store.awardGauntlet(HUNDRED_CHEST_CROWNS);
+        void store.claimMilestone(HUNDRED_MILESTONE_ID);
         store.pushEvent(owned, { kind: "ascent", title: "Cleared the Hundred", detail: "hundred" });
       }
       fetch("/api/circuit", {

@@ -93,7 +93,9 @@ import { crownCacheCrowns, crownCacheHits, rollCrownCache, type CrownCache } fro
 import { CrownCacheField } from "./climb/crown-cache-field";
 import {
   firstLightChestCrowns,
+  firstLightMilestoneId,
   HUNDRED_CHEST_CROWNS,
+  HUNDRED_MILESTONE_ID,
   SCOUT_CROWN_MULT,
   SCOUT_XP_MULT,
   scoutCampCap,
@@ -133,7 +135,7 @@ import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
 import type { Champion, CreatureType } from "@/lib/types";
-import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx } from "@/lib/sfx";
+import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx, stumbleSfx } from "@/lib/sfx";
 import { setMood, setAmbienceIntensity, duckAmbience, startAmbience } from "@/lib/ambience-bus";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { consumeFlightTeach, goldPayoutLine } from "./climb/flight-teach";
@@ -721,6 +723,7 @@ export default function CircuitLite({
   const getChampion = useChampions((s) => s.get);
   const awardTrainerXp = useChampions((s) => s.awardTrainerXp);
   const awardGauntlet = useChampions((s) => s.awardGauntlet);
+  const claimMilestone = useChampions((s) => s.claimMilestone);
   const lightCamp = useChampions((s) => s.lightCamp);
   const pushEvent = useChampions((s) => s.pushEvent);
   const scoutCrownsRemaining = useChampions((s) => s.scoutCrownsRemaining);
@@ -1082,7 +1085,7 @@ export default function CircuitLite({
       for (const n of lit.newlyLit) {
         const pay = firstLightChestCrowns(n);
         chestCrowns += pay;
-        void awardGauntlet(pay);
+        void claimMilestone(firstLightMilestoneId(n));
         const theme = reachThemeByIndex(n - 1);
         if (activeKey) {
           pushEvent(activeKey, {
@@ -1094,7 +1097,7 @@ export default function CircuitLite({
       }
       if (lit.hundredJustCleared) {
         chestCrowns += HUNDRED_CHEST_CROWNS;
-        void awardGauntlet(HUNDRED_CHEST_CROWNS);
+        void claimMilestone(HUNDRED_MILESTONE_ID);
         if (activeKey) {
           pushEvent(activeKey, {
             kind: "ascent",
@@ -1280,10 +1283,10 @@ export default function CircuitLite({
     if (crownCache) flashTeach(consumeFlightTeach("gold"));
   }, [crownCache, flashTeach]);
 
-  // a hazard hit: flash the screen edges + duck the score under the thud
+  // a hazard hit: thud + flash the screen edges + duck the score
   const onStumble = useCallback(() => {
     stumbleCountRef.current += 1;
-    duckAmbience(0.6, 260);
+    stumbleSfx();
     setStumbleFlash(true);
     if (stumbleTimer.current != null) window.clearTimeout(stumbleTimer.current);
     stumbleTimer.current = window.setTimeout(() => setStumbleFlash(false), 260);

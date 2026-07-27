@@ -16,7 +16,7 @@ now; the on-chain **deployment** can come after Launch v0.1.
 in-game soft currency and are never tokenized.** Concretely:
 
 1. **Crowns stay off-chain and server-authoritative.** They are the gameplay
-   economy (`lib/economy.ts`): earned by winning, spent on training/fragments.
+   economy (`lib/economy.ts`): earned by winning, spent on training/fragments/Rank Fight entries.
    We keep full control of faucets/sinks and ELO fairness. Crowns are *not*
    convertible to $ZING at a fixed rate (that would import token volatility into
    game balance and create a de-facto security).

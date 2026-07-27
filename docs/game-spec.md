@@ -96,7 +96,8 @@ Climb mounts the same engine and pins the Flight score. Loud SFX duck through
 
 ## Economy sketch
 
-**Crowns** are earned in play (Flight, fights, goals) and spent on training / entries.
+**Crowns** are earned in play (Flight, fights, goals) and spent on training / entries
+(including a Crown fee per Rank Fight on `/standings`).
 Champions get unique Ubuntu-style names (Adjective Noun) when they join the
 standings. Trainers stay nameless drivers. Wallet link is optional identity
 (career across devices), not a paywall. Name pool ~23k base pairs + suffixes.

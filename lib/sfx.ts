@@ -413,6 +413,55 @@ export function stopJet() {
   jet = null;
 }
 
+// Hazard clip in Flight — short hostile smack (red wisps / cinders / rotors).
+// Distinct from reward chimes and from jetFallSfx (life-lost plunge).
+export function stumbleSfx() {
+  if (!enabled()) return;
+  const c = ensure();
+  if (!c || !master) return;
+  if (c.state === "suspended") c.resume().catch(() => {});
+
+  duckAmbience(0.45, 220);
+
+  const t = c.currentTime + 0.005;
+
+  // noise crack — the "hit the spark" transient
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  const hp = c.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 900;
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.setValueAtTime(1800, t);
+  bp.frequency.exponentialRampToValueAtTime(420, t + 0.12);
+  bp.Q.value = 1.1;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.exponentialRampToValueAtTime(0.22, t + 0.008);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  src.connect(hp);
+  hp.connect(bp);
+  bp.connect(ng);
+  ng.connect(master);
+  src.start(t);
+  src.stop(t + 0.18);
+
+  // dissonant body drop — shove, not treasure
+  const o = c.createOscillator();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(210, t);
+  o.frequency.exponentialRampToValueAtTime(72, t + 0.14);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  o.connect(g);
+  g.connect(master);
+  o.start(t);
+  o.stop(t + 0.2);
+}
+
 // one-shot rush when the jetpack cuts out and the Handler drops into free fall
 export function jetFallSfx() {
   if (!enabled()) return;

@@ -28,6 +28,7 @@ import { guestDepthXp, takeGuestClimbDepth } from "@/lib/guest-climb";
 import {
   EMPTY_CLIMB,
   lightCamp as applyLightCamp,
+  milestoneCrowns,
   sanitizeClimb,
   SCOUT_CROWNS_DAY_CAP,
   type ClimbProgress,
@@ -282,6 +283,8 @@ interface ChampionStore {
   syncWallet: () => Promise<void>;
   // Credit a Gauntlet payout through the wallet (server clamps the amount).
   awardGauntlet: (amount: number) => Promise<void>;
+  // One-shot Flight milestone (Hundred / first-light). Server decides the amount.
+  claimMilestone: (claimId: string) => Promise<boolean>;
   // Commit-reveal wager: stake is taken server-side BEFORE the bout. Returns true
   // if the stake was placed (offline: optimistic local debit).
   commitBet: (stake: number, side: "me" | "opp", nonce: string) => Promise<boolean>;
@@ -696,6 +699,24 @@ export const useChampions = create<ChampionStore>()(
         if (res?.ok) set({ crowns: res.balance });
         else if (!res) set((s) => ({ crowns: s.crowns + amt })); // offline: optimistic
         // online reject (cap / duplicate): leave balance alone — server truth wins on sync
+      },
+      claimMilestone: async (claimId) => {
+        const id = claimId.trim();
+        if (!id) return false;
+        const res = await walletEvent("milestone", undefined, id);
+        if (res?.ok) {
+          set({ crowns: res.balance });
+          return true;
+        }
+        // offline: optimistic credit using the shared resolver (server reconciles)
+        if (!res) {
+          const amt = milestoneCrowns(id);
+          if (amt != null && amt > 0) {
+            set((s) => ({ crowns: s.crowns + amt }));
+            return true;
+          }
+        }
+        return false;
       },
       commitBet: async (stake, side, nonce) => {
         const res = await commitBetRequest(stake, side, nonce);

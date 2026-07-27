@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Plug, Swords } from "lucide-react";
+import { Crown, Plug, Swords } from "lucide-react";
 import type { CreatureType, RosterEntry, Strat } from "@/lib/types";
 import { DEFAULT_STRAT } from "@/lib/types";
+import { RANK_FIGHT_COST } from "@/lib/economy";
 import { TYPE_COLOR } from "@/lib/evolve/progression";
 import { forceName } from "@/lib/lore/canon";
 import { getOwnerToken } from "@/lib/owner";
@@ -39,6 +40,9 @@ const ACC = "#7c5cff";
 export default function StandingsPage() {
   const owned = useChampions((s) => s.owned);
   const recipes = useChampions((s) => s.recipes);
+  const crowns = useChampions((s) => s.crowns);
+  const setBalance = useChampions((s) => s.setBalance);
+  const syncWallet = useChampions((s) => s.syncWallet);
 
   const [ladder, setLadder] = useState<LadderChampion[]>([]);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
@@ -77,9 +81,10 @@ export default function StandingsPage() {
     });
     refresh();
     loadOwned();
+    void syncWallet();
     const iv = setInterval(refresh, 8000);
     return () => clearInterval(iv);
-  }, [refresh, loadOwned]);
+  }, [refresh, loadOwned, syncWallet]);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -110,6 +115,10 @@ export default function StandingsPage() {
   };
 
   const challenge = async (c: LadderChampion) => {
+    if (crowns < RANK_FIGHT_COST) {
+      flash(`Need ${RANK_FIGHT_COST} Crowns for a Rank fight. Win in the Grounds or fly.`);
+      return;
+    }
     setBusy(c.id);
     const res = await fetch("/api/challenge", {
       method: "POST",
@@ -117,9 +126,16 @@ export default function StandingsPage() {
       body: JSON.stringify({ id: c.id, ownerToken: tokenRef.current || getOwnerToken() }),
     }).then((r) => r.json());
     setBusy(null);
-    if (res.error) return flash(`Fight failed: ${res.error}`);
+    if (typeof res.balance === "number") setBalance(res.balance);
+    else if (typeof res.result?.balance === "number") setBalance(res.result.balance);
+    if (res.error) {
+      if (res.error === "not enough Crowns") {
+        return flash(`Need ${RANK_FIGHT_COST} Crowns for a Rank fight. Win in the Grounds or fly.`);
+      }
+      return flash(`Fight failed: ${res.error}`);
+    }
     const r = res.result;
-    flash(`${r.winner} beat ${r.loser} on "${r.topic}" (+${r.delta})`);
+    flash(`${r.winner} beat ${r.loser} on "${r.topic}" (+${r.delta}) · −${r.cost ?? RANK_FIGHT_COST} Crowns`);
     await Promise.all([refresh(), loadOwned()]);
   };
 
@@ -196,11 +212,24 @@ export default function StandingsPage() {
                 {mine && (
                   <button
                     onClick={() => challenge(c)}
-                    disabled={busy === c.id}
+                    disabled={busy === c.id || crowns < RANK_FIGHT_COST}
                     className="btn btn-primary"
-                    style={{ ["--ac" as string]: col, fontSize: 12, padding: "8px 12px", opacity: busy === c.id ? 0.5 : 1 }}
+                    title={crowns < RANK_FIGHT_COST ? `Need ${RANK_FIGHT_COST} Crowns` : `Rank fight · ${RANK_FIGHT_COST} Crowns`}
+                    style={{
+                      ["--ac" as string]: col,
+                      fontSize: 12,
+                      padding: "8px 12px",
+                      opacity: busy === c.id || crowns < RANK_FIGHT_COST ? 0.5 : 1,
+                    }}
                   >
-                    {busy === c.id ? "…" : <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Swords size={13} strokeWidth={2.2} /> Fight</span>}
+                    {busy === c.id ? (
+                      "…"
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Swords size={13} strokeWidth={2.2} /> Fight · {RANK_FIGHT_COST}
+                        <Crown size={12} strokeWidth={2.2} />
+                      </span>
+                    )}
                   </button>
                 )}
               </div>

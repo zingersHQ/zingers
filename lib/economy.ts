@@ -19,6 +19,9 @@ export const HOME_WAR_WEIGHT = 2;
 
 // Fixed sinks.
 export const TRAIN_COST = 60;
+// Rank Fight on /standings — one Crown entry per board write. Priced at one
+// Grounds win so farming the board means earning elsewhere first (no free Elo faucet).
+export const RANK_FIGHT_COST = 40;
 export const FRAGMENT_BUY = 140; // Crowns → 1 fragment
 export const FRAGMENT_SELL = 90; // 1 fragment → Crowns (Broker spread)
 // Recruit a new mind into your roster. The collection acquisition loop: a
@@ -38,10 +41,15 @@ export const CACHE_MAX = 200;
 export const GOAL_MAX = 600;
 export const GAUNTLET_MAX = 1200;
 
-/** Soft daily ceiling on Crowns from cache+goal+gauntlet combined (per owner). */
-export const DAILY_VARIABLE_EARN_CAP = 2_500;
+/** Soft daily ceiling on Crowns from cache+goal+gauntlet combined (per owner).
+ *  Tuned down from 2500 — soft-trust Flight/Arena earns were a free lunch. */
+export const DAILY_VARIABLE_EARN_CAP = 1_200;
 /** Max separate gauntlet payouts one owner can cash per UTC day. */
 export const MAX_GAUNTLET_PAYOUTS_PER_DAY = 8;
+
+/** One-shot Flight milestone purses (Hundred, first-light). Server decides the
+ *  amount from the claimId; outside the daily variable earn cap. */
+export const MILESTONE_MAX = 2_500;
 
 export function isLegalBet(stake: number): boolean {
   return (BET_AMOUNTS as readonly number[]).includes(stake);
@@ -57,7 +65,8 @@ export type WalletEventType =
   | "recruit"
   | "cache"
   | "goal"
-  | "gauntlet";
+  | "gauntlet"
+  | "milestone";
 
 const clampPos = (n: unknown, max: number): number => {
   const v = Number(n);
@@ -82,6 +91,9 @@ export function walletDelta(type: WalletEventType, amount?: number): number | nu
       return clampPos(amount, GOAL_MAX);
     case "gauntlet":
       return clampPos(amount, GAUNTLET_MAX);
+    case "milestone":
+      // Amount is decided server-side from claimId (see /api/wallet) — never trust client.
+      return null;
     default:
       return null;
   }

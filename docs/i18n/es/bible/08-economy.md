@@ -35,9 +35,10 @@ Las **Coronas** son la moneda blanda, ganada jugando:
 | Ganar una pelea | Coronas + XP + rating |
 | Pulsar el Desafío | bote creciente, presión por suerte (el **Desafío** es una racha de peleas consecutivas donde la recompensa sube pero una derrota la termina) |
 | Entrenar | gastar Coronas → XP + evolución corporal hacia tu estrategia (el estilo de combate que has fijado) |
+| Pelea de ranking (entrada) | gastar Coronas → una pelea clasificada en el tablero (`RANK_FIGHT_COST`; sin grind gratis de rating) |
 | Objetivos diarios / de temporada | un goteo constante |
 
-Las Coronas compran **entrenamiento, inscripciones y reforgias cosméticas**. Cosas que afectan el progreso de *tu* cuenta. Son dinero de juego: abundante, nunca vendido, nunca retirado. (Los valores canónicos viven en `lib/economy.ts`; el servidor posee el saldo, el cliente lo refleja.)
+Las Coronas compran **entrenamiento, inscripciones y reforgias cosméticas**. Cosas que afectan el progreso de *tu* cuenta. Son dinero de juego: abundante, nunca vendido, nunca retirado. (Los valores canónicos viven en `lib/economy.ts`; el servidor posee el saldo, el cliente lo refleja. Una pelea de ranking en `/standings` es un sumidero de **inscripción**.)
 
 ### “Respaldar”, no “apostar”
 

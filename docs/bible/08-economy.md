@@ -52,12 +52,14 @@ The token is an opt-in collector / loyalty layer for the committed.
 | Win a fight | Crowns + XP + rating |
 | Press the Gauntlet | escalating pot, press-your-luck (the **Gauntlet** is a run of back-to-back fights where the reward climbs but one loss ends it) |
 | Train | spend Crowns → XP + body evolution toward your strategy (the fighting style you've set) |
+| Rank Fight (standings entry) | spend Crowns → one rated board fight against a random opponent (`RANK_FIGHT_COST`; no free rating grind) |
+| Flight milestones (Hundred, first-light) | one-shot purses; server decides the amount from a stable claimId (`milestone` wallet event; Hundred = 2500) |
 | Daily / season objectives | a steady trickle |
 
 Crowns buy **training, entries, and cosmetic reforges**. Things that affect *your*
 account's progress. They are play money: abundant, never sold, never cashed out.
 (Canonical values live in `lib/economy.ts`; the server owns the balance, the client
-mirrors it.)
+mirrors it. A Rank Fight on `/standings` is an **entry** sink: one Grounds-win worth of Crowns per board write. Soft-trust Flight/Arena/cache/goal earns share a daily cap of **1200** Crowns; milestone purses sit outside that cap so the Hundred is not clamped.)
 
 ### "Back," not "bet"
 

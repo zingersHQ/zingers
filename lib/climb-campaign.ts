@@ -38,6 +38,22 @@ export function firstLightChestCrowns(camp: number): number {
 /** One-time purse for clearing the Hundred ranked. */
 export const HUNDRED_CHEST_CROWNS = 2500;
 
+/** Stable wallet claimIds for Flight milestone purses (server-decided amounts). */
+export const HUNDRED_MILESTONE_ID = "hundred";
+
+export function firstLightMilestoneId(camp: number): string {
+  const n = Math.max(1, Math.min(10, Math.floor(camp)));
+  return `firstlight-${n}`;
+}
+
+/** Resolve a milestone claimId → Crown amount. Unknown ids → null. */
+export function milestoneCrowns(claimId: string): number | null {
+  if (claimId === HUNDRED_MILESTONE_ID) return HUNDRED_CHEST_CROWNS;
+  const m = /^firstlight-([1-9]|10)$/.exec(claimId);
+  if (!m) return null;
+  return firstLightChestCrowns(Number(m[1]));
+}
+
 /** 0-based sector index where a scout from Camp n (1-based) begins. */
 export function scoutStartSector(camp: number): number {
   const n = Math.max(1, Math.min(10, Math.floor(camp)));

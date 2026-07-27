@@ -6,15 +6,18 @@
 // engine-authoritative path (lib/server/ladder.ts) once the outcome is known.
 //
 // Anti-abuse: variable earns require a claimId (one-shot per day/season); gauntlet
-// also has a per-day payout count; fragment_sell debits a server fragment balance
-// that only fragment_buy credits.
+// also has a per-day payout count; Flight milestones (Hundred / first-light) use
+// server-decided amounts outside the daily soft-trust cap; fragment_sell debits a
+// server fragment balance that only fragment_buy credits.
 import { getStore } from "@/lib/server/store";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { track } from "@/lib/server/track";
 import { currentSeasonNumber } from "@/lib/lore/season";
+import { milestoneCrowns } from "@/lib/climb-campaign";
 import {
   DAILY_VARIABLE_EARN_CAP,
   MAX_GAUNTLET_PAYOUTS_PER_DAY,
+  MILESTONE_MAX,
   isLegalBet,
   walletDelta,
   type WalletEventType,
@@ -105,6 +108,29 @@ export async function POST(req: Request) {
     }
     void track("earn", token, delta);
     return Response.json({ ok: true, balance: r.balance });
+  }
+
+  // Flight milestones: server decides Crowns from an allowlisted claimId.
+  // One-shot per owner for the career (long TTL). Outside the daily soft-trust cap
+  // so the Hundred purse (2500) is not clamped by GAUNTLET_MAX / day earn.
+  if (type === "milestone") {
+    const claimId = typeof b.claimId === "string" ? b.claimId.trim() : "";
+    if (!validClaimId(claimId)) {
+      return Response.json({ error: "missing or invalid claimId" }, { status: 400 });
+    }
+    const raw = milestoneCrowns(claimId);
+    if (raw == null || raw <= 0) {
+      return Response.json({ error: "unknown milestone" }, { status: 400 });
+    }
+    const delta = Math.min(MILESTONE_MAX, Math.round(raw));
+    const scopeKey = `milestone:${token}:${claimId}`;
+    const claimed = await store.claimOnce(scopeKey, 400 * 86_400);
+    if (!claimed) {
+      return Response.json({ ok: false, balance: await store.getWallet(token), error: "already claimed" }, { status: 409 });
+    }
+    const r = await store.adjustWallet(token, delta);
+    if (r.ok) void track("earn", token, delta);
+    return Response.json({ ok: r.ok, balance: r.balance, credited: delta });
   }
 
   // Variable earns: claimId + daily crown cap (+ gauntlet payout count).

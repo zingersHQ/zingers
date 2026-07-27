@@ -5,7 +5,7 @@ import { battleEvents, type SideConfig } from "@/lib/engine/battle";
 import { FIRST_MIND_KEYS, ROSTER, TOPICS } from "@/lib/engine/roster";
 import { hasExternalAgent } from "@/lib/engine/side-config";
 import type { CreatureType } from "@/lib/types";
-import { BET_PAYOUT_MULT, GROUNDS_WIN_REWARD, HOME_WIN_BONUS, HOME_WAR_WEIGHT } from "@/lib/economy";
+import { BET_PAYOUT_MULT, GROUNDS_WIN_REWARD, HOME_WIN_BONUS, HOME_WAR_WEIGHT, RANK_FIGHT_COST } from "@/lib/economy";
 import { getStore, type FeedEntry, type LadderChampion } from "./store";
 import { creditWarWin } from "./war";
 import { track } from "./track";
@@ -386,21 +386,41 @@ export async function pickMatchup(): Promise<[string, string] | null> {
 }
 
 // Run one bout for a specific OWNED champion against a random ladder opponent.
-// Owner-token gated so strangers can't grief someone else's rating.
+// Owner-token gated so strangers can't grief someone else's rating. Costs
+// RANK_FIGHT_COST Crowns up front — board writes are a sink, not a free faucet.
 export async function challengeChampion(
   id: string,
   ownerToken: string,
-): Promise<{ winner: string; loser: string; delta: number; topic: string } | { error: string } | null> {
+): Promise<
+  | { winner: string; loser: string; delta: number; topic: string; balance: number; cost: number }
+  | { error: string; balance?: number }
+  | null
+> {
   await ensureSeeded();
   const store = getStore();
   const me = await store.getChampion(id);
   if (!me) return null;
   if (me.house) return { error: "house champions cannot be challenged this way" };
-  if (!ownerToken || me.ownerToken !== ownerToken.slice(0, 64)) return { error: "not your champion" };
+  const owner = ownerToken.slice(0, 64);
+  if (!ownerToken || me.ownerToken !== owner) return { error: "not your champion" };
   const pool = (await store.topChampions(50)).filter((c) => c.id !== id);
   if (!pool.length) return null;
   const opp = pool[Math.floor(Math.random() * pool.length)];
-  return runRankedBout(id, opp.id);
+
+  const paid = await store.adjustWallet(owner, -RANK_FIGHT_COST);
+  if (!paid.ok) {
+    return { error: "not enough Crowns", balance: paid.balance };
+  }
+
+  const result = await runRankedBout(id, opp.id);
+  if (!result) {
+    // Matchup fell through after debit — put the Crowns back.
+    const refunded = await store.adjustWallet(owner, RANK_FIGHT_COST);
+    return { error: "no opponent available", balance: refunded.balance };
+  }
+
+  void track("spend", owner, RANK_FIGHT_COST);
+  return { ...result, balance: paid.balance, cost: RANK_FIGHT_COST };
 }
 
 export async function getLadder(limit = 50): Promise<LadderChampion[]> {

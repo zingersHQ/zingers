@@ -1,5 +1,6 @@
 // Send one of YOUR champions into a ranked bout against a random ladder
-// opponent. Updates the shared ELO + feed and returns the result.
+// opponent. Costs RANK_FIGHT_COST Crowns, updates the shared rating + feed.
+import { RANK_FIGHT_COST } from "@/lib/economy";
 import { challengeChampion } from "@/lib/server/ladder";
 import { rateLimit } from "@/lib/server/rate-limit";
 
@@ -26,6 +27,9 @@ export async function POST(req: Request) {
   }
   const result = await challengeChampion(id, ownerToken);
   if (!result) return Response.json({ error: "champion not found or not yours" }, { status: 404 });
-  if ("error" in result) return Response.json(result, { status: 403 });
+  if ("error" in result) {
+    const status = result.error === "not enough Crowns" ? 402 : 403;
+    return Response.json({ ...result, cost: RANK_FIGHT_COST }, { status });
+  }
   return Response.json({ result });
 }
