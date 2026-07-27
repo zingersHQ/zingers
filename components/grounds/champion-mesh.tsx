@@ -117,6 +117,9 @@ export interface BuiltCharacter {
   actions: Record<string, THREE.AnimationAction | undefined>;
   bones: Record<string, THREE.Bone>;
   boneBase: Record<string, THREE.Vector3>;
+  /** LowerLeg*_end markers — FootL/R are authored under the armature root, not
+   *  the shin, so stilts must snap feet here every frame or soles float mid-calf. */
+  ankleEnds: { l: THREE.Object3D | null; r: THREE.Object3D | null };
   /** bind-pose rotation/position of the neck + head bones, so we can blend the
    *  clip's exaggerated head swing part-way back toward rest each frame */
   restQuat: Record<string, THREE.Quaternion>;
@@ -288,8 +291,16 @@ export function buildCharacter(
     alias(`lowerleg.${s}`, `lowerleg${s}`);
     alias(`foot.${s}`, `foot${s}`);
   }
+  const ankleEnds = {
+    l: findAnkleEnd(bones["lowerleg.l"] ?? bones["lowerlegl"]),
+    r: findAnkleEnd(bones["lowerleg.r"] ?? bones["lowerlegr"]),
+  };
   const morph = app.morph;
   applyBoneMorph(bones, boneBase, morph);
+  // RobotExpressive parents FootL/R under the armature root (same world spot as
+  // LowerLeg*_end at bind). After legLen morphs the shin ends move and the feet
+  // would otherwise float — snap them onto the ankles before planting.
+  snapFeetToAnkles(bones, ankleEnds);
 
   // snapshot the rest (bind) rotation/position of the neck chain so the per-frame
   // damping below can blend the clip's head swing back toward this pose. The abdomen
@@ -307,8 +318,6 @@ export function buildCharacter(
 
   root.position.y = 0;
   root.updateMatrixWorld(true);
-  // Prefer ankle-based plant: SkinnedMesh bbox often ignores bone scales, so
-  // stilts + big Rhetoric boots used to leave gold feet floating above y=0.
   plantRootToFeet(root, bones);
   root.updateMatrixWorld(true);
 
@@ -393,7 +402,7 @@ export function buildCharacter(
   // initial skeletal pose is chosen by the restPose effect — don't start idle here
   // or the first crossfade fights a clip that's already mid-cycle.
 
-  return { root, mixer, actions, bones, boneBase, restQuat, restPos, partAnchors, morph, h: app.h, emissive: app.emissive, palette: pal };
+  return { root, mixer, actions, bones, boneBase, ankleEnds, restQuat, restPos, partAnchors, morph, h: app.h, emissive: app.emissive, palette: pal };
 }
 
 function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], ...names: string[]) {
@@ -493,34 +502,84 @@ function breathe(built: BuiltCharacter, t: number, intensity = 1) {
 // the head, neck, shoulders and arms — that way each group lands on its intended
 // NET size and a barrel chest never balloons the skull. Legs hang off the hips
 // (unscaled) so they need no correction.
-/** Drop the figure so the lower ankle sits on the floor (plus a small sole pad).
- *  Uses foot bone world Y — reliable after legLen morphs, unlike mesh AABB. */
 const _plantAnkle = new THREE.Vector3();
-const SOLE_PAD = 0.045; // figure units below the ankle bone to the sole contact
+const _snapPos = new THREE.Vector3();
+const _footBox = new THREE.Box3();
+/** Bind-pose sole depth under the ankle on RobotExpressive (~FootL world gap). */
+const SOLE_PAD = 0.05;
+
+function findAnkleEnd(lower?: THREE.Object3D): THREE.Object3D | null {
+  if (!lower) return null;
+  for (const c of lower.children) {
+    if (/_end$/i.test(c.name)) return c;
+  }
+  return null;
+}
+
+/**
+ * RobotExpressive authors FootL/R as children of the armature root `Bone`, not
+ * LowerLeg — they sit on LowerLeg*_end at bind, but do NOT inherit shin scale.
+ * After legLen stilts, snap each foot origin onto its shin end so soles ride the
+ * legs (every Force / every mind). Keeps Foot.* quaternion tracks from walk clips.
+ */
+export function snapFeetToAnkles(
+  bones: Record<string, THREE.Bone>,
+  ankleEnds?: { l: THREE.Object3D | null; r: THREE.Object3D | null },
+) {
+  for (const s of ["l", "r"] as const) {
+    const foot = bones[`foot.${s}`] ?? bones[`foot${s}`];
+    if (!foot?.parent) continue;
+    const end =
+      ankleEnds?.[s] ?? findAnkleEnd(bones[`lowerleg.${s}`] ?? bones[`lowerleg${s}`]);
+    if (!end) continue;
+    end.updateWorldMatrix(true, false);
+    foot.parent.updateWorldMatrix(true, false);
+    end.getWorldPosition(_snapPos);
+    foot.parent.worldToLocal(_snapPos);
+    foot.position.copy(_snapPos);
+  }
+}
+
+/** Drop the figure so the lower sole sits on the floor. Prefers foot-mesh AABB
+ *  (gold boots are plain meshes under Foot*), else ankle − SOLE_PAD. */
 export function plantRootToFeet(root: THREE.Object3D, bones: Record<string, THREE.Bone>) {
   root.updateWorldMatrix(true, true);
-  let minAnkle = Infinity;
-  for (const s of ["l", "r"] as const) {
-    const b = bones[`foot.${s}`] ?? bones[`foot${s}`];
-    if (!b) continue;
-    b.getWorldPosition(_plantAnkle);
-    // express in the root PARENT's space so root.position.y is the right lever
-    const parent = root.parent;
-    if (parent) {
-      parent.updateWorldMatrix(true, false);
-      parent.worldToLocal(_plantAnkle);
+  const parent = root.parent;
+  if (parent) parent.updateWorldMatrix(true, false);
+
+  let minSole = Infinity;
+  // FootL_1 / FootR_1 are unskinned meshes parented to the foot bones — their
+  // world AABB tracks stilts once snapFeetToAnkles has run.
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || !/foot/i.test(m.name)) return;
+    _footBox.setFromObject(m);
+    if (_footBox.isEmpty()) return;
+    const midX = (_footBox.min.x + _footBox.max.x) * 0.5;
+    const midZ = (_footBox.min.z + _footBox.max.z) * 0.5;
+    _plantAnkle.set(midX, _footBox.min.y, midZ);
+    if (parent) parent.worldToLocal(_plantAnkle);
+    minSole = Math.min(minSole, _plantAnkle.y);
+  });
+
+  if (!Number.isFinite(minSole)) {
+    for (const s of ["l", "r"] as const) {
+      const b = bones[`foot.${s}`] ?? bones[`foot${s}`];
+      if (!b) continue;
+      b.getWorldPosition(_plantAnkle);
+      if (parent) parent.worldToLocal(_plantAnkle);
+      minSole = Math.min(minSole, _plantAnkle.y - SOLE_PAD);
     }
-    minAnkle = Math.min(minAnkle, _plantAnkle.y);
   }
-  if (!Number.isFinite(minAnkle)) {
-    // fallback: unskinned bbox (pre-stilts behaviour)
+
+  if (!Number.isFinite(minSole)) {
     root.position.y = 0;
     root.updateWorldMatrix(true, true);
     root.position.y -= new THREE.Box3().setFromObject(root).min.y;
     return;
   }
-  // ankle local Y already includes current root.position.y — nudge so sole ≈ 0
-  root.position.y += SOLE_PAD - minAnkle;
+  // sole local Y already includes current root.position.y — nudge so sole ≈ 0
+  root.position.y += 0 - minSole;
 }
 
 export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Record<string, THREE.Vector3>, m: BoneMorph) {
@@ -579,6 +638,10 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
       bones[nm].scale.set(bb.x * m.handScale, bb.y * m.handScale, bb.z * m.handScale);
     }
   }
+
+  // Always re-seat feet on the shin ends — this rig's Foot bones are not children
+  // of LowerLeg, so any caller of applyBoneMorph (mesh, Grounds, ghosts) stays fixed.
+  snapFeetToAnkles(bones);
 }
 
 export function ChampionMesh({
@@ -1222,8 +1285,9 @@ export function ChampionMesh({
     if (lod === 0) {
       built.mixer.update(dt);
       applyBoneMorph(built.bones, built.boneBase, built.morph);
-      // Re-plant after clip + morph so stilts / idle leg keys can't leave soles
-      // hanging in the air (CADENCE gold feet). Skip while airborne.
+      // Feet are not in the shin hierarchy on this rig — snap then plant so every
+      // stilts/walk pose keeps soles on the floor (FLUX, CADENCE, whole dex).
+      snapFeetToAnkles(built.bones, built.ankleEnds);
       if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
       dampNeck(built, peaceful);
       breathe(built, t + phase, breatheIntensity);
@@ -1232,6 +1296,7 @@ export function ChampionMesh({
       if (lodAccum.current >= LOD_MID_STEP) {
         built.mixer.update(lodAccum.current);
         applyBoneMorph(built.bones, built.boneBase, built.morph);
+        snapFeetToAnkles(built.bones, built.ankleEnds);
         if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
         dampNeck(built, peaceful);
         breathe(built, t + phase, breatheIntensity);
