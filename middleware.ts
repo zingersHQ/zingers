@@ -51,8 +51,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.rewrite(new URL(`/bible${rest}${search}`, request.url));
     }
 
-    // Private studio pack — unlinked, no sidebar, noindex on the page
+    // Public press kit (React page) + legacy /creative → /press
     if (pathname === "/creative" || pathname.startsWith("/creative/")) {
+      return NextResponse.redirect(new URL(`/press${search}`, ORG_ORIGIN), 308);
+    }
+    if (pathname === "/press" || pathname.startsWith("/press/")) {
       return NextResponse.next();
     }
 

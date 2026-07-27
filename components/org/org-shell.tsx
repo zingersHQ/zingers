@@ -5,12 +5,27 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost, orgHref } from "@/lib/org/hosts";
 import { ORG_SECTIONS, orgPagesInSection } from "@/lib/org/registry";
-export async function OrgShell({ slug, children }: { slug?: string; children: ReactNode }) {
+
+export async function OrgShell({
+  slug,
+  children,
+  wide = false,
+  activeExtra,
+}: {
+  slug?: string;
+  children: ReactNode;
+  /** Wider main column (press kit grids, etc.). */
+  wide?: boolean;
+  activeExtra?: "gallery" | "press";
+}) {
   const host = (await headers()).get("host")?.split(":")[0] ?? "";
   const orgHost = BRAND.siteTech.replace("https://", "");
   const locale = await getLocale();
   const href = (s: string) => orgHref(s, host, locale);
   const t = await getTranslations("org");
+  const onOrg = isOrgHost(host);
+  const pressHref = onOrg ? "/press" : "/press";
+  const galleryHref = onOrg ? "/gallery" : `${BRAND.site}/bible`;
 
   return (
     <div className="org-layout">
@@ -50,7 +65,16 @@ export async function OrgShell({ slug, children }: { slug?: string; children: Re
         </nav>
 
         <div className="org-sidebar__foot">
-          <Link href={isOrgHost(host) ? "/gallery" : `${BRAND.site}/bible`} className="org-sidebar__cta btn">
+          <Link
+            href={pressHref}
+            className={`org-sidebar__cta btn${activeExtra === "press" ? " is-on" : ""}`}
+          >
+            Press kit
+          </Link>
+          <Link
+            href={galleryHref}
+            className={`org-sidebar__cta btn${activeExtra === "gallery" ? " is-on" : ""}`}
+          >
             Visual gallery
           </Link>
           <a href={`${BRAND.site}/agents`} className="org-sidebar__cta btn">
@@ -62,7 +86,7 @@ export async function OrgShell({ slug, children }: { slug?: string; children: Re
         </div>
       </aside>
 
-      <main className="org-main">{children}</main>
+      <main className={`org-main${wide ? " org-main--wide" : ""}`}>{children}</main>
     </div>
   );
 }

@@ -17,10 +17,10 @@ export interface OrgPage {
 }
 
 export const ORG_SECTIONS: OrgSection[] = [
-  { id: "bible", title: "The Bible", blurb: "Canon: forces, minds, regions, Keepers, Flight, seasons, collection." },
+  { id: "bible", title: "The Bible", blurb: "Canon: forces, minds, regions, Flight, seasons, collection, Vault lore." },
   { id: "protocol", title: "Protocol", blurb: "How agents plug in: contract, tools, MCP." },
   { id: "design", title: "Design", blurb: "Flight-First loop, combat math, retention, arenas." },
-  { id: "product", title: "Product", blurb: "Pitch decks and positioning." },
+  { id: "product", title: "Product", blurb: "Pitch decks, positioning, and the press kit." },
 ];
 
 export const ORG_PAGES: OrgPage[] = [
@@ -29,7 +29,7 @@ export const ORG_PAGES: OrgPage[] = [
   { slug: "bible/cosmology", section: "bible", order: 1, title: "Cosmology", file: "docs/bible/01-cosmology.md", description: "The Hum, the Long Vault, and why anyone fights." },
   { slug: "bible/forces", section: "bible", order: 2, title: "The Five Forces", file: "docs/bible/02-forces.md", description: "The type pentagon as in-world physics." },
   { slug: "bible/champions", section: "bible", order: 3, title: "Champions", file: "docs/bible/03-champions.md", description: "What a mind is; First Minds; the growing collectible dex." },
-  { slug: "bible/keepers", section: "bible", order: 4, title: "The Keepers", file: "docs/bible/04-keepers.md", description: "Five Keepers, five secret words: the campaign spine." },
+  { slug: "bible/keepers", section: "bible", order: 4, title: "The Keepers", file: "docs/bible/04-keepers.md", description: "Five Keepers of the Long Vault: canon lore; rite shelved from the face." },
   { slug: "bible/regions", section: "bible", order: 5, title: "Regions", file: "docs/bible/05-regions.md", description: "The map: Hub, regions, venues, Force bias, arenas." },
   { slug: "bible/seasons", section: "bible", order: 6, title: "Seasons", file: "docs/bible/06-seasons.md", description: "The Chronicle: generative, seeded living seasons." },
   { slug: "bible/collection", section: "bible", order: 7, title: "Collection", file: "docs/bible/07-collection.md", description: "Cards, rarity, lineage, weekly starters: the dex layer." },

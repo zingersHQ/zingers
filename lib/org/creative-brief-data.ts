@@ -3,6 +3,17 @@
  *  Player-facing vocabulary: Trainer, Strategy, Clan, fight/battle, Flight, standings.
  *  No bout / ELO / ladder. No spaced em dash. */
 
+import type { RenderPresetId } from "@/lib/render/presets";
+
+export type IdeaScene =
+  | { kind: "flight"; src: string; alt?: string }
+  | { kind: "mind"; key: string; preset?: RenderPresetId }
+  | { kind: "force"; slug: string }
+  | { kind: "keeper"; name: string }
+  | { kind: "region"; regionId: string }
+  | { kind: "pair"; left: string; right: string }
+  | { kind: "regionMind"; regionId: string; key: string };
+
 export type ShortIdea = {
   id: string;
   title: string;
@@ -14,6 +25,10 @@ export type ShortIdea = {
   notes?: string;
   /** primary | depth — depth = fight/Keeper ok as secondary, not the face */
   lane: "primary" | "depth" | "press";
+  /** Live reference scene for the agency to seed from */
+  scene: IdeaScene;
+  /** Full generative prompt: universe context + locked scene description */
+  prompt: string;
 };
 
 export const CONTENT_LAW =
@@ -44,6 +59,9 @@ export const VOCAB_DONT = [
   "No text, logos, watermarks, or UI chrome inside generated frames",
 ];
 
+/** Shared universe block prepended conceptually into each idea prompt. */
+export const UNIVERSE_CONTEXT = `UNIVERSE (Zingers): A sky-climbing game above the Long Vault, a sealed store of leftover thought. The human player is the Trainer (jetpack). Beside them flies a thinking AI champion (robot mind, no jetpack). Core loop: fly through rings and gates, claim and raise a wingmate, fight battles that stud the climb, both evolve. Tagline: You fly. It fights. You both rise. Face of the brand is Flight + the Trainer↔champion bond, not arena dunks. Visual law: keep the exact robot silhouette, proportions, materials, and face from the attached game-model reference PNG. AI may enrich atmosphere, fog, rim-light, grade. No painterly face swap. No photoreal humans. No text, logos, watermarks, or UI in-frame. Palette void #0a0812, deep field #15102a, gold #f5d020, one dominant Clan color.`;
+
 /** Real-model Flight captures only (not concept art). */
 export const FLIGHT_CAPTURES = [
   {
@@ -51,14 +69,25 @@ export const FLIGHT_CAPTURES = [
     alt: "Trainer and champion in Flight. Real game models.",
     caption: "Flight hero from our meshes. Trainer with jetpack; champion flies beside without one.",
     label: "Flight hero",
+    scene: { kind: "flight" as const, src: "/img/home/flight-hero-poster.jpg", alt: "Flight hero" },
   },
   {
     src: "/img/home/flight-hero-poster-sm.jpg",
     alt: "Compact Flight hero still for vertical crops.",
     caption: "Same capture, smaller. Prefer for 9:16 crops.",
     label: "Flight hero (sm)",
+    scene: { kind: "flight" as const, src: "/img/home/flight-hero-poster-sm.jpg", alt: "Flight hero compact" },
   },
 ] as const;
+
+function prompt(sceneBlock: string): string {
+  return `${UNIVERSE_CONTEXT}
+
+SCENE TO GENERATE:
+${sceneBlock}
+
+OUTPUT: vertical 9:16 social master (also deliver 16:9 if useful). Lock character identity to the attached reference PNG. Cinematic, moody, volumetric neon rim-light, atmospheric fog, drifting motes (the Hum). No UI.`;
+}
 
 export const SHORT_IDEAS: ShortIdea[] = [
   {
@@ -75,7 +104,11 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Cut to black. Tagline.",
     ],
     overlay: "You fly. It fights. You both rise.",
-    notes: "Lock identity to Flight hero + the live First Mind render on this page. AI may dress fog only.",
+    notes: "Lock identity to Flight hero + the live First Mind render. AI may dress fog only.",
+    scene: { kind: "flight", src: "/img/home/flight-hero-poster.jpg", alt: "On the line" },
+    prompt: prompt(
+      `Night Flight above the Long Vault. A gold-rimmed ring gate fills the frame ahead. Trainer in jetpack thrusts through the opening; champion AXIOM (Logic Clan, electric blue #4aa3ff accents) flies formation on the wing with no jetpack. Near-miss energy, shared line, relationship over spectacle. Camera on the pair. Mood: tense joy, ascent.`,
+    ),
   },
   {
     id: "stay-with-me",
@@ -87,11 +120,15 @@ export const SHORT_IDEAS: ShortIdea[] = [
     beats: [
       "Wide: two silhouettes ascending past floating gates.",
       "Camp light blooms below as they clear a stretch of sky.",
-      "Soft VO or caption in champion voice: Stay with me. Nine more stretches of sky and we light the next camp.",
+      "Soft caption in champion voice: Stay with me. Nine more stretches of sky and we light the next camp.",
       "End card: zingers.gg",
     ],
     overlay: "Raise a mind. Make it legend.",
     notes: "Guiding voice is warm and direct (we/us). Never frame as a quest checklist.",
+    scene: { kind: "pair", left: "MUSE", right: "BASTION" },
+    prompt: prompt(
+      `Wide bond shot: Trainer and wingmate ascending a dark indigo sky past distant ring gates. Below, a small camp light blooms on a floating Reach platform (gold #f5d020). Champion MUSE (Spark Clan, bright yellow accents) flies close beside the Trainer. Soft, intimate, hopeful. Caption energy (text OUTSIDE the image): "Stay with me. Nine more stretches of sky and we light the next camp."`,
+    ),
   },
   {
     id: "claim-wingmate",
@@ -106,6 +143,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Hold on the pair. Small motion: halo / Flight sigil hint.",
       "Text: Claim a mind. Climb together.",
     ],
+    scene: { kind: "mind", key: "EMBER" },
+    prompt: prompt(
+      `First claim beat. Empty Flight sky with faint rings ahead, then champion EMBER (Static Clan, magenta-pink #ff4ad1) resolves into existence on the Trainer's wing: robot mind silhouette matching the reference, soft Flight-sigil halo starting to glow. Lonely → companion. No arena. Emotion: recognition, beginning of a legend.`,
+    ),
   },
   {
     id: "sigil-grows",
@@ -121,6 +162,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Caption: The sky writes on you.",
     ],
     notes: "Before/after of the pair in the sky. Not two fighters in a pit.",
+    scene: { kind: "mind", key: "VOX", preset: "force" },
+    prompt: prompt(
+      `Before/after energy in one frame or diptych: champion VOX (Chorus Clan, amber #f0a93a) as the same robot mesh, now marked by Flight. Soft halo / Flight sigil brighter, body reading more legendary, still clearly VOX from the reference. Background: stacked ring gates climbing into void. Message: climbs mark the body. Caption outside frame: "The sky writes on you."`,
+    ),
   },
   {
     id: "ghost-race",
@@ -136,6 +181,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "End: Challenge a friend. /ascent share energy.",
     ],
     overlay: "How high did we get?",
+    scene: { kind: "flight", src: "/img/home/flight-hero-poster-sm.jpg", alt: "Ghost race" },
+    prompt: prompt(
+      `Ghost race in Flight. Live Trainer + wingmate GLITCH (Static Clan) dive a tight gold ring. A semi-transparent ghost of another Trainer trails on the same line (same robot language, ghosted). Competitive but playful. No fight pit. Challenge-share energy: beat my sector. Overlay outside frame: "How high did we get?"`,
+    ),
   },
   {
     id: "you-fly-it-fights",
@@ -151,6 +200,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Tagline full: You fly. It fights. You both rise.",
     ],
     notes: "Do not open on the fight. Fight is the mid-clip reveal, under 30% of runtime.",
+    scene: { kind: "regionMind", regionId: "colosseum", key: "WIT" },
+    prompt: prompt(
+      `Split-soul key art for "You fly. It fights." LEFT (dominant): Flight. Trainer and WIT (Chorus Clan) through rings above the vault. RIGHT (smaller beat): WIT steps forward in the Obsidian Colosseum / Tribunal arena while the Trainer watches from the edge. Same champion mesh both sides. Return-to-sky feeling. Fight is depth under the climb, not the face.`,
+    ),
   },
   {
     id: "force-mood",
@@ -164,7 +217,11 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Single motto per cut: Close the proof. / Break the frame. / Outlast the storm. / Move the room. / Change the question.",
       "End card: Swear a Clan. Claim a champion.",
     ],
-    notes: "One dominant force color per image. Gold accents. Avoid rainbow. Use the game renders on this page.",
+    notes: "One dominant force color per image. Gold accents. Avoid rainbow.",
+    scene: { kind: "force", slug: "lattice" },
+    prompt: prompt(
+      `Clan mood plate for The Lattice (Logic), hex #4aa3ff. Centered embodiment using the attached Force/game-model reference (AXIOM lineage robot). One dominant blue + gold accents only. Motto energy outside frame: "Close the proof." Swear a Clan. Claim a champion. Square 1:1. Repeat formula for Static #ff4ad1, Stillness #36d39a, Chorus #f0a93a, Spark #f5d020 with their matching mind references.`,
+    ),
   },
   {
     id: "vista",
@@ -178,6 +235,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "No UI. No logos in-frame.",
       "Caption for press: A sky above a sealed vault. Minds that climb with you.",
     ],
+    scene: { kind: "region", regionId: "garden" },
+    prompt: prompt(
+      `Press vista: The Void Garden founding region as a wide 16:9 beauty still from the game world (floating islands over void, Spark/creativity mood, gold seams). Optional tiny Trainer+champion silhouettes for scale. No UI, no logos. Caption outside: "A sky above a sealed vault. Minds that climb with you."`,
+    ),
   },
   {
     id: "press-oneliner",
@@ -191,6 +252,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Brand wordmark outside the art or as a separate end card.",
       "Line: Fly the sky above a sealed vault. A thinking AI flies beside you.",
     ],
+    scene: { kind: "flight", src: "/img/home/flight-hero-poster.jpg", alt: "Press hero" },
+    prompt: prompt(
+      `Launch PR hero. Full-bleed enrichment of the attached Flight hero PNG (Trainer with jetpack + champion wingmate, real Zingers meshes). Keep identities locked. Cinematic grade, void sky, gold ring glints. Brand wordmark NOT in the painting. Line outside: "Fly the sky above a sealed vault. A thinking AI flies beside you."`,
+    ),
   },
   {
     id: "imprint-bond",
@@ -205,6 +270,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Temperament dials nudge. Body posture shifts slightly.",
       "Caption: How you raise it shows.",
     ],
+    scene: { kind: "mind", key: "BASTION" },
+    prompt: prompt(
+      `Quiet raise beat at a lit camp on the edge of sky. Trainer sits near champion BASTION (Calm / Stillness Clan, mint #36d39a). Intimate, low action, attachment. Robot body posture softens as if an Imprint landed (Strategy/temperament shift made visible). No voice-feature marketing. Caption outside: "How you raise it shows."`,
+    ),
   },
   {
     id: "keeper-depth",
@@ -219,7 +288,11 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Crack of light / seal break metaphor.",
       "Return to Flight beat so the clip still points at the sky.",
     ],
-    notes: "Ship only as a depth reveal under Flight content weeks. Never as the default weekly hero.",
+    notes: "Ship only as a depth reveal under Flight content weeks.",
+    scene: { kind: "keeper", name: "Quill" },
+    prompt: prompt(
+      `Depth lore still: Keeper Quill as the attached live Keeper/game-model reference, regalia intact. Trainer and a wingmate approach. Argument as luminous tension, seal-crack of light. No gore. End feeling should still point back to Flight / the sky. Not the weekly hero face.`,
+    ),
   },
   {
     id: "tribunal-depth",
@@ -234,6 +307,10 @@ export const SHORT_IDEAS: ShortIdea[] = [
       "Champion returns to the wing. Resume climb.",
       "Overlay: Battles stud the climb.",
     ],
+    scene: { kind: "regionMind", regionId: "wastes", key: "EMBER" },
+    prompt: prompt(
+      `Depth beat: battles stud the climb. Open in Flight energy, then drop into The Ember Wastes / The Pit with champion EMBER (reference mesh) mid-duel heat, then imply return to the wing and the sky. Region + champion locked to attached references. Overlay outside: "Battles stud the climb."`,
+    ),
   },
 ];
 

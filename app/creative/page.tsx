@@ -1,14 +1,6 @@
-import type { Metadata } from "next";
-import { CreativeBrief } from "@/components/org/creative-brief";
-import { BRAND, pageTitle } from "@/lib/brand";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: pageTitle("Creative brief"),
-  description: "Private studio pack: reference plates, short ideas, and narrative rules for Zingers content.",
-  robots: { index: false, follow: false },
-  metadataBase: new URL(BRAND.siteTech),
-};
-
-export default function CreativePage() {
-  return <CreativeBrief />;
+/** Legacy agency URL → public press kit. */
+export default function CreativeRedirectPage() {
+  redirect("/press");
 }

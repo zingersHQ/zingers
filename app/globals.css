@@ -1256,6 +1256,15 @@ textarea::placeholder {
   padding: 28px 28px 80px;
   max-width: 920px;
 }
+.org-main--wide {
+  max-width: 1120px;
+}
+.org-sidebar__cta.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: rgba(124, 92, 255, 0.12);
+  color: var(--ink);
+  font-weight: 600;
+}
 .org-hero {
   margin-bottom: 28px;
 }
@@ -1521,18 +1530,17 @@ textarea::placeholder {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Private creative brief (/creative) ─────────────────────────────── */
+/* ── Press kit (/press) ─────────────────────────────────────────────── */
 .creative-brief {
   --cb-void: #0a0812;
   --cb-field: #15102a;
   --cb-gold: #f5d020;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 36px 22px 96px;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 48px;
   background:
-    radial-gradient(900px 420px at 12% -8%, rgba(74, 163, 255, 0.14), transparent 55%),
-    radial-gradient(700px 380px at 88% 0%, rgba(245, 208, 32, 0.1), transparent 50%),
-    linear-gradient(180deg, var(--cb-void), var(--bg, #07060d) 42%);
+    radial-gradient(900px 420px at 12% -8%, rgba(74, 163, 255, 0.12), transparent 55%),
+    radial-gradient(700px 380px at 88% 0%, rgba(245, 208, 32, 0.08), transparent 50%);
 }
 .creative-brief__hero {
   margin-bottom: 42px;
@@ -1668,26 +1676,44 @@ textarea::placeholder {
 .creative-brief__plate {
   margin: 0;
 }
-.creative-brief__plate-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-.creative-brief__plate-frame {
+.creative-brief__plate-btn {
   position: relative;
   display: block;
   width: 100%;
-  height: auto;
+  padding: 0;
+  margin: 0;
   overflow: hidden;
+  cursor: zoom-in;
   background: var(--cb-field);
   border: 1px solid var(--line);
+  color: inherit;
 }
-.creative-brief__plate-frame > * {
+.creative-brief__plate-btn > *:first-child {
   width: 100%;
   height: 100%;
 }
-.creative-brief__plate-img {
-  object-fit: cover;
+.creative-brief__plate-hint,
+.creative-brief__idea-scene-hint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  padding: 4px 7px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(10, 8, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.creative-brief__plate-btn:hover .creative-brief__plate-hint,
+.creative-brief__plate-btn:focus-visible .creative-brief__plate-hint,
+.creative-brief__idea-scene:hover .creative-brief__idea-scene-hint,
+.creative-brief__idea-scene:focus-visible .creative-brief__idea-scene-hint {
+  opacity: 1;
 }
 .creative-brief__plate figcaption {
   display: flex;
@@ -1709,9 +1735,37 @@ textarea::placeholder {
   gap: 16px;
 }
 .creative-brief__idea {
-  padding: 16px 16px 18px;
+  padding: 0 0 16px;
   border: 1px solid var(--line);
   background: rgba(21, 16, 42, 0.45);
+  overflow: hidden;
+}
+.creative-brief__idea-scene {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 14px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: #0a0812;
+  cursor: zoom-in;
+  color: inherit;
+}
+.creative-brief__idea > header,
+.creative-brief__idea > p,
+.creative-brief__idea > ol,
+.creative-brief__idea > .btn {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.creative-brief__idea > ol {
+  padding-left: 18px;
+}
+.creative-brief__idea-open {
+  margin-top: 12px !important;
+  margin-bottom: 2px;
+  font-size: 12px;
 }
 .creative-brief__idea[data-lane="depth"] {
   border-color: rgba(255, 74, 209, 0.28);
@@ -1812,8 +1866,111 @@ textarea::placeholder {
   }
 }
 
+/* Fullscreen creative render modal */
+.creative-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4, 3, 10, 0.82);
+  backdrop-filter: blur(8px);
+}
+.creative-modal__panel {
+  width: min(1100px, 100%);
+  max-height: min(94vh, 980px);
+  overflow: auto;
+  background: linear-gradient(180deg, #12101c, #0a0812 40%);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+.creative-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.creative-modal__head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+.creative-modal__head p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 62ch;
+}
+.creative-modal__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  cursor: pointer;
+}
+.creative-modal__stage-wrap {
+  padding: 16px 18px 8px;
+}
+.creative-modal__stage {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #0a0812;
+  border: 1px solid var(--line);
+}
+.creative-modal__stage > * {
+  width: 100%;
+  height: 100%;
+}
+.creative-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 18px 16px;
+}
+.creative-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.creative-modal__prompt {
+  padding: 0 18px 20px;
+  border-top: 1px solid var(--line);
+}
+.creative-modal__prompt h3 {
+  margin: 14px 0 8px;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+.creative-modal__prompt pre {
+  margin: 0;
+  padding: 14px 16px;
+  max-height: 28vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+  background: rgba(10, 8, 18, 0.85);
+  border: 1px solid var(--line);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .creative-brief__plate-link:hover .creative-brief__plate-img {
-    transform: none;
+  .creative-brief__plate-hint,
+  .creative-brief__idea-scene-hint {
+    opacity: 1;
   }
 }

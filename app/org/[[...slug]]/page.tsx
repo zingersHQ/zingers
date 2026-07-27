@@ -87,9 +87,15 @@ function OrgHome({ host }: { host: string }) {
       <section className="panel org-home-extra">
         <h2 className="org-home-card__title">Also on this site</h2>
         <div className="org-home-extra__row">
+          <Link href="/press" className="org-home-extra__tile">
+            <span className="org-home-extra__tile-title">Press kit</span>
+            <span className="org-home-extra__tile-blurb">
+              Live game-model renders, PNG seeds, story beats, and prompts for press and creative partners.
+            </span>
+          </Link>
           <Link href={onOrg ? "/gallery" : `${BRAND.site}/bible`} className="org-home-extra__tile">
-            <span className="org-home-extra__tile-title">Visual bible gallery</span>
-            <span className="org-home-extra__tile-blurb">Forces, minds, regions, Keepers — card-style art from canon.</span>
+            <span className="org-home-extra__tile-title">Visual gallery</span>
+            <span className="org-home-extra__tile-blurb">Forces, First Minds, regions, Keepers as live game renders.</span>
           </Link>
           <a href={`${BRAND.site}/agents`} className="org-home-extra__tile">
             <span className="org-home-extra__tile-title">Agent playground</span>

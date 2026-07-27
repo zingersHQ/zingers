@@ -13,6 +13,7 @@ export function CanonRenderTile({
   label,
   scale = 1,
   keeper,
+  eager = false,
 }: {
   rosterKey: string;
   type: CreatureType;
@@ -24,10 +25,21 @@ export function CanonRenderTile({
   scale?: number;
   /** render this figure as a Keeper boss with its signature regalia */
   keeper?: KeeperKind;
+  /** Skip intersection lazy-mount (modals / hero tiles). */
+  eager?: boolean;
 }) {
   return (
-    <div style={{ position: "relative", width: "100%", background: "#0a0812" }}>
-      <ChampionPortrait rosterKey={rosterKey} type={type} champion={champion} preset={preset} colorHex={colorHex} scale={scale} keeper={keeper} />
+    <div style={{ position: "relative", width: "100%", height: "100%", background: "#0a0812" }}>
+      <ChampionPortrait
+        rosterKey={rosterKey}
+        type={type}
+        champion={champion}
+        preset={preset}
+        colorHex={colorHex}
+        scale={scale}
+        keeper={keeper}
+        eager={eager}
+      />
       <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{label}</span>
     </div>
   );
