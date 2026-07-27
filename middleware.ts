@@ -51,6 +51,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.rewrite(new URL(`/bible${rest}${search}`, request.url));
     }
 
+    // Private studio pack — unlinked, no sidebar, noindex on the page
+    if (pathname === "/creative" || pathname.startsWith("/creative/")) {
+      return NextResponse.next();
+    }
+
     // Docs home
     if (pathname === "/") {
       return NextResponse.rewrite(new URL(`/org${search}`, request.url));
