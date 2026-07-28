@@ -34,7 +34,7 @@ export function applyMorphBias<T extends MorphLike>(
   bias: MorphBias,
   hBase: number,
 ): { morph: T; h: number } {
-  const mul = (v: number, m?: number) => (m == null ? v : Math.max(0.4, Math.min(2.6, v * m)));
+  const mul = (v: number, m?: number) => (m == null ? v : Math.max(0.62, Math.min(2.4, v * m)));
   const out = { ...morph };
   out.headScale = mul(out.headScale, bias.headScale);
   out.neckLen = mul(out.neckLen, bias.neckLen);

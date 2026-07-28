@@ -76,8 +76,8 @@ export const ANIM = {
   idleClipScale: 0.68,
   /** Standing / Sitting rest loops — very slow for a peaceful gallery read. */
   restClipScale: 0.32,
-  /** Extra neck damp when on a peaceful rest clip (0 = full clip head swing). */
-  peacefulNeckDamp: 0.85,
+  /** Gallery / standing: blend neck+head(+body) toward bind (0 = full clip swing, 1 = locked upright). */
+  peacefulNeckDamp: 0.92,
   /** Procedural chest breathing (radians / metres). */
   breathe: {
     hz: 0.38,

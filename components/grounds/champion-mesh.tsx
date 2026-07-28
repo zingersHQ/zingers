@@ -308,7 +308,7 @@ export function buildCharacter(
   // whole waist-up off its true bind pose.
   const restQuat: Record<string, THREE.Quaternion> = {};
   const restPos: Record<string, THREE.Vector3> = {};
-  for (const nm of ["neck", "head", "abdomen", "torso", "shoulder.l", "shoulder.r"]) {
+  for (const nm of ["neck", "head", "body", "abdomen", "torso", "shoulder.l", "shoulder.r"]) {
     const b = bones[nm];
     if (b) {
       restQuat[nm] = b.quaternion.clone();
@@ -414,15 +414,26 @@ function clipAction(mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], .
 // oversized head stops swinging off the static neck/collar. Runs AFTER the mixer
 // (and bone-morph) each frame; the head-attached decor rides these bones via
 // BoneFollower, so it stays glued to the calmer head.
+//
+// Combat: `NECK_MOTION` = fraction of clip head/neck to KEEP (slerp rest by 1-keep).
+// Peaceful (gallery / standing): `peacefulNeckDamp` = blend TOWARD rest
+// (0 = full clip swing, 1 = locked upright). These were previously wired as the
+// same "keep" knob, so raising peacefulNeckDamp made collection heads MORE
+// cocked — the Standing/Idle head keys were barely pulled back to bind.
 function dampNeck(built: BuiltCharacter, peaceful = false) {
-  const keep = peaceful ? NECK_MOTION_PEACEFUL : NECK_MOTION;
-  for (const nm of ["neck", "head"] as const) {
+  const towardRest = peaceful ? NECK_MOTION_PEACEFUL : 1 - NECK_MOTION;
+  // Body is keyed on Standing/Sitting and can tip the whole upper stack; calm it
+  // on portraits so long necks (PARADOX) and crest kits don't read as a lean.
+  const bones = peaceful
+    ? (["neck", "head", "body"] as const)
+    : (["neck", "head"] as const);
+  for (const nm of bones) {
     const b = built.bones[nm];
     const rq = built.restQuat[nm];
     const rp = built.restPos[nm];
     if (!b) continue;
-    if (rq) b.quaternion.slerp(rq, 1 - keep);
-    if (rp) b.position.lerp(rp, 1 - keep);
+    if (rq) b.quaternion.slerp(rq, towardRest);
+    if (rp) b.position.lerp(rp, towardRest);
   }
 }
 
@@ -475,8 +486,10 @@ function breathe(built: BuiltCharacter, t: number, intensity = 1) {
   const k = intensity;
   // Abdomen: gentle forward/back lean + weight-shift roll. Drives the whole upper
   // chain. Keep the vertical bob shallow — it translates the shoulders/arms too, and
-  // too much reads as a distracting bounce.
-  _breatheEuler.set(breath * leanAmp * k, 0, Math.sin(t * swayHz * 0.85) * rollAmp * k);
+  // too much reads as a distracting bounce. Gallery standing uses low intensity —
+  // drop the roll there so long necks (PARADOX) don't read as a cocked head.
+  const roll = k < 0.4 ? 0 : rollAmp;
+  _breatheEuler.set(breath * leanAmp * k, 0, Math.sin(t * swayHz * 0.85) * roll * k);
   _breatheQ.setFromEuler(_breatheEuler);
   b.quaternion.copy(rq).multiply(_breatheQ);
   const parent = b.parent;
@@ -491,10 +504,10 @@ function breathe(built: BuiltCharacter, t: number, intensity = 1) {
   // purely rotational, so it never bounces the arms vertically. This is the motion the
   // chest/shoulder decor most visibly rides.
   leanBone(built, "torso", breath * torsoTwist * k, sway * torsoTwist * 2.2 * k, 0);
-  // Shoulders: a small counter-phased roll so the shoulder spikes lift/settle with the
-  // breath. Kept tiny — arms hang off these, so big values look like flailing.
+  // Shoulders: counter-phased roll (L vs R) so breath doesn't cock the whole
+  // upper body to one side — that read as a permanently tilted head on Spark.
   leanBone(built, "shoulder.l", 0, 0, sway * shoulderRoll * k);
-  leanBone(built, "shoulder.r", 0, 0, sway * shoulderRoll * k);
+  leanBone(built, "shoulder.r", 0, 0, -sway * shoulderRoll * k);
 }
 
 // Drive the whole skeleton from the genome. Bone scales compound down the chain
@@ -595,24 +608,24 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
   const gCh = g / gAb;
   set("abdomen", gAb, m.torsoLen, gAb);
   set("torso", gCh, 1, gCh);
-  // neck: counter the inherited chest girth so it stays slim; lengthen on Y
-  set("neck", 1 / g, m.neckLen, 1 / g);
-  // head: counter inherited girth (XZ → 1 after the neck) and the abdomen+neck
-  // length so it reads as a clean uniform-size skull
-  set("head", m.headScale, m.headScale / (m.torsoLen * m.neckLen), m.headScale);
+  // Neck XZ counter is clamped — uncapped 1/g on thin Spark torsos fattened the
+  // neck into a sheared hinge and the big head read as cocked to one side.
+  const neckXZ = Math.max(0.7, Math.min(1.25, 1 / g));
+  set("neck", neckXZ, m.neckLen, neckXZ);
+  // Prefer near-uniform skull scale; only gently undo neck length so bobbleheads
+  // don't get a sheared Y-stretch on top of a short neck.
+  const headY = Math.max(0.75, Math.min(1.35, m.headScale / Math.max(0.7, m.neckLen)));
+  set("head", m.headScale, headY, m.headScale);
 
   for (const s of ["l", "r"] as const) {
     const asym = s === "l" ? m.asymL : m.asymR;
-    // Clamp shoulder/torso ratio so thin chests don't yank arm origins inside the
-    // ribcage (or balloon pads so far the upperarm looks detached).
-    const shXZ = Math.max(0.62, Math.min(1.55, m.shoulder / g));
-    const shY = Math.max(0.62, Math.min(1.55, m.shoulder / m.torsoLen));
+    // Keep shoulder pad close to torso so deltoids sit on the ribcage.
+    const shXZ = Math.max(0.75, Math.min(1.35, m.shoulder / g));
+    const shY = Math.max(0.75, Math.min(1.35, m.shoulder / m.torsoLen));
     set(`shoulder.${s}`, shXZ, shY, shXZ);
-    // upper arm: counter the shoulder's authored size (not the clamped pad) so
-    // length/girth stay near intent, but hard-cap so extreme stilts/reach kits
-    // can't invert the joint ("arm grows from inside the torso").
-    const armGirthS = Math.max(0.55, Math.min(1.45, (m.armGirth / m.shoulder) * asym));
-    const armLenS = Math.max(0.6, Math.min(1.55, m.armLen / m.shoulder));
+    // Soft asym on girth only; hard-cap length so arms never erupt from mid-chest.
+    const armGirthS = Math.max(0.6, Math.min(1.35, (m.armGirth / m.shoulder) * asym));
+    const armLenS = Math.max(0.7, Math.min(1.3, m.armLen / m.shoulder));
     set(`upperarm.${s}`, armGirthS, armLenS, armGirthS);
     set(`lowerarm.${s}`, 1, 1, 1);
     // Split leg length across thigh + shin so stilts read as full limbs, not
@@ -1289,8 +1302,10 @@ export function ChampionMesh({
       // stilts/walk pose keeps soles on the floor (FLUX, CADENCE, whole dex).
       snapFeetToAnkles(built.bones, built.ankleEnds);
       if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
-      dampNeck(built, peaceful);
       breathe(built, t + phase, breatheIntensity);
+      // After breathe: pull head/neck(+body on gallery) back to bind so abdomen
+      // sway can't leave long-neck / crest kits looking permanently cocked.
+      dampNeck(built, peaceful);
     } else if (lod === 1 || locoActive) {
       lodAccum.current += dt;
       if (lodAccum.current >= LOD_MID_STEP) {
@@ -1298,8 +1313,8 @@ export function ChampionMesh({
         applyBoneMorph(built.bones, built.boneBase, built.morph);
         snapFeetToAnkles(built.bones, built.ankleEnds);
         if (flyAmt.current < 0.05) plantRootToFeet(built.root, built.bones);
-        dampNeck(built, peaceful);
         breathe(built, t + phase, breatheIntensity);
+        dampNeck(built, peaceful);
         lodAccum.current = 0;
       }
     }

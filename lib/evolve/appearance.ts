@@ -150,14 +150,16 @@ export function jitterMorph(m: BoneMorph, seed: number, asym = 0, spread = 1): B
     cl(v * (1 + (rnd() - 0.5) * amt * s), lo, hi);
   // Wider individual jitter so a dex of same-Force minds reads as different
   // animals, not palette swaps (collectible silhouette budget).
+  // Floors stay above the "pencil torso / tiny shoulder" band that detached
+  // Spark arms (MUSE) after Force × species × jitter stacked.
   const out: BoneMorph = {
-    headScale: j(m.headScale, 0.28, 0.52, 2.25),
-    neckLen: j(m.neckLen, 0.34, 0.38, 2.15),
-    torsoGirth: j(m.torsoGirth, 0.28, 0.44, 2.35),
+    headScale: j(m.headScale, 0.28, 0.55, 2.1),
+    neckLen: j(m.neckLen, 0.28, 0.55, 2.0),
+    torsoGirth: j(m.torsoGirth, 0.22, 0.65, 2.3),
     torsoLen: j(m.torsoLen, 0.14, 0.82, 1.28),
-    shoulder: j(m.shoulder, 0.3, 0.52, 2.2),
-    armGirth: j(m.armGirth, 0.28, 0.5, 2.0),
-    armLen: j(m.armLen, 0.26, 0.58, 1.72),
+    shoulder: j(m.shoulder, 0.22, 0.72, 2.15),
+    armGirth: j(m.armGirth, 0.22, 0.55, 1.95),
+    armLen: j(m.armLen, 0.2, 0.7, 1.55),
     legGirth: j(m.legGirth, 0.28, 0.54, 2.05),
     legLen: j(m.legLen, 0.24, 0.58, 1.78),
     handScale: j(m.handScale, 0.24, 0.3, 0.98),

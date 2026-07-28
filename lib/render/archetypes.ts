@@ -102,13 +102,13 @@ export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
     idleSpeed: 1.05,
     lean: -0.04,
   },
-  // The Spark — a light, floaty body under a head that is a little bigger than
-  // canonical (e.g. MUSE): "ideas-heavy" but no longer a giant bobblehead saucer.
-  // Wispy limbs, a small frame.
+  // The Spark — light frame, slightly bigger head (e.g. MUSE). Keep shoulder/torso
+  // near parity so arms root cleanly; no CHAOS-style asym (that cocked the skull
+  // and yanked limbs off the ribcage on thin Spark builds).
   CREATIVITY: {
     type: "CREATIVITY",
     featureSet: "spark",
-    body: { h: 0.84, headScale: 1.15, neckLen: 0.9, torsoGirth: 0.62, shoulder: 0.66, armGirth: 0.58, armLen: 1.18, legGirth: 0.64, legLen: 1.14, asym: 0.28 },
+    body: { h: 0.9, headScale: 1.12, neckLen: 0.95, torsoGirth: 0.88, shoulder: 0.88, armGirth: 0.78, armLen: 1.06, legGirth: 0.78, legLen: 1.12, asym: 0 },
     material: { metalness: 0.0, roughness: -0.05, emissive: 1.22 },
     idleSpeed: 1.1,
     lean: 0.02,
@@ -122,14 +122,16 @@ export function kitFor(type: CreatureType): ArchetypeKit {
 const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 function planMorph(base: BoneMorph, plan: BodyPlan): BoneMorph {
+  // Floor torso/shoulder higher than the old 0.42/0.55 — Spark + jitter was
+  // landing at ~0.44/0.52 and detaching arms (MUSE). Stilts still use legLen.
   return {
-    headScale: cl(base.headScale * plan.headScale, 0.5, 2.5),
-    neckLen: cl(base.neckLen * plan.neckLen, 0.36, 2.1),
-    torsoGirth: cl(base.torsoGirth * plan.torsoGirth, 0.42, 2.6),
+    headScale: cl(base.headScale * plan.headScale, 0.55, 2.2),
+    neckLen: cl(base.neckLen * plan.neckLen, 0.55, 2.0),
+    torsoGirth: cl(base.torsoGirth * plan.torsoGirth, 0.62, 2.4),
     torsoLen: cl(base.torsoLen, 0.86, 1.24),
-    shoulder: cl(base.shoulder * plan.shoulder, 0.55, 2.5),
-    armGirth: cl(base.armGirth * plan.armGirth, 0.5, 2.1),
-    armLen: cl(base.armLen * plan.armLen, 0.55, 2.05),
+    shoulder: cl(base.shoulder * plan.shoulder, 0.7, 2.3),
+    armGirth: cl(base.armGirth * plan.armGirth, 0.55, 2.0),
+    armLen: cl(base.armLen * plan.armLen, 0.65, 1.85),
     legGirth: cl(base.legGirth * plan.legGirth, 0.52, 2.3),
     legLen: cl(base.legLen * plan.legLen, 0.55, 2.35),
     handScale: cl(base.handScale * (plan.handScale ?? 1), 0.3, 0.95),
