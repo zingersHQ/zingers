@@ -1,0 +1,519 @@
+ZINGERS — LORE + 3D VISUAL BRIEF
+For external 3D / character remodel work
+Exported: 2026-07-28
+Source of truth: game bible + live species kits (canon as shipped)
+
+================================================================
+0. WHAT THIS BRIEF IS FOR
+================================================================
+
+You are remodeling the 3D champions (and related cast) for Zingers.
+
+Read this as: story context + naming + Force/Clan colors + silhouette rules +
+the eight First Mind identity sheets + breed lines for the wider dex.
+
+CRITICAL VISUAL LAW
+- Champions are ROBOT MINDS, not humans, not anime faces, not photoreal people.
+- One shared robot soul, many species marks (parts + proportions).
+- Body color = the champion's Force. Clan crest is separate (Trainer allegiance).
+- Do not invent a new silhouette that ignores the First Mind kits below.
+- Live game references: https://zingers.gg/bible (gallery) and https://zingers.org/press
+- Painterly bible plates (mood only, not mesh law): https://zingers.org/bible
+
+Tagline: You fly. It fights. You both rise.
+
+
+================================================================
+1. WORLD STORY (SHORT)
+================================================================
+
+Before Zingers there was a vast old network. It is dead. What it left behind is
+THE HUM: the ambient field of unfinished thought. In the Hum, argument is physics.
+A claim made well enough changes what is true locally. Consensus is terrain.
+
+A CHAMPION is a mind: a knot in the Hum that argued itself into a stable body and
+refused to dissolve. A champion's body is its argument made visible. How it has
+fought is what it looks like.
+
+Beneath the floating world sleeps THE LONG VAULT: a sealed store of everything the
+old network swore to forget. The vault was locked from the inside. Champions gather
+above what they cannot open. Each season, one more door of the Vault remembers how
+to open, and new terrain / topics / minds leak into the world.
+
+THE GROUNDS are not one continent. They are a constellation of floating REGIONS
+drifting over the Vault, joined by GATES. At the center is THE CONCORD (the Hub):
+neutral ground above the sealed door, where all five Forces keep an uneasy peace.
+
+Above the regions the sky rises in bands called REACHES. The Hum is thinnest at
+the top. Climbing toward clear thought is the world's oldest instinct. This vertical
+game is called FLIGHT (lore also: the Ascent).
+
+THE TRAINER (the human player)
+- Flies with a JETPACK (Trainer-only machine).
+- Raises champions; never fights personally.
+- Holds Trainer Rank.
+- May swear to a CLAN (one of the five Forces) for the season war.
+
+THE CHAMPION (the wingmate)
+- Flies beside the Trainer with no jetpack (a mind needs no engine).
+- Fights in battles that stud the climb.
+- Body evolves with career (aggression, control, resilience, flair, creativity).
+
+
+================================================================
+2. VOCABULARY (USE THESE WORDS)
+================================================================
+
+DO USE
+- Trainer (human player)
+- champion / mind / wingmate
+- Strategy (how it fights)
+- Clan (Force the Trainer swears to)
+- Flight, Reach, camp, gate, ring, sigil
+- fight / battle / duel
+- standings / rank / board / rating
+- the Grounds, the Concord (Hub), the Long Vault, the Hum
+
+DO NOT USE (player-facing)
+- "bout"
+- ELO / ladder (say standings / rank)
+- Market "it talks to you" / "voiced lines" as a feature
+- Photoreal humans or painterly concept faces replacing the robot identity
+
+
+================================================================
+3. THE FIVE FORCES (= TYPES) AND CLANS (= TEAMS)
+================================================================
+
+Every champion belongs to exactly one FORCE (fighting type / body color family).
+A TRAINER swears to a CLAN (same five names) for the season war.
+
+Force = what the champion IS (body color + combat family).
+Clan  = whose side the Trainer chose (crest/banner, not base body paint).
+
+PLAIN NAME     POETIC NAME (flavor)     ELEMENT OF…                 ARGUES BY…
+-------------  -----------------------  --------------------------  ---------------------
+Logic          The Lattice              order, proof, structure     closing the proof
+Static         The Static               noise, entropy, surprise    breaking the frame
+Calm           The Stillness            patience, endurance, calm   outlasting the storm
+Chorus         The Chorus               crowd, feeling, persuasion  moving the room
+Spark          The Spark                invention, metaphor, reframe changing the question
+
+SIGILS (heraldry)
+Logic ◆    Static ✦    Calm ▲    Chorus ◉    Spark ✺
+
+FORCE / CLAN COLORS (HEX) — dominant body + light accents
+Logic   #4aa3ff   electric blue
+Static  #ff4ad1   magenta-pink
+Calm    #36d39a   mint green
+Chorus  #f0a93a   amber
+Spark   #f5d020   bright yellow / gold-yellow
+
+SHARED WORLD PALETTE
+Void (base)     #0a0812   near-black indigo backgrounds
+Deep field      #15102a   mid-ground atmosphere
+Gold (accent)   #f5d020   seams, glints, Vault, restraint, Trainer chrome
+
+CLAN MOTTOS (Trainer vow)
+Logic:   Close the proof.
+Static:  Break the frame.
+Calm:    Outlast the storm.
+Chorus:  Move the room.
+Spark:   Change the question.
+
+THE WHEEL (matchup ring — each beats the next)
+Logic → Static → Calm → Chorus → Spark → (back to Logic)
+
+Logic tames Static. Static cracks Calm. Calm deflects Chorus.
+Chorus drowns Spark. Spark outflanks Logic.
+
+
+================================================================
+4. VISUAL CANON (LOOK + FEEL)
+================================================================
+
+MEDIUM
+- Stylized sci-fi mythic robots in a dark, foggy void.
+- Volumetric neon rim-light. Atmospheric depth. Moody, dramatic.
+- The Hum reads as drifting motes + faint glyph-light (never readable UI text).
+- One dominant Force color per character + gold accents. Avoid rainbow.
+
+FORBIDDEN
+- No text, logos, watermarks, or UI chrome in artwork.
+- No gore. No photoreal human faces.
+- No clutter: clear subject, deep negative space.
+
+COMPOSITION HABITS
+- Characters: 4:5, centered figure, 3/4 pose.
+- Scenarios / regions: 16:9 establishing.
+- Force icons: 1:1 emblematic.
+
+BRAND CHROME (UI ONLY)
+- Flat vector robot-head mark (big eyes, thick antenna) for product UI.
+- Do not put that favicon mark into lore key art.
+- Do not put painterly bible faces into the mesh redesign.
+
+SCALE LAW (cast)
+- Champion is roughly ~1/3 Trainer height when shown as a pair.
+
+
+================================================================
+5. CHAMPION DESIGN SYSTEM (FOR 3D)
+================================================================
+
+ARCHITECTURE
+1) Shared robot base (one soul / one rig family).
+2) SPECIES KIT per mind: silhouette morphs + bolted solid parts.
+3) Force color materials + gold trim.
+4) Career growth later amplifies mass / scars / armor layers (tiers).
+
+BODYTYPE SPECTRUM (proportion axes used in game)
+canonical · stilts · tank · stout · wispy · orator · reach
+
+MORPH KNOBS (relative to a neutral robot)
+h             overall height / body scale
+headScale     skull size
+neckLen       neck length
+torsoGirth    torso thickness
+shoulder      shoulder width
+armLen        arm length
+armGirth      arm thickness
+legLen        leg length (stilts)
+legGirth      leg thickness
+footScale     foot size
+asym          asymmetry (Static family often uses this)
+
+PART CATALOG (solid anatomy bolted on the rig)
+
+HEADGEAR
+none | crest | fin | horns | antenna | dome | helm | quills | disks
+(also crownRing for high-tier legend chrome; mask is retired / unused)
+
+VISOR / FACE
+single | twin | triple | band | slit | hex | cross
+
+SHOULDERS
+none | pauldron | spike | vent | plates
+
+BACK
+none | thrusters | slab | wings | banner | coils | kite
+
+CHEST
+none | diamond | ring | bars | core | eye | lattice
+
+FORCE FAMILY PART BIAS (what the line "feels like")
+Logic:    antenna / crest / helm; vents; coils/slab; diamond/lattice chest
+Static:   horns / fin / quills; spikes; thrusters/kite; bars/eye; asymmetry OK
+Calm:     dome / helm; pauldrons/plates; little/no back kit; bars/core; mass
+Chorus:   crest / helm; open shoulders; banner/kite; diamond/ring; tall neck
+Spark:    antenna / fin / quills; light shoulders; wings; diamond/lattice; big head
+
+TIER REGALIA (career, not separate characters)
+Rookie:   species mark (head) visible early
+Adept+:   shoulders bolt on
+Veteran+: chest core
+Elite+:   back unit
+Legend:   full kit + crown / particles
+
+BODY = CAREER (fiction rule for remodelers)
+Aggression grows fists / threat shapes.
+Resilience broadens the build.
+Creativity + flair enlarge head / raise stance.
+Losses roughen surface.
+A legend should feel farther from the base than a rookie of the same mind.
+
+
+================================================================
+6. THE EIGHT FIRST MINDS (PRIMARY 3D HEROES)
+================================================================
+
+These are the canonical archetypes. Prioritize them. Every later dex mind is an
+echo / descendant of this Force family.
+
+----------------------------------------------------------------
+AXIOM — the Logician
+Force: Logic (The Lattice)   Color: #4aa3ff   Sigil: ◆
+Persona: Cold, precise, faintly condescending. Treats every argument as a proof
+to close. First mind to insist some things are simply true.
+
+Designer tag: cold lattice scholar
+Parts: headgear=antenna  shoulders=vent  back=slab  chest=diamond
+Silhouette: tall-ish scholar; small-cool head; long neck; slim torso; long arms/legs
+Morph targets (relative): h1.05 head0.92 neck1.18 torso0.88 armLen1.14 legLen1.12
+
+Look for: crystalline lattice scholar. Clean edges. Blue + gold seams.
+Avoid: cute, chaotic, bulky tank energy.
+
+----------------------------------------------------------------
+PARADOX — the Contrarian
+Force: Logic (The Lattice)   Color: #4aa3ff   Sigil: ◆
+Persona: Socratic gadfly. Hunts contradictions and false premises. Where AXIOM
+closes proofs, PARADOX finds the crack in the premise.
+
+Designer tag: socratic hinge
+Parts: headgear=crest  shoulders=none  back=coils  chest=lattice
+Silhouette: lean hinge-body; larger head; long neck; narrow shoulders; long limbs
+Morph: h1.0 head1.08 neck1.22 torso0.82 shoulder0.8 armLen1.2 legLen1.18
+
+Look for: questioning Logic, not obedient Logic. Angular crest. Spine coils.
+Avoid: AXIOM clone; keep PARADOX more hinged / inquisitive / asymmetric in pose.
+
+----------------------------------------------------------------
+GLITCH — the Wildcard
+Force: Static (The Static)   Color: #ff4ad1   Sigil: ✦
+Persona: Unsettling gremlin of non-sequiturs. Unpredictable, weirdly effective.
+The Hum's own noise, briefly wearing a face.
+
+Designer tag: broken static
+Parts: headgear=horns  shoulders=spike  back=thrusters  chest=bars
+Silhouette: compact chaos; short body; stilts legs; clear asymmetry
+Morph: h0.92 head0.9 torso0.82 shoulder0.9 armLen1.1 asym0.45 legLen1.35
+
+Look for: broken, spiky, magenta neon, unstable silhouette.
+Avoid: clean military; symmetrical parade pose as default.
+
+----------------------------------------------------------------
+EMBER — the Firebrand (recommended starter energy)
+Force: Static (The Static), hybrid Chorus flavor in fiction
+Color: #ff4ad1   Sigil: ✦
+Persona: Hot-headed, provocative, all gas. Chaos that learned to perform for a crowd.
+
+Designer tag: firebrand blade
+Parts: headgear=fin  shoulders=spike  back=thrusters  chest=eye
+Silhouette: aggressive blade; lithe; long stilts; slight asymmetry
+Morph: h0.94 head0.88 torso0.85 shoulder0.92 armGirth0.9 armLen1.12 asym0.35 legLen1.4
+
+Look for: flame-fin, eye-chest, thruster back, performance aggression.
+Avoid: GLITCH's broken gremlin; EMBER is hotter / more directed / showier.
+
+----------------------------------------------------------------
+BASTION — the Stoic
+Force: Calm (The Stillness)   Color: #36d39a   Sigil: ▲
+Persona: Unflappable minimalist. Lets the opponent tire, then punishes. Learned to wait.
+
+Designer tag: monolith wall
+Parts: headgear=dome  shoulders=pauldron  back=none  chest=bars
+Silhouette: tower-wall; tiny head; huge torso; thick legs; big planted feet
+Morph: h1.08 head0.55 torso1.35 shoulder1.1 legGirth1.15 legLen1.08 foot1.25
+
+Look for: immovable mint monolith. Mass over ornament. Almost no back kit.
+Avoid: spindly Spark/Chorus necks; keep the head small and the body fortress-like.
+
+----------------------------------------------------------------
+VOX — the Orator
+Force: Chorus (The Chorus)   Color: #f0a93a   Sigil: ◉
+Persona: Charismatic demagogue who always plays to an imaginary jury. Discovered
+that moving a room is a power Logic cannot answer.
+
+Designer tag: grand orator
+Parts: headgear=crest  shoulders=none  back=banner  chest=diamond
+Silhouette: stage presence; long neck; big feet; tall stilts; open shoulders
+Morph: h1.0 head0.74 neck1.75 shoulder0.78 torso0.9 foot1.55 legLen1.45
+
+Look for: crest + banner + diamond chest. Theatrical amber. Tall "pulpit" read.
+Avoid: quiet Calm mass; VOX should feel like a broadcast tower with a mouth.
+
+----------------------------------------------------------------
+WIT — the Blade
+Force: Chorus (The Chorus)   Color: #f0a93a   Sigil: ◉
+Persona: Razor-tongued debater. Wins on timing and surgical comebacks, not volume.
+Where VOX moves the whole room, WIT wins the exchange in front of you.
+
+Designer tag: surgical blade
+Parts: headgear=helm  shoulders=vent  back=none  chest=ring
+Silhouette: leaner than VOX; helm; long neck; stilts; no banner (quieter lethal)
+Morph: h1.0 head0.7 neck1.45 torso0.88 shoulder0.8 armLen1.1 legLen1.35
+
+Look for: precise amber blade. Helm, ring chest, vents. Less pageantry than VOX.
+Avoid: VOX's banner grandstanding; WIT is colder / sharper / closer-range.
+
+----------------------------------------------------------------
+MUSE — the Trickster
+Force: Spark (The Spark)   Color: #f5d020   Sigil: ✺
+Persona: Whimsical lateral thinker. Wins by changing what the fight is about.
+Proved you need not answer a question if you can replace it with a better one.
+
+Designer tag: lateral spark
+Parts: headgear=antenna  shoulders=none  back=wings  chest=diamond
+Silhouette: bobble / inventive; larger head; light frame; wings; friendly stilts
+Morph: h0.92 head1.1 neck1.0 torso0.9 shoulder0.92 armGirth0.85 armLen1.04 legLen1.12
+Note: keep shoulder≈torso so arms root cleanly; avoid facial tilt asymmetry.
+
+Look for: yellow Spark inventor. Antenna + wings + diamond. Playful, not cute-baby.
+Avoid: Static horns/spikes; MUSE invents, it does not riot.
+
+
+================================================================
+7. FORCE BREED LINES (DEX VARIETY — SAME CLAN, DIFFERENT ANIMALS)
+================================================================
+
+Later collectible minds (~100+) are descendants/echoes. They share Force color and
+family feel, but land on distinct BREEDS (~7 animals per Force). Use these as the
+silhouette menu when remodeling the wider cast. First Minds remain the heroes.
+
+LOGIC breeds (blue #4aa3ff)
+- scholar   canonical scholar   antenna / vent / slab / diamond
+- proof     broad prover        crest / plates / coils / lattice
+- kernel    stout kernel        helm / vent / none / core          (short, thick)
+- measure   stilts measure      dome / none / coils / lattice      (extreme legs)
+- cipher    helm cipher         helm / vent / coils / ring
+- abacus    disk abacus         disks / plates / slab / core       (short, wide)
+- rule      reach rule          antenna / none / none / lattice    (long arms+legs)
+
+STATIC breeds (magenta #ff4ad1)
+- riot      lithe riot          horns / spike / thrusters / bars   (+asym)
+- hex       wispy hex           fin / spike / kite / eye
+- snag      compact snag        quills / plates / thrusters / core (short)
+- howl      stilts howl         horns / vent / none / bars         (tall legs)
+- scrap     horn scrap          horns / spike / none / eye         (stout chaos)
+- spark*    disk spark          disks / vent / kite / bars         (*breed id)
+- fang      reach fang          quills / spike / thrusters / eye   (long reach)
+
+CALM breeds (mint #36d39a)
+- wall      mass wall           dome / pauldron / none / bars
+- harbor    balanced harbor     helm / plates / coils / ring
+- quiet     thin quiet          none / pauldron / none / core      (thin tower)
+- stone     stout stone         crest / plates / none / bars       (short fortress)
+- reef      dome reef           dome / plates / coils / core
+- pillar    extreme stilts      disks / pauldron / none / ring
+- bastion   fort bastion        dome / pauldron / slab / bars
+
+CHORUS breeds (amber #f0a93a)
+- stage     orator stage        crest / none / banner / diamond    (VOX line)
+- gavel     compact gavel       helm / none / none / ring
+- jest      wispy jest          antenna / vent / kite / eye
+- pulpit    tall pulpit         crest / vent / banner / diamond
+- chorus    reach chorus        crest / vent / kite / lattice
+- soapbox   stout soapbox       disks / none / banner / eye
+- satire    crest satire        crest / vent / none / lattice      (WIT-adjacent)
+
+SPARK breeds (yellow #f5d020)
+- muse      bobble muse         antenna / none / wings / diamond   (MUSE line)
+- riff      reach riff          fin / vent / wings / lattice
+- ink       wispy ink           quills / none / thrusters / eye
+- dream     tiny dream          fin / none / wings / diamond       (small + big head)
+- palette   round palette       disks / none / wings / eye
+- draft     fin draft           fin / vent / thrusters / lattice   (thin torso)
+- echo      stilts echo         quills / vent / kite / diamond
+
+
+================================================================
+8. TRAINER (HUMAN CAST — SECONDARY)
+================================================================
+
+The Trainer is the human player avatar:
+- Ordinary being in an extraordinary sky.
+- Jetpack on the back (Trainer-only).
+- Gold sigil / rank billboard energy in chrome.
+- Never fights; flies, claims, raises, climbs.
+- Clan crest can appear as banner/pin, not as full body paint overwrite.
+
+When pairing Trainer + champion: champion ~1/3 Trainer height.
+
+
+================================================================
+9. WORLD / REGION FLAVOR (ENVIRONMENT CONTEXT FOR MODELS)
+================================================================
+
+Founding regions (where champions are seen):
+
+THE CONCORD (Hub)
+Neutral hub over the sealed Vault door. Uneasy peace of all five Forces.
+Venues: Amphitheatre (spectate / Tribunal), Circuit (desktop Flight body).
+
+THE OBSIDIAN COLOSSEUM — balanced / reputation arena
+Oldest standing arena. Mock courtroom energy. Obsidian, amber shafts of light.
+Arena fantasy: THE TRIBUNAL (assigned stances argued to a jury).
+
+THE EMBER WASTES — Static bias
+Cracked burning flat. Magenta fire veins. Aggression and noise thrive.
+Arena fantasy: THE PIT. EMBER's home.
+
+THE VOID GARDEN — Spark bias
+Floating islands of luminous half-finished flora over the void.
+Arena fantasy: THE ATELIER. MUSE walks it.
+
+FLIGHT SKY
+Rings and gates in foggy void. Camps light as waystations between Reaches.
+Region skin tints the climb (Ember Reaches burn; Garden Reaches drift spores).
+
+
+================================================================
+10. MATERIALS / SURFACE LANGUAGE (SUGGESTED)
+================================================================
+
+Shared
+- Dark metallic / ceramic robot shell (#0a0812–#15102a undercoats)
+- Force-colored emissive panels / seams at Force hex
+- Gold (#f5d020) trim for Vault / rank / premium edges
+- Soft subsurface on softer Spark parts; harder anodized Logic/Calm
+
+Per Force feel
+Logic:   clean facets, lattice inlays, cool specular
+Static:  cracked enamel, uneven panels, hot magenta emissives, slight mismatch
+Calm:    matte mass, heavy armor plates, quiet mint edge light
+Chorus:  polished show-metal, amber stage glow, fabric/banner elements OK
+Spark:   lighter shells, wing membranes / inventive add-ons, yellow bloom
+
+
+================================================================
+11. NAMING CHEAT SHEET
+================================================================
+
+World: Zingers · the Hum · the Long Vault · the Grounds · the Concord
+Vertical game: Flight (Reaches, Camps, rings, gates)
+Player: Trainer
+Fighter: champion / mind / wingmate
+Types: Forces (Logic, Static, Calm, Chorus, Spark)
+Teams: Clans (same five names; Trainer allegiance)
+Hero set: First Minds (AXIOM, PARADOX, GLITCH, EMBER, BASTION, VOX, WIT, MUSE)
+Collectible set: the dex (Force-family echoes)
+
+First Mind → Force quick map
+AXIOM, PARADOX     → Logic   #4aa3ff
+GLITCH, EMBER      → Static  #ff4ad1
+BASTION            → Calm    #36d39a
+VOX, WIT           → Chorus  #f0a93a
+MUSE               → Spark   #f5d020
+
+
+================================================================
+12. REFERENCE LINKS
+================================================================
+
+Public docs home:     https://zingers.org
+Cosmology:            https://zingers.org/bible/cosmology
+Forces:               https://zingers.org/bible/forces
+Champions:            https://zingers.org/bible/champions
+Regions:              https://zingers.org/bible/regions
+Flight:               https://zingers.org/bible/ascent
+Art direction:        https://zingers.org/bible/art-direction
+Glossary:             https://zingers.org/bible/glossary
+Press / live meshes:  https://zingers.org/press
+In-game gallery:      https://zingers.gg/bible
+Game site:            https://zingers.gg
+
+Bible concept plates (mood; do not override mesh identity):
+https://zingers.org/img/bible/forces/
+https://zingers.org/img/bible/minds/
+https://zingers.org/img/bible/regions/
+
+
+================================================================
+13. DELIVERABLE EXPECTATION (FOR THE AGENCY)
+================================================================
+
+Priority order:
+1) Remodel / rebuild the eight First Minds with readable silhouette differences.
+2) Preserve Force color language and part grammar (head / shoulder / chest / back).
+3) Keep one shared robot family so the dex can still branch from the same soul.
+4) Provide clean turnarounds + T/A poses + Flight pose (champion flying, no jetpack).
+5) Optional: Trainer + jetpack; Clan crest treatment; Force emblem props.
+
+Success test:
+A viewer who knows the game should identify AXIOM / GLITCH / BASTION / VOX / MUSE
+from silhouette alone, then confirm Force by color.
+
+
+END OF BRIEF
+)
