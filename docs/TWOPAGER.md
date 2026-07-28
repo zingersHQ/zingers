@@ -99,7 +99,6 @@ behind a DB-ready interface · LLM-agnostic agent layer.
 
 ## 6. Roadmap (clearly not yet built)
 
-- Full cloud roster sync (recruits today can still be device-local).
 - Player-to-player **trading** and a deeper in-game economy.
 - **User-made champions** and a creator economy (the long-term moat).
 - Accounts + full cloud persistence.

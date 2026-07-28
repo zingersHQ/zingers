@@ -36,6 +36,11 @@ import { practiceOpponentKeys } from "@/lib/scene-population";
 import { warmGroundsChunk } from "@/lib/render/preload-grounds";
 import { READER_COPY } from "@/lib/player-copy";
 import { getOwnerToken, getHandle } from "@/lib/owner";
+import {
+  armFlightBoardRetryListeners,
+  beginFlightBoardRun,
+  submitFlightBoardRun,
+} from "@/lib/flight-board-client";
 import { track } from "@/lib/track";
 import type { GroundChampion, MatchView, NearTarget, WorldLife } from "@/components/grounds/world";
 import { WORLDS, DEFAULT_WORLD, worldById, CONCORD_GATES, NAV_WORLDS, REGION_WORLDS, FIRST_GUIDE_WORLD } from "@/components/grounds/worlds";
@@ -529,6 +534,9 @@ export default function GroundsScreen({
   const circuitCpNext = useRef(1); // skip decorative start ring — first real gate is 1
   const circuitRunStart = useRef(0);
   const circuitSectorStart = useRef(0);
+  /** Server takeoff ticket for ranked / expedition board writes. */
+  const circuitBoardRunIdRef = useRef<string | null>(null);
+  const circuitBoardRunPendingRef = useRef<Promise<string | null> | null>(null);
   /** Accumulated flying time only — excludes ready / continue / load gaps. */
   const circuitRunMsRef = useRef(0);
   /** Ghost-path samples in Climb-canonical space (interchangeable with mobile). */
@@ -825,6 +833,10 @@ export default function GroundsScreen({
     if (activeVenue === "circuit") loadCircuitBoard();
   }, [circuitRunMode, activeVenue, loadCircuitBoard]);
 
+  useEffect(() => {
+    armFlightBoardRetryListeners();
+  }, []);
+
   const submitCircuitRun = useCallback(
     (sectors: number, totalMs: number, clearedAll: boolean) => {
       // Guest Ascent: hold depth for claim XP — nothing on the ranked board yet.
@@ -877,19 +889,25 @@ export default function GroundsScreen({
         if (bonus > 0) void store.awardGauntlet(bonus);
         const expTok = getOwnerToken();
         if (expTok) {
-          fetch("/api/expedition", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          void (async () => {
+            let runId = circuitBoardRunIdRef.current;
+            if (!runId && circuitBoardRunPendingRef.current) {
+              runId = await circuitBoardRunPendingRef.current;
+            }
+            circuitBoardRunIdRef.current = null;
+            circuitBoardRunPendingRef.current = null;
+            if (!runId) return;
+            const res = await submitFlightBoardRun({
+              kind: "expedition",
               token: expTok,
               weekId: expedition.weekId,
               sectors: run.sectors,
               totalMs: run.totalMs,
               body: "flight",
-            }),
-          })
-            .then(() => loadCircuitBoard())
-            .catch(() => {});
+              runId,
+            });
+            if (res.ok) await loadCircuitBoard();
+          })();
         }
         return;
       }
@@ -914,28 +932,27 @@ export default function GroundsScreen({
         void store.claimMilestone(HUNDRED_MILESTONE_ID);
         store.pushEvent(owned, { kind: "ascent", title: "Cleared the Hundred", detail: "hundred" });
       }
-      fetch("/api/circuit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      void (async () => {
+        let runId = circuitBoardRunIdRef.current;
+        if (!runId && circuitBoardRunPendingRef.current) {
+          runId = await circuitBoardRunPendingRef.current;
+        }
+        circuitBoardRunIdRef.current = null;
+        circuitBoardRunPendingRef.current = null;
+        if (!runId) return;
+        const res = await submitFlightBoardRun({
+          kind: "circuit",
           token: tok,
           sectors,
           totalMs,
           clearedAll,
           body: "flight",
           campsLit: lit.climb.campsLit,
-        }),
-      })
-        .then(async (r) => {
-          try {
-            const j = (await r.json()) as { balance?: number };
-            if (typeof j.balance === "number") store.setBalance(j.balance);
-          } catch {
-            /* ignore */
-          }
-          return loadCircuitBoard();
-        })
-        .catch(() => {});
+          runId,
+        });
+        if (typeof res.balance === "number") store.setBalance(res.balance);
+        if (res.ok) await loadCircuitBoard();
+      })();
     },
     [loadCircuitBoard, owned, store, expedition.weekId, expedition.sectors],
   );
@@ -946,6 +963,8 @@ export default function GroundsScreen({
     circuitRunStart.current = 0;
     circuitSectorStart.current = 0;
     circuitRunMsRef.current = 0;
+    circuitBoardRunIdRef.current = null;
+    circuitBoardRunPendingRef.current = null;
     circuitSectorPathsRef.current = [];
     circuitSectorSamplesRef.current = [];
     circuitSampleLastT.current = 0;
@@ -1361,6 +1380,20 @@ export default function GroundsScreen({
     if (circuitSectorIdx === circuitStartSectorRef.current && circuitRunMsRef.current === 0) {
       circuitSectorPathsRef.current = [];
       setCircuitChallengeResult(null);
+      const mode = circuitRunModeRef.current;
+      if (owned && (mode === "ranked" || mode === "expedition")) {
+        const tok = getOwnerToken();
+        if (tok) {
+          circuitBoardRunIdRef.current = null;
+          circuitBoardRunPendingRef.current = beginFlightBoardRun(tok, "flight").then((id) => {
+            circuitBoardRunIdRef.current = id;
+            return id;
+          });
+        }
+      } else {
+        circuitBoardRunIdRef.current = null;
+        circuitBoardRunPendingRef.current = null;
+      }
     }
     // Resume from frozen flying time so ready / continue / load gaps don't count.
     circuitRunStart.current = now - circuitRunMsRef.current;
@@ -1373,7 +1406,7 @@ export default function GroundsScreen({
     setCircuitGhostRunStartMs(now);
     circuitPhaseRef.current = "running";
     setCircuitPhase("running");
-  }, [circuitSectorIdx]);
+  }, [circuitSectorIdx, owned]);
 
   const onCircuitSample = useCallback((y: number, z: number) => {
     const now = performance.now();

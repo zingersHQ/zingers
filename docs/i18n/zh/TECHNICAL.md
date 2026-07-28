@@ -27,7 +27,8 @@ Next.js 16（App Router）· React 19 · 全栈 **TypeScript** · **React Three 
 - **音乐**为 100% 程序化 Web Audio（`lib/ambience-scores.ts` + `lib/ambience.ts`）：每个地点拥有独特主题与乐句形式；强度、避让与装饰音通过 `lib/ambience-bus.ts` 控制。无音频文件。
 - **异步联赛**是核心机制：冠军均为 AI，因此 PvP 无需双方同时在线。联赛自主运行对战（Amphitheatre **Live Gallery**）；你可观看回放并攀登客观评分榜（`/standings`）。
 - **状态以客户端优先，同步更新**。职业生涯存储于 `localStorage`，并通过 `/api/save` 镜像至 Redis。**职业账本**（`CareerEvent[]` + `AxisSnapshot[]` 于 `PlayerSave`）是纯追加、有上限的日志，记录每一次真实时刻：战斗、升级、段位提升、训练、Keeper 破解、赛季轮转、首次领取。位于 `store/champions.ts`。
-- **训练师身份**。唯一名称可绑定可选的 Solana 钱包（仅用于所有权证明，无消费）。Circuit/Climb 排行榜在服务端解析标签。
+- **收藏阵容在服务端做并集**。已招募心智的键保存在 Redis 集合（`z:roster:{token}`）。付费招募为 `POST /api/wallet`，带 `{ type: "recruit", key }`（一次完成 Crowns 扣除与成员资格）。`/api/save` 在读写时合并阵容，避免 last-write-wins 抹掉传奇。跨设备恢复仍需同一训练师代码或已绑定的 Solana 钱包。
+- **训练师身份**。唯一名称可绑定可选的 Solana 钱包（仅用于所有权证明，无消费）。Circuit/Climb 技艺榜在服务端解析标签；排名提交需要起飞票据与墙钟/速度校验。王冠币按个人最佳并受每日上限约束发放，从不按榜上名次发放。
 - **约 25 个 API 路由**（`app/api/*`）覆盖战斗、模拟、领取、名册、排行、每日、守护者（Keepers）、印记、动态、战争、保存、钱包、Solana 链接、卡片 OG 图片及 `/api/cost` 计量。
 
 ## 可插拔代理层

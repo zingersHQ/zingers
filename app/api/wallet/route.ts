@@ -9,11 +9,14 @@
 // also has a per-day payout count; Flight milestones (Hundred / first-light) use
 // server-decided amounts outside the daily soft-trust cap; fragment_sell debits a
 // server fragment balance that only fragment_buy credits.
-import { getStore } from "@/lib/server/store";
+import { getStore, syncAuthoritativeRoster } from "@/lib/server/store";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { track } from "@/lib/server/track";
 import { currentSeasonNumber } from "@/lib/lore/season";
 import { milestoneCrowns } from "@/lib/climb-campaign";
+import { ROSTER } from "@/lib/engine/roster";
+import { trainerLevel } from "@/lib/evolve/trainer";
+import { recruitSlotsOpen } from "@/lib/unlock-ladder";
 import {
   DAILY_VARIABLE_EARN_CAP,
   MAX_GAUNTLET_PAYOUTS_PER_DAY,
@@ -108,6 +111,39 @@ export async function POST(req: Request) {
     }
     void track("earn", token, delta);
     return Response.json({ ok: true, balance: r.balance });
+  }
+
+  // Collection recruit: Crowns out + mind key into the authoritative roster set.
+  // Idempotent when the key is already recruited (no second charge). The key is
+  // required so a spend can never orphan a legend on another device.
+  if (type === "recruit") {
+    const key = typeof b.key === "string" ? b.key.trim().slice(0, 64) : "";
+    if (!key || !(key in ROSTER)) {
+      return Response.json({ error: "invalid recruit key" }, { status: 400 });
+    }
+    const save = await store.getSave(token);
+    let roster = await syncAuthoritativeRoster(store, token, save?.roster ?? [], save?.owned ?? null);
+    if (roster.includes(key) || save?.owned === key) {
+      return Response.json({ ok: true, balance: await store.getWallet(token), roster });
+    }
+    const slots = recruitSlotsOpen(trainerLevel(save?.trainerXp ?? 0).level);
+    if (roster.length >= slots) {
+      return Response.json(
+        { ok: false, balance: await store.getWallet(token), roster, error: "roster full" },
+        { status: 409 },
+      );
+    }
+    const delta = walletDelta("recruit");
+    if (delta === null) return Response.json({ error: "unknown event" }, { status: 400 });
+    const r = await store.adjustWallet(token, delta);
+    if (!r.ok) return Response.json({ ok: false, balance: r.balance, roster });
+    roster = await store.addRoster(token, [key]);
+    // Keep the save blob's roster mirror aligned so LWW can't resurrect a hole.
+    if (save) {
+      await store.putSave(token, { ...save, roster, updatedAt: Date.now() });
+    }
+    void track("spend", token, -delta);
+    return Response.json({ ok: true, balance: r.balance, roster });
   }
 
   // Flight milestones: server decides Crowns from an allowlisted claimId.

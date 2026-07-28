@@ -383,9 +383,8 @@ export interface PlayerSave {
   // only progress/identity; the wallet is reconciled separately.
   owned: string | null;
   // Minds RECRUITED into the player's roster (the collection acquisition loop).
-  // Server-persisted alongside progress so a roster paid for on one device shows
-  // up on another — Crown spend was already server-authoritative, but the roster
-  // it bought used to live only in the local cache.
+  // Mirrored from the authoritative Redis set (union-merged on /api/save); paid
+  // recruits also land atomically via /api/wallet { type: "recruit", key }.
   roster: string[];
   // Trainer career XP (drives the Trainer level / title). Earned from bouts,
   // training, caches and dailies; persisted so the career survives a cache wipe.

@@ -59,9 +59,16 @@ for live fights · **xAI (Grok)** as the built-in brain. Deployed on Vercel
   on `PlayerSave`) is a pure-additive, capped, append-only log from every real
   moment. Fight, level-up, tier-up, training, season turn, first claim. In
   `store/champions.ts`.
+- **Collection roster is server-unioned.** Recruited mind keys live in a Redis set
+  (`z:roster:{token}`). Paid recruit is `POST /api/wallet` with `{ type: "recruit",
+  key }` (Crowns + membership in one shot). `/api/save` merges roster on read/write
+  so last-write-wins cannot drop a legend. Cross-device restore still needs the same
+  Trainer code or linked Solana wallet.
 - **Trainer identity.** Unique names can lock to an optional Solana wallet
-  (prove-ownership only. No spend). Circuit/Climb boards resolve labels
-  server-side.
+  (prove-ownership only. No spend). Circuit/Climb craft boards resolve labels
+  server-side; ranked posts require a takeoff ticket and wall-clock / speed
+  checks (`lib/server/flight-run.ts`). Crowns pay personal bests under the daily
+  cap, never board placement.
 - **~25 API routes** (`app/api/*`) cover battle, sim, claim, roster, standings,
   daily, imprint, feed, war, save, wallet, solana-link, card OG images, and a
   `/api/cost` meter.

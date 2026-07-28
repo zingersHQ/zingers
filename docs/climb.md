@@ -377,6 +377,8 @@ untouched (`one fall → sector 1`), tsc/lints clean, ledger updated.
    depth-then-time works; once regulars camp at Reach VI+, do weekly boards
    reset (seasonal freshness) or accumulate (grind prestige)? Leaning: weekly
    *seasonal* board + all-time "high-water" board, reusing the season plumbing.
+   Seasonal boards refresh prestige only — never hard purses or on-chain weight
+   (see [`circuit-board.md`](./circuit-board.md)).
 2. **Stumble tuning.** −6 vy / 0.4s lockout is a guess; tune on device until a
    stumble feels like *your* fault ≥ 90% of the time.
 3. **Scout-run abuse.** Fractional rewards may still be the optimal Crowns/min

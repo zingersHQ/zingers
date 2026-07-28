@@ -378,7 +378,7 @@
     "bestLine": "ベスト {sectors}/{total}",
     "ascentSigil": "飛昇シギル · {n} 区間",
     "ascentSigils": "飛昇シギル · {n} 区間",
-    "craftBoard": "クラフトボード · ソフト信頼",
+    "craftBoard": "クラフトボード",
     "noRuns": "まだ記録なし。ペースを作れ",
     "claimTrainer": "トレーナーを迎えて順位へ",
     "you": "あなた",

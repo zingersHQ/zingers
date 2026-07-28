@@ -378,7 +378,7 @@
     "bestLine": "mejor {sectors}/{total}",
     "ascentSigil": "SIGILO DE ASCENSO · {n} TRAMO",
     "ascentSigils": "SIGILO DE ASCENSO · {n} TRAMOS",
-    "craftBoard": "TABLA DE OFICIO · confianza blanda",
+    "craftBoard": "TABLA DE OFICIO",
     "noRuns": "aún no hay carreras. Marca el ritmo",
     "claimTrainer": "reclama un Entrenador para rankear",
     "you": "tú",

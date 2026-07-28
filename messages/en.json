@@ -378,7 +378,7 @@
     "bestLine": "best {sectors}/{total}",
     "ascentSigil": "ASCENT SIGIL · {n} REACH",
     "ascentSigils": "ASCENT SIGIL · {n} REACHES",
-    "craftBoard": "CRAFT BOARD · soft trust",
+    "craftBoard": "CRAFT BOARD",
     "noRuns": "no runs yet. Set the pace",
     "claimTrainer": "claim a Trainer to rank",
     "you": "you",

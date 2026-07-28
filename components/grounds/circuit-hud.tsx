@@ -774,7 +774,7 @@ export function CircuitHud({
             </button>
           )}
           <div className="mono" style={{ fontSize: 9, letterSpacing: 1, color: "var(--muted2)", marginTop: 4, textAlign: "center" }}>
-            CRAFT BOARD · soft trust
+            CRAFT BOARD
           </div>
         </CircuitModal>
       )}

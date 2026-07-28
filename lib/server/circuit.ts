@@ -19,6 +19,7 @@ import {
 import { getStore } from "@/lib/server/store";
 import { shortOwnerLabel } from "@/lib/trainer-label";
 import { track } from "@/lib/server/track";
+import { consumeFlightRun } from "@/lib/server/flight-run";
 
 export type CircuitBody = "thumb" | "flight";
 
@@ -66,8 +67,6 @@ const BOARD_CAP = 50;
 // 90-min ceiling: a desktop 6-DOF full clear is aspirationally 60–90 min. Still
 // < 10M so "one more sector always outranks any time" holds in the packing.
 const MAX_MS = 90 * 60 * 1000;
-/** Soft floor — rejects absurd speed-posts (not proof of play; boards stay soft-trust). */
-const MIN_MS_PER_SECTOR = 400;
 export const MAX_SECTORS = CLIMB_SECTOR_COUNT;
 
 const utcDay = () => Math.floor(Date.now() / 86_400_000);
@@ -203,6 +202,7 @@ export async function submitCircuitRun(
   totalMs: number,
   _clearedAll: boolean,
   body: CircuitBody = "thumb",
+  runId?: string,
 ): Promise<{
   saved: boolean;
   entry: CircuitPublicEntry;
@@ -217,12 +217,12 @@ export async function submitCircuitRun(
   // Server decides clear — client flag is ignored.
   const clearedAll = s === MAX_SECTORS;
 
-  if (s > 0 && ms < s * MIN_MS_PER_SECTOR) {
+  const emptyMine = async (rejected: string) => {
     const prev = (await getCircuitBoard(1, tok, body)).mine;
     return {
-      saved: false,
+      saved: false as const,
       craftCrowns: 0,
-      rejected: "time_too_fast",
+      rejected,
       entry: prev
         ? {
             handle: prev.handle,
@@ -241,7 +241,17 @@ export async function submitCircuitRun(
             you: true,
           },
     };
-  }
+  };
+
+  // Ticket + wall clock — board writes need a live takeoff; pay PB depth/time only, never rank.
+  const ticket = await consumeFlightRun({
+    runId,
+    token: tok,
+    body,
+    sectors: s,
+    totalMs: ms,
+  });
+  if (!ticket.ok) return emptyMine(ticket.reason);
 
   const entry: CircuitEntry = {
     token: tok,
@@ -255,7 +265,7 @@ export async function submitCircuitRun(
   };
   const result = await getCircuitStore().submit(entry);
 
-  // Craft Crowns only on a real server-side PB — amount from shared formula, not client.
+  // Craft Crowns only on a real server-side PB (shared formula). Never pay board rank / top-N.
   let craftCrowns = 0;
   let balance: number | undefined;
   if (result.saved) {

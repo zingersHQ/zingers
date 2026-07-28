@@ -60,8 +60,9 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   densified. **Launch v0.1 engineering closed.** Ops after: human playtests, key art,
   growth push, weekly `@zingersHQ` notes (`docs/flight-first-plan.md`).
 - [~] **Phase 5 — Collection & creator economy.** Deterministic recruit (Crowns sink, earned
-  never rolled); species kits + Collection pager live. Still owed: full roster server-sync,
-  trading, user-made champions.
+  never rolled); species kits + Collection pager live; roster membership server-synced
+  (wallet recruit-by-key + Redis union set so legends follow a restored Trainer code /
+  wallet). Still owed: trading, user-made champions.
 - [ ] **Phase 6 — Proposed: Accounts & monetization.** Full cloud accounts, cosmetics, battle
   passes, "infinite battles." Token after traction.
 - [ ] **Phase 7+ — Proposed: post-traction horizon.** Seasons that fund the house; `$ZING`
@@ -174,7 +175,7 @@ champions, token launch, new venues as face work.
 - Post the Peak-on-Tower / Grounds polish ship note on `@zingersHQ`.
 - Human playtests (Climb feel, `/stats` MOBILE DOOR); growth push when ready.
 - Key art / share-card rasters (live WebGL hero covers homepage doors for now).
-- Roster cloud sync for recruit loop; Discord invite if still placeholder.
+- Discord invite if still placeholder.
 
 **Forecast:** Launch v0.1 engineering closed. Next is distribution (ship notes, playtests,
 growth), then Phase 5 depth. Token stays frozen. Post-success path sketched internally in
@@ -187,7 +188,7 @@ league goes paid or tool-loop defaults flip on.
 - ~~What defines "launch"?~~ **Answered:** Flight-First gates in `docs/flight-first-plan.md`.
 - ~~$ZING model?~~ **Proposed:** utility/fuel — awaiting founder sign-off; not blocking Climb.
 - Real-money model: which of cosmetics / battle pass / "infinite battles" comes first?
-- Accounts: when full cloud sync for roster/recruits?
+- Accounts: email/OAuth beyond Trainer code + optional Solana restore?
 - Creator economy moderation vs authoritative engine + ELO?
 - Community: Discord invite + who runs the weekly devlog?
 - Horizon: token-only monetization vs parallel Stripe/IAP for non-wallet players?

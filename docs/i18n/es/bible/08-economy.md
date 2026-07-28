@@ -39,7 +39,7 @@ Las **Coronas** son la moneda suave, ganada al jugar:
 | Hitos de Vuelo (Cien, primera-luz) | bolsas únicas; el Cien es una bolsa de celebración grande fuera del tope diario de ganancias |
 | Objetivos diarios / de temporada | un goteo constante |
 
-Las Coronas compran **entrenamiento, entradas y reforgias cosméticas.** Cosas que afectan el progreso de *tu* cuenta. Son dinero de juego: abundante, nunca vendido, nunca retirado. La confianza suave gana de Vuelo, Arena, cachés y metas comparten un tope diario para que el mundo se mantenga generoso sin volverse infinito; las bolsas de hitos quedan fuera de ese tope para que el Cien siga sintiéndose como una cumbre.
+Las Coronas compran **entrenamiento, entradas y reforgias cosméticas.** Cosas que afectan el progreso de *tu* cuenta. Son dinero de juego: abundante, nunca vendido, nunca retirado. Las ganancias variables de Vuelo, Arena, cachés y metas comparten un tope diario para que el mundo se mantenga generoso sin volverse infinito; las bolsas de hitos quedan fuera de ese tope para que el Cien siga sintiéndose como una cumbre. El puesto en la tabla de oficio es orgullo, nunca una bolsa de Coronas: mejorar puede pagar, el ranking no.
 
 ### “Respaldar”, no “apostar”
 

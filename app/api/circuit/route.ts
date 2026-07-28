@@ -1,4 +1,10 @@
-import { getPublicCircuitBoard, submitCircuitRun, isCircuitShared, type CircuitBody } from "@/lib/server/circuit";
+import {
+  getPublicCircuitBoard,
+  submitCircuitRun,
+  isCircuitShared,
+  type CircuitBody,
+} from "@/lib/server/circuit";
+import { beginFlightRun } from "@/lib/server/flight-run";
 import { rateLimit } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
@@ -33,6 +39,16 @@ export async function POST(req: Request) {
   const token = typeof b.token === "string" ? b.token.trim() : "";
   if (token.length < 8 || token.length > 128) return new Response("bad token", { status: 400 });
 
+  const runBody = parseBody(typeof b.body === "string" ? b.body : null);
+
+  // Takeoff ticket — wall clock starts before a board write can land.
+  if (b.action === "begin") {
+    const beginLimit = rateLimit(req, "circuit-begin", 20, 60_000);
+    if (beginLimit) return beginLimit;
+    const started = await beginFlightRun(token, runBody);
+    return Response.json(started);
+  }
+
   const sectors = Number(b.sectors);
   const totalMs = Number(b.totalMs);
   if (!Number.isFinite(sectors) || sectors < 0 || sectors > 100) return new Response("bad sectors", { status: 400 });
@@ -40,8 +56,8 @@ export async function POST(req: Request) {
 
   // Client `handle` is ignored — labels resolve from linked identity server-side.
   const clearedAll = b.clearedAll === true;
-  const runBody = parseBody(typeof b.body === "string" ? b.body : null);
+  const runId = typeof b.runId === "string" ? b.runId : undefined;
 
-  const result = await submitCircuitRun(token, sectors, totalMs, clearedAll, runBody);
+  const result = await submitCircuitRun(token, sectors, totalMs, clearedAll, runBody, runId);
   return Response.json(result);
 }

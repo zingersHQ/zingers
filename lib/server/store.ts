@@ -161,6 +161,11 @@ export interface Store {
   // Fragment inventory for buy/sell — Crowns alone can't prove a fragment exists.
   getFragments(token: string): Promise<number>;
   adjustFragments(token: string, delta: number): Promise<WalletResult>;
+  // Collection roster (recruited mind keys). Authoritative Redis set so a
+  // last-write-wins save blob can't drop a recruit paid for on another device.
+  // addRoster unions keys and returns the full set (capped).
+  getRoster(token: string): Promise<string[]>;
+  addRoster(token: string, keys: string[]): Promise<string[]>;
   // One-shot claim keys (cache node / goal id) — SET NX so the same reward can't
   // be cashed twice. ttlSeconds lets day/season scoped keys self-expire.
   claimOnce(key: string, ttlSeconds: number): Promise<boolean>;
@@ -213,6 +218,7 @@ const K = {
   imprint: (token: string, day: number) => `z:imp:${day}:${token}`,
   wallet: (token: string) => `z:wallet:${token}`,
   frag: (token: string) => `z:frag:${token}`,
+  roster: (token: string) => `z:roster:${token}`,
   claim: (key: string) => `z:claim:${key}`,
   earnDay: (token: string, day: number) => `z:earn:${day}:${token}`,
   gauntletDay: (token: string, day: number) => `z:gpay:${day}:${token}`,
@@ -300,6 +306,39 @@ export function sanitizeSave(raw: unknown): PlayerSave | null {
     climb: s.climb != null ? sanitizeClimb(s.climb) : undefined,
     updatedAt: Date.now(),
   };
+}
+
+/** Normalize mind keys for the authoritative collection set. */
+export function cleanRosterKeys(keys: unknown): string[] {
+  if (!Array.isArray(keys)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of keys) {
+    if (typeof raw !== "string") continue;
+    const k = raw.trim().slice(0, 64);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(k);
+    if (out.length >= MAX_PROGRESS_KEYS) break;
+  }
+  return out;
+}
+
+/**
+ * Union client/save roster keys into the authoritative set and return the full
+ * collection. Seeds from a legacy save blob when the Redis set is still empty.
+ */
+export async function syncAuthoritativeRoster(
+  store: Store,
+  token: string,
+  keys: string[],
+  owned?: string | null,
+): Promise<string[]> {
+  const seed = cleanRosterKeys([...(keys || []), ...(owned ? [owned] : [])]);
+  const existing = await store.getRoster(token);
+  if (existing.length === 0 && seed.length === 0) return [];
+  if (seed.length === 0) return existing;
+  return store.addRoster(token, seed);
 }
 
 // ── Upstash backend ──────────────────────────────────────────────────────────
@@ -426,6 +465,23 @@ class UpstashStore implements Store {
     }
     return { ok: true, balance };
   }
+  async getRoster(token: string) {
+    const members = (await this.r.smembers(K.roster(token))) || [];
+    return cleanRosterKeys(members);
+  }
+  async addRoster(token: string, keys: string[]) {
+    const clean = cleanRosterKeys(keys);
+    if (!clean.length) return this.getRoster(token);
+    const cur = await this.getRoster(token);
+    const room = Math.max(0, MAX_PROGRESS_KEYS - cur.length);
+    if (room <= 0) return cur;
+    const add = clean.filter((k) => !cur.includes(k)).slice(0, room);
+    if (add.length) {
+      // Upstash typings want a rest tuple; add one-by-one (small roster caps).
+      for (const k of add) await this.r.sadd(K.roster(token), k);
+    }
+    return this.getRoster(token);
+  }
   async claimOnce(key: string, ttlSeconds: number) {
     const k = K.claim(key.slice(0, 180));
     // Upstash returns "OK" on set, null when NX loses the race.
@@ -492,6 +548,7 @@ class MemoryStore implements Store {
   private imprints = new Map<string, number>(); // `${day}:${token}` → count
   private wallets = new Map<string, number>();
   private frags = new Map<string, number>();
+  private rosters = new Map<string, Set<string>>();
   private claims = new Set<string>();
   private earnDay = new Map<string, number>();
   private gauntletDay = new Map<string, number>();
@@ -586,6 +643,19 @@ class MemoryStore implements Store {
     if (next < 0) return { ok: false, balance: cur };
     this.frags.set(token, next);
     return { ok: true, balance: next };
+  }
+  async getRoster(token: string) {
+    return cleanRosterKeys([...(this.rosters.get(token) ?? [])]);
+  }
+  async addRoster(token: string, keys: string[]) {
+    const clean = cleanRosterKeys(keys);
+    if (!this.rosters.has(token)) this.rosters.set(token, new Set());
+    const set = this.rosters.get(token)!;
+    for (const k of clean) {
+      if (set.size >= MAX_PROGRESS_KEYS) break;
+      set.add(k);
+    }
+    return cleanRosterKeys([...set]);
   }
   async claimOnce(key: string, ttlSeconds: number) {
     const k = key.slice(0, 180);

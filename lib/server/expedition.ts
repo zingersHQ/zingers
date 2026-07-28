@@ -7,6 +7,7 @@ import { EXPEDITION_SECTORS } from "@/lib/expeditions";
 import { shortOwnerLabel } from "@/lib/trainer-label";
 import type { CircuitBody } from "@/lib/server/circuit";
 import { circuitScore } from "@/lib/server/circuit";
+import { consumeFlightRun } from "@/lib/server/flight-run";
 
 export interface ExpeditionEntry {
   token: string;
@@ -37,7 +38,6 @@ export interface ExpeditionPublicBoard {
 
 const BOARD_CAP = 50;
 const MAX_MS = 90 * 60 * 1000;
-const MIN_MS_PER_SECTOR = 400;
 
 const boardKey = (weekId: string, body: CircuitBody) => `z:expedition:board:${weekId}:${body}`;
 const entryKey = (weekId: string, body: CircuitBody, token: string) =>
@@ -170,6 +170,7 @@ export async function submitExpeditionRun(
   sectors: number,
   totalMs: number,
   body: CircuitBody = "thumb",
+  runId?: string,
 ): Promise<{ saved: boolean; entry: ExpeditionPublicEntry; rejected?: string }> {
   const tok = token.slice(0, 128);
   const week = weekId.slice(0, 16);
@@ -179,10 +180,17 @@ export async function submitExpeditionRun(
   const ms = Math.max(0, Math.min(MAX_MS, Math.floor(totalMs)));
   const clearedAll = s >= EXPEDITION_SECTORS;
 
-  if (s > 0 && ms < s * MIN_MS_PER_SECTOR) {
+  const ticket = await consumeFlightRun({
+    runId,
+    token: tok,
+    body,
+    sectors: s,
+    totalMs: ms,
+  });
+  if (!ticket.ok) {
     return {
       saved: false,
-      rejected: "time_too_fast",
+      rejected: ticket.reason,
       entry: { handle, sectors: 0, totalMs: 0, clearedAll: false, you: true },
     };
   }

@@ -134,6 +134,11 @@ import { NextLine } from "@/components/director/next-card";
 import { useChampions } from "@/store/champions";
 import { ROSTER } from "@/lib/engine/roster";
 import { getOwnerToken } from "@/lib/owner";
+import {
+  armFlightBoardRetryListeners,
+  beginFlightBoardRun,
+  submitFlightBoardRun,
+} from "@/lib/flight-board-client";
 import type { Champion, CreatureType } from "@/lib/types";
 import { setJet, stopJet, jetFallSfx, rewardSfx, badLuckSfx, stumbleSfx } from "@/lib/sfx";
 import { setMood, setAmbienceIntensity, duckAmbience, startAmbience } from "@/lib/ambience-bus";
@@ -707,6 +712,9 @@ export default function CircuitLite({
   const glWatchdog = useRef<number | null>(null);
   const glRebuilds = useRef<number[]>([]);
   const runIdRef = useRef(0);
+  /** Server takeoff ticket for ranked / expedition board writes. */
+  const boardRunIdRef = useRef<string | null>(null);
+  const boardRunPendingRef = useRef<Promise<string | null> | null>(null);
 
   const holdRef = useRef(false);
   const altRef = useRef(0);
@@ -919,6 +927,7 @@ export default function CircuitLite({
     setMounted(true);
     setBest(loadCircuitPersonalBest("thumb"));
     loadBoard();
+    armFlightBoardRetryListeners();
     // Seed camps from local board depth (silent — no chest dump for veterans).
     try {
       const thumb = loadCircuitPersonalBest("thumb");
@@ -1044,19 +1053,25 @@ export default function CircuitLite({
         }
         const tok = getOwnerToken();
         if (tok) {
-          fetch("/api/expedition", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          void (async () => {
+            let runId = boardRunIdRef.current;
+            if (!runId && boardRunPendingRef.current) {
+              runId = await boardRunPendingRef.current;
+            }
+            boardRunIdRef.current = null;
+            boardRunPendingRef.current = null;
+            if (!runId) return;
+            const res = await submitFlightBoardRun({
+              kind: "expedition",
               token: tok,
               weekId: expedition.weekId,
               sectors: run.sectors,
               totalMs: run.totalMs,
               body: "thumb",
-            }),
-          })
-            .then(() => loadBoard())
-            .catch(() => {});
+              runId,
+            });
+            if (res.ok) await loadBoard();
+          })();
         }
         return;
       }
@@ -1077,7 +1092,6 @@ export default function CircuitLite({
       }
       const bonus = bonusCrowns.current;
       if (bonus > 0) void awardGauntlet(bonus);
-      const expectCraft = better ? ascentCraftCrowns(run.sectors, clearedAll) : 0;
 
       // Camps + first-light chests + Hundred (climb-p2).
       const lit = lightCamp(run.sectors, clearedAll);
@@ -1107,9 +1121,10 @@ export default function CircuitLite({
         }
       }
 
+      // Craft Crowns come from the server PB path — don't toast them until confirmed.
       setReward(
-        xp > 0 || expectCraft + bonus + chestCrowns > 0
-          ? { xp, crowns: expectCraft + bonus + chestCrowns, deeper }
+        xp > 0 || bonus + chestCrowns > 0
+          ? { xp, crowns: bonus + chestCrowns, deeper }
           : null,
       );
 
@@ -1123,28 +1138,39 @@ export default function CircuitLite({
 
       const tok = getOwnerToken();
       if (tok) {
-        fetch("/api/circuit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        void (async () => {
+          let runId = boardRunIdRef.current;
+          if (!runId && boardRunPendingRef.current) {
+            runId = await boardRunPendingRef.current;
+          }
+          boardRunIdRef.current = null;
+          boardRunPendingRef.current = null;
+          if (!runId) return;
+          const res = await submitFlightBoardRun({
+            kind: "circuit",
             token: tok,
             sectors: run.sectors,
             totalMs: run.totalMs,
             clearedAll,
             body: "thumb",
             campsLit: lit.climb.campsLit,
-          }),
-        })
-          .then(async (r) => {
-            try {
-              const j = (await r.json()) as { balance?: number };
-              if (typeof j.balance === "number") useChampions.getState().setBalance(j.balance);
-            } catch {
-              /* ignore */
+            runId,
+          });
+          if (typeof res.balance === "number") {
+            useChampions.getState().setBalance(res.balance);
+          }
+          if (res.ok) {
+            const craft = res.craftCrowns ?? 0;
+            if (craft > 0) {
+              setReward((prev) => ({
+                xp: prev?.xp ?? xp,
+                crowns: (prev?.crowns ?? bonus + chestCrowns) + craft,
+                deeper: prev?.deeper ?? deeper,
+              }));
             }
-            return loadBoard();
-          })
-          .catch(() => {});
+            await loadBoard();
+          }
+        })();
       }
     },
     [
@@ -1314,6 +1340,21 @@ export default function CircuitLite({
           runStart.current = now;
           sectorPathsRef.current = [];
           setChallengeResult(null);
+          // Ranked / expedition board writes need a server takeoff ticket.
+          const mode = runModeRef.current;
+          if (!guest && (mode === "ranked" || mode === "expedition")) {
+            const tok = getOwnerToken();
+            if (tok) {
+              boardRunIdRef.current = null;
+              boardRunPendingRef.current = beginFlightBoardRun(tok, "thumb").then((id) => {
+                boardRunIdRef.current = id;
+                return id;
+              });
+            }
+          } else {
+            boardRunIdRef.current = null;
+            boardRunPendingRef.current = null;
+          }
         }
         sectorStart.current = now;
         setGhostStartMs(now);
@@ -1351,6 +1392,8 @@ export default function CircuitLite({
     setGhostStartMs(0);
     sectorStart.current = 0;
     runStart.current = 0;
+    boardRunIdRef.current = null;
+    boardRunPendingRef.current = null;
     bonusCrowns.current = 0;
     stumbleCountRef.current = 0;
     goldRingsRef.current = 0;
@@ -2389,7 +2432,7 @@ export default function CircuitLite({
               </div>
             )}
 
-            {/* compact craft board (depth-then-time) — soft trust until replay */}
+            {/* compact craft board (depth-then-time) */}
             <div style={{ marginBottom: 18, textAlign: "left", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, padding: "10px 12px", background: "rgba(255,255,255,.02)" }}>
               <div className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2, #6b6785)", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
                 <span>{t("craftBoard")}</span>

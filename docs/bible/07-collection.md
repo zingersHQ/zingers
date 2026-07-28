@@ -47,7 +47,9 @@ champion's tier and with how rare that build genuinely is.
 - **Meet**: weekly adopt rotation shows one starter per Force from that pool, so
   returning Trainers meet different wingmates over time.
 - **Build**: a small **stable** of champions you field across the regions; their
-  Forces interact on the Wheel, so coverage across the five matters.
+  Forces interact on the Wheel, so coverage across the five matters. Recruits you
+  claim follow your Trainer mark across devices when you restore that mark
+  (recovery code or linked wallet). They are not trapped on one glass.
 - **Trade / gift**: player-to-player movement of cards (the social loop). Designed
   here; gated behind the ownership layer ([economy.md](./08-economy.md)). On-chain
   mint is a later fill-in of provenance fields already on the card, not a reason

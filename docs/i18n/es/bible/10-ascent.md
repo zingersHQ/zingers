@@ -58,7 +58,7 @@ Ambos cuerpos vuelan el mismo corredor de viento: el pack te empuja hacia delant
 Entre puertas, las chispas y barras que te empujan son peligros. Nunca son premios. Empujan y bloquean el empuje; no quitan Coronas ni vidas al contacto.  
 El único tesoro a mitad de carrera es un alijo de Coronas que flota fuera de la línea de planeo entre puertas. Cada sector tiene uno o no lo tiene; el mapa está fijo, no es una lotería. Los Alcances iniciales muestran más premios pequeños; los posteriores pagan más, pero están más difíciles de alcanzar fuera de la línea. Sube o desciende para cogerlo. Perder uno nunca falla el sector.
 
-Completar los cien sectores es una cumbre. Después el ascenso no se vuelve infinito. Vuelas más limpio, compites contra el fantasma de un amigo o esperas un nuevo cielo semanal. La velocidad no es la historia. Móvil y escritorio conservan sus propias tablas de arte.
+Completar los cien sectores es una cumbre. Después el ascenso no se vuelve infinito. Vuelas más limpio, compites contra el fantasma de un amigo o esperas un nuevo cielo semanal. La velocidad no es la historia. Móvil y escritorio conservan sus propias tablas de arte: orgullo de cómo volaste, no una bolsa.
 
 ## Por qué importa para el juego
 

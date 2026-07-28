@@ -69,14 +69,14 @@ Aligned with `AGENCY.md` phases. **CURRENT work stays Phase 4 ops → Phase 5.**
 | Phase | Horizon job |
 |-------|-------------|
 | **4 ops** | Playtests, ship notes, key art, growth push, moderation before fan-out |
-| **5** | Collection depth: roster cloud sync, trading, user-made champions (creator moat) |
+| **5** | Collection depth: trading, user-made champions (creator moat). Roster follows Trainer identity. |
 | **6** | Accounts + monetization rails: cosmetics, battle pass, infinite battles; `$ZING` when demand is real |
 
 ### Mid — seasons that fund the house
 
 Once accounts + soft premium exist:
 
-1. **Season machine.** Soft resets, Flight boards, body/sigil season marks, shareable recaps. Recurring ritual > one spike.
+1. **Season machine.** Soft resets, Flight boards, body/sigil season marks, shareable recaps. Recurring ritual > one spike. Seasonal Flight boards refresh craft prestige; they are not attested proof-of-play and never gate hard purses or on-chain weight (see [`circuit-board.md`](./circuit-board.md)). Token/stakes stay on fight standings.
 2. **Token live (opt-in).** On-chain standings entry (burn-or-stake), patron crests, airdrop weight for play. Still: no yield, no pay-to-win, Crowns wall intact.
 3. **Creator royalties in `$ZING`.** User-made champions earn when adopted / fought. This is the durable moat bet.
 4. **Inference product.** "Infinite battles" priced above measured marginal duel cost (`npm run cost`). Climb stays cheap; paid depth pays the LLM bill.

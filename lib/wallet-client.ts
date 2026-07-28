@@ -9,6 +9,8 @@ import type { WalletEventType } from "@/lib/economy";
 export interface WalletResp {
   ok: boolean;
   balance: number;
+  /** Authoritative collection keys when the event touched roster membership. */
+  roster?: string[];
 }
 
 /** Don't block gameplay on a hung wallet round-trip — fall back to local mirror. */
@@ -35,10 +37,16 @@ async function post(body: Record<string, unknown>): Promise<WalletResp | null> {
       keepalive: true,
     });
     if (!r.ok) {
-      // 409 already-claimed / no fragment — still return balance when present
+      // 409 already-claimed / no fragment / roster full — still return balance when present
       try {
         const j = (await r.json()) as Partial<WalletResp>;
-        if (typeof j.balance === "number") return { ok: false, balance: j.balance };
+        if (typeof j.balance === "number") {
+          return {
+            ok: false,
+            balance: j.balance,
+            roster: Array.isArray(j.roster) ? j.roster.filter((k): k is string => typeof k === "string") : undefined,
+          };
+        }
       } catch {
         /* ignore */
       }
@@ -46,7 +54,11 @@ async function post(body: Record<string, unknown>): Promise<WalletResp | null> {
     }
     const j = (await r.json()) as Partial<WalletResp>;
     if (typeof j.balance !== "number") return null;
-    return { ok: j.ok !== false, balance: j.balance };
+    return {
+      ok: j.ok !== false,
+      balance: j.balance,
+      roster: Array.isArray(j.roster) ? j.roster.filter((k): k is string => typeof k === "string") : undefined,
+    };
   } catch {
     return null;
   }
@@ -65,8 +77,18 @@ export async function fetchBalance(): Promise<number | null> {
   }
 }
 
-export function walletEvent(type: WalletEventType, amount?: number, claimId?: string): Promise<WalletResp | null> {
-  return post({ type, amount, ...(claimId ? { claimId } : {}) });
+export function walletEvent(
+  type: WalletEventType,
+  amount?: number,
+  claimId?: string,
+  key?: string,
+): Promise<WalletResp | null> {
+  return post({
+    type,
+    amount,
+    ...(claimId ? { claimId } : {}),
+    ...(key ? { key } : {}),
+  });
 }
 
 export function commitBet(stake: number, side: "me" | "opp", nonce: string): Promise<WalletResp | null> {

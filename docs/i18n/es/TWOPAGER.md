@@ -78,7 +78,6 @@ Una sola aplicación Next.js tipada: un solo runtime, sin backend separado que s
 
 ## 6. Hoja de ruta (claramente aún no construido)
 
-- Sincronización completa de roster en la nube (los reclutas de hoy aún pueden ser locales del dispositivo).
 - **Comercio** entre jugadores y una economía más profunda en el juego.
 - **Campeones hechos por usuarios** y una economía de creadores (el foso a largo plazo).
 - Cuentas + persistencia completa en la nube.

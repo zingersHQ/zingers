@@ -58,9 +58,10 @@ The token is an opt-in collector / loyalty layer for the committed.
 
 Crowns buy **training, entries, and cosmetic reforges**. Things that affect *your*
 account's progress. They are play money: abundant, never sold, never cashed out.
-Soft-trust earns from Flight, Arena, caches, and goals share a daily cap so the
+Variable earns from Flight, Arena, caches, and goals share a daily cap so the
 world stays generous without becoming infinite; milestone purses sit outside that
-cap so the Hundred still feels like a summit.
+cap so the Hundred still feels like a summit. Craft board rank is pride, never a
+Crown purse — improvement can pay, placement does not.
 
 ### "Back," not "bet"
 

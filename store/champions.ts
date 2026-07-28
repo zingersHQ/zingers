@@ -210,8 +210,8 @@ interface ChampionStore {
   owned: string | null; // the single ACTIVE/adopted champion (unchanged behaviour)
   // The collection acquisition loop: every mind you've RECRUITED into your roster
   // (a deterministic Crown sink, see recruit()). Your adopted `owned` champion is
-  // always implicitly recruited. Client-only mirror for now (like `fragments`) —
-  // the spend itself is server-authoritative via the wallet.
+  // always implicitly recruited. Server-authoritative via /api/wallet recruit +
+  // the Redis roster set; this array is the local mirror (like crowns).
   roster: string[];
   predict: PredictState;
   daily: DailyState;
@@ -342,6 +342,8 @@ export const useChampions = create<ChampionStore>()(
       // Reconcile the server's authoritative save into local state. Server
       // recipes never carry an API key (client-only), so we re-apply any key we
       // already hold locally — the rest of the recipe comes from the server.
+      // Roster is union-merged so a fresher career blob can't drop a recruit the
+      // Redis set (or this device) already holds.
       applyServerSave: (save) =>
         set((s) => {
           const recipes: Record<string, Recipe> = {};
@@ -349,13 +351,15 @@ export const useChampions = create<ChampionStore>()(
             const localKey = s.recipes[key]?.agent?.apiKey;
             recipes[key] = localKey && r.agent ? { ...r, agent: { ...r.agent, apiKey: localKey } } : r;
           }
+          const serverRoster = Array.isArray(save.roster) ? save.roster.filter((k) => typeof k === "string") : [];
+          const roster = Array.from(new Set([...serverRoster, ...s.roster, ...(save.owned ? [save.owned] : []), ...(s.owned ? [s.owned] : [])]));
           return {
             progress: { ...seeded(), ...(save.progress || {}) },
             recipes,
             // crowns intentionally not taken from the save — the wallet is the
             // authority and is reconciled by syncWallet().
             owned: save.owned ?? null,
-            roster: Array.isArray(save.roster) ? save.roster.filter((k) => typeof k === "string") : [],
+            roster,
             trainerXp: typeof save.trainerXp === "number" && Number.isFinite(save.trainerXp) ? Math.max(0, save.trainerXp) : 0,
             predict: save.predict || { streak: 0, best: 0 },
             daily: save.daily || { lastDay: 0, streak: 0, best: 0, plays: 0, result: null },
@@ -672,13 +676,27 @@ export const useChampions = create<ChampionStore>()(
         const slots = recruitSlotsOpen(trainerLevel(s.trainerXp).level);
         const count = new Set([...(s.owned ? [s.owned] : []), ...s.roster]).size;
         if (count >= slots) return false;
-        const res = await walletEvent("recruit");
+        // Server spends Crowns and SADD's the key in one shot — membership follows
+        // the trainer even if the debounced save push hasn't landed yet.
+        const res = await walletEvent("recruit", undefined, undefined, key);
         if (res) {
-          if (!res.ok) return false; // server: can't afford
-          set((st) => ({ crowns: res.balance, roster: [...st.roster, key] }));
+          if (!res.ok) {
+            if (typeof res.balance === "number") set({ crowns: res.balance });
+            if (Array.isArray(res.roster)) set({ roster: res.roster });
+            return false; // can't afford / roster full
+          }
+          set((st) => ({
+            crowns: res.balance,
+            roster: Array.isArray(res.roster)
+              ? res.roster
+              : st.roster.includes(key)
+                ? st.roster
+                : [...st.roster, key],
+          }));
           return true;
         }
-        // offline fallback: optimistic local spend (reconciled by syncWallet)
+        // offline fallback: optimistic local spend (reconciled by syncWallet;
+        // the key rides the next /api/save union into the Redis roster set)
         if (s.crowns < RECRUIT_COST) return false;
         set((st) => ({ crowns: st.crowns - RECRUIT_COST, roster: [...st.roster, key] }));
         return true;

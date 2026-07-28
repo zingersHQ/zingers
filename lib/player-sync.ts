@@ -4,6 +4,9 @@
 // change. Failures are non-fatal: with no network or no Redis provisioned the
 // game simply stays local-first, exactly as before. localStorage is now a cache
 // in front of this, not the source of truth.
+//
+// Collection roster is union-merged on the server (Redis set + save blob) so a
+// LWW career push cannot drop a recruit; paid recruits also land via /api/wallet.
 import { useEffect } from "react";
 import { getOwnerToken } from "@/lib/owner";
 import { useChampions } from "@/store/champions";
@@ -34,8 +37,17 @@ export function usePlayerSync() {
           keepalive: true,
         });
         if (r.ok) {
-          const { updatedAt } = (await r.json()) as { updatedAt?: number };
-          if (!cancelled) useChampions.setState({ lastServerSync: updatedAt ?? save.updatedAt });
+          const { updatedAt, roster } = (await r.json()) as { updatedAt?: number; roster?: string[] };
+          if (!cancelled) {
+            const patch: { lastServerSync: number; roster?: string[] } = {
+              lastServerSync: updatedAt ?? save.updatedAt,
+            };
+            if (Array.isArray(roster)) {
+              const local = useChampions.getState().roster;
+              patch.roster = Array.from(new Set([...roster, ...local]));
+            }
+            useChampions.setState(patch);
+          }
         }
       } catch {
         // offline — leave the local cache as-is; next change retries
@@ -60,7 +72,12 @@ export function usePlayerSync() {
           s.predict !== prev.predict ||
           s.daily !== prev.daily ||
           s.force !== prev.force ||
-          s.forcePoints !== prev.forcePoints;
+          s.forceSeason !== prev.forceSeason ||
+          s.forcePoints !== prev.forcePoints ||
+          s.events !== prev.events ||
+          s.snapshots !== prev.snapshots ||
+          s.climb !== prev.climb ||
+          s.lastVisit !== prev.lastVisit;
         if (changed) schedulePush();
       });
     }

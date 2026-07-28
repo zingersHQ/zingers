@@ -115,7 +115,8 @@ line. Climb or dive for it. Missing one never fails the sector.
 
 Clearing all one hundred sectors is a summit. After that the climb does not become
 endless. You fly cleaner, race a friend's ghost, or wait for a new weekly sky.
-Speed is not the story. Mobile and desktop keep their own craft boards.
+Speed is not the story. Mobile and desktop keep their own craft boards — pride of
+how you flew, not a purse.
 
 ## Why this matters for play
 

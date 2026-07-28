@@ -51,6 +51,7 @@ export async function POST(req: Request) {
   }
 
   const runBody = parseBody(typeof b.body === "string" ? b.body : null);
-  const result = await submitExpeditionRun(token, weekId, sectors, totalMs, runBody);
+  const runId = typeof b.runId === "string" ? b.runId : undefined;
+  const result = await submitExpeditionRun(token, weekId, sectors, totalMs, runBody, runId);
   return Response.json(result);
 }
