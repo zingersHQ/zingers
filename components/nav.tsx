@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost } from "@/lib/org/hosts";
 import { NAV_GROUPS, navIsActive, docsNavIsActive, siteNavHidden, playEntryHref } from "@/lib/play-nav";
@@ -15,6 +16,7 @@ export function Nav() {
   const path = usePathname();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
+  const t = useTranslations("nav");
   const host = typeof window !== "undefined" ? window.location.hostname : undefined;
   const onOrg = host ? isOrgHost(host) : false;
   // The immersive 3D world (/, /grounds) and pure render/slide surfaces keep
@@ -60,7 +62,7 @@ export function Nav() {
         <button
           type="button"
           className="site-nav__burger"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? t("closeMenu") : t("openMenu")}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
         >
@@ -71,7 +73,9 @@ export function Nav() {
       <nav className={`site-nav__links${open ? " is-open" : ""}`}>
         {NAV_GROUPS.map((group, gi) => (
           <Fragment key={group.id}>
-            <span className={`site-nav__section mono${gi > 0 ? " site-nav__section--also" : ""}`}>{group.label}</span>
+            <span className={`site-nav__section mono${gi > 0 ? " site-nav__section--also" : ""}`}>
+              {t(`groups.${group.id}`)}
+            </span>
             {group.items.map((l) => {
               const href =
                 l.id === "play" && isMobile
@@ -81,6 +85,8 @@ export function Nav() {
                     : l.external
                       ? l.href
                       : gameHref(l.href);
+              const label = t(`items.${l.id}.label`);
+              const blurb = t(`items.${l.id}.blurb`);
               const className = `site-nav__link mono${gi > 0 ? " site-nav__link--secondary" : ""}${l.id === "how" ? " site-nav__link--guide" : ""}${
                 l.id === "org" ? (docsNavIsActive(path, l.id, host) ? " is-on" : "") : navIsActive(path, l.href) || (l.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m"))) ? " is-on" : ""
               }`;
@@ -93,9 +99,9 @@ export function Nav() {
                     rel="noopener noreferrer"
                     onClick={close}
                     className={className}
-                    title={l.blurb}
+                    title={blurb}
                   >
-                    {l.label}
+                    {label}
                   </a>
                 );
               }
@@ -105,14 +111,14 @@ export function Nav() {
                 href={href}
                 onClick={close}
                 className={className}
-                title={l.blurb}
+                title={blurb}
               >
-                {l.label}
+                {label}
               </Link>
             );})}
           </Fragment>
         ))}
-        <span className="site-nav__section mono site-nav__section--also">Display</span>
+        <span className="site-nav__section mono site-nav__section--also">{t("display")}</span>
         <ThemeToggle />
       </nav>
     </header>

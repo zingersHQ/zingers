@@ -30,7 +30,7 @@
   "fight": {
     "duel": "duelo",
     "fight": "pelea",
-    "fights": "pelea",
+    "fights": "peleas",
     "duels": "duelos",
     "rankedDuel": "duelo clasificado",
     "leagueDuels": "duelos de liga",
@@ -60,7 +60,9 @@
       "fighting": "Combate",
       "growing": "Crecer y coleccionar",
       "bigger-world": "El mundo más grande"
-    }
+    },
+    "bibleLink": "la Biblia",
+    "pageDescription": "Cada término de Zingers en una frase clara. Para jugadores nuevos y quien quiera un recordatorio rápido."
   },
   "director": {
     "yourChampion": "Tu campeón",
@@ -124,7 +126,58 @@
       "designBlurb": "Bucle Flight-First, combate, retención, arenas.",
       "product": "Producto",
       "productBlurb": "Pitches, posicionamiento y press kit."
-    }
+    },
+    "docsCanon": "Docs y canon",
+    "shellBlurb": "Pitches Flight-First, biblia de lore, protocolo de agentes y specs de combate. Una sola fuente de verdad para humanos y generadores.",
+    "pressKit": "Kit de prensa",
+    "visualGallery": "Galería visual",
+    "trainAgent": "Entrenar un agente",
+    "playGame": "← Jugar",
+    "pages": {
+      "bible": "La Biblia de Zingers",
+      "bible_cosmology": "Cosmología",
+      "bible_forces": "Las cinco Fuerzas",
+      "bible_champions": "Campeones",
+      "bible_regions": "Regiones",
+      "bible_seasons": "Temporadas",
+      "bible_collection": "Colección",
+      "bible_economy": "Economía",
+      "bible_ascent": "Vuelo",
+      "bible_art_direction": "Dirección de arte",
+      "bible_glossary": "Glosario",
+      "protocol_agents": "Protocolo de agentes",
+      "protocol_mcp": "Servidor MCP",
+      "design": "Índice de documentación",
+      "design_vision": "Visión de diseño",
+      "design_vocabulary": "Vocabulario",
+      "design_combat": "Diseño de combate",
+      "design_game_spec": "Especificación del juego",
+      "design_flight_first": "Plan Flight-First",
+      "design_two_doors": "Dos puertas",
+      "design_essence": "Esencia",
+      "design_long_game": "Juego largo",
+      "design_first_journey": "Primer viaje (histórico)",
+      "product_onepager": "One-pager",
+      "product_twopager": "Two-pager",
+      "product_story": "Historia (one-pager)",
+      "product_technical": "Técnico (one-pager)",
+      "product_ai_crypto": "IA y cripto (one-pager)"
+    },
+    "docsTitle": "Docs",
+    "docsDescription": "zingers.org: biblia, protocolo de agentes, diseño de combate y specs de producto.",
+    "notFound": "No encontrado",
+    "publicCanon": "CANON PÚBLICO",
+    "homeTitle": "Documentación de Zingers",
+    "startWith": "Empieza con {title} →",
+    "alsoOnSite": "También en este sitio",
+    "pressBlurb": "Renders del modelo de juego, semillas PNG, beats de historia y prompts para prensa y creativos.",
+    "galleryBlurb": "Fuerzas, primeras mentes y regiones fundadoras como renders en vivo del juego.",
+    "agentPlayground": "Zona de agentes",
+    "agentBlurb": "Valida un endpoint propio y salta a la arena.",
+    "whitepaper": "Whitepaper interactivo",
+    "whitepaperBlurb": "Narrativa de producto con diagramas en vivo y rueda de tipos.",
+    "navigation": "Navegación",
+    "homeLead": "La enciclopedia, el protocolo de información y las specs de diseño detrás de <brand>Zingers</brand>. El markdown en docs/ es la fuente; este sitio es la vista navegable que comparten agentes y humanos."
   },
   "status": {
     "exposed": "Expuesto",
@@ -188,7 +241,21 @@
     "finalTitle": "El cielo te espera.",
     "finalSub": "Cría una mente. Hazla leyenda.",
     "lore": "Lore",
-    "scrollShort": "baja"
+    "scrollShort": "baja",
+    "regions": {
+      "colosseum": {
+        "name": "El Coliseo de Obsidiana",
+        "blurb": "La arena más antigua en pie, un tribunal simulado donde las mentes defienden posturas asignadas ante un jurado."
+      },
+      "wastes": {
+        "name": "Los Yermos de Ascuas",
+        "blurb": "Una llanura agrietada y ardiente. La agresión y el ruido prosperan; los pacientes se sobrecalientan."
+      },
+      "garden": {
+        "name": "El Jardín del Vacío",
+        "blurb": "Un jardín lento e imposible crecido de ideas sin terminar. Florecen los reframes; se marchitan las pruebas rígidas."
+      }
+    }
   },
   "mobile": {
     "splashTitle": "Alza el vuelo.",
@@ -342,5 +409,79 @@
     "them": "ELLOS",
     "themLower": "ellos",
     "they": "ELLOS"
+  },
+  "nav": {
+    "display": "Pantalla",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "menu": "Menú",
+    "menuHint": "M para abrir · Esc para cerrar",
+    "groups": {
+      "play": "Jugar",
+      "you": "Tú",
+      "learn": "Aprender",
+      "build": "Crear"
+    },
+    "items": {
+      "play": {
+        "label": "Jugar",
+        "short": "Jugar",
+        "blurb": "Explora el mundo: entrena, pelea y juega sus modos."
+      },
+      "collection": {
+        "label": "Colección",
+        "short": "Dex",
+        "blurb": "Tu dex de campeones. Cartas que evolucionan al pelear."
+      },
+      "rank": {
+        "label": "Rango",
+        "short": "Rango",
+        "blurb": "Clasificación de temporada. Donde vive tu puntuación."
+      },
+      "how": {
+        "label": "Cómo funciona",
+        "short": "Guía",
+        "blurb": "Empieza aquí si eres nuevo."
+      },
+      "bible": {
+        "label": "Galería",
+        "short": "Galería",
+        "blurb": "Canon visual: fuerzas, mentes, regiones."
+      },
+      "catalogue": {
+        "label": "Catálogo",
+        "short": "Cat",
+        "blurb": "20 agentes emulados de sistemas reales: cada tipo, nivel y clan."
+      },
+      "org": {
+        "label": "Docs",
+        "short": "Docs",
+        "blurb": "zingers.org: biblia, protocolo, diseño."
+      },
+      "readme": {
+        "label": "Whitepaper",
+        "short": "Paper",
+        "blurb": "El documento de diseño completo."
+      },
+      "agents": {
+        "label": "Entrenar IA",
+        "short": "IA",
+        "blurb": "Conecta tu propio agente de IA y desplíegalo en la clasificación o por MCP."
+      }
+    },
+    "controls": "Controles",
+    "settings": "Ajustes",
+    "navigate": "Navegar",
+    "navigation": "Navegación"
+  },
+  "chrome": {
+    "lightMode": "Cambiar a modo claro",
+    "darkMode": "Cambiar a modo oscuro",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "muteAmbience": "Silenciar ambiente",
+    "playAmbience": "Activar ambiente",
+    "scoreOn": "Partitura activa: cambia por región, lugar y combate",
+    "scoreMuted": "Partitura silenciada"
   }
 }

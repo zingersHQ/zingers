@@ -3,16 +3,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Menu as MenuIcon, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { HUB_NAV_GROUPS, navIsActive, siteNavHidden, playEntryHref, type PlayLink } from "@/lib/play-nav";
 import { useIsMobile } from "@/lib/use-device";
 import { isOrgHost } from "@/lib/org/hosts";
 
 function MenuLink({ item, path, href, onPick }: { item: PlayLink; path: string; href: string; onPick: () => void }) {
+  const t = useTranslations("nav");
   const active = navIsActive(path, item.href) || (item.id === "play" && (path.startsWith("/ascent") || path.startsWith("/m")));
   return (
     <Link href={href} onClick={onPick} className={`game-menu__item${active ? " is-on" : ""}`}>
-      <span className="game-menu__item-label">{item.label}</span>
-      <span className="game-menu__item-blurb">{item.blurb}</span>
+      <span className="game-menu__item-label">{t(`items.${item.id}.label`)}</span>
+      <span className="game-menu__item-blurb">{t(`items.${item.id}.blurb`)}</span>
     </Link>
   );
 }
@@ -24,6 +26,7 @@ function MenuLink({ item, path, href, onPick }: { item: PlayLink; path: string; 
 export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; fixed?: boolean }) {
   const path = usePathname();
   const isMobile = useIsMobile();
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   // When the shared site header is also on this page, drop the trigger below it
   // so the two menus don't stack on top of each other in the corner.
@@ -69,7 +72,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
         type="button"
         className={`game-menu__trigger${fixed ? " game-menu__trigger--fixed" : ""}${open ? " is-open" : ""}`}
         style={belowNav ? { top: "calc(var(--nav-h) + 12px)" } : undefined}
-        aria-label={open ? "Close menu" : "Open menu"}
+        aria-label={open ? t("closeMenu") : t("openMenu")}
         aria-expanded={open}
         onClick={toggle}
       >
@@ -80,7 +83,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
         <div
           className="game-menu__panel"
           role="dialog"
-          aria-label="Navigation"
+          aria-label={t("navigation")}
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
@@ -88,8 +91,8 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
         >
           <div className="game-menu__panel-inner">
             <div className="game-menu__panel-head">
-              <span className="game-menu__panel-kicker mono">Menu</span>
-              <button type="button" className="game-menu__panel-close" aria-label="Close menu" onClick={close}>
+              <span className="game-menu__panel-kicker mono">{t("menu")}</span>
+              <button type="button" className="game-menu__panel-close" aria-label={t("closeMenu")} onClick={close}>
                 <X size={18} strokeWidth={2.2} />
               </button>
             </div>
@@ -97,7 +100,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
             <div className="game-menu__grid">
               {HUB_NAV_GROUPS.map((group) => (
                 <div key={group.id} className="game-menu__section">
-                  <span className="game-menu__section-label mono">{group.label}</span>
+                  <span className="game-menu__section-label mono">{t(`groups.${group.id}`)}</span>
                   {group.items.map((item) => (
                     <MenuLink
                       key={item.id}
@@ -111,7 +114,7 @@ export function GameMenu({ hidden = false, fixed = false }: { hidden?: boolean; 
               ))}
             </div>
 
-            <p className="game-menu__hint mono">M to toggle · Esc to close</p>
+            <p className="game-menu__hint mono">{t("menuHint")}</p>
           </div>
         </div>
       )}

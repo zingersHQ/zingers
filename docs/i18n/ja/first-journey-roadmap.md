@@ -8,7 +8,7 @@
 
 前回のAct 1パスからの制作メモ（参考／考古用に残す）。
 
-## Act 1フロー（旧パス — 廃止済み）
+## Act 1フロー（旧パス: 廃止済み）
 
 ```
 ファーストラン（シネマティック）→ ファーストデュエル：採用（5つのフォース、週替わり、ローキープレビュー）
@@ -27,7 +27,7 @@
 
 公式コピー：`lib/player-copy.ts` · ビジョン：`docs/design-vision.md` · 用語集：`docs/vocabulary.md`
 
-## P0 — 破られた約束 ✅
+## P0: 破られた約束 ✅
 
 | 項目 | 状況 | 備考 |
 |------|------|------|
@@ -37,45 +37,45 @@
 | ファイター間隔の拡大＋カメラ | ✅ | `MATCH_SPREAD = 4.5`、周回14／高さ6.2 |
 | ハブ戦でのシール／旗クリップ防止 | ✅ | 試合中はコンコード非表示、一時アリーナリング |
 
-## P1 — ナラティブ接着 ✅
+## P1: ナラティブ接着 ✅
 
 | 項目 | 状況 | 備考 |
 |------|------|------|
 | 新規プレイヤー向けFirstRunスキップの廃止 | ✅ | イントロ既読の自動マークを削除 |
-| イントロ音声スティング | ✅ | `lib/sound-gallery.ts` — ジェスチャー＋CTA |
+| イントロ音声スティング | ✅ | `lib/sound-gallery.ts`: ジェスチャー＋CTA |
 | コンコード着陸（3ビート） | ✅ | シール→ ヴォールトゲート→ 君のセッション |
 | ボディ進化に関する正直なコピー | ✅ | オンボーディングは進化ステップまで可視成長を保留 |
 
-## P2 — 磨き ✅
+## P2: 磨き ✅
 
 | 項目 | 状況 | 備考 |
 |------|------|------|
 | プレイヤー向けbout表記の全削除（アプリ内UI） | ✅ | ファーストジャーニー、FirstRun、ガントレット目標、シナリオ |
 | ハブ内のコンコード目標コーチ | ✅ | Act 1後に一度だけコーチマーク |
 | ガイド付き初回コンコード着陸 | ✅ | 初回実行でグラウンズゲートをスポットライト（「▶ ここから始める」）、他のゲートとシールを暗くし、近接感知のナッジと「そこへ連れて行って」歩行CTAを実行。プレイヤーがアイドル状態になるとゴールドにエスカレート（`guideWorld`/`guideUrgent`、`FIRST_GUIDE_WORLD`） |
-| 専用初戦ビネットカメラ | ✅ | `MatchView.cinematic` — よりタイトな周回 |
+| 専用初戦ビネットカメラ | ✅ | `MatchView.cinematic`: よりタイトな周回 |
 | サウンドギャラリー | ✅ | `lib/sound-gallery.ts`＋オンボーディングビートごとのスティング |
-| アイコングラフィー整合 | ✅ | `lib/iconography.ts` — アートディレクション・パレット＋フォースシギル |
-| シーズナルスターター回転 | ✅ | `firstDuelStarterKeys()` — フォースごとの週替わり選択 |
+| アイコングラフィー整合 | ✅ | `lib/iconography.ts`: アートディレクション・パレット＋フォースシギル |
+| シーズナルスターター回転 | ✅ | `firstDuelStarterKeys()`: フォースごとの週替わり選択 |
 | オンボーディング音声トグル表示 | ✅ | FirstRun＋FirstDuelオーバーレイ上の`OnboardingAudio` |
 
 ## ナラティブ＆シネマティック ✅
 
 | 項目 | 状況 | 備考 |
 |------|------|------|
-| ゲート／移動トランジション | ✅ | `TravelVeil` — ゲート移動と会場出入りのためのフォース着色ワイプ＋ネームカード（`travelWhoosh` SFX） |
-| トレーナーのサガ脊柱 | ✅ | `lib/lore/saga.ts` — トレーナーランクに連動する8章／4幕の弧、`ReaderThread`ハブマーカー（コードIDは変更なし） |
-| シーズンターンシネマティック | ✅ | `seasonTurnBeat()` — 新しい扉が開く際にキーパーが年代記を演じる（シーズン1回限り） |
-| ライバルシステム | ✅ | `lib/lore/rival.ts` — 再登場する名指しライバルトレーナー、永続的な直接対決、エスカレートする挑発、`RivalCard`＋デュエル前後のビート |
+| ゲート／移動トランジション | ✅ | `TravelVeil`: ゲート移動と会場出入りのためのフォース着色ワイプ＋ネームカード（`travelWhoosh` SFX） |
+| トレーナーのサガ脊柱 | ✅ | `lib/lore/saga.ts`: トレーナーランクに連動する8章／4幕の弧、`ReaderThread`ハブマーカー（コードIDは変更なし） |
+| シーズンターンシネマティック | ✅ | `seasonTurnBeat()`: 新しい扉が開く際にキーパーが年代記を演じる（シーズン1回限り） |
+| ライバルシステム | ✅ | `lib/lore/rival.ts`: 再登場する名指しライバルトレーナー、永続的な直接対決、エスカレートする挑発、`RivalCard`＋デュエル前後のビート |
 | 演出付きキャラクタービート | ✅ | `CharacterBeat`強化：レターボックス、浮遊するライブ3Dポートレート、行ごとのグロー脈動、タイプライター、パララックスフィールド（モーション低減対応） |
 
 サガ（君の物語）と年代記（世界の物語）は意図的に区別されている。サガは1つのトレーナーランク数で進行するため、プレイスタイルに関係なく進む。一方、年代記はシーズンクロックで回る。
 
 ## 意図的に変更しないもの
 
-- **コード／アナリティクスイベントキー** — 依然として`bout`（安定したサーバートラッキング）
-- **`useBout`フック名** — 内部用、プレイヤー向けラベルではない
-- **Docs/README/MCP** — 開発者向け、ゲーム内コピーパスには含まれない（正典については`docs/`同期を参照）
+- **コード／アナリティクスイベントキー**: 依然として`bout`（安定したサーバートラッキング）
+- **`useBout`フック名**: 内部用、プレイヤー向けラベルではない
+- **Docs/README/MCP**: 開発者向け、ゲーム内コピーパスには含まれない（正典については`docs/`同期を参照）
 
 ## サウンドトラック（場所ごとのプロシージャル）
 
@@ -95,26 +95,26 @@
 ## 用語
 
 - **プレイヤー表示**：duel、fight、ranked duel
-- **コード／アナリティクス**：bout（変更なし — 安定したイベントキー）
+- **コード／アナリティクス**：bout（変更なし: 安定したイベントキー）
 
 ## 主要ファイル
 
-- `lib/first-duel.ts` — スターター、回転、アリーナワールド、コンコード着陸コピー
-- `lib/lore/saga.ts` — トレーナーのサガ弧＋シーズンターンビート
-- `lib/lore/rival.ts` — 再登場ライバルID、記憶、挑発
-- `lib/lore/character-beats.ts` — チャンピオン＋キーパーの声ビート
-- `components/grounds/travel-veil.tsx` — シーン変更トランジション
-- `components/grounds/reader-thread.tsx` — サガハブマーカー（コードIDは変更なし）
-- `components/grounds/rival-card.tsx` — ライバルハブ存在
-- `components/grounds/character-beat.tsx` — 演出付きナラティブビート
-- `lib/ambience-scores.ts` — 場所ごとのプロシージャルサウンドトラック
-- `lib/player-copy.ts` — プレイヤー向け戦闘語彙
-- `lib/sound-gallery.ts` — オンボーディングスティングマップ
-- `lib/iconography.ts` — UIビジュアル正典
-- `components/intro/first-duel.tsx` — オンボーディングオーバーレイ
-- `components/intro/onboarding-audio.tsx` — 浮動ミュートコントロール
-- `components/shared/doctrine-dial.tsx` — 気質メーター／戦略読み取り
-- `components/grounds/grounds-screen.tsx` — シーケンス＋ワールド移動＋初回ガイド（ゲートフォーカス、アイドルエスカレーション、歩行ナッジ）
-- `components/grounds/world.tsx` — マッチステージング＋シネマティックカメラ、`guideWorld`/`guideUrgent`をコンコードへスレッド
-- `components/grounds/concord.tsx` — コンコードシーン、ヴォールトゲートのスポットライト／暗転処理（`firstStop`/`dimmed`/`urgent`）
-- `components/grounds/worlds.ts` — `FIRST_GUIDE_WORLD`（誘導先の初地域）
+- `lib/first-duel.ts`: スターター、回転、アリーナワールド、コンコード着陸コピー
+- `lib/lore/saga.ts`: トレーナーのサガ弧＋シーズンターンビート
+- `lib/lore/rival.ts`: 再登場ライバルID、記憶、挑発
+- `lib/lore/character-beats.ts`: チャンピオン＋キーパーの声ビート
+- `components/grounds/travel-veil.tsx`: シーン変更トランジション
+- `components/grounds/reader-thread.tsx`: サガハブマーカー（コードIDは変更なし）
+- `components/grounds/rival-card.tsx`: ライバルハブ存在
+- `components/grounds/character-beat.tsx`: 演出付きナラティブビート
+- `lib/ambience-scores.ts`: 場所ごとのプロシージャルサウンドトラック
+- `lib/player-copy.ts`: プレイヤー向け戦闘語彙
+- `lib/sound-gallery.ts`: オンボーディングスティングマップ
+- `lib/iconography.ts`: UIビジュアル正典
+- `components/intro/first-duel.tsx`: オンボーディングオーバーレイ
+- `components/intro/onboarding-audio.tsx`: 浮動ミュートコントロール
+- `components/shared/doctrine-dial.tsx`: 気質メーター／戦略読み取り
+- `components/grounds/grounds-screen.tsx`: シーケンス＋ワールド移動＋初回ガイド（ゲートフォーカス、アイドルエスカレーション、歩行ナッジ）
+- `components/grounds/world.tsx`: マッチステージング＋シネマティックカメラ、`guideWorld`/`guideUrgent`をコンコードへスレッド
+- `components/grounds/concord.tsx`: コンコードシーン、ヴォールトゲートのスポットライト／暗転処理（`firstStop`/`dimmed`/`urgent`）
+- `components/grounds/worlds.ts`: `FIRST_GUIDE_WORLD`（誘導先の初地域）

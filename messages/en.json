@@ -60,7 +60,9 @@
       "fighting": "Fighting",
       "growing": "Growing and collecting",
       "bigger-world": "The bigger world"
-    }
+    },
+    "bibleLink": "the Bible",
+    "pageDescription": "Every Zingers term in one plain sentence. For new players and anyone who wants a quick reminder."
   },
   "director": {
     "yourChampion": "Your champion",
@@ -124,7 +126,58 @@
       "designBlurb": "Flight-First loop, combat math, retention, arenas.",
       "product": "Product",
       "productBlurb": "Pitch decks, positioning, and the press kit."
-    }
+    },
+    "docsCanon": "Docs & Canon",
+    "shellBlurb": "Flight-First pitches, lore bible, agent protocol, and combat specs. One source of truth for humans and generators.",
+    "pressKit": "Press kit",
+    "visualGallery": "Visual gallery",
+    "trainAgent": "Train an agent",
+    "playGame": "← Play the game",
+    "pages": {
+      "bible": "The Zingers Bible",
+      "bible_cosmology": "Cosmology",
+      "bible_forces": "The Five Forces",
+      "bible_champions": "Champions",
+      "bible_regions": "Regions",
+      "bible_seasons": "Seasons",
+      "bible_collection": "Collection",
+      "bible_economy": "Economy",
+      "bible_ascent": "Flight",
+      "bible_art_direction": "Art direction",
+      "bible_glossary": "Glossary",
+      "protocol_agents": "Agent protocol",
+      "protocol_mcp": "MCP server",
+      "design": "Documentation index",
+      "design_vision": "Design vision",
+      "design_vocabulary": "Vocabulary",
+      "design_combat": "Combat design",
+      "design_game_spec": "Game spec",
+      "design_flight_first": "Flight-First plan",
+      "design_two_doors": "Two doors",
+      "design_essence": "Essence",
+      "design_long_game": "Long game",
+      "design_first_journey": "First journey (historical)",
+      "product_onepager": "One-pager",
+      "product_twopager": "Two-pager",
+      "product_story": "Story one-pager",
+      "product_technical": "Technical one-pager",
+      "product_ai_crypto": "AI & crypto one-pager"
+    },
+    "docsTitle": "Docs",
+    "docsDescription": "zingers.org: bible, agent protocol, combat design, and product specs.",
+    "notFound": "Not found",
+    "publicCanon": "PUBLIC CANON",
+    "homeTitle": "Zingers documentation",
+    "startWith": "Start with {title} →",
+    "alsoOnSite": "Also on this site",
+    "pressBlurb": "Live game-model renders, PNG seeds, story beats, and prompts for press and creative partners.",
+    "galleryBlurb": "Forces, First Minds, and founding regions as live game renders.",
+    "agentPlayground": "Agent playground",
+    "agentBlurb": "Validate a bring-your-own endpoint and jump into the arena.",
+    "whitepaper": "Interactive whitepaper",
+    "whitepaperBlurb": "Product narrative with live diagrams and type wheel.",
+    "navigation": "Navigation",
+    "homeLead": "The encyclopedia, information protocol, and design specs behind <brand>Zingers</brand>. Markdown in docs/ is the source; this site is the browsable view agents and humans share."
   },
   "status": {
     "exposed": "Exposed",
@@ -188,7 +241,21 @@
     "finalTitle": "The sky is waiting.",
     "finalSub": "Raise a mind. Make it legend.",
     "lore": "Lore",
-    "scrollShort": "scroll"
+    "scrollShort": "scroll",
+    "regions": {
+      "colosseum": {
+        "name": "The Obsidian Colosseum",
+        "blurb": "The oldest standing arena, a mock courtroom where minds argue assigned stances to a jury."
+      },
+      "wastes": {
+        "name": "The Ember Wastes",
+        "blurb": "A cracked, burning flat where the ground runs hot. Aggression and noise thrive; the patient overheat."
+      },
+      "garden": {
+        "name": "The Void Garden",
+        "blurb": "A slow, impossible garden grown from unfinished ideas. Reframes bloom; rigid proofs wilt."
+      }
+    }
   },
   "mobile": {
     "splashTitle": "Take flight.",
@@ -342,5 +409,79 @@
     "them": "THEM",
     "themLower": "them",
     "they": "THEY"
+  },
+  "nav": {
+    "display": "Display",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menu": "Menu",
+    "menuHint": "M to toggle · Esc to close",
+    "groups": {
+      "play": "Play",
+      "you": "You",
+      "learn": "Learn",
+      "build": "Build"
+    },
+    "items": {
+      "play": {
+        "label": "Play",
+        "short": "Play",
+        "blurb": "Explore the world: train, fight, and play its games."
+      },
+      "collection": {
+        "label": "Collection",
+        "short": "Dex",
+        "blurb": "Your champion dex. Cards that evolve as you fight."
+      },
+      "rank": {
+        "label": "Rank",
+        "short": "Rank",
+        "blurb": "Season standings. Where your rating lives."
+      },
+      "how": {
+        "label": "How it works",
+        "short": "Guide",
+        "blurb": "Start here if you're new."
+      },
+      "bible": {
+        "label": "Gallery",
+        "short": "Gallery",
+        "blurb": "Visual canon: forces, minds, regions."
+      },
+      "catalogue": {
+        "label": "Catalogue",
+        "short": "Cat",
+        "blurb": "20 agents emulated from the real systems: every type, tier, and clan."
+      },
+      "org": {
+        "label": "Docs",
+        "short": "Docs",
+        "blurb": "zingers.org: bible, protocol, design specs."
+      },
+      "readme": {
+        "label": "Whitepaper",
+        "short": "Paper",
+        "blurb": "The full design doc."
+      },
+      "agents": {
+        "label": "Train AI",
+        "short": "Train",
+        "blurb": "Plug in your own AI agent and deploy it to the standings or over MCP."
+      }
+    },
+    "controls": "Controls",
+    "settings": "Settings",
+    "navigate": "Navigate",
+    "navigation": "Navigation"
+  },
+  "chrome": {
+    "lightMode": "Switch to light mode",
+    "darkMode": "Switch to dark mode",
+    "light": "Light",
+    "dark": "Dark",
+    "muteAmbience": "Mute ambience",
+    "playAmbience": "Play ambience",
+    "scoreOn": "Score on: changes per region, venue, and combat",
+    "scoreMuted": "Score muted"
   }
 }

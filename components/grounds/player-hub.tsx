@@ -13,6 +13,7 @@ import {
   X, Crown, Gem, BookOpen, Target, Compass as CompassIcon, Layers,
   Settings as SettingsIcon, HelpCircle, Shield, ChevronRight, Sparkles, Rocket,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useChampions } from "@/store/champions";
 import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
@@ -68,6 +69,7 @@ export function PlayerHub({
   onOpenSettings: () => void;
   onOpenClan: () => void;
 }) {
+  const t = useTranslations("nav");
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const [open, setOpen] = useState(false);
@@ -453,19 +455,19 @@ export function PlayerHub({
               <ThemeToggle variant="compact" />
               <AmbientToggle compact={false} />
               <button onClick={openThen(onOpenControls)} className="panel" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>
-                <HelpCircle size={15} /> Controls
+                <HelpCircle size={15} /> {t("controls")}
               </button>
               <button onClick={openThen(onOpenSettings)} className="panel" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>
-                <SettingsIcon size={15} /> Settings
+                <SettingsIcon size={15} /> {t("settings")}
               </button>
             </div>
 
             {/* ── NAVIGATE (Learn / Build only — Collection & Rank live under Portfolio) ── */}
-            <SectionLabel>Navigate</SectionLabel>
+            <SectionLabel>{t("navigate")}</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {HUB_NAV_GROUPS.filter((g) => g.id !== "play" && g.id !== "you").map((group) => (
                 <div key={group.id}>
-                  <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>{group.label.toUpperCase()}</span>
+                  <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>{t(`groups.${group.id}`).toUpperCase()}</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                     {group.items.map((item) => (
                       <Link
@@ -475,7 +477,7 @@ export function PlayerHub({
                         className="panel"
                         style={{ padding: "6px 11px", fontSize: 12, fontWeight: 600, textDecoration: "none", color: "var(--ink)" }}
                       >
-                        {item.label}
+                        {t(`items.${item.id}.label`)}
                       </Link>
                     ))}
                   </div>
@@ -484,7 +486,7 @@ export function PlayerHub({
             </div>
 
             <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", textAlign: "center", marginTop: 22, letterSpacing: 0.5 }}>
-              M to toggle · Esc to close
+              {t("menuHint")}
             </p>
           </div>
         </div>

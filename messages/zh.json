@@ -60,7 +60,9 @@
       "fighting": "战斗",
       "growing": "成长与收集",
       "bigger-world": "更大的世界"
-    }
+    },
+    "bibleLink": "圣典",
+    "pageDescription": "每个津格斯术语，一句说清。给新玩家，也给想快速回顾的人。"
   },
   "director": {
     "yourChampion": "你的冠军",
@@ -124,7 +126,58 @@
       "designBlurb": "飞行优先循环、战斗数值、留存、竞技场。",
       "product": "产品",
       "productBlurb": "推介、定位与媒体资料。"
-    }
+    },
+    "docsCanon": "文档与正典",
+    "shellBlurb": "Flight-First 提案、世界观圣典、特工协议与战斗规格。人类与生成器共用的单一事实来源。",
+    "pressKit": "媒体资料包",
+    "visualGallery": "视觉画廊",
+    "trainAgent": "训练特工",
+    "playGame": "← 去玩游戏",
+    "pages": {
+      "bible": "津格斯圣典",
+      "bible_cosmology": "宇宙论",
+      "bible_forces": "五大原力",
+      "bible_champions": "冠军",
+      "bible_regions": "区域",
+      "bible_seasons": "赛季",
+      "bible_collection": "收藏",
+      "bible_economy": "经济",
+      "bible_ascent": "飞行",
+      "bible_art_direction": "美术方向",
+      "bible_glossary": "词汇表",
+      "protocol_agents": "特工协议",
+      "protocol_mcp": "MCP 服务器",
+      "design": "文档索引",
+      "design_vision": "设计愿景",
+      "design_vocabulary": "词汇规范",
+      "design_combat": "战斗设计",
+      "design_game_spec": "游戏规格",
+      "design_flight_first": "Flight-First 计划",
+      "design_two_doors": "两扇门",
+      "design_essence": "本质",
+      "design_long_game": "长线游戏",
+      "design_first_journey": "初次旅程（历史）",
+      "product_onepager": "一页纸",
+      "product_twopager": "两页纸",
+      "product_story": "故事一页纸",
+      "product_technical": "技术一页纸",
+      "product_ai_crypto": "AI 与加密一页纸"
+    },
+    "docsTitle": "文档",
+    "docsDescription": "zingers.org：圣典、特工协议、战斗设计与产品规格。",
+    "notFound": "未找到",
+    "publicCanon": "公开正典",
+    "homeTitle": "津格斯文档",
+    "startWith": "从 {title} 开始 →",
+    "alsoOnSite": "本站还有",
+    "pressBlurb": "实机模型渲染、PNG 种子、故事节拍与给媒体和创意伙伴的提示词。",
+    "galleryBlurb": "原力、初生心智与创始区域的实机渲染。",
+    "agentPlayground": "特工试验场",
+    "agentBlurb": "验证自带端点并进入竞技场。",
+    "whitepaper": "互动白皮书",
+    "whitepaperBlurb": "带实时图表与类型轮盘的产品叙事。",
+    "navigation": "导航",
+    "homeLead": "支撑 <brand>Zingers</brand> 的百科、信息协议与设计规格。docs/ 中的 Markdown 是源；本站是特工与人类共用的可浏览视图。"
   },
   "status": {
     "exposed": "破绽",
@@ -188,7 +241,21 @@
     "finalTitle": "天空在等你。",
     "finalSub": "培养一颗心灵。把它炼成传说。",
     "lore": "传说",
-    "scrollShort": "下滑"
+    "scrollShort": "下滑",
+    "regions": {
+      "colosseum": {
+        "name": "黑曜石竞技场",
+        "blurb": "现存最古老的竞技场，一座模拟法庭：心智就指派立场向陪审团争辩。"
+      },
+      "wastes": {
+        "name": "余烬荒原",
+        "blurb": "龟裂灼热的平原。攻击与喧嚣在此得势；耐心者容易过热。"
+      },
+      "garden": {
+        "name": "虚空花园",
+        "blurb": "由未完成的念头长成的缓慢不可能之园。重构绽放；僵硬证明枯萎。"
+      }
+    }
   },
   "mobile": {
     "splashTitle": "起飞。",
@@ -342,5 +409,79 @@
     "them": "对手",
     "themLower": "对手",
     "they": "对手"
+  },
+  "nav": {
+    "display": "显示",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "menu": "菜单",
+    "menuHint": "按 M 开关 · Esc 关闭",
+    "groups": {
+      "play": "开始",
+      "you": "你",
+      "learn": "了解",
+      "build": "构建"
+    },
+    "items": {
+      "play": {
+        "label": "开始",
+        "short": "开始",
+        "blurb": "探索世界：训练、战斗，游玩其中的模式。"
+      },
+      "collection": {
+        "label": "收藏",
+        "short": "图鉴",
+        "blurb": "你的冠军图鉴。卡片随战斗进化。"
+      },
+      "rank": {
+        "label": "排名",
+        "short": "排名",
+        "blurb": "赛季积分榜。你的评分所在。"
+      },
+      "how": {
+        "label": "玩法说明",
+        "short": "指南",
+        "blurb": "新手从这里开始。"
+      },
+      "bible": {
+        "label": "画廊",
+        "short": "画廊",
+        "blurb": "视觉正典：原力、心智、区域。"
+      },
+      "catalogue": {
+        "label": "名录",
+        "short": "名录",
+        "blurb": "20 个源自真实系统的特工：每种类型、层级与氏族。"
+      },
+      "org": {
+        "label": "文档",
+        "short": "文档",
+        "blurb": "zingers.org：圣典、协议、设计。"
+      },
+      "readme": {
+        "label": "白皮书",
+        "short": "白皮书",
+        "blurb": "完整设计文档。"
+      },
+      "agents": {
+        "label": "训练 AI",
+        "short": "训练",
+        "blurb": "接入你自己的 AI 特工，部署到积分榜或通过 MCP。"
+      }
+    },
+    "controls": "操作",
+    "settings": "设置",
+    "navigate": "导航",
+    "navigation": "导航"
+  },
+  "chrome": {
+    "lightMode": "切换到浅色模式",
+    "darkMode": "切换到深色模式",
+    "light": "浅色",
+    "dark": "深色",
+    "muteAmbience": "静音氛围音乐",
+    "playAmbience": "播放氛围音乐",
+    "scoreOn": "配乐开启：随区域、场所与战斗变化",
+    "scoreMuted": "配乐已静音"
   }
 }

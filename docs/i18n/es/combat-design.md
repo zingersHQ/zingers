@@ -145,7 +145,7 @@ Presupuesto de estadísticas ≈ 300 cada una (equilibrado). Cada una tiene 4 mo
 | Infierno | CAO | 26 | +30% si el oponente está **Desequilibrado** |
 
 ### PARADOX: Contrario (LÓGICA)
-*Una mosca socrática. Desmonta argumentos cazando contradicciones y premisas falsas — no cerrando pruebas.*
+*Una mosca socrática. Desmonta argumentos cazando contradicciones y premisas falsas: no cerrando pruebas.*
 `LOG 88 · CMP 58 · CRE 52 · CAO 48 · RET 54`
 
 | Movimiento | Stat | Base | Efecto |

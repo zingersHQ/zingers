@@ -8,7 +8,7 @@ tells translators and draft scripts how to treat each signature term in
 
 1. **Champion names** (AXIOM, VOX, GLITCH…): always **borrow** (keep Latin spelling).
 2. **Code ids / URLs / move ids**: never translate.
-3. **No spaced em dash** ` — ` in player-readable text in any locale.
+3. **No spaced em dash** `: ` in player-readable text in any locale.
 4. **Never** product-noun calques of bout / ELO / ladder. Use fight·battle·duel /
    standings·rank·board·rating (or the locale equivalents below).
 5. **Gloss on first use** for flavor-layer lore names, same as English.
@@ -36,7 +36,7 @@ tells translators and draft scripts how to treat each signature term in
 | Crowns | Translate | Coronas | 王冠币 | Короны | クラウン |
 | the Long Vault | Borrow + gloss | the Long Vault | 长拱库 | Long Vault | ロング・ヴォールト |
 | the Hum | Borrow + gloss | the Hum | 嗡鸣 | Hum | ハム |
-| the Grounds / Concord | Lore borrow; UI says world / Hub | — | — | — | — |
+| the Grounds / Concord | Lore borrow; UI says world / Hub |: |: |: |: |
 | Strategy / temperament meters | Translate | estrategia / temperamento | 策略 / 性情 | стратегия / темперамент | 戦略 / 気質 |
 | standings / rank / board / rating | Translate; never ELO/ladder | clasificación / rango | 排名 / 积分榜 | рейтинг / таблица | 順位 / ランキング |
 | fight / battle / duel | Translate; never bout | pelea / batalla / duelo | 战斗 / 对决 | бой / дуэль | 戦い / デュエル |

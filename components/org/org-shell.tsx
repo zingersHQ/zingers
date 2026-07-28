@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/lib/brand";
 import { isOrgHost, orgHref } from "@/lib/org/hosts";
 import { ORG_SECTIONS, orgPagesInSection } from "@/lib/org/registry";
+import { orgPageMessageKey } from "@/lib/i18n/org-page-key";
 
 export async function OrgShell({
   slug,
@@ -33,11 +34,9 @@ export async function OrgShell({
         <div className="org-sidebar__head">
           <Link href={href("")} className="org-sidebar__brand">
             <span className="org-sidebar__host mono">{orgHost}</span>
-            <span className="org-sidebar__title">Docs &amp; Canon</span>
+            <span className="org-sidebar__title">{t("docsCanon")}</span>
           </Link>
-          <p className="org-sidebar__blurb">
-            Flight-First pitches, lore bible, agent protocol, and combat specs. One source of truth for humans and generators.
-          </p>
+          <p className="org-sidebar__blurb">{t("shellBlurb")}</p>
         </div>
 
         <nav className="org-sidebar__nav">
@@ -50,10 +49,11 @@ export async function OrgShell({
                 <ul className="org-sidebar__list">
                   {pages.map((page) => {
                     const active = slug === page.slug;
+                    const title = t(`pages.${orgPageMessageKey(page.slug)}`);
                     return (
                       <li key={page.slug}>
                         <Link href={href(page.slug)} className={`org-sidebar__link${active ? " is-on" : ""}`}>
-                          {page.title}
+                          {title}
                         </Link>
                       </li>
                     );
@@ -69,19 +69,19 @@ export async function OrgShell({
             href={pressHref}
             className={`org-sidebar__cta btn${activeExtra === "press" ? " is-on" : ""}`}
           >
-            Press kit
+            {t("pressKit")}
           </Link>
           <Link
             href={galleryHref}
             className={`org-sidebar__cta btn${activeExtra === "gallery" ? " is-on" : ""}`}
           >
-            Visual gallery
+            {t("visualGallery")}
           </Link>
           <a href={`${BRAND.site}/agents`} className="org-sidebar__cta btn">
-            Train an agent
+            {t("trainAgent")}
           </a>
           <a href={BRAND.site} className="org-sidebar__back mono">
-            ← Play the game
+            {t("playGame")}
           </a>
         </div>
       </aside>

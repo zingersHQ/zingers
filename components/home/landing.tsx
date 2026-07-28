@@ -229,8 +229,8 @@ export function Landing() {
                   <RegionPoster biome={w.biome} accent={w.force.hex} />
                   <div className="lp-place__fade" />
                 </div>
-                <h3 className="lp-place__name">{w.name}</h3>
-                <p className="lp-place__line">{w.blurb}</p>
+                <h3 className="lp-place__name">{t(`regions.${w.id}.name`)}</h3>
+                <p className="lp-place__line">{t(`regions.${w.id}.blurb`)}</p>
               </Reveal>
             ))}
           </div>

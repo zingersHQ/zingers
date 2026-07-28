@@ -60,7 +60,9 @@
       "fighting": "戦い",
       "growing": "成長と収集",
       "bigger-world": "より大きな世界"
-    }
+    },
+    "bibleLink": "バイブル",
+    "pageDescription": "Zingersの用語をそれぞれ一文で。新規プレイヤーと、さっと確認したい人向け。"
   },
   "director": {
     "yourChampion": "あなたのチャンピオン",
@@ -124,7 +126,58 @@
       "designBlurb": "Flight-First ループ、戦闘数値、継続、アリーナ。",
       "product": "プロダクト",
       "productBlurb": "ピッチ、ポジション、プレスキット。"
-    }
+    },
+    "docsCanon": "ドキュメントと正典",
+    "shellBlurb": "Flight-Firstのピッチ、ロアバイブル、エージェントプロトコル、戦闘仕様。人と生成器のための単一の真実源。",
+    "pressKit": "プレスキット",
+    "visualGallery": "ビジュアルギャラリー",
+    "trainAgent": "エージェントを訓練",
+    "playGame": "← ゲームを遊ぶ",
+    "pages": {
+      "bible": "ジンガーズ・バイブル",
+      "bible_cosmology": "宇宙論",
+      "bible_forces": "五つのフォース",
+      "bible_champions": "チャンピオン",
+      "bible_regions": "地域",
+      "bible_seasons": "シーズン",
+      "bible_collection": "コレクション",
+      "bible_economy": "経済",
+      "bible_ascent": "フライト",
+      "bible_art_direction": "アートディレクション",
+      "bible_glossary": "用語集",
+      "protocol_agents": "エージェントプロトコル",
+      "protocol_mcp": "MCPサーバー",
+      "design": "ドキュメント索引",
+      "design_vision": "デザインビジョン",
+      "design_vocabulary": "語彙",
+      "design_combat": "戦闘デザイン",
+      "design_game_spec": "ゲーム仕様",
+      "design_flight_first": "Flight-First計画",
+      "design_two_doors": "二つの扉",
+      "design_essence": "本質",
+      "design_long_game": "長期ゲーム",
+      "design_first_journey": "最初の旅（歴史）",
+      "product_onepager": "ワンペーパー",
+      "product_twopager": "ツーペーパー",
+      "product_story": "ストーリー（ワンペーパー）",
+      "product_technical": "技術（ワンペーパー）",
+      "product_ai_crypto": "AIと暗号（ワンペーパー）"
+    },
+    "docsTitle": "ドキュメント",
+    "docsDescription": "zingers.org：バイブル、エージェントプロトコル、戦闘デザイン、プロダクト仕様。",
+    "notFound": "見つかりません",
+    "publicCanon": "公開正典",
+    "homeTitle": "Zingersドキュメント",
+    "startWith": "{title} から始める →",
+    "alsoOnSite": "このサイトのほか",
+    "pressBlurb": "実機モデルのレンダー、PNGシード、ストーリービート、プレス／クリエイティブ向けプロンプト。",
+    "galleryBlurb": "フォース、初生マインド、創設地域の実機レンダー。",
+    "agentPlayground": "エージェント遊び場",
+    "agentBlurb": "自前エンドポイントを検証してアリーナへ。",
+    "whitepaper": "インタラクティブ・ホワイトペーパー",
+    "whitepaperBlurb": "ライブ図解とタイプホイール付きのプロダクト物語。",
+    "navigation": "ナビゲーション",
+    "homeLead": "<brand>Zingers</brand> の百科・情報プロトコル・設計仕様。docs/ のMarkdownがソース。このサイトはエージェントと人間が共有する閲覧ビューです。"
   },
   "status": {
     "exposed": "露出",
@@ -188,7 +241,21 @@
     "finalTitle": "空が待っている。",
     "finalSub": "心を育てろ。伝説にしろ。",
     "lore": "伝承",
-    "scrollShort": "スクロール"
+    "scrollShort": "スクロール",
+    "regions": {
+      "colosseum": {
+        "name": "黒曜石コロッセオ",
+        "blurb": "最古の現存アリーナ。割り当てられた立場を陪審の前で論じる模擬法廷。"
+      },
+      "wastes": {
+        "name": "残り火の荒野",
+        "blurb": "ひび割れ灼熱の平原。攻撃と喧騒が勢いづき、忍耐は過熱する。"
+      },
+      "garden": {
+        "name": "虚空の庭",
+        "blurb": "未完の着想から育つ、遅く不可能な庭。再構成が咲き、硬い証明は萎れる。"
+      }
+    }
   },
   "mobile": {
     "splashTitle": "飛び立て。",
@@ -342,5 +409,79 @@
     "them": "相手",
     "themLower": "相手",
     "they": "相手"
+  },
+  "nav": {
+    "display": "表示",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "menu": "メニュー",
+    "menuHint": "Mで開閉 · Escで閉じる",
+    "groups": {
+      "play": "プレイ",
+      "you": "あなた",
+      "learn": "学ぶ",
+      "build": "作る"
+    },
+    "items": {
+      "play": {
+        "label": "プレイ",
+        "short": "プレイ",
+        "blurb": "世界を探索：育て、戦い、モードを遊ぶ。"
+      },
+      "collection": {
+        "label": "コレクション",
+        "short": "図鑑",
+        "blurb": "チャンピオン図鑑。戦うほどカードが進化する。"
+      },
+      "rank": {
+        "label": "順位",
+        "short": "順位",
+        "blurb": "シーズン順位表。レーティングの居場所。"
+      },
+      "how": {
+        "label": "遊び方",
+        "short": "ガイド",
+        "blurb": "初めてならここから。"
+      },
+      "bible": {
+        "label": "ギャラリー",
+        "short": "画廊",
+        "blurb": "ビジュアル正典：フォース、マインド、地域。"
+      },
+      "catalogue": {
+        "label": "カタログ",
+        "short": "カタ",
+        "blurb": "実在システムから模した20エージェント：タイプ・ティア・クラン。"
+      },
+      "org": {
+        "label": "ドキュメント",
+        "short": "Docs",
+        "blurb": "zingers.org：バイブル、プロトコル、設計。"
+      },
+      "readme": {
+        "label": "ホワイトペーパー",
+        "short": "文書",
+        "blurb": "設計ドキュメント全文。"
+      },
+      "agents": {
+        "label": "AIを訓練",
+        "short": "訓練",
+        "blurb": "自分のAIエージェントを接続し、順位表やMCPへ配備。"
+      }
+    },
+    "controls": "操作",
+    "settings": "設定",
+    "navigate": "移動",
+    "navigation": "ナビゲーション"
+  },
+  "chrome": {
+    "lightMode": "ライトモードに切り替え",
+    "darkMode": "ダークモードに切り替え",
+    "light": "ライト",
+    "dark": "ダーク",
+    "muteAmbience": "環境音をミュート",
+    "playAmbience": "環境音を再生",
+    "scoreOn": "スコアON：地域・会場・戦闘で変化",
+    "scoreMuted": "スコアミュート中"
   }
 }

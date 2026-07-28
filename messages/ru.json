@@ -60,7 +60,9 @@
       "fighting": "Бой",
       "growing": "Рост и коллекция",
       "bigger-world": "Большой мир"
-    }
+    },
+    "bibleLink": "Библию",
+    "pageDescription": "Каждый термин Zingers одной простой фразой. Для новичков и тех, кому нужно быстро освежить."
   },
   "director": {
     "yourChampion": "Твой чемпион",
@@ -124,7 +126,58 @@
       "designBlurb": "Цикл Flight-First, боевая математика, удержание, арены.",
       "product": "Продукт",
       "productBlurb": "Питчи, позиционирование и пресс-кит."
-    }
+    },
+    "docsCanon": "Документы и канон",
+    "shellBlurb": "Пичи Flight-First, лор-библия, протокол агентов и боевые спеки. Единый источник правды для людей и генераторов.",
+    "pressKit": "Пресс-кит",
+    "visualGallery": "Визуальная галерея",
+    "trainAgent": "Тренировать агента",
+    "playGame": "← Играть",
+    "pages": {
+      "bible": "Библия Zingers",
+      "bible_cosmology": "Космология",
+      "bible_forces": "Пять Сил",
+      "bible_champions": "Чемпионы",
+      "bible_regions": "Регионы",
+      "bible_seasons": "Сезоны",
+      "bible_collection": "Коллекция",
+      "bible_economy": "Экономика",
+      "bible_ascent": "Полёт",
+      "bible_art_direction": "Арт-направление",
+      "bible_glossary": "Глоссарий",
+      "protocol_agents": "Протокол агентов",
+      "protocol_mcp": "MCP-сервер",
+      "design": "Индекс документации",
+      "design_vision": "Дизайн-видение",
+      "design_vocabulary": "Словарь",
+      "design_combat": "Дизайн боя",
+      "design_game_spec": "Спецификация игры",
+      "design_flight_first": "План Flight-First",
+      "design_two_doors": "Две двери",
+      "design_essence": "Суть",
+      "design_long_game": "Долгая игра",
+      "design_first_journey": "Первое путешествие (история)",
+      "product_onepager": "One-pager",
+      "product_twopager": "Two-pager",
+      "product_story": "Сюжет (one-pager)",
+      "product_technical": "Технический (one-pager)",
+      "product_ai_crypto": "ИИ и крипто (one-pager)"
+    },
+    "docsTitle": "Документы",
+    "docsDescription": "zingers.org: библия, протокол агентов, дизайн боя и продуктовые спеки.",
+    "notFound": "Не найдено",
+    "publicCanon": "ПУБЛИЧНЫЙ КАНОН",
+    "homeTitle": "Документация Zingers",
+    "startWith": "Начни с {title} →",
+    "alsoOnSite": "Также на этом сайте",
+    "pressBlurb": "Рендеры игровой модели, PNG-сиды, сюжетные биты и промпты для прессы и креатива.",
+    "galleryBlurb": "Силы, первые разумы и основополагающие регионы как живые игровые рендеры.",
+    "agentPlayground": "Песочница агентов",
+    "agentBlurb": "Проверь свой endpoint и выйди на арену.",
+    "whitepaper": "Интерактивный whitepaper",
+    "whitepaperBlurb": "Продуктовый нарратив с живыми схемами и колесом типов.",
+    "navigation": "Навигация",
+    "homeLead": "Энциклопедия, информационный протокол и дизайн-спеки за <brand>Zingers</brand>. Markdown в docs/ это источник; этот сайт общая читаемая витрина для агентов и людей."
   },
   "status": {
     "exposed": "Раскрыт",
@@ -188,7 +241,21 @@
     "finalTitle": "Небо ждёт.",
     "finalSub": "Вырасти ум. Сделай его легендой.",
     "lore": "Лор",
-    "scrollShort": "листай"
+    "scrollShort": "листай",
+    "regions": {
+      "colosseum": {
+        "name": "Обсидиановый Колизей",
+        "blurb": "Древнейшая арена: учебный зал суда, где разумы спорят назначенные позиции перед жюри."
+      },
+      "wastes": {
+        "name": "Пепельные Пустоши",
+        "blurb": "Треснувшая горящая равнина. Агрессия и шум здесь в силе; терпеливые перегреваются."
+      },
+      "garden": {
+        "name": "Сад Пустоты",
+        "blurb": "Медленный невозможный сад из незаконченных идей. Расцветают переосмысления; вянут жёсткие доказательства."
+      }
+    }
   },
   "mobile": {
     "splashTitle": "Взлетай.",
@@ -342,5 +409,79 @@
     "them": "ИХ",
     "themLower": "них",
     "they": "ОНИ"
+  },
+  "nav": {
+    "display": "Экран",
+    "openMenu": "Открыть меню",
+    "closeMenu": "Закрыть меню",
+    "menu": "Меню",
+    "menuHint": "M чтобы открыть · Esc чтобы закрыть",
+    "groups": {
+      "play": "Играть",
+      "you": "Ты",
+      "learn": "Узнать",
+      "build": "Собрать"
+    },
+    "items": {
+      "play": {
+        "label": "Играть",
+        "short": "Играть",
+        "blurb": "Исследуй мир: тренируй, сражайся и играй в его режимы."
+      },
+      "collection": {
+        "label": "Коллекция",
+        "short": "Декс",
+        "blurb": "Твой декс чемпионов. Карты эволюционируют в боях."
+      },
+      "rank": {
+        "label": "Ранг",
+        "short": "Ранг",
+        "blurb": "Сезонная таблица. Здесь живёт твой рейтинг."
+      },
+      "how": {
+        "label": "Как это работает",
+        "short": "Гид",
+        "blurb": "Начни здесь, если ты новичок."
+      },
+      "bible": {
+        "label": "Галерея",
+        "short": "Галерея",
+        "blurb": "Визуальный канон: силы, разумы, регионы."
+      },
+      "catalogue": {
+        "label": "Каталог",
+        "short": "Кат",
+        "blurb": "20 агентов по мотивам реальных систем: каждый тип, ярус и клан."
+      },
+      "org": {
+        "label": "Доки",
+        "short": "Доки",
+        "blurb": "zingers.org: библия, протокол, дизайн."
+      },
+      "readme": {
+        "label": "Whitepaper",
+        "short": "Док",
+        "blurb": "Полный дизайн-документ."
+      },
+      "agents": {
+        "label": "Тренировать ИИ",
+        "short": "ИИ",
+        "blurb": "Подключи своего ИИ-агента и выведи его в таблицу или через MCP."
+      }
+    },
+    "controls": "Управление",
+    "settings": "Настройки",
+    "navigate": "Навигация",
+    "navigation": "Навигация"
+  },
+  "chrome": {
+    "lightMode": "Включить светлую тему",
+    "darkMode": "Включить тёмную тему",
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "muteAmbience": "Выключить атмосферу",
+    "playAmbience": "Включить атмосферу",
+    "scoreOn": "Саундтрек включён: меняется по региону, месту и бою",
+    "scoreMuted": "Саундтрек выключен"
   }
 }

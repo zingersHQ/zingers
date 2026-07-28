@@ -12,13 +12,14 @@ Run once per locale (`es`, `zh`, `ru`, `ja`) before marking that locale GA.
 - [ ] Intro / landing hero reads naturally (no English leftovers in chrome).
 - [ ] Hub Settings labels (Audio / Camera / Comfort / Language).
 - [ ] Director card: primary CTA + detail in locale.
-- [ ] `/glossary` group titles and definitions in locale.
+- [ ] `/glossary` group titles, definitions, and bible link in locale.
+- [ ] Site nav: Play / How it works / Display / theme toggle in locale.
+- [ ] Org shell (zingers.org): sidebar titles + CTAs in locale; bible chapter body from `docs/i18n/{locale}/`.
+- [ ] Landing region cards: names + blurbs in locale.
 - [ ] Flight HUD: plain progress / pause / resume in locale where extracted.
 - [ ] Mock Daily fight: topic localized; banter bars in locale (or EN fallback only if bank missing).
 - [ ] Live fight (house brain): trash-talk bars in locale; length feels phone-readable.
 - [ ] Imprint: reply language matches locale (when live).
-- [ ] Guardian: dialogue in locale; **secret word still English** when revealed.
-- [ ] zingers.org: language switcher; one bible chapter loads from `docs/i18n/{locale}/` (or EN fallback).
 
 ## Policy
 
@@ -30,3 +31,4 @@ Run once per locale (`es`, `zh`, `ru`, `ja`) before marking that locale GA.
 ## Notes
 
 BYO agents may still emit English lines; house brain honors `lang`.
+Brand tagline in the site header may stay English as the product lockup.

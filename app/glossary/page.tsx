@@ -3,10 +3,13 @@ import { pageTitle } from "@/lib/brand";
 import { orgCanonical } from "@/lib/org/hosts";
 import { getGlossary } from "@/lib/lore/glossary";
 
-export const metadata = {
-  title: pageTitle("Glossary"),
-  description: "Every Zingers term in one plain sentence. For new players and anyone who wants a quick reminder.",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("glossary");
+  return {
+    title: pageTitle(t("pageTitle")),
+    description: t("pageDescription"),
+  };
+}
 
 export default async function GlossaryPage() {
   const locale = await getLocale();
@@ -24,7 +27,7 @@ export default async function GlossaryPage() {
       <p style={{ maxWidth: 720, color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: "0 0 30px" }}>
         {t("pageLead")}{" "}
         <a href={orgCanonical("bible")} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
-          the Bible
+          {t("bibleLink")}
         </a>
         .
       </p>

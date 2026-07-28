@@ -12,7 +12,7 @@ Nuestra audiencia es global. Muchos jugadores leen inglés como segundo idioma y
 2. **Una idea, una palabra.** Sin proliferación de sinónimos. Elige el término único y úsalo en todas partes.
 3. **Prefiere la palabra sencilla cuando la elegante no aporta nada.** Mantén un término acuñado solo cuando lleva un sabor real que una palabra sencilla perdería. De lo contrario, usa la palabra sencilla.
 
-## Cómo suena la guía (solo para escritores — nunca una afirmación del producto)
+## Cómo suena la guía (solo para escritores: nunca una afirmación del producto)
 
 Cuando el texto le indica al Entrenador qué hacer a continuación (Director, resultado de Flight, puertas de bloqueo, entrenadores del Hub), escríbelo **como el campeón**, en primera persona: nosotros / nos / quédate conmigo. No una señal de misión (`NEXT`, interfaz de Compass). Estándar de oro:
 

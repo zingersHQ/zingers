@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Ambience } from "@/lib/ambience";
 import { registerAmbience, registerAmbienceArm } from "@/lib/ambience-bus";
 import { setSfxEnabled } from "@/lib/sfx";
@@ -155,13 +156,14 @@ export function AmbienceEngine() {
 /** The ON/OFF button. Pure UI over the shared preference. */
 export function AmbientToggle({ compact = false }: { compact?: boolean }) {
   const { enabled, toggle } = useAmbiencePref();
+  const t = useTranslations("chrome");
   return (
     <button
       onClick={toggle}
       className="panel"
       suppressHydrationWarning
-      aria-label={enabled ? "Mute ambience" : "Play ambience"}
-      title={enabled ? "Score on: changes per region, venue, and combat" : "Score muted"}
+      aria-label={enabled ? t("muteAmbience") : t("playAmbience")}
+      title={enabled ? t("scoreOn") : t("scoreMuted")}
       style={{
         padding: compact ? "8px 9px" : "8px 12px",
         display: "flex",

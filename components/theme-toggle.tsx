@@ -1,5 +1,6 @@
 "use client";
 import { Sun, Moon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme, toggleTheme } from "@/lib/theme";
 
 // Flip between the dark (native) and light (daytime) palettes. Two shapes:
@@ -7,8 +8,9 @@ import { useTheme, toggleTheme } from "@/lib/theme";
 //  • compact — a square icon button matching the in-game HUD panels
 export function ThemeToggle({ variant = "nav" }: { variant?: "nav" | "compact" }) {
   const theme = useTheme();
+  const t = useTranslations("chrome");
   const light = theme === "light";
-  const label = light ? "Switch to dark mode" : "Switch to light mode";
+  const label = light ? t("darkMode") : t("lightMode");
 
   if (variant === "compact") {
     return (
@@ -55,7 +57,7 @@ export function ThemeToggle({ variant = "nav" }: { variant?: "nav" | "compact" }
       <span suppressHydrationWarning style={{ display: "grid", placeItems: "center", lineHeight: 0 }}>
         {light ? <Moon size={14} strokeWidth={2} /> : <Sun size={14} strokeWidth={2} />}
       </span>
-      <span suppressHydrationWarning>{light ? "Dark" : "Light"}</span>
+      <span suppressHydrationWarning>{light ? t("dark") : t("light")}</span>
     </button>
   );
 }
