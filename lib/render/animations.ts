@@ -76,8 +76,10 @@ export const ANIM = {
   idleClipScale: 0.68,
   /** Standing / Sitting rest loops — very slow for a peaceful gallery read. */
   restClipScale: 0.32,
-  /** Gallery / standing: blend neck+head(+body) toward bind (0 = full clip swing, 1 = locked upright). */
-  peacefulNeckDamp: 0.92,
+  /** Gallery / standing: blend neck+head(+body) toward bind (0 = full clip swing, 1 = locked upright).
+   *  Keep at 1 — any residual Standing head keys shear through non-uniform neck scale and
+   *  read as a cocked skull on bobble kits (MUSE antennas make it obvious). */
+  peacefulNeckDamp: 1,
   /** Procedural chest breathing (radians / metres). */
   breathe: {
     hz: 0.38,
@@ -93,7 +95,7 @@ export const ANIM = {
   portrait: {
     gazeSpeed: 0.055,
     glanceSpeed: 0.025,
-    pitchAmp: 0.022,
+    pitchAmp: 0.01,
     bobHz: 0.58,
     bobAmp: 0.009,
     /** faster bounce cadence while fighters are in the pocket */

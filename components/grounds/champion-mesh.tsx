@@ -427,13 +427,20 @@ function dampNeck(built: BuiltCharacter, peaceful = false) {
   const bones = peaceful
     ? (["neck", "head", "body"] as const)
     : (["neck", "head"] as const);
+  const lock = towardRest >= 0.999;
   for (const nm of bones) {
     const b = built.bones[nm];
     const rq = built.restQuat[nm];
     const rp = built.restPos[nm];
     if (!b) continue;
-    if (rq) b.quaternion.slerp(rq, towardRest);
-    if (rp) b.position.lerp(rp, towardRest);
+    if (rq) {
+      if (lock) b.quaternion.copy(rq);
+      else b.quaternion.slerp(rq, towardRest);
+    }
+    if (rp) {
+      if (lock) b.position.copy(rp);
+      else b.position.lerp(rp, towardRest);
+    }
   }
 }
 
@@ -610,12 +617,15 @@ export function applyBoneMorph(bones: Record<string, THREE.Bone>, boneBase: Reco
   set("torso", gCh, 1, gCh);
   // Neck XZ counter is clamped — uncapped 1/g on thin Spark torsos fattened the
   // neck into a sheared hinge and the big head read as cocked to one side.
-  const neckXZ = Math.max(0.7, Math.min(1.25, 1 / g));
-  set("neck", neckXZ, m.neckLen, neckXZ);
-  // Prefer near-uniform skull scale; only gently undo neck length so bobbleheads
-  // don't get a sheared Y-stretch on top of a short neck.
-  const headY = Math.max(0.75, Math.min(1.35, m.headScale / Math.max(0.7, m.neckLen)));
-  set("head", m.headScale, headY, m.headScale);
+  // Prefer a near-cylindrical neck: keep XZ close to length so residual head
+  // rotation can't shear the skull into an "inclined" read.
+  const neckXZ = Math.max(0.85, Math.min(1.15, 1 / g));
+  const neckY = Math.max(0.85, Math.min(1.35, m.neckLen));
+  const neckR = (neckXZ + neckY) * 0.5;
+  set("neck", neckR + (neckXZ - neckR) * 0.35, neckY, neckR + (neckXZ - neckR) * 0.35);
+  // Uniform skull scale — non-uniform head Y sheared under any neck roll and made
+  // MUSE's antenna row read as a permanently tilted head.
+  set("head", m.headScale, m.headScale, m.headScale);
 
   for (const s of ["l", "r"] as const) {
     const asym = s === "l" ? m.asymL : m.asymR;

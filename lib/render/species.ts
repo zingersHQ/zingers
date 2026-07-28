@@ -110,8 +110,9 @@ export const FIRST_SPECIES: Record<string, SpeciesKit> = {
     back: "wings",
     chest: "diamond",
     // Slight bobble + light frame — keep shoulder≈torso so arms root at the
-    // deltoid, and no asym (tilted the head / split the limbs).
-    morph: { h: 0.92, headScale: 1.14, neckLen: 0.95, torsoGirth: 0.9, shoulder: 0.92, armGirth: 0.85, armLen: 1.04, legLen: 1.12 },
+    // deltoid, and no asym (tilted the head / split the limbs). Neck near 1 so
+    // the skull stays cylindrical under portrait framing.
+    morph: { h: 0.92, headScale: 1.1, neckLen: 1.0, torsoGirth: 0.9, shoulder: 0.92, armGirth: 0.85, armLen: 1.04, legLen: 1.12 },
   },
 };
 
@@ -447,7 +448,7 @@ export const BREEDS: Record<CreatureType, Breed[]> = {
         shoulders: "none",
         back: "wings",
         chest: "diamond",
-        morph: { h: 0.9, headScale: 1.16, neckLen: 0.95, torsoGirth: 0.88, shoulder: 0.9, armGirth: 0.82, armLen: 1.05, legLen: 1.12 },
+        morph: { h: 0.9, headScale: 1.12, neckLen: 1.0, torsoGirth: 0.88, shoulder: 0.9, armGirth: 0.82, armLen: 1.05, legLen: 1.12 },
       },
     },
     {

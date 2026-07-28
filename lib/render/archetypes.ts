@@ -104,14 +104,15 @@ export const ARCHETYPES: Record<CreatureType, ArchetypeKit> = {
   },
   // The Spark — light frame, slightly bigger head (e.g. MUSE). Keep shoulder/torso
   // near parity so arms root cleanly; no CHAOS-style asym (that cocked the skull
-  // and yanked limbs off the ribcage on thin Spark builds).
+  // and yanked limbs off the ribcage on thin Spark builds). Zero lean — even a
+  // tiny pitch plus portrait yaw made the antenna row read as an inclined head.
   CREATIVITY: {
     type: "CREATIVITY",
     featureSet: "spark",
-    body: { h: 0.9, headScale: 1.12, neckLen: 0.95, torsoGirth: 0.88, shoulder: 0.88, armGirth: 0.78, armLen: 1.06, legGirth: 0.78, legLen: 1.12, asym: 0 },
+    body: { h: 0.9, headScale: 1.1, neckLen: 1.0, torsoGirth: 0.88, shoulder: 0.88, armGirth: 0.78, armLen: 1.06, legGirth: 0.78, legLen: 1.12, asym: 0 },
     material: { metalness: 0.0, roughness: -0.05, emissive: 1.22 },
     idleSpeed: 1.1,
-    lean: 0.02,
+    lean: 0,
   },
 };
 

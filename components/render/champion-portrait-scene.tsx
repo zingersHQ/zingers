@@ -94,7 +94,6 @@ function VignetteSet({ colorHex }: { colorHex: string }) {
 const _box = new THREE.Box3();
 const _b = new THREE.Box3();
 const _size = new THREE.Vector3();
-const _ctr = new THREE.Vector3();
 
 /** World-space AABB of the figure's *solid* silhouette — body, phenotype, crown,
  *  archetype/keeper features — skipping any node flagged `userData.fitIgnore`
@@ -152,15 +151,18 @@ function FitFrame({
       solidBounds(g.current, _box);
       if (!_box.isEmpty() && isFinite(_box.min.y)) {
         _box.getSize(_size);
-        _box.getCenter(_ctr);
+        // Bias the look target toward the face/upper chest. Framing on the bbox
+        // midpoint puts the camera at mid-torso looking slightly UP at a yawed
+        // head — tall antennae (MUSE) then keystone into a fake "inclined head".
+        const faceY = _box.min.y + _size.y * 0.64;
         const tanV = Math.tan((cam.fov * Math.PI) / 180 / 2);
         const aspect = cam.aspect || vp.width / Math.max(1, vp.height);
         const distV = _size.y / 2 / (tanV * fillFrac);
         const distH = _size.x / 2 / (tanV * aspect * fillFrac);
         const dist = Math.max(distV, distH);
-        if (!tgt.current) tgt.current = { y: _ctr.y, dist };
+        if (!tgt.current) tgt.current = { y: faceY, dist };
         else {
-          tgt.current.y += (_ctr.y - tgt.current.y) * 0.2;
+          tgt.current.y += (faceY - tgt.current.y) * 0.2;
           tgt.current.dist = Math.max(tgt.current.dist, dist);
         }
       }

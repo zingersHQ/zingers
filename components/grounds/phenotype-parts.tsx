@@ -307,7 +307,7 @@ function Headgear({ kind, top, center, r, count, pal, k }: { kind: Phenotype["he
         {Array.from({ length: n }).map((_, i) => {
           const off = (i - (n - 1) / 2) * r * 0.5;
           return (
-            <group key={i} position={[off, 0, 0]} rotation={[0, 0, off === 0 ? 0 : off > 0 ? -0.2 : 0.2]}>
+            <group key={i} position={[off, 0, 0]} rotation={[0, 0, off === 0 ? 0 : off > 0 ? -0.08 : 0.08]}>
               {/* socket */}
               <mesh position={[0, r * 0.02, 0]}>
                 <cylinderGeometry args={[r * 0.1, r * 0.12, r * 0.12, 10]} />

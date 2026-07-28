@@ -53,5 +53,7 @@ export const RENDER_PRESETS: Record<RenderPresetId, RenderPreset> = {
   },
 };
 
-/** Fixed hero yaw (radians) — consistent across all exported PNGs. */
-export const RENDER_YAW = 0.38;
+/** Fixed hero yaw (radians) — consistent across all exported PNGs.
+ *  Kept modest: a deep ¾ turn foreshortens tall headgear (MUSE antennas) so the
+ *  skull reads cocked even when the neck is locked upright. */
+export const RENDER_YAW = 0.2;
