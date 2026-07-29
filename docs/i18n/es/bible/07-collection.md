@@ -9,7 +9,7 @@ Cada campeón es también una **carta**. La carta es el rostro portátil y colec
 | Parte | Fuente | Notas |
 |------|--------|-------|
 | **Mente** (nombre, Fuerza, linaje) | Primeras Mentes + dex + generador de temporada | la identidad |
-| **Arte** | carrera + Fuerza + marca de especie → cuerpo | cambia con las peleas y el nivel |
+| **Arte** | carrera + Fuerza + marca de especie → cuerpo | cambia con peleas y nivel en juego; un sello inmortalizado en cadena congela una instantánea |
 | **Estadísticas** | las cinco estadísticas de combate + rating | los números |
 | **Sigilos** | heráldica de Fuerza ganada (I/II/III). Insignias que se ganan, no se compran | las insignias |
 | **Atributos** | el conjunto de movimientos (4 movimientos) | la línea de habilidades: lo que puede hacer en una pelea |
@@ -35,9 +35,10 @@ La rareza se **gana, luego escasea**. No es un sorteo aleatorio. Sube con el niv
 - **Coleccionar**: las ocho Primeras Mentes, luego ecos del dex, mentes destacadas de temporada y tus propias carreras criadas. El dex es el juego largo. Las mentes nuevas llegan en oleadas a medida que el mundo crece (ver [03-campeones.md](./03-campeones.md)).
 - **Conocer**: la rotación de adopción semanal muestra un inicial por Fuerza de ese grupo, así que los Entrenadores que regresan conocen a distintos compañeros de ala con el tiempo.
 - **Construir**: un pequeño **establo** de campeones que despliegas por las regiones; sus Fuerzas interactúan en la Rueda, así que la cobertura entre las cinco importa. Los reclutas que reclamas siguen tu marca de Entrenador entre dispositivos cuando restauras esa marca (código de recuperación o billetera vinculada). No quedan atrapados en un solo cristal.
-- **Intercambiar / regalar**: movimiento de cartas entre jugadores (el bucle social). Diseñado aquí; bloqueado tras la capa de propiedad ([economía.md](./08-economía.md)). La acuñación en cadena es un relleno posterior de los campos de procedencia ya presentes en la carta, no una razón por la que exista el dex.
+- **Intercambiar / regalar**: movimiento de cartas entre jugadores (el bucle social). Diseñado aquí; bloqueado tras la capa de propiedad ([08-economy.md](./08-economy.md)).
+- **Inmortalizar**: quemar el token opcional para sellar una carrera como carta en cadena ([08-economy.md](./08-economy.md)). El sello congela el arte en ese momento; las ediciones siguen temporadas y saltos de rareza. Los campos de procedencia son el gancho. El dex existe para jugar de todos modos.
 
 ## Disciplina canónica
 
-- La **rareza de una carta puede subir** (un Novato que crías hasta Leyenda se reacuña hacia arriba), pero la **identidad de una carta es permanente**: misma mente, mismo linaje, cuerpo en evolución.
+- La **rareza de una carta puede subir** (un Novato que crías hasta Leyenda), pero la **identidad es permanente**: misma mente, mismo linaje, cuerpo en evolución en juego. En cadena, una rareza mayor puede ser una **nueva edición** sellada con una quema fresca; las ediciones viejas quedan como historia.
 - El dex y las mentes generadas reciben una etiqueta de **linaje** (a qué Primera Mente hacen eco) para que el dex siga siendo legible y cada carta tenga un lugar en la Rueda.

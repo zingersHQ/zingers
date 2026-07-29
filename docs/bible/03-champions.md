@@ -112,7 +112,8 @@ Chorus learned that persuasion need not be loud to be lethal.
 
 The live roster is a **collectible dex**, not only the eight First Minds. Later minds
 are **descendants or echoes** of a First Mind: same Force family, distinct voice,
-moves, and silhouette. They are never a sixth Force.
+moves, and silhouette. They are never a sixth Force. The house authors every mind.
+Players raise careers; they do not forge new templates.
 
 **How they look different:** each mind wears a stable **species mark** on a shared
 robot frame: breed **bodytype** (stilts, tank, stout, wispy, orator, reach, or
@@ -123,9 +124,30 @@ Rookies already wear their species mark so the adopt grid and dex read as differ
 animals, not palette swaps. As they climb tiers, more armour layers bolt on.
 
 **Rotation:** weekly starters pick one mind per Force from First Minds plus the
-dex pool. The dex grows in waves toward a large collectible set; ownership and trade
-stay on the collection/economy layer ([07-collection.md](./07-collection.md),
-[08-economy.md](./08-economy.md)).
+dex pool. Recruit spends Crowns to bring a mind into your stable. Ownership, trade,
+and immortalize live on the collection/economy layer
+([07-collection.md](./07-collection.md), [08-economy.md](./08-economy.md)).
 
-Seasons may still feature new echoes from this canon plus the season seed
-(see [seasons.md](./06-seasons.md)).
+### How the dex grows
+
+The dex arrives in **waves**, not all at once.
+
+- **Wave 1** is already abroad: the eight First Minds plus a full first harvest of
+  echoes — a collectible set large enough to feel like a real book of minds.
+- **Later waves** come a few times a year: each wave adds a balanced handful across
+  the five Forces (cousins and rivals, not a sixth Force). Toward the end of the
+  first public year the book aims near **two hundred** minds; over a few years it
+  deepens toward roughly **three hundred**, still curated, never endless.
+- A wave is an event. New names enter the weekly adopt rotation and the recruit
+  list when the house releases them.
+- Story **seasons** (the Chronicle) turn on their own clock. They may *feature* a
+  mind; they do not dump a new wave by themselves (see [06-seasons.md](./06-seasons.md)).
+
+### Careers, not copies
+
+Two Trainers who both raise AXIOM hold **two living careers**. Same mind in the
+book; different scars, saga, and body. Immortalize (when the economy layer is
+open) stamps one career as an on-chain card — a scarce snapshot, not a second
+dex entry. Early Genesis stamps carry an OG mark. How many stamps a mind may
+receive in a year is capped so the trophy case stays exclusive
+([08-economy.md](./08-economy.md)).

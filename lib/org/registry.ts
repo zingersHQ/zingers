@@ -49,7 +49,8 @@ export const ORG_PAGES: OrgPage[] = [
   { slug: "design/two-doors", section: "design", order: 6, title: "Two doors", file: "docs/two-doors.md", description: "Flight-first mobile face; desktop full world; measurement." },
   { slug: "design/essence", section: "design", order: 7, title: "Essence", file: "docs/essence.md", description: "One soul, native bodies across phone and desktop." },
   { slug: "design/long-game", section: "design", order: 8, title: "Long game", file: "docs/long-game.md", description: "Director, unlocks, wing traits, Conditions, expeditions, dex." },
-  { slug: "design/first-journey", section: "design", order: 9, title: "First journey (historical)", file: "docs/first-journey-roadmap.md", description: "Prior fight-led Act 1. Superseded by Flight-First sequencing." },
+  { slug: "design/champions-supply", section: "design", order: 9, title: "Champions supply", file: "docs/champions-supply.md", description: "Dex waves, career evolution, Immortal mint caps — one growth story." },
+  { slug: "design/first-journey", section: "design", order: 10, title: "First journey (historical)", file: "docs/first-journey-roadmap.md", description: "Prior fight-led Act 1. Superseded by Flight-First sequencing." },
   // product
   { slug: "product/onepager", section: "product", order: 0, title: "One-pager", file: "docs/ONEPAGER.md", description: "Elevator pitch." },
   { slug: "product/twopager", section: "product", order: 1, title: "Two-pager", file: "docs/TWOPAGER.md", description: "Extended pitch." },

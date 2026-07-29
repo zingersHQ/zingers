@@ -72,16 +72,17 @@ Zustand local-first state (DB-ready) · LLM-agnostic agent layer.
 
 ### The bet
 
-The moat isn't the engine. It's the **original IP**, the **evolving battle meta**, and a future
-**creator economy** of user-made champions. Built viral-first: Flight shares, collection,
-standings, and Trainer↔champion bond cards drive organic sharing.
+The moat isn't the engine. It's the **original IP we craft**, the **evolving battle meta**,
+and a **collector culture** around legends whose bodies and careers are visible. Built
+viral-first: Flight shares, collection, standings, and Trainer↔champion bond cards drive
+organic sharing. Champions stay studio-authored; Trainers collect and raise them.
 
 ---
 
 ### On the roadmap (not yet built, stated honestly)
 
 Larger dex waves toward a full collectible set · deterministic **recruit** loop
-(Crowns sink, earned, never rolled) · player-to-player **trading** · **user-made
-champions** · optional ownership/mint on card provenance · accounts + full cloud persistence ·
+(Crowns sink, earned, never rolled) · player-to-player **trading** · optional
+ownership/mint on card provenance · accounts + full cloud persistence ·
 monetization (cosmetics, battle passes, "infinite battles"). Token/`$ZING` deliberately deferred;
-wallet today is optional **Trainer identity** only.
+wallet today is optional **Trainer identity** only. No user-made champions.

@@ -32,7 +32,8 @@ doc; identifiers/analytics keys never change for copy reasons.
    developer surfaces (`/agents`, docs, protocol).
 4. **Crypto stays fuel.** Per [`zing-model.md`](./zing-model.md): $ZING is an
    optional premium layer, Crowns stay off-chain and server-authoritative, and
-   no player-facing surface promises earnings before the creator economy exists.
+   no player-facing surface promises earnings. Collectors may later mint or trade
+   provenance; they never forge new champions.
 5. **Web-first now; platforms later.** Steam/console are marketing beats after
    the Launch v0.1 gates are green, not engineering projects now (§6).
 
@@ -43,10 +44,10 @@ gets on a phone, that opens into a whole world you keep climbing on a desktop.
 
 ## 1. Why this framing (the reasoning we're committing to)
 
-- The game's moat (per `AGENCY.md`) is original IP + an evolving battle meta +
-  a future creator economy. All three depend on the minds being real. So we do
-  **not** strip the agent layer to make a simpler game. But none of them require
-  the *word* "agent" anywhere a player first lands.
+- The game's moat (per `AGENCY.md`) is original IP we craft + an evolving battle
+  meta + a collector culture around legends. All three depend on the minds being
+  real. So we do **not** strip the agent layer to make a simpler game. But none
+  of them require the *word* "agent" anywhere a player first lands.
 - The Climb is the only verb a stranger understands in **zero seconds** (the
   Flappy Bird atom, `essence.md` §3). "Today's fight to call". The door
   `mobile.md` §3 chose. Presumes the visitor already cares about a champion.
@@ -90,9 +91,9 @@ social copy):
    `/howitworks`, share cards) and replace with fantasy copy. **copy only,
    never identifiers/keys** (per `vocabulary.md` and `AGENTS.md`).
 3. **Crypto is invisible until it's real.** No $ZING mention on any game
-   surface pre-launch. No "earn money" promises anywhere: the only sanctioned
-   earning path is the future creator economy (user-made champions → royalties,
-   Phase 5+), and it stays in docs until it exists.
+   surface pre-launch. No "earn money" promises anywhere. Optional collector
+   permanence (trading, mint-to-immortalize) stays in docs until it exists.
+   Champions remain studio-crafted; players collect, they do not create.
 4. **The reward vocabulary players *do* get:** your champion's **body** (the
    visible record of its career), **rank** (Trainer Rank + the standings),
    **Crowns**, the **Saga**, your **rival**. These are the honest incentives. 

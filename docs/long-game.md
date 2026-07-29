@@ -163,7 +163,8 @@ Wave tools: `npm run forge:dex` (curated name banks + voice kits) and
 **PRISM**, **FABLE**. Wave 1 forged a Gen-1-scale collectible set on top (see
 `docs/bible/03-champions.md`). Phenotype part catalog + species marks at rookie
 tier so same-Force minds read as different animals. No new GLTF per mind.
-Further waves = more reviewed JSON + rebake + part-kit expansion.
+Further waves = more reviewed JSON + rebake + part-kit expansion. Cadence, Year 1–3
+dex targets, and Immortal mint math: [`champions-supply.md`](./champions-supply.md).
 
 ## 7. Explicit non-goals
 

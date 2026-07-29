@@ -35,7 +35,7 @@ in the economy bible is the right shape when we get there.
 **Open-world sequel (Pokémon / Zelda scale):** not discarded, **not funded by
 hope**. It is a horizon option if Game One generates real treasury and proof
 that Trainers will follow the IP into a bigger body. Until then, depth stays in
-this stack (run variance, seasons, creator economy) per [`long-game.md`](./long-game.md).
+this stack (run variance, seasons, collector depth) per [`long-game.md`](./long-game.md).
 
 **Continuing, not forking.** Each phase below is "what we keep shipping when the
 previous one is earning its keep." No single "do we go AAA or die" moment. The
@@ -53,10 +53,11 @@ Rough internal gates (tune with real metrics; do not invent numbers yet):
 | **Bond retains** | Return flights / Imprints / season activity without paid push |
 | **Shares work** | Climb challenge + bond cards drive cold opens (growth north star) |
 | **Accounts exist** | Cloud persistence so legends survive devices |
-| **Premium demand** | People ask for cosmetics / infinite battles / on-chain standing *before* we sell them |
-| **Token follows** | Deploy `$ZING` when sinks and creator royalties have someone to serve |
+| **Premium demand** | People ask for cosmetics / infinite battles *before* we sell them |
+| **Immortalize works** | Burn-to-mint stamps live; collectors use them past launch week |
 
-Token after traction. Never traction after token.
+Token is the Solana launch megaphone; immortalize is the honest day-one utility
+(`docs/zing-model.md`). Traction without a ticker is not the plan for CT.
 
 ---
 
@@ -69,28 +70,18 @@ Aligned with `AGENCY.md` phases. **CURRENT work stays Phase 4 ops → Phase 5.**
 | Phase | Horizon job |
 |-------|-------------|
 | **4 ops** | Playtests, ship notes, key art, growth push, moderation before fan-out |
-| **5** | Collection depth: trading, user-made champions (creator moat). Roster follows Trainer identity. |
-| **6** | Accounts + monetization rails: cosmetics, battle pass, infinite battles; `$ZING` when demand is real |
+| **5** | Collection depth: trading + burn-to-immortalize (model locked). Studio roster only. |
+| **6** | Crypto launch rails + accounts; cosmetics / battle pass / infinite battles as soft premium |
 
 ### Mid — seasons that fund the house
 
-Once accounts + soft premium exist:
+Once immortalize + accounts exist:
 
-1. **Season machine.** Soft resets, Flight boards, body/sigil season marks, shareable recaps. Recurring ritual > one spike. Seasonal Flight boards refresh craft prestige; they are not attested proof-of-play and never gate hard purses or on-chain weight (see [`circuit-board.md`](./circuit-board.md)). Token/stakes stay on fight standings.
-2. **Token live (opt-in).** On-chain standings entry (burn-or-stake), patron crests, airdrop weight for play. Still: no yield, no pay-to-win, Crowns wall intact.
-3. **Creator royalties in `$ZING`.** User-made champions earn when adopted / fought. This is the durable moat bet.
+1. **Season machine.** Soft resets, Flight boards, body/sigil season marks, shareable recaps. Seasonal Flight boards stay craft prestige only (see [`circuit-board.md`](./circuit-board.md)).
+2. **Immortalize culture.** Season editions, tier re-stamps, gallery standing, airdrop weight. Still: no yield, no pay-to-win, Crowns wall intact.
+3. **Collector trading.** Player-to-player movement of stamped cards. Studio minds only.
 4. **Inference product.** "Infinite battles" priced above measured marginal duel cost (`npm run cost`). Climb stays cheap; paid depth pays the LLM bill.
 5. **Agent layer as distribution.** MCP / BYO ranked boards so committed players bring their own inference spend.
-
-### Mid-late — collectible layer (only if the IP is already a thing)
-
-Not required for monetization if token sinks work. Worth keeping as option B:
-
-- **Mint-to-immortalize** career cards (art = deterministic body from record).
-- Tradeable provenance for collectors; free game untouched.
-- Optional limited drops only if crypto culture actually surrounds the game — never as the growth strategy for everyone else.
-
-If collectibles never ship, the game can still be a success. They are upside on love + crypto adjacency, not the plan.
 
 ---
 
@@ -133,7 +124,7 @@ Cheap experiments that reuse IP without AAA:
 
 - Pure Flight score-chase (hyper-casual door, feeds back to full game).
 - Spectate-first Live Gallery for streamers (depth, not face rewrite).
-- Creator tooling as a product (forge minds, sell cosmetics/royalties).
+- Collector showcase / press kit surfaces that feed the same crafted roster.
 
 *Choose when:* one surface is clearly outgrowing the others and deserves its own
 store page / audience.
@@ -147,7 +138,8 @@ store page / audience.
 - **Crowns ↔ token wall.** Soft play money never becomes cash-out.
 - **Token buys standing, access, permanence — never yield.**
 - **Crypto optional forever** for the core loop.
-- **IP + creator economy + evolving meta** are the moat, not the debate UI fad.
+- **Crafted IP + collectors + evolving meta** are the moat, not the debate UI fad.
+- **No user-made champions.** Visual brand and roster authorship stay in-house.
 
 ---
 

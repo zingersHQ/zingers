@@ -4,10 +4,9 @@
 
 ### Thinking creatures first. Collectible legends underneath.
 
-Zingers leads with a real AI game. Creatures that actually think. And keeps any
-ownership layer opt-in, walled off, and utility-anchored. Two layers, kept
-strictly distinct. Today a wallet is optional **Trainer identity** only; token
-launch is deliberately deferred. *(`docs/flight-first-plan.md`, `docs/zing-model.md`.)*
+Zingers leads with a real AI game. Creatures that actually think. Ownership stays
+opt-in, walled off, and thin. Two layers, kept strictly distinct.
+*(`docs/flight-first-plan.md`, `docs/zing-model.md`, `docs/bible/08-economy.md`.)*
 
 ---
 
@@ -39,18 +38,15 @@ decision` can drive a champion. *(`docs/agent-protocol.md`.)*
 
 ## The crypto layer (opt-in, underneath)
 
-**Cardinal rule:** the game is **free and complete** without a wallet. You can
-raise legends, climb seasons, and crack the Vault having never seen one. Crypto is
-a layer *beneath* the game, never a gate in front of it. *(`docs/bible/08-economy.md`,
-`docs/zing-model.md`.)*
+**Cardinal rule:** the game is **free and complete** without a wallet. Crypto is
+a layer *beneath* the game, never a gate in front of it.
 
 **Shipped today:** optional Solana wallet link (Phantom SIWS-style prove-ownership)
-to keep a unique **Trainer name** across devices. No spend approvals. No token UI.
+to keep a unique **Trainer name** across devices. No spend approvals yet.
 
-**Honest scope (2026-07):** first connect binds **name ↔ pubkey ↔ ownerToken**
-(the device career key). Reconnect on a new device returns that canonical
-`ownerToken` so champions, Crowns, and `/api/save` restore after reload. Still
-without `$ZING`. Recovery code remains a backup if the wallet is lost.
+**Locked utility (build next):** **burn `$ZING` → immortalize** a champion as an
+on-chain card. Snapshot art. Season / rarity editions. Tiered fixed burns. No
+oracle. No bonding curve. No yield. No fee on Crowns the living champion earns.
 
 **Naming:** in-game Crowns live at `/api/wallet` (off-chain). Solana is
 `solana-link` / “Connect”. Never call Crowns a chain wallet in player copy.
@@ -59,40 +55,35 @@ without `$ZING`. Recovery code remains a backup if the wallet is lost.
 
 | | **Crowns** | **$ZING** (working name) |
 |---|---|---|
-| Nature | Soft, in-game, server-authoritative | Hard, on-chain (SPL / Solana). *not launched* |
-| How you get it | *Earned* by playing | *Bought* on a market, or airdropped for play (future) |
-| What it's for | Training, entries, backing, cosmetic reforges | On-chain standings entry, minting cards, patron standing (future) |
+| Nature | Soft, in-game, server-authoritative | Hard, on-chain (SPL / Solana) |
+| How you get it | *Earned* by playing | *Bought* on a market, or airdropped for play |
+| What it's for | Training, entries, backing, cosmetic reforges | Burn to immortalize a champion card |
 | Cashes out? | **Never** | Only on the open market, never *through us* |
 
-The wall between them. No conversion, no shared wallet. Is the single most
-important invariant. It is what keeps Zingers *not* a security and *not* a casino.
+### What the token does. And only this
 
-### What the token does. And only this (future)
+1. **Immortalize.** Burn fixed `$ZING` → mint an edition NFT. Art freezes at stamp
+   time. Re-stamp on season/tier for a new edition. Fills provenance fields already
+   on the card (`mintId`, `owner`, `chain`, `mintedSeason`).
+2. **Standing (soft).** Crests, gallery, airdrop weight. Glory, not payout.
 
-1. **Pays opt-in on-chain board entry** via **burn-or-stake**. Burn is a small
-   consumed access fee (pure deflation); stake is a larger, **refundable-in-full**
-   deposit that returns principal only. Stake persists across seasons, so loyal
-   players lock capital and play free forever. **No yield, ever.**
-2. **Mints permanence**. Burn to immortalize a champion as an on-chain card. The
-   art is deterministic from the career record, so **the token *is* the track
-   record.** It fills provenance fields that already exist inert (`mintId`,
-   `owner`, `chain`, `mintedSeason`). A fill-in, not a refactor.
-3. **Confers standing**. Patron crests for backing a champion, dex provenance,
-   and next-season airdrop *weight* earned by play.
+### Mechanism (simple)
 
-### Guardrails (the indie-safe envelope)
+Server proves eligibility (owns career, edition free) → short-lived voucher →
+one Solana tx burns token and mints the card. Atomic. No oracle. No stake
+scheduler. Fail closed: bad voucher or failed tx means no mint and no burn.
 
-No yield / no APY / no pot; **burn is a fee, not a wager**; all rewards are
-cosmetic, standing, or allocation (never cash or performance-scaled payouts); no
-price marketing; **Crowns never cash out**. The on-chain season close only works
-*because* fights are deterministic and provably fair.
+### Guardrails
+
+No yield / no APY / no pot; burn is a fee for a stamp, not a wager; no
+performance fees to card holders from living play; no price marketing; **Crowns
+never cash out**; no user-made champions.
 
 ---
 
 ## Positioning & sequencing
 
-Lead with "the creatures actually think" and "you fly," meme-friendly for
-distribution but utility-anchored so the message never whiplashes between agent
-protocol and casino. Ship with **Crowns only**; wallet = identity; **$ZING** is
-*announced in docs*, not required in-product. **Token follows traction, not the
-other way around.**
+Lead with "the creatures actually think" and "you fly." Token launch is
+distribution for Solana eyes; immortalize is the honest utility on day one.
+Play without crypto always. Full lock: `docs/zing-model.md`. Dex waves + Immortal
+math: `docs/champions-supply.md`.

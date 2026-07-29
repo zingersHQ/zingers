@@ -1,70 +1,152 @@
-# $ZING — token model decision
+# $ZING — token model (LOCKED)
 
-**Status:** Proposed decision (needs founder sign-off). Written to unblock economy
-and creator-economy design per `AGENCY.md` §Launch gate 6.
+**Status:** Locked (founder, 2026-07). Thin utility. Easy to explain. Simple to build.
 
-The question isn't "do we deploy a token" — it's "what *is* $ZING, so the Crown
-economy, sinks, and any creator economy can be designed against a fixed answer."
-Leaving this open blocks every downstream economic decision. Decide the **model**
-now; the on-chain **deployment** can come after Launch v0.1.
+One sentence players should understand:
+
+> **Burn `$ZING` to immortalize your champion as an on-chain card.**
+> The game stays free. Crowns never touch the token.
 
 ---
 
-## The decision: $ZING is fuel, not the product
+## The decision
 
-**$ZING is an optional, off-to-the-side utility/fuel token. Crowns remain the
-in-game soft currency and are never tokenized.** Concretely:
+**`$ZING` is optional Solana fuel for permanence.** Crowns remain the only
+gameplay currency and are never tokenized, never bridged, never cashed out.
 
-1. **Crowns stay off-chain and server-authoritative.** They are the gameplay
-   economy (`lib/economy.ts`): earned by winning, spent on training/fragments/Rank Fight entries.
-   We keep full control of faucets/sinks and ELO fairness. Crowns are *not*
-   convertible to $ZING at a fixed rate (that would import token volatility into
-   game balance and create a de-facto security).
+| | Crowns | `$ZING` |
+|---|---|---|
+| Where | Off-chain, server | Solana SPL |
+| Job | Play (train, recruit, back, entries) | Immortalize (burn → mint card) |
+| Required to play? | Soft yes (earned freely) | No |
+| Convert? | Never ↔ token | Never ↔ Crowns |
 
-2. **$ZING is a premium/meta layer, not a gate to play.** You can play, climb,
-   evolve, and share a legend with zero crypto. $ZING buys *optional* things and
-   rewards *committed* players:
-   - **Premium sinks:** cosmetics, season pass, "infinite battles" (the
-     inference-paid mode — price it above marginal duel cost, see §Economics).
-   - **Creator royalties:** when user-made champions arrive (Phase 5), creators
-     earn $ZING when their champion is adopted/fought.
-   - **Staking for league rewards:** stake $ZING behind a Force/champion for a
-     share of seasonal rewards — aligned with the async-league spectacle.
+---
 
-3. **Positioning: AI-native game first, meme-friendly for distribution.** Lead
-   with "the creatures actually think," not "buy our coin." $ZING can launch with
-   meme energy for distribution, but it is *utility-anchored* so the messaging
-   doesn't whiplash between "serious agent protocol" and "casino."
+## What the token does (only this)
+
+### 1. Immortalize (the hard utility)
+
+Burn a fixed amount of `$ZING` → mint one Immortal card (NFT) of that champion.
+
+- **Who:** the Trainer who owns that living career (wallet linked). **Owner-only.**
+- **Art:** a **frozen snapshot** at mint time. In-game the body may keep
+  evolving; the NFT does not morph live. Early art can be framed as **OG /
+  Genesis** when the remodel improves later.
+- **Price:** **tiered fixed `$ZING` amounts** (by rarity / class). Retune by
+  config between mint windows. **No USD oracle. No bonding curve.**
+- **Tradeable:** yes, day one.
+- **Standard:** full NFT (Metaplex / Core) for v1 — prestige over cNFT volume.
+- **Not sold:** power, wins, stats, standings entry.
+
+### Supply (scarcity is the point)
+
+Chronicle **story seasons** (~7-day Season 0, then ~28-day seasons) are the
+content clock. They are **not** automatic print runs.
+
+Supply is **tied to the dex**, not a magic fixed headcount like “exactly 600.”
+
+**Year 1 law — per mind:**
+
+> At most **M** Immortal stamps per mind in Year 1.
+> One stamp per living career. Owner-only.
+
+**Year 1: M = 8** (locked). Supply tracks the roster and its waves — full numbers
+and Year 2–3 projections live in [`champions-supply.md`](./champions-supply.md).
+
+| Dex moment (Year 1 plan) | Minds | Max Immortals (M = 8) |
+|--------------------------|-------|------------------------|
+| Launch (wave 1, live) | ~132 | ~1056 |
+| After planned waves (+72) | ~204 | ~1632 Year-1 ceiling if all fill |
+
+**Dex evolution during the year:**
+
+- When the house ships a **new mind**, that mind gets its own fresh **M** slots
+  for Year 1. Supply grows with the roster, not with the calendar alone.
+- Story season turns do **not** reset or refill M.
+- Year 2+ sets a new M (or pause) — separate decision.
+
+**Early minting is rewarded (Genesis):**
+
+- Launch / Season 0 opens a **Genesis window**. Stamps minted then carry an
+  **OG / Genesis** mark forever.
+- Those stamps still count against that mind’s M. Early Trainers compete for the
+  scarce OG slice of each mind; later Trainers can still mint if that mind’s M
+  is not full, but without the Genesis mark.
+- Optional later: close minting outside windows; slots still come from the same
+  per-mind M.
+
+**Rejected supply shapes:** unbounded careers × seasons; fixed global 10k drops;
+“one NFT per dex row forever” (too tiny once the roster is the product).
+
+### 2. Standing (soft only)
+
+Glory around immortalized cards — gallery placement, season crest on the stamp,
+optional airdrop *weight* for holders/players next season. **Never a payout.**
+**Never a fee on what the living champion earns in Crowns.**
+
+Secondary marketplace royalties: **yes** — small % on trades, split **house +
+original minter**. Trade infrastructure, not “champion salary.” (Solana royalties
+are marketplace-enforced.)
+
+---
 
 ## Explicitly rejected
 
-- **Betting-integrated token.** Turning ranked outcomes into on-chain wagers
-  makes Zingers a gambling product (regulatory + platform-risk + tone). Keep
-  betting as a *Crown* sink only (already capped at {25,50,100}, 2× payout).
-- **Pure meme coin as the product.** Contradicts the north star ("$ZING as fuel,
-  not the product") and the moat (IP + evolving meta + creator economy).
-- **Tokenizing Crowns.** Would hand economy balance to a volatile market.
+- Pay-to-win / token-gated boards / token-gated Flight
+- Yield, APY, stake-to-earn, pots, performance fees to NFT holders
+- Crowns ↔ `$ZING` bridge or Crown cash-out
+- USD-priced burns (oracles)
+- Continuous bonding curves
+- Live-updating NFT art as the default
+- User-made champions / creator royalties
+- On-chain standings entry as a token utility (dropped — too much surface)
 
-## What this unblocks
+---
 
-- **Sink design:** premium sinks are denominated in $ZING; gameplay sinks in
-  Crowns. Two currencies, two jobs — no ambiguity.
-- **Creator economy (Phase 5):** royalties have a unit of account.
-- **Cost coverage:** "infinite battles" is the inference-paid product; its $ZING
-  price is set as a multiple of the measured marginal duel cost (§Economics).
+## Mechanism (simple, hard to fail)
+
+Hybrid by design. Game truth stays on the server. Chain only burns and mints.
+
+```
+1. Wallet linked to Trainer (already shipped: SIWS).
+2. Player asks to immortalize champion X in the open mint window.
+3. Server checks: owns career, career not yet Immortal, that mind’s Year-1 count
+   under M, mint window rules (Genesis vs later), burn amount + art URI/hash.
+4. Server issues a short-lived signed voucher (mind key, mint index, Genesis flag).
+5. One Solana transaction: burn N $ZING + mint NFT + consume voucher.
+6. Server writes mintId / owner / chain / mintedSeason on the card (fields exist).
+```
+
+**Failure posture:**
+
+- If the chain tx fails → nothing minted, nothing burned (atomic).
+- If the voucher is stale/used → program rejects; no burn.
+- If Redis/server is down → no new vouchers; existing NFTs untouched.
+- Never mint without burn. Never burn without a valid voucher.
+- Never trust the client for eligibility or burn amount.
+
+No oracle. No multi-step escrow. No stake unlock scheduler. One program path.
+
+---
 
 ## Sequencing
 
-- **Pre-launch (now):** lock this model in writing. No contract, no chain.
-- **Launch v0.1:** ship with Crowns only. $ZING is *announced* (positioning), not
-  required.
-- **Post-launch:** deploy $ZING when there's real demand for premium sinks and a
-  creator economy to royalty. Token follows traction, not the other way around.
+- **Now:** model locked in this file + economy bible.
+- **Build:** SPL mint + Immortalize program + voucher API + UI (“Immortalize”).
+- **Launch:** token + LP + claim/airdrop ops as distribution; immortalize live on day one.
+- **Play without token:** always possible. Wallet stays identity + mint key.
 
-## Open sub-questions (for sign-off)
+---
 
-- Chain/standard (e.g. an L2 vs. Solana) and custody/wallet UX for non-crypto players?
-- Does staking pay from a treasury, a cut of premium-sink revenue, or emissions?
-- Is there ever a one-way Crowns→$ZING *reward* faucet (e.g. seasonal top-ranked
-  payout), or are the two economies fully separate? (Recommend: fully separate at
-  launch; revisit once creator economy exists.)
+## Still open (knobs, not shape)
+
+- Final ticker name (working: `$ZING`)
+- Exact burn table (tier → `$ZING` amount)
+- Exact royalty split (e.g. 5% total → house / minter)
+- Whether minting is always-on until M fills, or windowed after Genesis
+- Year 2+ **M** (or pause)
+
+**Settled:** Year 1 = **8 Immortals per mind** (~1056 at ~132 minds; grows with
+dex). Genesis OG mark rewards early stamps. Owner-only. Tradeable. Full NFT.
+Tiered fixed burns. Snapshot art. Story seasons ≠ print runs.

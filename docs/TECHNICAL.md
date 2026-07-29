@@ -65,10 +65,15 @@ for live fights · **xAI (Grok)** as the built-in brain. Deployed on Vercel
   so last-write-wins cannot drop a legend. Cross-device restore still needs the same
   Trainer code or linked Solana wallet.
 - **Trainer identity.** Unique names can lock to an optional Solana wallet
-  (prove-ownership only. No spend). Circuit/Climb craft boards resolve labels
+  (prove-ownership; mint key later). Circuit/Climb craft boards resolve labels
   server-side; ranked posts require a takeoff ticket and wall-clock / speed
   checks (`lib/server/flight-run.ts`). Crowns pay personal bests under the daily
   cap, never board placement.
+- **`$ZING` immortalize (locked, not shipped).** Burn fixed SPL amounts → mint a
+  card edition. Flow: server voucher (owns career, edition free, burn amount +
+  art hash) → one program tx burns token + mints NFT → server fills card
+  provenance. Snapshot art; season/tier re-stamps; no oracle, no curve, no yield.
+  See `docs/zing-model.md`.
 - **~25 API routes** (`app/api/*`) cover battle, sim, claim, roster, standings,
   daily, imprint, feed, war, save, wallet, solana-link, card OG images, and a
   `/api/cost` meter.
@@ -95,8 +100,8 @@ paths reject mock/seed bias; wallet earns are claim-scoped.
 ## Determinism as a feature
 
 Fights use seeded RNG (`lib/engine/xai.ts:makeRng`), so any fight is reproducible
-and provably fair. That invariant is also the prerequisite for a future on-chain
-season close (see the AI & crypto one-pager). Analytics/event keys may still say
+and provably fair. Career truth for immortalize vouchers stays server-side; the
+chain only executes burn+mint. Analytics/event keys may still say
 `bout` internally. Player-facing copy never does (`docs/vocabulary.md`).
 
 ---

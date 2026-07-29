@@ -17,7 +17,7 @@ own gets visibly stronger as you fight it.
 | Part | Source | Notes |
 |------|--------|-------|
 | **Mind** (name, force, lineage) | First Minds + dex + season generator | the identity |
-| **Art** | career + Force + species mark → body | changes with fights and tier |
+| **Art** | career + Force + species mark → body | changes with fights and tier in play; an immortalized on-chain stamp freezes a snapshot |
 | **Stats** | the five combat stats + rating | the numbers |
 | **Sigils** | earned force-heraldry (I/II/III). Badges you win, not buy | the badges |
 | **Attributes** | the moveset (4 moves) | the abilities line: what it can do in a fight |
@@ -42,8 +42,9 @@ champion's tier and with how rare that build genuinely is.
 ## How collection plays
 
 - **Collect**: the eight First Minds, later dex echoes, season featured minds, and
-  your own raised careers. The dex is the long game. New minds arrive in waves as
-  the world grows (see [03-champions.md](./03-champions.md)).
+  your own raised careers. The dex is the long game. New minds arrive in house
+  **waves** a few times a year — toward roughly two hundred minds in the first
+  public year, deeper over the years after (see [03-champions.md](./03-champions.md)).
 - **Meet**: weekly adopt rotation shows one starter per Force from that pool, so
   returning Trainers meet different wingmates over time.
 - **Build**: a small **stable** of champions you field across the regions; their
@@ -51,13 +52,17 @@ champion's tier and with how rare that build genuinely is.
   claim follow your Trainer mark across devices when you restore that mark
   (recovery code or linked wallet). They are not trapped on one glass.
 - **Trade / gift**: player-to-player movement of cards (the social loop). Designed
-  here; gated behind the ownership layer ([economy.md](./08-economy.md)). On-chain
-  mint is a later fill-in of provenance fields already on the card, not a reason
-  the dex exists.
+  here; gated behind the ownership layer ([economy.md](./08-economy.md)).
+- **Immortalize**: burn the optional token to stamp a career as an on-chain card
+  ([economy.md](./08-economy.md)). The stamp freezes art at that moment; editions
+  follow seasons and rarity jumps. Provenance fields on the card are the hook.
+  The dex exists for play either way.
 
 ## Canon discipline
 
-- A card's **rarity can rise** (a Rookie you raise to Legend re-mints upward) but a
-  card's **identity is permanent**: same mind, same lineage, evolving body.
+- A card's **rarity can rise** (a Rookie you raise to Legend) but a card's
+  **identity is permanent**: same mind, same lineage, evolving body in play.
+  On-chain, a higher rarity may be a **new edition** stamped with a fresh burn;
+  older editions stay as history.
 - Dex and generated minds get a **lineage** tag (which First Mind they echo) so
   the dex stays legible and every card has a place on the Wheel.

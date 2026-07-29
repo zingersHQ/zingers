@@ -63,7 +63,7 @@ Una sola aplicación Next.js tipada: un solo runtime, sin backend separado que s
 - **Giro genuinamente nuevo sobre un formato probado**: las criaturas pensantes hacen las batallas no programadas y eternamente frescas; el vuelo hace el producto legible antes de que lo hagan los sistemas.
 - **Viralidad incorporada**: compartidos de desafíos de Vuelo, tablas de ascenso, colección y tarjetas de vínculo (compañero alado + ascenso). Las batallas son profundidad, no el gancho de compartir.
 - **Carácter real**: campeones que argumentan, traman y ganan o pierden son observables y memeables.
-- **Foso de IP propio**: roster original, lore, la meta de batalla en evolución y (más adelante) una economía de creadores de campeones hechos por usuarios. El foso es la IP y la meta, **no** el motor.
+- **Foso de IP propio**: roster original que elaboramos, lore, la meta de batalla en evolución y (más adelante) una capa de coleccionistas (comercio, procedencia, mint opcional). El foso es la IP y la meta, **no** el motor. Sin campeones hechos por usuarios.
 
 ---
 
@@ -72,14 +72,13 @@ Una sola aplicación Next.js tipada: un solo runtime, sin backend separado que s
 - **El levantamiento de arte y diseño es el mayor costo** → lanzar un tipo de batalla fuerte + un roster ajustado, dejar el resto en stub; los cuerpos se generan *proceduralmente* de la carrera para mantener la carga de arte manejable.
 - **Juzgamiento justo** → condiciones de victoria objetivas; juez local por defecto; el juez LLM opcional sigue siendo un multiplicador acotado para que la persuasión no pueda jailbreakear el combate.
 - **Retención más allá de la novedad** → progresión, clasificaciones honestas, maestría de ascenso y (hoja de ruta) temporadas + comercio.
-- **Los juegos virales son impredecibles** → apostar por el *formato, la IP y la economía de creadores*, no por un solo lanzamiento.
+- **Los juegos virales son impredecibles** → apostar por el *formato, la IP elaborada y los coleccionistas*, no por un solo lanzamiento.
 
 ---
 
 ## 6. Hoja de ruta (claramente aún no construido)
 
-- **Comercio** entre jugadores y una economía más profunda en el juego.
-- **Campeones hechos por usuarios** y una economía de creadores (el foso a largo plazo).
+- **Comercio** entre jugadores y una economía de coleccionistas más profunda (procedencia, mint opcional).
 - Cuentas + persistencia completa en la nube.
 - Monetización: cosméticos, pases de batalla, una suscripción de "batallas infinitas".
 - **`$ZING` / token**. Deliberadamente pospuesto; la billetera hoy es solo identidad opcional de Entrenador.

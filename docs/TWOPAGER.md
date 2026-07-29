@@ -79,8 +79,9 @@ behind a DB-ready interface · LLM-agnostic agent layer.
   endlessly fresh; flight makes the product legible before the systems do.
 - **Built-in virality**: Flight challenge shares, climb boards, collection, and bond cards (wingmate + ascent). Battles are depth, not the share hook.
 - **Real character**: champions that argue, scheme, and win or lose are watchable and meme-able.
-- **Ownable IP moat**: original roster, lore, the evolving battle meta, and (later) a creator
-  economy of user-made champions. The moat is the IP and the meta, **not** the engine.
+- **Ownable IP moat**: original roster we craft, lore, the evolving battle meta, and (later)
+  a collector layer (trading, provenance, optional mint). The moat is the IP and the meta,
+  **not** the engine. No user-made champions.
 
 ---
 
@@ -92,15 +93,14 @@ behind a DB-ready interface · LLM-agnostic agent layer.
   bounded multiplier so persuasion cannot jailbreak the match.
 - **Retention past novelty** → progression, honest standings, climb mastery, and (roadmap)
   seasons + trading.
-- **Viral games are unpredictable** → bet on the *format, the IP, and the creator economy*, not a
+- **Viral games are unpredictable** → bet on the *format, the crafted IP, and collectors*, not a
   single launch.
 
 ---
 
 ## 6. Roadmap (clearly not yet built)
 
-- Player-to-player **trading** and a deeper in-game economy.
-- **User-made champions** and a creator economy (the long-term moat).
+- Player-to-player **trading** and a deeper collector economy (provenance, optional mint).
 - Accounts + full cloud persistence.
 - Monetization: cosmetics, battle passes, an "infinite battles" subscription.
 - **`$ZING` / token**. Deliberately deferred; wallet today is optional Trainer identity only.

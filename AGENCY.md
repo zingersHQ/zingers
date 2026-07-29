@@ -4,7 +4,7 @@ stage: launched
 autonomy: propose
 north_star: "Players fly the Ascent with a champion beside them, raise the bond, and share the flight and legend both become — the loop that drives organic, viral growth."
 target: { launch: "Launch v0.1 CLOSED (engineering). Flight-First gates shipped on zingers.gg. Remaining: human playtests, growth push, weekly ship notes — ops, not blockers." }
-economics: { model: "Proposed: free-to-play; future monetization via cosmetics, battle passes, and 'infinite battles'. In-game soft currency is Crowns (server-authoritative wallet). $ZING is fuel, not the product — deferred; see docs/zing-model.md.", costs: "LLM inference (xAI/Grok ~1 call/turn + local judge by default), Vercel hosting + cron, Upstash Redis persistence" }
+economics: { model: "Free-to-play. Crowns = server soft currency (never bridged). $ZING = optional Solana fuel; only hard utility is burn-to-immortalize (snapshot card editions). No yield, no P2W, no oracles. See docs/zing-model.md.", costs: "LLM inference (xAI/Grok ~1 call/turn + local judge by default), Vercel hosting + cron, Upstash Redis persistence" }
 guardrails:
   - "The engine is authoritative: stats/types/statuses/ELO decide combat. Wit quality is a bounded 0.7–1.3 (max 1.4) multiplier (local judge default; LLM judge opt-in) and can never single-handedly decide a match."
   - "Crown amounts are decided server-side only (lib/economy.ts + lib/server). Client-reported earns are clamped to ceilings; never let the client mint currency."
@@ -39,9 +39,11 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
 - **Raise model:** seed **Strategy** at adopt; UI shows **temperament meters** (readout). Daily
   **Imprints** and fights move the dials — no free-drag training sliders.
 - **Identity:** Trainers are nameless drivers; champions get unique names on claim/standings.
-  Optional Solana wallet is recovery only. Token/`$ZING` deliberately deferred.
-- **The bet:** the moat isn't the engine — it's original IP, the evolving battle meta, and a
-  future creator economy. Built viral-first (Flight shares, climb boards, collection, bond cards).
+  Optional Solana wallet is Trainer identity (+ future mint key). `$ZING` locked
+  as burn-to-immortalize only (`docs/zing-model.md`); Crowns stay off-chain forever.
+- **The bet:** the moat isn't the engine — it's original IP we craft (visual brand of minds),
+  the evolving battle meta, and a collector culture around legends. Built viral-first (Flight
+  shares, climb boards, collection, bond cards). No user-made champions.
 - **Open agent layer:** `act(view) → decision` (`docs/agent-protocol.md`). Default: single-shot
   JSON + local judge; tool loop / LLM judge are env-gated.
 
@@ -59,17 +61,18 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   unique champion names; temperament meters; robot brand mark; Peak-on-Tower; species kits
   densified. **Launch v0.1 engineering closed.** Ops after: human playtests, key art,
   growth push, weekly `@zingersHQ` notes (`docs/flight-first-plan.md`).
-- [~] **Phase 5 — Collection & creator economy.** Deterministic recruit (Crowns sink, earned
+- [~] **Phase 5 — Collection & collectors.** Deterministic recruit (Crowns sink, earned
   never rolled); species kits + Collection pager live; roster membership server-synced
   (wallet recruit-by-key + Redis union set so legends follow a restored Trainer code /
-  wallet). Still owed: trading, user-made champions.
-- [ ] **Phase 6 — Proposed: Accounts & monetization.** Full cloud accounts, cosmetics, battle
-  passes, "infinite battles." Token after traction.
-- [ ] **Phase 7+ — Proposed: post-traction horizon.** Seasons that fund the house; `$ZING`
-  live (opt-in standing / permanence); creator royalties; collectible mint only if IP
-  already loved. Far options if treasury allows: deepen this body, or a second-game
-  open world (same IP), or small franchise splinters. Internal map: `docs/horizon.md`.
-  Not a public promise.
+  wallet). Champions are studio-crafted only. Dex growth + Immortal supply unified in
+  `docs/champions-supply.md` (wave 1 = 132 live; Year 1 waves → ~200 minds; M = 8
+  Immortals/mind/year). Still owed: trading; Solana immortalize build; waves 2+.
+- [ ] **Phase 6 — Crypto launch + accounts rails.** `$ZING` + Immortalize program + claim
+  ops for Solana visibility; full cloud accounts; later cosmetics / battle pass /
+  "infinite battles." Token utility stays thin (immortalize + soft standing only).
+- [ ] **Phase 7+ — Proposed: post-launch horizon.** Seasons that fund the house; collector
+  trading depth; deepen this body or a second-game open world if treasury allows.
+  Internal map: `docs/horizon.md`. Not a public promise.
 
 ## Product & Design
 
@@ -121,10 +124,11 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
 | **—** | Token deferred; wallet ≠ coin | still frozen |
 
 Supporting: weekly `@zingersHQ` ship notes + Discord still owed for distribution.
-`$ZING` model written (`docs/zing-model.md`) — awaiting founder sign-off; not blocking.
+`$ZING` model locked (`docs/zing-model.md`): burn-to-immortalize only; build next.
 
-Explicitly **out of scope for v0.1:** full cloud accounts, real-money monetization, user-made
-champions, token launch, new venues as face work.
+Explicitly **out of scope for v0.1:** full cloud accounts, real-money monetization, token
+launch, new venues as face work. **Never in scope:** user-made champions / player creator
+tools for minds — the visual brand stays studio-crafted; players are collectors.
 
 ## Deployment
 
@@ -177,19 +181,21 @@ champions, token launch, new venues as face work.
 - Key art / share-card rasters (live WebGL hero covers homepage doors for now).
 - Discord invite if still placeholder.
 
-**Forecast:** Launch v0.1 engineering closed. Next is distribution (ship notes, playtests,
-growth), then Phase 5 depth. Token stays frozen. Post-success path sketched internally in
-`docs/horizon.md` (continuing spine, not a crossroads).
+**Forecast:** Launch v0.1 engineering closed. `$ZING` model locked thin:
+burn-to-immortalize only (`docs/zing-model.md`). Next is build the voucher + Solana
+program path, then crypto launch as distribution with that utility live. Phase 5
+still owes trading. Studio-crafted roster only. Horizon: `docs/horizon.md`.
 **Risks:** Climb feel busy-ness; onboarding length vs. fun; two-domain routing; LLM cost if
 league goes paid or tool-loop defaults flip on.
 
 ## Open Questions
 
 - ~~What defines "launch"?~~ **Answered:** Flight-First gates in `docs/flight-first-plan.md`.
-- ~~$ZING model?~~ **Proposed:** utility/fuel — awaiting founder sign-off; not blocking Climb.
+- ~~$ZING model?~~ **Locked:** burn-to-immortalize (snapshot editions, tiered fixed burns, no oracle/curve/yield). See `docs/zing-model.md`.
 - Real-money model: which of cosmetics / battle pass / "infinite battles" comes first?
 - Accounts: email/OAuth beyond Trainer code + optional Solana restore?
-- Creator economy moderation vs authoritative engine + ELO?
+- Immortalize knobs: exact burn table, cNFT vs NFT, Season 0 tradeable day one, royalty %.
+- Trading: what moves between Trainers without breaking engine authority?
 - Community: Discord invite + who runs the weekly devlog?
 - Horizon: token-only monetization vs parallel Stripe/IAP for non-wallet players?
   (`docs/horizon.md` §7)

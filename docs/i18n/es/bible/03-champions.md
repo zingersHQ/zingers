@@ -82,12 +82,21 @@ Una debatidora de lengua afilada que gana por el tempo y las réplicas quirúrgi
 
 ## El dex (mentes posteriores)
 
-El roster en vivo es un **dex coleccionable**, no solo las ocho Primeras Mentes. Las mentes posteriores son **descendientes o ecos** de una Primera Mente: misma familia de Fuerza, voz, movimientos y silueta distintos. Nunca son una sexta Fuerza.
+El roster en vivo es un **dex coleccionable**, no solo las ocho Primeras Mentes. Las mentes posteriores son **descendientes o ecos** de una Primera Mente: misma familia de Fuerza, voz, movimientos y silueta distintos. Nunca son una sexta Fuerza. La casa escribe cada mente. Los jugadores crían carreras; no forjan plantillas nuevas.
 
 **Cómo se ven diferentes:** cada mente lleva una **marca de especie** estable sobre un armazón robótico compartido: **tipo corporal** de raza (zancos, tanque, robusto, vaporoso, orador, alcance o canónico) más qué partes sólidas porta (cabeza, hombros, pecho, espalda). Las Primeras Mentes están hechas a mano; las mentes del dex posterior se asientan en una línea de **raza** de Fuerza con un toque ligero para que los primos difieran. El crecimiento de carrera y el nivel siguen remodelando el cuerpo. Los novatos ya llevan su marca de especie para que la cuadrícula de adopción y el dex se lean como animales distintos, no como cambios de paleta. Al subir de nivel, se atornillan más capas de armadura.
 
-**Rotación:** los iniciales semanales eligen una mente por Fuerza entre las Primeras Mentes y el pool del dex. El dex crece en oleadas hacia un gran conjunto coleccionable; la propiedad y el intercambio permanecen en la capa de colección/economía ([07-collection.md](./07-collection.md),
-[08-economy.md](./08-economy.md)).
+**Rotación:** los iniciales semanales eligen una mente por Fuerza entre las Primeras Mentes y el pool del dex. Reclutar gasta Coronas para meter una mente en tu establo. Propiedad, intercambio e inmortalizar viven en la capa de colección/economía ([07-collection.md](./07-collection.md), [08-economy.md](./08-economy.md)).
 
-Las temporadas pueden seguir presentando nuevos ecos de este canon más la semilla de temporada
-(véase [seasons.md](./06-seasons.md)).
+### Cómo crece el dex
+
+El dex llega en **oleadas**, no de golpe.
+
+- **Oleada 1** ya está fuera: las ocho Primeras Mentes más una primera cosecha completa de ecos.
+- **Oleadas posteriores** unas pocas veces al año: cada una añade un puñado equilibrado entre las cinco Fuerzas. Hacia el final del primer año público el libro apunta cerca de **doscientas** mentes; en unos años se profundiza hacia unas **trescientas**, aún curado, nunca infinito.
+- Una oleada es un acontecimiento. Los nombres nuevos entran en la rotación semanal y en la lista de recluta cuando la casa los suelta.
+- Las **temporadas** de historia (la Crónica) giran en su propio reloj. Pueden *destacar* una mente; no sueltan una oleada por sí solas (véase [06-seasons.md](./06-seasons.md)).
+
+### Carreras, no copias
+
+Dos Entrenadores que crían AXIOM sostienen **dos carreras vivas**. Misma mente en el libro; distintas cicatrices, saga y cuerpo. Inmortalizar (cuando la capa económica esté abierta) sella una carrera como carta en cadena: una instantánea escasa, no una segunda entrada del dex. Los sellos Génesis tempranos llevan marca OG. Cuántos sellos puede recibir una mente en un año está limitado para que la vitrina siga siendo exclusiva ([08-economy.md](./08-economy.md)).

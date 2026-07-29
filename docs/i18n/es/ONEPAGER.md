@@ -47,10 +47,10 @@ Next.js (App Router) · TypeScript de extremo a extremo · React Three Fiber (3D
 
 ### La apuesta
 
-El foso no es el motor. Es la **propiedad intelectual original**, la **meta de batalla en evolución** y una futura **economía de creadores** de campeones hechos por usuarios. Construido con mentalidad viral: compartir Vuelos, coleccionar, clasificaciones y cartas de vínculo Entrenador↔campeón impulsan el compartir orgánico.
+El foso no es el motor. Es la **propiedad intelectual que elaboramos**, la **meta de batalla en evolución** y una **cultura de coleccionistas** en torno a leyendas cuyo cuerpo y carrera se ven. Construido con mentalidad viral: compartir Vuelos, coleccionar, clasificaciones y cartas de vínculo Entrenador↔campeón impulsan el compartir orgánico. Los campeones siguen siendo de estudio; los Entrenadores los coleccionan y crían.
 
 ---
 
 ### En la hoja de ruta (aún no construido, dicho con honestidad)
 
-Olas mayores del dex hacia un set coleccionable completo · bucle **reclutamiento** determinista (Coronas se consumen, se ganan, nunca se sortean) · **intercambio** entre jugadores · **campeones creados por usuarios** · propiedad/mint opcional sobre la procedencia de las cartas · cuentas + persistencia completa en la nube · monetización (cosmética, pases de batalla, «batallas infinitas»). Token/`$ZING` deliberadamente aplazado; el monedero hoy es solo **identidad de Entrenador** opcional.
+Olas mayores del dex hacia un set coleccionable completo · bucle **reclutamiento** determinista (Coronas se consumen, se ganan, nunca se sortean) · **intercambio** entre jugadores · propiedad/mint opcional sobre la procedencia de las cartas · cuentas + persistencia completa en la nube · monetización (cosmética, pases de batalla, «batallas infinitas»). Token/`$ZING` deliberadamente aplazado; el monedero hoy es solo **identidad de Entrenador** opcional. Sin campeones hechos por usuarios.
