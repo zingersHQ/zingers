@@ -1,0 +1,15 @@
+# Anchor/Cargo build artifacts (can be >1GB) — never ship to Vercel.
+onchain/**/target
+onchain/**/.anchor
+onchain/**/test-ledger
+onchain/**/.deployer-keypair.json
+
+# Local / agent
+.agency
+.cursor
+.content/minds/draft
+content/minds/draft
+
+# Misc heavy local
+Stylized Nature MegaKit[Standard]/
+*.rs.bk

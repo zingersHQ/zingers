@@ -66,10 +66,12 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
   (wallet recruit-by-key + Redis union set so legends follow a restored Trainer code /
   wallet). Champions are studio-crafted only. Dex growth + Immortal supply unified in
   `docs/champions-supply.md` (wave 1 = 132 live; Year 1 waves → ~200 minds; M = 8
-  Immortals/mind/year). Still owed: trading; Solana immortalize build; waves 2+.
-- [ ] **Phase 6 — Crypto launch + accounts rails.** `$ZING` + Immortalize program + claim
-  ops for Solana visibility; full cloud accounts; later cosmetics / battle pass /
-  "infinite battles." Token utility stays thin (immortalize + soft standing only).
+  Immortals/mind/year). Immortalize app path shipped (voucher API + attested seal + UI);
+  still owed: trading; on-chain burn/mint program; waves 2+.
+- [~] **Phase 6 — Crypto launch + accounts rails.** Immortalize + **`card_immortalize`
+  Anchor program** (PDA mint authority, on-chain M=8, ed25519 vouchers; CARS test brand).
+  Still owe mainnet deploy/init, production `$ZING` + art, claim/airdrop ops; cloud
+  accounts; cosmetics / battle pass later. Token utility stays thin.
 - [ ] **Phase 7+ — Proposed: post-launch horizon.** Seasons that fund the house; collector
   trading depth; deepen this body or a second-game open world if treasury allows.
   Internal map: `docs/horizon.md`. Not a public promise.
@@ -124,7 +126,8 @@ Product framing: `docs/design-vision.md` (Flight-First v3.0). Active plan:
 | **—** | Token deferred; wallet ≠ coin | still frozen |
 
 Supporting: weekly `@zingersHQ` ship notes + Discord still owed for distribution.
-`$ZING` model locked (`docs/zing-model.md`): burn-to-immortalize only; build next.
+`$ZING` model locked (`docs/zing-model.md`): burn-to-immortalize only; app voucher path
+live (attested); on-chain program next.
 
 Explicitly **out of scope for v0.1:** full cloud accounts, real-money monetization, token
 launch, new venues as face work. **Never in scope:** user-made champions / player creator
@@ -135,7 +138,9 @@ tools for minds — the visual brand stays studio-crafted; players are collector
 - **Host:** Vercel — one project, two domains; `vercel.json` 6-hourly cron at `/api/cron`.
 - **Persistence:** Upstash Redis + Zustand/localStorage client mirror.
 - **Env:** `XAI_API_KEY` (optional), `ZINGERS_MODEL`, `ZINGERS_AGENT_TOOLS`, `ZINGERS_LLM_JUDGE`,
-  `LLM_DAILY_BUDGET_USD`, `CRON_SECRET`. Secrets in `.env.local` (never commit).
+  `LLM_DAILY_BUDGET_USD`, `CRON_SECRET`, optional `IMMORTALIZE_MODE` /
+  `IMMORTALIZE_SECRET` / chain: `CARS_MINT`, `CARDS_AUTHORITY`, `SOLANA_RPC_URL`.
+  Secrets in `.env.local` (never commit).
 - **Who triggers:** commits, pushes, deploys are **human-triggered**.
 
 ## Economics
@@ -143,7 +148,8 @@ tools for minds — the visual brand stays studio-crafted; players are collector
 - **In-game currency:** Crowns. Start 500; ranked win = +40 (+20 home Clan bonus). Sinks: train
   60, fragment buy/sell, **recruit 250**. Bets {25,50,100} @ 2×. Source: `lib/economy.ts`.
 - **Real money:** none today. Future: cosmetics, battle passes, "infinite battles."
-- **$ZING:** fuel, not the product — deferred. Wallet today = optional Trainer identity.
+- **$ZING:** fuel, not the product. Immortalize app path live (attested ledger seal);
+  SPL burn + NFT program still deferred. Wallet = Trainer identity + mint key.
 - **Marginal cost of one ranked duel** (`npm run cost`, 8 calls/duel, local judge):
   **≈ $0.0012** (optimistic) to **≈ $0.0033** (conservative). League defaults to mock (free).
   Reproduce with `npm run cost`; re-measure from `GET /api/cost`.
@@ -181,10 +187,10 @@ tools for minds — the visual brand stays studio-crafted; players are collector
 - Key art / share-card rasters (live WebGL hero covers homepage doors for now).
 - Discord invite if still placeholder.
 
-**Forecast:** Launch v0.1 engineering closed. `$ZING` model locked thin:
-burn-to-immortalize only (`docs/zing-model.md`). Next is build the voucher + Solana
-program path, then crypto launch as distribution with that utility live. Phase 5
-still owes trading. Studio-crafted roster only. Horizon: `docs/horizon.md`.
+**Forecast:** Immortalize app + CARS mainnet test lane shipped locally (burn fuel + mint
+Card with car placeholders). Next: bootstrap CARS mint on mainnet, fund a test wallet,
+set `IMMORTALIZE_MODE=chain`, verify end-to-end, then swap to production ticker/art for
+launch. Phase 5 still owes trading. Horizon: `docs/horizon.md`.
 **Risks:** Climb feel busy-ness; onboarding length vs. fun; two-domain routing; LLM cost if
 league goes paid or tool-loop defaults flip on.
 
@@ -194,7 +200,7 @@ league goes paid or tool-loop defaults flip on.
 - ~~$ZING model?~~ **Locked:** burn-to-immortalize (snapshot editions, tiered fixed burns, no oracle/curve/yield). See `docs/zing-model.md`.
 - Real-money model: which of cosmetics / battle pass / "infinite battles" comes first?
 - Accounts: email/OAuth beyond Trainer code + optional Solana restore?
-- Immortalize knobs: exact burn table, cNFT vs NFT, Season 0 tradeable day one, royalty %.
+- Immortalize knobs: retune burn table defaults, royalty %, always-on vs windowed after Genesis.
 - Trading: what moves between Trainers without breaking engine authority?
 - Community: Discord invite + who runs the weekly devlog?
 - Horizon: token-only monetization vs parallel Stripe/IAP for non-wallet players?

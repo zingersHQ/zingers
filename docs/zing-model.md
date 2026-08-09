@@ -139,10 +139,34 @@ No oracle. No multi-step escrow. No stake unlock scheduler. One program path.
 
 ---
 
+## Working burn table (retune anytime)
+
+Display units of `$ZING` (config in `lib/immortalize.ts`). Not final economics.
+
+| Rarity | Burn |
+|--------|------|
+| common | 100 |
+| uncommon | 250 |
+| rare | 500 |
+| epic | 1000 |
+| legendary | 2500 |
+| mythic | 5000 |
+
+## App status
+
+- **Shipped in-repo:** voucher API, champion UI, attested seal, and **Anchor program
+  `card_immortalize`** (PDA M-cap, career stamp, ed25519 voucher, burn + Metaplex
+  Card mint). Mint authority = program PDA. Server = voucher issuer only.
+- **Mainnet test lane (no product branding):** fuel **CARS** (or any SPL / pump.fun
+  mint), NFT **Card**, car SVG placeholders. Ops: `onchain/cars/README.md`,
+  `npm run cars:deploy-program`, `cars:init-program`, `cars:gen-issuer`.
+- **Not shipped:** production `$ZING` ticker + real champion art; program deploy to
+  mainnet (local build ready).
+
 ## Still open (knobs, not shape)
 
 - Final ticker name (working: `$ZING`)
-- Exact burn table (tier → `$ZING` amount)
+- Exact burn table retune (defaults above)
 - Exact royalty split (e.g. 5% total → house / minter)
 - Whether minting is always-on until M fills, or windowed after Genesis
 - Year 2+ **M** (or pause)

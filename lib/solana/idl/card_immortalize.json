@@ -1,0 +1,800 @@
+{
+  "address": "FNjvsSSqg8VcEuvRpXT1BjGWFe2BWwiQHo6qjoSUme3U",
+  "metadata": {
+    "name": "card_immortalize",
+    "version": "0.2.0",
+    "spec": "0.1.0",
+    "description": "Lean Immortalize: burn fuel + mint unique SPL card (PDA mint authority)"
+  },
+  "instructions": [
+    {
+      "name": "immortalize",
+      "discriminator": [
+        145,
+        187,
+        205,
+        115,
+        214,
+        236,
+        246,
+        155
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mind_counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "year"
+              },
+              {
+                "kind": "arg",
+                "path": "mind_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "career_stamp",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  114,
+                  101,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "year"
+              },
+              {
+                "kind": "arg",
+                "path": "mind_hash"
+              },
+              {
+                "kind": "arg",
+                "path": "mint_index"
+              }
+            ]
+          }
+        },
+        {
+          "name": "voucher_used",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  111,
+                  117,
+                  99,
+                  104,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fuel_mint",
+          "writable": true
+        },
+        {
+          "name": "owner_fuel_ata",
+          "writable": true
+        },
+        {
+          "name": "card_mint",
+          "docs": [
+            "Fresh mint keypair — created + initialized in handler"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "owner_card_ata",
+          "docs": [
+            "Fresh token account keypair — created + initialized in handler"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "mind_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "burn_amount",
+          "type": "u64"
+        },
+        {
+          "name": "mint_index",
+          "type": "u16"
+        },
+        {
+          "name": "year",
+          "type": "u32"
+        },
+        {
+          "name": "genesis",
+          "type": "u8"
+        },
+        {
+          "name": "exp",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "meta_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "voucher_issuer"
+        },
+        {
+          "name": "fuel_mint"
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_per_mind",
+          "type": "u16"
+        },
+        {
+          "name": "fuel_decimals",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "set_authority",
+      "discriminator": [
+        133,
+        250,
+        37,
+        21,
+        110,
+        163,
+        26,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_max_per_mind",
+      "discriminator": [
+        120,
+        8,
+        57,
+        199,
+        221,
+        13,
+        8,
+        175
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "max_per_mind",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "set_voucher_issuer",
+      "discriminator": [
+        119,
+        241,
+        45,
+        221,
+        152,
+        178,
+        108,
+        151
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_issuer",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CareerStamp",
+      "discriminator": [
+        250,
+        93,
+        232,
+        66,
+        80,
+        147,
+        193,
+        159
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "MindCounter",
+      "discriminator": [
+        199,
+        88,
+        231,
+        36,
+        217,
+        74,
+        219,
+        146
+      ]
+    },
+    {
+      "name": "VoucherUsed",
+      "discriminator": [
+        217,
+        180,
+        20,
+        250,
+        212,
+        53,
+        7,
+        44
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BadMax",
+      "msg": "Invalid max_per_mind"
+    },
+    {
+      "code": 6001,
+      "name": "BadDecimals",
+      "msg": "Fuel decimals mismatch"
+    },
+    {
+      "code": 6002,
+      "name": "BadBurn",
+      "msg": "Invalid burn amount"
+    },
+    {
+      "code": 6003,
+      "name": "BadGenesis",
+      "msg": "Invalid genesis flag"
+    },
+    {
+      "code": 6004,
+      "name": "VoucherExpired",
+      "msg": "Voucher expired"
+    },
+    {
+      "code": 6005,
+      "name": "BadEd25519",
+      "msg": "Ed25519 voucher missing or invalid"
+    },
+    {
+      "code": 6006,
+      "name": "MindFull",
+      "msg": "Mind Immortal slots full"
+    },
+    {
+      "code": 6007,
+      "name": "BadMintIndex",
+      "msg": "mint_index must be count+1"
+    },
+    {
+      "code": 6008,
+      "name": "BadCounter",
+      "msg": "Mind counter mismatch"
+    },
+    {
+      "code": 6009,
+      "name": "Paused",
+      "msg": "Program paused"
+    },
+    {
+      "code": 6010,
+      "name": "BadAdmin",
+      "msg": "Bad admin authority"
+    },
+    {
+      "code": 6011,
+      "name": "BadTokenAccount",
+      "msg": "Bad SPL token account"
+    },
+    {
+      "code": 6012,
+      "name": "BadCardMint",
+      "msg": "Card mint post-condition failed"
+    }
+  ],
+  "types": [
+    {
+      "name": "CareerStamp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "mind_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "card_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint_index",
+            "type": "u16"
+          },
+          {
+            "name": "year",
+            "type": "u32"
+          },
+          {
+            "name": "genesis",
+            "type": "u8"
+          },
+          {
+            "name": "burn_amount",
+            "type": "u64"
+          },
+          {
+            "name": "meta_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "voucher_issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "fuel_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_per_mind",
+            "type": "u16"
+          },
+          {
+            "name": "fuel_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "paused",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint_authority_bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "docs": [
+              "Forward-compat (version flags, fee bps, etc.). Keep zeroed."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MindCounter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mind_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "year",
+            "type": "u32"
+          },
+          {
+            "name": "count",
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VoucherUsed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

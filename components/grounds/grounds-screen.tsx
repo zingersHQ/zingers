@@ -328,7 +328,30 @@ export default function GroundsScreen({
     return loadLastWorld() ?? DEFAULT_WORLD.id;
   });
   const world = useMemo(() => worldById(worldId), [worldId]);
-  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  // /ascent must open as Circuit on the first paint. A null session mounts World
+  // as wilds (heading π → exit portal), then remounts into Circuit — the Trainer
+  // flashes looking back at the return arch before heading 0 (+Z / rings) sticks.
+  const [gameSession, setGameSession] = useState<GameSession | null>(() => {
+    if (!ascentEntry) return null;
+    let host = DEFAULT_WORLD.id;
+    try {
+      if (typeof window !== "undefined" && sessionStorage.getItem(STORAGE.postClaimGuide) === "1") {
+        host = "concord";
+      } else {
+        host = loadLastWorld() ?? DEFAULT_WORLD.id;
+      }
+    } catch {
+      host = loadLastWorld() ?? DEFAULT_WORLD.id;
+    }
+    const saved = loadWorldPose(host);
+    const pose = awayFromCircuitPortal(host, saved ?? { x: 0, z: 0, y: 0, heading: 0 });
+    try {
+      saveWorldPose(host, pose);
+    } catch {
+      // best-effort — exit resume still has returnPose in session state
+    }
+    return { venue: "circuit", hostWorldId: host, returnPose: pose };
+  });
   /** Mount Handler at this wilds pose after leaving a venue (Ascent portal exit). */
   const [wildResume, setWildResume] = useState<{ x: number; z: number; y?: number; heading?: number } | null>(null);
   const activeVenue = gameSession?.venue ?? null;
@@ -1558,13 +1581,16 @@ export default function GroundsScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
   }, []);
 
-  // /ascent with an owned mind — drop straight into the Circuit (guests still
-  // wait for the short summon → guestAscentReady enter below).
+  // /ascent with an owned mind — Circuit session is already seeded (see gameSession
+  // init) so World never mounts as wilds. Still call enterVenue once for wing
+  // reset + pad travel snap; venue key stays "circuit" (no remount / facing flash).
+  const ascentOwnedEntered = useRef(false);
   useEffect(() => {
     if (leaveAscentAfterClaim.current) return;
-    if (!ascentEntry || !owned || gameSession || activeVenue === "circuit") return;
+    if (!ascentEntry || !owned || ascentOwnedEntered.current) return;
+    ascentOwnedEntered.current = true;
     enterVenue("circuit");
-  }, [ascentEntry, owned, gameSession, activeVenue, enterVenue]);
+  }, [ascentEntry, owned, enterVenue]);
 
   useEffect(() => {
     if (activeVenue !== "circuit") return;
@@ -2181,8 +2207,11 @@ export default function GroundsScreen({
 
   // Once guest Ascent is armed, drop into the Circuit (claim postponed to RUN OVER).
   // On /ascent we're already at the door — skip the second TAKE FLIGHT veil.
+  // Session may already be Circuit-seeded; enterVenue still runs for resets/travel
+  // without remounting World into wilds first.
   useEffect(() => {
-    if (!guestAscentReady || owned || activeVenue === "circuit" || guestEnterArmed.current) return;
+    if (!guestAscentReady || owned || guestEnterArmed.current) return;
+    if (!ascentEntry && activeVenue === "circuit") return;
     guestEnterArmed.current = true;
     track("m_guest_run");
     if (ascentEntry) {

@@ -1,0 +1,39 @@
+{
+  "collection": {
+    "name": "CARS Cards",
+    "symbol": "CARD",
+    "family": "CARS"
+  },
+  "models": [
+    {
+      "id": "sedan",
+      "name": "Apex Sedan",
+      "blurb": "Four doors. Quiet ambition.",
+      "image": "/cars/sedan.svg"
+    },
+    {
+      "id": "coupe",
+      "name": "Night Coupe",
+      "blurb": "Two doors. Sharp line.",
+      "image": "/cars/coupe.svg"
+    },
+    {
+      "id": "hatch",
+      "name": "City Hatch",
+      "blurb": "Compact. Quick off the light.",
+      "image": "/cars/hatch.svg"
+    },
+    {
+      "id": "wagon",
+      "name": "Long Wagon",
+      "blurb": "Room in the back. Steady pace.",
+      "image": "/cars/wagon.svg"
+    },
+    {
+      "id": "roadster",
+      "name": "Open Roadster",
+      "blurb": "Top down. Wind first.",
+      "image": "/cars/roadster.svg"
+    }
+  ]
+}

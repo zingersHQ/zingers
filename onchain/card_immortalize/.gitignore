@@ -1,0 +1,11 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+
+.deployer-keypair.json
+.env.deploy
+**/card_immortalize-keypair.json

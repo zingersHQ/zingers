@@ -24,12 +24,14 @@ export interface CardAbility {
   finisher: boolean;
 }
 
-// Inert ownership hook — wired to a chain later, never affects gameplay.
+// Ownership / Immortal stamp — never affects gameplay.
 export interface CardProvenance {
   mintId: string | null;
   owner: string | null; // handle or wallet
   chain: string | null;
   mintedSeason: number | null;
+  /** OG / Genesis mark from early Immortalize window. */
+  genesis?: boolean;
 }
 
 export interface CardSigil {

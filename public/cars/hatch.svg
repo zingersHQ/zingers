@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" fill="none">
+  <rect width="320" height="180" fill="#18241c"/>
+  <text x="16" y="28" fill="#7a9a84" font-family="ui-monospace,monospace" font-size="12">CARS � HATCH</text>
+  <path d="M56 118h28l16-32h90l22 18 8 14h44v16H56z" fill="#3dbf7a"/>
+  <path d="M108 90h70l14 24H100z" fill="#8ee0b0"/>
+  <circle cx="104" cy="138" r="15" fill="#222" stroke="#bbb" stroke-width="3"/>
+  <circle cx="228" cy="138" r="15" fill="#222" stroke="#bbb" stroke-width="3"/>
+  <rect x="64" y="108" width="14" height="5" rx="2" fill="#f0d878"/>
+</svg>

@@ -41,9 +41,12 @@ const line = "var(--line2)";
 
 export function SolanaConnect({
   compact = false,
+  /** Hub: shorter copy, stronger connect CTA (still optional). */
+  tone = "default",
   onIdentity,
 }: {
   compact?: boolean;
+  tone?: "default" | "hub";
   /** Fired after link/restore (name always null — Trainers are nameless). */
   onIdentity?: (name: string | null) => void;
 }) {
@@ -202,11 +205,15 @@ export function SolanaConnect({
     fontFamily: "var(--font-mono), monospace",
   };
 
+  const hub = tone === "hub";
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: 0 }}>
-        Optional wallet. Reconnect restores champions, Crowns, and Flight progress. Keep a recovery code as backup.
-      </p>
+    <div style={{ display: "flex", flexDirection: "column", gap: hub ? 8 : 10 }}>
+      {!hub && (
+        <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.45, margin: 0 }}>
+          Optional wallet. Reconnect restores champions, Crowns, and Flight progress. Keep a recovery code as backup.
+        </p>
+      )}
 
       {pubkey ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -227,18 +234,36 @@ export function SolanaConnect({
           type="button"
           onClick={() => void connect()}
           disabled={busy}
-          style={{
-            ...ghostBtn,
-            color: ink,
-            width: "100%",
-            padding: "10px 14px",
-            fontSize: 12,
-            fontWeight: 600,
-          }}
+          className={hub ? "btn btn-primary" : undefined}
+          style={
+            hub
+              ? {
+                  ["--ac" as string]: "#7c5cff",
+                  width: "100%",
+                  fontSize: 13,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }
+              : {
+                  ...ghostBtn,
+                  color: ink,
+                  width: "100%",
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }
+          }
         >
           <Wallet size={14} strokeWidth={2} />
           {busy ? "Signing…" : "Connect wallet"}
         </button>
+      )}
+      {hub && !pubkey && (
+        <p className="mono" style={{ fontSize: 9, color: mute, lineHeight: 1.4, margin: 0 }}>
+          Optional. Same wallet restores this Trainer on another device.
+        </p>
       )}
 
       {err && (

@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { useGLTF, Environment, Lightformer, Html, PerformanceMonitor, AdaptiveDpr } from "@react-three/drei";
 import { Physics, RigidBody, CapsuleCollider, CuboidCollider, type RapierRigidBody } from "@react-three/rapier";
-import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { ChevronsUp, ChevronsDown, Zap, Swords, Moon, Ban, type LucideIcon } from "lucide-react";
 import * as THREE from "three";
@@ -773,9 +773,16 @@ export default function World({
       camera={{ position: spawnCam, fov: 52, near: 0.1, far: gpuLite ? 320 : 600 }}
       dpr={gpuLite ? [0.75, 1] : [1, 1.5]}
       gl={{ antialias: !gpuLite, powerPreference: WEBGL_POWER, failIfMajorPerformanceCaveat: false }}
-      onCreated={({ gl }) => {
+      onCreated={({ gl, camera }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = biome.exposure;
+        // R3F default look is −Z. Circuit spawnCam sits behind the pad on −Z, so
+        // frame 0 would stare at the return portal until CameraController runs.
+        if (inCircuit && venueSpawn) {
+          camera.lookAt(venueSpawn[0], venueSpawn[1] + 1.4, venueSpawn[2] + 6);
+        } else if (inAmphitheatre && venueSpawn) {
+          camera.lookAt(venueSpawn[0], venueSpawn[1] + 1.2, venueSpawn[2] - 4);
+        }
         onGlReady?.();
         const canvas = gl.domElement;
         // calling preventDefault() is what tells the browser we want the context
@@ -3035,8 +3042,10 @@ function Handler({
   // squash-&-stretch impulse that pops on launch and absorbs on landing
   const leanX = useRef(0);
   const leanZ = useRef(0);
-  // previous frame's heading — its delta gives the turn rate for the ground bank
-  const prevHeading = useRef(Math.PI);
+  // previous frame's heading — its delta gives the turn rate for the ground bank.
+  // Seed from the live spawn face (Circuit = 0). Math.PI made the first frame
+  // bank as if we'd spun 180° from the exit portal.
+  const prevHeading = useRef(handlerHeading.current);
   const stretch = useRef(0); // +1 = stretch up (launch), -1 = squash down (land)
   const wasGrounded = useRef(true);
   const wasFlying = useRef(false);
@@ -3087,17 +3096,23 @@ function Handler({
   // Circuit / Amphitheatre / wild resume already seeded `handlerHeading` at World
   // mount. Never force wild resume to 0 — that stares at the Concord return
   // portal (Void Garden +z knoll) instead of the plaza with the portal at your back.
-  useEffect(() => {
+  // useLayoutEffect: apply mesh yaw before the first paint so settle's early-return
+  // can't leave the robot at identity while the exit portal is already on screen.
+  useLayoutEffect(() => {
     const face = spawnPos
       ? handlerHeading.current
       : Math.atan2(-spawnKnoll.x, -spawnKnoll.z);
     heading.current = face;
+    prevHeading.current = face;
     handlerHeading.current = face;
     if (camCue.current) {
       camCue.current.heading = face;
       if (spawnPos) camCue.current.recenter = true;
     }
-    if (inner.current) inner.current.rotation.set(0, face, 0);
+    if (inner.current) {
+      inner.current.rotation.order = "YXZ";
+      inner.current.rotation.set(0, face, 0);
+    }
   }, [spawnPos, spawnKnoll, camCue, handlerHeading]);
 
   // Single entry point for body animation. Always fades out whatever `cur`
@@ -3284,6 +3299,13 @@ function Handler({
     // can never pin the player forever.
     if (!settled.current) {
       if (spawnAt.current === 0) spawnAt.current = performance.now();
+      // Keep spawn yaw applied while pinned — this branch used to return before the
+      // body-polish rotation write, so a cold Circuit load could show the robot
+      // facing the return portal until the pad sensor fired.
+      if (inner.current) {
+        inner.current.rotation.order = "YXZ";
+        inner.current.rotation.set(0, heading.current, 0);
+      }
       if (sensorGround) {
         settled.current = true;
         if (camCue.current) camCue.current.bodyReady = true;
@@ -4171,7 +4193,7 @@ function ShowcaseCamera({ shape }: { shape: TerrainShape }) {
 }
 
 const CIRCUIT_INTRO_HOLD_S = 1.5;
-/** Arrival + title card share CIRCUIT_SECTOR_INTRO — face-on, then Q-sweep to chase. */
+/** Arrival + title card share CIRCUIT_SECTOR_INTRO — chase-from-behind, then settle. */
 const CIRCUIT_ARRIVE_HOLD_S = CIRCUIT_SECTOR_INTRO.arriveHoldS;
 const CIRCUIT_CONTINUE_ARRIVE_HOLD_S = CIRCUIT_SECTOR_INTRO.continueArriveHoldS;
 const CIRCUIT_ARRIVE_SWEEP_S = CIRCUIT_SECTOR_INTRO.arriveSweepS;

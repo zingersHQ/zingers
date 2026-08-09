@@ -29,7 +29,8 @@ Next.js 16（App Router）・React 19・エンドツーエンド**TypeScript**�
 - **状態はクライアントファースト、同期**。キャリアは`localStorage`に保存され、`/api/save`経由でRedisにミラーリング。**キャリア台帳**（`CareerEvent[]`＋`AxisSnapshot[]` on `PlayerSave`）は純粋追加・上限付き・追記専用ログで、全ての実プレイを記録。バトル、レベルアップ、ティアアップ、訓練、Keeper解除、シーズン交代、初回獲得など。`store/champions.ts`に実装。
 - **コレクションのロスターはサーバーでユニオン**。リクルートした心のキーはRedisセット（`z:roster:{token}`）に載る。有料リクルートは`POST /api/wallet`の`{ type: "recruit", key }`（Crownsと所属を一発）。`/api/save`は読み書きでロスターをマージし、last-write-winsが伝説を消さないようにする。端末をまたぐ復元には同じトレーナーコードまたは連携Solanaウォレットが必要。
 - **トレーナー同一性**。一意の名前は任意のSolanaウォレットでロック可能（所有権証明のみ。消費なし）。Circuit/Climbクラフトボードはサーバーサイドでラベル解決。ランク投稿には離陸チケットと壁時計／速度チェックが必要。クラウンは日次上限内の自己ベストに払い、ボード順位には払わない。
-- **約25のAPIルート**（`app/api/*`）がバトル、シミュレーション、獲得、ロスター、順位表、デイリー、ガーディアン（Keepers）、インプリント、フィード、戦争、セーブ、ウォレット、Solanaリンク、カードOG画像、`/api/cost`メーターをカバー。
+- **イモータライズ（アプリ + CARS テスト帯）。** `GET/POST /api/immortalize`（voucher / prepare / confirm）。`chain`：SPL バーン + Card NFT ミント（Metaplex）。メインネット試験ブランドは **CARS / Cards / 車 SVG**。製品名や本編アートは使わない（`onchain/cars/`）。
+- **約26のAPIルート**（`app/api/*`）がバトル、シミュレーション、獲得、ロスター、順位表、デイリー、ガーディアン（Keepers）、インプリント、フィード、戦争、セーブ、ウォレット、Solanaリンク、イモータライズ、カードOG画像、`/api/cost`メーターをカバー。
 
 ## プラグイン可能なエージェント層
 

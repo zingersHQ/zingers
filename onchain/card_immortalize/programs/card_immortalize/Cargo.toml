@@ -1,0 +1,28 @@
+[package]
+name = "card_immortalize"
+version = "0.2.0"
+description = "Lean Immortalize: burn fuel + mint unique SPL card (PDA mint authority)"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "card_immortalize"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
+# Classic SPL Token only — no anchor-spl (its Accounts macros force Token-2022 into the .so).
+spl-token = { version = "8", default-features = false, features = ["no-entrypoint"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

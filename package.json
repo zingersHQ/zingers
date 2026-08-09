@@ -19,15 +19,29 @@
     "i18n:promote-minds": "node scripts/i18n/promote-minds.mjs",
     "i18n:draft-docs": "node scripts/i18n/draft-docs.mjs",
     "i18n:draft-glossary": "node scripts/i18n/draft-glossary.mjs",
-    "mcp": "node mcp/zingers-mcp.mjs"
+    "mcp": "node mcp/zingers-mcp.mjs",
+    "cars:create-mint": "node scripts/cars/create-mint.mjs",
+    "cars:fund": "node scripts/cars/fund-wallet.mjs",
+    "cars:gen-issuer": "node scripts/cars/gen-voucher-issuer.mjs",
+    "cars:init-program": "node scripts/cars/init-program.mjs",
+    "cars:deploy-program": "bash scripts/cars/deploy-program.sh",
+    "cars:finish-mainnet": "node scripts/cars/finish-mainnet.mjs"
   },
   "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
+    "@metaplex-foundation/mpl-toolbox": "^0.11.4",
+    "@metaplex-foundation/umi": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
+    "@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@noble/ed25519": "^3.1.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
     "@react-three/rapier": "^2.2.0",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.98.4",
     "@upstash/redis": "^1.38.0",
     "bs58": "^6.0.0",
     "lucide-react": "^1.20.0",
@@ -38,6 +52,7 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "three": "^0.184.0",
+    "tweetnacl": "^1.0.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

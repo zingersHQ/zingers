@@ -1,28 +1,27 @@
 "use client";
 // ─────────────────────────────────────────────────────────────────────────────
-// The Player Hub — ONE top-right entry that folds together the ~9 widgets that
-// used to litter the HUD: trainer status, the season war, the saga thread, world
-// objectives, discovery, the collection/portfolio links, settings, theme, the
-// ambience toggle, controls, and the site nav. The always-visible trigger keeps
-// only the essentials (robot mark · level · crowns); everything else lives one
-// tap away in a single slide-over so the world reads clean.
+// The Player Hub — top-right slide-over for Trainer identity + wallet, flight,
+// your stuff, compact progress, season war, and settings. Learn/Build links sit
+// under "More". Trigger shows level · crowns · wallet hint when unlinked.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  X, Crown, Gem, BookOpen, Target, Compass as CompassIcon, Layers,
-  Settings as SettingsIcon, HelpCircle, Shield, ChevronRight, Sparkles, Rocket,
+  X, Crown, Gem, BookOpen, Target, Layers, Wallet,
+  Settings as SettingsIcon, HelpCircle, Shield, ChevronRight, Rocket,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useChampions } from "@/store/champions";
 import { trainerLevel, FORCES, forceMeta } from "@/lib/evolve/trainer";
 import { TYPE_COLOR, EMBLEM } from "@/lib/evolve/progression";
-import { readerSaga, SAGA } from "@/lib/lore/saga";
+import { readerSaga } from "@/lib/lore/saga";
 import { HUB_NAV_GROUPS, playEntryHref } from "@/lib/play-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientToggle } from "@/components/grounds/ambience";
 import { LocaleDropdown } from "@/components/locale-dropdown";
 import { RobotMark } from "@/components/brand/robot-mark";
+import { SolanaConnect } from "@/components/wallet/solana-connect";
+import { STORAGE } from "@/lib/brand";
 import type { WorldGoal } from "./goals";
 import type { WarState } from "@/lib/types";
 
@@ -73,12 +72,26 @@ export function PlayerHub({
   const trainerXp = useChampions((s) => s.trainerXp);
   const force = useChampions((s) => s.force);
   const [open, setOpen] = useState(false);
+  const [walletLinked, setWalletLinked] = useState(false);
 
   const tl = trainerLevel(trainerXp);
   const saga = readerSaga(trainerXp);
   const fc = force ? TYPE_COLOR[force] : "#9a96b8";
   const fm = force ? forceMeta(force) : null;
   const rankFrac = Math.max(0.03, Math.min(1, tl.into / tl.span));
+
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setWalletLinked(!!localStorage.getItem(STORAGE.solPubkey));
+      } catch {
+        setWalletLinked(false);
+      }
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -150,9 +163,21 @@ export function PlayerHub({
         type="button"
         onClick={openHub}
         className={`panel hub-trigger${hudDim ? " is-dim" : ""}${highlight ? " is-catch" : ""}`}
-        aria-label={huntOpen ? `Open your menu · ${goalsLeft.length} goals · ${nodesLeft} caches` : "Open your menu"}
+        aria-label={
+          !walletLinked
+            ? "Open your menu · connect wallet"
+            : huntOpen
+              ? `Open your menu · ${goalsLeft.length} goals · ${nodesLeft} caches`
+              : "Open your menu"
+        }
         aria-expanded={open}
-        title={huntOpen ? `Menu · ${goalsLeft.length}/${goals.length || 3} goals · ${nodesLeft} caches` : "Your menu"}
+        title={
+          !walletLinked
+            ? "Your menu · connect wallet"
+            : huntOpen
+              ? `Menu · ${goalsLeft.length}/${goals.length || 3} goals · ${nodesLeft} caches`
+              : "Your menu"
+        }
         style={{
           ["--ac" as string]: fc,
           display: "inline-flex",
@@ -192,6 +217,25 @@ export function PlayerHub({
           <Crown size={isMobile ? 13 : 15} color="var(--gold)" strokeWidth={2.2} />
           <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: "var(--gold)" }}>{crowns}</span>
         </span>
+        {!walletLinked && (
+          <span
+            title="Connect wallet"
+            aria-hidden
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginLeft: 2,
+              width: 18,
+              height: 18,
+              borderRadius: 5,
+              background: "color-mix(in srgb, #7c5cff 28%, transparent)",
+              color: "#c4b5ff",
+            }}
+          >
+            <Wallet size={11} strokeWidth={2.4} />
+          </span>
+        )}
         {(highlight || huntOpen) && (
           <span
             title="World objectives & caches"
@@ -272,6 +316,35 @@ export function PlayerHub({
               </button>
             </div>
 
+            {/* Account first — wallet was buried on Rank / Immortalize */}
+            <SectionLabel>{t("account")}</SectionLabel>
+            <div className="panel" style={{ padding: "12px 13px" }}>
+              <SolanaConnect
+                tone="hub"
+                onIdentity={() => {
+                  try {
+                    setWalletLinked(!!localStorage.getItem(STORAGE.solPubkey));
+                  } catch {
+                    setWalletLinked(false);
+                  }
+                }}
+              />
+              <Link
+                href="/standings"
+                onClick={close}
+                className="mono"
+                style={{
+                  display: "inline-block",
+                  marginTop: 10,
+                  fontSize: 10,
+                  color: "var(--muted2)",
+                  textDecoration: "underline",
+                }}
+              >
+                {t("recoveryOnRank")}
+              </Link>
+            </div>
+
             {onTakeFlight && (
               <button
                 type="button"
@@ -313,21 +386,43 @@ export function PlayerHub({
               </div>
             </div>
 
-            {/* ── PROGRESS: three distinct systems ── */}
-            <SectionLabel>Progress</SectionLabel>
+            {/* You — your stuff */}
+            <SectionLabel>{t("groups.you")}</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <Link href="/collection" onClick={close} className="hub-navlink">
+                <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <Layers size={15} color="var(--gold)" />
+                  <span style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{t("items.collection.label")}</span>
+                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>{t("items.collection.blurb")}</span>
+                  </span>
+                </span>
+                <ChevronRight size={15} color="var(--muted2)" />
+              </Link>
+              <Link href="/standings" onClick={close} className="hub-navlink">
+                <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <Crown size={15} color="var(--gold)" />
+                  <span style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{t("items.rank.label")}</span>
+                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>{t("items.rank.blurb")}</span>
+                  </span>
+                </span>
+                <ChevronRight size={15} color="var(--muted2)" />
+              </Link>
+            </div>
 
-            {/* World Objectives — seasonal/spatial goals in the current region */}
-            <Card icon={<Target size={15} />} color="var(--gold)" title="World Objectives" sub={inRegion ? regionName : "region goals"}>
+            {/* Progress — one card, not three stacked systems */}
+            <SectionLabel>{t("progress")}</SectionLabel>
+            <div className="panel" style={{ padding: "12px 13px" }}>
               {inRegion && goals.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 9 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                   {goals.map((g) => {
                     const done = goalsDone.includes(g.id);
                     return (
                       <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 9, opacity: done ? 0.5 : 1 }}>
                         <span style={{ fontSize: 13, color: g.color, width: 16, textAlign: "center" }}>{KIND_ICON[g.kind]}</span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: 12.5, fontWeight: 600, textDecoration: done ? "line-through" : "none" }}>{g.label}</span>
-                          <span style={{ fontSize: 11, color: "var(--muted2)" }}> · {g.hint}</span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, textDecoration: done ? "line-through" : "none" }}>
+                          {g.label}
                         </span>
                         <span className="mono" style={{ fontSize: 10, color: done ? "#36d39a" : "var(--gold)", flexShrink: 0 }}>
                           {done ? "done" : `${g.reward.crowns}c`}
@@ -335,64 +430,44 @@ export function PlayerHub({
                       </div>
                     );
                   })}
-                  <div className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", marginTop: 2 }}>
-                    {goalsLeft.length} of {goals.length} left · tracked in your compass
-                  </div>
                 </div>
               ) : (
-                <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.4 }}>
-                  Walk out through a gate. Every region has a peak, a depth and a secret to claim.
+                <p style={{ fontSize: 12, color: "var(--muted)", margin: 0, lineHeight: 1.4 }}>
+                  {t("progressEmpty")}
                 </p>
               )}
-            </Card>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  marginTop: 12,
+                  paddingTop: 10,
+                  borderTop: "1px solid var(--line)",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+                  <BookOpen size={13} color="#cdb8ff" />
+                  <span style={{ fontWeight: 700 }}>{saga.chapter.title}</span>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>
+                    {saga.index + 1}/{saga.total}
+                  </span>
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, marginLeft: "auto" }}>
+                  <Gem size={13} color="#39e0ff" />
+                  <span style={{ fontWeight: 700 }}>{fragments}</span>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--muted2)" }}>
+                    {inRegion ? `· ${nodesLeft} caches` : ""}
+                  </span>
+                </span>
+              </div>
+            </div>
 
-            {/* Saga — the story spine, keyed off trainer rank */}
-            <Card icon={<BookOpen size={15} />} color="#cdb8ff" title="Saga" sub={`Chapter ${saga.index + 1}/${saga.total} · Act ${saga.chapter.act}`}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8 }}>{saga.chapter.title}</div>
-              <p style={{ fontSize: 11.5, color: "var(--muted)", fontStyle: "italic", margin: "5px 0 0", lineHeight: 1.45 }}>{saga.chapter.stake}</p>
-              <div style={{ display: "flex", gap: 7, alignItems: "flex-start", marginTop: 9 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#cdb8ff", marginTop: 5, flexShrink: 0, boxShadow: "0 0 8px #cdb8ff" }} />
-                <span style={{ fontSize: 12, lineHeight: 1.4 }}>{saga.chapter.objective}</span>
-              </div>
-              <div style={{ height: 4, borderRadius: 3, background: "rgba(255,255,255,.09)", marginTop: 10, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.round(saga.pct * 100)}%`, background: "#cdb8ff", transition: "width .5s" }} />
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
-                {SAGA.map((ch, i) => (
-                  <span key={ch.id} title={ch.title} style={{ width: 9, height: 9, borderRadius: "50%", background: i === saga.index ? "#cdb8ff" : i < saga.index ? "var(--muted2)" : "transparent", border: i <= saga.index ? "none" : "1px solid var(--line)", boxShadow: i === saga.index ? "0 0 8px #cdb8ff" : "none" }} />
-                ))}
-              </div>
-            </Card>
-
-            {/* Discovery — the daily caches + fragments you collect out in the wilds */}
-            <Card icon={<CompassIcon size={15} />} color="#39e0ff" title="Discovery" sub="caches & fragments">
-              <div style={{ display: "flex", gap: 18, marginTop: 9 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <Gem size={14} color="#39e0ff" strokeWidth={2.2} />
-                    <span style={{ fontSize: 17, fontWeight: 800 }}>{fragments}</span>
-                  </div>
-                  <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>FRAGMENTS</div>
-                </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <Sparkles size={14} color={inRegion ? "#39e0ff" : "var(--muted2)"} strokeWidth={2.2} />
-                    <span style={{ fontSize: 17, fontWeight: 800, color: inRegion ? "var(--ink)" : "var(--muted2)" }}>{inRegion ? nodesLeft : "—"}</span>
-                  </div>
-                  <div className="mono" style={{ fontSize: 9, color: "var(--muted2)", marginTop: 2 }}>CACHES LEFT TODAY</div>
-                </div>
-              </div>
-              <p className="mono" style={{ fontSize: 9.5, color: "var(--muted2)", margin: "8px 0 0", lineHeight: 1.4 }}>
-                {inRegion
-                  ? "Nearest cache rides your compass · refresh at UTC midnight"
-                  : "Gate into a region — Peak, Depth, Secret, and today’s caches wait past the plaza"}
-              </p>
-            </Card>
-
-            {/* ── SEASON WAR ── */}
+            {/* Season war — compact; clan CTA if needed */}
             {war && (
               <>
-                <SectionLabel>Season war</SectionLabel>
+                <SectionLabel>{t("seasonWar")}</SectionLabel>
                 <div className="panel" style={{ padding: "11px 12px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                     {FORCES.map((f) => {
@@ -416,40 +491,15 @@ export function PlayerHub({
                       className="btn btn-primary"
                       style={{ ["--ac" as string]: fc, width: "100%", marginTop: 11, fontSize: 12.5 }}
                     >
-                      Choose your Clan
+                      {t("chooseClan")}
                     </button>
                   )}
                 </div>
               </>
             )}
 
-            {/* ── PORTFOLIO ── */}
-            <SectionLabel>Portfolio</SectionLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              <Link href="/collection" onClick={close} className="hub-navlink">
-                <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <Layers size={15} color="var(--gold)" />
-                  <span style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>Collection</span>
-                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Your champion dex: cards that evolve</span>
-                  </span>
-                </span>
-                <ChevronRight size={15} color="var(--muted2)" />
-              </Link>
-              <Link href="/standings" onClick={close} className="hub-navlink">
-                <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <Crown size={15} color="var(--gold)" />
-                  <span style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>Rank</span>
-                    <span style={{ fontSize: 10.5, color: "var(--muted2)" }}>Season standings & rating</span>
-                  </span>
-                </span>
-                <ChevronRight size={15} color="var(--muted2)" />
-              </Link>
-            </div>
-
-            {/* ── DISPLAY & SETTINGS ── */}
-            <SectionLabel>Display &amp; settings</SectionLabel>
+            {/* Settings */}
+            <SectionLabel>{t("displaySettings")}</SectionLabel>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <LocaleDropdown variant="hub" />
               <ThemeToggle variant="compact" />
@@ -462,30 +512,38 @@ export function PlayerHub({
               </button>
             </div>
 
-            {/* ── NAVIGATE (Learn / Build only — Collection & Rank live under Portfolio) ── */}
-            <SectionLabel>{t("navigate")}</SectionLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {HUB_NAV_GROUPS.filter((g) => g.id !== "play" && g.id !== "you").map((group) => (
-                <div key={group.id}>
-                  <span className="mono" style={{ fontSize: 9, letterSpacing: 1.5, color: "var(--muted2)" }}>{t(`groups.${group.id}`).toUpperCase()}</span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={item.id === "play" ? playEntryHref(isMobile) : item.href}
-                        onClick={close}
-                        className="panel"
-                        style={{ padding: "6px 11px", fontSize: 12, fontWeight: 600, textDecoration: "none", color: "var(--ink)" }}
-                      >
-                        {t(`items.${item.id}.label`)}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Learn / Build tucked away — not the default wall of chrome */}
+            <details style={{ marginTop: 18 }}>
+              <summary
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.2,
+                  color: "var(--muted2)",
+                  cursor: "pointer",
+                  listStyle: "none",
+                }}
+              >
+                {t("moreLinks")}
+              </summary>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                {HUB_NAV_GROUPS.filter((g) => g.id !== "play" && g.id !== "you").flatMap((group) =>
+                  group.items.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.id === "play" ? playEntryHref(isMobile) : item.href}
+                      onClick={close}
+                      className="panel"
+                      style={{ padding: "6px 11px", fontSize: 12, fontWeight: 600, textDecoration: "none", color: "var(--ink)" }}
+                    >
+                      {t(`items.${item.id}.label`)}
+                    </Link>
+                  )),
+                )}
+              </div>
+            </details>
 
-            <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", textAlign: "center", marginTop: 22, letterSpacing: 0.5 }}>
+            <p className="mono" style={{ fontSize: 9, color: "var(--muted2)", textAlign: "center", marginTop: 18, letterSpacing: 0.5 }}>
               {t("menuHint")}
             </p>
           </div>
@@ -503,19 +561,3 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Card({ icon, color, title, sub, children }: { icon: React.ReactNode; color: string; title: string; sub?: string; children: React.ReactNode }) {
-  return (
-    <div className="panel" style={{ ["--ac" as string]: color, padding: "12px 13px", marginBottom: 9, borderColor: "var(--line)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 8, background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
-          {icon}
-        </span>
-        <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 800 }}>{title}</span>
-          {sub && <span className="mono" style={{ fontSize: 9, letterSpacing: 0.8, color: "var(--muted2)", marginTop: 1 }}>{sub.toUpperCase()}</span>}
-        </span>
-      </div>
-      {children}
-    </div>
-  );
-}

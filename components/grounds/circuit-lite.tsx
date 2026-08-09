@@ -1721,13 +1721,20 @@ export default function CircuitLite({
           }}
           gl={{ antialias: gfx.antialias, powerPreference: gfx.powerPreference }}
           style={{ pointerEvents: "none" }}
-          onCreated={({ gl }) => {
+          onCreated={({ gl, camera }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = biome.exposure;
             if (gfx.shadows) {
               gl.shadowMap.enabled = true;
               gl.shadowMap.type = THREE.PCFSoftShadowMap;
             }
+            // Default camera looks −Z; pad cam sits on −Z so frame 0 would face the
+            // deck edge / void until ReadyPose's first lookAt (+Z / rings).
+            camera.lookAt(
+              track.spawn[0],
+              track.spawn[1] + CAM_HEIGHT + 0.55,
+              track.spawn[2] + CAM_LEAD,
+            );
             const bornAt = runId;
             setGlLost(false);
             clearGlWatchdog();

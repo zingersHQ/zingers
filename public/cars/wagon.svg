@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" fill="none">
+  <rect width="320" height="180" fill="#241c14"/>
+  <text x="16" y="28" fill="#9a8a7a" font-family="ui-monospace,monospace" font-size="12">CARS � WAGON</text>
+  <path d="M36 122h48l18-34h140l8 34h34v14H36z" fill="#d4953a"/>
+  <path d="M110 92h100l8 26H104z" fill="#e8c080"/>
+  <circle cx="92" cy="140" r="16" fill="#222" stroke="#ccc" stroke-width="3"/>
+  <circle cx="244" cy="140" r="16" fill="#222" stroke="#ccc" stroke-width="3"/>
+  <rect x="44" y="110" width="16" height="5" rx="2" fill="#f0d878"/>
+</svg>

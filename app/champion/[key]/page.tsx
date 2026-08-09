@@ -18,12 +18,16 @@ import { getHandle } from "@/lib/owner";
 import { loadCircuitPersonalBest } from "@/components/grounds/circuit-tracks";
 import { canRetire, readCareer } from "@/lib/career-friction";
 import { isRetired } from "@/lib/legacy";
+import { ImmortalizePanel } from "@/components/collection/immortalize-panel";
+import { fetchImmortalStatus } from "@/lib/immortalize-client";
+import type { CardProvenance } from "@/lib/cards/card";
 
 export default function ChampionPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = use(params);
   const ckey = key.toUpperCase();
   const [mounted, setMounted] = useState(false);
   const [retireNote, setRetireNote] = useState<string | null>(null);
+  const [provenance, setProvenance] = useState<Partial<CardProvenance> | undefined>(undefined);
   const isMobile = useIsMobile();
   const router = useRouter();
   const { get, getRecipe, owned, events, snapshots, retireOwned } = useChampions();
@@ -32,13 +36,34 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
     setMounted(true);
   }, [ckey]);
 
+  useEffect(() => {
+    if (!mounted || owned !== ckey) {
+      setProvenance(undefined);
+      return;
+    }
+    let cancelled = false;
+    void fetchImmortalStatus(ckey).then((s) => {
+      if (cancelled || !s?.record) return;
+      setProvenance({
+        mintId: s.record.mintId,
+        owner: s.record.ownerPubkey,
+        chain: s.record.chain,
+        mintedSeason: s.record.season,
+        genesis: s.record.genesis,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ckey, mounted, owned]);
+
   if (!mounted) return <main style={{ padding: 40 }} />;
   const entry = ROSTER[ckey];
   if (!entry) return <main style={{ padding: 40, color: "var(--muted)" }}>Unknown champion.</main>;
 
   const c = get(ckey);
   const recipe = getRecipe(ckey);
-  const card = cardOf(ckey, c || blank(), { memory: recipe.memory });
+  const card = cardOf(ckey, c || blank(), { memory: recipe.memory, provenance });
   const col = card.force.hex;
   const saga = [...(events[ckey] || [])].sort((a, b) => b.ts - a.ts);
   const career = readCareer(c || blank(), events[ckey]);
@@ -163,6 +188,7 @@ export default function ChampionPage({ params }: { params: Promise<{ key: string
             )}
           </div>
         )}
+        <ImmortalizePanel mindKey={ckey} owned={owned === ckey} accent={col} />
       </div>
 
       {saga.length > 0 && (

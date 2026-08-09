@@ -69,14 +69,16 @@ for live fights · **xAI (Grok)** as the built-in brain. Deployed on Vercel
   server-side; ranked posts require a takeoff ticket and wall-clock / speed
   checks (`lib/server/flight-run.ts`). Crowns pay personal bests under the daily
   cap, never board placement.
-- **`$ZING` immortalize (locked, not shipped).** Burn fixed SPL amounts → mint a
-  card edition. Flow: server voucher (owns career, edition free, burn amount +
-  art hash) → one program tx burns token + mints NFT → server fills card
-  provenance. Snapshot art; season/tier re-stamps; no oracle, no curve, no yield.
-  See `docs/zing-model.md`.
-- **~25 API routes** (`app/api/*`) cover battle, sim, claim, roster, standings,
-  daily, imprint, feed, war, save, wallet, solana-link, card OG images, and a
-  `/api/cost` meter.
+- **Immortalize (app + `card_immortalize` program).** `GET/POST /api/immortalize`
+  (voucher / prepare / confirm). `chain` mode: user tx = Ed25519 voucher verify +
+  program `immortalize` (burn fuel, mint Card, PDA caps M=8 / career uniqueness).
+  Mint authority is a **program PDA** — server only holds `CARDS_VOUCHER_ISSUER`.
+  Test brand: CARS / Cards / car SVGs (`onchain/card_immortalize/`,
+  `onchain/cars/README.md`). Env: `IMMORTALIZE_MODE=chain`, `CARS_MINT`,
+  `CARDS_VOUCHER_ISSUER`, `SOLANA_RPC_URL`.
+- **~26 API routes** (`app/api/*`) cover battle, sim, claim, roster, standings,
+  daily, imprint, feed, war, save, wallet, solana-link, immortalize, card OG
+  images, and a `/api/cost` meter.
 
 ## The pluggable agent layer
 

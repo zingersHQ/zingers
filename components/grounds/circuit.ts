@@ -15,11 +15,11 @@ export const CIRCUIT_LIVES = 3;
  * and CameraController.
  */
 export const CIRCUIT_SECTOR_INTRO = {
-  /** Face-on hold before the chase sweep (seconds). */
+  /** Chase-from-behind hold looking down-track at the rings (seconds). */
   arriveHoldS: 1.55,
-  /** Q-sweep from face-on to chase (seconds). */
+  /** Soft settle from arrive hold into free chase (seconds). */
   arriveSweepS: 1.15,
-  /** Life-continue face-on hold (seconds) — longer for the ghost leave. */
+  /** Life-continue chase hold (seconds) — longer for the ghost leave. */
   continueArriveHoldS: 2.05,
   /** Title card on screen (ms) — covers hold + early sweep. Jump cue follows. */
   cardMs: 2800,
